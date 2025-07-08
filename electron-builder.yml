@@ -1,5 +1,5 @@
-appId: facture_system.electron.app
-productName: MwangeMangaza_System_facture
+appId: tchik.electron.app
+productName: tchik
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: MwangeMangaza_System_facture
+  executableName: tchik
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
