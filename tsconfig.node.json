@@ -1,0 +1,28 @@
+{
+  "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
+  "include": [
+    "electron.vite.config.*",
+    "src/main/*",
+    "src/preload/*",
+    "src/main/**/*",
+    "src/camons/*",
+    "src/camons/**/*"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "types": [
+      "electron-vite/node"
+    ],
+    "paths": {
+      "@main/*": [
+        "./src/main/*"
+      ],
+      "@camontype/*":[
+        "./src/camons/types/*"
+      ],
+      "@camons/*":[
+        "./src/camons/*"
+      ]
+    }
+  }
+}
