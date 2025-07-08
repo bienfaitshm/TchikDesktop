@@ -1,13 +1,13 @@
 import { IpcMainInvokeEvent } from "electron"
-import { saveFileDialog } from "@main/utils"
-import { createInvoice } from "@main/pdf/invoice"
+import { saveFileDialog } from "@/main/utils"
+import { createInvoice } from "@/main/pdf/invoice"
 import {
     InvoiceQuery,
     ItemQuery,
     CategorieQueries,
     ClientQueries,
     ProduitQueries,
-} from "@main/db/queries"
+} from "@/main/db/queries"
 import {
     TInvoiceCommand,
     WithDBValues,
@@ -15,8 +15,8 @@ import {
     TInvoice,
     TItem,
     TDataInvoiceCommand,
-} from "@camontype/index"
-import { getRadomString } from "@camons/utils"
+} from "@/camontype/index"
+import { getRadomString } from "@/camons/utils"
 
 export async function exportInvoice(data: WithDBValues<TDataInvoiceCommand>): Promise<void> {
     // console.log("EXPORT_INVOICE", event)
