@@ -14,13 +14,13 @@
       "electron-vite/node"
     ],
     "paths": {
-      "@main/*": [
+      "@/main/*": [
         "./src/main/*"
       ],
-      "@camontype/*":[
+      "@/camontype/*":[
         "./src/camons/types/*"
       ],
-      "@camons/*":[
+      "@/camons/*":[
         "./src/camons/*"
       ]
     }
