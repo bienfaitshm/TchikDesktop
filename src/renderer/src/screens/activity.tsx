@@ -1,4 +1,4 @@
-import { Calculator, Settings, Smile, User, LucideBell } from "lucide-react";
+import { Settings } from "lucide-react";
 import {
   Command,
   CommandEmpty,
@@ -6,9 +6,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
-  CommandShortcut,
-} from "@renderer/components/ui/command";
+} from "@/renderer/components/ui/command";
 
 import * as React from "react";
 import {
@@ -20,28 +18,26 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { cn } from "@renderer/utils";
-import { Button } from "@renderer/components/ui/button";
+import { cn } from "@/renderer/utils";
+import { Button } from "@/renderer/components/ui/button";
 
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@renderer/components/ui/popover";
+} from "@/renderer/components/ui/popover";
 import { NavLink, Outlet } from "react-router-dom";
-import appRouters from "@renderer/config";
-import MailPage from "@renderer/components/email/page";
-import { buttonVariants } from "@renderer/components/ui/button";
-import IconImage from "@renderer/assets/icon.svg";
+import appRouters from "@/renderer/config";
+
+import IconImage from "@/renderer/assets/icon.svg";
 
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@renderer/components/ui/tooltip";
-import ButtonSheet from "@renderer/components/buttonSheet";
-import { Separator } from "@renderer/components/ui/separator";
+} from "@/renderer/components/ui/tooltip";
+import { Separator } from "@/renderer/components/ui/separator";
 
 type MToolTipProps = {
   content: JSX.Element;
@@ -71,7 +67,7 @@ const NavLinkButton: React.FC<NavLinkButtonProps> = ({ to, icon, name }) => {
         cn(
           " p-2 relative flex items-center justify-center w-full",
           isActive &&
-            "befor:h-full before:w-[2px] before:bg-primary before:absolute before:top-0 before:bottom-0 before:left-0"
+          "befor:h-full before:w-[2px] before:bg-primary before:absolute before:top-0 before:bottom-0 before:left-0"
         )
       }
       to={to}
@@ -154,7 +150,7 @@ export function ComboboxPopover(): JSX.Element {
                     onSelect={(value) => {
                       setSelectedStatus(
                         statuses.find((priority) => priority.value === value) ||
-                          null
+                        null
                       );
                       setOpen(false);
                     }}

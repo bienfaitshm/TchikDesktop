@@ -2,13 +2,13 @@ import {
   createBrowserRouter,
   RouterProvider as RRouterProvider,
 } from "react-router-dom";
-import MainActivity from "@renderer/screens/activity";
-import clients from "@renderer/screens/clients";
-import products from "@renderer/screens/products";
-import categories from "@renderer/screens/categories";
-import payement from "@renderer/screens/payement";
-import settings from "@renderer/screens/settings";
-import Home from "@renderer/screens/home";
+import MainActivity from "@/renderer/screens/activity";
+// import clients from "@renderer/screens/clients";
+// import products from "@renderer/screens/products";
+// import categories from "@renderer/screens/categories";
+// import payement from "@renderer/screens/payement";
+// import settings from "@renderer/screens/settings";
+import Home from "@/renderer/screens/home";
 
 const router = createBrowserRouter([
   {
@@ -22,11 +22,11 @@ const router = createBrowserRouter([
     // ),
     children: [
       { index: true, element: <Home />, errorElement: <Home /> },
-      payement,
-      clients,
-      products,
-      categories,
-      settings,
+      // payement,
+      // clients,
+      // products,
+      // categories,
+      // settings,
     ],
   },
 ]);

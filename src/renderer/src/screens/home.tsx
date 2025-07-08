@@ -1,23 +1,21 @@
-import React from "react";
-import CheckoutForm from "@renderer/components/form/checkout-form";
-import { SuspenseProvider } from "@renderer/providers/supense";
-import { useGetProducts } from "@renderer/apis/queries";
-import { TProduit } from "@renderer/apis/type";
-import { ScrollArea } from "@renderer/components/ui/scroll-area";
+import React, { useEffect } from "react";
+import { SuspenseProvider } from "@/renderer/providers/supense";
 
-const SuspenseLoaderProductInForm: React.FC = () => {
-  const { data: products } = useGetProducts<
-    (TProduit & { id: number | string })[],
-    unknown
-  >();
-  return <CheckoutForm products={products || []} />;
-};
+import { ScrollArea } from "@/renderer/components/ui/scroll-area";
+import { getConfiguration } from "@/renderer/libs/apis/configuration"
+
 const Home: React.FC = () => {
+  useEffect(() => {
+    (async () => {
+      const data = await getConfiguration()
+      console.log("Data...", data)
+    })()
+
+  }, [])
   return (
     <ScrollArea className="h-full">
       <div className="my-10 h-full container max-w-screen-lg">
         <SuspenseProvider>
-          <SuspenseLoaderProductInForm />
         </SuspenseProvider>
       </div>
     </ScrollArea>
