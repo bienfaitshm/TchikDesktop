@@ -1,165 +1,124 @@
 import type { BrowserWindow } from "electron"
 import { ipcMain } from "electron"
-import { Methods } from "./constant"
-import { formatRouteMethodName, reponse, type TFuncReponse, type TReponse } from "./utils"
+import { Methods, Status } from "./constant"
+import { formatRouteMethodName, response, type TResponse } from "./utils"
 
-type TMethods = "GET" | "POST" | "PUT" | "DELETE" | "PATCH"
+type HTTPMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH"
 
-/**
- * Represents a server request.
- * @template TParams - The type of the request parameters.
- * @template TData - The type of the request data.
- */
-type TServerRequest<TParams extends {} = Record<string, unknown>, TData = unknown> = {
+type ServerRequest<TParams extends object = Record<string, unknown>, TData = unknown> = {
     headers: object
     data: TData
     params: TParams
 }
 
-/**
- * Represents a server response.
- * @template TResponse - The type of the response data.
- */
-type TServerResponse<TRes> = TFuncReponse<TRes> | TReponse<TRes>
+type ResponseType = ReturnType<typeof response>
+type ServerResponse = TResponse<ResponseType>
 
-/**
- * Represents a route definition.
- * @template TRequest - The type of the request.
- * @template TResponse - The type of the response.
- */
-type TRoute<TRequest = unknown, R = unknown> = {
+type RouteHandler = (request: ServerRequest) => Promise<ServerResponse>
+
+type Route = {
     name: string
-    callback(request: TRequest): TServerResponse<R>
+    handler: RouteHandler
 }
 
-/**
- * Callback type for server functions.
- * @template TResponse - The type of the response.
- */
-type ServerFunctionCallback<R = unknown> = (request: TServerRequest) => TServerResponse<R> | R
+type RegisterRoute = (
+    route: string,
+    handler: (request: ServerRequest) => Promise<ResponseType | unknown>,
+) => void
 
-/**
- * Type definition for server functions (GET, POST, PUT, DELETE).
- */
-type ServerFunction = (route: string, callback: ServerFunctionCallback) => void
-
-/**
- * Interface defining the server's API.
- */
 interface IServer {
-    /**
-     * Starts the server and binds routes to the provided BrowserWindow.
-     * @param win - The Electron BrowserWindow instance.
-     * @param callback - Optional callback to execute after the server starts.
-     */
-    listen(win: BrowserWindow | null, callback?: (routes?: TRoute[]) => void): void
-
-    get: ServerFunction
-    post: ServerFunction
-    put: ServerFunction
-    delete: ServerFunction
+    listen(win: BrowserWindow | null, callback?: (routes: Route[]) => void): void
+    get: RegisterRoute
+    post: RegisterRoute
+    put: RegisterRoute
+    delete: RegisterRoute
 }
 
-/**
- * Implementation of the IServer interface.
- */
 class Server implements IServer {
     private win: BrowserWindow | null = null
-    private routes: TRoute[] = []
+    private routes: Route[] = []
 
-    /**
-     * Registers a GET route.
-     * @param name - The route name.
-     * @param callback - The callback to handle the request.
-     */
-    get(name: string, callback: ServerFunctionCallback): void {
-        this.addRoute(name, callback, Methods.GET)
+    get(route: string, handler): void {
+        this.addRoute(route, handler, Methods.GET)
     }
 
-    /**
-     * Registers a POST route.
-     * @param name - The route name.
-     * @param callback - The callback to handle the request.
-     */
-    post(name: string, callback: ServerFunctionCallback): void {
-        this.addRoute(name, callback, Methods.POST)
+    post(route: string, handler): void {
+        this.addRoute(route, handler, Methods.POST)
     }
 
-    /**
-     * Registers a PUT route.
-     * @param name - The route name.
-     * @param callback - The callback to handle the request.
-     */
-    put(name: string, callback: ServerFunctionCallback): void {
-        this.addRoute(name, callback, Methods.PUT)
+    put(route: string, handler): void {
+        this.addRoute(route, handler, Methods.PUT)
     }
 
-    /**
-     * Registers a DELETE route.
-     * @param name - The route name.
-     * @param callback - The callback to handle the request.
-     */
-    delete(name: string, callback: ServerFunctionCallback): void {
-        this.addRoute(name, callback, Methods.DELETE)
+    delete(route: string, handler): void {
+        this.addRoute(route, handler, Methods.DELETE)
     }
 
-    /**
-     * Starts the server and binds all registered routes to the provided BrowserWindow.
-     * @param win - The Electron BrowserWindow instance.
-     * @param callback - Optional callback to execute after the server starts.
-     */
-    listen(win: BrowserWindow | null, callback?: (routes: TRoute[]) => void): void {
+    listen(win: BrowserWindow | null, callback?: (routes: Route[]) => void): void {
         this.win = win
-
         this.routes.forEach((route) => {
-            ipcMain.handle(route.name, (_, request) => route.callback(request))
+            ipcMain.handle(route.name, async (_, request) =>
+                route.handler(this.getRequest(request)),
+            )
         })
-
         callback?.(this.routes)
     }
 
-    /**
-     * Adds a route to the server.
-     * @param name - The route name.
-     * @param func - The callback to handle the request.
-     * @param method - The HTTP method (GET, POST, PUT, DELETE).
-     */
-    private addRoute(name: string, func: ServerFunctionCallback, method: TMethods): void {
-        const route: TRoute = {
-            name: formatRouteMethodName(name, method),
-            callback(request: TServerRequest): TServerResponse<unknown> {
-                const res = func(request)
-                if ((res as any)?.__func) return res as TServerResponse<unknown>
-                return reponse(res as unknown)
+    private getRequest(request): ServerRequest {
+        const headers = request.headers ? request.headers : {}
+        return {
+            data: request,
+            params: request,
+            headers: {
+                win: this.win,
+                ...headers,
             },
         }
-        this.routes.push(route)
+    }
+
+    private createRoute(routeName: string, method: HTTPMethod, handler: RouteHandler): Route {
+        return {
+            name: formatRouteMethodName(routeName, method),
+            handler: async (request: ServerRequest): Promise<ServerResponse> => {
+                try {
+                    const res = await handler(request)
+                    if (res?.__func) return res
+                    return response(res.data, Status.OK) as ServerResponse
+                } catch (error: unknown) {
+                    const errMsg = error instanceof Error ? error.message : String(error)
+                    return response(
+                        undefined as unknown as never,
+                        Status.INTERNAL_SERVER,
+                        errMsg,
+                    ) as ServerResponse
+                }
+            },
+        }
+    }
+
+    private addRoute(route: string, handler: RouteHandler, method: HTTPMethod): void {
+        this.routes.push(this.createRoute(route, method, handler))
     }
 }
 
-// Create an instance of the server
 export const server = new Server()
 
 /**
  * Example Usage:
  *
- * ```typescript
- * import server from "./lib/electron-apis/server";
+ * import { server } from "./lib/electron-apis/server";
  * import { BrowserWindow } from "electron";
  *
- * // Define routes
- * server.get("example", (request) => {
- *   return { data: { message: "GET request received", params: request.params } };
- * });
+ * server.get("example", (request) => ({
+ *   data: { message: "GET request received", params: request.params }
+ * }));
  *
- * server.post("example", (request) => {
- *   return { data: { message: "POST request received", data: request.data } };
- * });
+ * server.post("example", (request) => ({
+ *   data: { message: "POST request received", data: request.data }
+ * }));
  *
- * // Start the server
  * const win = new BrowserWindow();
  * server.listen(win, () => {
  *   console.log("Server is listening...");
  * });
- * ```
  */
