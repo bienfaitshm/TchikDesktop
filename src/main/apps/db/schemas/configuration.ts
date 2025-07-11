@@ -1,4 +1,8 @@
-import { sqliteTable, integer } from "drizzle-orm/sqlite-core"
+import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+
 export const users = sqliteTable("users", {
-    id: integer(),
-})
+  name: text(),
+});
+
+export type InsertUser = typeof users.$inferInsert;
+export type SelectUser = typeof users.$inferSelect;

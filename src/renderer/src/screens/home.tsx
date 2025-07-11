@@ -10,15 +10,15 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 
 const schema = z.object({
-  title: z.string()
+  name: z.string()
 })
 
 const Home: React.FC = () => {
   const [form, onSubmit] = useControlledForm({
     schema,
-    defaultValues: { title: "" },
+    defaultValues: { name: "" },
     onSubmit(data) {
-      createConfiguration(data.title).then(res => {
+      createConfiguration(data.name).then(res => {
         console.log("Result", res)
       })
     },
@@ -39,7 +39,7 @@ const Home: React.FC = () => {
             <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
               <FormField
                 control={form.control}
-                name="title"
+                name="name"
                 render={({ field }) => (
                   <FormControl>
                     <Input {...field} />

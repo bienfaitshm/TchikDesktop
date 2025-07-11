@@ -1,107 +1,116 @@
-import type { BrowserWindow } from "electron"
-import { ipcMain } from "electron"
-import { Methods, Status } from "./constant"
-import { formatRouteMethodName, response, type TResponse } from "./utils"
+import type { BrowserWindow } from "electron";import { ipcMain } from "electron";
+import { Methods, Status } from "./constant";
+import { formatRouteMethodName, response, type TResponse } from "./utils";
 
-type HTTPMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH"
+type HTTPMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
-type ServerRequest<TParams extends object = Record<string, unknown>, TData = unknown> = {
-    headers: object
-    data: TData
-    params: TParams
+interface ServerRequest<
+  TData = unknown,
+  TParams extends object = Record<string, unknown>,
+> {
+  headers: object;
+  data: TData;
+  params: TParams;
 }
 
-type ResponseType = ReturnType<typeof response>
-type ServerResponse = TResponse<ResponseType>
+type ServerResponse<R> = TResponse<R>;
 
-type RouteHandler = (request: ServerRequest) => Promise<ServerResponse>
+type RouteHandler<TRes, TData, TParams extends object> = (
+  request: ServerRequest<TData, TParams>,
+) => Promise<ServerResponse<TRes> | TRes>;
 
-type Route = {
-    name: string
-    handler: RouteHandler
+interface Route<TRes = unknown, TData = unknown, TParams extends object = {}> {
+  name: string;
+  handler: RouteHandler<TRes, TData, TParams>;
 }
 
-type RegisterRoute = (
+class Server {
+  private win: BrowserWindow | null = null;
+  private routes: Route[] = [];
+
+  get<TRes, TParams extends object = {}>(
     route: string,
-    handler: (request: ServerRequest) => Promise<ResponseType | unknown>,
-) => void
+    handler: RouteHandler<TRes, undefined, TParams>,
+  ): void {
+    this.addRoute(route, handler, Methods.GET);
+  }
 
-interface IServer {
-    listen(win: BrowserWindow | null, callback?: (routes: Route[]) => void): void
-    get: RegisterRoute
-    post: RegisterRoute
-    put: RegisterRoute
-    delete: RegisterRoute
+  post<TRes, TData, TParams extends object = {}>(
+    route: string,
+    handler: RouteHandler<TRes, TData, TParams>,
+  ): void {
+    this.addRoute(route, handler, Methods.POST);
+  }
+
+  put<TRes, TData, TParams extends object = {}>(
+    route: string,
+    handler: RouteHandler<TRes, TData, TParams>,
+  ): void {
+    this.addRoute(route, handler, Methods.PUT);
+  }
+
+  delete<TRes, TParams extends object = {}>(
+    route: string,
+    handler: RouteHandler<TRes, undefined, TParams>,
+  ): void {
+    this.addRoute(route, handler, Methods.DELETE);
+  }
+
+  listen(
+    win: BrowserWindow | null,
+    callback?: (routes: Route[]) => void,
+  ): void {
+    this.win = win;
+    this.routes.forEach((route) => {
+      ipcMain.handle(route.name, async (_, request) =>
+        route.handler(this.buildRequest(request)),
+      );
+    });
+    callback?.(this.routes);
+  }
+
+  private buildRequest(request: any): ServerRequest {
+    const headers = request?.headers ?? {};
+    return {
+      ...request,
+      headers: {
+        win: this.win,
+        ...headers,
+      },
+    };
+  }
+
+  private createRoute<TRes, TData, TParams extends object>(
+    routeName: string,
+    method: HTTPMethod,
+    handler: RouteHandler<TRes, TData, TParams>,
+  ): Route {
+    return {
+      name: formatRouteMethodName(routeName, method),
+      handler: async (request) => {
+        try {
+          const res = await handler(request as any);
+          if ((res as any)?.__func) return res;
+          return response((res as any).data, Status.OK);
+        } catch (error: unknown) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          return response(undefined as never, Status.INTERNAL_SERVER, message);
+        }
+      },
+    };
+  }
+
+  private addRoute<TRes, TData, TParams extends object>(
+    route: string,
+    handler: RouteHandler<TRes, TData, TParams>,
+    method: HTTPMethod,
+  ): void {
+    this.routes.push(this.createRoute(route, method, handler));
+  }
 }
 
-class Server implements IServer {
-    private win: BrowserWindow | null = null
-    private routes: Route[] = []
-
-    get(route: string, handler): void {
-        this.addRoute(route, handler, Methods.GET)
-    }
-
-    post(route: string, handler): void {
-        this.addRoute(route, handler, Methods.POST)
-    }
-
-    put(route: string, handler): void {
-        this.addRoute(route, handler, Methods.PUT)
-    }
-
-    delete(route: string, handler): void {
-        this.addRoute(route, handler, Methods.DELETE)
-    }
-
-    listen(win: BrowserWindow | null, callback?: (routes: Route[]) => void): void {
-        this.win = win
-        this.routes.forEach((route) => {
-            ipcMain.handle(route.name, async (_, request) =>
-                route.handler(this.getRequest(request)),
-            )
-        })
-        callback?.(this.routes)
-    }
-
-    private getRequest(request): ServerRequest {
-        const headers = request.headers ? request.headers : {}
-        return {
-            data: request,
-            params: request,
-            headers: {
-                win: this.win,
-                ...headers,
-            },
-        }
-    }
-
-    private createRoute(routeName: string, method: HTTPMethod, handler: RouteHandler): Route {
-        return {
-            name: formatRouteMethodName(routeName, method),
-            handler: async (request: ServerRequest): Promise<ServerResponse> => {
-                try {
-                    const res = await handler(request)
-                    if (res?.__func) return res
-                    return response(res.data, Status.OK) as ServerResponse
-                } catch (error: unknown) {
-                    const errMsg = error instanceof Error ? error.message : String(error)
-                    return response(
-                        undefined as unknown as never,
-                        Status.INTERNAL_SERVER,
-                        errMsg,
-                    ) as ServerResponse
-                }
-            },
-        }
-    }
-
-    private addRoute(route: string, handler: RouteHandler, method: HTTPMethod): void {
-        this.routes.push(this.createRoute(route, method, handler))
-    }
-}
-
-export const server = new Server()
+export const server = new Server();
 
 /**
  * Example Usage:
