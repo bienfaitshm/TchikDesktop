@@ -6,6 +6,6 @@ export async function getUsers() {
 }
 
 export async function createUser(value: InsertUser): Promise<SelectUser> {
-  const _users = db.insert(users).values(value).returning();
+  const _users = await db.insert(users).values(value).returning();
   return _users[0];
 }

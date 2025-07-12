@@ -2,17 +2,15 @@ import React, { useEffect } from "react";
 import { SuspenseProvider } from "@/renderer/providers/supense";
 
 import { ScrollArea } from "@/renderer/components/ui/scroll-area";
-import { createConfiguration, getConfiguration } from "@/renderer/libs/apis/configuration"
 import { useControlledForm } from "@/camons/libs/forms";
 import z from "zod";
-import { Form, FormControl, FormField, FormMessage } from "../components/ui/form";
+import { Form, FormControl, FormField, FormMessage, FormItem } from "../components/ui/form";
 import { Input } from "../components/ui/input";
-import { Button } from "../components/ui/button";
 import { useCreateConfiguration, useGetConfiguration } from "../libs/queries/configuration";
 import { ButtonLoader } from "../components/form/button-loader";
 
 const schema = z.object({
-  name: z.string()
+  name: z.string().nonempty()
 })
 
 const Home: React.FC = () => {
@@ -29,6 +27,7 @@ const Home: React.FC = () => {
         },
         onSuccess(data, variables, context) {
           console.log("success", data)
+          form.reset()
         },
       })
     },
@@ -54,13 +53,15 @@ const Home: React.FC = () => {
                 control={form.control}
                 name="name"
                 render={({ field }) => (
-                  <FormControl>
-                    <Input {...field} />
-                    {/* <FormMessage /> */}
-                  </FormControl>
+                  <FormItem>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
-              <ButtonLoader isLoading={mutation.isLoading} isLoadingText="Submiting">Submit</ButtonLoader>
+              <ButtonLoader isLoading={mutation.isPending} isLoadingText="Submiting">Submit</ButtonLoader>
             </form>
           </Form>
         </SuspenseProvider>

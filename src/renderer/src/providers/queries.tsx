@@ -1,11 +1,11 @@
-import { QueryClient, QueryClientProvider } from "react-query"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      suspense: true,
-    },
-  },
+      staleTime: 10000
+    }
+  }
 })
 
 export default function QuerieProvider({

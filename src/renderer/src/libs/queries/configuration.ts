@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createConfiguration,
   getConfiguration,
@@ -12,14 +12,10 @@ export function useGetConfiguration() {
 }
 
 export function useCreateConfiguration() {
-  const client = useQueryClient();
+  // const client = useQueryClient();
   return useMutation({
     mutationKey: ["CREATE_MUTATION"],
     mutationFn: (value: { name: string }) => createConfiguration(value),
-    onSuccess() {
-      client.fetchQuery({
-        queryKey: ["GET_CONFIGURATION"],
-      });
-    },
+    onSuccess() {},
   });
 }
