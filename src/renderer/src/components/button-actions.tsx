@@ -1,18 +1,18 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from "@renderer/components/ui/tooltip"
-import { Button } from "@renderer/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/renderer/components/ui/tooltip"
+import { Button } from "@/renderer/components/ui/button"
 import ButtonMore, { TButtonMore } from "./button-more"
 
 //
 export type TMenu =
   | TButtonMore
   | {
-      icon: React.JSX.Element
-      action: () => void
-      info: string
-      type: "button"
-      text?: string
-      variant?: unknown
-    }
+    icon: React.JSX.Element
+    action: () => void
+    info: string
+    type: "button"
+    text?: string
+    variant?: unknown
+  }
 
 export type ButtonActionsProps = {
   menus?: TMenu[]

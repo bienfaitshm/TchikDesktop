@@ -9,6 +9,7 @@ server.get("configuration", async () => {
 });
 
 server.post<any, { name: string }>("configuration", async ({ data }) => {
-  const user = await createUser({ name: String(data?.name) });
-  return response(user);
+  const user = await createUser(data);
+  console.log("data", data, user);
+  return response({});
 });

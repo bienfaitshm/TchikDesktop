@@ -4,6 +4,6 @@ export const getConfiguration = () => {
   return clientApis.get("configuration");
 };
 
-export const createConfiguration = (name: string) => {
-  return clientApis.post("configuration", { name });
+export const createConfiguration = (value: { name: string }) => {
+  return clientApis.post("configuration", value);
 };

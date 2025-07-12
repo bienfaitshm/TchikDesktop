@@ -8,18 +8,28 @@ import z from "zod";
 import { Form, FormControl, FormField, FormMessage } from "../components/ui/form";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
+import { useCreateConfiguration, useGetConfiguration } from "../libs/queries/configuration";
+import { ButtonLoader } from "../components/form/button-loader";
 
 const schema = z.object({
   name: z.string()
 })
 
 const Home: React.FC = () => {
+  const { data: configurations } = useGetConfiguration()
+  const mutation = useCreateConfiguration()
+
   const [form, onSubmit] = useControlledForm({
     schema,
     defaultValues: { name: "" },
-    onSubmit(data) {
-      createConfiguration(data.name).then(res => {
-        console.log("Result", res)
+    onSubmit(value) {
+      mutation.mutate(value, {
+        onError(error, variables, context) {
+          console.log("error", error)
+        },
+        onSuccess(data, variables, context) {
+          console.log("success", data)
+        },
       })
     },
   })
@@ -33,6 +43,9 @@ const Home: React.FC = () => {
 
   return (
     <ScrollArea className="h-full">
+      <div>
+        <h3>{JSON.stringify(configurations, null, 4)}</h3>
+      </div>
       <div className="my-10 h-full container max-w-screen-lg">
         <SuspenseProvider>
           <Form {...form}>
@@ -47,7 +60,7 @@ const Home: React.FC = () => {
                   </FormControl>
                 )}
               />
-              <Button>Submit</Button>
+              <ButtonLoader isLoading={mutation.isLoading} isLoadingText="Submiting">Submit</ButtonLoader>
             </form>
           </Form>
         </SuspenseProvider>
