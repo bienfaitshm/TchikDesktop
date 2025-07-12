@@ -1,7 +1,9 @@
 import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { commonFieldTable } from "./base";
 
 export const users = sqliteTable("users", {
-  name: text(),
+  ...commonFieldTable,
+  name: text("name", { length: 256 }).notNull(),
 });
 
 export type InsertUser = typeof users.$inferInsert;
