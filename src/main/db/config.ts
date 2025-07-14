@@ -12,11 +12,11 @@ type SchemaSyncStatus = {
   checkedAt: string;
 };
 
-export const DATABASE_FILENAME = "local_database.db";
+export const DEFAULT_DB_FILENAME = "db_local.db";
 export const SCHEMA_STATUS_FILE = "./schema_sync_status.json";
 
 export const dbClient = createClient({
-  url: process.env.DB_FILE_NAME || `file:${DATABASE_FILENAME}`,
+  url: process.env.DB_FILE_NAME || `file:${DEFAULT_DB_FILENAME}`,
 });
 export const db = drizzle({ client: dbClient });
 
