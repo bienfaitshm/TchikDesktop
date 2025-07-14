@@ -1,4 +1,4 @@
-import { text } from "drizzle-orm/sqlite-core";
+import { text, integer } from "drizzle-orm/sqlite-core";
 import ShortUniqueId from "short-unique-id";
 
 const shordId = new ShortUniqueId({ length: 5 });
@@ -8,8 +8,8 @@ export const commonFieldTable = {
     .notNull()
     .primaryKey()
     .$defaultFn(() => shordId.randomUUID()),
-  updatedAt: text("updated_at"),
-  createdAt: text("created_at")
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+    .$defaultFn(() => new Date()),
 };

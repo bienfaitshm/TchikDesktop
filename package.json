@@ -16,7 +16,6 @@
     "buildNc": "npm run typecheck",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "postinstall": "electron-builder",
     "build:win": "npm run build && electron-builder --win --config",
     "build:mac": "electron-vite build && electron-builder --mac --config",
     "build:linux": "electron-vite build && electron-builder --linux --config",

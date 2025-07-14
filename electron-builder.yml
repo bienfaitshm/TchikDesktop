@@ -1,4 +1,4 @@
-appId: tchik.electron.app
+appId: ${productName}.electron.app
 productName: Tchik
 directories:
   buildResources: build
@@ -9,14 +9,19 @@ files:
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+extraFiles:
+  - 'drizzle/**'
 asarUnpack:
   - resources/**
 win:
   executableName: Tchik
 nsis:
+  oneClick: false
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
+  displayLanguageSelector: true
+  allowToChangeInstallationDirectory: true
   createDesktopShortcut: always
 mac:
   entitlementsInherit: build/entitlements.mac.plist
@@ -33,7 +38,7 @@ linux:
     - AppImage
     - snap
     - deb
-  maintainer: electronjs.org
+  maintainer: Bienfait shomari
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}
