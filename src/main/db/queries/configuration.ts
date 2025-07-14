@@ -1,5 +1,5 @@
 import { db } from "../config";
-import { users, InsertUser, SelectUser } from "@/main/apps/db/schemas";
+import { users, InsertUser, SelectUser } from "@/main/db/schemas";
 
 export async function getUsers() {
   return db.select().from(users);

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { SuspenseProvider } from "@/renderer/providers/supense";
 
 import { ScrollArea } from "@/renderer/components/ui/scroll-area";
@@ -22,10 +22,10 @@ const Home: React.FC = () => {
     defaultValues: { name: "" },
     onSubmit(value) {
       mutation.mutate(value, {
-        onError(error, variables, context) {
+        onError(error,) {
           console.log("error", error)
         },
-        onSuccess(data, variables, context) {
+        onSuccess(data) {
           console.log("success", data)
           form.reset()
         },
@@ -42,10 +42,10 @@ const Home: React.FC = () => {
 
   return (
     <ScrollArea className="h-full">
-      <div>
-        <h3>{JSON.stringify(configurations, null, 4)}</h3>
-      </div>
       <div className="my-10 h-full container max-w-screen-lg">
+        <div>
+          <code>{JSON.stringify(configurations, null, 4)}</code>
+        </div>
         <SuspenseProvider>
           <Form {...form}>
             <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>

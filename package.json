@@ -50,6 +50,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "docx-templates": "^4.14.1",
     "drizzle-orm": "^0.44.2",
     "electron-updater": "^6.6.2",
     "jotai": "^2.12.5",
