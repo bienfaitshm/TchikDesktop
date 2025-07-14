@@ -22,7 +22,7 @@ export const db = drizzle({ client: dbClient });
 
 export async function runMigrations() {
   try {
-    await migrate(db, { migrationsFolder: "./Drizzle" });
+    await migrate(db, { migrationsFolder: "./drizzle" });
     console.log("Migrations applied successfully!");
   } catch (error) {
     console.error("Error applying migrations:", error);

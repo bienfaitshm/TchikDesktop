@@ -1,19 +1,35 @@
 import { createReport } from "docx-templates";
 import type { UserOptions } from "docx-templates/lib/types";
 import fs from "fs";
+import path from "path";
 
-const reportConfig: Partial<UserOptions> = {
+const TEMPLATE_DIR = "docx-templates";
+
+const DOCX_REPORT_OPTIONS: Partial<UserOptions> = {
   cmdDelimiter: ["{{", "}}"],
 };
 
-export async function createDocx(
-  template_name: string,
+/**
+ * Generates a DOCX report based on a template and provided data.
+ *
+ * @param templatePath - The file system path to the DOCX template file.
+ * @param data - An object containing the data to populate the template.
+ * @returns A promise that resolves to a Uint8Array containing the generated DOCX file.
+ *
+ * @throws Will throw an error if the template file cannot be read or the report generation fails.
+ */
+export async function generateDocxReport(
+  templatePath: string,
   data: Record<string, unknown>
-) {
-  const template = fs.readFileSync(template_name);
-  return await createReport({
-    template,
+): Promise<Uint8Array> {
+  const templateBuffer = fs.readFileSync(templatePath);
+  return createReport({
+    template: templateBuffer,
     data,
-    ...reportConfig,
+    ...DOCX_REPORT_OPTIONS,
   });
+}
+
+export function resolveTemplatePath(filename: string): string {
+  return path.join(TEMPLATE_DIR, filename);
 }
