@@ -1,5 +1,5 @@
-appId: ${productName}.electron.app
 productName: Tchik
+appId: Tchik.electron.app
 
 directories:
   buildResources: build

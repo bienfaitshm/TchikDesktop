@@ -3,10 +3,10 @@ import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
 import { server } from "@/camons/libs/electron-apis/server";
-import { applyMigrations } from "@/main/db/config";
+import { checkAndUpdateSchemaStatus } from "@/main/db/config";
 import "@/main/apps";
 
-applyMigrations();
+checkAndUpdateSchemaStatus();
 
 function createMainWindow(): void {
   const mainWindow = new BrowserWindow({
