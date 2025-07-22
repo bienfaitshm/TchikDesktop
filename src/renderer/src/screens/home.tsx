@@ -4,22 +4,23 @@ import { SuspenseProvider } from "@/renderer/providers/supense";
 import { ScrollArea } from "@/renderer/components/ui/scroll-area";
 import { useControlledForm } from "@/camons/libs/forms";
 import z from "zod";
-import { Form, FormControl, FormField, FormMessage, FormItem } from "../components/ui/form";
+import { Form, FormControl, FormField, FormMessage, FormItem, FormLabel } from "../components/ui/form";
 import { Input } from "../components/ui/input";
-import { useCreateConfiguration, useGetConfiguration } from "../libs/queries/configuration";
+import { useCreateUser, useGetUsers } from "../libs/queries/account";
 import { ButtonLoader } from "../components/form/button-loader";
 
 const schema = z.object({
-  name: z.string().nonempty()
+  firstName: z.string().nonempty(),
+  lastName: z.string().nonempty()
 })
 
 const Home: React.FC = () => {
-  const { data: configurations } = useGetConfiguration()
-  const mutation = useCreateConfiguration()
+  const { data: configurations } = useGetUsers()
+  const mutation = useCreateUser()
 
   const [form, onSubmit] = useControlledForm({
     schema,
-    defaultValues: { name: "" },
+    defaultValues: { firstName: "", lastName: "" },
     onSubmit(value) {
       mutation.mutate(value, {
         onError(error,) {
@@ -32,28 +33,35 @@ const Home: React.FC = () => {
       })
     },
   })
-  // useEffect(() => {
-  //   (async () => {
-  //     const data = await getConfiguration()
-  //     console.log("Data...", data)
-  //   })()
-
-  // }, [])
 
   return (
     <ScrollArea className="h-full">
-      <div className="my-10 h-full container max-w-screen-lg">
+      <div className="my-10 mx-auto h-full container max-w-screen-md">
         <div>
           <code>{JSON.stringify(configurations, null, 4)}</code>
         </div>
         <SuspenseProvider>
           <Form {...form}>
-            <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
+            <form className="space-y-5" onSubmit={onSubmit}>
               <FormField
                 control={form.control}
-                name="name"
+                name="firstName"
                 render={({ field }) => (
                   <FormItem>
+                    <FormLabel>Prenom</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>

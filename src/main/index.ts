@@ -3,17 +3,15 @@ import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
 import { server } from "@/camons/libs/electron-apis/server";
-import { checkAndUpdateSchemaStatus } from "@/main/db/config";
 import "@/main/apps";
+import { sequelize } from "./db/config";
 
-checkAndUpdateSchemaStatus();
-
-function createMainWindow(): void {
+const createMainWindow = (): void => {
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
-    icon: icon,
+    icon,
     autoHideMenuBar: true,
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
@@ -22,8 +20,11 @@ function createMainWindow(): void {
     },
   });
 
-  server.listen(mainWindow, (routes) => {
-    console.log("server active", `${routes.length} initialised`);
+  sequelize.sync().then((result) => {
+    console.log("Database synchronized!", result);
+    server.listen(mainWindow, (routes) => {
+      console.log(`Server active, ${routes.length} routes initialized`);
+    });
   });
 
   mainWindow.once("ready-to-show", () => mainWindow.show());
@@ -38,7 +39,7 @@ function createMainWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
-}
+};
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId("com.electron.tchik");
@@ -50,10 +51,14 @@ app.whenReady().then(() => {
   createMainWindow();
 
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createMainWindow();
+    }
   });
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
 });

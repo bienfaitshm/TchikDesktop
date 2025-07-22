@@ -19,5 +19,6 @@ export function useControlledForm<T extends ZodRawShape>({
     defaultValues,
   });
 
-  return [form, onSubmit] as const;
+  const handleSubmit = form.handleSubmit(onSubmit);
+  return [form, handleSubmit] as const;
 }
