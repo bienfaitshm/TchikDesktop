@@ -20,8 +20,8 @@ const createMainWindow = (): void => {
     },
   });
 
-  sequelize.sync().then((result) => {
-    console.log("Database synchronized!", result);
+  sequelize.sync().then(() => {
+    console.log("Database synchronized!");
     server.listen(mainWindow, (routes) => {
       console.log(`Server active, ${routes.length} routes initialized`);
     });
