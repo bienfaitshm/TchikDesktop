@@ -3,6 +3,7 @@ appId: Tchik.electron.app
 
 directories:
   buildResources: build
+  output: release/${version}
 
 files:
   # Exclure les fichiers/dossiers inutiles du package
