@@ -1,6 +1,12 @@
-import { app, shell, BrowserWindow } from "electron";
+import { app, shell, BrowserWindow, dialog } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
+import { autoUpdater } from "electron-updater";
+import log from "electron-log";
+
+// Configure le logger (optionnel)
+autoUpdater.logger = log;
+
 import icon from "../../resources/icon.png?asset";
 import { server } from "@/camons/libs/electron-apis/server";
 import "@/main/apps";
@@ -20,7 +26,7 @@ const createMainWindow = (): void => {
     },
   });
 
-  sequelize.sync().then(() => {
+  sequelize.sync({}).then(() => {
     console.log("Database synchronized!");
     server.listen(mainWindow, (routes) => {
       console.log(`Server active, ${routes.length} routes initialized`);
@@ -61,4 +67,60 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
+});
+
+// Événements de l'auto-updater
+autoUpdater.on("checking-for-update", () => {
+  log.info("Checking for update...");
+});
+
+autoUpdater.on("update-available", (info) => {
+  log.info("Update available.");
+  dialog.showMessageBox({
+    type: "info",
+    title: "Mise à jour disponible",
+    message: "Une nouvelle version est disponible. Téléchargement en cours...",
+    buttons: ["OK"],
+  });
+});
+
+autoUpdater.on("update-not-available", (info) => {
+  log.info("Update not available.");
+});
+
+autoUpdater.on("error", (err) => {
+  log.error("Error in auto-updater: " + err);
+});
+
+autoUpdater.on("download-progress", (progressObj) => {
+  let log_message = "Download speed: " + progressObj.bytesPerSecond;
+  log_message = log_message + " - Downloaded " + progressObj.percent + "%";
+  log_message =
+    log_message +
+    " (" +
+    progressObj.transferred +
+    "/" +
+    progressObj.total +
+    ")";
+  log.info(log_message);
+  // Vous pouvez envoyer la progression au renderer process pour afficher une barre de progression
+  // mainWindow.webContents.send('download-progress', progressObj.percent);
+});
+
+autoUpdater.on("update-downloaded", (info) => {
+  log.info("Update downloaded.");
+  dialog
+    .showMessageBox({
+      type: "info",
+      title: "Mise à jour prête à être installée",
+      message:
+        "La nouvelle version a été téléchargée. Redémarrez l'application pour l'installer.",
+      buttons: ["Redémarrer", "Plus tard"],
+    })
+    .then((result) => {
+      if (result.response === 0) {
+        // Si l'utilisateur clique sur "Redémarrer"
+        autoUpdater.quitAndInstall();
+      }
+    });
 });

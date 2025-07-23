@@ -52,6 +52,7 @@
     "date-fns": "^4.1.0",
     "docx-templates": "^4.14.1",
     "drizzle-orm": "^0.44.2",
+    "electron-log": "^5.4.1",
     "electron-updater": "^6.6.2",
     "jotai": "^2.12.5",
     "localforage": "^1.10.0",

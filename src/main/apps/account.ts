@@ -13,12 +13,16 @@ server.get("users", async () => {
 server.post<any, { firstName: string; lastName: string }>(
   "users",
   async ({ data }) => {
-    const user = await createUser(data);
+    try {
+      const user = await createUser({ ...data });
+      console.log("data", data, user);
+    } catch (error) {
+      console.log("DB Error", error);
+    }
     // const content = await generateDocxReport(resolveTemplatePath("hello.docx"), {
     //   name: user.name,
     // });
     // await dialogSaveDocxFile(`${user.name}-document.docx`, content);
-    console.log("data", data, user);
     return response({});
   }
 );

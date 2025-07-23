@@ -64,5 +64,7 @@ appImage:
 npmRebuild: false
 
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  provider: github
+  owner: bienfaitshm
+  repo: TchikDesktop
+  releaseType: release
