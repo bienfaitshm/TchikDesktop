@@ -1,79 +1,126 @@
-import { app, shell, BrowserWindow } from "electron"
-import { join } from "path"
-import { electronApp, optimizer, is } from "@electron-toolkit/utils"
-import { IPC_ROUTE_BINDER } from "@main/routes"
-import apisEndPointRoute from "@main/apis/endpoints"
-import { syncDataBase } from "@main/db/config"
-import icon from "../../resources/icon.png?asset"
+import { app, shell, BrowserWindow, dialog } from "electron";
+import { join } from "path";
+import { electronApp, optimizer, is } from "@electron-toolkit/utils";
+import { autoUpdater } from "electron-updater";
+import log from "electron-log";
 
-function createWindow(): void {
-  // Create the browser window.
+// Configure le logger (optionnel)
+autoUpdater.logger = log;
+
+import icon from "../../resources/icon.png?asset";
+import { server } from "@/camons/libs/electron-apis/server";
+import "@/main/apps";
+import { sequelize } from "./db/config";
+
+const createMainWindow = (): void => {
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
+    icon,
     autoHideMenuBar: true,
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
     },
-  })
+  });
 
-  //sync database
-  syncDataBase()
-  // apis
-  IPC_ROUTE_BINDER.bind(apisEndPointRoute)
+  sequelize.sync({}).then(() => {
+    console.log("Database synchronized!");
+    server.listen(mainWindow, (routes) => {
+      console.log(`Server active, ${routes.length} routes initialized`);
+    });
+  });
 
-  mainWindow.on("ready-to-show", () => {
-    mainWindow.show()
-  })
+  mainWindow.once("ready-to-show", () => mainWindow.show());
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: "deny" }
-  })
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: "deny" };
+  });
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"])
+  if (is.dev && process.env.ELECTRON_RENDERER_URL) {
+    mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
-    mainWindow.loadFile(join(__dirname, "../renderer/index.html"))
+    mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
-}
+};
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  // Set app user model id for windows
-  electronApp.setAppUserModelId("com.electron")
+  electronApp.setAppUserModelId("com.electron.tchik");
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on("browser-window-created", (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
+    optimizer.watchWindowShortcuts(window);
+  });
 
-  createWindow()
+  createMainWindow();
 
-  app.on("activate", function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
-})
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createMainWindow();
+    }
+  });
+});
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    app.quit()
+    app.quit();
   }
-})
+});
 
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.
+// Événements de l'auto-updater
+autoUpdater.on("checking-for-update", () => {
+  log.info("Checking for update...");
+});
+
+autoUpdater.on("update-available", (info) => {
+  log.info("Update available.");
+  dialog.showMessageBox({
+    type: "info",
+    title: "Mise à jour disponible",
+    message: "Une nouvelle version est disponible. Téléchargement en cours...",
+    buttons: ["OK"],
+  });
+});
+
+autoUpdater.on("update-not-available", (info) => {
+  log.info("Update not available.");
+});
+
+autoUpdater.on("error", (err) => {
+  log.error("Error in auto-updater: " + err);
+});
+
+autoUpdater.on("download-progress", (progressObj) => {
+  let log_message = "Download speed: " + progressObj.bytesPerSecond;
+  log_message = log_message + " - Downloaded " + progressObj.percent + "%";
+  log_message =
+    log_message +
+    " (" +
+    progressObj.transferred +
+    "/" +
+    progressObj.total +
+    ")";
+  log.info(log_message);
+  // Vous pouvez envoyer la progression au renderer process pour afficher une barre de progression
+  // mainWindow.webContents.send('download-progress', progressObj.percent);
+});
+
+autoUpdater.on("update-downloaded", (info) => {
+  log.info("Update downloaded.");
+  dialog
+    .showMessageBox({
+      type: "info",
+      title: "Mise à jour prête à être installée",
+      message:
+        "La nouvelle version a été téléchargée. Redémarrez l'application pour l'installer.",
+      buttons: ["Redémarrer", "Plus tard"],
+    })
+    .then((result) => {
+      if (result.response === 0) {
+        // Si l'utilisateur clique sur "Redémarrer"
+        autoUpdater.quitAndInstall();
+      }
+    });
+});

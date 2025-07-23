@@ -13,16 +13,16 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@renderer/*": [
+      "@/renderer/*": [
         "src/renderer/src/*"
       ],
-      "@components/*": [
+      "@/components/*": [
         "src/renderer/src/components/*"
       ],
-      "@camontype/*":[
+      "@/camontype/*":[
         "src/camons/types/*"
       ],
-      "@camons/*":[
+      "@/camons/*":[
         "src/camons/*"
       ]
     }
