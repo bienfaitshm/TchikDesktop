@@ -6,23 +6,21 @@ import { response } from "@/camons/libs/electron-apis/utils";
 
 server.get("users", async () => {
   const users = await getUsers();
-  console.log("Fetched users:", users);
   return response(users);
 });
 
-server.post<any, { firstName: string; lastName: string }>(
-  "users",
-  async ({ data }) => {
-    try {
-      const user = await createUser({ ...data });
-      console.log("data", data, user);
-    } catch (error) {
-      console.log("DB Error", error);
-    }
-    // const content = await generateDocxReport(resolveTemplatePath("hello.docx"), {
-    //   name: user.name,
-    // });
-    // await dialogSaveDocxFile(`${user.name}-document.docx`, content);
-    return response({});
-  }
-);
+server.post<any, any>("users", async ({ data }) => {
+  const user = await createUser({ ...data });
+  return response(user);
+  // try {
+  //   const user =
+  //   console.log("data", data, user);
+  // } catch (error) {
+  //   console.log("DB Error", error);
+  // }
+  // // const content = await generateDocxReport(resolveTemplatePath("hello.docx"), {
+  // //   name: user.name,
+  // // });
+  // // await dialogSaveDocxFile(`${user.name}-document.docx`, content);
+  // return response({});
+});
