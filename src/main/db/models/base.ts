@@ -3,7 +3,13 @@ import ShortUniqueId from "short-unique-id";
 
 const shortId = new ShortUniqueId({ length: 5 });
 
-export const modelBase: ModelAttributes<Model<any, any>> = {
+export interface IBaseModel {
+  id: string;
+  createAt: Date;
+  updateAt: Date;
+}
+
+export const baseModel: ModelAttributes<Model<IBaseModel, IBaseModel>> = {
   id: {
     type: DataTypes.STRING(10),
     primaryKey: true,

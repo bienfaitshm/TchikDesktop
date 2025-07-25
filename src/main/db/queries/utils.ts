@@ -8,10 +8,12 @@ import type { Model } from "sequelize";
  * @returns A promise that resolves to an array of plain objects.
  */
 export async function mapModelsToPlainList<T extends Model>(
-  data: Promise<T[]>
+  data: Promise<T[]> | T[],
+  callback?: (e: T) => unknown
 ): Promise<Record<string, any>[]> {
   const models = await data;
-  return models.map((model) => model.toJSON());
+  const _func = callback ? callback : (model) => model.toJSON();
+  return models.map(_func);
 }
 
 /**
@@ -22,7 +24,7 @@ export async function mapModelsToPlainList<T extends Model>(
  * @returns A promise that resolves to a plain object.
  */
 export async function mapModelToPlain<T extends Model>(
-  data: Promise<T>
+  data: Promise<T> | T
 ): Promise<Record<string, any>> {
   const model = await data;
   return model.toJSON();
