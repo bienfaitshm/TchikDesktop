@@ -2,19 +2,20 @@ import {
   createBrowserRouter,
   RouterProvider as RRouterProvider,
 } from "react-router-dom";
-import MainActivity from "@/renderer/screens/activity";
 // import clients from "@renderer/screens/clients";
 // import products from "@renderer/screens/products";
 // import categories from "@renderer/screens/categories";
 // import payement from "@renderer/screens/payement";
 // import settings from "@renderer/screens/settings";
 import Home from "@/renderer/screens/home";
+import Layout from "./layout";
+import Launcher from "./launcher";
 
 const router = createBrowserRouter([
   {
     path: "",
-    element: <MainActivity />,
-    errorElement: <MainActivity />,
+    element: <Layout />,
+    errorElement: <Launcher />,
     // errorElement: (
     //   <div className="h-screen w-full flex justify-center items-center">
     //     <h1 className="text-2xl font-bold">Il y eu erreur</h1>
