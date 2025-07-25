@@ -1,26 +1,33 @@
 import { server } from "@/camons/libs/electron-apis/server";
-import { getUsers, createUser } from "@/main/db/queries/account";
+import * as queries from "@/main/db/queries/account";
 import { response } from "@/camons/libs/electron-apis/utils";
-// import { dialogSaveDocxFile } from "@/main/libs/save-files";
-// import { generateDocxReport, resolveTemplatePath } from "@/main/libs/docx";
 
-server.get("users", async () => {
-  const users = await getUsers();
-  return response(users);
+server.get<any, any>("users", async ({}) => {
+  const classes = await queries.getUsers();
+  return response(classes);
 });
 
-server.post<any, any>("users", async ({ data }) => {
-  const user = await createUser({ ...data });
-  return response(user);
-  // try {
-  //   const user =
-  //   console.log("data", data, user);
-  // } catch (error) {
-  //   console.log("DB Error", error);
-  // }
-  // // const content = await generateDocxReport(resolveTemplatePath("hello.docx"), {
-  // //   name: user.name,
-  // // });
-  // // await dialogSaveDocxFile(`${user.name}-document.docx`, content);
-  // return response({});
+server.get<any, any>("user", async ({ params }) => {
+  const classes = await queries.getUserById(params.userId);
+  return response(classes);
 });
+
+server.get<any, any>("user-email", async ({ params }) => {
+  const classes = await queries.getUserById(params.email);
+  return response(classes);
+});
+
+server.get<any, any>("users-roles", async () => {
+  const classes = await queries.getUsersWithRoles();
+  return response(classes);
+});
+
+server.post<any, any>("user-assign-role", async ({ data }) => {
+  const classe = await queries.assignRoleToUser(data.userId, data.roleId);
+  return response(classe);
+});
+
+// server.put<any, any>("classes", async ({ data }) => {
+//   const classe = await queries.updateClasse(data.id_classe, data);
+//   return response(classe);
+// });
