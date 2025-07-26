@@ -4,7 +4,7 @@
   "description": "application de gestion d'une ecole",
   "main": "./out/main/index.js",
   "author": "Bienfait Shomari",
-  "homepage": "https://www.electronjs.org",
+  "homepage": "https://github.com/bienfaitshm/TchikDesktop",
   "license": "MIT",
   "scripts": {
     "format": "prettier --write .",
