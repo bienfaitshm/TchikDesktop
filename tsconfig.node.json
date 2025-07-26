@@ -10,19 +10,10 @@
   ],
   "compilerOptions": {
     "composite": true,
-    "types": [
-      "electron-vite/node"
-    ],
+    "types": ["electron-vite/node"],
     "paths": {
-      "@/main/*": [
-        "./src/main/*"
-      ],
-      "@/camontype/*":[
-        "./src/camons/types/*"
-      ],
-      "@/camons/*":[
-        "./src/camons/*"
-      ]
+      "@/main/*": ["./src/main/*"],
+      "@/camons/*": ["./src/camons/*"]
     }
   }
 }
