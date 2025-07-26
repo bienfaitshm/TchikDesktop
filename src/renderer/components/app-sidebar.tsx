@@ -25,6 +25,7 @@ import {
 } from "@/renderer/components/ui/sidebar"
 import { SidebarHead } from "./app-sidebar.head"
 import { SidebarFoot } from "./app-sidebar.foot"
+import { SidebarCollapsible } from "./app-sidebar.collapsible"
 
 const data = {
     user: {
@@ -180,6 +181,7 @@ export function AppSidebar() {
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
+                <SidebarCollapsible items={data.navMain} />
             </SidebarContent>
             <SidebarFooter>
                 <SidebarFoot user={data.user} />

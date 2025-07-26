@@ -10,7 +10,7 @@
     "cssVariables": true
   },
   "aliases": {
-    "components": "src/renderer/src/components",
-    "utils": "src/renderer/src/utils"
+    "components": "src/renderer/components",
+    "utils": "src/renderer/utils"
   }
 }
