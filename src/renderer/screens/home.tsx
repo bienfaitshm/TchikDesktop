@@ -6,6 +6,8 @@ import { Form, FormControl, FormField, FormMessage, FormItem, FormLabel } from "
 import { Input } from "../components/ui/input";
 import { useCreateUser, useGetUsers } from "../libs/queries/account";
 import { ButtonLoader } from "../components/form/button-loader";
+import { DataTable } from "../components/tables";
+import data from "../components/tables/data.json"
 
 const schema = z.object({
   firstName: z.string().nonempty(),
@@ -69,6 +71,7 @@ const Home: React.FC = () => {
             <ButtonLoader isLoading={mutation.isPending} isLoadingText="Submiting">Submit</ButtonLoader>
           </form>
         </Form>
+        <DataTable data={data} />
       </SuspenseProvider>
     </div>
   );
