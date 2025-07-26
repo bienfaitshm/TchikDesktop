@@ -33,7 +33,7 @@ const Home: React.FC = () => {
   })
 
   return (
-    <div className="my-10 mx-auto h-full container max-w-screen-md">
+    <div className="my-10 mx-auto h-full container max-w-screen-md bg-blue-400">
       <div>
         <code>{JSON.stringify(configurations, null, 4)}</code>
       </div>
