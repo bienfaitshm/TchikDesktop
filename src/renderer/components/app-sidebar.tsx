@@ -1,14 +1,7 @@
 import {
-    AudioWaveform,
-    BookOpen,
-    Bot,
-    Command,
     Frame,
-    GalleryVerticalEnd,
     Map,
     PieChart,
-    Settings2,
-    SquareTerminal,
 } from "lucide-react"
 
 import {
@@ -25,7 +18,6 @@ import {
 } from "@/renderer/components/ui/sidebar"
 import { SidebarHead } from "./app-sidebar.head"
 import { SidebarFoot } from "./app-sidebar.foot"
-import { SidebarCollapsible } from "./app-sidebar.collapsible"
 
 const data = {
     user: {
@@ -33,125 +25,47 @@ const data = {
         email: "m@example.com",
         avatar: "/avatars/shadcn.jpg",
     },
-    teams: [
+    applications: [
         {
-            name: "Acme Inc",
-            logo: GalleryVerticalEnd,
-            plan: "Enterprise",
-        },
-        {
-            name: "Acme Corp.",
-            logo: AudioWaveform,
-            plan: "Startup",
-        },
-        {
-            name: "Evil Corp.",
-            logo: Command,
-            plan: "Free",
-        },
-    ],
-    navMain: [
-        {
-            title: "Playground",
-            url: "#",
-            icon: SquareTerminal,
-            isActive: true,
-            items: [
-                {
-                    title: "History",
-                    url: "#",
-                },
-                {
-                    title: "Starred",
-                    url: "#",
-                },
-                {
-                    title: "Settings",
-                    url: "#",
-                },
-            ],
-        },
-        {
-            title: "Models",
-            url: "#",
-            icon: Bot,
-            items: [
-                {
-                    title: "Genesis",
-                    url: "#",
-                },
-                {
-                    title: "Explorer",
-                    url: "#",
-                },
-                {
-                    title: "Quantum",
-                    url: "#",
-                },
-            ],
-        },
-        {
-            title: "Documentation",
-            url: "#",
-            icon: BookOpen,
-            items: [
-                {
-                    title: "Introduction",
-                    url: "#",
-                },
-                {
-                    title: "Get Started",
-                    url: "#",
-                },
-                {
-                    title: "Tutorials",
-                    url: "#",
-                },
-                {
-                    title: "Changelog",
-                    url: "#",
-                },
-            ],
-        },
-        {
-            title: "Settings",
-            url: "#",
-            icon: Settings2,
-            items: [
-                {
-                    title: "General",
-                    url: "#",
-                },
-                {
-                    title: "Team",
-                    url: "#",
-                },
-                {
-                    title: "Billing",
-                    url: "#",
-                },
-                {
-                    title: "Limits",
-                    url: "#",
-                },
-            ],
-        },
-    ],
-    projects: [
-        {
-            name: "Design Engineering",
+            name: "Inscriptions",
             url: "#",
             icon: Frame,
         },
         {
-            name: "Sales & Marketing",
+            name: "Payements",
             url: "#",
             icon: PieChart,
         },
         {
-            name: "Travel",
+            name: "Eleves",
             url: "#",
             icon: Map,
+        },
+    ],
+
+    school: [
+        {
+            name: "Sections",
+            url: "#",
+            icon: Frame,
+        },
+        {
+            name: "Options",
+            url: "#",
+            icon: PieChart,
+        },
+        {
+            name: "Classes",
+            url: "#",
+            icon: Map,
+        },
+    ],
+
+    others: [
+        {
+            name: "Annees scolaire",
+            url: "#",
+            icon: Frame,
         },
     ],
 }
@@ -168,7 +82,7 @@ export function AppSidebar() {
                     <SidebarGroupLabel>Application</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {data.projects.map((item) => (
+                            {data.applications.map((item) => (
                                 <SidebarMenuItem key={item.name}>
                                     <SidebarMenuButton asChild>
                                         <a href={item.url}>
@@ -181,7 +95,40 @@ export function AppSidebar() {
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
-                <SidebarCollapsible items={data.navMain} />
+                <SidebarGroup>
+                    <SidebarGroupLabel>Ecoles</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            {data.school.map((item) => (
+                                <SidebarMenuItem key={item.name}>
+                                    <SidebarMenuButton asChild>
+                                        <a href={item.url}>
+                                            <item.icon />
+                                            <span>{item.name}</span>
+                                        </a>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+                <SidebarGroup>
+                    <SidebarGroupLabel>Autres</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            {data.others.map((item) => (
+                                <SidebarMenuItem key={item.name}>
+                                    <SidebarMenuButton asChild>
+                                        <a href={item.url}>
+                                            <item.icon />
+                                            <span>{item.name}</span>
+                                        </a>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>
                 <SidebarFoot user={data.user} />

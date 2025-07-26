@@ -13,7 +13,7 @@ import Launcher from "./launcher";
 
 const router = createBrowserRouter([
   {
-    path: "",
+    path: "/",
     element: <Layout />,
     errorElement: <Launcher />,
     // errorElement: (
