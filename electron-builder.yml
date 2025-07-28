@@ -21,8 +21,7 @@ files:
   - '!tsconfig*.json'
 
 extraFiles:
-  - Drizzle/**
-  - DocxTemplates/**
+  - docx-templates/**
 
 asarUnpack:
   - resources/**
