@@ -74,6 +74,11 @@ export const OptionSchema = z.object({
     .min(1, "Le nom de l'option ne peut pas être vide.")
     .max(255, "Le nom de l'option est trop long.")
     .trim(),
+  nom_court_option: z
+    .string()
+    .min(1, "Le nom de l'option ne peut pas être vide.")
+    .max(10, "Le nom de l'option est trop long.")
+    .trim(),
 });
 
 export const AnneeEtudeSchema = z.object({
