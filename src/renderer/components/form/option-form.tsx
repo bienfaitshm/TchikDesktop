@@ -1,18 +1,20 @@
 import React, { PropsWithChildren } from "react"
-import { mergeDefaultValue, useImperativeHandleForm, type FormRef } from "./utils"
 import { useControlledForm } from "@/camons/libs/forms"
-import { OptionSchema, type OptionInput } from "@/renderer/libs/schemas"
+import { SECTION, SECTION_TRANSLATIONS } from "@/camons/constants/enum"
+import { OptionSchema, type OptionAttributes } from "@/renderer/libs/schemas"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/renderer/components/ui/form"
+import { mergeDefaultValue, useImperativeHandleForm, type FormRef } from "./utils"
 import { Input } from "../ui/input"
 
 export { useFormRef } from "./utils"
 
 const schema = OptionSchema
-export type ValueType = OptionInput
+export type ValueType = OptionAttributes
 
 const DEFAULT_VALUE: ValueType = {
-    nom_option: "",
-    nom_court_option: ""
+    optionName: "",
+    optionShortName: "",
+    section: SECTION.SECONDARY
 }
 
 export interface OptionFormProps {
@@ -41,7 +43,7 @@ export const OptionForm = React.forwardRef<OptionFormRef, PropsWithChildren<Opti
                 <form onSubmit={handleSubmit}>
                     <FormField
                         control={form.control}
-                        name="nom_option"
+                        name="optionName"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Nom</FormLabel>
@@ -55,7 +57,7 @@ export const OptionForm = React.forwardRef<OptionFormRef, PropsWithChildren<Opti
                     />
                     <FormField
                         control={form.control}
-                        name="nom_court_option"
+                        name="optionShortName"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Nom Court</FormLabel>

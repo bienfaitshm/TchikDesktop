@@ -1,195 +1,144 @@
 import { z } from "zod";
+import { SECTION, USER_GENDER, USER_ROLE } from "@/camons/constants/enum";
 
 // =====================
-// SCHEMAS ZOD
+// SCHÉMAS ZOD ET LEURS TYPES INFÉRÉS
 // =====================
 
-export const RoleSchema = z.object({
-  id_role: z.number().int().positive().optional(),
-  nom_role: z
-    .string()
-    .min(1, "Le nom du rôle ne peut pas être vide.")
-    .max(255, "Le nom du rôle est trop long.")
-    .trim(),
+/**
+ * Schéma Zod pour SchoolAttributes.
+ */
+export const SchoolSchema = z.object({
+  name: z.string().nonempty("Le nom de l'école ne peut pas être vide."),
+  adress: z.string().nonempty("L'adresse ne peut pas être vide."),
+  town: z.string().nonempty("La ville ne peut pas être vide."),
+  logo: z.string().optional(),
 });
 
+/**
+ * Type TypeScript inféré du schéma SchoolSchema.
+ */
+export type SchoolAttributes = z.infer<typeof SchoolSchema>;
+
+/**
+ * Schéma Zod pour UserAttributes.
+ */
 export const UserSchema = z.object({
-  id_utilisateur: z.number().int().positive().optional(),
-  nom: z
+  userId: z.string().nonempty("L'ID de l'utilisateur ne peut pas être vide."),
+  lastName: z.string().nonempty("Le nom de famille ne peut pas être vide."),
+  middleName: z.string().nonempty("Le deuxième prénom ne peut pas être vide."),
+  firstName: z.string().nonempty("Le prénom ne peut pas être vide.").optional(),
+  username: z
     .string()
-    .min(1, "Le nom ne peut pas être vide.")
-    .max(255, "Le nom est trop long.")
-    .trim(),
-  postnom: z
-    .string()
-    .max(255, "Le post-nom est trop long.")
-    .trim()
-    .optional()
-    .nullable(),
-  prenom: z
-    .string()
-    .max(255, "Le prénom est trop long.")
-    .trim()
-    .optional()
-    .nullable(),
-  email: z
-    .string()
-    .email("L'adresse email n'est pas valide.")
-    .max(255, "L'email est trop long.")
-    .trim()
-    .optional(),
+    .min(3, "Le nom d'utilisateur doit contenir au moins 3 caractères."),
   password: z
     .string()
-    .min(8, "Le mot de passe doit contenir au moins 8 caractères.")
-    .max(255, "Le mot de passe est trop long."),
-  date_naissance: z
+    .min(6, "Le mot de passe doit contenir au moins 6 caractères."),
+  gender: z.nativeEnum(USER_GENDER, {
+    errorMap: () => ({ message: "Genre d'utilisateur invalide." }),
+  }),
+  role: z.nativeEnum(USER_ROLE, {
+    errorMap: () => ({ message: "Rôle d'utilisateur invalide." }),
+  }),
+  birthDate: z
     .string()
     .regex(
       /^\d{4}-\d{2}-\d{2}$/,
       "La date de naissance doit être au format AAAA-MM-JJ."
     )
-    .optional()
-    .nullable(),
-  sexe: z
-    .string()
-    .max(50, "Le sexe est trop long.")
-    .trim()
-    .optional()
-    .nullable(),
-});
-
-export const SectionSchema = z.object({
-  id_section: z.number().int().positive().optional(),
-  nom_section: z
-    .string()
-    .min(1, "Le nom de la section ne peut pas être vide.")
-    .max(255, "Le nom de la section est trop long.")
-    .trim(),
-});
-
-export const OptionSchema = z.object({
-  id_option: z.number().int().positive().optional(),
-  nom_option: z
-    .string()
-    .min(1, "Le nom de l'option ne peut pas être vide.")
-    .max(255, "Le nom de l'option est trop long.")
-    .trim(),
-  nom_court_option: z
-    .string()
-    .min(1, "Le nom de l'option ne peut pas être vide.")
-    .max(10, "Le nom de l'option est trop long.")
-    .trim(),
-});
-
-export const AnneeEtudeSchema = z.object({
-  id_annee: z.number().int().positive().optional(),
-  nom_annee: z
-    .string()
-    .min(1, "Le nom de l'année d'étude ne peut pas être vide.")
-    .max(255, "Le nom de l'année d'étude est trop long.")
-    .trim(),
-});
-
-export const ClasseSchema = z.object({
-  id_classe: z.number().int().positive().optional(),
-  nom_identifiant: z
-    .string()
-    .min(1, "Le nom identifiant de la classe ne peut pas être vide.")
-    .max(255, "Le nom identifiant est trop long.")
-    .trim(),
-  annee_scolaire: z
-    .string()
-    .min(1, "L'année scolaire ne peut pas être vide.")
-    .max(255, "L'année scolaire est trop longue.")
-    .trim(),
-  id_section: z.number().int().positive().optional().nullable(),
-  id_option: z.number().int().positive().optional().nullable(),
-  id_annee: z.number().int().positive().optional().nullable(),
-});
-
-export const InscriptionSchema = z.object({
-  id_inscription: z.number().int().positive().optional(),
-  date_inscription: z
-    .string()
-    .regex(
-      /^\d{4}-\d{2}-\d{2}$/,
-      "La date d'inscription doit être au format AAAA-MM-JJ."
-    )
     .optional(),
-  id_utilisateur_eleve: z.number().int().positive(),
-  id_classe: z.number().int().positive(),
-});
-
-export const ProfesseurClasseSchema = z.object({
-  id_affectation: z.number().int().positive().optional(),
-  matiere_enseignee: z
+  birthPlace: z
     .string()
-    .max(255, "La matière enseignée est trop longue.")
-    .trim()
-    .optional()
-    .nullable(),
-  id_utilisateur_prof: z.number().int().positive(),
-  id_classe: z.number().int().positive(),
+    .nonempty("Le lieu de naissance ne peut pas être vide.")
+    .optional(),
+  schoolId: z.string().nonempty("L'ID de l'école ne peut pas être vide."),
 });
 
-export const RelationParentEleveSchema = z.object({
-  id_relation: z.number().int().positive().optional(),
-  type_relation: z
+/**
+ * Type TypeScript inféré du schéma UserSchema.
+ */
+export type UserAttributes = z.infer<typeof UserSchema>;
+
+/**
+ * Schéma Zod pour OptionAttributes.
+ */
+export const OptionSchema = z.object({
+  optionName: z.string().nonempty("Le nom de l'option ne peut pas être vide."),
+  optionShortName: z
     .string()
-    .min(1, "Le type de relation ne peut pas être vide.")
-    .max(255, "Le type de relation est trop long.")
-    .trim(),
-  id_utilisateur_parent: z.number().int().positive(),
-  id_utilisateur_eleve: z.number().int().positive(),
+    .nonempty("Le nom court de l'option ne peut pas être vide."),
+  section: z.nativeEnum(SECTION, {
+    errorMap: () => ({ message: "Section invalide." }),
+  }),
 });
 
-// =====================
-// TYPES DÉDUITS
-// =====================
+/**
+ * Type TypeScript inféré du schéma OptionSchema.
+ */
+export type OptionAttributes = z.infer<typeof OptionSchema>;
 
 /**
- * Type TypeScript pour les attributs d'un Rôle, déduit de RoleSchema.
+ * Schéma Zod pour StudyYearAttributes.
  */
-export type RoleInput = z.infer<typeof RoleSchema>;
+export const StudyYearSchema = z.object({
+  yearName: z.string().nonempty("Le nom de l'année ne peut pas être vide."),
+  startDate: z.coerce.date({
+    errorMap: () => ({ message: "Date de début invalide." }),
+  }),
+  endDate: z.coerce.date({
+    errorMap: () => ({ message: "Date de fin invalide." }),
+  }),
+  schoolId: z.string().nonempty("L'ID de l'école ne peut pas être vide."),
+});
 
 /**
- * Type TypeScript pour les attributs d'un Utilisateur, déduit de UserSchema.
+ * Type TypeScript inféré du schéma StudyYearSchema.
  */
-export type UserInput = z.infer<typeof UserSchema>;
+export type StudyYearAttributes = z.infer<typeof StudyYearSchema>;
 
 /**
- * Type TypeScript pour les attributs d'une Section, déduit de SectionSchema.
+ * Schéma Zod pour ClassAttributes.
  */
-export type SectionInput = z.infer<typeof SectionSchema>;
+export const ClassSchema = z.object({
+  identifier: z.string().nonempty("L'identifiant ne peut pas être vide."),
+  shortIdentifier: z
+    .string()
+    .nonempty("L'identifiant court ne peut pas être vide."),
+  section: z.nativeEnum(SECTION, {
+    errorMap: () => ({ message: "Section invalide." }),
+  }),
+  yearId: z
+    .number()
+    .int("L'ID de l'année doit être un entier.")
+    .positive("L'ID de l'année doit être un nombre positif."),
+  optionId: z
+    .number()
+    .int("L'ID de l'option doit être un entier.")
+    .positive("L'ID de l'option doit être un nombre positif.")
+    .optional(),
+  schoolId: z.string().nonempty("L'ID de l'école ne peut pas être vide."),
+});
 
 /**
- * Type TypeScript pour les attributs d'une Option, déduit de OptionSchema.
+ * Type TypeScript inféré du schéma ClassSchema.
  */
-export type OptionInput = z.infer<typeof OptionSchema>;
+export type ClassAttributes = z.infer<typeof ClassSchema>;
 
 /**
- * Type TypeScript pour les attributs d'une Année d'Étude, déduit de AnneeEtudeSchema.
+ * Schéma Zod pour ClassroomEnrolementAttributes.
  */
-export type AnneeEtudeInput = z.infer<typeof AnneeEtudeSchema>;
+export const ClassroomEnrolementSchema = z.object({
+  enrolement: z.string().nonempty("L'enrôlement ne peut pas être vide."),
+  classroomId: z.string().nonempty("L'ID de la classe ne peut pas être vide."),
+  studentId: z.string().nonempty("L'ID de l'étudiant ne peut pas être vide."),
+  isNewStudent: z.boolean(),
+  code: z.string().nonempty("Le code ne peut pas être vide."),
+  schoolId: z.string().nonempty("L'ID de l'école ne peut pas être vide."),
+});
 
 /**
- * Type TypeScript pour les attributs d'une Classe, déduit de ClasseSchema.
+ * Type TypeScript inféré du schéma ClassroomEnrolementSchema.
  */
-export type ClasseInput = z.infer<typeof ClasseSchema>;
-
-/**
- * Type TypeScript pour les attributs d'une Inscription, déduit de InscriptionSchema.
- */
-export type InscriptionInput = z.infer<typeof InscriptionSchema>;
-
-/**
- * Type TypeScript pour les attributs d'une Affectation Professeur-Classe, déduit de ProfesseurClasseSchema.
- */
-export type ProfesseurClasseInput = z.infer<typeof ProfesseurClasseSchema>;
-
-/**
- * Type TypeScript pour les attributs d'une Relation Parent-Élève, déduit de RelationParentEleveSchema.
- */
-export type RelationParentEleveInput = z.infer<
-  typeof RelationParentEleveSchema
+export type ClassroomEnrolementAttributes = z.infer<
+  typeof ClassroomEnrolementSchema
 >;
