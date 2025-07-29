@@ -1,0 +1,41 @@
+import type { OptionAttributes } from "@/camons/types/models"
+import type { ColumnDef } from "@tanstack/react-table"
+import { TypographySmall } from "@/renderer/components/ui/typography"
+import { Badge } from "@/renderer/components/ui/badge"
+import { SECTION_TRANSLATIONS } from "@/camons/constants/enum"
+
+
+export const OptionColumns: ColumnDef<OptionAttributes>[] = [
+    {
+        accessorKey: "optionId",
+        header: "#ID",
+        cell: ({ row }) => {
+            return <TypographySmall>{row.original.optionId}</TypographySmall>
+        },
+        enableHiding: false,
+    },
+    {
+        accessorKey: "optionName",
+        header: "Nom Complet",
+        cell: ({ row }) => {
+            return <TypographySmall>{row.original.optionName}</TypographySmall>
+        },
+        enableHiding: false,
+    },
+    {
+        accessorKey: "optionShortName",
+        header: "Nom Court",
+        cell: ({ row }) => <TypographySmall>{row.original.optionShortName}</TypographySmall>
+    },
+    {
+        accessorKey: "section",
+        header: "SECTION",
+        cell: ({ row }) => (
+            <div className="w-32">
+                <Badge variant="outline" className="text-muted-foreground px-1.5">
+                    {SECTION_TRANSLATIONS[row.original.section]}
+                </Badge>
+            </div>
+        ),
+    },
+]

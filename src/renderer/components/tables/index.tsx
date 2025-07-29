@@ -1,20 +1,10 @@
 "use client"
-
-import * as React from "react"
 import {
     closestCenter,
     DndContext,
-    KeyboardSensor,
-    MouseSensor,
-    TouchSensor,
-    useSensor,
-    useSensors,
-    type DragEndEvent,
-    type UniqueIdentifier,
 } from "@dnd-kit/core"
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers"
 import {
-    arrayMove,
     SortableContext,
     useSortable,
     verticalListSortingStrategy,
@@ -34,21 +24,7 @@ import {
     Plus,
     TrendingUp,
 } from "lucide-react"
-import {
-    ColumnDef,
-    ColumnFiltersState,
-    flexRender,
-    getCoreRowModel,
-    getFacetedRowModel,
-    getFacetedUniqueValues,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    Row,
-    SortingState,
-    useReactTable,
-    VisibilityState,
-} from "@tanstack/react-table"
+import { ColumnDef, flexRender, Row } from "@tanstack/react-table"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -105,6 +81,7 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/renderer/components/ui/tabs"
+import { useTable } from "./hooks"
 
 export const schema = z.object({
     id: z.number(),
@@ -335,71 +312,18 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
     )
 }
 
-export function DataTable({
+type DataTableProps<T> = {
+    data: T[];
+    keyExtractor(value: T): string;
+    columns: ColumnDef<T>[];
+}
+export function DataTable<T>({
     data: initialData,
-}: {
-    data: z.infer<typeof schema>[]
-}) {
-    const [data, setData] = React.useState(() => initialData)
-    const [rowSelection, setRowSelection] = React.useState({})
-    const [columnVisibility, setColumnVisibility] =
-        React.useState<VisibilityState>({})
-    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-        []
-    )
-    const [sorting, setSorting] = React.useState<SortingState>([])
-    const [pagination, setPagination] = React.useState({
-        pageIndex: 0,
-        pageSize: 10,
-    })
-    const sortableId = React.useId()
-    const sensors = useSensors(
-        useSensor(MouseSensor, {}),
-        useSensor(TouchSensor, {}),
-        useSensor(KeyboardSensor, {})
-    )
+    keyExtractor,
+    columns
+}: DataTableProps<T>) {
 
-    const dataIds = React.useMemo<UniqueIdentifier[]>(
-        () => data?.map(({ id }) => id) || [],
-        [data]
-    )
-
-    const table = useReactTable({
-        data,
-        columns,
-        state: {
-            sorting,
-            columnVisibility,
-            rowSelection,
-            columnFilters,
-            pagination,
-        },
-        getRowId: (row) => row.id.toString(),
-        enableRowSelection: true,
-        onRowSelectionChange: setRowSelection,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
-        onColumnVisibilityChange: setColumnVisibility,
-        onPaginationChange: setPagination,
-        getCoreRowModel: getCoreRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFacetedRowModel: getFacetedRowModel(),
-        getFacetedUniqueValues: getFacetedUniqueValues(),
-    })
-
-    function handleDragEnd(event: DragEndEvent) {
-        const { active, over } = event
-        if (active && over && active.id !== over.id) {
-            setData((data) => {
-                const oldIndex = dataIds.indexOf(active.id)
-                const newIndex = dataIds.indexOf(over.id)
-                return arrayMove(data, oldIndex, newIndex)
-            })
-        }
-    }
-
+    const { table, handleDragEnd, sensors, sortableId } = useTable({ initialData, keyExtractor, columns })
     return (
         <Tabs
             defaultValue="outline"
