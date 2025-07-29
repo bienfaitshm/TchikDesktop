@@ -1,5 +1,5 @@
 import { cn } from "@renderer/utils"
-import ButtonMore, { TButtonMore } from "./button-more"
+import ButtonMore, { TButtonMore } from "./button-menus"
 
 type ClassesItemProps = {
   icon?: React.ReactNode

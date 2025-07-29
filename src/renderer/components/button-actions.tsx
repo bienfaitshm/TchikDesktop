@@ -1,6 +1,6 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/renderer/components/ui/tooltip"
 import { Button } from "@/renderer/components/ui/button"
-import ButtonMore, { TButtonMore } from "./button-more"
+import ButtonMore, { TButtonMore } from "./button-menus"
 
 //
 export type TMenu =
