@@ -58,6 +58,8 @@ export interface ClassroomEnrolementAttributes {
   enrolement: string;
   classroomId: string;
   studentId: string; // userId
+  isNewStudent: boolean;
+  code: string;
   schoolId: string;
 }
 
@@ -253,6 +255,17 @@ const ClassroomEnrolement = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       field: "classroom_id",
+    },
+    isNewStudent: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: "is_new_student",
+    },
+    code: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "student_code",
     },
     studentId: {
       type: DataTypes.STRING,
