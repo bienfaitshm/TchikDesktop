@@ -74,7 +74,7 @@ autoUpdater.on("checking-for-update", () => {
   log.info("Checking for update...");
 });
 
-autoUpdater.on("update-available", (info) => {
+autoUpdater.on("update-available", () => {
   log.info("Update available.");
   dialog.showMessageBox({
     type: "info",
@@ -84,7 +84,7 @@ autoUpdater.on("update-available", (info) => {
   });
 });
 
-autoUpdater.on("update-not-available", (info) => {
+autoUpdater.on("update-not-available", () => {
   log.info("Update not available.");
 });
 
@@ -107,7 +107,7 @@ autoUpdater.on("download-progress", (progressObj) => {
   // mainWindow.webContents.send('download-progress', progressObj.percent);
 });
 
-autoUpdater.on("update-downloaded", (info) => {
+autoUpdater.on("update-downloaded", () => {
   log.info("Update downloaded.");
   dialog
     .showMessageBox({
