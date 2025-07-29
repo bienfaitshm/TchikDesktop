@@ -1,7 +1,8 @@
 import React from "react"
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogClose, DialogTrigger } from "@/renderer/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogClose, DialogTrigger, DialogTitle, DialogDescription } from "@/renderer/components/ui/dialog"
 import { Button } from "@/renderer/components/ui/button"
 import { ButtonLoader } from "../form/button-loader"
+import type { DialogTitleProps, DialogDescriptionProps } from "@radix-ui/react-dialog"
 
 export interface FormDialogProps {
     header?: React.ReactNode,
@@ -10,9 +11,10 @@ export interface FormDialogProps {
     buttonTrigger: React.ReactNode
 }
 
-export const FormDialogHeader: React.FC<React.PropsWithChildren> = ({ children }) => {
-    return <DialogHeader>{children}</DialogHeader>
-}
+export const FormDialogTitle: React.FC<DialogTitleProps> = (props) => <DialogTitle {...props} />
+export const FormDialogDescription: React.FC<DialogDescriptionProps> = (props) => <DialogDescription {...props} />
+export const FormDialogHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = (props) => <DialogHeader {...props} />
+
 
 export const FormDialog: React.FC<React.PropsWithChildren<FormDialogProps>> = ({ header, isPeding, children, buttonTrigger }) => {
     const btnRef = React.useRef<HTMLButtonElement>(null)
@@ -29,9 +31,10 @@ export const FormDialog: React.FC<React.PropsWithChildren<FormDialogProps>> = ({
                 {formComponent}
                 <DialogFooter>
                     <DialogClose asChild>
-                        <Button>Fermer</Button>
+                        <Button variant="outline">Fermer</Button>
                     </DialogClose>
                     <ButtonLoader
+                        onClick={() => btnRef.current?.click()}
                         disabled={isPeding}
                         isLoading={isPeding}
                         isLoadingText="Enregistrement..."

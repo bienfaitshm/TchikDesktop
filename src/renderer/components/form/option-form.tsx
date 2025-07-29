@@ -5,9 +5,10 @@ import { OptionSchema, type OptionInput } from "@/renderer/libs/schemas"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/renderer/components/ui/form"
 import { Input } from "../ui/input"
 
+export { useFormRef } from "./utils"
 
 const schema = OptionSchema
-type ValueType = OptionInput
+export type ValueType = OptionInput
 
 const DEFAULT_VALUE: ValueType = {
     nom_option: "",

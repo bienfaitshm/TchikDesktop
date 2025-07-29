@@ -1,77 +1,38 @@
 import React from "react";
-import { useControlledForm } from "@/camons/libs/forms";
-import z from "zod";
-import { Form, FormControl, FormField, FormMessage, FormItem, FormLabel } from "../components/ui/form";
-import { Input } from "../components/ui/input";
-import { useCreateUser, useGetUsers } from "../libs/queries/account";
-import { ButtonLoader } from "../components/form/button-loader";
-import { DataTable } from "../components/tables";
-import data from "../components/tables/data.json"
-import { TypographyH1, TypographyH3 } from "../components/ui/typography";
+import { DataTable } from "@/renderer/components/tables";
+import { TypographyH3 } from "@/renderer/components/ui/typography";
+import { OptionForm, useFormRef, type ValueType as FormValueType } from "@/renderer/components/form/option-form"
+import { FormDialog, FormDialogHeader, FormDialogTitle, FormDialogDescription } from "@/renderer/components/dialog/dialog-form"
 
-const schema = z.object({
-  firstName: z.string().nonempty(),
-  lastName: z.string().nonempty()
-})
+import data from "@/renderer/components/tables/data.json"
+import { Button } from "@/renderer/components/ui/button";
+
+const OptionFormMutation = () => {
+  const formRef = useFormRef()
+  const onSubmit = (value: FormValueType) => {
+    console.log("Submit", value)
+  }
+  return (
+    <FormDialog
+      header={
+        <FormDialogHeader>
+          <FormDialogTitle>Creation de l&apos;option</FormDialogTitle>
+          <FormDialogDescription>ici une bonne description</FormDialogDescription>
+        </FormDialogHeader>
+      }
+      buttonTrigger={<Button>Ajout de l'option</Button>}
+      children={<OptionForm ref={formRef} onSubmit={onSubmit} />}
+    />
+  )
+}
+
 
 const Home: React.FC = () => {
-  const { data: configurations } = useGetUsers()
-  const mutation = useCreateUser()
-
-  const [form, onSubmit] = useControlledForm({
-    schema,
-    defaultValues: { firstName: "", lastName: "" },
-    onSubmit(value) {
-      mutation.mutate(value, {
-        onError(error,) {
-          console.log("error", error)
-        },
-        onSuccess(data) {
-          console.log("success", data)
-          form.reset()
-        },
-      })
-    },
-  })
-
   return (
     <div className="my-10 mx-auto h-full container max-w-screen-lg">
-      {/* <div>
-        <code>{JSON.stringify(configurations, null, 4)}</code>
-      </div>
-      <Form {...form}>
-        <form className="space-y-5" onSubmit={onSubmit}>
-          <FormField
-            control={form.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Prenom</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nom</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <ButtonLoader isLoading={mutation.isPending} isLoadingText="Submiting">Submit</ButtonLoader>
-        </form>
-      </Form> */}
       <div>
         <TypographyH3>Section</TypographyH3>
+        <OptionFormMutation />
       </div>
       <DataTable data={data} />
     </div>
