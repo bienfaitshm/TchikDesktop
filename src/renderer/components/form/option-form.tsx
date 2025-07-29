@@ -5,6 +5,14 @@ import { OptionSchema, type OptionAttributes } from "@/renderer/libs/schemas"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/renderer/components/ui/form"
 import { mergeDefaultValue, useImperativeHandleForm, type FormRef } from "./utils"
 import { Input } from "../ui/input"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/renderer/components/ui/select"
+import { getEnumKeyValueList } from "@/camons/utils"
 
 export { useFormRef } from "./utils"
 
@@ -17,6 +25,7 @@ const DEFAULT_VALUE: ValueType = {
     section: SECTION.SECONDARY
 }
 
+const SECTION_OPTIONS = getEnumKeyValueList(SECTION, SECTION_TRANSLATIONS)
 export interface OptionFormProps {
     onSubmit?(value: ValueType): void,
     initialValues?: Partial<ValueType>
@@ -25,6 +34,30 @@ export interface OptionFormProps {
 export interface OptionFormRef extends FormRef {
 
 }
+
+
+export interface SectionInputProps {
+    options: { label: string; value: string }[],
+    value?: string;
+    onChangeValue(value: string): void
+}
+export const SectionInput: React.FC<SectionInputProps> = ({ onChangeValue, options, value }) => {
+    return (
+        <Select onValueChange={onChangeValue} defaultValue={value}>
+            <FormControl>
+                <SelectTrigger>
+                    <SelectValue placeholder="Selectioner la section ici..." />
+                </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+                {options.map(option => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+    )
+}
+
 
 export const OptionForm = React.forwardRef<OptionFormRef, PropsWithChildren<OptionFormProps>>(({ children, onSubmit, initialValues = {} }, ref) => {
     const [form, handleSubmit] = useControlledForm({
@@ -40,17 +73,19 @@ export const OptionForm = React.forwardRef<OptionFormRef, PropsWithChildren<Opti
     return (
         <div>
             <Form {...form}>
-                <form onSubmit={handleSubmit}>
+                <form className="space-y-4" onSubmit={handleSubmit}>
                     <FormField
                         control={form.control}
                         name="optionName"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Nom</FormLabel>
+                                <FormLabel>Nom complet</FormLabel>
                                 <FormControl>
                                     <Input {...field} />
                                 </FormControl>
-                                <FormDescription>le nom le plus detaillee de l&apos;option (ex: Electricite Generale, Humanite scientifique )</FormDescription>
+                                <FormDescription>
+                                    Saisissez le nom complet de l’option (ex. : Électricité Générale, Humanités Scientifiques).
+                                </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -60,11 +95,34 @@ export const OptionForm = React.forwardRef<OptionFormRef, PropsWithChildren<Opti
                         name="optionShortName"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Nom Court</FormLabel>
+                                <FormLabel>Nom abrégé</FormLabel>
                                 <FormControl>
                                     <Input {...field} />
                                 </FormControl>
-                                <FormDescription>le nom le plus cours de l&apos;option (ex: ELEC, HSC, TCC...)</FormDescription>
+                                <FormDescription>
+                                    Saisissez le nom abrégé de l’option (ex. : ELEC, HSC, TCC).
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="section"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Section</FormLabel>
+                                <FormControl>
+                                    <SectionInput
+                                        options={SECTION_OPTIONS}
+                                        value={field.value}
+                                        onChangeValue={field.onChange}
+                                    />
+                                </FormControl>
+                                <FormDescription>
+                                    Precisez la section ici.
+                                </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
