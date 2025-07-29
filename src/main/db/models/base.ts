@@ -3,6 +3,14 @@ import ShortUniqueId from "short-unique-id";
 
 const shortId = new ShortUniqueId({ length: 5 });
 
+export const PRIMARY_KEY = {
+  type: DataTypes.STRING(10),
+  primaryKey: true,
+  unique: true,
+  allowNull: true,
+  defaultValue: () => shortId.randomUUID(),
+};
+
 export interface IBaseModel {
   id: string;
   createAt: Date;
@@ -11,10 +19,6 @@ export interface IBaseModel {
 
 export const baseModel: ModelAttributes<Model<IBaseModel, IBaseModel>> = {
   id: {
-    type: DataTypes.STRING(10),
-    primaryKey: true,
-    unique: true,
-    allowNull: true,
-    defaultValue: () => shortId.randomUUID(),
+    ...PRIMARY_KEY,
   },
 };

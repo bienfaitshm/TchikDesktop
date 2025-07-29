@@ -1,52 +1,68 @@
 import { DataTypes, Model, BuildOptions } from "sequelize";
+import { SECTION, USER_GENDER, USER_ROLE } from "@/camons/constants/enum";
 import { sequelize } from "../config";
+import { PRIMARY_KEY } from "./base";
 
 // =====================
-// INTERFACES ATTRIBUTS
+// ATTRIBUTE INTERFACES
 // =====================
 
-export interface RoleAttributes {
-  id_role: number;
-  nom_role: string;
+export interface School {
+  schoolId: string;
+  name: string;
+  adress: string;
+  town: string;
+  logo?: string;
 }
-
 export interface UserAttributes {
-  id_utilisateur: number;
-  nom: string;
-  postnom?: string;
-  prenom?: string;
-  email: string;
+  userId: string;
+  lastName: string;
+  middleName: string;
+  firstName?: string;
+  username: string;
   password: string;
-  date_naissance?: string;
-  sexe?: string;
-}
-
-export interface SectionAttributes {
-  id_section: number;
-  nom_section: string;
+  gender: USER_GENDER;
+  role: USER_ROLE;
+  birthDate?: string;
+  birthPlace?: string;
+  schoolId: string;
 }
 
 export interface OptionAttributes {
-  id_option: number;
-  nom_option: string;
+  optionId: string;
+  optionName: string;
+  optionShortName: string;
+  section: SECTION;
+  schoolId: string;
 }
 
-export interface AnneeEtudeAttributes {
-  id_annee: number;
-  nom_annee: string;
+export interface StudyYearAttributes {
+  yearId: string;
+  yearName: string;
+  startDate: Date;
+  endDate: Date;
+  schoolId: string;
 }
 
-export interface ClasseAttributes {
-  id_classe?: number;
-  nom_identifiant: string;
-  annee_scolaire: string;
-  id_section?: number;
-  id_option?: number;
-  id_annee?: number;
+export interface ClassAttributes {
+  classId: string;
+  identifier: string;
+  shortIdentifier: string;
+  section: SECTION;
+  yearId: number;
+  optionId?: number;
+  schoolId: string;
+}
+
+export interface ClassroomEnrolementAttributes {
+  enrolement: string;
+  classroomId: string;
+  studentId: string; // userId
+  schoolId: string;
 }
 
 // =====================
-// TYPES MODELES
+// MODEL TYPES
 // =====================
 
 type ModelStatic<T extends {}> = typeof Model & {
@@ -54,225 +70,239 @@ type ModelStatic<T extends {}> = typeof Model & {
 };
 
 // =====================
-// DEFINITION DES MODELES
+// MODELS
 // =====================
 
-const Role = sequelize.define(
-  "Role",
+const School = sequelize.define(
+  "School",
   {
-    id_role: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    nom_role: { type: DataTypes.STRING, allowNull: false, unique: true },
+    schoolId: {
+      ...PRIMARY_KEY,
+      field: "school_id",
+    },
+    name: { type: DataTypes.STRING, allowNull: false, field: "name" },
+    adress: { type: DataTypes.STRING, allowNull: false, field: "adress" },
+    town: { type: DataTypes.STRING, allowNull: false, field: "town" },
+    logo: { type: DataTypes.STRING, allowNull: true, field: "logo" },
   },
-  { tableName: "Roles" }
-) as ModelStatic<RoleAttributes>;
+  { tableName: "Schools" }
+) as ModelStatic<School>;
 
-/**
- * Représente le modèle User pour la gestion des utilisateurs dans l'application.
- *
- * Ce modèle mappe la table "Utilisateurs" de la base de données et définit les attributs principaux d'un utilisateur.
- *
- * Attributs :
- * - id_utilisateur : Identifiant unique de l'utilisateur (clé primaire, auto-incrémentée).
- * - nom : Nom de famille de l'utilisateur (obligatoire).
- * - postnom : Post-nom de l'utilisateur (optionnel).
- * - prenom : Prénom de l'utilisateur (optionnel).
- * - email : Adresse e-mail de l'utilisateur (obligatoire, unique, format valide requis).
- * - password : Mot de passe de l'utilisateur (obligatoire).
- * - date_naissance : Date de naissance de l'utilisateur (optionnelle, format AAAA-MM-JJ).
- * - sexe : Sexe de l'utilisateur (optionnel).
- *
- * Ce modèle utilise Sequelize pour l'ORM et assure la validation des données, notamment pour l'e-mail.
- *
- * @remarks
- * Utilisez ce modèle pour toutes les opérations CRUD liées aux utilisateurs.
- * Assurez-vous de ne jamais exposer le mot de passe en clair lors des réponses API.
- */
 const User = sequelize.define(
   "User",
   {
-    id_utilisateur: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
+    userId: {
+      ...PRIMARY_KEY,
+      field: "user_id",
     },
-    nom: { type: DataTypes.STRING, allowNull: false },
-    postnom: DataTypes.STRING,
-    prenom: DataTypes.STRING,
-    email: {
+    lastName: { type: DataTypes.STRING, allowNull: false, field: "last_name" },
+    middleName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "middle_name",
+    },
+    firstName: { type: DataTypes.STRING, allowNull: true, field: "first_name" },
+    username: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
-      validate: { isEmail: true },
+      field: "username",
     },
-    password: { type: DataTypes.STRING, allowNull: false },
-    date_naissance: DataTypes.DATEONLY,
-    sexe: DataTypes.STRING,
+    password: { type: DataTypes.STRING, allowNull: false, field: "password" },
+    gender: {
+      type: DataTypes.ENUM(...Object.values(USER_GENDER)),
+      allowNull: false,
+      field: "gender",
+    },
+    role: {
+      type: DataTypes.ENUM(...Object.values(USER_ROLE)),
+      allowNull: false,
+      field: "role",
+    },
+    birthDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      field: "birth_date",
+    },
+    birthPlace: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: "birth_place",
+    },
+    schoolId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "school_id",
+    },
   },
-  { tableName: "Utilisateurs" }
+  { tableName: "Users" }
 ) as ModelStatic<UserAttributes>;
-
-const Section = sequelize.define(
-  "Section",
-  {
-    id_section: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    nom_section: { type: DataTypes.STRING, allowNull: false, unique: true },
-  },
-  { tableName: "Sections", timestamps: false }
-) as ModelStatic<SectionAttributes>;
 
 const Option = sequelize.define(
   "Option",
   {
-    id_option: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
+    optionId: {
+      ...PRIMARY_KEY,
+      field: "option_id",
     },
-    nom_option: { type: DataTypes.STRING, allowNull: false, unique: true },
+    optionName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "option_name",
+    },
+    optionShortName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "option_short_name",
+    },
+    section: {
+      type: DataTypes.ENUM(...Object.values(SECTION)),
+      allowNull: false,
+      field: "section",
+    },
+    schoolId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "school_id",
+    },
   },
   { tableName: "Options", timestamps: false }
 ) as ModelStatic<OptionAttributes>;
 
-const AnneeEtude = sequelize.define(
-  "AnneeEtude",
+const StudyYear = sequelize.define(
+  "StudyYear",
   {
-    id_annee: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
+    yearId: {
+      ...PRIMARY_KEY,
+      field: "year_id",
     },
-    nom_annee: { type: DataTypes.STRING, allowNull: false, unique: true },
+    yearName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      field: "year_name",
+    },
+    startDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "start_date",
+    },
+    endDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: "end_date",
+    },
+    schoolId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "school_id",
+    },
   },
-  { tableName: "AnneesEtudes" }
-) as ModelStatic<AnneeEtudeAttributes>;
+  { tableName: "StudyYears" }
+) as ModelStatic<StudyYearAttributes>;
 
-const Classe = sequelize.define(
-  "Classe",
+const ClassRoom = sequelize.define(
+  "ClassRoom",
   {
-    id_classe: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
+    classId: {
+      ...PRIMARY_KEY,
+      field: "class_id",
     },
-    nom_identifiant: { type: DataTypes.STRING, allowNull: false },
-    annee_scolaire: { type: DataTypes.STRING, allowNull: false },
-    id_section: { type: DataTypes.INTEGER, allowNull: true },
-    id_option: { type: DataTypes.INTEGER, allowNull: true },
-    id_annee: { type: DataTypes.INTEGER, allowNull: true },
+    identifier: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "identifier",
+    },
+    shortIdentifier: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "short_identifier",
+    },
+    section: {
+      type: DataTypes.ENUM(...Object.values(SECTION)),
+      allowNull: false,
+      field: "section",
+    },
+    yearId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "year_id",
+    },
+    optionId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: "option_id",
+    },
+    schoolId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "school_id",
+    },
   },
-  { tableName: "Classes" }
-) as ModelStatic<ClasseAttributes>;
+  { tableName: "ClassRooms" }
+) as ModelStatic<ClassAttributes>;
 
-const Inscription = sequelize.define(
-  "Inscription",
+const ClassroomEnrolement = sequelize.define(
+  "ClassroomEnrolement",
   {
-    id_inscription: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
+    enrolementId: {
+      ...PRIMARY_KEY,
+      field: "enrolement_id",
     },
-    date_inscription: { type: DataTypes.DATEONLY, defaultValue: DataTypes.NOW },
-  },
-  { tableName: "Inscriptions" }
-);
-
-const ProfesseurClasse = sequelize.define(
-  "ProfesseurClasse",
-  {
-    id_affectation: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
+    classroomId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "classroom_id",
     },
-    matiere_enseignee: DataTypes.STRING,
-  },
-  { tableName: "Professeur_Classes" }
-);
-
-const RelationParentEleve = sequelize.define(
-  "RelationParentEleve",
-  {
-    id_relation: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
+    studentId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "student_id",
     },
-    type_relation: { type: DataTypes.STRING, allowNull: false },
+    schoolId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: "school_id",
+    },
   },
-  { tableName: "Relations_Parent_Eleve" }
-);
+  { tableName: "ClassroomEnrolements" }
+) as ModelStatic<ClassroomEnrolementAttributes>;
 
 // =====================
-// ASSOCIATIONS
+// RELATIONS
 // =====================
 
-// User <-> Role (Many-to-Many)
-User.belongsToMany(Role, {
-  through: "Utilisateur_Roles",
-  foreignKey: "id_utilisateur",
-  otherKey: "id_role",
-});
-Role.belongsToMany(User, {
-  through: "Utilisateur_Roles",
-  foreignKey: "id_role",
-  otherKey: "id_utilisateur",
-});
+// School relations
+School.hasMany(User, { foreignKey: "schoolId" });
+User.belongsTo(School, { foreignKey: "schoolId" });
 
-// Classe <-> Section/Option/AnneeEtude (One-to-Many)
-Section.hasMany(Classe, { foreignKey: "id_section" });
-Classe.belongsTo(Section, { foreignKey: "id_section" });
+School.hasMany(Option, { foreignKey: "schoolId" });
+Option.belongsTo(School, { foreignKey: "schoolId" });
 
-Option.hasMany(Classe, { foreignKey: "id_option" });
-Classe.belongsTo(Option, { foreignKey: "id_option" });
+School.hasMany(StudyYear, { foreignKey: "schoolId" });
+StudyYear.belongsTo(School, { foreignKey: "schoolId" });
 
-AnneeEtude.hasMany(Classe, { foreignKey: "id_annee" });
-Classe.belongsTo(AnneeEtude, { foreignKey: "id_annee" });
+School.hasMany(ClassRoom, { foreignKey: "schoolId" });
+ClassRoom.belongsTo(School, { foreignKey: "schoolId" });
 
-// User (Eleve) <-> Classe (Many-to-Many via Inscription)
-User.belongsToMany(Classe, {
-  through: Inscription,
-  as: "Classes",
-  foreignKey: "id_utilisateur_eleve",
-  otherKey: "id_classe",
-});
-Classe.belongsToMany(User, {
-  through: Inscription,
-  as: "Eleves",
-  foreignKey: "id_classe",
-  otherKey: "id_utilisateur_eleve",
-});
+School.hasMany(ClassroomEnrolement, { foreignKey: "schoolId" });
+ClassroomEnrolement.belongsTo(School, { foreignKey: "schoolId" });
 
-// User (Prof) <-> Classe (Many-to-Many via ProfesseurClasse)
-User.belongsToMany(Classe, {
-  as: "TaughtClasses",
-  through: ProfesseurClasse,
-  foreignKey: "id_utilisateur_prof",
-  otherKey: "id_classe",
-});
-Classe.belongsToMany(User, {
-  as: "Teachers",
-  through: ProfesseurClasse,
-  foreignKey: "id_classe",
-  otherKey: "id_utilisateur_prof",
-});
+// Option relations
+Option.hasMany(ClassRoom, { foreignKey: "optionId" });
+ClassRoom.belongsTo(Option, { foreignKey: "optionId" });
 
-// User (Parent) <-> User (Eleve) (Many-to-Many)
-User.belongsToMany(User, {
-  as: "Children",
-  through: RelationParentEleve,
-  foreignKey: "id_utilisateur_parent",
-  otherKey: "id_utilisateur_eleve",
-});
-User.belongsToMany(User, {
-  as: "Parents",
-  through: RelationParentEleve,
-  foreignKey: "id_utilisateur_eleve",
-  otherKey: "id_utilisateur_parent",
-});
+// StudyYear relations
+StudyYear.hasMany(ClassRoom, { foreignKey: "yearId" });
+ClassRoom.belongsTo(StudyYear, { foreignKey: "yearId" });
+
+// ClassRoom relations
+ClassRoom.hasMany(ClassroomEnrolement, { foreignKey: "classroomId" });
+ClassroomEnrolement.belongsTo(ClassRoom, { foreignKey: "classroomId" });
+
+// User/ClassroomEnrolement relations
+User.hasMany(ClassroomEnrolement, { foreignKey: "studentId" });
+ClassroomEnrolement.belongsTo(User, { foreignKey: "studentId" });
 
 // =====================
 // EXPORTS
@@ -281,12 +311,9 @@ User.belongsToMany(User, {
 export {
   sequelize,
   User,
-  Role,
-  Section,
   Option,
-  AnneeEtude,
-  Classe,
-  Inscription,
-  ProfesseurClasse,
-  RelationParentEleve,
+  StudyYear,
+  ClassRoom,
+  School,
+  ClassroomEnrolement,
 };
