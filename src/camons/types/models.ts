@@ -45,8 +45,8 @@ export interface ClassAttributes {
   identifier: string;
   shortIdentifier: string;
   section: SECTION;
-  yearId: number;
-  optionId?: number;
+  yearId: string;
+  optionId?: string;
   schoolId: string;
 }
 

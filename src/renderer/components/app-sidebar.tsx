@@ -37,7 +37,7 @@ const data = {
             icon: PieChart,
         },
         {
-            name: "Eleves",
+            name: "Mise en place",
             url: "#",
             icon: Map,
         },
@@ -45,7 +45,7 @@ const data = {
 
     school: [
         {
-            name: "Sections",
+            name: "Eleves",
             url: "#",
             icon: Frame,
         },
@@ -56,6 +56,11 @@ const data = {
         },
         {
             name: "Classes",
+            url: "#",
+            icon: Map,
+        },
+        {
+            name: "Locals",
             url: "#",
             icon: Map,
         },

@@ -133,7 +133,7 @@ export const SectionSelect: React.FC<SectionSelectProps> = ({
  * @example
  * ```tsx
  * import { useFormRef } from "@/path/to/this/file";
- * import { FormDialog } from "@/path/to/your/FormDialog"; // Assuming FormDialog is available
+ * import { FormDialog } from "@/path/to/your/FormDialog";
  *
  * const MyOptionManagement = () => {
  * const optionFormRef = useFormRef<OptionFormHandle>();

@@ -5,15 +5,17 @@ import {
   ClassRoomService,
   OptionService,
   StudyYearService,
+  SchoolService,
 } from "@/main/db/services";
 import { mapModelToPlain, mapModelsToPlainList } from "@/main/db/models/utils";
 import type {
   ClassAttributes,
-  OptionAttributes, // Assumé pour les services d'option
-  StudyYearAttributes, // Assumé pour les services d'année d'étude
+  OptionAttributes,
+  StudyYearAttributes,
   WithSchoolId,
   WithSchoolAndYearId,
-} from "@/main/db/services/types";
+  SchoolAttributes, // Added SchoolAttributes
+} from "@/camons/types/services";
 import { WithSchoolIdParams } from "./types";
 
 // --- Routes pour Classrooms ---
@@ -341,6 +343,128 @@ server.delete<any, WithSchoolIdParams<{ studyYearId: string }>>(
         {},
         Status.INTERNAL_SERVER,
         "Erreur interne du serveur lors de la suppression de l'année d'étude."
+      );
+    }
+  }
+);
+
+/**
+ * @route GET /schools
+ * @description Récupère la liste de toutes les écoles.
+ */
+server.get("schools", async () => {
+  try {
+    const schools = await SchoolService.findAll();
+    return response(mapModelsToPlainList(schools));
+  } catch (error) {
+    console.error(`Erreur lors de la récupération des écoles: ${error}`);
+    return response(
+      {},
+      Status.INTERNAL_SERVER,
+      "Erreur interne du serveur lors de la récupération des écoles."
+    );
+  }
+});
+
+/**
+ * @route GET /schools/:schoolId
+ * @description Récupère une école par son ID.
+ */
+server.get<any, WithSchoolIdParams<{}>>(
+  "schools/:schoolId",
+  async ({ params: { schoolId } }) => {
+    try {
+      const school = await SchoolService.findById(schoolId);
+      if (school) {
+        return response(mapModelToPlain(school));
+      }
+      return response({}, Status.NOT_FOUND, "École non trouvée.");
+    } catch (error) {
+      console.error(
+        `Erreur lors de la récupération de l'école ${schoolId}: ${error}`
+      );
+      return response(
+        {},
+        Status.INTERNAL_SERVER,
+        "Erreur interne du serveur lors de la récupération de l'école."
+      );
+    }
+  }
+);
+
+/**
+ * @route POST /schools
+ * @description Crée une nouvelle école.
+ */
+server.post<any, SchoolAttributes, {}>("schools", async ({ data }) => {
+  try {
+    const newSchool = await SchoolService.create(data);
+    return response(mapModelToPlain(newSchool));
+  } catch (error) {
+    console.error(`Erreur lors de la création de l'école: ${error}`);
+    return response(
+      {},
+      Status.INTERNAL_SERVER,
+      "Erreur interne du serveur lors de la création de l'école."
+    );
+  }
+});
+
+/**
+ * @route PUT /schools
+ * @description Met à jour une école existante.
+ */
+server.put<any, Partial<SchoolAttributes>, WithSchoolIdParams<{}>>(
+  "schools",
+  async ({ params: { schoolId }, data }) => {
+    try {
+      const updatedSchool = await SchoolService.update(schoolId, data);
+      if (updatedSchool) {
+        return response(mapModelToPlain(updatedSchool));
+      }
+      return response(
+        {},
+        Status.NOT_FOUND,
+        "École non trouvée ou aucune mise à jour effectuée."
+      );
+    } catch (error) {
+      console.error(
+        `Erreur lors de la mise à jour de l'école ${schoolId}: ${error}`
+      );
+      return response(
+        {},
+        Status.INTERNAL_SERVER,
+        "Erreur interne du serveur lors de la mise à jour de l'école."
+      );
+    }
+  }
+);
+
+/**
+ * @route DELETE /schools
+ * @description Supprime une école.
+ */
+server.delete<any, WithSchoolIdParams<{}>>(
+  "schools",
+  async ({ params: { schoolId } }) => {
+    try {
+      const success = await SchoolService.delete(schoolId);
+      if (success) {
+        return response({ message: "École supprimée avec succès." });
+      }
+      return response(
+        {},
+        Status.NOT_FOUND,
+        "École non trouvée ou impossible à supprimer."
+      );
+    } catch (error) {
+      console.error(
+        `Erreur lors de la suppression de l'école ${schoolId}: ${error}`
+      );
+      return response(
+        {},
+        Status.INTERNAL_SERVER,
+        "Erreur interne du serveur lors de la suppression de l'école."
       );
     }
   }

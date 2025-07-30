@@ -134,7 +134,7 @@ const OptionUpdateForm = withUpdateDialog((_, ref) => {
 const Home: React.FC = () => {
   const dialogConfirmRef = useDialogConfirmDelete();
   const updateDialogRef = useUpdateDialogRef();
-  const actionHandler = useTableActionHandler(); // Renamed for clarity
+  const actionHandler = useTableActionHandler();
 
   // Registering action handlers for data table row menus
   actionHandler.on<OptionAttributes>("edit", (value) => {
