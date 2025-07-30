@@ -29,7 +29,7 @@ export const OptionColumns: ColumnDef<OptionAttributes>[] = [
     },
     {
         accessorKey: "section",
-        header: "SECTION",
+        header: "Section",
         cell: ({ row }) => (
             <div className="w-32">
                 <Badge variant="outline" className="text-muted-foreground px-1.5">

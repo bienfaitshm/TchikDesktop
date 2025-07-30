@@ -1,11 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { ButtonMenu } from "@/renderer/components/button-menus";
+import type { DataTableMenu } from "@/renderer/components/button-menus";
 
-export type DataTableMenu = {
-    separator?: boolean;
-    label: string;
-    key: string;
-};
 
 export type EnhanceColumnsWithMenuParams<T> = {
     columns: ColumnDef<T>[];

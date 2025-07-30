@@ -107,9 +107,7 @@ export function useTable<T>({
   } as const;
 }
 
-export function useTableActionHandler<T>() {
-  const handlerRef = React.useRef<TableActionHandler<T>>(
-    new TableActionHandler<T>()
-  );
+export function useTableActionHandler() {
+  const handlerRef = React.useRef<TableActionHandler>(new TableActionHandler());
   return handlerRef.current;
 }

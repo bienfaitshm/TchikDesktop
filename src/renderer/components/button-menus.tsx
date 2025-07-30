@@ -14,6 +14,7 @@ export type DataTableMenu = {
   separator?: boolean;
   label: string;
   key: string;
+  icon?: React.ReactNode
 };
 
 type ButtonMenuProps<T> = {
@@ -40,8 +41,10 @@ export const ButtonMenu: React.FC<ButtonMenuProps<any>> = ({ menus = [], value, 
             {menu.separator && <DropdownMenuSeparator key={`separator-${menu.key}`} />
             }
             <DropdownMenuItem
+              className="gap-4"
               onClick={() => onPressMenu?.(menu.key, value)}
             >
+              {menu?.icon}
               {menu.label}
             </DropdownMenuItem>
           </React.Fragment>

@@ -1,12 +1,12 @@
-export class TableActionHandler<T> {
-  private actions: Record<string, (value: T) => void> = {};
+export class TableActionHandler {
+  private actions: Record<string, (value: any) => void> = {};
 
   /**
    * Registers a callback for a specific action name.
    * @param name The action identifier.
    * @param callback The function to execute when the action is triggered.
    */
-  on(name: string, callback: (value: T) => void): void {
+  on<T>(name: string, callback: (value: T) => void): void {
     this.actions[name] = callback;
   }
 
@@ -15,7 +15,7 @@ export class TableActionHandler<T> {
    * @param name The action identifier.
    * @param value The value to pass to the callback.
    */
-  trigger(name: string, value: T): void {
+  trigger<T>(name: string, value: T): void {
     const callback = this.actions[name];
     if (callback) {
       callback(value);
