@@ -1,33 +1,108 @@
 import { server } from "@/camons/libs/electron-apis/server";
-import * as queries from "@/main/db/queries/account";
 import { response } from "@/camons/libs/electron-apis/utils";
+import { Status } from "@/camons/libs/electron-apis/constant";
+import { UserService } from "@/main/db/services";
+import { mapModelToPlain, mapModelsToPlainList } from "@/main/db/models/utils";
+import type { UserAttributes, WithSchoolId } from "@/main/db/services/types";
 
-server.get<any, any>("users", async ({}) => {
-  const classes = await queries.getUsers();
-  return response(classes);
+// Type utilitaire pour les paramètres avec schoolId et userId
+type UserRouteParams = WithSchoolId<{ userId: string }>;
+
+/**
+ * @route GET /users
+ * @description Récupère la liste de tous les utilisateurs pour une école donnée.
+ */
+server.get<any, WithSchoolId<{}>>("users", async ({ params: { schoolId } }) => {
+  try {
+    const users = await UserService.findAll(schoolId);
+    return response(mapModelsToPlainList(users));
+  } catch (error) {
+    console.error(`Erreur lors de la récupération des utilisateurs: ${error}`);
+    return response(
+      {},
+      Status.INTERNAL_SERVER,
+      "Erreur interne du serveur lors de la récupération des utilisateurs."
+    );
+  }
 });
 
-server.get<any, any>("user", async ({ params }) => {
-  const classes = await queries.getUserById(params.userId);
-  return response(classes);
-});
+/**
+ * @route POST /users
+ * @description Crée un nouvel utilisateur.
+ */
+server.post<any, WithSchoolId<UserAttributes>, WithSchoolId<{}>>(
+  "users",
+  async ({ data, params: { schoolId } }) => {
+    try {
+      const newUser = await UserService.create({ ...data, schoolId });
+      return response(mapModelToPlain(newUser));
+    } catch (error) {
+      console.error(`Erreur lors de la création de l'utilisateur: ${error}`);
+      return response(
+        {},
+        Status.INTERNAL_SERVER,
+        "Erreur interne du serveur lors de la création de l'utilisateur."
+      );
+    }
+  }
+);
 
-server.get<any, any>("user-email", async ({ params }) => {
-  const classes = await queries.getUserById(params.email);
-  return response(classes);
-});
+/**
+ * @route PUT /users
+ * @description Met à jour un utilisateur existant.
+ */
+server.put<any, Partial<UserAttributes>, UserRouteParams>(
+  "users",
+  async ({ params: { schoolId, userId }, data }) => {
+    try {
+      const updatedUser = await UserService.update(schoolId, userId, data);
+      if (updatedUser) {
+        return response(mapModelToPlain(updatedUser));
+      }
+      return response(
+        {},
+        Status.NOT_FOUND,
+        "Utilisateur non trouvé ou aucune mise à jour effectuée."
+      );
+    } catch (error) {
+      console.error(
+        `Erreur lors de la mise à jour de l'utilisateur ${userId}: ${error}`
+      );
+      return response(
+        {},
+        Status.INTERNAL_SERVER,
+        "Erreur interne du serveur lors de la mise à jour de l'utilisateur."
+      );
+    }
+  }
+);
 
-server.get<any, any>("users-roles", async () => {
-  const classes = await queries.getUsersWithRoles();
-  return response(classes);
-});
-
-server.post<any, any>("user-assign-role", async ({ data }) => {
-  const classe = await queries.assignRoleToUser(data.userId, data.roleId);
-  return response(classe);
-});
-
-// server.put<any, any>("classes", async ({ data }) => {
-//   const classe = await queries.updateClasse(data.id_classe, data);
-//   return response(classe);
-// });
+/**
+ * @route DELETE /users
+ * @description Supprime un utilisateur.
+ */
+server.delete<any, UserRouteParams>(
+  "users",
+  async ({ params: { schoolId, userId } }) => {
+    try {
+      const success = await UserService.delete(schoolId, userId);
+      if (success) {
+        return response({ message: "Utilisateur supprimé avec succès." });
+      }
+      return response(
+        {},
+        Status.NOT_FOUND,
+        "Utilisateur non trouvé ou impossible à supprimer."
+      );
+    } catch (error) {
+      console.error(
+        `Erreur lors de la suppression de l'utilisateur ${userId}: ${error}`
+      );
+      return response(
+        {},
+        Status.INTERNAL_SERVER,
+        "Erreur interne du serveur lors de la suppression de l'utilisateur."
+      );
+    }
+  }
+);
