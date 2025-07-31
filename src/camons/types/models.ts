@@ -51,6 +51,7 @@ export interface ClassAttributes {
 }
 
 export interface ClassroomEnrolementAttributes {
+  enrolementId: string;
   enrolement: string;
   classroomId: string;
   studentId: string; // userId
