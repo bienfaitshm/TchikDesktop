@@ -71,7 +71,7 @@ export const StudyYearCreationForm: React.FC = () => {
         (values: StudyYearFormData) => {
             console.log("StudyYearFormData", values)
             mutation.mutate(
-                { data: values, schoolId: currentSchoolId }, // Pass schoolId from store
+                { data: { ...values, schoolId: currentSchoolId }, schoolId: currentSchoolId },
                 createMutationCallbacksWithNotifications({
                     successMessageTitle: "Année scolaire créée !",
                     successMessageDescription: `L'année scolaire '${values.yearName}' a été ajoutée avec succès.`,

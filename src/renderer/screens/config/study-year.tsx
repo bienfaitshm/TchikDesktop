@@ -87,13 +87,13 @@ const StudyYearListDisplayTable: React.FC = () => {
 
     // If study years exist, display the table
     return (
-        <div className="p-4 border rounded-md shadow-sm">
+        <div>
             <TypographyH4 className="mb-6 text-center md:text-left">
                 Veuillez choisir l'année scolaire sur laquelle vous souhaitez travailler.
             </TypographyH4>
             <Table>
-                <TableCaption className="text-left flex justify-between items-center pr-4">
-                    <span>Liste des années scolaires enregistrées pour "{currentSchool.name}".</span>
+                <TableCaption>
+                    <span>Liste des années scolaires enregistrées pour <b>{currentSchool.name}</b>.</span> {" "}
                     <Link to={`/configuration/school-year/new`} className="text-blue-600 hover:underline text-sm">
                         Ajouter une nouvelle année scolaire
                     </Link>
@@ -109,15 +109,14 @@ const StudyYearListDisplayTable: React.FC = () => {
                 <TableBody>
                     {studyYears.map((studyYear: StudyYearDataDisplay) => (
                         <TableRow
-                            key={studyYear.yearId} // Use yearId for key
+                            key={studyYear.yearId}
                             className="cursor-pointer hover:bg-muted/50 transition-colors"
                             onClick={() => setCurrentStudyYearAndNavigate(studyYear)}
                         >
-                            {/* Display yearId, not schoolId in this table */}
                             <TableCell className="font-medium">{studyYear.yearId}</TableCell>
                             <TableCell>{studyYear.yearName}</TableCell>
-                            <TableCell>{format(new Date(studyYear.startDate), "PPP")}</TableCell> {/* Format date */}
-                            <TableCell className="text-right">{format(new Date(studyYear.endDate), "PPP")}</TableCell> {/* Format date */}
+                            <TableCell>{format(new Date(studyYear.startDate), "PPP")}</TableCell>
+                            <TableCell className="text-right">{format(new Date(studyYear.endDate), "PPP")}</TableCell>
                         </TableRow>
                     ))}
                 </TableBody>

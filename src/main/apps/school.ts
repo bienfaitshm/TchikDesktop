@@ -270,11 +270,9 @@ server.get<any, WithSchoolId<{}>>(
  */
 server.post<any, WithSchoolId<StudyYearAttributes>, WithSchoolId<{}>>(
   "study-years",
-  async ({ data, params: { schoolId } }) => {
+  async ({ data }) => {
     try {
-      const newStudyYear = await mapModelToPlain(
-        StudyYearService.create({ ...data, schoolId })
-      );
+      const newStudyYear = await mapModelToPlain(StudyYearService.create(data));
       return response(newStudyYear);
     } catch (error) {
       console.error(`Erreur lors de la création de l'année d'étude: ${error}`);
