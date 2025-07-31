@@ -69,15 +69,12 @@ export const StudyYearCreationForm: React.FC = () => {
 
     const onSubmit = React.useCallback(
         (values: StudyYearFormData) => {
-            console.log("StudyYearFormData", values)
-            mutation.mutate(
-                { data: { ...values, schoolId: currentSchoolId }, schoolId: currentSchoolId },
+            mutation.mutate(values,
                 createMutationCallbacksWithNotifications({
                     successMessageTitle: "Année scolaire créée !",
                     successMessageDescription: `L'année scolaire '${values.yearName}' a été ajoutée avec succès.`,
                     errorMessageTitle: "Échec de la création de l'année scolaire.",
                     onSuccess(data) {
-                        // Assuming 'data' from useCreateStudyYear is StudyYearAttributes
                         setCurrentStudyYearAndNavigate(data as StudyYearAttributes);
                     },
                 })
@@ -87,10 +84,7 @@ export const StudyYearCreationForm: React.FC = () => {
     );
 
     return (
-        <div >
-            {/* <TypographyH4 className="mb-4 text-center">
-                Créer une nouvelle année scolaire
-            </TypographyH4> */}
+        <div>
             <StudyYearForm initialValues={{ schoolId: currentSchoolId }} onSubmit={onSubmit}>
                 <div className="flex justify-end pt-4">
                     <ButtonLoader

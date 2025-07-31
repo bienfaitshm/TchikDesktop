@@ -31,8 +31,8 @@ interface StudyYearDataDisplay {
     yearId: string;
     schoolId: string; // Keep if displayed or needed for keying
     yearName: string;
-    startDate: Date; // Assuming date objects or transformable to them
-    endDate: Date; // Assuming date objects or transformable to them
+    startDate: Date;
+    endDate: Date;
 }
 
 /**

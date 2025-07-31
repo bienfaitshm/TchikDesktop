@@ -19,12 +19,12 @@ export function formatRouteMethodName(name: string, method: string): string {
   return `${name}_${method}`;
 }
 
-export function response<TData = unknown>(
-  data: TData,
+export async function response<TData = unknown>(
+  data: TData | Promise<TData>,
   status: number = Status.OK,
   message?: string
-): TResponse<TData> {
-  return { data, status, message, __func: true };
+): Promise<TResponse<TData>> {
+  return { data: await data, status, message, __func: true };
 }
 
 export async function actionFn<Data>(value: Promise<TResponse<Data>>) {

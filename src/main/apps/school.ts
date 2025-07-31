@@ -9,12 +9,12 @@ import {
 } from "@/main/db/services";
 import { mapModelToPlain, mapModelsToPlainList } from "@/main/db/models/utils";
 import type {
-  ClassAttributes,
-  OptionAttributes,
-  StudyYearAttributes,
   WithSchoolId,
   WithSchoolAndYearId,
-  SchoolAttributes, // Added SchoolAttributes
+  ClassAttributesInsert,
+  OptionAttributesInsert,
+  SchoolAttributesInsert,
+  StudyYearAttributesInsert,
 } from "@/camons/types/services";
 import { WithSchoolIdParams } from "./types";
 
@@ -28,8 +28,9 @@ server.get<any, WithSchoolId<{ yearId?: string }>>(
   "classrooms",
   async ({ params: { schoolId, yearId } }) => {
     try {
-      const classrooms = await ClassRoomService.findAll(schoolId, yearId);
-      return response(mapModelsToPlainList(classrooms));
+      return response(
+        mapModelsToPlainList(ClassRoomService.findAll(schoolId, yearId))
+      );
     } catch (error) {
       console.error(
         `Erreur lors de la récupération des salles de classe: ${error}`
@@ -47,12 +48,13 @@ server.get<any, WithSchoolId<{ yearId?: string }>>(
  * @route POST /classrooms
  * @description Crée une nouvelle salle de classe.
  */
-server.post<any, WithSchoolAndYearId<ClassAttributes>, WithSchoolAndYearId<{}>>(
+server.post<any, ClassAttributesInsert, WithSchoolAndYearId<{}>>(
   "classrooms",
   async ({ data, params: { schoolId } }) => {
     try {
-      const newClassroom = await ClassRoomService.create({ ...data, schoolId });
-      return response(mapModelToPlain(newClassroom));
+      return response(
+        mapModelToPlain(ClassRoomService.create({ ...data, schoolId }))
+      );
     } catch (error) {
       console.error(
         `Erreur lors de la création de la salle de classe: ${error}`
@@ -72,14 +74,15 @@ server.post<any, WithSchoolAndYearId<ClassAttributes>, WithSchoolAndYearId<{}>>(
  */
 server.put<
   any,
-  Partial<ClassAttributes>,
-  WithSchoolIdParams<{ classId: string }>
->("classrooms", async ({ params: { schoolId, classId }, data }) => {
+  Partial<ClassAttributesInsert>,
+  WithSchoolAndYearId<{ classId: string }>
+>("classrooms", async ({ params: { schoolId, classId, yearId }, data }) => {
   try {
     const updatedClassroom = await ClassRoomService.update(
       schoolId,
       classId,
-      data
+      data,
+      yearId
     );
     if (updatedClassroom) {
       return response(mapModelToPlain(updatedClassroom));
@@ -158,23 +161,22 @@ server.get<any, WithSchoolId<{}>>(
  * @route POST /options
  * @description Crée une nouvelle option.
  */
-server.post<
-  any,
-  WithSchoolAndYearId<OptionAttributes>,
-  WithSchoolAndYearId<{}>
->("options", async ({ data, params: { schoolId } }) => {
-  try {
-    const newOption = await OptionService.create({ ...data, schoolId });
-    return response(mapModelToPlain(newOption));
-  } catch (error) {
-    console.error(`Erreur lors de la création de l'option: ${error}`);
-    return response(
-      {},
-      Status.INTERNAL_SERVER,
-      "Erreur interne du serveur lors de la création de l'option."
-    );
+server.post<any, OptionAttributesInsert, WithSchoolAndYearId<{}>>(
+  "options",
+  async ({ data }) => {
+    try {
+      const newOption = await OptionService.create(data);
+      return response(mapModelToPlain(newOption));
+    } catch (error) {
+      console.error(`Erreur lors de la création de l'option: ${error}`);
+      return response(
+        {},
+        Status.INTERNAL_SERVER,
+        "Erreur interne du serveur lors de la création de l'option."
+      );
+    }
   }
-});
+);
 
 /**
  * @route PUT /options
@@ -182,7 +184,7 @@ server.post<
  */
 server.put<
   any,
-  Partial<OptionAttributes>,
+  Partial<OptionAttributesInsert>,
   WithSchoolIdParams<{ optionId: string }>
 >("options", async ({ params: { schoolId, optionId }, data }) => {
   try {
@@ -268,7 +270,7 @@ server.get<any, WithSchoolId<{}>>(
  * @route POST /study-years
  * @description Crée une nouvelle année d'étude.
  */
-server.post<any, WithSchoolId<StudyYearAttributes>, WithSchoolId<{}>>(
+server.post<any, StudyYearAttributesInsert, WithSchoolId<{}>>(
   "study-years",
   async ({ data }) => {
     try {
@@ -291,7 +293,7 @@ server.post<any, WithSchoolId<StudyYearAttributes>, WithSchoolId<{}>>(
  */
 server.put<
   any,
-  Partial<StudyYearAttributes>,
+  Partial<StudyYearAttributesInsert>,
   WithSchoolIdParams<{ studyYearId: string }>
 >("study-years", async ({ params: { schoolId, studyYearId }, data }) => {
   try {
@@ -356,8 +358,7 @@ server.delete<any, WithSchoolIdParams<{ studyYearId: string }>>(
  */
 server.get("schools", async () => {
   try {
-    const schools = await mapModelsToPlainList(SchoolService.findAll());
-    return response(schools);
+    return response(mapModelsToPlainList(SchoolService.findAll()));
   } catch (error) {
     console.error(`Erreur lors de la récupération des écoles: ${error}`);
     return response(
@@ -378,7 +379,7 @@ server.get<any, WithSchoolIdParams<{}>>(
     try {
       const school = await SchoolService.findById(schoolId);
       if (school) {
-        return response(await mapModelToPlain(school));
+        return response(mapModelToPlain(school));
       }
       return response({}, Status.NOT_FOUND, "École non trouvée.");
     } catch (error) {
@@ -398,10 +399,9 @@ server.get<any, WithSchoolIdParams<{}>>(
  * @route POST /schools
  * @description Crée une nouvelle école.
  */
-server.post<any, SchoolAttributes, {}>("schools", async ({ data }) => {
+server.post<any, SchoolAttributesInsert, {}>("schools", async ({ data }) => {
   try {
-    const newSchool = await mapModelToPlain(SchoolService.create(data));
-    return response(newSchool);
+    return response(mapModelToPlain(SchoolService.create(data)));
   } catch (error) {
     console.error(`Erreur lors de la création de l'école: ${error}`);
     return response(
@@ -416,13 +416,13 @@ server.post<any, SchoolAttributes, {}>("schools", async ({ data }) => {
  * @route PUT /schools
  * @description Met à jour une école existante.
  */
-server.put<any, Partial<SchoolAttributes>, WithSchoolIdParams<{}>>(
+server.put<any, Partial<SchoolAttributesInsert>, WithSchoolIdParams<{}>>(
   "schools",
   async ({ params: { schoolId }, data }) => {
     try {
       const updatedSchool = await SchoolService.update(schoolId, data);
       if (updatedSchool) {
-        return response(await mapModelToPlain(updatedSchool));
+        return response(mapModelToPlain(updatedSchool));
       }
       return response(
         {},

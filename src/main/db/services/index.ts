@@ -157,13 +157,13 @@ export const ClassRoomService = {
     schoolId: string,
     classId: string,
     data: Partial<ClassAttributesInsert>,
-    yearId: string
+    yearId?: string
   ) => {
-    const whereClause: { classId: string; schoolId: string; yearId: string } = {
-      classId,
-      schoolId,
-      yearId,
-    };
+    const whereClause: { classId: string; schoolId: string; yearId?: string } =
+      { classId, schoolId };
+    if (yearId) {
+      whereClause.yearId = yearId;
+    }
 
     const classRoom = await ClassRoom.findOne({ where: whereClause });
     if (!classRoom) return null;
