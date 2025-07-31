@@ -11,7 +11,7 @@ import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
 import SchoolYearScreen from "@/renderer/screens/school-years";
 import Layout from "@/renderer/screens/layout";
 import {
-  LayoutConfigurationScreen,
+  ConfigurationLayoutScreen,
   SchoolConfigurationNewSchoolScreen,
   SchoolConfigurationScreen,
   StudyYearConfigurationScreen,
@@ -35,7 +35,7 @@ export default function RouterProvider(): JSX.Element {
           {/* other */}
           <Route path="school-years" element={<SchoolYearScreen />} />
         </Route>
-        <Route path="configuration" element={<LayoutConfigurationScreen />}>
+        <Route path="configuration" element={<ConfigurationLayoutScreen />}>
           <Route index element={<SchoolConfigurationScreen />} />
           <Route path="school/new" element={<SchoolConfigurationNewSchoolScreen />} />
           <Route path="school-year" element={<StudyYearConfigurationScreen />} />
