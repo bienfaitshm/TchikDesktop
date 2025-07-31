@@ -71,7 +71,7 @@ const data = {
     others: [
         {
             name: "Annees scolaire",
-            url: "#",
+            url: "/school-years",
             icon: Frame,
         },
     ],
@@ -126,10 +126,10 @@ export function AppSidebar() {
                             {data.others.map((item) => (
                                 <SidebarMenuItem key={item.name}>
                                     <SidebarMenuButton asChild>
-                                        <a href={item.url}>
+                                        <NavLink to={item.url}>
                                             <item.icon />
                                             <span>{item.name}</span>
-                                        </a>
+                                        </NavLink>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             ))}
