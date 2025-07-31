@@ -59,3 +59,13 @@ export interface ClassroomEnrolementAttributes {
   code: string;
   schoolId: string;
 }
+
+export type UserAttributesInsert = Omit<UserAttributes, "userId">;
+export type SchoolAttributesInsert = Omit<SchoolAttributes, "schoolId">;
+export type ClassAttributesInsert = Omit<ClassAttributes, "classId">;
+export type OptionAttributesInsert = Omit<OptionAttributes, "schoolId">;
+export type StudyYearAttributesInsert = Omit<StudyYearAttributes, "yearId">;
+export type ClassroomEnrolementAttributesInsert = Omit<
+  ClassroomEnrolementAttributes,
+  "enrolementId"
+>;

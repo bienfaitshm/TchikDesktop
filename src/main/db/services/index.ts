@@ -8,20 +8,18 @@ import {
   ClassroomEnrolement,
 } from "../models"; // Adjust path to your models file
 import {
-  ClassAttributes,
-  ClassroomEnrolementAttributes,
-  OptionAttributes,
-  SchoolAttributes,
-  StudyYearAttributes,
-  UserAttributes,
-  WithSchoolAndYearId,
-  WithSchoolId,
-} from "./types";
+  SchoolAttributesInsert,
+  ClassAttributesInsert,
+  ClassroomEnrolementAttributesInsert,
+  OptionAttributesInsert,
+  StudyYearAttributesInsert,
+  UserAttributesInsert,
+} from "@/camons/types/services";
 
 // --- School CRUD ---
 export const SchoolService = {
-  create: async (data: SchoolAttributes) => {
-    return School.create(data);
+  create: async (data: SchoolAttributesInsert) => {
+    return School.create(data as any);
   },
   findAll: async () => {
     return School.findAll();
@@ -29,7 +27,7 @@ export const SchoolService = {
   findById: async (schoolId: string) => {
     return School.findByPk(schoolId);
   },
-  update: async (schoolId: string, data: Partial<SchoolAttributes>) => {
+  update: async (schoolId: string, data: Partial<SchoolAttributesInsert>) => {
     const school = await School.findByPk(schoolId);
     if (!school) return null;
     return school.update(data);
@@ -44,8 +42,8 @@ export const SchoolService = {
 
 // --- User CRUD ---
 export const UserService = {
-  create: async (data: WithSchoolId<UserAttributes>) => {
-    return User.create(data);
+  create: async (data: UserAttributesInsert) => {
+    return User.create(data as any);
   },
   findAll: async (schoolId: string) => {
     return User.findAll({ where: { schoolId }, include: [School] });
@@ -56,7 +54,7 @@ export const UserService = {
   update: async (
     schoolId: string,
     userId: string,
-    data: Partial<UserAttributes>
+    data: Partial<UserAttributesInsert>
   ) => {
     const user = await User.findOne({ where: { userId, schoolId } });
     if (!user) return null;
@@ -72,8 +70,8 @@ export const UserService = {
 
 // --- Option CRUD ---
 export const OptionService = {
-  create: async (data: WithSchoolId<OptionAttributes>) => {
-    return Option.create(data);
+  create: async (data: OptionAttributesInsert) => {
+    return Option.create(data as any);
   },
   findAll: async (schoolId: string) => {
     return Option.findAll({ where: { schoolId }, include: [School] });
@@ -84,7 +82,7 @@ export const OptionService = {
   update: async (
     schoolId: string,
     optionId: string,
-    data: Partial<OptionAttributes>
+    data: Partial<OptionAttributesInsert>
   ) => {
     const option = await Option.findOne({ where: { optionId, schoolId } });
     if (!option) return null;
@@ -100,8 +98,8 @@ export const OptionService = {
 
 // --- StudyYear CRUD ---
 export const StudyYearService = {
-  create: async (data: WithSchoolId<StudyYearAttributes>) => {
-    return StudyYear.create(data);
+  create: async (data: StudyYearAttributesInsert) => {
+    return StudyYear.create(data as any);
   },
   findAll: async (schoolId: string) => {
     return StudyYear.findAll({ where: { schoolId }, include: [School] });
@@ -115,7 +113,7 @@ export const StudyYearService = {
   update: async (
     schoolId: string,
     yearId: string,
-    data: Partial<StudyYearAttributes>
+    data: Partial<StudyYearAttributesInsert>
   ) => {
     const studyYear = await StudyYear.findOne({ where: { yearId, schoolId } });
     if (!studyYear) return null;
@@ -131,11 +129,8 @@ export const StudyYearService = {
 
 // --- ClassRoom CRUD ---
 export const ClassRoomService = {
-  create: async (data: WithSchoolAndYearId<ClassAttributes>) => {
-    if (!data.yearId) {
-      throw new Error("yearId is required to create a ClassRoom.");
-    }
-    return ClassRoom.create(data);
+  create: async (data: ClassAttributesInsert) => {
+    return ClassRoom.create(data as any);
   },
   findAll: async (schoolId: string, yearId?: string) => {
     const whereClause: { schoolId: string; yearId?: string } = { schoolId };
@@ -161,14 +156,15 @@ export const ClassRoomService = {
   update: async (
     schoolId: string,
     classId: string,
-    data: Partial<ClassAttributes>,
-    yearId?: string
+    data: Partial<ClassAttributesInsert>,
+    yearId: string
   ) => {
-    const whereClause: { classId: string; schoolId: string; yearId?: string } =
-      { classId, schoolId };
-    if (yearId) {
-      whereClause.yearId = yearId;
-    }
+    const whereClause: { classId: string; schoolId: string; yearId: string } = {
+      classId,
+      schoolId,
+      yearId,
+    };
+
     const classRoom = await ClassRoom.findOne({ where: whereClause });
     if (!classRoom) return null;
     return classRoom.update(data);
@@ -188,8 +184,8 @@ export const ClassRoomService = {
 
 // --- ClassroomEnrolement CRUD ---
 export const ClassroomEnrolementService = {
-  create: async (data: WithSchoolId<ClassroomEnrolementAttributes>) => {
-    return ClassroomEnrolement.create(data);
+  create: async (data: ClassroomEnrolementAttributesInsert) => {
+    return ClassroomEnrolement.create(data as any);
   },
   findAll: async (schoolId: string, classroomId?: string) => {
     const whereClause: { schoolId: string; classroomId?: string } = {
@@ -224,7 +220,7 @@ export const ClassroomEnrolementService = {
   update: async (
     schoolId: string,
     enrolementId: string,
-    data: Partial<ClassroomEnrolementAttributes>,
+    data: Partial<ClassroomEnrolementAttributesInsert>,
     classroomId?: string
   ) => {
     const whereClause: {

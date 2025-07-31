@@ -5,6 +5,10 @@ import type {
   StudyYearAttributes,
   WithSchoolAndYearId,
   WithSchoolId,
+  ClassAttributesInsert,
+  OptionAttributesInsert,
+  SchoolAttributesInsert,
+  StudyYearAttributesInsert,
 } from "@/camons/types/services";
 import { TResponse, actionFn } from "@/camons/libs/electron-apis/utils";
 import { clientApis } from "./client";
@@ -31,16 +35,12 @@ export const getClassrooms = (schoolId: string, yearId?: string) => {
  * @function createClassroom
  * @description Client action to create a new classroom.
  */
-export const createClassroom = (
-  data: Omit<ClassAttributes, "yearId" | "schoolId">,
-  schoolId: string,
-  yearId: string
-) => {
+export const createClassroom = (data: ClassAttributesInsert) => {
   return actionFn(
-    clientApis.post<
-      TResponse<ClassAttributes>,
-      WithSchoolAndYearId<ClassAttributes>
-    >("classrooms", { ...data, schoolId, yearId })
+    clientApis.post<TResponse<ClassAttributes>, ClassAttributesInsert>(
+      "classrooms",
+      data
+    )
   ).then((res) => res.data);
 };
 
@@ -49,12 +49,12 @@ export const createClassroom = (
  * @description Client action to update an existing classroom.
  */
 export const updateClassroom = (
-  data: Partial<ClassAttributes>,
+  data: Partial<ClassAttributesInsert>,
   schoolId: string,
   classId: string
 ) => {
   return actionFn(
-    clientApis.put<TResponse<ClassAttributes>, Partial<ClassAttributes>>(
+    clientApis.put<TResponse<ClassAttributes>, Partial<ClassAttributesInsert>>(
       "classrooms",
       data,
       { params: { schoolId, classId } }
@@ -92,18 +92,11 @@ export const getOptions = (schoolId: string) => {
  * @function createOption
  * @description Client action to create a new option.
  */
-export const createOption = (
-  data: OptionAttributes,
-  schoolId: string,
-  yearId: string
-) => {
+export const createOption = (data: OptionAttributesInsert) => {
   return actionFn(
-    clientApis.post<
-      TResponse<OptionAttributes>,
-      WithSchoolAndYearId<OptionAttributes>
-    >(
+    clientApis.post<TResponse<OptionAttributes>, OptionAttributesInsert>(
       "options",
-      { ...data, schoolId, yearId } // Data and params merged as per server expectation
+      data
     )
   ).then((res) => res.data);
 };
@@ -113,16 +106,15 @@ export const createOption = (
  * @description Client action to update an existing option.
  */
 export const updateOption = (
-  data: Partial<OptionAttributes>,
+  data: Partial<OptionAttributesInsert>,
   schoolId: string,
   optionId: string
 ) => {
   return actionFn(
-    clientApis.put<TResponse<OptionAttributes>, Partial<OptionAttributes>>(
-      "options",
-      data,
-      { params: { schoolId, optionId } }
-    )
+    clientApis.put<
+      TResponse<OptionAttributes>,
+      Partial<OptionAttributesInsert>
+    >("options", data, { params: { schoolId, optionId } })
   ).then((res) => res.data);
 };
 
@@ -156,15 +148,12 @@ export const getStudyYears = (schoolId: string) => {
  * @function createStudyYear
  * @description Client action to create a new study year.
  */
-export const createStudyYear = (
-  data: Omit<StudyYearAttributes, "yearId">,
-  schoolId: string
-) => {
+export const createStudyYear = (data: StudyYearAttributesInsert) => {
   return actionFn(
-    clientApis.post<
-      TResponse<StudyYearAttributes>,
-      WithSchoolId<Omit<StudyYearAttributes, "yearId">>
-    >("study-years", { ...data, schoolId })
+    clientApis.post<TResponse<StudyYearAttributes>, StudyYearAttributesInsert>(
+      "study-years",
+      data
+    )
   ).then((res) => res.data);
 };
 
@@ -173,14 +162,14 @@ export const createStudyYear = (
  * @description Client action to update an existing study year.
  */
 export const updateStudyYear = (
-  data: Partial<StudyYearAttributes>,
+  data: Partial<StudyYearAttributesInsert>,
   schoolId: string,
   studyYearId: string
 ) => {
   return actionFn(
     clientApis.put<
       TResponse<StudyYearAttributes>,
-      Partial<StudyYearAttributes>
+      Partial<StudyYearAttributesInsert>
     >("study-years", data, { params: { schoolId, studyYearId } })
   ).then((res) => res.data);
 };
@@ -225,12 +214,12 @@ export const getSchoolById = (schoolId: string) => {
  * @function createSchool
  * @description Client action to create a new school.
  */
-export const createSchool = (data: Omit<SchoolAttributes, "schoolId">) => {
+export const createSchool = (data: SchoolAttributesInsert) => {
   return actionFn(
-    clientApis.post<
-      TResponse<SchoolAttributes>,
-      Omit<SchoolAttributes, "schoolId">
-    >("schools", data)
+    clientApis.post<TResponse<SchoolAttributes>, SchoolAttributesInsert>(
+      "schools",
+      data
+    )
   ).then((res) => res.data);
 };
 
@@ -239,15 +228,14 @@ export const createSchool = (data: Omit<SchoolAttributes, "schoolId">) => {
  * @description Client action to update an existing school.
  */
 export const updateSchool = (
-  data: Partial<SchoolAttributes>,
+  data: Partial<SchoolAttributesInsert>,
   schoolId: string
 ) => {
   return actionFn(
-    clientApis.put<TResponse<SchoolAttributes>, Partial<SchoolAttributes>>(
-      "schools",
-      data,
-      { params: { schoolId } }
-    )
+    clientApis.put<
+      TResponse<SchoolAttributes>,
+      Partial<SchoolAttributesInsert>
+    >("schools", data, { params: { schoolId } })
   ).then((res) => res.data);
 };
 
