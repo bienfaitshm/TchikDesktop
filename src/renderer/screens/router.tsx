@@ -10,6 +10,7 @@ import InscriptionScreen from "@/renderer/screens/inscriptions";
 import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
 import SchoolYearScreen from "@/renderer/screens/school-years";
 import Layout from "@/renderer/screens/layout";
+import { SchoolConfigurationScreen, SchoolYearConfigurationScreen } from "./config";
 
 
 export default function RouterProvider(): JSX.Element {
@@ -28,6 +29,11 @@ export default function RouterProvider(): JSX.Element {
           {/* other */}
           <Route path="school-years" element={<SchoolYearScreen />} />
         </Route>
+        <Route path="config">
+          <Route index element={<SchoolConfigurationScreen />} />
+          <Route path="school-year" element={<SchoolYearConfigurationScreen />} />
+        </Route>
+        <Route path="*" element={<h2>404 Not Found</h2>} />
       </Routes>
     </Router>
   )

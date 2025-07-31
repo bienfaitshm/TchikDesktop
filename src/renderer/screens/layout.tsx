@@ -1,8 +1,14 @@
+
 import { SidebarProvider, SidebarTrigger, } from "@/renderer/components/ui/sidebar"
 import { ApplicationSidebar } from "@/renderer/components/app-sidebar"
-import { Outlet } from "react-router"
+import { Outlet, Navigate } from "react-router"
+import { useAppStore } from "@/renderer/libs/stores/app-store"
 
 export default function Layout() {
+    const isConfigured = useAppStore(store => !!store.currentSchool && !!store.currentYearSchool)
+    if (!isConfigured) {
+        return <Navigate to="config" replace />
+    }
     return (
         <SidebarProvider>
             <ApplicationSidebar />
