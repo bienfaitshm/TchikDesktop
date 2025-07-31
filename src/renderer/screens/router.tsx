@@ -14,7 +14,8 @@ import {
   LayoutConfigurationScreen,
   SchoolConfigurationNewSchoolScreen,
   SchoolConfigurationScreen,
-  SchoolYearConfigurationScreen
+  StudyYearConfigurationScreen,
+  NewStudyYearConfigurationPage
 } from "@/renderer/screens/config";
 
 
@@ -37,7 +38,8 @@ export default function RouterProvider(): JSX.Element {
         <Route path="configuration" element={<LayoutConfigurationScreen />}>
           <Route index element={<SchoolConfigurationScreen />} />
           <Route path="school/new" element={<SchoolConfigurationNewSchoolScreen />} />
-          <Route path="school-year" element={<SchoolYearConfigurationScreen />} />
+          <Route path="school-year" element={<StudyYearConfigurationScreen />} />
+          <Route path="school-year/new" element={<NewStudyYearConfigurationPage />} />
         </Route>
         <Route path="*" element={<h2>404 Not Found</h2>} />
       </Routes>

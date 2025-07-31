@@ -247,8 +247,10 @@ server.get<any, WithSchoolId<{}>>(
   "study-years",
   async ({ params: { schoolId } }) => {
     try {
-      const studyYears = await StudyYearService.findAll(schoolId);
-      return response(mapModelsToPlainList(studyYears));
+      const studyYears = await mapModelsToPlainList(
+        StudyYearService.findAll(schoolId)
+      );
+      return response(studyYears);
     } catch (error) {
       console.error(
         `Erreur lors de la récupération des années d'étude: ${error}`
@@ -270,8 +272,10 @@ server.post<any, WithSchoolId<StudyYearAttributes>, WithSchoolId<{}>>(
   "study-years",
   async ({ data, params: { schoolId } }) => {
     try {
-      const newStudyYear = await StudyYearService.create({ ...data, schoolId });
-      return response(mapModelToPlain(newStudyYear));
+      const newStudyYear = await mapModelToPlain(
+        StudyYearService.create({ ...data, schoolId })
+      );
+      return response(newStudyYear);
     } catch (error) {
       console.error(`Erreur lors de la création de l'année d'étude: ${error}`);
       return response(
@@ -299,7 +303,7 @@ server.put<
       data
     );
     if (updatedStudyYear) {
-      return response(mapModelToPlain(updatedStudyYear));
+      return response(await mapModelToPlain(updatedStudyYear));
     }
     return response(
       {},

@@ -224,7 +224,7 @@ export function useCreateStudyYear() {
   return useMutation<
     StudyYearAttributes,
     Error,
-    { data: StudyYearAttributes; schoolId: string }
+    { data: Omit<StudyYearAttributes, "yearId">; schoolId: string }
   >({
     mutationKey: ["CREATE_STUDY_YEAR"],
     mutationFn: ({ data, schoolId }) => apis.createStudyYear(data, schoolId),

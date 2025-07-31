@@ -140,14 +140,14 @@ export const StudyYearForm = React.forwardRef<
                     )}
                 />
 
-                <div className="grid grid-cols-2">
+                <div className="grid grid-cols-2 gap-5">
                     <div>
                         {/* Field for Start Date */}
                         <FormField
                             control={form.control}
                             name="startDate"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem className="flex flex-col">
                                     <FormLabel>Date de début</FormLabel>
                                     <FormControl>
                                         <DatePickerInput
@@ -171,7 +171,7 @@ export const StudyYearForm = React.forwardRef<
                             control={form.control}
                             name="endDate"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem className="flex flex-col">
                                     <FormLabel>Date de fin</FormLabel>
                                     <FormControl>
                                         <DatePickerInput

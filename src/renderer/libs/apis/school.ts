@@ -157,13 +157,13 @@ export const getStudyYears = (schoolId: string) => {
  * @description Client action to create a new study year.
  */
 export const createStudyYear = (
-  data: StudyYearAttributes,
+  data: Omit<StudyYearAttributes, "yearId">,
   schoolId: string
 ) => {
   return actionFn(
     clientApis.post<
       TResponse<StudyYearAttributes>,
-      WithSchoolId<StudyYearAttributes>
+      WithSchoolId<Omit<StudyYearAttributes, "yearId">>
     >("study-years", { ...data, schoolId })
   ).then((res) => res.data);
 };
