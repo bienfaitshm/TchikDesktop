@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router"
+import { HashRouter as Router, Route, Routes } from "react-router"
 import Launcher from "@/renderer/screens/launcher";
 // 
 import Home from "@/renderer/screens/home";
@@ -14,7 +14,7 @@ import Layout from "@/renderer/screens/layout";
 
 export default function RouterProvider(): JSX.Element {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         <Route element={<Layout />} errorElement={<Launcher />}>
           <Route index element={<Home />} />
@@ -29,6 +29,6 @@ export default function RouterProvider(): JSX.Element {
           <Route path="school-years" element={<SchoolYearScreen />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </Router>
   )
 }
