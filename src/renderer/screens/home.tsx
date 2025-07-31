@@ -9,7 +9,7 @@ import {
   DataTableColumnFilter,
 } from "@/renderer/components/tables/data-table";
 import { TypographyH3 } from "@/renderer/components/ui/typography";
-import { SchoolForm, useFormRef, type SchoolFormData as FormValueType } from "@/renderer/components/form/school-form";
+import { SchoolForm, useFormHandleRef, type SchoolFormData as FormValueType } from "@/renderer/components/form/school-form";
 import { FormDialog, useFormDialogRef } from "@/renderer/components/dialog/dialog-form";
 import { Button } from "@/renderer/components/ui/button";
 import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns.base";
@@ -53,7 +53,7 @@ const tableMenus: DataTableMenu[] = [
 // --- Option Creation Form Component ---
 const OptionCreateForm: React.FC = () => {
   const dialogRef = useFormDialogRef();
-  const formRef = useFormRef();
+  const formRef = useFormHandleRef<FormValueType>();
   const mutation = useCreateSchool()
 
   // Handler for form submission
@@ -108,7 +108,7 @@ const OptionCreateForm: React.FC = () => {
 // --- Option Update Form Component (Higher-Order Component Pattern) ---
 const OptionUpdateForm = withUpdateDialog((_, ref) => {
   const dialogRef = useFormDialogRef();
-  const formRef = useFormRef();
+  const formRef = useFormHandleRef<FormValueType>();
 
   const mutation = useUpdateSchool()
 
@@ -143,7 +143,11 @@ const OptionUpdateForm = withUpdateDialog((_, ref) => {
           </FormDialog.Description>
         </FormDialog.Header>
         <FormDialog.FormWrapper>
-          <SchoolForm initialValues={{ adress: dataToEdit?.adress, town: dataToEdit?.town, name: dataToEdit?.name }} ref={formRef} onSubmit={onSubmit} />
+          <SchoolForm
+            ref={formRef}
+            initialValues={{ adress: dataToEdit?.adress, town: dataToEdit?.town, name: dataToEdit?.name }}
+            onSubmit={onSubmit}
+          />
         </FormDialog.FormWrapper>
         <FormDialog.Footer>
           <FormDialog.CloseButton asChild>

@@ -11,7 +11,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/renderer/components/ui/form";
-import { useImperativeHandleForm, type FormRef } from "./utils"; // Assuming utils contains FormRef and useImperativeHandleForm
+import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { Input } from "@/renderer/components/ui/input";
 import {
     Select,
@@ -22,7 +22,8 @@ import {
 } from "@/renderer/components/ui/select";
 import { getEnumKeyValueList } from "@/camons/utils";
 
-export { useFormRef } from "./utils";
+export * from "./utils"
+
 
 /**
  * @typedef {OptionAttributes} OptionFormData
@@ -64,7 +65,7 @@ export interface OptionFormProps {
  * @description Extends `FormRef` to define the imperative handle for the `OptionForm` component.
  * This allows a parent component to programmatically submit, reset, or access form state.
  */
-export interface OptionFormHandle extends FormRef { }
+export interface OptionFormHandle extends ImperativeFormHandle<OptionFormData> { }
 
 /**
  * @interface SectionSelectProps
@@ -189,8 +190,7 @@ export const OptionForm = React.forwardRef<
         },
     });
 
-    // Expose react-hook-form's methods imperatively via the ref
-    useImperativeHandleForm(ref, form);
+    useFormImperativeHandle(ref, form);
 
     return (
         <div>

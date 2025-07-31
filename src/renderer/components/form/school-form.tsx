@@ -10,11 +10,10 @@ import {
     FormLabel,
     FormMessage,
 } from "@/renderer/components/ui/form";
-import { useImperativeHandleForm, type FormRef } from "./utils"; // Assuming utils contains FormRef and useImperativeHandleForm
+import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { Input } from "@/renderer/components/ui/input";
 
-
-export { useFormRef } from "./utils";
+export * from "./utils"
 
 /**
  * @typedef {SchoolAttributes} SchoolFormData
@@ -51,7 +50,7 @@ export interface SchoolFormProps {
  * @description Extends `FormRef` to define the imperative handle for the `SchoolForm` component.
  * This allows a parent component to programmatically submit, reset, or access form state.
  */
-export interface SchoolFormHandle extends FormRef { }
+export interface SchoolFormHandle extends ImperativeFormHandle<SchoolFormData> { }
 
 /**
  * @interface SectionSelectProps
@@ -138,7 +137,7 @@ export const SchoolForm = React.forwardRef<
         },
     });
 
-    useImperativeHandleForm(ref, form);
+    useFormImperativeHandle(ref, form);
     return (
         <div>
             <Form {...form}>
@@ -196,7 +195,7 @@ export const SchoolForm = React.forwardRef<
                             </FormItem>
                         )}
                     />
-                    {children} {/* Render any additional children passed to the form */}
+                    {children}
                 </form>
             </Form>
         </div>
