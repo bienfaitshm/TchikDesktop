@@ -2,7 +2,9 @@ import {
     Frame,
     Map,
     PieChart,
+    Home
 } from "lucide-react"
+import { NavLink } from "react-router"
 
 import {
     Sidebar,
@@ -27,18 +29,18 @@ const data = {
     },
     applications: [
         {
+            name: "Acceuil",
+            url: "/",
+            icon: Home,
+        },
+        {
             name: "Inscriptions",
-            url: "#",
+            url: "/inscriptions",
             icon: Frame,
         },
         {
-            name: "Payements",
-            url: "#",
-            icon: PieChart,
-        },
-        {
             name: "Mise en place",
-            url: "#",
+            url: "/mise-en-places",
             icon: Map,
         },
     ],
@@ -46,22 +48,22 @@ const data = {
     school: [
         {
             name: "Eleves",
-            url: "#",
+            url: "/students",
             icon: Frame,
         },
         {
             name: "Options",
-            url: "#",
+            url: "/options",
             icon: PieChart,
         },
         {
             name: "Classes",
-            url: "#",
+            url: "/classrooms",
             icon: Map,
         },
         {
             name: "Locals",
-            url: "#",
+            url: "/locals",
             icon: Map,
         },
     ],
@@ -90,10 +92,10 @@ export function AppSidebar() {
                             {data.applications.map((item) => (
                                 <SidebarMenuItem key={item.name}>
                                     <SidebarMenuButton asChild>
-                                        <a href={item.url}>
+                                        <NavLink to={item.url}>
                                             <item.icon />
                                             <span>{item.name}</span>
-                                        </a>
+                                        </NavLink>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             ))}
@@ -107,10 +109,10 @@ export function AppSidebar() {
                             {data.school.map((item) => (
                                 <SidebarMenuItem key={item.name}>
                                     <SidebarMenuButton asChild>
-                                        <a href={item.url}>
+                                        <NavLink to={item.url}>
                                             <item.icon />
                                             <span>{item.name}</span>
-                                        </a>
+                                        </NavLink>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             ))}

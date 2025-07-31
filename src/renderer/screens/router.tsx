@@ -1,37 +1,28 @@
-import {
-  createBrowserRouter,
-  RouterProvider as RRouterProvider,
-} from "react-router-dom";
-// import clients from "@renderer/screens/clients";
-// import products from "@renderer/screens/products";
-// import categories from "@renderer/screens/categories";
-// import payement from "@renderer/screens/payement";
-// import settings from "@renderer/screens/settings";
+import { BrowserRouter, Route, Routes } from "react-router"
 import Home from "@/renderer/screens/home";
-import Layout from "./layout";
-import Launcher from "./launcher";
+import OptionScreen from "@/renderer/screens/options";
+import ClassroomScreen from "@/renderer/screens/classrooms";
+import StudentScreen from "@/renderer/screens/students";
+import LocalScreen from "@/renderer/screens/locals";
+import InscriptionScreen from "@/renderer/screens/inscriptions";
+import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
+import Layout from "@/renderer/screens/layout";
 
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Layout />,
-    errorElement: <Launcher />,
-    // errorElement: (
-    //   <div className="h-screen w-full flex justify-center items-center">
-    //     <h1 className="text-2xl font-bold">Il y eu erreur</h1>
-    //   </div>
-    // ),
-    children: [
-      { index: true, element: <Home />, errorElement: <Home /> },
-      // payement,
-      // clients,
-      // products,
-      // categories,
-      // settings,
-    ],
-  },
-]);
 
 export default function RouterProvider(): JSX.Element {
-  return <RRouterProvider router={router} />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="inscriptions" element={<InscriptionScreen />} />
+          <Route path="mise-en-places" element={<MiseEnPlaceScreen />} />
+          <Route path="students" element={<StudentScreen />} />
+          <Route path="options" element={<OptionScreen />} />
+          <Route path="classrooms" element={<ClassroomScreen />} />
+          <Route path="locals" element={<LocalScreen />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  )
 }

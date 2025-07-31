@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarTrigger, } from "@/renderer/components/ui/sidebar"
 import { AppSidebar } from "@/renderer/components/app-sidebar"
-import { Outlet } from "react-router-dom"
+import { Outlet } from "react-router"
 
 export default function Layout() {
     return (
