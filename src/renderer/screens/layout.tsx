@@ -2,12 +2,12 @@
 import { SidebarProvider, SidebarTrigger, } from "@/renderer/components/ui/sidebar"
 import { ApplicationSidebar } from "@/renderer/components/app-sidebar"
 import { Outlet, Navigate } from "react-router"
-import { useAppStore } from "@/renderer/libs/stores/app-store"
+import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store"
 
 export default function Layout() {
-    const isConfigured = useAppStore(store => !!store.currentSchool && !!store.currentYearSchool)
+    const isConfigured = useApplicationConfigurationStore(store => !!store.currentSchool && !!store.currentStudyYear)
     if (!isConfigured) {
-        return <Navigate to="config" replace />
+        return <Navigate to="configuration" replace />
     }
     return (
         <SidebarProvider>

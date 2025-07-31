@@ -2,7 +2,7 @@ import { TypographyH1 } from "@/renderer/components/ui/typography"
 
 export const SchoolYearConfigurationScreen = () => {
     return (
-        <div className="h-screen flex justify-center items-center">
+        <div>
             <TypographyH1>
                 SchoolYearConfiguration Screen
             </TypographyH1>
