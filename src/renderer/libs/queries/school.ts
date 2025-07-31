@@ -4,6 +4,10 @@ import type {
   OptionAttributes,
   SchoolAttributes,
   StudyYearAttributes,
+  ClassAttributesInsert,
+  OptionAttributesInsert,
+  SchoolAttributesInsert,
+  StudyYearAttributesInsert,
 } from "@/camons/types/services";
 import * as apis from "@/renderer/libs/apis/school";
 
@@ -36,14 +40,9 @@ export function useGetSchoolById(schoolId: string) {
  * @description Hook to create a new school.
  */
 export function useCreateSchool() {
-  return useMutation<
-    SchoolAttributes,
-    Error,
-    Omit<SchoolAttributes, "schoolId">
-  >({
+  return useMutation<SchoolAttributes, Error, SchoolAttributesInsert>({
     mutationKey: ["CREATE_SCHOOL"],
     mutationFn: (data) => apis.createSchool(data),
-    // Consider adding onSuccess to invalidate 'GET_SCHOOLS' query
   });
 }
 
@@ -55,11 +54,10 @@ export function useUpdateSchool() {
   return useMutation<
     SchoolAttributes,
     Error,
-    { data: Partial<SchoolAttributes>; schoolId: string }
+    { data: Partial<SchoolAttributesInsert>; schoolId: string }
   >({
     mutationKey: ["UPDATE_SCHOOL"],
     mutationFn: ({ data, schoolId }) => apis.updateSchool(data, schoolId),
-    // Consider adding onSuccess to invalidate 'GET_SCHOOLS' or 'GET_SCHOOL_BY_ID' queries
   });
 }
 
@@ -71,7 +69,6 @@ export function useDeleteSchool() {
   return useMutation<{ message: string }, Error, string>({
     mutationKey: ["DELETE_SCHOOL"],
     mutationFn: (schoolId) => apis.deleteSchool(schoolId),
-    // Consider adding onSuccess to invalidate 'GET_SCHOOLS' query
   });
 }
 
@@ -93,15 +90,9 @@ export function useGetClassrooms(schoolId: string, yearId?: string) {
  * @description Hook to create a new classroom.
  */
 export function useCreateClassroom() {
-  return useMutation<
-    ClassAttributes,
-    Error,
-    { data: ClassAttributes; schoolId: string; yearId: string }
-  >({
+  return useMutation<ClassAttributes, Error, ClassAttributesInsert>({
     mutationKey: ["CREATE_CLASSROOM"],
-    mutationFn: ({ data, schoolId, yearId }) =>
-      apis.createClassroom(data, schoolId, yearId),
-    // Consider adding onSuccess to invalidate 'GET_CLASSROOMS' query
+    mutationFn: (data) => apis.createClassroom(data),
   });
 }
 
@@ -113,12 +104,11 @@ export function useUpdateClassroom() {
   return useMutation<
     ClassAttributes,
     Error,
-    { data: Partial<ClassAttributes>; schoolId: string; classId: string }
+    { data: Partial<ClassAttributesInsert>; schoolId: string; classId: string }
   >({
     mutationKey: ["UPDATE_CLASSROOM"],
     mutationFn: ({ data, schoolId, classId }) =>
       apis.updateClassroom(data, schoolId, classId),
-    // Consider adding onSuccess to invalidate 'GET_CLASSROOMS' query
   });
 }
 
@@ -135,7 +125,6 @@ export function useDeleteClassroom() {
     mutationKey: ["DELETE_CLASSROOM"],
     mutationFn: ({ schoolId, classId }) =>
       apis.deleteClassroom(schoolId, classId),
-    // Consider adding onSuccess to invalidate 'GET_CLASSROOMS' query
   });
 }
 
@@ -157,15 +146,9 @@ export function useGetOptions(schoolId: string) {
  * @description Hook to create a new option.
  */
 export function useCreateOption() {
-  return useMutation<
-    OptionAttributes,
-    Error,
-    { data: OptionAttributes; schoolId: string; yearId: string }
-  >({
+  return useMutation<OptionAttributes, Error, OptionAttributesInsert>({
     mutationKey: ["CREATE_OPTION"],
-    mutationFn: ({ data, schoolId, yearId }) =>
-      apis.createOption(data, schoolId, yearId),
-    // Consider adding onSuccess to invalidate 'GET_OPTIONS' query
+    mutationFn: (data) => apis.createOption(data),
   });
 }
 
@@ -182,7 +165,6 @@ export function useUpdateOption() {
     mutationKey: ["UPDATE_OPTION"],
     mutationFn: ({ data, schoolId, optionId }) =>
       apis.updateOption(data, schoolId, optionId),
-    // Consider adding onSuccess to invalidate 'GET_OPTIONS' query
   });
 }
 
@@ -199,7 +181,6 @@ export function useDeleteOption() {
     mutationKey: ["DELETE_OPTION"],
     mutationFn: ({ schoolId, optionId }) =>
       apis.deleteOption(schoolId, optionId),
-    // Consider adding onSuccess to invalidate 'GET_OPTIONS' query
   });
 }
 
@@ -221,14 +202,9 @@ export function useGetStudyYears(schoolId: string) {
  * @description Hook to create a new study year.
  */
 export function useCreateStudyYear() {
-  return useMutation<
-    StudyYearAttributes,
-    Error,
-    { data: Omit<StudyYearAttributes, "yearId">; schoolId: string }
-  >({
+  return useMutation<StudyYearAttributes, Error, StudyYearAttributesInsert>({
     mutationKey: ["CREATE_STUDY_YEAR"],
-    mutationFn: ({ data, schoolId }) => apis.createStudyYear(data, schoolId),
-    // Consider adding onSuccess to invalidate 'GET_STUDY_YEARS' query
+    mutationFn: (data) => apis.createStudyYear(data),
   });
 }
 
@@ -241,7 +217,7 @@ export function useUpdateStudyYear() {
     StudyYearAttributes,
     Error,
     {
-      data: Partial<StudyYearAttributes>;
+      data: Partial<StudyYearAttributesInsert>;
       schoolId: string;
       studyYearId: string;
     }
@@ -249,7 +225,6 @@ export function useUpdateStudyYear() {
     mutationKey: ["UPDATE_STUDY_YEAR"],
     mutationFn: ({ data, schoolId, studyYearId }) =>
       apis.updateStudyYear(data, schoolId, studyYearId),
-    // Consider adding onSuccess to invalidate 'GET_STUDY_YEARS' query
   });
 }
 
@@ -266,6 +241,5 @@ export function useDeleteStudyYear() {
     mutationKey: ["DELETE_STUDY_YEAR"],
     mutationFn: ({ schoolId, studyYearId }) =>
       apis.deleteStudyYear(schoolId, studyYearId),
-    // Consider adding onSuccess to invalidate 'GET_STUDY_YEARS' query
   });
 }
