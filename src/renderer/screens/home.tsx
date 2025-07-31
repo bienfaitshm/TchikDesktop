@@ -5,22 +5,25 @@ import {
   DataContentHead,
   DataTableContent,
   DataTablePagination,
-  useTableActionHandler,
+
   DataTableColumnFilter,
 } from "@/renderer/components/tables/data-table";
 import { TypographyH3 } from "@/renderer/components/ui/typography";
-import { OptionForm, useFormRef, type OptionFormData as FormValueType } from "@/renderer/components/form/option-form";
+import { SchoolForm, useFormRef, type SchoolFormData as FormValueType } from "@/renderer/components/form/school-form";
 import { FormDialog, useFormDialogRef } from "@/renderer/components/dialog/dialog-form";
 import { Button } from "@/renderer/components/ui/button";
 import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns.base";
-import { OptionColumns } from "@/renderer/components/tables/columns.options";
-import type { OptionAttributes } from "@/camons/types/models";
+import { SchoolColumns } from "@/renderer/components/tables/columns.school";
+import type { SchoolAttributes, OptionAttributes } from "@/camons/types/models";
 import type { DataTableMenu } from "@/renderer/components/button-menus";
 import { SECTION } from "@/camons/constants/enum";
 import { Pencil, Trash2 } from "lucide-react";
 import { DialogConfirmDelete, useDialogConfirmDelete } from "../components/dialog/dialog-delete";
 import { ButtonLoader } from "../components/form/button-loader";
 import { useImperativeUpdateDialog, useUpdateDialogRef, withUpdateDialog } from "../components/dialog/dialog-form.update";
+import { useCreateSchool, useGetSchools, useUpdateSchool } from "../libs/queries/school";
+import { useTableActionController } from "../components/tables/hooks";
+import { Suspense } from "../libs/queries/suspense";
 
 // --- Mock Data ---
 // In a real application, this data would typically be fetched from an API.
@@ -51,12 +54,21 @@ const tableMenus: DataTableMenu[] = [
 const OptionCreateForm: React.FC = () => {
   const dialogRef = useFormDialogRef();
   const formRef = useFormRef();
+  const mutation = useCreateSchool()
 
   // Handler for form submission
   const onSubmit = (value: FormValueType) => {
     console.log("Submit new option:", value);
     // In a real app, you would send this data to your backend
-    dialogRef.current?.closeDialog();
+    mutation.mutate(value, {
+      onSuccess(data) {
+        console.log("New school created", data);
+        dialogRef.current?.closeDialog();
+      }, onError(error,) {
+        console.log("error", error)
+      },
+    })
+
   };
 
   return (
@@ -72,14 +84,20 @@ const OptionCreateForm: React.FC = () => {
           </FormDialog.Description>
         </FormDialog.Header>
         <FormDialog.FormWrapper>
-          <OptionForm ref={formRef} onSubmit={onSubmit} />
+          <SchoolForm ref={formRef} onSubmit={onSubmit} />
         </FormDialog.FormWrapper>
         <FormDialog.Footer>
           <FormDialog.CloseButton asChild>
             <Button variant="outline" size="sm">Annuler</Button>
           </FormDialog.CloseButton>
           <FormDialog.SubmitButton asChild>
-            <ButtonLoader>Enregistrer</ButtonLoader>
+            <ButtonLoader
+              isLoading={mutation.isPending}
+              disabled={mutation.isPending}
+              isLoadingText="Enregistrement ..."
+            >
+              Enregistrer
+            </ButtonLoader>
           </FormDialog.SubmitButton>
         </FormDialog.Footer>
       </FormDialog.Content>
@@ -92,16 +110,27 @@ const OptionUpdateForm = withUpdateDialog((_, ref) => {
   const dialogRef = useFormDialogRef();
   const formRef = useFormRef();
 
+  const mutation = useUpdateSchool()
+
+
   // Hook to get the data passed for editing and open the dialog
-  const [dataToEdit] = useImperativeUpdateDialog<Omit<Partial<OptionAttributes>, "optionId">>(ref, () => {
+  const [dataToEdit] = useImperativeUpdateDialog<Partial<SchoolAttributes>>(ref, () => {
     dialogRef.current?.openDialog();
   });
 
   // Handler for form submission
   const onSubmit = (value: FormValueType) => {
-    console.log("Submit updated option:", value);
-    // In a real app, you would send this updated data to your backend
-    dialogRef.current?.closeDialog();
+    console.log("Submit new option:", value);
+    // In a real app, you would send this data to your backend
+    mutation.mutate({ data: value, schoolId: dataToEdit?.schoolId as string }, {
+      onSuccess(data) {
+        console.log("Update school created", data);
+        dialogRef.current?.closeDialog();
+      }, onError(error,) {
+        console.log("error", error)
+      },
+    })
+
   };
 
   return (
@@ -114,15 +143,21 @@ const OptionUpdateForm = withUpdateDialog((_, ref) => {
           </FormDialog.Description>
         </FormDialog.Header>
         <FormDialog.FormWrapper>
-          {/* Pass initialValues to pre-fill the form with dataToEdit */}
-          <OptionForm initialValues={dataToEdit} ref={formRef} onSubmit={onSubmit} />
+          <SchoolForm initialValues={{ adress: dataToEdit?.adress, town: dataToEdit?.town, name: dataToEdit?.name }} ref={formRef} onSubmit={onSubmit} />
         </FormDialog.FormWrapper>
         <FormDialog.Footer>
           <FormDialog.CloseButton asChild>
             <Button variant="outline" size="sm">Annuler</Button>
           </FormDialog.CloseButton>
           <FormDialog.SubmitButton asChild>
-            <ButtonLoader>Enregistrer</ButtonLoader>
+            <ButtonLoader
+              size="sm"
+              isLoading={mutation.isPending}
+              disabled={mutation.isPending}
+              isLoadingText="Enregistrement ..."
+            >
+              Enregistrer
+            </ButtonLoader>
           </FormDialog.SubmitButton>
         </FormDialog.Footer>
       </FormDialog.Content>
@@ -131,18 +166,21 @@ const OptionUpdateForm = withUpdateDialog((_, ref) => {
 });
 
 // --- Main Home Component ---
-const Home: React.FC = () => {
+const HomePageLoader: React.FC = () => {
   const dialogConfirmRef = useDialogConfirmDelete();
   const updateDialogRef = useUpdateDialogRef();
-  const actionHandler = useTableActionHandler();
+  const actionHandler = useTableActionController();
 
+  const { data: schools } = useGetSchools()
+
+  console.log("schools", schools)
   // Registering action handlers for data table row menus
-  actionHandler.on<OptionAttributes>("edit", (value) => {
+  actionHandler.on<SchoolAttributes>("edit", (value) => {
     console.log("Action: Edit", { value });
     updateDialogRef.current?.openDialog(value); // Open update dialog with selected data
   });
 
-  actionHandler.on("delete", (value: OptionAttributes) => {
+  actionHandler.on("delete", (value: SchoolAttributes) => {
     console.log("Action: Delete", { value });
     dialogConfirmRef.current?.openDialog(value); // Open confirmation dialog for deletion
   });
@@ -160,14 +198,14 @@ const Home: React.FC = () => {
       </div>
 
       <DataTable
-        data={mockData}
+        data={schools ? schools : []}
         columns={enhanceColumnsWithMenu({
           // Directly pass the actionHandler's trigger method
           onPressMenu: (...args) => actionHandler.trigger(...args),
-          columns: OptionColumns,
+          columns: SchoolColumns,
           menus: tableMenus,
         })}
-        keyExtractor={(item) => item.optionId}
+        keyExtractor={(item) => item.schoolId}
       >
         <div className="flex items-center justify-between my-5">
           {/* This button seems to be for testing; consider its purpose or remove */}
@@ -193,4 +231,12 @@ const Home: React.FC = () => {
   );
 };
 
+
+const Home = () => {
+  return (
+    <Suspense>
+      <HomePageLoader />
+    </Suspense>
+  )
+}
 export default Home;

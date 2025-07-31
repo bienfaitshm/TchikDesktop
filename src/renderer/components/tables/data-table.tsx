@@ -50,19 +50,17 @@ import {
     DropdownMenuTrigger,
 } from "@/renderer/components/ui/dropdown-menu"
 import { Button } from "@/renderer/components/ui/button";
-import { useTable } from "./hooks";
+import { useDataTable } from "./hooks";
 import { DraggableRow } from "./data-table.components";
 
-export { useTableActionHandler } from "./hooks"
-
 type ContextTable<T> = {
-    handleDragEnd: (event: DragEndEvent) => void;
-    sensors: SensorDescriptor<SensorOptions>[];
-    sortableId: string;
-    table: TanstackTable<T>;
+    dndId: string;
+    dndSensors: SensorDescriptor<SensorOptions>[];
+    handleRowDragEnd: (event: DragEndEvent) => void;
+    tableInstance: TanstackTable<T>;
     columns: ColumnDef<T>[];
-    dataIds: UniqueIdentifier[];
-    keyExtractor: (value: T) => string;
+    rowIds: UniqueIdentifier[];
+    keyExtractor: (item: T) => string;
 };
 
 const DataTableContext = createContext<ContextTable<any> | null>(null);
@@ -84,9 +82,9 @@ export function DataTable<T>({
     columns,
     children,
 }: DataTableProps<T> & { children?: React.ReactNode }) {
-    const contextValue = useTable({ initialData: data, keyExtractor, columns });
+    const contextValue = useDataTable({ initialData: data, keyExtractor, columns });
     return (
-        <DataTableContext.Provider value={contextValue as ContextTable<any>}>
+        <DataTableContext.Provider value={contextValue}>
             {children}
         </DataTableContext.Provider>
     );
@@ -99,9 +97,9 @@ export function DataTableContent({ children }: { children?: React.ReactNode }) {
             <DndContext
                 collisionDetection={closestCenter}
                 modifiers={[restrictToVerticalAxis]}
-                onDragEnd={ctx?.handleDragEnd}
-                sensors={ctx?.sensors}
-                id={ctx?.sortableId}
+                onDragEnd={ctx?.handleRowDragEnd}
+                sensors={ctx?.dndSensors}
+                id={ctx?.dndId}
             >
                 <TableView>{children}</TableView>
             </DndContext>
@@ -111,7 +109,7 @@ export function DataTableContent({ children }: { children?: React.ReactNode }) {
 
 export function DataContentHead() {
     const ctx = useDataTableContext();
-    const headerGroups = ctx?.table?.getHeaderGroups() ?? [];
+    const headerGroups = ctx?.tableInstance?.getHeaderGroups() ?? [];
     return (
         <TableHeader className="bg-muted sticky top-0 z-10">
             {headerGroups.map((headerGroup) => (
@@ -134,12 +132,12 @@ export function DataContentHead() {
 
 export function DataContentBody() {
     const ctx = useDataTableContext();
-    const rows = ctx?.table?.getRowModel().rows ?? [];
+    const rows = ctx?.tableInstance?.getRowModel().rows ?? [];
     return (
         <TableBody className="**:data-[slot=table-cell]:first:w-8">
             {rows.length ? (
                 <SortableContext
-                    items={ctx!.dataIds}
+                    items={ctx!.rowIds}
                     strategy={verticalListSortingStrategy}
                 >
                     {rows.map((row) => (
@@ -163,7 +161,7 @@ export function DataContentBody() {
 
 export function DataTablePagination() {
     const ctx = useDataTableContext();
-    const table = ctx?.table;
+    const table = ctx?.tableInstance;
     if (!table) return null;
 
     const {
@@ -250,7 +248,7 @@ export function DataTablePagination() {
 
 export function DataTableColumnFilter() {
     const ctx = useDataTableContext();
-    const table = ctx?.table;
+    const table = ctx?.tableInstance;
     if (!table) return null;
 
     return (

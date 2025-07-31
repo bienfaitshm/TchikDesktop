@@ -7,6 +7,7 @@ const queryClient = new QueryClient({
             refetchOnWindowFocus: false, // Pas de refetch lors du focus
             refetchOnReconnect: false, // Pas de refetch lors de la reconnexion
             refetchInterval: false, // Pas de refetch périodique
+            suspense: true,
         },
     },
 })

@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import type {
   ClassAttributes,
   OptionAttributes,
@@ -14,7 +14,7 @@ import * as apis from "@/renderer/libs/apis/school";
  * @description Hook to fetch all schools.
  */
 export function useGetSchools() {
-  return useQuery<SchoolAttributes[], Error>({
+  return useSuspenseQuery<SchoolAttributes[], Error>({
     queryKey: ["GET_SCHOOLS"],
     queryFn: () => apis.getSchools(),
   });
@@ -25,10 +25,9 @@ export function useGetSchools() {
  * @description Hook to fetch a single school by its ID.
  */
 export function useGetSchoolById(schoolId: string) {
-  return useQuery<SchoolAttributes, Error>({
+  return useSuspenseQuery<SchoolAttributes, Error>({
     queryKey: ["GET_SCHOOL_BY_ID", schoolId],
     queryFn: () => apis.getSchoolById(schoolId),
-    enabled: !!schoolId, // Only run query if schoolId is available
   });
 }
 
@@ -37,7 +36,11 @@ export function useGetSchoolById(schoolId: string) {
  * @description Hook to create a new school.
  */
 export function useCreateSchool() {
-  return useMutation<SchoolAttributes, Error, SchoolAttributes>({
+  return useMutation<
+    SchoolAttributes,
+    Error,
+    Omit<SchoolAttributes, "schoolId">
+  >({
     mutationKey: ["CREATE_SCHOOL"],
     mutationFn: (data) => apis.createSchool(data),
     // Consider adding onSuccess to invalidate 'GET_SCHOOLS' query
@@ -79,10 +82,9 @@ export function useDeleteSchool() {
  * @description Hook to fetch all classrooms for a given school, optionally filtered by year.
  */
 export function useGetClassrooms(schoolId: string, yearId?: string) {
-  return useQuery<ClassAttributes[], Error>({
+  return useSuspenseQuery<ClassAttributes[], Error>({
     queryKey: ["GET_CLASSROOMS", schoolId, yearId],
     queryFn: () => apis.getClassrooms(schoolId, yearId),
-    enabled: !!schoolId, // Only run query if schoolId is available
   });
 }
 
@@ -144,10 +146,9 @@ export function useDeleteClassroom() {
  * @description Hook to fetch all options for a given school.
  */
 export function useGetOptions(schoolId: string) {
-  return useQuery<OptionAttributes[], Error>({
+  return useSuspenseQuery<OptionAttributes[], Error>({
     queryKey: ["GET_OPTIONS", schoolId],
     queryFn: () => apis.getOptions(schoolId),
-    enabled: !!schoolId,
   });
 }
 
@@ -209,10 +210,9 @@ export function useDeleteOption() {
  * @description Hook to fetch all study years for a given school.
  */
 export function useGetStudyYears(schoolId: string) {
-  return useQuery<StudyYearAttributes[], Error>({
+  return useSuspenseQuery<StudyYearAttributes[], Error>({
     queryKey: ["GET_STUDY_YEARS", schoolId],
     queryFn: () => apis.getStudyYears(schoolId),
-    enabled: !!schoolId,
   });
 }
 

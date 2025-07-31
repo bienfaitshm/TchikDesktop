@@ -225,12 +225,12 @@ export const getSchoolById = (schoolId: string) => {
  * @function createSchool
  * @description Client action to create a new school.
  */
-export const createSchool = (data: SchoolAttributes) => {
+export const createSchool = (data: Omit<SchoolAttributes, "schoolId">) => {
   return actionFn(
-    clientApis.post<TResponse<SchoolAttributes>, SchoolAttributes>(
-      "schools",
-      data
-    )
+    clientApis.post<
+      TResponse<SchoolAttributes>,
+      Omit<SchoolAttributes, "schoolId">
+    >("schools", data)
   ).then((res) => res.data);
 };
 

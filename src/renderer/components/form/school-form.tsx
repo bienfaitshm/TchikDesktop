@@ -138,13 +138,11 @@ export const SchoolForm = React.forwardRef<
         },
     });
 
-    // Expose react-hook-form's methods imperatively via the ref
     useImperativeHandleForm(ref, form);
-
     return (
         <div>
-            <Form {...form}> {/* Pass the form instance from useControlledForm */}
-                <form className="space-y-4" onSubmit={handleSubmit}> {/* Use the handleSubmit from useControlledForm */}
+            <Form {...form}>
+                <form className="space-y-4" onSubmit={handleSubmit}>
                     {/* School Name Field */}
                     <FormField
                         control={form.control}

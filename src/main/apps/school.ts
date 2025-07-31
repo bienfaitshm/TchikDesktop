@@ -354,8 +354,8 @@ server.delete<any, WithSchoolIdParams<{ studyYearId: string }>>(
  */
 server.get("schools", async () => {
   try {
-    const schools = await SchoolService.findAll();
-    return response(mapModelsToPlainList(schools));
+    const schools = await mapModelsToPlainList(SchoolService.findAll());
+    return response(schools);
   } catch (error) {
     console.error(`Erreur lors de la récupération des écoles: ${error}`);
     return response(
@@ -376,7 +376,7 @@ server.get<any, WithSchoolIdParams<{}>>(
     try {
       const school = await SchoolService.findById(schoolId);
       if (school) {
-        return response(mapModelToPlain(school));
+        return response(await mapModelToPlain(school));
       }
       return response({}, Status.NOT_FOUND, "École non trouvée.");
     } catch (error) {
@@ -398,8 +398,8 @@ server.get<any, WithSchoolIdParams<{}>>(
  */
 server.post<any, SchoolAttributes, {}>("schools", async ({ data }) => {
   try {
-    const newSchool = await SchoolService.create(data);
-    return response(mapModelToPlain(newSchool));
+    const newSchool = await mapModelToPlain(SchoolService.create(data));
+    return response(newSchool);
   } catch (error) {
     console.error(`Erreur lors de la création de l'école: ${error}`);
     return response(
@@ -420,7 +420,7 @@ server.put<any, Partial<SchoolAttributes>, WithSchoolIdParams<{}>>(
     try {
       const updatedSchool = await SchoolService.update(schoolId, data);
       if (updatedSchool) {
-        return response(mapModelToPlain(updatedSchool));
+        return response(await mapModelToPlain(updatedSchool));
       }
       return response(
         {},
