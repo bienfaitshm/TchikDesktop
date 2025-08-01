@@ -76,7 +76,7 @@
     "tailwindcss-animate": "^1.0.7",
     "voilab-pdf-table": "^0.5.1",
     "zod": "^4.0.5",
-    "zustand": "^5.0.6"
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^2.0.0",
