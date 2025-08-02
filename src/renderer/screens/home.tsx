@@ -5,222 +5,211 @@ import {
   DataContentHead,
   DataTableContent,
   DataTablePagination,
-
   DataTableColumnFilter,
 } from "@/renderer/components/tables/data-table";
-import { TypographyH3 } from "@/renderer/components/ui/typography";
-import { SchoolForm, useFormHandleRef, type SchoolFormData as FormValueType } from "@/renderer/components/form/school-form";
-import { FormDialog, useFormDialogRef } from "@/renderer/components/dialog/dialog-form";
+import { TypographyH3, TypographySmall } from "@/renderer/components/ui/typography";
+import { SchoolForm, type SchoolFormData as FormValueType } from "@/renderer/components/form/school-form";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/renderer/components/ui/dialog";
 import { Button } from "@/renderer/components/ui/button";
-import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns.base";
+import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
 import { SchoolColumns } from "@/renderer/components/tables/columns.school";
-import type { SchoolAttributes, OptionAttributes } from "@/camons/types/models";
+import type { SchoolAttributes } from "@/camons/types/models";
 import type { DataTableMenu } from "@/renderer/components/button-menus";
-import { SECTION } from "@/camons/constants/enum";
 import { Pencil, Trash2 } from "lucide-react";
-import { DialogConfirmDelete, useDialogConfirmDelete } from "../components/dialog/dialog-delete";
-import { ButtonLoader } from "../components/form/button-loader";
-import { useImperativeUpdateDialog, useUpdateDialogRef, withUpdateDialog } from "../components/dialog/dialog-form.update";
-import { useCreateSchool, useGetSchools, useUpdateSchool } from "../libs/queries/school";
-import { useTableActionController } from "../components/tables/hooks";
-import { Suspense } from "../libs/queries/suspense";
+import { DialogConfirmDelete, useConfirmDeleteDialog } from "../components/dialog/dialog-delete";
+import { ButtonLoader } from "@/renderer/components/form/button-loader";
+import { useCreateSchool, useDeleteSchool, useGetSchools, useUpdateSchool } from "@/renderer/libs/queries/school";
+import { useQueryClient } from "@tanstack/react-query";
+import { Suspense } from "@/renderer/libs/queries/suspense";
+import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
+import { FormSubmitter } from "@/renderer/components/form/form-submiter"
 
-// --- Mock Data ---
-// In a real application, this data would typically be fetched from an API.
-const mockData: OptionAttributes[] = [
-  {
-    optionId: "123",
-    optionName: "Scientifique",
-    optionShortName: "HSC",
-    schoolId: "12345",
-    section: SECTION.SECONDARY,
-  },
-  {
-    optionId: "1238",
-    optionName: "Pedagogie generale",
-    optionShortName: "HP",
-    schoolId: "12345",
-    section: SECTION.SECONDARY,
-  },
-];
+type SchoolDialogState = {
+  isOpen: boolean;
+  type: 'create' | 'edit';
+  initialData?: Partial<SchoolAttributes>;
+}
 
-// --- Data Table Menu Definitions ---
+// --- Reusable Data Table Menu Definitions ---
 const tableMenus: DataTableMenu[] = [
   { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
   { key: "delete", label: "Supprimer", separator: true, icon: <Trash2 className="size-3" /> },
 ];
 
-// --- Option Creation Form Component ---
-const OptionCreateForm: React.FC = () => {
-  const dialogRef = useFormDialogRef();
-  const formRef = useFormHandleRef<FormValueType>();
-  const mutation = useCreateSchool()
+// This hook encapsulates all the data fetching, mutation, and state management
+// for the school management page, making the main component much cleaner.
+const useSchoolManagement = () => {
+  const queryClient = useQueryClient();
+  const { data: schools = [], isLoading } = useGetSchools();
+  const createMutation = useCreateSchool();
+  const updateMutation = useUpdateSchool();
+  const deleteMutation = useDeleteSchool();
 
-  // Handler for form submission
-  const onSubmit = (value: FormValueType) => {
-    console.log("Submit new option:", value);
-    // In a real app, you would send this data to your backend
-    mutation.mutate(value, {
-      onSuccess(data) {
-        console.log("New school created", data);
-        dialogRef.current?.closeDialog();
-      }, onError(error,) {
-        console.log("error", error)
-      },
-    })
-
+  const invalidateSchoolsCache = () => {
+    queryClient.invalidateQueries({ queryKey: ["GET_SCHOOLS"] });
   };
 
+  const handleCreate = (values: FormValueType) => {
+    createMutation.mutate(values, createMutationCallbacksWithNotifications({
+      successMessageTitle: "Établissement créé !",
+      successMessageDescription: `L'établissement '${values.name}' a été ajouté avec succès.`,
+      errorMessageTitle: "Échec de la création de l'établissement.",
+      onSuccess: invalidateSchoolsCache,
+    }));
+  };
+
+  const handleUpdate = (schoolId: string, values: FormValueType) => {
+    updateMutation.mutate({ schoolId, data: values }, createMutationCallbacksWithNotifications({
+      successMessageTitle: "Établissement mis à jour !",
+      successMessageDescription: `L'établissement '${values.name}' a été modifié avec succès.`,
+      errorMessageTitle: "Échec de la mise à jour de l'établissement.",
+      onSuccess: invalidateSchoolsCache,
+    }));
+  };
+
+  const handleDelete = (schoolId: string) => {
+    deleteMutation.mutate(schoolId, createMutationCallbacksWithNotifications({
+      successMessageTitle: "Établissement supprimé !",
+      successMessageDescription: "L'établissement a été supprimé avec succès.",
+      errorMessageTitle: "Échec de la suppression de l'établissement.",
+      onSuccess: invalidateSchoolsCache,
+    }));
+  };
+
+  return {
+    schools,
+    isLoading,
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    handleCreate,
+    handleUpdate,
+    handleDelete,
+  };
+};
+
+const SchoolFormDialog = ({ state, onClose, onSubmit, isPending }: {
+  state: SchoolDialogState;
+  onClose: () => void;
+  onSubmit: (values: FormValueType) => void;
+  isPending: boolean;
+}) => {
+  const title = state.type === 'create' ? "Création de l'établissement" : "Modification de l'établissement";
+  const description = state.type === 'create' ?
+    "Remplissez les informations ci-dessous pour créer un nouvel établissement." :
+    "Modifiez les informations de l'établissement sélectionné.";
+  const submitText = state.type === 'create' ? "Enregistrer" : "Modifier";
+
+
   return (
-    <FormDialog.Root ref={dialogRef}>
-      <FormDialog.TriggerButton asChild>
-        <Button size="sm">Ajout de l'option</Button>
-      </FormDialog.TriggerButton>
-      <FormDialog.Content>
-        <FormDialog.Header>
-          <FormDialog.Title>Création de l'option</FormDialog.Title>
-          <FormDialog.Description>
-            Remplissez les informations ci-dessous pour créer une nouvelle option.
-          </FormDialog.Description>
-        </FormDialog.Header>
-        <FormDialog.FormWrapper>
-          <SchoolForm ref={formRef} onSubmit={onSubmit} />
-        </FormDialog.FormWrapper>
-        <FormDialog.Footer>
-          <FormDialog.CloseButton asChild>
-            <Button variant="outline" size="sm">Annuler</Button>
-          </FormDialog.CloseButton>
-          <FormDialog.SubmitButton asChild>
-            <ButtonLoader
-              isLoading={mutation.isPending}
-              disabled={mutation.isPending}
-              isLoadingText="Enregistrement ..."
-            >
-              Enregistrer
-            </ButtonLoader>
-          </FormDialog.SubmitButton>
-        </FormDialog.Footer>
-      </FormDialog.Content>
-    </FormDialog.Root>
+    <Dialog open={state.isOpen} onOpenChange={onClose}>
+      <FormSubmitter>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
+          <FormSubmitter.Wrapper>
+            <SchoolForm initialValues={state.initialData} onSubmit={onSubmit} />
+          </FormSubmitter.Wrapper>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={onClose} disabled={isPending}>Annuler</Button>
+            <FormSubmitter.Trigger asChild>
+              <ButtonLoader
+                size="sm"
+                isLoading={isPending}
+                disabled={isPending}
+                isLoadingText="Enregistrement ..."
+              >
+                {submitText}
+              </ButtonLoader>
+            </FormSubmitter.Trigger>
+          </DialogFooter>
+        </DialogContent>
+      </FormSubmitter>
+    </Dialog>
   );
 };
 
-// --- Option Update Form Component (Higher-Order Component Pattern) ---
-const OptionUpdateForm = withUpdateDialog((_, ref) => {
-  const dialogRef = useFormDialogRef();
-  const formRef = useFormHandleRef<FormValueType>();
+// --- Main Page Component ---
+const SchoolManagementPage = () => {
+  const {
+    schools,
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    handleCreate,
+    handleUpdate,
+    handleDelete,
+  } = useSchoolManagement();
 
-  const mutation = useUpdateSchool()
+  const confirmDelete = useConfirmDeleteDialog<SchoolAttributes>();
 
-
-  // Hook to get the data passed for editing and open the dialog
-  const [dataToEdit] = useImperativeUpdateDialog<Partial<SchoolAttributes>>(ref, () => {
-    dialogRef.current?.openDialog();
+  const [dialogState, setDialogState] = React.useState<SchoolDialogState>({
+    isOpen: false,
+    type: 'create',
   });
 
-  // Handler for form submission
-  const onSubmit = (value: FormValueType) => {
-    console.log("Submit new option:", value);
-    // In a real app, you would send this data to your backend
-    mutation.mutate({ data: value, schoolId: dataToEdit?.schoolId as string }, {
-      onSuccess(data) {
-        console.log("Update school created", data);
-        dialogRef.current?.closeDialog();
-      }, onError(error,) {
-        console.log("error", error)
-      },
-    })
+  const openCreateDialog = () => setDialogState({ isOpen: true, type: 'create' });
+  const openEditDialog = (school: SchoolAttributes) => setDialogState({ isOpen: true, type: 'edit', initialData: school });
+  const closeDialog = () => setDialogState({ isOpen: false, type: 'create' });
 
+  const handleAction = (key: string, item: SchoolAttributes) => {
+    switch (key) {
+      case "edit":
+        openEditDialog(item);
+        break;
+      case "delete":
+        confirmDelete.onOpen(item);
+        break;
+      default:
+        console.warn(`Unknown action key: ${key}`);
+    }
   };
 
-  return (
-    <FormDialog.Root ref={dialogRef}>
-      <FormDialog.Content>
-        <FormDialog.Header>
-          <FormDialog.Title>Modifier l'option</FormDialog.Title>
-          <FormDialog.Description>
-            Modifiez les informations de l'option sélectionnée.
-          </FormDialog.Description>
-        </FormDialog.Header>
-        <FormDialog.FormWrapper>
-          <SchoolForm
-            ref={formRef}
-            initialValues={{ adress: dataToEdit?.adress, town: dataToEdit?.town, name: dataToEdit?.name }}
-            onSubmit={onSubmit}
-          />
-        </FormDialog.FormWrapper>
-        <FormDialog.Footer>
-          <FormDialog.CloseButton asChild>
-            <Button variant="outline" size="sm">Annuler</Button>
-          </FormDialog.CloseButton>
-          <FormDialog.SubmitButton asChild>
-            <ButtonLoader
-              size="sm"
-              isLoading={mutation.isPending}
-              disabled={mutation.isPending}
-              isLoadingText="Enregistrement ..."
-            >
-              Enregistrer
-            </ButtonLoader>
-          </FormDialog.SubmitButton>
-        </FormDialog.Footer>
-      </FormDialog.Content>
-    </FormDialog.Root>
-  );
-});
-
-// --- Main Home Component ---
-const HomePageLoader: React.FC = () => {
-  const dialogConfirmRef = useDialogConfirmDelete();
-  const updateDialogRef = useUpdateDialogRef();
-  const actionHandler = useTableActionController();
-
-  const { data: schools } = useGetSchools()
-
-  console.log("schools", schools)
-  // Registering action handlers for data table row menus
-  actionHandler.on<SchoolAttributes>("edit", (value) => {
-    console.log("Action: Edit", { value });
-    updateDialogRef.current?.openDialog(value); // Open update dialog with selected data
-  });
-
-  actionHandler.on("delete", (value: SchoolAttributes) => {
-    console.log("Action: Delete", { value });
-    dialogConfirmRef.current?.openDialog(value); // Open confirmation dialog for deletion
-  });
-
-  // Handler for confirming deletion
-  const onConfirmDelete = (item: unknown) => {
-    console.log("Confirmed deletion for item:", item);
-    // In a real app, you would send a delete request to your backend
+  const onConfirmDelete = (item: SchoolAttributes) => {
+    handleDelete(item.schoolId);
+    confirmDelete.onClose();
   };
+
+  const onSubmitDialog = (values: FormValueType) => {
+    console.log("submit dialog", values)
+    if (dialogState.type === 'create') {
+      handleCreate(values);
+    } else if (dialogState.type === 'edit' && dialogState.initialData?.schoolId) {
+      handleUpdate(dialogState.initialData.schoolId, values);
+    }
+    closeDialog();
+  };
+
+  const isFormPending = dialogState.type === 'create' ? createMutation.isPending : updateMutation.isPending;
 
   return (
     <div className="my-10 mx-auto h-full container max-w-screen-lg">
       <div className="mb-6">
-        <TypographyH3>Gestion des Options</TypographyH3>
+        <TypographyH3>Gestion des Établissements Scolaires</TypographyH3>
       </div>
 
       <DataTable
-        data={schools ? schools : []}
+        data={schools}
         columns={enhanceColumnsWithMenu({
-          // Directly pass the actionHandler's trigger method
-          onPressMenu: (...args) => actionHandler.trigger(...args),
+          onPressMenu: handleAction,
           columns: SchoolColumns,
           menus: tableMenus,
         })}
         keyExtractor={(item) => item.schoolId}
       >
-        <div className="flex items-center justify-between my-5">
-          {/* This button seems to be for testing; consider its purpose or remove */}
-          <div>
-            <Button onClick={() => console.log("Bonjour button clicked!")}>Bonjour</Button>
-          </div>
+        <div className="flex items-center justify-end my-5">
           <div className="flex items-center gap-5">
             <DataTableColumnFilter />
-            <OptionCreateForm />
+            <Button size="sm" onClick={openCreateDialog}>Ajouter un établissement</Button>
           </div>
         </div>
+        {deleteMutation.isPending && (
+          <div className="py-1 px-5 my-1 bg-red-400/30 rounded-md">
+            <TypographySmall>Suppression en cours....</TypographySmall>
+          </div>
+        )}
         <DataTableContent>
           <DataContentHead />
           <DataContentBody />
@@ -229,18 +218,29 @@ const HomePageLoader: React.FC = () => {
       </DataTable>
 
       {/* Dialogs rendered at the root level for accessibility and proper overlay */}
-      <DialogConfirmDelete ref={dialogConfirmRef} onConfirmDelete={onConfirmDelete} />
-      <OptionUpdateForm ref={updateDialogRef} />
+      <SchoolFormDialog
+        state={dialogState}
+        onClose={closeDialog}
+        onSubmit={onSubmitDialog}
+        isPending={isFormPending}
+      />
+      <DialogConfirmDelete
+        item={confirmDelete.item}
+        open={confirmDelete.open}
+        onClose={confirmDelete.onClose}
+        onConfirm={onConfirmDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 };
 
-
 const Home = () => {
   return (
     <Suspense>
-      <HomePageLoader />
+      <SchoolManagementPage />
     </Suspense>
   )
 }
+
 export default Home;

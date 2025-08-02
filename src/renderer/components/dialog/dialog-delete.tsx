@@ -1,4 +1,4 @@
-import { useCallback, useImperativeHandle, useRef, useState, forwardRef } from "react";
+import { useCallback, useState } from "react";
 import {
     Dialog,
     DialogClose,
@@ -8,65 +8,74 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/renderer/components/ui/dialog";
-import { Button } from "../ui/button";
+import { Button } from "@/renderer/components/ui/button";
 
-export type DialogConfirmDeleteState = {
-    item?: unknown;
+// --- Custom Hook to Manage the Dialog State ---
+// This hook encapsulates all the logic for opening, closing, and confirming the dialog.
+// It's the "brain" of the component, allowing the parent component to control it declaratively.
+export const useConfirmDeleteDialog = <T extends object>() => {
+    const [item, setItem] = useState<T | undefined>(undefined);
+    const [open, setOpen] = useState(false);
+
+    const onOpen = useCallback((data: T) => {
+        setItem(data);
+        setOpen(true);
+    }, []);
+
+    const onClose = useCallback(() => {
+        setOpen(false);
+        setItem(undefined); // Clear item on close for safety
+    }, []);
+
+    return { item, open, onOpen, onClose };
+};
+
+
+export const DialogConfirmDelete = <T extends object>({
+    item,
+    open,
+    onClose,
+    onConfirm,
+    isLoading = false,
+}: {
+    item: T | undefined;
     open: boolean;
-};
+    onClose: () => void;
+    onConfirm: (item: T) => void;
+    isLoading?: boolean;
+}) => {
+    const handleConfirm = useCallback(() => {
+        if (item) {
+            onConfirm(item);
+        }
+    }, [item, onConfirm]);
 
-export type DialogConfirmDeleteProps = {
-    onConfirmDelete: (item: unknown) => void;
-};
-
-export type DialogConfirmDeleteRef = {
-    openDialog: (item?: unknown) => void;
-};
-
-export const DialogConfirmDelete = forwardRef<DialogConfirmDeleteRef, DialogConfirmDeleteProps>(
-    ({ onConfirmDelete }, ref) => {
-        const [state, setState] = useState<DialogConfirmDeleteState>({ open: false, item: undefined });
-
-        const handleOpenChange = useCallback((open: boolean) => {
-            setState(prev => ({ ...prev, open, item: open ? prev.item : undefined }));
-        }, []);
-
-        const handleConfirmDelete = useCallback(() => {
-            onConfirmDelete(state.item);
-            setState(prev => ({ ...prev, open: false, item: undefined }));
-        }, [onConfirmDelete, state.item]);
-
-        useImperativeHandle(ref, () => ({
-            openDialog: (item?: unknown) => setState({ open: true, item }),
-        }), []);
-
-        return (
-            <Dialog open={state.open} onOpenChange={handleOpenChange}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">
-                            Voulez-vous vraiment supprimer&nbsp;?
-                        </DialogTitle>
-                        <DialogDescription className="text-center">
-                            Cette action est irréversible.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="sm:justify-center gap-4">
-                        <DialogClose asChild>
-                            <Button type="button" variant="secondary">
-                                Annuler
-                            </Button>
-                        </DialogClose>
-                        <Button onClick={handleConfirmDelete} variant="destructive">
-                            Confirmer
+    return (
+        <Dialog open={open} onOpenChange={onClose}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle className="text-center">
+                        Voulez-vous vraiment supprimer ?
+                    </DialogTitle>
+                    <DialogDescription className="text-center">
+                        Cette action est irréversible.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="sm:justify-center gap-4">
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary" disabled={isLoading}>
+                            Annuler
                         </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        );
-    }
-);
-
-DialogConfirmDelete.displayName = "DialogConfirmDelete";
-
-export const useDialogConfirmDelete = () => useRef<DialogConfirmDeleteRef>(null);
+                    </DialogClose>
+                    <Button
+                        onClick={handleConfirm}
+                        variant="destructive"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? "Suppression..." : "Confirmer"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};

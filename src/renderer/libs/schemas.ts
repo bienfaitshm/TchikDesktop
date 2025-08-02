@@ -12,7 +12,7 @@ export const SchoolSchema = z.object({
   name: z.string().nonempty("Le nom de l'école ne peut pas être vide."),
   adress: z.string().nonempty("L'adresse ne peut pas être vide."),
   town: z.string().nonempty("La ville ne peut pas être vide."),
-  logo: z.string().optional(),
+  logo: z.string().nullable().optional(),
 });
 
 /**
@@ -27,7 +27,11 @@ export const UserSchema = z.object({
   userId: z.string().nonempty("L'ID de l'utilisateur ne peut pas être vide."),
   lastName: z.string().nonempty("Le nom de famille ne peut pas être vide."),
   middleName: z.string().nonempty("Le deuxième prénom ne peut pas être vide."),
-  firstName: z.string().nonempty("Le prénom ne peut pas être vide.").optional(),
+  firstName: z
+    .string()
+    .nonempty("Le prénom ne peut pas être vide.")
+    .nullable()
+    .optional(),
   username: z
     .string()
     .min(3, "Le nom d'utilisateur doit contenir au moins 3 caractères."),
@@ -46,10 +50,12 @@ export const UserSchema = z.object({
       /^\d{4}-\d{2}-\d{2}$/,
       "La date de naissance doit être au format AAAA-MM-JJ."
     )
+    .nullable()
     .optional(),
   birthPlace: z
     .string()
     .nonempty("Le lieu de naissance ne peut pas être vide.")
+    .nullable()
     .optional(),
   schoolId: z.string().nonempty("L'ID de l'école ne peut pas être vide."),
 });

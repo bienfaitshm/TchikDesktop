@@ -8,7 +8,7 @@ import StudentScreen from "@/renderer/screens/students";
 import LocalScreen from "@/renderer/screens/locals";
 import InscriptionScreen from "@/renderer/screens/inscriptions";
 import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
-import SchoolYearScreen from "@/renderer/screens/school-years";
+import SchoolYearScreen from "@/renderer/screens/study-years";
 import Layout from "@/renderer/screens/layout";
 import {
   ConfigurationLayoutScreen,

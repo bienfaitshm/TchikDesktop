@@ -8,27 +8,27 @@ import {
     DataTableColumnFilter,
 } from "@/renderer/components/tables/data-table";
 import { TypographyH3, TypographySmall } from "@/renderer/components/ui/typography";
-import { OptionForm, type OptionFormData as FormValueType } from "@/renderer/components/form/option-form";
+import { StudyYearForm, type StudyYearFormData as FormValueType } from "@/renderer/components/form/study-year-form";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/renderer/components/ui/dialog";
 import { Button } from "@/renderer/components/ui/button";
 import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
-import { OptionColumns } from "@/renderer/components/tables/columns.options";
-import type { OptionAttributes } from "@/camons/types/models";
+import { StudyYearColumns } from "@/renderer/components/tables/columns.study-years";
+import type { StudyYearAttributes } from "@/camons/types/services";
 import type { DataTableMenu } from "@/renderer/components/button-menus";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { DialogConfirmDelete, useConfirmDeleteDialog } from "../components/dialog/dialog-delete";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
-import { useCreateOption, useDeleteOption, useGetOptions, useUpdateOption } from "@/renderer/libs/queries/school";
 import { useQueryClient } from "@tanstack/react-query";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { FormSubmitter } from "@/renderer/components/form/form-submiter"
 import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
+import { useCreateStudyYear, useDeleteStudyYear, useGetStudyYears, useUpdateStudyYear } from "@/renderer/libs/queries/school";
 
 type SchoolDialogState = {
     isOpen: boolean;
     type: 'create' | 'edit';
-    initialData?: Partial<OptionAttributes>;
+    initialData?: Partial<StudyYearAttributes>;
 }
 
 // --- Reusable Data Table Menu Definitions ---
@@ -39,47 +39,47 @@ const tableMenus: DataTableMenu[] = [
 
 // This hook encapsulates all the data fetching, mutation, and state management
 // for the school management page, making the main component much cleaner.
-const useOptionManagement = () => {
+const useStudyYearManagement = () => {
     const queryClient = useQueryClient();
     const schoolId = useApplicationConfigurationStore(store => store.currentSchool?.schoolId as string)
-    const { data: schools = [], isLoading } = useGetOptions(schoolId);
-    const createMutation = useCreateOption();
-    const updateMutation = useUpdateOption();
-    const deleteMutation = useDeleteOption();
+    const { data: studyYears = [], isLoading } = useGetStudyYears(schoolId);
+    const createMutation = useCreateStudyYear();
+    const updateMutation = useUpdateStudyYear();
+    const deleteMutation = useDeleteStudyYear();
 
-    const invalidateSchoolsCache = () => {
-        queryClient.invalidateQueries({ queryKey: ["GET_OPTIONS", schoolId] });
+    const invalidateStudyYearsCache = () => {
+        queryClient.invalidateQueries({ queryKey: ["GET_STUDY_YEARS", schoolId] });
     };
 
     const handleCreate = (values: FormValueType) => {
         createMutation.mutate({ ...values, schoolId }, createMutationCallbacksWithNotifications({
-            successMessageTitle: "Option créé !",
-            successMessageDescription: `L'Option '${values.optionName}' a été ajouté avec succès.`,
-            errorMessageTitle: "Échec de la création de l'Option.",
-            onSuccess: invalidateSchoolsCache,
+            successMessageTitle: "L'année scolaire créé !",
+            successMessageDescription: `L'année scolaire'${values.yearName}' a été ajoutée avec succès.`,
+            errorMessageTitle: "Échec de la création de l'année scolaire",
+            onSuccess: invalidateStudyYearsCache,
         }));
     };
 
-    const handleUpdate = (optionId: string, values: FormValueType) => {
-        updateMutation.mutate({ schoolId, optionId, data: values }, createMutationCallbacksWithNotifications({
-            successMessageTitle: "Option mis à jour !",
-            successMessageDescription: `L'Option '${values.optionName}' a été modifié avec succès.`,
-            errorMessageTitle: "Échec de la mise à jour de l'Option.",
-            onSuccess: invalidateSchoolsCache,
+    const handleUpdate = (yearId: string, values: FormValueType) => {
+        updateMutation.mutate({ schoolId, studyYearId: yearId, data: values }, createMutationCallbacksWithNotifications({
+            successMessageTitle: "L'année scolaire mis à jour !",
+            successMessageDescription: `L'année scolaire '${values.yearName}' a été modifiée avec succès.`,
+            errorMessageTitle: "Échec de la mise à jour de l'année scolaire",
+            onSuccess: invalidateStudyYearsCache,
         }));
     };
 
-    const handleDelete = (optionId: string) => {
-        deleteMutation.mutate({ optionId, schoolId }, createMutationCallbacksWithNotifications({
-            successMessageTitle: "Option supprimé !",
-            successMessageDescription: "L'Option a été supprimé avec succès.",
-            errorMessageTitle: "Échec de la suppression de l'Option.",
-            onSuccess: invalidateSchoolsCache,
+    const handleDelete = (studyYearId: string) => {
+        deleteMutation.mutate({ studyYearId, schoolId }, createMutationCallbacksWithNotifications({
+            successMessageTitle: "L'année scolaire supprimé !",
+            successMessageDescription: "L'année scolaire a été supprimée avec succès.",
+            errorMessageTitle: "Échec de la suppression de l'année scolaire",
+            onSuccess: invalidateStudyYearsCache,
         }));
     };
 
     return {
-        schools,
+        studyYears,
         isLoading,
         createMutation,
         updateMutation,
@@ -90,16 +90,18 @@ const useOptionManagement = () => {
     };
 };
 
-const OptionFormDialog = ({ state, onClose, onSubmit, isPending }: {
+const StudyYearFormDialog = ({ state, onClose, onSubmit, isPending }: {
     state: SchoolDialogState;
     onClose: () => void;
     onSubmit: (values: FormValueType) => void;
     isPending: boolean;
 }) => {
-    const title = state.type === 'create' ? "Création de l'option" : "Modification de l'option";
+    const schoolId = useApplicationConfigurationStore(store => store.currentSchool?.schoolId as string)
+
+    const title = state.type === 'create' ? "Création de l'année scolaire" : "Modification de l'année scolaire";
     const description = state.type === 'create' ?
-        "Remplissez les informations ci-dessous pour créer une nouvelle option." :
-        "Modifiez les informations de l'Option sélectionné.";
+        "Remplissez les informations ci-dessous pour créer une nouvelle année scolaire." :
+        "Modifiez les informations de l'année scolaire sélectionnée.";
     const submitText = state.type === 'create' ? "Enregistrer" : "Modifier";
 
 
@@ -112,7 +114,7 @@ const OptionFormDialog = ({ state, onClose, onSubmit, isPending }: {
                         <DialogDescription>{description}</DialogDescription>
                     </DialogHeader>
                     <FormSubmitter.Wrapper>
-                        <OptionForm initialValues={state.initialData} onSubmit={onSubmit} />
+                        <StudyYearForm initialValues={{ ...state.initialData, schoolId }} onSubmit={onSubmit} />
                     </FormSubmitter.Wrapper>
                     <DialogFooter>
                         <Button variant="outline" size="sm" onClick={onClose} disabled={isPending}>Annuler</Button>
@@ -134,18 +136,18 @@ const OptionFormDialog = ({ state, onClose, onSubmit, isPending }: {
 };
 
 // --- Main Page Component ---
-const OptionManagementPage = () => {
+const StudyYearManagementPage = () => {
     const {
-        schools,
+        studyYears,
         createMutation,
         updateMutation,
         deleteMutation,
         handleCreate,
         handleUpdate,
         handleDelete,
-    } = useOptionManagement();
+    } = useStudyYearManagement();
 
-    const confirmDelete = useConfirmDeleteDialog<OptionAttributes>();
+    const confirmDelete = useConfirmDeleteDialog<StudyYearAttributes>();
 
     const [dialogState, setDialogState] = React.useState<SchoolDialogState>({
         isOpen: false,
@@ -153,10 +155,10 @@ const OptionManagementPage = () => {
     });
 
     const openCreateDialog = () => setDialogState({ isOpen: true, type: 'create' });
-    const openEditDialog = (school: OptionAttributes) => setDialogState({ isOpen: true, type: 'edit', initialData: school });
+    const openEditDialog = (school: StudyYearAttributes) => setDialogState({ isOpen: true, type: 'edit', initialData: school });
     const closeDialog = () => setDialogState({ isOpen: false, type: 'create' });
 
-    const handleAction = (key: string, item: OptionAttributes) => {
+    const handleAction = (key: string, item: StudyYearAttributes) => {
         switch (key) {
             case "edit":
                 openEditDialog(item);
@@ -169,7 +171,7 @@ const OptionManagementPage = () => {
         }
     };
 
-    const onConfirmDelete = (item: OptionAttributes) => {
+    const onConfirmDelete = (item: StudyYearAttributes) => {
         handleDelete(item.schoolId);
         confirmDelete.onClose();
     };
@@ -189,24 +191,24 @@ const OptionManagementPage = () => {
     return (
         <div className="my-10 mx-auto h-full container max-w-screen-lg">
             <div className="mb-6">
-                <TypographyH3>Gestion des options de l'établissement</TypographyH3>
+                <TypographyH3>Gestion des années scolaire</TypographyH3>
             </div>
 
             <DataTable
-                data={schools}
+                data={studyYears}
                 columns={enhanceColumnsWithMenu({
                     onPressMenu: handleAction,
-                    columns: OptionColumns,
+                    columns: StudyYearColumns,
                     menus: tableMenus,
                 })}
-                keyExtractor={(item) => item.schoolId}
+                keyExtractor={(item) => item.yearId}
             >
                 <div className="flex items-center justify-end my-5">
                     <div className="flex items-center gap-5">
                         <DataTableColumnFilter />
                         <Button size="sm" onClick={openCreateDialog}>
                             <Plus className="size-4" />
-                            <span>Ajouter une option</span>
+                            <span>Ajouter une année scolaire</span>
                         </Button>
                     </div>
                 </div>
@@ -223,7 +225,7 @@ const OptionManagementPage = () => {
             </DataTable>
 
             {/* Dialogs rendered at the root level for accessibility and proper overlay */}
-            <OptionFormDialog
+            <StudyYearFormDialog
                 state={dialogState}
                 onClose={closeDialog}
                 onSubmit={onSubmitDialog}
@@ -240,12 +242,12 @@ const OptionManagementPage = () => {
     );
 };
 
-const OptionPage = () => {
+const StudyYearsPage = () => {
     return (
         <Suspense>
-            <OptionManagementPage />
+            <StudyYearManagementPage />
         </Suspense>
     )
 }
 
-export default OptionPage;
+export default StudyYearsPage;

@@ -6,7 +6,7 @@ import type { DataTableMenu } from "@/renderer/components/button-menus";
 export type EnhanceColumnsWithMenuParams<T> = {
     columns: ColumnDef<T>[];
     menus?: DataTableMenu[];
-    onPressMenu?: (key: string, value?: T) => void;
+    onPressMenu?: (key: string, value: T) => void;
 };
 
 export function enhanceColumnsWithMenu<T>({

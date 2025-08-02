@@ -138,6 +138,7 @@ export const SchoolForm = React.forwardRef<
     });
 
     useFormImperativeHandle(ref, form);
+
     return (
         <div>
             <Form {...form}>

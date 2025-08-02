@@ -1,37 +1,37 @@
-import type { OptionAttributes } from "@/camons/types/models"
+import type { ClassAttributes } from "@/camons/types/models"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
 import { Badge } from "@/renderer/components/ui/badge"
 import { SECTION_TRANSLATIONS } from "@/camons/constants/enum"
 
 
-export const OptionColumns: ColumnDef<OptionAttributes>[] = [
+export const ClassroomColumns: ColumnDef<ClassAttributes>[] = [
     {
-        accessorKey: "optionId",
+        accessorKey: "yearId",
         header: "#ID",
         cell: ({ row }) => {
-            return <TypographySmall>{row.original.optionId}</TypographySmall>
+            return <TypographySmall>{row.original.classId}</TypographySmall>
         },
         enableHiding: false,
     },
     {
-        accessorKey: "optionName",
-        header: "Nom Complet",
+        accessorKey: "yearName",
+        header: "Nom de l'année scolaire",
         cell: ({ row }) => {
-            return <TypographySmall>{row.original.optionName}</TypographySmall>
+            return <TypographySmall>{row.original.identifier}</TypographySmall>
         },
         enableHiding: false,
     },
     {
-        accessorKey: "optionShortName",
-        header: "Nom Court",
-        cell: ({ row }) => <TypographySmall>{row.original.optionShortName}</TypographySmall>
+        accessorKey: "startDate",
+        header: "Date de début",
+        cell: ({ row }) => <TypographySmall>{row.original.shortIdentifier}</TypographySmall>
     },
     {
-        accessorKey: "section",
-        header: "Section",
+        accessorKey: "endDate",
+        header: "Date de fin",
         cell: ({ row }) => (
-            <div>
+            <div className="w-32">
                 <Badge variant="outline" className="text-muted-foreground px-1.5">
                     {SECTION_TRANSLATIONS[row.original.section]}
                 </Badge>

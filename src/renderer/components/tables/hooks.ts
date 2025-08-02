@@ -210,7 +210,7 @@ export function useDataTable<TData>({
   // Memoize row IDs for DND-kit SortableContext
   const rowIds = React.useMemo<UniqueIdentifier[]>(
     () => data?.map(keyExtractor) || [],
-    [data, keyExtractor] // Add keyExtractor to dependencies
+    [data, keyExtractor]
   );
 
   // Initialize @tanstack/react-table
@@ -256,8 +256,12 @@ export function useDataTable<TData>({
         });
       }
     },
-    [rowIds] // Depend on rowIds to ensure correct index calculations
+    [rowIds]
   );
+
+  React.useEffect(() => {
+    setData(initialData);
+  }, [initialData]);
 
   return {
     dndId,

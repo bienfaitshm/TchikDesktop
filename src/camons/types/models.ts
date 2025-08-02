@@ -8,19 +8,19 @@ export interface SchoolAttributes {
   name: string;
   adress: string;
   town: string;
-  logo?: string;
+  logo?: string | null;
 }
 export interface UserAttributes {
   userId: string;
   lastName: string;
   middleName: string;
-  firstName?: string;
+  firstName?: string | null;
   username: string;
   password: string;
   gender: USER_GENDER;
   role: USER_ROLE;
-  birthDate?: string;
-  birthPlace?: string;
+  birthDate?: Date | null;
+  birthPlace?: Date | null;
   schoolId: string;
 }
 
@@ -46,7 +46,7 @@ export interface ClassAttributes {
   shortIdentifier: string;
   section: SECTION;
   yearId: string;
-  optionId?: string;
+  optionId?: string | null;
   schoolId: string;
 }
 
@@ -63,7 +63,7 @@ export interface ClassroomEnrolementAttributes {
 export type UserAttributesInsert = Omit<UserAttributes, "userId">;
 export type SchoolAttributesInsert = Omit<SchoolAttributes, "schoolId">;
 export type ClassAttributesInsert = Omit<ClassAttributes, "classId">;
-export type OptionAttributesInsert = Omit<OptionAttributes, "schoolId">;
+export type OptionAttributesInsert = Omit<OptionAttributes, "optionId">;
 export type StudyYearAttributesInsert = Omit<StudyYearAttributes, "yearId">;
 export type ClassroomEnrolementAttributesInsert = Omit<
   ClassroomEnrolementAttributes,
