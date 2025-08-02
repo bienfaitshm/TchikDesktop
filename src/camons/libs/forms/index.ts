@@ -6,7 +6,7 @@ import { useForm, DefaultValues, SubmitHandler } from "react-hook-form";
 type TUseControlledFormParams<T extends ZodRawShape> = {
   schema: ZodObject<T>;
   defaultValues?: DefaultValues<z.infer<ZodObject<T>>>;
-  onSubmit: SubmitHandler<z.infer<ZodObject<T>>>;
+  onSubmit?: SubmitHandler<z.infer<ZodObject<T>>>;
 };
 
 export function useControlledForm<T extends ZodRawShape>({
@@ -19,6 +19,6 @@ export function useControlledForm<T extends ZodRawShape>({
     defaultValues,
   });
 
-  const handleSubmit = form.handleSubmit(onSubmit);
+  const handleSubmit = form.handleSubmit((value) => onSubmit?.(value));
   return [form, handleSubmit] as const;
 }

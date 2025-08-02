@@ -114,15 +114,10 @@ export const ClassSchema = z.object({
     errorMap: () => ({ message: "Section invalide." }),
   }),
   yearId: z
-    .number()
-    .int("L'ID de l'année doit être un entier.")
-    .positive("L'ID de l'année doit être un nombre positif."),
-  optionId: z
-    .number()
-    .int("L'ID de l'option doit être un entier.")
-    .positive("L'ID de l'option doit être un nombre positif.")
-    .optional(),
+    .string()
+    .nonempty("ID de l'annee scolaire encourt ne peut pas être vide."),
   schoolId: z.string().nonempty("L'ID de l'école ne peut pas être vide."),
+  optionId: z.string().nullable().optional(),
 });
 
 /**
