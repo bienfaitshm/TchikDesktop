@@ -25,6 +25,8 @@ import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutat
 import { FormSubmitter } from "@/renderer/components/form/form-submiter"
 import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
 
+import { useLoaderData } from "react-router"
+
 type SchoolDialogState = {
     isOpen: boolean;
     type: 'create' | 'edit';
@@ -199,7 +201,7 @@ const OptionManagementPage = () => {
                     columns: OptionColumns,
                     menus: tableMenus,
                 })}
-                keyExtractor={(item) => item.schoolId}
+                keyExtractor={(item) => item.optionId}
             >
                 <div className="flex items-center justify-end my-5">
                     <div className="flex items-center gap-5">

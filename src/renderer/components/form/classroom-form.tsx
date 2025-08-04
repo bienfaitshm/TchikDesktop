@@ -130,49 +130,56 @@ export const ClassroomForm = forwardRef<
                         </FormItem>
                     )}
                 />
+                <div className="grid grid-cols-2 gap-5">
+                    <div>
+                        <FormField
+                            control={form.control}
+                            name="optionId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Option</FormLabel>
+                                    <Select
+                                        onValueChange={(value) =>
+                                            field.onChange(value === "null" ? null : value)
+                                        }
+                                        defaultValue={field.value ?? "null"}
+                                    >
+                                        <OptionsSelect
+                                            options={[{ label: "Aucune options.", value: "null" }, ...options]}
+                                            placeholder="Précisez l'option ici..."
+                                        />
+                                    </Select>
+                                    <FormDescription>
+                                        Précisez l'option ici.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    <div>
+                        <FormField
+                            control={form.control}
+                            name="section"
+                            render={({ field: { onChange, ...field } }) => (
+                                <FormItem>
+                                    <FormLabel>Section</FormLabel>
+                                    <Select onValueChange={onChange} defaultValue={field.value}>
+                                        <OptionsSelect
+                                            options={SECTION_SELECT_OPTIONS}
+                                            placeholder="Sélectionner la section ici..."
+                                        />
+                                    </Select>
+                                    <FormDescription>Précisez la section ici.</FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                </div>
 
-                <FormField
-                    control={form.control}
-                    name="optionId"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Option</FormLabel>
-                            <Select
-                                onValueChange={(value) =>
-                                    field.onChange(value === "null" ? null : value)
-                                }
-                                defaultValue={field.value ?? "null"}
-                            >
-                                <OptionsSelect
-                                    options={[{ label: "Aucune options.", value: "null" }, ...options]}
-                                    placeholder="Précisez l'option ici..."
-                                />
-                            </Select>
-                            <FormDescription>
-                                Précisez l'option ici.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
 
-                <FormField
-                    control={form.control}
-                    name="section"
-                    render={({ field: { onChange, ...field } }) => (
-                        <FormItem>
-                            <FormLabel>Section</FormLabel>
-                            <Select onValueChange={onChange} defaultValue={field.value}>
-                                <OptionsSelect
-                                    options={SECTION_SELECT_OPTIONS}
-                                    placeholder="Sélectionner la section ici..."
-                                />
-                            </Select>
-                            <FormDescription>Précisez la section ici.</FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+
 
                 {children}
             </form>
