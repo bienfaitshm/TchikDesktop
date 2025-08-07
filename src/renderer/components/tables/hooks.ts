@@ -10,7 +10,7 @@ import {
   type DragEndEvent,
   type UniqueIdentifier,
 } from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
+// import { arrayMove } from "@dnd-kit/sortable";
 
 import {
   ColumnDef,
@@ -185,7 +185,7 @@ export function useDataTable<TData>({
   columns,
   keyExtractor,
 }: UseTableOptions<TData>) {
-  const [data, setData] = React.useState(initialData);
+  // const [data, setData] = React.useState(initialData);
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -209,13 +209,13 @@ export function useDataTable<TData>({
 
   // Memoize row IDs for DND-kit SortableContext
   const rowIds = React.useMemo<UniqueIdentifier[]>(
-    () => data?.map(keyExtractor) || [],
-    [data, keyExtractor]
+    () => initialData?.map(keyExtractor) || [],
+    [initialData, keyExtractor]
   );
 
   // Initialize @tanstack/react-table
   const tableInstance = useReactTable({
-    data,
+    data: initialData,
     columns,
     state: {
       sorting,
@@ -249,19 +249,15 @@ export function useDataTable<TData>({
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (active && over && active.id !== over.id) {
-        setData((currentData) => {
-          const oldIndex = rowIds.indexOf(active.id);
-          const newIndex = rowIds.indexOf(over.id);
-          return arrayMove(currentData, oldIndex, newIndex);
-        });
+        // setData((currentData) => {
+        //   const oldIndex = rowIds.indexOf(active.id);
+        //   const newIndex = rowIds.indexOf(over.id);
+        //   return arrayMove(currentData, oldIndex, newIndex);
+        // });
       }
     },
     [rowIds]
   );
-
-  React.useEffect(() => {
-    setData(initialData);
-  }, [initialData]);
 
   return {
     dndId,

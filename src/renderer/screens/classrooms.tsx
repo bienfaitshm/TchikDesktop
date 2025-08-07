@@ -38,61 +38,51 @@ const tableMenus: DataTableMenu[] = [
     { key: "delete", label: "Supprimer", separator: true, icon: <Trash2 className="size-3" /> },
 ];
 
-// Hook to get the current school and study year IDs from the global store.
-const useGetCurrentYearSchool = () => {
-    const schoolId = useApplicationConfigurationStore(s => s.currentSchool?.schoolId as string)
-    const yearId = useApplicationConfigurationStore(s => s.currentStudyYear?.yearId as string)
-    return { schoolId, yearId }
-}
-
 // Hook that encapsulates all data fetching and mutation logic for classrooms.
-// This is a great pattern for keeping components clean and focused on rendering.
 const useClassroomManagement = ({ schoolId, yearId }: { schoolId: string; yearId: string }) => {
     const queryClient = useQueryClient();
-
-    const { data: classrooms = [], isLoading } = useGetClassrooms(schoolId, yearId);
+    const { data: classrooms = [] } = useGetClassrooms(schoolId, yearId);
     const createMutation = useCreateClassroom();
     const updateMutation = useUpdateClassroom();
     const deleteMutation = useDeleteClassroom();
 
     // Helper function to invalidate the classroom cache, triggering a refetch.
-    const invalidateClassroomsCache = () => {
+    const invalidateClassroomsCache = React.useCallback(() => {
         queryClient.invalidateQueries({ queryKey: ["GET_CLASSROOMS"] });
-    };
+    }, [queryClient]);
 
     // Handler for creating a new classroom.
-    const handleCreate = (values: FormValueType) => {
+    const handleCreate = React.useCallback((values: FormValueType) => {
         createMutation.mutate(values, createMutationCallbacksWithNotifications({
             successMessageTitle: "La classe créé !",
             successMessageDescription: `La classe '${values.identifier}' a été ajoutée avec succès.`,
             errorMessageTitle: "Échec de la création de la classe.",
             onSuccess: invalidateClassroomsCache,
         }));
-    };
+    }, [createMutation, invalidateClassroomsCache]);
 
     // Handler for updating an existing classroom.
-    const handleUpdate = (classId: string, values: FormValueType) => {
+    const handleUpdate = React.useCallback((classId: string, values: FormValueType) => {
         updateMutation.mutate({ classId, schoolId, data: values }, createMutationCallbacksWithNotifications({
             successMessageTitle: "La classe mis à jour !",
             successMessageDescription: `La classe '${values.identifier}' a été modifié avec succès.`,
             errorMessageTitle: "Échec de la mise à jour de la classe.",
             onSuccess: invalidateClassroomsCache,
         }));
-    };
+    }, [updateMutation, schoolId, invalidateClassroomsCache]);
 
     // Handler for deleting a classroom.
-    const handleDelete = (classId: string) => {
+    const handleDelete = React.useCallback((classId: string) => {
         deleteMutation.mutate({ classId, schoolId }, createMutationCallbacksWithNotifications({
             successMessageTitle: "La classe supprimé !",
             successMessageDescription: "La classe a été supprimé avec succès.",
             errorMessageTitle: "Échec de la suppression de la classe.",
             onSuccess: invalidateClassroomsCache,
         }));
-    };
+    }, [deleteMutation, schoolId, invalidateClassroomsCache]);
 
     return {
         classrooms,
-        isLoading,
         createMutation,
         updateMutation,
         deleteMutation,
@@ -103,8 +93,7 @@ const useClassroomManagement = ({ schoolId, yearId }: { schoolId: string; yearId
 };
 
 // Component for the classroom creation/edit dialog.
-// This is a separate, reusable component that takes props for its state and handlers.
-const ClassroomFormDialog = ({ state, onClose, onSubmit, isPending, schoolId, yearId }: {
+const ClassroomFormDialog = React.memo(({ state, onClose, onSubmit, isPending, schoolId, yearId }: {
     state: ClassroomDialogState;
     onClose: () => void;
     onSubmit: (values: FormValueType) => void;
@@ -113,7 +102,7 @@ const ClassroomFormDialog = ({ state, onClose, onSubmit, isPending, schoolId, ye
     yearId: string
 }) => {
     // Fetch options for the form.
-    const { data: options = [] } = useGetOptions(schoolId)
+    const { data: options = [] } = useGetOptions(schoolId);
 
     const title = state.type === 'create' ? "Création de la classe" : "Modification de la classe";
     const description = state.type === 'create' ?
@@ -161,16 +150,15 @@ const ClassroomFormDialog = ({ state, onClose, onSubmit, isPending, schoolId, ye
             </FormSubmitter>
         </Dialog>
     );
-};
+});
 
 // New, separate component for the data table.
-const ClassroomTable = React.memo(({ classrooms, onAction, onOpenCreateDialog, isDeleting }: {
+const ClassroomTable = React.memo(({ classrooms, onAction, isDeleting, onOpenCreateDialog }: {
     classrooms: ClassAttributes[];
+    onOpenCreateDialog(): void
     onAction: (key: string, item: ClassAttributes) => void;
-    onOpenCreateDialog: () => void;
-    isDeleting: boolean;
+    isDeleting?: boolean
 }) => {
-    // Use `useMemo` to memoize the columns, preventing them from being re-created on every render.
     const columns = React.useMemo(() => enhanceColumnsWithMenu({
         onPressMenu: onAction,
         columns: ClassroomColumns,
@@ -203,19 +191,21 @@ const ClassroomTable = React.memo(({ classrooms, onAction, onOpenCreateDialog, i
     )
 })
 
-// --- Main Page Component ---
-// This component now focuses solely on state management and dialogs.
-const ClassroomManagementPage = () => {
-    const { schoolId, yearId } = useGetCurrentYearSchool();
+type ClassroomManagementProps = {
+    schoolId: string,
+    yearId: string
+}
 
+// This component now focuses solely on state management and dialogs.
+const ClassroomManagementPage: React.FC<ClassroomManagementProps> = ({ schoolId, yearId }) => {
     const {
-        classrooms,
         createMutation,
         updateMutation,
         deleteMutation,
         handleCreate,
         handleUpdate,
         handleDelete,
+        classrooms
     } = useClassroomManagement({ schoolId, yearId });
 
     const confirmDelete = useConfirmDeleteDialog<ClassAttributes>();
@@ -225,9 +215,10 @@ const ClassroomManagementPage = () => {
         type: 'create',
     });
 
-    const openCreateDialog = () => setDialogState({ isOpen: true, type: 'create' });
-    const openEditDialog = (item: ClassAttributes) => setDialogState({ isOpen: true, type: 'edit', initialData: item });
-    const closeDialog = () => setDialogState({ isOpen: false, type: 'create' });
+    // Corrections avec useCallback pour mémoriser les fonctions
+    const openCreateDialog = React.useCallback(() => setDialogState({ isOpen: true, type: 'create' }), []);
+    const openEditDialog = React.useCallback((item: ClassAttributes) => setDialogState({ isOpen: true, type: 'edit', initialData: item }), []);
+    const closeDialog = React.useCallback(() => setDialogState({ isOpen: false, type: 'create' }), []);
 
     const handleAction = React.useCallback((key: string, item: ClassAttributes) => {
         switch (key) {
@@ -240,7 +231,7 @@ const ClassroomManagementPage = () => {
             default:
                 console.warn(`Unknown action key: ${key}`);
         }
-    }, [confirmDelete.onOpen]);
+    }, [confirmDelete.onOpen, openEditDialog]);
 
     const onConfirmDelete = React.useCallback((item: ClassAttributes) => {
         handleDelete(item.schoolId);
@@ -254,11 +245,9 @@ const ClassroomManagementPage = () => {
             handleUpdate(dialogState.initialData.schoolId, values);
         }
         closeDialog();
-    }, [dialogState, handleCreate, handleUpdate]);
+    }, [dialogState, handleCreate, handleUpdate, closeDialog]);
 
     const isFormPending = dialogState.type === 'create' ? createMutation.isPending : updateMutation.isPending;
-
-    console.log("data", classrooms)
 
     return (
         <div className="my-10 mx-auto h-full container max-w-screen-lg">
@@ -293,12 +282,12 @@ const ClassroomManagementPage = () => {
     );
 };
 
-// Main component that wraps the management page in a Suspense boundary.
 const ClassroomPage = () => {
+    // const { isSet, schoolId, yearId } = useApplicationConfigurationStore(s => s.getCurrentStudyYearSchool())
+    // if (!isSet) return null
+    // console.log("first")
     return (
-        <Suspense>
-            <ClassroomManagementPage />
-        </Suspense>
+        <ClassroomManagementPage schoolId={"schoolId"} yearId={"yearId"} />
     )
 }
 

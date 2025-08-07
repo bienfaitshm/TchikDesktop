@@ -61,6 +61,7 @@ type ContextTable<T> = {
     columns: ColumnDef<T>[];
     rowIds: UniqueIdentifier[];
     keyExtractor: (item: T) => string;
+    // setData: React.Dispatch<React.SetStateAction<T[]>>;
 };
 
 const DataTableContext = createContext<ContextTable<any> | null>(null);
@@ -76,6 +77,25 @@ export type DataTableProps<T> = {
     children?: React.ReactNode;
 };
 
+
+export type DataTableRef = {
+    updateDate(): void
+}
+
+// export const DataTable = React.forwardRef<DataTableRef, React.PropsWithChildren<DataTableProps<T>>>(({ columns, data, keyExtractor, children }, ref) => {
+//     const contextValue = useDataTable({ initialData: data, keyExtractor, columns });
+//     React.useImperativeHandle(ref, () => ({
+//         updateDate() {
+//             contextValue.setData(data)
+//         },
+//     }), [data])
+//     return (
+//         <DataTableContext.Provider value={contextValue}>
+//             {children}
+//         </DataTableContext.Provider>
+//     );
+// })
+
 export function DataTable<T>({
     data,
     keyExtractor,
@@ -83,6 +103,9 @@ export function DataTable<T>({
     children,
 }: DataTableProps<T> & { children?: React.ReactNode }) {
     const contextValue = useDataTable({ initialData: data, keyExtractor, columns });
+    // React.useEffect(() => {
+    //     contextValue.setData(data)
+    // }, [data])
     return (
         <DataTableContext.Provider value={contextValue}>
             {children}
@@ -179,7 +202,7 @@ export function DataTablePagination() {
             <div className="flex w-full items-center gap-8 lg:w-fit">
                 <div className="hidden items-center gap-2 lg:flex">
                     <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                        lignes par page
+                        Lignes par page
                     </Label>
                     <Select
                         value={`${pageSize}`}

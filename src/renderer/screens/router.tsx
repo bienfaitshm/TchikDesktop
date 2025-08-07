@@ -1,6 +1,5 @@
 
 import { HashRouter as Router, Route, Routes } from "react-router"
-import * as loaders from "@/renderer/loaders"
 // 
 
 import Launcher from "@/renderer/screens/launcher";
@@ -33,7 +32,7 @@ export default function RouterProvider(): JSX.Element {
           <Route path="mise-en-places" element={<MiseEnPlaceScreen />} />
           {/* schools */}
           <Route path="students" element={<StudentScreen />} />
-          <Route path="options" element={<OptionScreen />} loader={loaders.optionLoader} />
+          <Route path="options" element={<OptionScreen />} />
           <Route path="classrooms" element={<ClassroomScreen />} />
           <Route path="locals" element={<LocalScreen />} />
           {/* other */}
