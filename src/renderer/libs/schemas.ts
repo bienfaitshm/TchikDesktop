@@ -20,11 +20,37 @@ export const SchoolSchema = z.object({
  */
 export type SchoolAttributes = z.infer<typeof SchoolSchema>;
 
+export const BaseUserSchema = z.object({
+  lastName: z.string().nonempty("Le nom de famille ne peut pas être vide."),
+  middleName: z.string().nonempty("Le deuxième prénom ne peut pas être vide."),
+  firstName: z
+    .string()
+    .nonempty("Le prénom ne peut pas être vide.")
+    .nullable()
+    .optional(),
+  role: z.nativeEnum(USER_ROLE, {
+    errorMap: () => ({ message: "Rôle d'utilisateur invalide." }),
+  }),
+  birthDate: z
+    .string()
+    .regex(
+      /^\d{4}-\d{2}-\d{2}$/,
+      "La date de naissance doit être au format AAAA-MM-JJ."
+    )
+    .nullable()
+    .optional(),
+  birthPlace: z
+    .string()
+    .nonempty("Le lieu de naissance ne peut pas être vide.")
+    .nullable()
+    .optional(),
+});
+
+export type BaseUserSchemaAttributes = z.infer<typeof BaseUserSchema>;
 /**
  * Schéma Zod pour UserAttributes.
  */
 export const UserSchema = z.object({
-  userId: z.string().nonempty("L'ID de l'utilisateur ne peut pas être vide."),
   lastName: z.string().nonempty("Le nom de famille ne peut pas être vide."),
   middleName: z.string().nonempty("Le deuxième prénom ne peut pas être vide."),
   firstName: z
@@ -129,12 +155,11 @@ export type ClassAttributes = z.infer<typeof ClassSchema>;
  * Schéma Zod pour ClassroomEnrolementAttributes.
  */
 export const ClassroomEnrolementSchema = z.object({
-  enrolement: z.string().nonempty("L'enrôlement ne peut pas être vide."),
   classroomId: z.string().nonempty("L'ID de la classe ne peut pas être vide."),
-  studentId: z.string().nonempty("L'ID de l'étudiant ne peut pas être vide."),
+  studentId: z.string().optional(),
   isNewStudent: z.boolean(),
-  code: z.string().nonempty("Le code ne peut pas être vide."),
   schoolId: z.string().nonempty("L'ID de l'école ne peut pas être vide."),
+  yearId: z.string().nonempty("L'ID de l'annee scolaire ne doit pas etre vide"),
 });
 
 /**
@@ -142,4 +167,22 @@ export const ClassroomEnrolementSchema = z.object({
  */
 export type ClassroomEnrolementAttributes = z.infer<
   typeof ClassroomEnrolementSchema
+>;
+
+/**
+ *
+ */
+export const QuickEnrolementSchema = z
+  .object({
+    student: BaseUserSchema,
+    isInSystem: z.boolean().optional(),
+  })
+  .merge(ClassroomEnrolementSchema);
+
+/**
+ *
+ */
+
+export type QuickEnrolementSchemaAttributes = z.infer<
+  typeof QuickEnrolementSchema
 >;
