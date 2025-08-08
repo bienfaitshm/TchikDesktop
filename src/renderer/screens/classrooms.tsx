@@ -121,7 +121,7 @@ type ClassroomFormDialogProps = {
     onClose: () => void;
     onSubmit: (values: FormValueType) => void;
     isPending: boolean;
-    initialValues?: FormValueType
+    initialValues?: Partial<FormValueType>
 }
 const ClassroomFormDialog: React.FC<WithSchoolAndYearId<ClassroomFormDialogProps>> = ({ open, schoolId, yearId, info, initialValues, isPending, onClose, onSubmit }) => {
     const { data: options = [] } = useGetOptions(schoolId);
@@ -129,7 +129,6 @@ const ClassroomFormDialog: React.FC<WithSchoolAndYearId<ClassroomFormDialogProps
     const formattedOptions = React.useMemo(() => (
         options.map((option) => ({ label: option.optionName, value: option.optionId }))
     ), [options]);
-
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
@@ -184,7 +183,7 @@ const ClassroomTable: React.FC<WithSchoolAndYearId<ClassroomTableProps>> = ({ sc
         <DataTable
             data={classrooms}
             columns={columns}
-            keyExtractor={(item) => item.schoolId}
+            keyExtractor={(item) => item.classId}
         >
             <div className="flex items-center justify-end my-5">
                 <div className="flex items-center gap-5">
@@ -236,8 +235,8 @@ const FormManagementDialog = React.forwardRef<FormManagementDialogRef, Required<
     const onSubmitDialog = React.useCallback((values: FormValueType) => {
         if (dialogState.type === MUTATION_ACTION.CREATE) {
             handleCreate(values);
-        } else if (dialogState.type === MUTATION_ACTION.EDIT && dialogState.initialData?.schoolId) {
-            handleUpdate(dialogState.initialData.schoolId, values);
+        } else if (dialogState.type === MUTATION_ACTION.EDIT && dialogState.initialData?.classId) {
+            handleUpdate(dialogState.initialData.classId, values);
         }
         closeDialog();
     }, [dialogState, handleCreate, handleUpdate, closeDialog]);
@@ -252,6 +251,7 @@ const FormManagementDialog = React.forwardRef<FormManagementDialogRef, Required<
     return (
         <div>
             <ClassroomFormDialog
+                initialValues={dialogState.initialData}
                 open={dialogState.isOpen}
                 info={DIALOG_TEXT_INFOS[dialogState.type]}
                 schoolId={schoolId}
