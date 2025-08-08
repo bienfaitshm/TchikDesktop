@@ -29,11 +29,6 @@ export async function response<TData = unknown>(
 
 export async function actionFn<Data>(value: Promise<TResponse<Data>>) {
   const _handler = await value;
-  console.log(
-    "\n\n++++++actionFn",
-    _handler,
-    SuccessStatus.includes(_handler.status)
-  );
   if (SuccessStatus.includes(_handler.status)) {
     return _handler;
   } else {
