@@ -33,3 +33,8 @@ export const USER_GENDER_TRANSLATIONS: Record<USER_GENDER, string> = {
   [USER_GENDER.MALE]: "Masculin",
   [USER_GENDER.FEMALE]: "Féminin",
 };
+
+export enum MUTATION_ACTION {
+  CREATE = "CREATE",
+  EDIT = "EDIT",
+}

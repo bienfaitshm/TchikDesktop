@@ -7,7 +7,7 @@ import {
     DataTablePagination,
     DataTableColumnFilter,
 } from "@/renderer/components/tables/data-table";
-import { TypographyH3, TypographySmall } from "@/renderer/components/ui/typography";
+import { TypographyH3 } from "@/renderer/components/ui/typography";
 import { ClassroomForm, type ClassroomFormData as FormValueType } from "@/renderer/components/form/classroom-form";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/renderer/components/ui/dialog";
 import { Button } from "@/renderer/components/ui/button";
@@ -19,29 +19,50 @@ import { Pencil, Trash2 } from "lucide-react";
 import { DialogConfirmDelete, useConfirmDeleteDialog } from "../components/dialog/dialog-delete";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import { useQueryClient } from "@tanstack/react-query";
-import { Suspense } from "@/renderer/libs/queries/suspense";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { FormSubmitter } from "@/renderer/components/form/form-submiter"
 import { useCreateClassroom, useDeleteClassroom, useGetClassrooms, useGetOptions, useUpdateClassroom } from "@/renderer/libs/queries/school";
-import { useApplicationConfigurationStore } from "../libs/stores/app-store";
+import { useGetCurrentYearSchool } from "../libs/stores/app-store";
+import { WithSchoolAndYearId } from "@/camons/types/services";
+import { MUTATION_ACTION } from "@/camons/constants/enum";
 
-// Type definition for the dialog state, which is clean and descriptive.
+type DialogDescription = {
+    title: string;
+    description: string;
+    submitText: string;
+
+}
+type TDialogTextInfos = Record<MUTATION_ACTION, DialogDescription>
+
+
+
 type ClassroomDialogState = {
     isOpen: boolean;
-    type: 'create' | 'edit';
+    type: MUTATION_ACTION;
     initialData?: Partial<ClassAttributes>;
 }
 
-// Reusable menu definitions for the data table actions.
+// consts
+
+const DIALOG_TEXT_INFOS: TDialogTextInfos = {
+    [MUTATION_ACTION.CREATE]: {
+        title: "Création de la classe",
+        description: "Remplissez les informations ci-dessous pour créer une nouvelle classe.",
+        submitText: "Enregistrer"
+    },
+    [MUTATION_ACTION.EDIT]: {
+        title: "Modification de la classe",
+        description: "Modifiez les informations de la classe sélectionnée.",
+        submitText: "Modifier"
+    },
+}
 const tableMenus: DataTableMenu[] = [
     { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
     { key: "delete", label: "Supprimer", separator: true, icon: <Trash2 className="size-3" /> },
 ];
 
-// Hook that encapsulates all data fetching and mutation logic for classrooms.
-const useClassroomManagement = ({ schoolId, yearId }: { schoolId: string; yearId: string }) => {
+const useClassroomManagement = ({ schoolId }: WithSchoolAndYearId<{}>) => {
     const queryClient = useQueryClient();
-    const { data: classrooms = [] } = useGetClassrooms(schoolId, yearId);
     const createMutation = useCreateClassroom();
     const updateMutation = useUpdateClassroom();
     const deleteMutation = useDeleteClassroom();
@@ -62,7 +83,7 @@ const useClassroomManagement = ({ schoolId, yearId }: { schoolId: string; yearId
     }, [createMutation, invalidateClassroomsCache]);
 
     // Handler for updating an existing classroom.
-    const handleUpdate = React.useCallback((classId: string, values: FormValueType) => {
+    const handleUpdate = React.useCallback((classId: string, values: Partial<FormValueType>) => {
         updateMutation.mutate({ classId, schoolId, data: values }, createMutationCallbacksWithNotifications({
             successMessageTitle: "La classe mis à jour !",
             successMessageDescription: `La classe '${values.identifier}' a été modifié avec succès.`,
@@ -82,7 +103,6 @@ const useClassroomManagement = ({ schoolId, yearId }: { schoolId: string; yearId
     }, [deleteMutation, schoolId, invalidateClassroomsCache]);
 
     return {
-        classrooms,
         createMutation,
         updateMutation,
         deleteMutation,
@@ -92,44 +112,34 @@ const useClassroomManagement = ({ schoolId, yearId }: { schoolId: string; yearId
     };
 };
 
-// Component for the classroom creation/edit dialog.
-const ClassroomFormDialog = React.memo(({ state, onClose, onSubmit, isPending, schoolId, yearId }: {
-    state: ClassroomDialogState;
+type ClassroomFormDialogProps = {
+    open: boolean;
+    info: DialogDescription;
     onClose: () => void;
     onSubmit: (values: FormValueType) => void;
     isPending: boolean;
-    schoolId: string;
-    yearId: string
-}) => {
-    // Fetch options for the form.
+    initialValues?: FormValueType
+}
+const ClassroomFormDialog: React.FC<WithSchoolAndYearId<ClassroomFormDialogProps>> = ({ open, schoolId, yearId, info, initialValues, isPending, onClose, onSubmit }) => {
     const { data: options = [] } = useGetOptions(schoolId);
-
-    const title = state.type === 'create' ? "Création de la classe" : "Modification de la classe";
-    const description = state.type === 'create' ?
-        "Remplissez les informations ci-dessous pour créer une nouvelle classe." :
-        "Modifiez les informations de la classe sélectionnée.";
-    const submitText = state.type === 'create' ? "Enregistrer" : "Modifier";
 
     const formattedOptions = React.useMemo(() => (
         options.map((option) => ({ label: option.optionName, value: option.optionId }))
     ), [options]);
 
-    const initialValues = React.useMemo(() => (
-        { ...state.initialData, yearId, schoolId }
-    ), [state.initialData, yearId, schoolId]);
 
     return (
-        <Dialog open={state.isOpen} onOpenChange={onClose}>
+        <Dialog open={open} onOpenChange={onClose}>
             <FormSubmitter>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{title}</DialogTitle>
-                        <DialogDescription>{description}</DialogDescription>
+                        <DialogTitle>{info.title}</DialogTitle>
+                        <DialogDescription>{info.description}</DialogDescription>
                     </DialogHeader>
                     <FormSubmitter.Wrapper>
                         <ClassroomForm
                             options={formattedOptions}
-                            initialValues={initialValues}
+                            initialValues={{ ...initialValues, yearId, schoolId }}
                             onSubmit={onSubmit}
                         />
                     </FormSubmitter.Wrapper>
@@ -142,7 +152,7 @@ const ClassroomFormDialog = React.memo(({ state, onClose, onSubmit, isPending, s
                                 disabled={isPending}
                                 isLoadingText="Enregistrement ..."
                             >
-                                {submitText}
+                                {info.submitText}
                             </ButtonLoader>
                         </FormSubmitter.Trigger>
                     </DialogFooter>
@@ -150,21 +160,23 @@ const ClassroomFormDialog = React.memo(({ state, onClose, onSubmit, isPending, s
             </FormSubmitter>
         </Dialog>
     );
-});
+};
 
-// New, separate component for the data table.
-const ClassroomTable = React.memo(({ classrooms, onAction, isDeleting, onOpenCreateDialog }: {
-    classrooms: ClassAttributes[];
+
+
+
+type ClassroomTableProps = {
     onOpenCreateDialog(): void
     onAction: (key: string, item: ClassAttributes) => void;
-    isDeleting?: boolean
-}) => {
+}
+
+const ClassroomTable: React.FC<WithSchoolAndYearId<ClassroomTableProps>> = ({ schoolId, yearId, onAction, onOpenCreateDialog }) => {
+    const { data: classrooms = [] } = useGetClassrooms(schoolId, yearId)
     const columns = React.useMemo(() => enhanceColumnsWithMenu({
         onPressMenu: onAction,
         columns: ClassroomColumns,
         menus: tableMenus,
     }), [onAction]);
-
     return (
         <DataTable
             data={classrooms}
@@ -177,11 +189,6 @@ const ClassroomTable = React.memo(({ classrooms, onAction, isDeleting, onOpenCre
                     <Button size="sm" onClick={onOpenCreateDialog}>Ajouter un La classe</Button>
                 </div>
             </div>
-            {isDeleting && (
-                <div className="py-1 px-5 my-1 bg-red-400/30 rounded-md">
-                    <TypographySmall>Suppression en cours....</TypographySmall>
-                </div>
-            )}
             <DataTableContent>
                 <DataContentHead />
                 <DataContentBody />
@@ -189,15 +196,15 @@ const ClassroomTable = React.memo(({ classrooms, onAction, isDeleting, onOpenCre
             <DataTablePagination />
         </DataTable>
     )
-})
 
-type ClassroomManagementProps = {
-    schoolId: string,
-    yearId: string
 }
 
-// This component now focuses solely on state management and dialogs.
-const ClassroomManagementPage: React.FC<ClassroomManagementProps> = ({ schoolId, yearId }) => {
+type FormManagementDialogRef = {
+    openCreateDialog(): void;
+    openEditDialog(item: ClassAttributes): void;
+    openDeleteDialog(item: ClassAttributes): void;
+}
+const FormManagementDialog = React.forwardRef<FormManagementDialogRef, Required<WithSchoolAndYearId<{}>>>(({ schoolId, yearId }, ref) => {
     const {
         createMutation,
         updateMutation,
@@ -205,33 +212,18 @@ const ClassroomManagementPage: React.FC<ClassroomManagementProps> = ({ schoolId,
         handleCreate,
         handleUpdate,
         handleDelete,
-        classrooms
     } = useClassroomManagement({ schoolId, yearId });
-
-    const confirmDelete = useConfirmDeleteDialog<ClassAttributes>();
 
     const [dialogState, setDialogState] = React.useState<ClassroomDialogState>({
         isOpen: false,
-        type: 'create',
+        type: MUTATION_ACTION.CREATE,
     });
 
-    // Corrections avec useCallback pour mémoriser les fonctions
-    const openCreateDialog = React.useCallback(() => setDialogState({ isOpen: true, type: 'create' }), []);
-    const openEditDialog = React.useCallback((item: ClassAttributes) => setDialogState({ isOpen: true, type: 'edit', initialData: item }), []);
-    const closeDialog = React.useCallback(() => setDialogState({ isOpen: false, type: 'create' }), []);
-
-    const handleAction = React.useCallback((key: string, item: ClassAttributes) => {
-        switch (key) {
-            case "edit":
-                openEditDialog(item);
-                break;
-            case "delete":
-                confirmDelete.onOpen(item);
-                break;
-            default:
-                console.warn(`Unknown action key: ${key}`);
-        }
-    }, [confirmDelete.onOpen, openEditDialog]);
+    const isFormPending = React.useMemo(() => dialogState.type === MUTATION_ACTION.CREATE ? createMutation.isPending : updateMutation.isPending, [])
+    const confirmDelete = useConfirmDeleteDialog<ClassAttributes>();
+    const openCreateDialog = React.useCallback(() => setDialogState({ isOpen: true, type: MUTATION_ACTION.CREATE }), []);
+    const openEditDialog = React.useCallback((item: ClassAttributes) => setDialogState({ isOpen: true, type: MUTATION_ACTION.EDIT, initialData: item }), []);
+    const closeDialog = React.useCallback(() => setDialogState({ isOpen: false, type: MUTATION_ACTION.CREATE }), []);
 
     const onConfirmDelete = React.useCallback((item: ClassAttributes) => {
         handleDelete(item.schoolId);
@@ -239,34 +231,28 @@ const ClassroomManagementPage: React.FC<ClassroomManagementProps> = ({ schoolId,
     }, [handleDelete, confirmDelete.onClose]);
 
     const onSubmitDialog = React.useCallback((values: FormValueType) => {
-        if (dialogState.type === 'create') {
+        if (dialogState.type === MUTATION_ACTION.CREATE) {
             handleCreate(values);
-        } else if (dialogState.type === 'edit' && dialogState.initialData?.schoolId) {
+        } else if (dialogState.type === MUTATION_ACTION.EDIT && dialogState.initialData?.schoolId) {
             handleUpdate(dialogState.initialData.schoolId, values);
         }
         closeDialog();
     }, [dialogState, handleCreate, handleUpdate, closeDialog]);
 
-    const isFormPending = dialogState.type === 'create' ? createMutation.isPending : updateMutation.isPending;
-
+    React.useImperativeHandle(ref, () => ({
+        openCreateDialog,
+        openEditDialog,
+        openDeleteDialog(item) {
+            confirmDelete.onOpen(item)
+        },
+    }), [openCreateDialog, openEditDialog])
     return (
-        <div className="my-10 mx-auto h-full container max-w-screen-lg">
-            <div className="mb-6">
-                <TypographyH3>Gestion des classes Scolaires</TypographyH3>
-            </div>
-
-            <ClassroomTable
-                classrooms={classrooms}
-                onAction={handleAction}
-                onOpenCreateDialog={openCreateDialog}
-                isDeleting={deleteMutation.isPending}
-            />
-
-            {/* Dialogs rendered at the root level for accessibility and proper overlay */}
+        <div>
             <ClassroomFormDialog
+                open={dialogState.isOpen}
+                info={DIALOG_TEXT_INFOS[dialogState.type]}
                 schoolId={schoolId}
                 yearId={yearId}
-                state={dialogState}
                 onClose={closeDialog}
                 onSubmit={onSubmitDialog}
                 isPending={isFormPending}
@@ -279,16 +265,57 @@ const ClassroomManagementPage: React.FC<ClassroomManagementProps> = ({ schoolId,
                 isLoading={deleteMutation.isPending}
             />
         </div>
-    );
-};
+    )
+})
+
+FormManagementDialog.displayName = "FormManagementDialog"
+
+
+const ClassroomManagement: React.FC<Required<WithSchoolAndYearId<{}>>> = ({ schoolId, yearId }) => {
+    console.log("ClassroomManagement")
+    const formManagementDialogRef = React.useRef<FormManagementDialogRef | null>(null)
+
+    const handleAction = React.useCallback((key: string, item: ClassAttributes) => {
+        switch (key) {
+            case "edit":
+                formManagementDialogRef.current?.openEditDialog(item)
+                break;
+            case "delete":
+                formManagementDialogRef.current?.openDeleteDialog(item)
+                break;
+            default:
+                console.warn(`Unknown action key: ${key}`);
+        }
+    }, [formManagementDialogRef]);
+    return (
+        <div className="my-10 mx-auto h-full container max-w-screen-lg">
+            <div className="mb-6">
+                <TypographyH3>Gestion des classes Scolaires</TypographyH3>
+            </div>
+            <ClassroomTable
+                schoolId={schoolId}
+                yearId={yearId}
+                onAction={handleAction}
+                onOpenCreateDialog={() => formManagementDialogRef.current?.openCreateDialog()}
+            />
+            <div>
+                <FormManagementDialog
+                    ref={formManagementDialogRef}
+                    schoolId={schoolId}
+                    yearId={yearId}
+                />
+            </div>
+        </div>
+    )
+}
 
 const ClassroomPage = () => {
-    // const { isSet, schoolId, yearId } = useApplicationConfigurationStore(s => s.getCurrentStudyYearSchool())
-    // if (!isSet) return null
-    // console.log("first")
-    return (
-        <ClassroomManagementPage schoolId={"schoolId"} yearId={"yearId"} />
-    )
+    console.log("ClassroomPage")
+    const { schoolId, yearId } = useGetCurrentYearSchool()
+    if (!schoolId && !yearId) {
+        return null;
+    }
+    return <ClassroomManagement schoolId={schoolId} yearId={yearId} />
 }
 
 export default ClassroomPage;

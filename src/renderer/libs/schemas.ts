@@ -31,14 +31,10 @@ export const BaseUserSchema = z.object({
   role: z.nativeEnum(USER_ROLE, {
     errorMap: () => ({ message: "Rôle d'utilisateur invalide." }),
   }),
-  birthDate: z
-    .string()
-    .regex(
-      /^\d{4}-\d{2}-\d{2}$/,
-      "La date de naissance doit être au format AAAA-MM-JJ."
-    )
-    .nullable()
-    .optional(),
+  gender: z.nativeEnum(USER_GENDER, {
+    errorMap: () => ({ message: "Genre d'utilisateur invalide." }),
+  }),
+  birthDate: z.date().nullable().optional(),
   birthPlace: z
     .string()
     .nonempty("Le lieu de naissance ne peut pas être vide.")
@@ -172,7 +168,7 @@ export type ClassroomEnrolementAttributes = z.infer<
 /**
  *
  */
-export const QuickEnrolementSchema = z
+export const QuickEnrollmentSchema = z
   .object({
     student: BaseUserSchema,
     isInSystem: z.boolean().optional(),
@@ -183,6 +179,6 @@ export const QuickEnrolementSchema = z
  *
  */
 
-export type QuickEnrolementSchemaAttributes = z.infer<
-  typeof QuickEnrolementSchema
+export type QuickEnrollmentSchemaAttributes = z.infer<
+  typeof QuickEnrollmentSchema
 >;
