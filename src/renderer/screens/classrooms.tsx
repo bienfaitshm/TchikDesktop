@@ -229,7 +229,7 @@ const FormManagementDialog = React.forwardRef<FormManagementDialogRef, Required<
     const closeDialog = React.useCallback(() => setDialogState({ isOpen: false, type: MUTATION_ACTION.CREATE }), []);
 
     const onConfirmDelete = React.useCallback((item: ClassAttributes) => {
-        handleDelete(item.schoolId);
+        handleDelete(item.classId);
         confirmDelete.onClose();
     }, [handleDelete, confirmDelete.onClose]);
 
