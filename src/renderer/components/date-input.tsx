@@ -71,7 +71,7 @@ export const DatePickerInput: React.FC<DatePickerInputProps> = ({
         <Button
           variant="outline"
           id="date-picker-trigger"
-          className="justify-between font-normal"
+          className="justify-between font-normal w-full"
         >
           {/* Display formatted date or placeholder */}
           {value ? format(value, "PPP") : placeholder}

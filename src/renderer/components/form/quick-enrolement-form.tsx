@@ -10,13 +10,6 @@ import {
     FormLabel,
     FormMessage,
 } from "@/renderer/components/ui/form";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/renderer/components/ui/select";
 import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { USER_GENDER, USER_ROLE } from "@/camons/constants/enum";
 import { Input } from "@/renderer/components/ui/input";
@@ -26,6 +19,7 @@ import { DatePickerInput } from "@/renderer/components/date-input";
 import { RadioGroup, RadioGroupItem } from "@/renderer/components/ui/radio-group";
 import { UseFormReturn } from "react-hook-form";
 import { cn } from "@/renderer/utils";
+import { Combobox } from "../ui/combobox";
 
 // Exporte les utilitaires du formulaire pour les composants parents
 export * from "./utils";
@@ -34,10 +28,10 @@ export * from "./utils";
 export type QuickEnrollmentFormData = QuickEnrollmentSchemaAttributes;
 
 const DEFAULT_QUICK_ENROLLMENT_VALUES: QuickEnrollmentFormData = {
-    classroomId: "145",
+    classroomId: "",
     isNewStudent: false,
-    schoolId: "785",
-    yearId: "785",
+    schoolId: "",
+    yearId: "",
     isInSystem: false,
     studentId: undefined,
     student: {
@@ -56,35 +50,6 @@ interface ClassroomOption {
     label: string;
     value: string;
 }
-
-interface ClassroomSelectProps {
-    classrooms: ClassroomOption[];
-    value: string;
-    onChange(value: string): void;
-}
-
-const ClassroomSelect = React.forwardRef<any, ClassroomSelectProps>(
-    ({ classrooms, value, onChange }, ref) => {
-        return (
-            <Select onValueChange={onChange} value={value}>
-                <FormControl>
-                    <SelectTrigger>
-                        <SelectValue ref={ref} placeholder="Sélectionnez la classe ici..." />
-                    </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                    {classrooms.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        );
-    }
-);
-
-ClassroomSelect.displayName = "ClassroomSelect";
 
 // Composant pour les champs d'informations sur l'étudiant
 const StudentFields: React.FC<{
@@ -151,19 +116,34 @@ const StudentFields: React.FC<{
                     name="student.birthDate"
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
-                            <FormLabel>Date de naissance</FormLabel>
+                            <FormLabel className="mt-1 mb-1">Date de naissance</FormLabel>
                             <FormControl>
-                                <DatePickerInput
-                                    value={field.value ?? new Date()}
-                                    onChange={field.onChange}
-                                    placeholder="Sélectionner la date de naissance"
-                                />
+                                <div className="w-full">
+                                    <DatePickerInput
+                                        value={field.value ?? new Date()}
+                                        onChange={field.onChange}
+                                        placeholder="Sélectionner la date de naissance"
+                                    />
+                                </div>
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
             </div>
+            <FormField
+                control={form.control}
+                name="student.birthPlace"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Lieu de naissance</FormLabel>
+                        <FormControl>
+                            <Input {...field} value={field.value ?? ""} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
         </div>
     );
 };
@@ -199,7 +179,11 @@ export const QuickEnrollmentForm = React.forwardRef<
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Classe</FormLabel>
-                            <ClassroomSelect classrooms={classrooms} {...field} />
+                            <Combobox {...field}
+                                options={classrooms}
+                                placeholder="Choisir  une salle classe"
+                                searchPlaceholder="Chercher une salle de classe"
+                            />
                             <FormDescription>
                                 La classe (promotion) à laquelle l'élève sera affecté.
                             </FormDescription>

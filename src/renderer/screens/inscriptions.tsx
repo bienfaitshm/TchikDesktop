@@ -13,7 +13,7 @@ type InscriptionFormLoaderProps = {
 const InscriptionFormLoader: React.FC<InscriptionFormLoaderProps> = ({ schoolId, yearId }) => {
     const [isloading, setIsloading] = React.useState(false)
     const { data: classrooms = [] } = useGetClassrooms(schoolId, yearId)
-    const classroomsOptions = React.useMemo(() => classrooms.map(classroom => ({ value: classroom.classId, label: `${classroom.shortIdentifier} : ${classroom.identifier}` })), [classrooms])
+    const classroomsOptions = React.useMemo(() => classrooms.map(classroom => ({ value: classroom.classId, label: `${classroom.identifier} (${classroom.shortIdentifier})` })), [classrooms])
     console.log("InscriptionFormLoader")
 
     const onSubmit = React.useCallback((value: QuickEnrollmentFormData) => {
@@ -24,7 +24,7 @@ const InscriptionFormLoader: React.FC<InscriptionFormLoaderProps> = ({ schoolId,
         }, 30 * 1000)
     }, [])
     return (
-        <QuickEnrollmentForm onSubmit={onSubmit} classrooms={classroomsOptions}>
+        <QuickEnrollmentForm initialValues={{ schoolId, yearId }} onSubmit={onSubmit} classrooms={classroomsOptions}>
             <div>
                 <ButtonLoader isLoading={isloading} isLoadingText="Enregistrement encours...">
                     Enregistrer
