@@ -66,7 +66,7 @@ export function useUpdateSchool() {
  * @description Hook to delete a school.
  */
 export function useDeleteSchool() {
-  return useMutation<{ message: string }, Error, string>({
+  return useMutation<any, Error, string>({
     mutationKey: ["DELETE_SCHOOL"],
     mutationFn: (schoolId) => apis.deleteSchool(schoolId),
   });
@@ -117,11 +117,7 @@ export function useUpdateClassroom() {
  * @description Hook to delete a classroom.
  */
 export function useDeleteClassroom() {
-  return useMutation<
-    { message: string },
-    Error,
-    { schoolId: string; classId: string }
-  >({
+  return useMutation<any, Error, { schoolId: string; classId: string }>({
     mutationKey: ["DELETE_CLASSROOM"],
     mutationFn: ({ schoolId, classId }) =>
       apis.deleteClassroom(schoolId, classId),
@@ -173,11 +169,7 @@ export function useUpdateOption() {
  * @description Hook to delete an option.
  */
 export function useDeleteOption() {
-  return useMutation<
-    { message: string },
-    Error,
-    { schoolId: string; optionId: string }
-  >({
+  return useMutation<any, Error, { schoolId: string; optionId: string }>({
     mutationKey: ["DELETE_OPTION"],
     mutationFn: ({ schoolId, optionId }) =>
       apis.deleteOption(schoolId, optionId),
@@ -233,11 +225,7 @@ export function useUpdateStudyYear() {
  * @description Hook to delete a study year.
  */
 export function useDeleteStudyYear() {
-  return useMutation<
-    { message: string },
-    Error,
-    { schoolId: string; studyYearId: string }
-  >({
+  return useMutation<any, Error, { schoolId: string; studyYearId: string }>({
     mutationKey: ["DELETE_STUDY_YEAR"],
     mutationFn: ({ schoolId, studyYearId }) =>
       apis.deleteStudyYear(schoolId, studyYearId),

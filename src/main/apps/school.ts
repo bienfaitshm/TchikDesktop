@@ -48,25 +48,19 @@ server.get<any, WithSchoolId<{ yearId?: string }>>(
  * @route POST /classrooms
  * @description Crée une nouvelle salle de classe.
  */
-server.post<any, ClassAttributesInsert, WithSchoolAndYearId<{}>>(
-  "classrooms",
-  async ({ data, params: { schoolId } }) => {
-    try {
-      return response(
-        mapModelToPlain(ClassRoomService.create({ ...data, schoolId }))
-      );
-    } catch (error) {
-      console.error(
-        `Erreur lors de la création de la salle de classe: ${error}`
-      );
-      return response(
-        {},
-        Status.INTERNAL_SERVER,
-        "Erreur interne du serveur lors de la création de la salle de classe."
-      );
-    }
+server.post<any, ClassAttributesInsert, any>("classrooms", async ({ data }) => {
+  try {
+    console.info("classrooms: POST", data);
+    return response(mapModelToPlain(ClassRoomService.create(data)));
+  } catch (error) {
+    console.error(`Erreur lors de la création de la salle de classe: ${error}`);
+    return response(
+      {},
+      Status.INTERNAL_SERVER,
+      "Erreur interne du serveur lors de la création de la salle de classe."
+    );
   }
-);
+});
 
 /**
  * @route PUT /classrooms
@@ -112,6 +106,8 @@ server.delete<any, WithSchoolIdParams<{ classId: string }>>(
   "classrooms",
   async ({ params: { schoolId, classId } }) => {
     try {
+      console.info("classrooms: DELETE", { schoolId, classId });
+
       const success = await ClassRoomService.delete(schoolId, classId);
       if (success) {
         return response({ message: "Salle de classe supprimée avec succès." });

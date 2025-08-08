@@ -99,6 +99,9 @@ const useClassroomManagement = ({ schoolId }: WithSchoolAndYearId<{}>) => {
             successMessageDescription: "La classe a été supprimé avec succès.",
             errorMessageTitle: "Échec de la suppression de la classe.",
             onSuccess: invalidateClassroomsCache,
+            onError(error) {
+                console.log("Error===>", error)
+            },
         }));
     }, [deleteMutation, schoolId, invalidateClassroomsCache]);
 

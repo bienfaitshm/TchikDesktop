@@ -167,10 +167,11 @@ export function createMutationCallbacksWithNotifications<
       onError?.(error, variables, context);
 
       if (showErrorNotification) {
+        const errorDescription =
+          ((error as Error)?.message as string) ||
+          DEFAULT_MUTATION_MESSAGES.errorDescription;
         toast.error(errorMessageTitle || DEFAULT_MUTATION_MESSAGES.errorTitle, {
-          description:
-            errorMessageDescription ||
-            DEFAULT_MUTATION_MESSAGES.errorDescription,
+          description: errorMessageDescription || errorDescription,
         });
       }
     },

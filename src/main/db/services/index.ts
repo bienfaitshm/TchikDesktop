@@ -176,6 +176,7 @@ export const ClassRoomService = {
       whereClause.yearId = yearId;
     }
     const classRoom = await ClassRoom.findOne({ where: whereClause });
+    console.log("classRoom", classRoom, whereClause);
     if (!classRoom) return false;
     await classRoom.destroy();
     return true;

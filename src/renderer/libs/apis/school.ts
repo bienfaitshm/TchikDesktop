@@ -10,7 +10,6 @@ import type {
   SchoolAttributesInsert,
   StudyYearAttributesInsert,
 } from "@/camons/types/services";
-import { TResponse, actionFn } from "@/camons/libs/electron-apis/utils";
 import { clientApis } from "./client";
 
 export type WithSchoolIdParams<T extends {} = {}> = WithSchoolId<T>;
@@ -24,11 +23,11 @@ export type WithSchoolAndYearIdParams<T extends {} = {}> =
  * @description Client action to retrieve all classrooms for a given school, optionally filtered by year.
  */
 export const getClassrooms = (schoolId: string, yearId?: string) => {
-  return actionFn(
-    clientApis.get<TResponse<ClassAttributes[]>>("classrooms", {
+  return clientApis
+    .get<ClassAttributes[]>("classrooms", {
       params: { schoolId, yearId },
     })
-  ).then((res) => res.data);
+    .then((res) => res.data);
 };
 
 /**
@@ -36,12 +35,9 @@ export const getClassrooms = (schoolId: string, yearId?: string) => {
  * @description Client action to create a new classroom.
  */
 export const createClassroom = (data: ClassAttributesInsert) => {
-  return actionFn(
-    clientApis.post<TResponse<ClassAttributes>, ClassAttributesInsert>(
-      "classrooms",
-      data
-    )
-  ).then((res) => res.data);
+  return clientApis
+    .post<ClassAttributes, ClassAttributesInsert>("classrooms", data)
+    .then((res) => res.data);
 };
 
 /**
@@ -53,13 +49,12 @@ export const updateClassroom = (
   schoolId: string,
   classId: string
 ) => {
-  return actionFn(
-    clientApis.put<TResponse<ClassAttributes>, Partial<ClassAttributesInsert>>(
-      "classrooms",
-      data,
-      { params: { schoolId, classId } }
-    )
-  ).then((res) => res.data);
+  return clientApis
+    .put<
+      ClassAttributes,
+      Partial<ClassAttributesInsert>
+    >("classrooms", data, { params: { schoolId, classId } })
+    .then((res) => res.data);
 };
 
 /**
@@ -67,11 +62,11 @@ export const updateClassroom = (
  * @description Client action to delete a classroom.
  */
 export const deleteClassroom = (schoolId: string, classId: string) => {
-  return actionFn(
-    clientApis.delete<TResponse<{ message: string }>>("classrooms", {
+  return clientApis
+    .delete<{ message: string }>("classrooms", {
       params: { schoolId, classId },
     })
-  ).then((res) => res.data);
+    .then((res) => res.data);
 };
 
 // --- Client Actions for Options ---
@@ -81,11 +76,11 @@ export const deleteClassroom = (schoolId: string, classId: string) => {
  * @description Client action to retrieve all options for a given school.
  */
 export const getOptions = (schoolId: string) => {
-  return actionFn(
-    clientApis.get<TResponse<OptionAttributes[]>>("options", {
+  return clientApis
+    .get<OptionAttributes[]>("options", {
       params: { schoolId },
     })
-  ).then((res) => res.data);
+    .then((res) => res.data);
 };
 
 /**
@@ -93,12 +88,9 @@ export const getOptions = (schoolId: string) => {
  * @description Client action to create a new option.
  */
 export const createOption = (data: OptionAttributesInsert) => {
-  return actionFn(
-    clientApis.post<TResponse<OptionAttributes>, OptionAttributesInsert>(
-      "options",
-      data
-    )
-  ).then((res) => res.data);
+  return clientApis
+    .post<OptionAttributes, OptionAttributesInsert>("options", data)
+    .then((res) => res.data);
 };
 
 /**
@@ -110,12 +102,12 @@ export const updateOption = (
   schoolId: string,
   optionId: string
 ) => {
-  return actionFn(
-    clientApis.put<
-      TResponse<OptionAttributes>,
+  return clientApis
+    .put<
+      OptionAttributes,
       Partial<OptionAttributesInsert>
     >("options", data, { params: { schoolId, optionId } })
-  ).then((res) => res.data);
+    .then((res) => res.data);
 };
 
 /**
@@ -123,11 +115,11 @@ export const updateOption = (
  * @description Client action to delete an option.
  */
 export const deleteOption = (schoolId: string, optionId: string) => {
-  return actionFn(
-    clientApis.delete<TResponse<{ message: string }>>("options", {
+  return clientApis
+    .delete<{ message: string }>("options", {
       params: { schoolId, optionId },
     })
-  ).then((res) => res.data);
+    .then((res) => res.data);
 };
 
 // --- Client Actions for StudyYears ---
@@ -137,11 +129,11 @@ export const deleteOption = (schoolId: string, optionId: string) => {
  * @description Client action to retrieve all study years for a given school.
  */
 export const getStudyYears = (schoolId: string) => {
-  return actionFn(
-    clientApis.get<TResponse<StudyYearAttributes[]>>("study-years", {
+  return clientApis
+    .get<StudyYearAttributes[]>("study-years", {
       params: { schoolId },
     })
-  ).then((res) => res.data);
+    .then((res) => res.data);
 };
 
 /**
@@ -149,12 +141,9 @@ export const getStudyYears = (schoolId: string) => {
  * @description Client action to create a new study year.
  */
 export const createStudyYear = (data: StudyYearAttributesInsert) => {
-  return actionFn(
-    clientApis.post<TResponse<StudyYearAttributes>, StudyYearAttributesInsert>(
-      "study-years",
-      data
-    )
-  ).then((res) => res.data);
+  return clientApis
+    .post<StudyYearAttributes, StudyYearAttributesInsert>("study-years", data)
+    .then((res) => res.data);
 };
 
 /**
@@ -166,12 +155,12 @@ export const updateStudyYear = (
   schoolId: string,
   studyYearId: string
 ) => {
-  return actionFn(
-    clientApis.put<
-      TResponse<StudyYearAttributes>,
+  return clientApis
+    .put<
+      StudyYearAttributes,
       Partial<StudyYearAttributesInsert>
     >("study-years", data, { params: { schoolId, studyYearId } })
-  ).then((res) => res.data);
+    .then((res) => res.data);
 };
 
 /**
@@ -179,11 +168,11 @@ export const updateStudyYear = (
  * @description Client action to delete a study year.
  */
 export const deleteStudyYear = (schoolId: string, studyYearId: string) => {
-  return actionFn(
-    clientApis.delete<TResponse<{ message: string }>>("study-years", {
+  return clientApis
+    .delete<{ message: string }>("study-years", {
       params: { schoolId, studyYearId },
     })
-  ).then((res) => res.data);
+    .then((res) => res.data);
 };
 
 // --- Client Actions for Schools (Corrected from your example) ---
@@ -193,9 +182,7 @@ export const deleteStudyYear = (schoolId: string, studyYearId: string) => {
  * @description Client action to retrieve all schools.
  */
 export const getSchools = () => {
-  return actionFn(
-    clientApis.get<TResponse<SchoolAttributes[]>>("schools")
-  ).then((res) => res.data);
+  return clientApis.get<SchoolAttributes[]>("schools").then((res) => res.data);
 };
 
 /**
@@ -203,11 +190,9 @@ export const getSchools = () => {
  * @description Client action to retrieve a single school by its ID.
  */
 export const getSchoolById = (schoolId: string) => {
-  return actionFn(
-    clientApis.get<TResponse<SchoolAttributes>>(
-      `schools/${schoolId}` // Direct path for specific school
-    )
-  ).then((res) => res.data);
+  return clientApis
+    .get<SchoolAttributes>(`schools/${schoolId}`)
+    .then((res) => res.data);
 };
 
 /**
@@ -215,12 +200,9 @@ export const getSchoolById = (schoolId: string) => {
  * @description Client action to create a new school.
  */
 export const createSchool = (data: SchoolAttributesInsert) => {
-  return actionFn(
-    clientApis.post<TResponse<SchoolAttributes>, SchoolAttributesInsert>(
-      "schools",
-      data
-    )
-  ).then((res) => res.data);
+  return clientApis
+    .post<SchoolAttributes, SchoolAttributesInsert>("schools", data)
+    .then((res) => res.data);
 };
 
 /**
@@ -231,12 +213,12 @@ export const updateSchool = (
   data: Partial<SchoolAttributesInsert>,
   schoolId: string
 ) => {
-  return actionFn(
-    clientApis.put<
-      TResponse<SchoolAttributes>,
+  return clientApis
+    .put<
+      SchoolAttributes,
       Partial<SchoolAttributesInsert>
     >("schools", data, { params: { schoolId } })
-  ).then((res) => res.data);
+    .then((res) => res.data);
 };
 
 /**
@@ -244,9 +226,9 @@ export const updateSchool = (
  * @description Client action to delete a school.
  */
 export const deleteSchool = (schoolId: string) => {
-  return actionFn(
-    clientApis.delete<TResponse<{ message: string }>>("schools", {
+  return clientApis
+    .delete<{ message: string }>("schools", {
       params: { schoolId },
     })
-  ).then((res) => res.data);
+    .then((res) => res.data);
 };
