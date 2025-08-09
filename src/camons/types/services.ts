@@ -16,6 +16,13 @@ import type {
 export type WithSchoolId<T> = T & { schoolId: string };
 export type WithSchoolAndYearId<T> = T & { schoolId: string; yearId?: string };
 
+export type QuickEnrolementAttributesInsert = Omit<
+  ClassroomEnrolementAttributesInsert,
+  "code" | "status"
+> & {
+  student: Omit<UserAttributesInsert, "username" | "schoolId" | "password">;
+};
+
 export type {
   SchoolAttributes,
   SchoolAttributesInsert,

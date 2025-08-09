@@ -1,4 +1,10 @@
-import type { SECTION, USER_GENDER, USER_ROLE } from "@/camons/constants/enum";
+import type {
+  SECTION,
+  USER_GENDER,
+  USER_ROLE,
+  STUDENT_STATUS,
+  ENROLEMENT_ACTION,
+} from "@/camons/constants/enum";
 // =====================
 // ATTRIBUTE INTERFACES
 // =====================
@@ -12,16 +18,18 @@ export interface SchoolAttributes {
 }
 export interface UserAttributes {
   userId: string;
+  //
   lastName: string;
   middleName: string;
   firstName?: string | null;
-  username: string;
-  password: string;
   gender: USER_GENDER;
   role: USER_ROLE;
   birthDate?: Date | null;
-  birthPlace?: Date | null;
+  birthPlace?: string | null;
+  //
+  username: string;
   schoolId: string;
+  password: string;
 }
 
 export interface OptionAttributes {
@@ -52,12 +60,22 @@ export interface ClassAttributes {
 
 export interface ClassroomEnrolementAttributes {
   enrolementId: string;
-  enrolement: string;
+  //
   classroomId: string;
   studentId: string; // userId
   isNewStudent: boolean;
-  code: string;
   schoolId: string;
+  status: STUDENT_STATUS;
+  //
+  code: string;
+}
+
+export interface ClassroomEnrolementActionAttributes {
+  actionId: string;
+  //
+  enrolementId: string;
+  reason?: string;
+  action: ENROLEMENT_ACTION;
 }
 
 export type UserAttributesInsert = Omit<UserAttributes, "userId">;

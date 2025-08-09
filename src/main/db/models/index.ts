@@ -1,5 +1,10 @@
 import { DataTypes, Model, BuildOptions } from "sequelize";
-import { SECTION, USER_GENDER, USER_ROLE } from "@/camons/constants/enum";
+import {
+  SECTION,
+  STUDENT_STATUS,
+  USER_GENDER,
+  USER_ROLE,
+} from "@/camons/constants/enum";
 import { sequelize } from "../config";
 import { PRIMARY_KEY } from "./base";
 import type {
@@ -203,6 +208,12 @@ const ClassroomEnrolement = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       field: "classroom_id",
+    },
+    status: {
+      type: DataTypes.ENUM(...Object.values(STUDENT_STATUS)),
+      allowNull: false,
+      field: "status",
+      defaultValue: STUDENT_STATUS.EN_COURS,
     },
     isNewStudent: {
       type: DataTypes.BOOLEAN,
