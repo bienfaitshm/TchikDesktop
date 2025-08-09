@@ -18,7 +18,7 @@ export type WithSchoolAndYearId<T> = T & { schoolId: string; yearId?: string };
 
 export type QuickEnrolementAttributesInsert = Omit<
   ClassroomEnrolementAttributesInsert,
-  "code" | "status"
+  "code" | "status" | "studentId"
 > & {
   student: Omit<UserAttributesInsert, "username" | "schoolId" | "password">;
 };

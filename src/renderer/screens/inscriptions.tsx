@@ -4,29 +4,31 @@ import { TypographyH1 } from "@/renderer/components/ui/typography"
 import { useGetClassrooms } from "@/renderer/libs/queries/school"
 import { Suspense } from "@/renderer/libs/queries/suspense"
 import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store"
-import { ButtonLoader } from "../components/form/button-loader"
+import { ButtonLoader } from "@/renderer/components/form/button-loader"
+import { useQuickEnrolement } from "@/renderer/libs/queries/enrolement"
+import { createMutationCallbacksWithNotifications } from "../utils/mutation-toast"
 
 type InscriptionFormLoaderProps = {
     schoolId: string;
     yearId: string;
 }
 const InscriptionFormLoader: React.FC<InscriptionFormLoaderProps> = ({ schoolId, yearId }) => {
-    const [isloading, setIsloading] = React.useState(false)
+    const quickEnrolementMutation = useQuickEnrolement()
     const { data: classrooms = [] } = useGetClassrooms(schoolId, yearId)
     const classroomsOptions = React.useMemo(() => classrooms.map(classroom => ({ value: classroom.classId, label: `${classroom.identifier} (${classroom.shortIdentifier})` })), [classrooms])
     console.log("InscriptionFormLoader")
 
     const onSubmit = React.useCallback((value: QuickEnrollmentFormData) => {
-        console.log(value)
-        setIsloading(true)
-        setTimeout(() => {
-            setIsloading(false)
-        }, 30 * 1000)
+        quickEnrolementMutation.mutate(value, createMutationCallbacksWithNotifications({
+            onSuccess(data,) {
+                console.log("success inscription", data)
+            },
+        }))
     }, [])
     return (
         <QuickEnrollmentForm initialValues={{ schoolId, yearId }} onSubmit={onSubmit} classrooms={classroomsOptions}>
             <div>
-                <ButtonLoader isLoading={isloading} isLoadingText="Enregistrement encours...">
+                <ButtonLoader isLoading={quickEnrolementMutation.isPending} isLoadingText="Enregistrement encours...">
                     Enregistrer
                 </ButtonLoader>
             </div>

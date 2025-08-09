@@ -4,13 +4,14 @@ import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { autoUpdater } from "electron-updater";
 import log from "electron-log";
 
-// Configure le logger (optionnel)
-autoUpdater.logger = log;
-
 import icon from "../../resources/icon.png?asset";
 import { server } from "@/camons/libs/electron-apis/server";
 import "@/main/apps";
 import { sequelize } from "./db/config";
+
+// Configure le logger (optionnel)
+autoUpdater.logger = log;
+const ALTER_DB: boolean = true;
 
 const createMainWindow = (): void => {
   const mainWindow = new BrowserWindow({
@@ -26,12 +27,17 @@ const createMainWindow = (): void => {
     },
   });
 
-  sequelize.sync({ alter: false }).then(() => {
-    console.log("Database synchronized!");
-    server.listen(mainWindow, (routes) => {
-      console.log(`Server active, ${routes.length} routes initialized`);
+  sequelize
+    .sync({ alter: ALTER_DB, force: true })
+    .then(() => {
+      console.log("Database synchronized!");
+      server.listen(mainWindow, (routes) => {
+        console.log(`Server active, ${routes.length} routes initialized`);
+      });
+    })
+    .catch((error) => {
+      console.log("Database NO synchronized!", JSON.stringify(error, null, 4));
     });
-  });
 
   mainWindow.once("ready-to-show", () => mainWindow.show());
 
