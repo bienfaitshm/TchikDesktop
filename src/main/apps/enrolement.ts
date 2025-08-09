@@ -1,8 +1,11 @@
-import type { QuickEnrolementAttributesInsert } from "@/camons/types/services";
+import type {
+  QuickEnrolementAttributesInsert,
+  WithSchoolAndYearId,
+} from "@/camons/types/services";
 import { server } from "@/camons/libs/electron-apis/server";
 import { response } from "@/camons/libs/electron-apis/utils";
 // import { Status } from "@/camons/libs/electron-apis/constant";
-import { mapModelToPlain } from "@/main/db/models/utils";
+import { mapModelsToPlainList, mapModelToPlain } from "@/main/db/models/utils";
 import { STUDENT_STATUS } from "@/camons/constants/enum";
 import { UserService, ClassroomEnrolementService } from "@/main/db/services";
 import {
@@ -42,9 +45,14 @@ server.post<any, QuickEnrolementAttributesInsert>(
   }
 );
 
-server.get("enrolements", async () => {
-  return response({});
-});
+server.get<any, WithSchoolAndYearId>(
+  "enrolements",
+  async ({ params: { schoolId } }) => {
+    return response(
+      mapModelsToPlainList(ClassroomEnrolementService.findAll(schoolId))
+    );
+  }
+);
 
 server.post("enrolements", async () => {
   return response({});

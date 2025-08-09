@@ -11,7 +11,7 @@ import { sequelize } from "./db/config";
 
 // Configure le logger (optionnel)
 autoUpdater.logger = log;
-const ALTER_DB: boolean = true;
+const ALTER_DB: boolean = false;
 
 const createMainWindow = (): void => {
   const mainWindow = new BrowserWindow({
@@ -28,7 +28,7 @@ const createMainWindow = (): void => {
   });
 
   sequelize
-    .sync({ alter: ALTER_DB, force: true })
+    .sync({ alter: ALTER_DB })
     .then(() => {
       console.log("Database synchronized!");
       server.listen(mainWindow, (routes) => {
