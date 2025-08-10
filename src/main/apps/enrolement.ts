@@ -8,10 +8,7 @@ import { response } from "@/camons/libs/electron-apis/utils";
 import { mapModelsToPlainList, mapModelToPlain } from "@/main/db/models/utils";
 import { STUDENT_STATUS } from "@/camons/constants/enum";
 import { UserService, ClassroomEnrolementService } from "@/main/db/services";
-import {
-  getDefaultEnrolementCode,
-  getDefaultUsername,
-} from "@/main/db/services/utils";
+import { getDefaultEnrolementCode } from "@/main/db/services/utils";
 
 const DEFAULT_STUDENT_PASSWORD = "000000";
 
@@ -20,13 +17,11 @@ server.post<any, QuickEnrolementAttributesInsert>(
   async ({ data }) => {
     const { student: studentData, ...enrolementData } = data;
     // generics/ default data
-    const username = getDefaultUsername();
     const enrolementCode = getDefaultEnrolementCode();
 
     //   create -student
     const student = await UserService.create({
       ...studentData,
-      username,
       password: DEFAULT_STUDENT_PASSWORD,
       schoolId: enrolementData.schoolId,
     });

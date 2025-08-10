@@ -1,4 +1,21 @@
 import type { Model } from "sequelize";
+import ShortUniqueId from "short-unique-id";
+
+const shortId = new ShortUniqueId({ length: 5 });
+const shortCode = new ShortUniqueId({ length: 10, dictionary: "number" });
+
+export function getUniqueId(lenght: number) {
+  return shortId.randomUUID(lenght);
+}
+
+export function getDefaultUsername(lenght = 6): string {
+  const id = shortId.randomUUID(lenght);
+  return `${id}`;
+}
+
+export function getDefaultEnrolementCode(lenght = 10) {
+  return shortCode.randomUUID(lenght);
+}
 
 /**
  * Transforms a promise resolving to an array of Sequelize models into

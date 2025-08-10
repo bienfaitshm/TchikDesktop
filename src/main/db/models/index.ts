@@ -6,7 +6,8 @@ import {
   USER_ROLE,
 } from "@/camons/constants/enum";
 import { sequelize } from "../config";
-import { PRIMARY_KEY } from "./base";
+import { PRIMARY_KEY, primaryKey } from "./base";
+import { getDefaultEnrolementCode, getDefaultUsername } from "./utils";
 import type {
   SchoolAttributes,
   ClassAttributes,
@@ -20,8 +21,14 @@ import type {
 // MODEL TYPES
 // =====================
 
-type ModelStatic<T extends {}> = typeof Model & {
-  new (values?: object, options?: BuildOptions): Model<T> & T;
+type ModelStatic<
+  Attributes extends {},
+  InsertAttributes extends {} = {},
+> = typeof Model & {
+  new (
+    values?: object,
+    options?: BuildOptions
+  ): Model<Attributes, InsertAttributes> & Attributes;
 };
 
 // =====================
@@ -31,10 +38,7 @@ type ModelStatic<T extends {}> = typeof Model & {
 const School = sequelize.define(
   "School",
   {
-    schoolId: {
-      ...PRIMARY_KEY,
-      field: "school_id",
-    },
+    schoolId: primaryKey({ field: "school_id" }),
     name: { type: DataTypes.STRING, allowNull: false, field: "name" },
     adress: { type: DataTypes.STRING, allowNull: false, field: "adress" },
     town: { type: DataTypes.STRING, allowNull: false, field: "town" },
@@ -46,10 +50,7 @@ const School = sequelize.define(
 const User = sequelize.define(
   "User",
   {
-    userId: {
-      ...PRIMARY_KEY,
-      field: "user_id",
-    },
+    userId: primaryKey({ field: "user_id" }),
     lastName: { type: DataTypes.STRING, allowNull: false, field: "last_name" },
     middleName: {
       type: DataTypes.STRING,
@@ -57,22 +58,34 @@ const User = sequelize.define(
       field: "middle_name",
     },
     firstName: { type: DataTypes.STRING, allowNull: true, field: "first_name" },
+    fullname: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${this.lastName} ${this.middleName} ${this.lastName ?? ""}`;
+      },
+    },
     username: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
       field: "username",
+      defaultValue: getDefaultUsername,
+      set(val: string) {
+        this.setDataValue("username", `${this.role}_${val}`);
+      },
     },
     password: { type: DataTypes.STRING, allowNull: false, field: "password" },
     gender: {
       type: DataTypes.ENUM(...Object.values(USER_GENDER)),
       allowNull: false,
       field: "gender",
+      defaultValue: USER_GENDER.MALE,
     },
     role: {
       type: DataTypes.ENUM(...Object.values(USER_ROLE)),
       allowNull: false,
       field: "role",
+      defaultValue: USER_ROLE.STUDENT,
     },
     birthDate: {
       type: DataTypes.DATEONLY,
@@ -91,15 +104,12 @@ const User = sequelize.define(
     },
   },
   { tableName: "Users" }
-) as ModelStatic<UserAttributes>;
+) as ModelStatic<Required<UserAttributes>, UserAttributes>;
 
 const Option = sequelize.define(
   "Option",
   {
-    optionId: {
-      ...PRIMARY_KEY,
-      field: "option_id",
-    },
+    optionId: primaryKey({ field: "option_id" }),
     optionName: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -114,6 +124,7 @@ const Option = sequelize.define(
       type: DataTypes.ENUM(...Object.values(SECTION)),
       allowNull: false,
       field: "section",
+      defaultValue: SECTION.SECONDARY,
     },
     schoolId: {
       type: DataTypes.STRING,
@@ -127,10 +138,7 @@ const Option = sequelize.define(
 const StudyYear = sequelize.define(
   "StudyYear",
   {
-    yearId: {
-      ...PRIMARY_KEY,
-      field: "year_id",
-    },
+    yearId: primaryKey({ field: "year_id" }),
     yearName: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -159,10 +167,7 @@ const StudyYear = sequelize.define(
 const ClassRoom = sequelize.define(
   "ClassRoom",
   {
-    classId: {
-      ...PRIMARY_KEY,
-      field: "class_id",
-    },
+    classId: primaryKey({ field: "class_id" }),
     identifier: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -225,6 +230,7 @@ const ClassroomEnrolement = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       field: "student_code",
+      defaultValue: getDefaultEnrolementCode,
     },
     studentId: {
       type: DataTypes.STRING,

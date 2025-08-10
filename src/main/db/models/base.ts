@@ -1,14 +1,28 @@
-import { Model, ModelAttributes, DataTypes } from "sequelize";
-import ShortUniqueId from "short-unique-id";
+import {
+  Model,
+  ModelAttributes,
+  DataTypes,
+  BuildOptions,
+  ModelAttributeColumnOptions,
+} from "sequelize";
+import { getUniqueId } from "./utils";
 
-const shortId = new ShortUniqueId({ length: 5 });
+export type ModelStatic<
+  Attributes extends {},
+  InsertAttributes extends {} = {},
+> = typeof Model & {
+  new (
+    values?: object,
+    options?: BuildOptions
+  ): Model<Attributes, InsertAttributes> & Attributes;
+};
 
 export const PRIMARY_KEY = {
   type: DataTypes.STRING(10),
   primaryKey: true,
   unique: true,
   allowNull: true,
-  defaultValue: () => shortId.randomUUID(),
+  defaultValue: getUniqueId,
 };
 
 export interface IBaseModel {
@@ -22,3 +36,9 @@ export const baseModel: ModelAttributes<Model<IBaseModel, IBaseModel>> = {
     ...PRIMARY_KEY,
   },
 };
+
+export function primaryKey<M extends Model = Model<any, any>>(
+  value: Partial<ModelAttributeColumnOptions<M>>
+): ModelAttributeColumnOptions<M> {
+  return { ...PRIMARY_KEY, ...value };
+}

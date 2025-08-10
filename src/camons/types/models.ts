@@ -17,19 +17,20 @@ export interface SchoolAttributes {
   logo?: string | null;
 }
 export interface UserAttributes {
-  userId: string;
+  userId?: string;
   //
   lastName: string;
   middleName: string;
   firstName?: string | null;
-  gender: USER_GENDER;
-  role: USER_ROLE;
+  fullname?: string;
+  gender?: USER_GENDER;
+  role?: USER_ROLE;
   birthDate?: Date | null;
   birthPlace?: string | null;
   //
-  username: string;
-  schoolId: string;
-  password: string;
+  username?: string;
+  schoolId?: string;
+  password?: string;
 }
 
 export interface OptionAttributes {
