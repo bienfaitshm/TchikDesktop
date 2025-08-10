@@ -1,8 +1,9 @@
 
-import { SidebarProvider, SidebarTrigger, } from "@/renderer/components/ui/sidebar"
+import { SidebarInset, SidebarProvider, SidebarTrigger, } from "@/renderer/components/ui/sidebar"
 import { ApplicationSidebar } from "@/renderer/components/app-sidebar"
 import { Outlet, Navigate } from "react-router"
 import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store"
+import { Separator } from "../components/ui/separator"
 
 export default function Layout() {
     const isConfigured = useApplicationConfigurationStore(store => !!store.currentSchool && !!store.currentStudyYear)
@@ -12,10 +13,29 @@ export default function Layout() {
     return (
         <SidebarProvider>
             <ApplicationSidebar />
-            <main className="w-full h-full flex-1">
-                <SidebarTrigger />
-                <Outlet />
-            </main>
+            <SidebarInset>
+                <header className="bg-background sticky top-0 flex shrink-0 items-center gap-2 border-b p-4">
+                    <SidebarTrigger className="-ml-1" />
+                    <Separator
+                        orientation="vertical"
+                        className="mr-2 data-[orientation=vertical]:h-4"
+                    />
+                    {/* <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem className="hidden md:block">
+                <BreadcrumbLink href="#">All Inboxes</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="hidden md:block" />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Inbox</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb> */}
+                </header>
+                <main className="w-full h-full flex-1">
+                    <Outlet />
+                </main>
+            </SidebarInset>
         </SidebarProvider>
     )
 }

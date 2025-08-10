@@ -214,6 +214,7 @@ export function ApplicationSidebar() {
             <SidebarFooter>
                 <SidebarFoot user={APP_SIDEBAR_NAVIGATION_DATA.user} />
             </SidebarFooter>
+
         </Sidebar>
     );
 }
