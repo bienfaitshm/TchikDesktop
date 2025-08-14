@@ -15,6 +15,8 @@ import type {
   OptionAttributes,
   StudyYearAttributes,
   UserAttributes,
+  TClassroomInsert,
+  TClassroom,
 } from "@/camons/types/models";
 
 // =====================
@@ -200,7 +202,7 @@ const ClassRoom = sequelize.define(
     },
   },
   { tableName: "ClassRooms" }
-) as ModelStatic<ClassAttributes>;
+) as ModelStatic<TClassroom, TClassroomInsert>;
 
 const ClassroomEnrolement = sequelize.define(
   "ClassroomEnrolement",

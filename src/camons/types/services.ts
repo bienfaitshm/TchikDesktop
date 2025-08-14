@@ -18,6 +18,7 @@ export type WithSchoolAndYearId<T = {}> = T & {
   schoolId: string;
   yearId?: string;
 };
+export type QueryParams<TQuery, TParams> = TQuery & { params: TParams };
 
 export type QuickEnrolementAttributesInsert = Omit<
   ClassroomEnrolementAttributesInsert,
