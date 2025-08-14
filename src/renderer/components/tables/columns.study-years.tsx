@@ -1,4 +1,4 @@
-import type { StudyYearAttributes } from "@/camons/types/models"
+import type { StudyYearAttributes } from "@/commons/types/models"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
 import { format } from "date-fns"

@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from "react";
-import { useControlledForm } from "@/camons/libs/forms";
+import { useControlledForm } from "@/commons/libs/forms";
 import { StudyYearSchema, type StudyYearAttributes } from "@/renderer/libs/schemas";
 import {
     Form,

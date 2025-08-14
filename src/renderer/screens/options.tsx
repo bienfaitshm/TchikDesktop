@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/renderer/components/ui/button";
 import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
 import { OptionColumns } from "@/renderer/components/tables/columns.options";
-import type { OptionAttributes } from "@/camons/types/models";
+import type { OptionAttributes } from "@/commons/types/models";
 import type { DataTableMenu } from "@/renderer/components/button-menus";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { DialogConfirmDelete, useConfirmDeleteDialog } from "../components/dialog/dialog-delete";
@@ -25,7 +25,6 @@ import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutat
 import { FormSubmitter } from "@/renderer/components/form/form-submiter"
 import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
 
-import { useLoaderData } from "react-router"
 
 type SchoolDialogState = {
     isOpen: boolean;

@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from "react";
-import { useControlledForm } from "@/camons/libs/forms";
-import { SECTION, SECTION_TRANSLATIONS } from "@/camons/constants/enum";
+import { useControlledForm } from "@/commons/libs/forms";
+import { SECTION, SECTION_TRANSLATIONS } from "@/commons/constants/enum";
 import { OptionSchema, type OptionAttributes } from "@/renderer/libs/schemas";
 import {
     Form,
@@ -20,7 +20,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/renderer/components/ui/select";
-import { getEnumKeyValueList } from "@/camons/utils";
+import { getEnumKeyValueList } from "@/commons/utils";
 
 export * from "./utils"
 

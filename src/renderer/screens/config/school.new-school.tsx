@@ -6,7 +6,7 @@ import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-sto
 import { SchoolForm, type SchoolFormData } from "@/renderer/components/form/school-form";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import React from "react";
-import type { SchoolAttributes } from "@/camons/types/models";
+import type { SchoolAttributes } from "@/commons/types/models";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { Button } from "@/renderer/components/ui/button";
 import { ArrowLeft } from "lucide-react";

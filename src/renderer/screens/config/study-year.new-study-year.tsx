@@ -6,7 +6,7 @@ import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-sto
 import { StudyYearForm, type StudyYearFormData } from "@/renderer/components/form/study-year-form";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import React from "react";
-import type { StudyYearAttributes } from "@/camons/types/models";
+import type { StudyYearAttributes } from "@/commons/types/models";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { Button } from "@/renderer/components/ui/button";
 import { ArrowLeft } from "lucide-react";

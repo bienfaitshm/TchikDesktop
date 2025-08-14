@@ -6,7 +6,7 @@ import type {
   OptionAttributesInsert,
   SchoolAttributesInsert,
   StudyYearAttributesInsert,
-} from "@/camons/types/services";
+} from "@/commons/types/services";
 import * as apis from "@/renderer/libs/apis/school";
 
 // --- School Hooks ---

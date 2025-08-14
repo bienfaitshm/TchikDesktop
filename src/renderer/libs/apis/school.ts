@@ -9,7 +9,7 @@ import type {
   OptionAttributesInsert,
   SchoolAttributesInsert,
   StudyYearAttributesInsert,
-} from "@/camons/types/services";
+} from "@/commons/types/services";
 import { clientApis } from "./client";
 
 export type WithSchoolIdParams<T extends {} = {}> = WithSchoolId<T>;

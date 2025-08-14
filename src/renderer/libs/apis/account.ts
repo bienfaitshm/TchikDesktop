@@ -1,4 +1,4 @@
-import { TResponse, actionFn } from "@/camons/libs/electron-apis/utils";
+import { TResponse, actionFn } from "@/commons/libs/electron-apis/utils";
 import { clientApis } from "./client";
 
 export const getUsers = () => {

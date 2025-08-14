@@ -1,10 +1,9 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import type {
   TEnrolement,
-  TEnrolementInsert,
   TWithUser,
   TQuickEnrolementInsert,
-} from "@/camons/types/services";
+} from "@/commons/types/services";
 import * as apis from "@/renderer/libs/apis/enrolement";
 
 export function useGetEnrolements(params: apis.GetEnrolementParams) {

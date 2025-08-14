@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SECTION, USER_GENDER, USER_ROLE } from "@/camons/constants/enum";
+import { SECTION, USER_GENDER, USER_ROLE } from "@/commons/constants/enum";
 
 // =====================
 // SCHÉMAS ZOD ET LEURS TYPES INFÉRÉS

@@ -5,7 +5,7 @@ import { autoUpdater } from "electron-updater";
 import log from "electron-log";
 
 import icon from "../../resources/icon.png?asset";
-import { server } from "@/camons/libs/electron-apis/server";
+import { server } from "@/commons/libs/electron-apis/server";
 import "@/main/apps";
 import { sequelize } from "./db/config";
 

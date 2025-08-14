@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/renderer/components/ui/button";
 import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
 import { SchoolColumns } from "@/renderer/components/tables/columns.school";
-import type { SchoolAttributes } from "@/camons/types/models";
+import type { SchoolAttributes } from "@/commons/types/models";
 import type { DataTableMenu } from "@/renderer/components/button-menus";
 import { Pencil, Trash2 } from "lucide-react";
 import { DialogConfirmDelete, useConfirmDeleteDialog } from "../components/dialog/dialog-delete";

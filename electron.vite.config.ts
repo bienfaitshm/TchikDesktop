@@ -7,7 +7,7 @@ export default defineConfig({
     resolve: {
       alias: {
         "@/main": resolve("src/main"),
-        "@/camons": resolve("src/camons"),
+        "@/commons": resolve("src/commons"),
       },
     },
     plugins: [externalizeDepsPlugin()],
@@ -19,7 +19,7 @@ export default defineConfig({
     resolve: {
       alias: {
         "@/renderer": resolve("src/renderer"),
-        "@/camons": resolve("src/camons"),
+        "@/commons": resolve("src/commons"),
       },
     },
     plugins: [react()],

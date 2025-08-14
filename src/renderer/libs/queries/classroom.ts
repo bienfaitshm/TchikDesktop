@@ -2,7 +2,7 @@ import {
   TClassroom,
   TClassroomInsert,
   TWithOption,
-} from "@/camons/types/services";
+} from "@/commons/types/services";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import * as apis from "@/renderer/libs/apis/classroom";
 

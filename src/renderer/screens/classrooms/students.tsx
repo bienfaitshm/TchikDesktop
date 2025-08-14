@@ -15,10 +15,10 @@ import { StudentColumns } from "@/renderer/components/tables/columns.students"
 import { Card, CardContent, CardHeader, CardTitle } from "@/renderer/components/ui/card";
 import { TypographyH2, TypographySmall } from "@/renderer/components/ui/typography";
 import { useGetEnrolements } from "@/renderer/libs/queries/enrolement";
-import { TEnrolement, TUser, TWithUser, WithSchoolAndYearId } from "@/camons/types/services";
+import { TEnrolement, TUser, TWithUser, WithSchoolAndYearId } from "@/commons/types/services";
 import { useGetClassroom } from "@/renderer/libs/queries/classroom";
 import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store";
-import { STUDENT_STATUS, USER_GENDER } from "@/camons/constants/enum";
+import { STUDENT_STATUS, USER_GENDER } from "@/commons/constants/enum";
 import { cn } from "@/renderer/utils";
 
 const tableMenus: DataTableMenu[] = [

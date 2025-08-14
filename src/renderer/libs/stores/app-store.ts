@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type {
   SchoolAttributes,
   StudyYearAttributes,
-} from "@/camons/types/models";
+} from "@/commons/types/models";
 
 // Définit l'état du store
 interface ConfigurationState {

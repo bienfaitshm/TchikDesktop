@@ -1,8 +1,8 @@
-import type { ClassAttributes } from "@/camons/types/models"
+import type { ClassAttributes } from "@/commons/types/models"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
 import { Badge } from "@/renderer/components/ui/badge"
-import { SECTION_TRANSLATIONS } from "@/camons/constants/enum"
+import { SECTION_TRANSLATIONS } from "@/commons/constants/enum"
 
 
 export const ClassroomColumns: ColumnDef<ClassAttributes>[] = [

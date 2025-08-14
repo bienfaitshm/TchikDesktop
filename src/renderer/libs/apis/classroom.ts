@@ -4,7 +4,7 @@ import type {
   TClassroom,
   TWithOption,
   WithSchoolAndYearId,
-} from "@/camons/types/services";
+} from "@/commons/types/services";
 import { clientApis } from "./client";
 
 export type GetClassroomParams = QueryParams<

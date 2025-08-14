@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/renderer/components/ui/button";
 import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
 import { ClassroomColumns } from "@/renderer/components/tables/columns.classroom";
-import type { ClassAttributes } from "@/camons/types/models";
+import type { ClassAttributes } from "@/commons/types/models";
 import type { DataTableMenu } from "@/renderer/components/button-menus";
 import { Pencil, Trash2 } from "lucide-react";
 import { DialogConfirmDelete, useConfirmDeleteDialog } from "../components/dialog/dialog-delete";
@@ -23,8 +23,8 @@ import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutat
 import { FormSubmitter } from "@/renderer/components/form/form-submiter"
 import { useGetOptions } from "@/renderer/libs/queries/school";
 import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store";
-import { WithSchoolAndYearId } from "@/camons/types/services";
-import { MUTATION_ACTION } from "@/camons/constants/enum";
+import { WithSchoolAndYearId } from "@/commons/types/services";
+import { MUTATION_ACTION } from "@/commons/constants/enum";
 import { useCreateClassroom, useDeleteClassroom, useGetClassrooms, useUpdateClassroom } from "@/renderer/libs/queries/classroom";
 
 type DialogDescription = {

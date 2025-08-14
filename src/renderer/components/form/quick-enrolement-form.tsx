@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from "react";
-import { useControlledForm } from "@/camons/libs/forms";
+import { useControlledForm } from "@/commons/libs/forms";
 import { QuickEnrollmentSchema, type QuickEnrollmentSchemaAttributes } from "@/renderer/libs/schemas";
 import {
     Form,
@@ -11,7 +11,7 @@ import {
     FormMessage,
 } from "@/renderer/components/ui/form";
 import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
-import { USER_GENDER, USER_ROLE } from "@/camons/constants/enum";
+import { USER_GENDER, USER_ROLE } from "@/commons/constants/enum";
 import { Input } from "@/renderer/components/ui/input";
 import { GenderInput } from "./fields/gender";
 import { Label } from "@/renderer/components/ui/label";

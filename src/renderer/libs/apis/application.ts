@@ -1,5 +1,5 @@
-import { TResponse, actionFn } from "@/camons/libs/electron-apis/utils";
-import { SystemInformation } from "@/camons/types/sys-infos";
+import { TResponse, actionFn } from "@/commons/libs/electron-apis/utils";
+import { SystemInformation } from "@/commons/types/sys-infos";
 
 import { clientApis } from "./client";
 

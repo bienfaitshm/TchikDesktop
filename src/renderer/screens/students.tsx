@@ -1,4 +1,4 @@
-import { WithSchoolAndYearId } from "@/camons/types/services"
+import { WithSchoolAndYearId } from "@/commons/types/services"
 import { TypographyH2, TypographyH3, TypographyP, TypographySmall } from "@/renderer/components/ui/typography"
 import { Shapes } from "lucide-react"
 import {
@@ -9,8 +9,8 @@ import {
 } from "@/renderer/components/ui/tabs"
 import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store"
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom"
-import { SECTION, SECTION_TRANSLATIONS } from "@/camons/constants/enum"
-import { getEnumKeyValueList } from "@/camons/utils"
+import { SECTION, SECTION_TRANSLATIONS } from "@/commons/constants/enum"
+import { getEnumKeyValueList } from "@/commons/utils"
 import { Badge } from "@/renderer/components/ui/badge"
 import { Link } from "react-router"
 

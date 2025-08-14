@@ -1,5 +1,5 @@
-import { USER_GENDER, USER_GENDER_TRANSLATIONS } from "@/camons/constants/enum";
-import { getEnumKeyValueList } from "@/camons/utils";
+import { USER_GENDER, USER_GENDER_TRANSLATIONS } from "@/commons/constants/enum";
+import { getEnumKeyValueList } from "@/commons/utils";
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/renderer/components/ui/select";
 import { FormControl } from "@/renderer/components/ui/form";

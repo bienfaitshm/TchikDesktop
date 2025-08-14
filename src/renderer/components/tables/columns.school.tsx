@@ -1,4 +1,4 @@
-import type { SchoolAttributes } from "@/camons/types/models"
+import type { SchoolAttributes } from "@/commons/types/models"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
 

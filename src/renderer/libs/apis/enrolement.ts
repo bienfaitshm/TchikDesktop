@@ -5,7 +5,7 @@ import type {
   QueryParams,
   WithSchoolAndYearId,
   TEnrolementInsert,
-} from "@/camons/types/services";
+} from "@/commons/types/services";
 import { clientApis } from "./client";
 
 export type GetEnrolementParams = QueryParams<
