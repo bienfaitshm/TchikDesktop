@@ -12,7 +12,6 @@ import type {
   SchoolAttributes,
   OptionAttributes,
   StudyYearAttributes,
-  UserAttributes,
   TClassroomInsert,
   TClassroom,
   TEnrolement,
@@ -65,7 +64,7 @@ const User = sequelize.define(
     fullname: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.lastName} ${this.middleName} ${this.lastName ?? ""}`;
+        return `${this.lastName} ${this.middleName} ${this.lastName ?? ""}`.toUpperCase();
       },
     },
     username: {

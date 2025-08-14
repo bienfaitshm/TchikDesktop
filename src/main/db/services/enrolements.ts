@@ -14,7 +14,6 @@ export async function getEnrolements({
   params = {},
 }: QueryParams<WithSchoolAndYearId, Partial<TEnrolementInsert>>) {
   const whereClause = getDefinedAttributes({ schoolId, ...params });
-  console.log("\n\n\n", JSON.stringify(whereClause, null, 4));
   return ClassroomEnrolement.findAll({
     where: whereClause,
     include: [
