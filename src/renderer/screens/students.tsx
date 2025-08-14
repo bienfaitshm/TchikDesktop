@@ -22,10 +22,11 @@ const SECTIONS_LISTS = getEnumKeyValueList(SECTION, SECTION_TRANSLATIONS)
 
 const ClassroomSection: React.FC<CurrentYearSchoolProps<{ section: SECTION }>> = ({ schoolId, section, yearId }) => {
     const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId, params: { section } })
+    console.log({ classrooms })
     return (
         <div className="grid grid-cols-3 gap-5 mt-5">
             {classrooms.map(classroom => (
-                <Link to={`/classrooms/${classroom.classId}`} className="rounded-xl cursor-pointer p-4 bg-accent-foreground/5 hover:bg-accent-foreground/10 transition-colors">
+                <Link key={classroom.classId} to={`/classrooms/${classroom.classId}`} className="rounded-xl cursor-pointer p-4 bg-accent-foreground/5 hover:bg-accent-foreground/10 transition-colors">
                     <div className="bg-primary rounded-full p-2 w-fit">
                         <Shapes className="text-white size-8" />
                     </div>

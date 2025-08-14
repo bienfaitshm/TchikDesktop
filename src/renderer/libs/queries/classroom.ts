@@ -1,4 +1,8 @@
-import { TClassroom, TClassroomInsert } from "@/camons/types/services";
+import {
+  TClassroom,
+  TClassroomInsert,
+  TWithOption,
+} from "@/camons/types/services";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import * as apis from "@/renderer/libs/apis/classroom";
 
@@ -11,8 +15,8 @@ export const GET_CLASSROOMS_KEY = "GET_CLASSROOMS";
  * @description Hook to fetch all classrooms for a given school, optionally filtered by year.
  */
 export function useGetClassrooms(params: apis.GetClassroomParams) {
-  return useSuspenseQuery<TClassroom[], Error>({
-    queryKey: [GET_CLASSROOMS_KEY],
+  return useSuspenseQuery<TWithOption<TClassroom>[], Error>({
+    queryKey: [GET_CLASSROOMS_KEY, params],
     queryFn: () => apis.getClassrooms(params),
   });
 }

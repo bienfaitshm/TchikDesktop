@@ -2,6 +2,7 @@ import type {
   QueryParams,
   TClassroomInsert,
   TClassroom,
+  TWithOption,
   WithSchoolAndYearId,
 } from "@/camons/types/services";
 import { clientApis } from "./client";
@@ -16,7 +17,7 @@ export type GetClassroomParams = QueryParams<
  */
 export const getClassrooms = (params: GetClassroomParams) => {
   return clientApis
-    .get<TClassroom[]>("classrooms", {
+    .get<TWithOption<TClassroom>[]>("classrooms", {
       params,
     })
     .then((res) => res.data);
