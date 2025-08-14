@@ -47,14 +47,14 @@ export async function mapModelToPlain<T extends Model>(
   return model.toJSON();
 }
 
-type AnyObject = Record<string, any>;
-
 /**
  * @description Filtre un objet pour ne garder que les attributs dont la valeur est définie (pas 'undefined').
  * @param obj L'objet à filtrer.
  * @returns Un nouvel objet contenant seulement les clés avec des valeurs définies.
  */
-export function getDefinedAttributes(obj: AnyObject): AnyObject {
+export function getDefinedAttributes<T extends {} = {}>(
+  obj: Partial<T>
+): Partial<T> {
   if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
     return {};
   }
@@ -64,5 +64,5 @@ export function getDefinedAttributes(obj: AnyObject): AnyObject {
       result[key] = obj[key];
     }
     return result;
-  }, {} as AnyObject);
+  }, {} as T);
 }

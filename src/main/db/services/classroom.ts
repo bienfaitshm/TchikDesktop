@@ -23,7 +23,10 @@ export async function createClassroom(data: TClassroomInsert) {
   return ClassRoom.create(data);
 }
 
-export async function updateClassroom(classId: string, data: TClassroomInsert) {
+export async function updateClassroom(
+  classId: string,
+  data: Partial<TClassroomInsert>
+) {
   const whereClause = getDefinedAttributes({ classId });
   const classRoom = await ClassRoom.findOne({ where: whereClause });
   if (!classRoom) return null;

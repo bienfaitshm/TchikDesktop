@@ -90,9 +90,9 @@ export interface ClassroomEnrolementAttributes {
   studentId: string; // userId
   isNewStudent: boolean;
   schoolId: string;
-  status: STUDENT_STATUS;
   //
-  code: string;
+  status?: STUDENT_STATUS;
+  code?: string;
 }
 
 export type TEnrolement = Required<ClassroomEnrolementAttributes>;

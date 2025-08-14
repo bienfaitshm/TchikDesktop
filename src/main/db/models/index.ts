@@ -10,13 +10,15 @@ import { PRIMARY_KEY, primaryKey } from "./base";
 import { getDefaultEnrolementCode, getDefaultUsername } from "./utils";
 import type {
   SchoolAttributes,
-  ClassAttributes,
-  ClassroomEnrolementAttributes,
   OptionAttributes,
   StudyYearAttributes,
   UserAttributes,
   TClassroomInsert,
   TClassroom,
+  TEnrolement,
+  TEnrolementInsert,
+  TUserInsert,
+  TUser,
 } from "@/camons/types/models";
 
 // =====================
@@ -106,7 +108,7 @@ const User = sequelize.define(
     },
   },
   { tableName: "Users" }
-) as ModelStatic<Required<UserAttributes>, UserAttributes>;
+) as ModelStatic<TUser, TUserInsert>;
 
 const Option = sequelize.define(
   "Option",
@@ -246,7 +248,7 @@ const ClassroomEnrolement = sequelize.define(
     },
   },
   { tableName: "ClassroomEnrolements" }
-) as ModelStatic<ClassroomEnrolementAttributes>;
+) as ModelStatic<TEnrolement, TEnrolementInsert>;
 
 // =====================
 // RELATIONS

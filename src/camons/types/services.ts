@@ -1,17 +1,4 @@
-import type {
-  ClassAttributes,
-  ClassroomEnrolementAttributes,
-  OptionAttributes,
-  SchoolAttributes,
-  StudyYearAttributes,
-  UserAttributes,
-  ClassAttributesInsert,
-  ClassroomEnrolementAttributesInsert,
-  OptionAttributesInsert,
-  SchoolAttributesInsert,
-  StudyYearAttributesInsert,
-  UserAttributesInsert,
-} from "@/camons/types/models";
+import type { TEnrolementInsert, TUserInsert } from "@/camons/types/models";
 
 export type WithSchoolId<T = {}> = T & { schoolId: string };
 export type WithSchoolAndYearId<T = {}> = T & {
@@ -20,24 +7,8 @@ export type WithSchoolAndYearId<T = {}> = T & {
 };
 export type QueryParams<TQuery, TParams> = TQuery & { params: TParams };
 
-export type QuickEnrolementAttributesInsert = Omit<
-  ClassroomEnrolementAttributesInsert,
-  "code" | "status" | "studentId"
-> & {
-  student: Omit<UserAttributesInsert, "username" | "schoolId" | "password">;
+export type TQuickEnrolementInsert = Omit<TEnrolementInsert, "studentId"> & {
+  student: TUserInsert;
 };
 
-export type {
-  SchoolAttributes,
-  SchoolAttributesInsert,
-  ClassAttributes,
-  ClassAttributesInsert,
-  ClassroomEnrolementAttributes,
-  ClassroomEnrolementAttributesInsert,
-  OptionAttributes,
-  OptionAttributesInsert,
-  StudyYearAttributes,
-  StudyYearAttributesInsert,
-  UserAttributes,
-  UserAttributesInsert,
-};
+export * from "./models";

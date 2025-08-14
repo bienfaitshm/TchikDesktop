@@ -1,7 +1,7 @@
 import React from "react"
 import { QuickEnrollmentForm, QuickEnrollmentFormData } from "@/renderer/components/form/quick-enrolement-form"
 import { TypographyH1 } from "@/renderer/components/ui/typography"
-import { useGetClassrooms } from "@/renderer/libs/queries/school"
+import { useGetClassrooms } from "@/renderer/libs/queries/classroom"
 import { Suspense } from "@/renderer/libs/queries/suspense"
 import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store"
 import { ButtonLoader } from "@/renderer/components/form/button-loader"
@@ -14,7 +14,7 @@ type InscriptionFormLoaderProps = {
 }
 const InscriptionFormLoader: React.FC<InscriptionFormLoaderProps> = ({ schoolId, yearId }) => {
     const quickEnrolementMutation = useQuickEnrolement()
-    const { data: classrooms = [] } = useGetClassrooms(schoolId, yearId)
+    const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId, params: {} })
     const classroomsOptions = React.useMemo(() => classrooms.map(classroom => ({ value: classroom.classId, label: `${classroom.identifier} (${classroom.shortIdentifier})` })), [classrooms])
     console.log("InscriptionFormLoader")
 

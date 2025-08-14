@@ -8,7 +8,7 @@ import {
     TabsTrigger,
 } from "@/renderer/components/ui/tabs"
 import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store"
-import { useGetClassrooms } from "@/renderer/libs/queries/school"
+import { useGetClassrooms } from "@/renderer/libs/queries/classroom"
 import { SECTION, SECTION_TRANSLATIONS } from "@/camons/constants/enum"
 import { getEnumKeyValueList } from "@/camons/utils"
 import { Badge } from "@/renderer/components/ui/badge"
@@ -21,7 +21,7 @@ type CurrentYearSchoolProps<T extends {} = {}> = Required<WithSchoolAndYearId<T>
 const SECTIONS_LISTS = getEnumKeyValueList(SECTION, SECTION_TRANSLATIONS)
 
 const ClassroomSection: React.FC<CurrentYearSchoolProps<{ section: SECTION }>> = ({ schoolId, section, yearId }) => {
-    const { data: classrooms = [] } = useGetClassrooms(schoolId, yearId)
+    const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId, params: { section } })
     return (
         <div className="grid grid-cols-3 gap-5 mt-5">
             {classrooms.map(classroom => (

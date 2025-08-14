@@ -21,10 +21,11 @@ import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import { useQueryClient } from "@tanstack/react-query";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { FormSubmitter } from "@/renderer/components/form/form-submiter"
-import { useCreateClassroom, useDeleteClassroom, useGetClassrooms, useGetOptions, useUpdateClassroom } from "@/renderer/libs/queries/school";
-import { useGetCurrentYearSchool } from "../libs/stores/app-store";
+import { useGetOptions } from "@/renderer/libs/queries/school";
+import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store";
 import { WithSchoolAndYearId } from "@/camons/types/services";
 import { MUTATION_ACTION } from "@/camons/constants/enum";
+import { useCreateClassroom, useDeleteClassroom, useGetClassrooms, useUpdateClassroom } from "@/renderer/libs/queries/classroom";
 
 type DialogDescription = {
     title: string;
@@ -84,7 +85,7 @@ const useClassroomManagement = ({ schoolId }: WithSchoolAndYearId<{}>) => {
 
     // Handler for updating an existing classroom.
     const handleUpdate = React.useCallback((classId: string, values: Partial<FormValueType>) => {
-        updateMutation.mutate({ classId, schoolId, data: values }, createMutationCallbacksWithNotifications({
+        updateMutation.mutate({ classId, data: values }, createMutationCallbacksWithNotifications({
             successMessageTitle: "La classe mis à jour !",
             successMessageDescription: `La classe '${values.identifier}' a été modifié avec succès.`,
             errorMessageTitle: "Échec de la mise à jour de la classe.",
@@ -94,7 +95,7 @@ const useClassroomManagement = ({ schoolId }: WithSchoolAndYearId<{}>) => {
 
     // Handler for deleting a classroom.
     const handleDelete = React.useCallback((classId: string) => {
-        deleteMutation.mutate({ classId, schoolId }, createMutationCallbacksWithNotifications({
+        deleteMutation.mutate({ classId }, createMutationCallbacksWithNotifications({
             successMessageTitle: "La classe supprimé !",
             successMessageDescription: "La classe a été supprimé avec succès.",
             errorMessageTitle: "Échec de la suppression de la classe.",
@@ -173,7 +174,7 @@ type ClassroomTableProps = {
 }
 
 const ClassroomTable: React.FC<WithSchoolAndYearId<ClassroomTableProps>> = ({ schoolId, yearId, onAction, onOpenCreateDialog }) => {
-    const { data: classrooms = [] } = useGetClassrooms(schoolId, yearId)
+    const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId, params: {} })
     const columns = React.useMemo(() => enhanceColumnsWithMenu({
         onPressMenu: onAction,
         columns: ClassroomColumns,
@@ -183,7 +184,7 @@ const ClassroomTable: React.FC<WithSchoolAndYearId<ClassroomTableProps>> = ({ sc
         <DataTable
             data={classrooms}
             columns={columns}
-            keyExtractor={(item) => item.classId}
+            keyExtractor={(item) => `${item.classId}`}
         >
             <div className="flex items-center justify-end my-5">
                 <div className="flex items-center gap-5">
@@ -228,7 +229,7 @@ const FormManagementDialog = React.forwardRef<FormManagementDialogRef, Required<
     const closeDialog = React.useCallback(() => setDialogState({ isOpen: false, type: MUTATION_ACTION.CREATE }), []);
 
     const onConfirmDelete = React.useCallback((item: ClassAttributes) => {
-        handleDelete(item.classId);
+        handleDelete(item.classId as string);
         confirmDelete.onClose();
     }, [handleDelete, confirmDelete.onClose]);
 

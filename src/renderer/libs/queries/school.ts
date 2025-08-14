@@ -1,10 +1,8 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import type {
-  ClassAttributes,
   OptionAttributes,
   SchoolAttributes,
   StudyYearAttributes,
-  ClassAttributesInsert,
   OptionAttributesInsert,
   SchoolAttributesInsert,
   StudyYearAttributesInsert,
@@ -69,58 +67,6 @@ export function useDeleteSchool() {
   return useMutation<any, Error, string>({
     mutationKey: ["DELETE_SCHOOL"],
     mutationFn: (schoolId) => apis.deleteSchool(schoolId),
-  });
-}
-
-// --- Classroom Hooks ---
-
-/**
- * @function useGetClassrooms
- * @description Hook to fetch all classrooms for a given school, optionally filtered by year.
- */
-export function useGetClassrooms(schoolId: string, yearId?: string) {
-  return useSuspenseQuery<ClassAttributes[], Error>({
-    queryKey: ["GET_CLASSROOMS", schoolId, yearId],
-    queryFn: () => apis.getClassrooms(schoolId, yearId),
-  });
-}
-
-/**
- * @function useCreateClassroom
- * @description Hook to create a new classroom.
- */
-export function useCreateClassroom() {
-  return useMutation<ClassAttributes, Error, ClassAttributesInsert>({
-    mutationKey: ["CREATE_CLASSROOM"],
-    mutationFn: (data) => apis.createClassroom(data),
-  });
-}
-
-/**
- * @function useUpdateClassroom
- * @description Hook to update an existing classroom.
- */
-export function useUpdateClassroom() {
-  return useMutation<
-    ClassAttributes,
-    Error,
-    { data: Partial<ClassAttributesInsert>; schoolId: string; classId: string }
-  >({
-    mutationKey: ["UPDATE_CLASSROOM"],
-    mutationFn: ({ data, schoolId, classId }) =>
-      apis.updateClassroom(data, schoolId, classId),
-  });
-}
-
-/**
- * @function useDeleteClassroom
- * @description Hook to delete a classroom.
- */
-export function useDeleteClassroom() {
-  return useMutation<any, Error, { schoolId: string; classId: string }>({
-    mutationKey: ["DELETE_CLASSROOM"],
-    mutationFn: ({ schoolId, classId }) =>
-      apis.deleteClassroom(schoolId, classId),
   });
 }
 
