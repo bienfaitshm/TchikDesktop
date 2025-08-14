@@ -38,7 +38,10 @@ export async function createQuickEnrolement({
   student: studendValue,
   ...data
 }: TQuickEnrolementInsert) {
-  const student = await createUser(studendValue);
+  const student = await createUser({
+    ...studendValue,
+    schoolId: data.schoolId,
+  });
   return ClassroomEnrolement.create({ ...data, studentId: student.userId });
 }
 

@@ -1,5 +1,5 @@
 import React from "react"
-import { QuickEnrollmentForm, QuickEnrollmentFormData } from "@/renderer/components/form/quick-enrolement-form"
+import { QuickEnrollmentForm, QuickEnrollmentFormData, useFormHandleRef } from "@/renderer/components/form/quick-enrolement-form"
 import { TypographyH1 } from "@/renderer/components/ui/typography"
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom"
 import { Suspense } from "@/renderer/libs/queries/suspense"
@@ -13,20 +13,21 @@ type InscriptionFormLoaderProps = {
     yearId: string;
 }
 const InscriptionFormLoader: React.FC<InscriptionFormLoaderProps> = ({ schoolId, yearId }) => {
+    const form = useFormHandleRef<QuickEnrollmentFormData>()
     const quickEnrolementMutation = useCreateQuickEnrolement()
     const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId, params: {} })
     const classroomsOptions = React.useMemo(() => classrooms.map(classroom => ({ value: classroom.classId, label: `${classroom.identifier} (${classroom.shortIdentifier})` })), [classrooms])
-    console.log("InscriptionFormLoader")
 
     const onSubmit = React.useCallback((value: QuickEnrollmentFormData) => {
         quickEnrolementMutation.mutate(value, createMutationCallbacksWithNotifications({
             onSuccess(data,) {
                 console.log("success inscription", data)
+                form.current?.reset()
             },
         }))
     }, [])
     return (
-        <QuickEnrollmentForm initialValues={{ schoolId, yearId }} onSubmit={onSubmit} classrooms={classroomsOptions}>
+        <QuickEnrollmentForm ref={form} initialValues={{ schoolId, yearId }} onSubmit={onSubmit} classrooms={classroomsOptions}>
             <div>
                 <ButtonLoader isLoading={quickEnrolementMutation.isPending} isLoadingText="Enregistrement encours...">
                     Enregistrer
