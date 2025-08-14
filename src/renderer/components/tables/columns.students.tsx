@@ -41,7 +41,7 @@ export const StudentColumns: ColumnDef<TWithUser<TEnrolement>>[] = [
     },
     {
         accessorKey: "fullname",
-        header: "Nom, postnom et prenom",
+        header: "Nom, postnom et prénom",
         cell: ({ row }) => {
             const fullname = row.original.User.fullname;
             return (

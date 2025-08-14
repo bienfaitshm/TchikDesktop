@@ -48,7 +48,7 @@ import {
     DropdownMenuContent,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/renderer/components/ui/dropdown-menu"
+} from "@/renderer/components/ui/dropdown-menu";
 import { Button } from "@/renderer/components/ui/button";
 import { useDataTable } from "./hooks";
 import { DraggableRow } from "./data-table.components";
@@ -77,24 +77,9 @@ export type DataTableProps<T> = {
     children?: React.ReactNode;
 };
 
-
 export type DataTableRef = {
-    updateDate(): void
-}
-
-// export const DataTable = React.forwardRef<DataTableRef, React.PropsWithChildren<DataTableProps<T>>>(({ columns, data, keyExtractor, children }, ref) => {
-//     const contextValue = useDataTable({ initialData: data, keyExtractor, columns });
-//     React.useImperativeHandle(ref, () => ({
-//         updateDate() {
-//             contextValue.setData(data)
-//         },
-//     }), [data])
-//     return (
-//         <DataTableContext.Provider value={contextValue}>
-//             {children}
-//         </DataTableContext.Provider>
-//     );
-// })
+    updateData(): void;
+};
 
 export function DataTable<T>({
     data,
@@ -104,7 +89,7 @@ export function DataTable<T>({
 }: DataTableProps<T> & { children?: React.ReactNode }) {
     const contextValue = useDataTable({ initialData: data, keyExtractor, columns });
     // React.useEffect(() => {
-    //     contextValue.setData(data)
+    //     contextValue.setData(data)
     // }, [data])
     return (
         <DataTableContext.Provider value={contextValue}>
@@ -134,17 +119,14 @@ export function DataContentHead() {
     const ctx = useDataTableContext();
     const headerGroups = ctx?.tableInstance?.getHeaderGroups() ?? [];
     return (
-        <TableHeader className="bg-muted sticky top-0 z-10">
+        <TableHeader className="sticky top-0 z-10 bg-muted">
             {headerGroups.map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                         <TableHead key={header.id} colSpan={header.colSpan}>
                             {header.isPlaceholder
                                 ? null
-                                : flexRender(
-                                    header.column.columnDef.header,
-                                    header.getContext()
-                                )}
+                                : flexRender(header.column.columnDef.header, header.getContext())}
                         </TableHead>
                     ))}
                 </TableRow>
@@ -157,7 +139,7 @@ export function DataContentBody() {
     const ctx = useDataTableContext();
     const rows = ctx?.tableInstance?.getRowModel().rows ?? [];
     return (
-        <TableBody className="**:data-[slot=table-cell]:first:w-8">
+        <TableBody className="[&_[data-slot=table-cell]:first-child]:w-8">
             {rows.length ? (
                 <SortableContext
                     items={ctx!.rowIds}
@@ -166,7 +148,7 @@ export function DataContentBody() {
                     {rows.map((row) => (
                         <DraggableRow
                             key={row.id}
-                            rowOrginalId={ctx!.keyExtractor(row.original)}
+                            rowOriginalId={ctx!.keyExtractor(row.original)}
                             row={row}
                         />
                     ))}
@@ -187,17 +169,14 @@ export function DataTablePagination() {
     const table = ctx?.tableInstance;
     if (!table) return null;
 
-    const {
-        pageIndex,
-        pageSize,
-    } = table.getState().pagination;
+    const { pageIndex, pageSize } = table.getState().pagination;
     const pageCount = table.getPageCount();
 
     return (
-        <div className="flex items-center justify-between mt-5">
+        <div className="mt-5 flex items-center justify-between">
             <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
                 {table.getFilteredSelectedRowModel().rows.length} sur{" "}
-                {table.getFilteredRowModel().rows.length} ligne(s) selectionnee(s).
+                {table.getFilteredRowModel().rows.length} ligne(s) sélectionné(s).{" "}
             </div>
             <div className="flex w-full items-center gap-8 lg:w-fit">
                 <div className="hidden items-center gap-2 lg:flex">
@@ -208,7 +187,7 @@ export function DataTablePagination() {
                         value={`${pageSize}`}
                         onValueChange={(value) => table.setPageSize(Number(value))}
                     >
-                        <SelectTrigger className="w-20" id="rows-per-page">
+                        <SelectTrigger className="h-8 w-20" id="rows-per-page">
                             <SelectValue placeholder={pageSize} />
                         </SelectTrigger>
                         <SelectContent side="top">
@@ -221,7 +200,7 @@ export function DataTablePagination() {
                     </Select>
                 </div>
                 <div className="flex w-fit items-center justify-center text-sm font-medium">
-                    Page {pageIndex + 1} of {pageCount}
+                    Page {pageIndex + 1} sur {pageCount}
                 </div>
                 <div className="ml-auto flex items-center gap-2 lg:ml-0">
                     <Button
@@ -293,17 +272,14 @@ export function DataTableColumnFilter() {
                     .getAllColumns()
                     .filter(
                         (column) =>
-                            typeof column.accessorFn !== "undefined" &&
-                            column.getCanHide()
+                            typeof column.accessorFn !== "undefined" && column.getCanHide()
                     )
                     .map((column) => (
                         <DropdownMenuCheckboxItem
                             key={column.id}
                             className="capitalize"
                             checked={column.getIsVisible()}
-                            onCheckedChange={(value) =>
-                                column.toggleVisibility(!!value)
-                            }
+                            onCheckedChange={(value) => column.toggleVisibility(!!value)}
                         >
                             {column.id}
                         </DropdownMenuCheckboxItem>

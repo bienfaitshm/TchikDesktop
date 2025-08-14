@@ -10,10 +10,10 @@ import type { UniqueIdentifier } from "@dnd-kit/core"
 
 type DraggableRowProps<T> = {
     row: Row<T>,
-    rowOrginalId: UniqueIdentifier
+    rowOriginalId: UniqueIdentifier
 }
 
-export function DraggableRow<T>({ row, rowOrginalId: id }: DraggableRowProps<T>) {
+export function DraggableRow<T>({ row, rowOriginalId: id }: DraggableRowProps<T>) {
     const { transform, transition, setNodeRef, isDragging } = useSortable({ id })
 
     return (
