@@ -6,19 +6,22 @@ import { SECTION_TRANSLATIONS } from "@/camons/constants/enum"
 
 
 export const StudentColumns: ColumnDef<ClassroomEnrolementAttributes>[] = [
-    {
-        accessorKey: "optionId",
-        header: "#ID",
-        cell: ({ row }) => {
-            return <TypographySmall>{row.original.enrolementId}</TypographySmall>
-        },
-        enableHiding: false,
-    },
+    // {
+    //     accessorKey: "optionId",
+    //     header: "#ID",
+    //     cell: ({ row }) => {
+    //         return <TypographySmall>{row.original.enrolementId}</TypographySmall>
+    //     },
+    //     enableHiding: false,
+    // },
     {
         accessorKey: "optionName",
-        header: "Nom Complet",
+        header: "Nom, postnom et prenom",
         cell: ({ row }) => {
-            return <TypographySmall>{row.original.code}</TypographySmall>
+            return (<div>
+
+                <TypographySmall>{row.original.code}</TypographySmall>
+            </div>)
         },
         enableHiding: false,
     },

@@ -8,7 +8,7 @@ import { Button } from "@/renderer/components/ui/button";
 import { StudentColumns } from "@/renderer/components/tables/columns.students"
 import { Card, CardContent, CardHeader, CardTitle } from "@/renderer/components/ui/card";
 import { Badge } from "@/renderer/components/ui/badge";
-import { TypographyH4, TypographyP } from "@/renderer/components/ui/typography";
+import { TypographyH4, TypographyP, TypographySmall } from "@/renderer/components/ui/typography";
 
 const tableMenus: DataTableMenu[] = [
     { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
@@ -85,17 +85,23 @@ const Header: React.FC<HeaderProps> = ({
                     {/* Femmes */}
                     <Card>
                         <CardHeader className="space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-center">Encours</CardTitle>
+                            <CardTitle className="text-sm font-medium text-center">Actifs</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-center mb-2">{maleStudents}</div>
-                            <div className="grid grid-cols-2 text-muted-foreground text-sm">
-                                <small className="block">Homme:</small>
-                                <small className="block"><b>{maleStudents}</b> soit 56%</small>
-                            </div>
-                            <div className="grid grid-cols-2 text-muted-foreground text-sm">
-                                <small className="block">Femme:</small>
-                                <small className="block"><b>{maleStudents}</b> soit 56%</small>
+                            <div className="grid grid-cols-2 gap-5 text-muted-foreground text-sm">
+                                <div className="flex flex-col gap-2 justify-center items-center">
+                                    <TypographySmall className="text-xs">Homme</TypographySmall>
+                                    <TypographySmall>{maleStudents}
+                                        <Badge className="mt-1 bg-green-500 text-white hover:bg-green-600">
+                                            {((activeStudents / totalStudents) * 100).toFixed(0)}%
+                                        </Badge>
+                                    </TypographySmall>
+                                </div>
+                                <div className="flex flex-col gap-2 justify-center items-center">
+                                    <TypographySmall className="text-xs">Femme</TypographySmall>
+                                    <TypographySmall>{maleStudents}</TypographySmall>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
