@@ -20,6 +20,8 @@ import { useGetClassroom } from "@/renderer/libs/queries/classroom";
 import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store";
 import { STUDENT_STATUS, USER_GENDER } from "@/commons/constants/enum";
 import { cn } from "@/renderer/utils";
+import { QuickEnrollmentDialogForm } from "./students.dialog-form";
+import { useQueryClient } from "@tanstack/react-query";
 
 const tableMenus: DataTableMenu[] = [
     { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
@@ -109,12 +111,18 @@ const RoomHeader: React.FC<Pick<HeaderProps, "students"> & { classId: string, }>
 }
 
 const StudentList: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
-    const params = useParams()
-    const { data: students = [] } = useGetEnrolements({ schoolId, yearId, params: { classroomId: params.classroomId } })
-    console.log({ students })
+    const { classroomId } = useParams<{ classroomId: string }>()
+    const queryClient = useQueryClient()
+    const params = React.useMemo(() => ({ schoolId, yearId, params: { classroomId } }), [schoolId, yearId, classroomId])
+
+    const { data: students = [] } = useGetEnrolements(params)
+
+    const onValidateData = React.useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ["GET_ENROLEMENTS", params] })
+    }, [params])
     return (
         <div className="mx-auto container max-w-screen-lg mt-10">
-            <RoomHeader classId={params.classroomId as string} students={students} />
+            <RoomHeader classId={classroomId as string} students={students} />
             <DataTable
                 data={students}
                 columns={enhanceColumnsWithMenu({
@@ -127,10 +135,18 @@ const StudentList: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
                 <div className="flex items-center justify-end my-5">
                     <div className="flex items-center gap-5">
                         <DataTableColumnFilter />
-                        <Button size="sm">
-                            <Plus className="size-4" />
-                            <span>Ajouter un eleves</span>
-                        </Button>
+                        <QuickEnrollmentDialogForm
+                            classId={classroomId as string}
+                            schoolId={schoolId}
+                            yearId={yearId}
+                            onValidateData={onValidateData}
+                        >
+
+                            <Button size="sm">
+                                <Plus className="size-4" />
+                                <span>Ajouter un eleves</span>
+                            </Button>
+                        </QuickEnrollmentDialogForm>
                     </div>
                 </div>
 

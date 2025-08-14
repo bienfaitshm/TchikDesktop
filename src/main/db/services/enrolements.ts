@@ -7,6 +7,7 @@ import type {
 import { ClassroomEnrolement, User, ClassRoom } from "../models";
 import { getDefinedAttributes } from "../models/utils";
 import { createUser } from "./account";
+import { Sequelize } from "sequelize";
 
 export async function getEnrolements({
   schoolId,
@@ -19,6 +20,11 @@ export async function getEnrolements({
     include: [
       User,
       { model: ClassRoom, where: getDefinedAttributes({ yearId }) },
+    ],
+    order: [
+      [Sequelize.literal('LOWER("User"."last_name")'), "ASC"],
+      [Sequelize.literal('LOWER("User"."middle_name")'), "ASC"],
+      [Sequelize.literal('LOWER("User"."first_name")'), "ASC"],
     ],
   });
 }

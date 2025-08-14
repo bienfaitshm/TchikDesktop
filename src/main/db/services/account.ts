@@ -8,6 +8,7 @@ import {
   getDefaultUsername,
   getDefinedAttributes,
 } from "@/main/db/models/utils";
+import { Sequelize } from "sequelize";
 
 const DEFAULT_STUDENT_PASSWORD = "000000";
 
@@ -26,6 +27,12 @@ export async function getUsers({
   });
   return User.findAll({
     where: whereClause,
+    order: [
+      [Sequelize.fn("LOWER", Sequelize.col("last_name")), "ASC"],
+      [Sequelize.fn("LOWER", Sequelize.col("middle_name")), "ASC"][
+        (Sequelize.fn("LOWER", Sequelize.col("first_name")), "ASC")
+      ],
+    ],
     include: [
       User,
       {

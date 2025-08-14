@@ -8,7 +8,7 @@ import * as apis from "@/renderer/libs/apis/enrolement";
 
 export function useGetEnrolements(params: apis.GetEnrolementParams) {
   return useSuspenseQuery<TWithUser<TEnrolement>[], Error>({
-    queryKey: ["GET_ENROLEMENT", params],
+    queryKey: ["GET_ENROLEMENTS", params],
     queryFn: () => apis.getEnrolements(params),
   });
 }
