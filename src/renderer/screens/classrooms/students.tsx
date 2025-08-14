@@ -1,120 +1,94 @@
+import React from "react";
 import { useParams } from "react-router"
-import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store";
 import { DataTableMenu } from "@/renderer/components/button-menus";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/renderer/components/ui/accordion"
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { DataContentBody, DataContentHead, DataTable, DataTableColumnFilter, DataTableContent, DataTablePagination } from "@/renderer/components/tables";
 import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
 import { Button } from "@/renderer/components/ui/button";
 import { StudentColumns } from "@/renderer/components/tables/columns.students"
 import { Card, CardContent, CardHeader, CardTitle } from "@/renderer/components/ui/card";
-import { Badge } from "@/renderer/components/ui/badge";
-import { TypographyH4, TypographyP, TypographySmall } from "@/renderer/components/ui/typography";
+import { TypographyH2, TypographySmall } from "@/renderer/components/ui/typography";
+import { useGetEnrolements } from "@/renderer/libs/queries/enrolement";
+import { TEnrolement, TUser, TWithUser, WithSchoolAndYearId } from "@/camons/types/services";
+import { useGetClassroom } from "@/renderer/libs/queries/classroom";
+import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store";
+import { STUDENT_STATUS, USER_GENDER } from "@/camons/constants/enum";
+import { cn } from "@/renderer/utils";
 
 const tableMenus: DataTableMenu[] = [
     { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
     { key: "delete", label: "Supprimer", separator: true, icon: <Trash2 className="size-3" /> },
 ];
 
+
+const InformationCard: React.FC<{ title: string, students?: TUser[], variant?: "DESTRUCTIVE" | "DEFAULT" }> = ({ title, variant = "DEFAULT", students = [] }) => {
+    const totalStudents = students.length
+    const { femaleStudents, maleStudents } = React.useMemo(() => ({
+        maleStudents: students.filter(student => student.gender === USER_GENDER.MALE).length,
+        femaleStudents: students.filter(student => student.gender !== USER_GENDER.MALE).length
+    }), [students])
+
+    return (
+        <Card>
+            <CardHeader className="space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-center">{title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className={cn("text-2xl font-bold text-center mb-2", variant !== "DEFAULT" && "text-destructive")}>{totalStudents}</div>
+                <div className="grid grid-cols-2 gap-5 text-muted-foreground text-sm">
+                    <div className="flex flex-col gap-2 justify-center items-center">
+                        <TypographySmall className="text-xs">Homme</TypographySmall>
+                        <TypographySmall className={cn(variant !== "DEFAULT" && "text-destructive-foreground")}>{maleStudents}</TypographySmall>
+                        <TypographySmall className={cn("block text-xs", variant !== "DEFAULT" && "text-destructive")}>Soit {totalStudents > 0 ? ((maleStudents / totalStudents) * 100).toFixed(0) : totalStudents} %</TypographySmall>
+                    </div>
+                    <div className="flex flex-col gap-2 justify-center items-center">
+                        <TypographySmall className="text-xs">Femme</TypographySmall>
+                        <TypographySmall>{femaleStudents}</TypographySmall>
+                        <TypographySmall className="block text-xs">Soit {totalStudents > 0 ? ((femaleStudents / totalStudents) * 100).toFixed(0) : totalStudents} %</TypographySmall>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+
+    )
+}
 interface HeaderProps {
     roomName: string;
-    totalStudents: number;
-    activeStudents: number;
-    droppedStudents: number;
-    maleStudents: number;
-    femaleStudents: number;
+    students?: TWithUser<TEnrolement>[]
 }
 
 const Header: React.FC<HeaderProps> = ({
     roomName,
-    totalStudents,
-    activeStudents,
-    droppedStudents,
-    maleStudents,
-    femaleStudents,
+    students = []
 }) => {
+
+    const totalStudents = React.useMemo(() => students.map(enrol => enrol.User), [students])
+    const actifStudents = React.useMemo(() => students.filter(st => st.status === STUDENT_STATUS.EN_COURS).map(enrol => enrol.User), [students])
+    const dropStudents = React.useMemo(() => students.filter(st => st.status !== STUDENT_STATUS.EN_COURS).map(enrol => enrol.User), [students])
     return (
         <header className="bg-background p-4 rounded-lg">
             <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 md:space-x-4">
                 {/* Section du titre */}
-                <div className="flex-shrink-0">
-                    <h1 className="text-3xl font-bold tracking-tight">{roomName}</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Informations détaillées sur les élèves
-                    </p>
-                    <div className="mt-5">
-                        <div className="flex flex-row gap-4 items-baseline">
-                            <TypographyH4 className="text-sm font-medium">
-                                Total
-                            </TypographyH4>
-                            <TypographyP className="text-md font-bold">{totalStudents}</TypographyP>
-                        </div>
-                        <div className="flex flex-row gap-4 items-baseline">
-                            <TypographyH4 className="text-sm font-medium">
-                                En cours
-                            </TypographyH4>
-                            <TypographyP className="text-md font-bold">{activeStudents}</TypographyP>
-                            <Badge className="mt-1 bg-green-500 text-white hover:bg-green-600">
-                                {((activeStudents / totalStudents) * 100).toFixed(0)}%
-                            </Badge>
-                        </div>
-                        <div className="flex flex-row gap-4 items-baseline">
-                            <TypographyH4 className="text-sm font-medium">
-                                Abandonnés
-                            </TypographyH4>
-                            <TypographyP className="text-md font-bold text-destructive">{droppedStudents}</TypographyP>
-                            <Badge className="mt-1 bg-red-500 text-white hover:bg-red-600">
-                                {((droppedStudents / totalStudents) * 100).toFixed(0)}%
-                            </Badge>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Section des statistiques */}
-                <div className="grid grid-cols-3 gap-4 w-full md:w-auto">
-
-                    {/* Hommes */}
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{maleStudents}</div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Femmes */}
-                    <Card>
-                        <CardHeader className="space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-center">Actifs</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-center mb-2">{maleStudents}</div>
-                            <div className="grid grid-cols-2 gap-5 text-muted-foreground text-sm">
-                                <div className="flex flex-col gap-2 justify-center items-center">
-                                    <TypographySmall className="text-xs">Homme</TypographySmall>
-                                    <TypographySmall>{maleStudents}
-                                        <Badge className="mt-1 bg-green-500 text-white hover:bg-green-600">
-                                            {((activeStudents / totalStudents) * 100).toFixed(0)}%
-                                        </Badge>
-                                    </TypographySmall>
+                <div className="flex-shrink-0 w-full">
+                    <TypographyH2 className="uppercase font-bold mb-0">{roomName}</TypographyH2>
+                    <Accordion className="w-full" type="single" collapsible >
+                        <AccordionItem className="border-b-0" value="item-1">
+                            <AccordionTrigger className="text-sm text-muted-foreground mt-1 justify-start items-center gap-2">Informations détaillées sur les élèves</AccordionTrigger>
+                            <AccordionContent>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <InformationCard title="Total" students={totalStudents} />
+                                    <InformationCard title="Actifs" students={actifStudents} />
+                                    <InformationCard title="Abandonnees" variant="DESTRUCTIVE" students={dropStudents} />
                                 </div>
-                                <div className="flex flex-col gap-2 justify-center items-center">
-                                    <TypographySmall className="text-xs">Femme</TypographySmall>
-                                    <TypographySmall>{maleStudents}</TypographySmall>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Autres */}
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Autres</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{totalStudents - activeStudents - droppedStudents}</div>
-                        </CardContent>
-                    </Card>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
                 </div>
             </div>
         </header>
@@ -122,30 +96,27 @@ const Header: React.FC<HeaderProps> = ({
 };
 
 
-const roomData = {
-    roomName: "Classe de Terminale A",
-    totalStudents: 45,
-    activeStudents: 38,
-    droppedStudents: 4,
-    maleStudents: 22,
-    femaleStudents: 23,
-};
-const StudentList: React.FC = () => {
+
+
+const RoomHeader: React.FC<Pick<HeaderProps, "students"> & { classId: string, }> = ({ classId, students }) => {
+    const { data: classroom } = useGetClassroom(classId)
+    return (
+        <Header
+            roomName={classroom.identifier}
+            students={students}
+        />
+    )
+}
+
+const StudentList: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
     const params = useParams()
+    const { data: students = [] } = useGetEnrolements({ schoolId, yearId, params: { classroomId: params.classroomId } })
+    console.log({ students })
     return (
         <div className="mx-auto container max-w-screen-lg mt-10">
-            <Header
-                roomName={roomData.roomName}
-                totalStudents={roomData.totalStudents}
-                activeStudents={roomData.activeStudents}
-                droppedStudents={roomData.droppedStudents}
-                maleStudents={roomData.maleStudents}
-                femaleStudents={roomData.femaleStudents}
-            />
-
-            <b>{JSON.stringify(params, null, 4)}</b>
+            <RoomHeader classId={params.classroomId as string} students={students} />
             <DataTable
-                data={[]}
+                data={students}
                 columns={enhanceColumnsWithMenu({
                     onPressMenu: () => console.log(),
                     columns: StudentColumns,
@@ -180,7 +151,7 @@ export function ClassroomStudentsPage() {
     }
     return (
         <div>
-            <StudentList />
+            <StudentList schoolId={schoolId} yearId={yearId} />
         </div>
     )
 }

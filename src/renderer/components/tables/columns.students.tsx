@@ -1,42 +1,86 @@
-import type { ClassroomEnrolementAttributes } from "@/camons/types/models"
+import type { TEnrolement, TWithUser } from "@/camons/types/models"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
 import { Badge } from "@/renderer/components/ui/badge"
-import { SECTION_TRANSLATIONS } from "@/camons/constants/enum"
+import { USER_GENDER, USER_GENDER_TRANSLATIONS, STUDENT_STATUS_TRANSLATIONS, STUDENT_STATUS } from "@/camons/constants/enum"
+import { Avatar, AvatarFallback } from "@/renderer/components/ui/avatar"
+import { Checkbox } from "@/renderer/components/ui/checkbox"
+import { Mars, Venus } from "lucide-react"
 
 
-export const StudentColumns: ColumnDef<ClassroomEnrolementAttributes>[] = [
-    // {
-    //     accessorKey: "optionId",
-    //     header: "#ID",
-    //     cell: ({ row }) => {
-    //         return <TypographySmall>{row.original.enrolementId}</TypographySmall>
-    //     },
-    //     enableHiding: false,
-    // },
+export const StudentColumns: ColumnDef<TWithUser<TEnrolement>>[] = [
     {
-        accessorKey: "optionName",
+        id: "select",
+        header: ({ table }) => (
+            <div className="flex items-center justify-center">
+                <Checkbox
+                    checked={
+                        table.getIsAllPageRowsSelected() ||
+                        (table.getIsSomePageRowsSelected() && "indeterminate")
+                    }
+                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                    aria-label="Select all"
+                />
+            </div>
+        ),
+        cell: ({ row }) => (
+            <div className="flex items-center justify-center">
+                <Checkbox
+                    checked={row.getIsSelected()}
+                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    aria-label="Select row"
+                />
+            </div>
+        ),
+        enableSorting: false,
+        enableHiding: false,
+    },
+    {
+        accessorKey: "fullname",
         header: "Nom, postnom et prenom",
         cell: ({ row }) => {
-            return (<div>
-
-                <TypographySmall>{row.original.code}</TypographySmall>
-            </div>)
+            const fullname = row.original.User.fullname
+            return (
+                <div className="flex flex-row gap-2">
+                    <Avatar>
+                        <AvatarFallback>{fullname.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <TypographySmall className="text-sm text-black dark:text-white">{fullname}</TypographySmall>
+                        <TypographySmall className="text-xs text-muted-foreground block">{row.original.isNewStudent ? "Nouveau" : "Ancien"}</TypographySmall>
+                    </div>
+                </div>
+            )
         },
         enableHiding: false,
     },
     {
-        accessorKey: "optionShortName",
-        header: "Encientee",
-        cell: ({ row }) => <TypographySmall>{row.original.isNewStudent}</TypographySmall>
+        accessorKey: "sexe",
+        header: "Sexe",
+        cell: ({ row }) => {
+            const isMale = row.original.User.gender === USER_GENDER.MALE
+            return (
+                <Badge variant={isMale ? "secondary" : "outline"} className="px-2 ">
+                    {isMale ? <Mars className="size-4" /> : <Venus className="size-4" />}
+                    <span className="ml-2">
+                        {USER_GENDER_TRANSLATIONS[row.original.User.gender]}
+                    </span>
+                </Badge>
+            )
+        },
+    },
+    {
+        accessorKey: "code",
+        header: "Code",
+        cell: ({ row }) => <TypographySmall>{row.original.code}</TypographySmall>
     },
     {
         accessorKey: "section",
         header: "Status",
         cell: ({ row }) => (
             <div>
-                <Badge variant="outline" className="text-muted-foreground px-1.5">
-                    {SECTION_TRANSLATIONS[row.original.status]}
+                <Badge variant={row.original.status === STUDENT_STATUS.EN_COURS ? "default" : "destructive"} className="px-2">
+                    {STUDENT_STATUS_TRANSLATIONS[row.original.status]}
                 </Badge>
             </div>
         ),

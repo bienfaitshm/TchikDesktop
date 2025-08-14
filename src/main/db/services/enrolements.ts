@@ -8,15 +8,19 @@ import { ClassroomEnrolement, User, ClassRoom } from "../models";
 import { getDefinedAttributes } from "../models/utils";
 import { createUser } from "./account";
 
-export async function getEncolements({
+export async function getEnrolements({
   schoolId,
   yearId,
-  params,
+  params = {},
 }: QueryParams<WithSchoolAndYearId, Partial<TEnrolementInsert>>) {
-  const whereClause = getDefinedAttributes({ schoolId, yearId, ...params });
+  const whereClause = getDefinedAttributes({ schoolId, ...params });
+  console.log("\n\n\n", JSON.stringify(whereClause, null, 4));
   return ClassroomEnrolement.findAll({
     where: whereClause,
-    include: [User, ClassRoom],
+    include: [
+      User,
+      { model: ClassRoom, where: getDefinedAttributes({ yearId }) },
+    ],
   });
 }
 

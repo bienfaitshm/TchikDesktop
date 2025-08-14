@@ -51,7 +51,7 @@ export enum STUDENT_STATUS {
 }
 
 export const STUDENT_STATUS_TRANSLATIONS: Record<STUDENT_STATUS, string> = {
-  [STUDENT_STATUS.EN_COURS]: "En cours",
+  [STUDENT_STATUS.EN_COURS]: "Actif",
   [STUDENT_STATUS.ABANDON]: "Abandon",
   [STUDENT_STATUS.EXCLUT]: "Exclu",
 };

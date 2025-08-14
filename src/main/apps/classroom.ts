@@ -30,6 +30,26 @@ server.get<any, QueryParams<WithSchoolAndYearId, Partial<TClassroomInsert>>>(
   }
 );
 
+server.get<any, { classId: string }>(
+  "classrooms/:classId",
+  async ({ params: { classId } }) => {
+    try {
+      const classroom = await services.getClassroom(classId);
+      if (classroom) return response(mapModelToPlain(classroom));
+      return response({}, Status.NOT_FOUND, "Salle de classe non trouvée.");
+    } catch (error) {
+      console.error(
+        `Erreur lors de la récupération des salles de classe: ${error}`
+      );
+      return response(
+        {},
+        Status.INTERNAL_SERVER,
+        "Erreur interne du serveur lors de la récupération des salles de classe."
+      );
+    }
+  }
+);
+
 /**
  * @route POST /classrooms
  * @description Crée une nouvelle salle de classe.

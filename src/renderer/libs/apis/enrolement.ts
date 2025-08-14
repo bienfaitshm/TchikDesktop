@@ -1,22 +1,28 @@
 import type {
-  QuickEnrolementAttributesInsert,
-  ClassroomEnrolementAttributes,
+  TEnrolement,
+  TWithUser,
+  TQuickEnrolementInsert,
+  QueryParams,
+  WithSchoolAndYearId,
+  TEnrolementInsert,
 } from "@/camons/types/services";
 import { clientApis } from "./client";
 
-export const getEnrolements = (schoolId: string, yearId?: string) => {
+export type GetEnrolementParams = QueryParams<
+  WithSchoolAndYearId,
+  Partial<TEnrolementInsert>
+>;
+
+export const getEnrolements = (params: GetEnrolementParams) => {
   return clientApis
-    .get<ClassroomEnrolementAttributes[]>("enrolements", {
-      params: { schoolId, yearId },
+    .get<TWithUser<TEnrolement>[]>("enrolements", {
+      params,
     })
     .then((res) => res.data);
 };
 
-export const quickEnrolement = (data: QuickEnrolementAttributesInsert) => {
+export const quickEnrolement = (data: TQuickEnrolementInsert) => {
   return clientApis
-    .post<
-      ClassroomEnrolementAttributes,
-      QuickEnrolementAttributesInsert
-    >("enrolements/quick", data)
+    .post<TEnrolement, TQuickEnrolementInsert>("enrolements/quick", data)
     .then((res) => res.data);
 };

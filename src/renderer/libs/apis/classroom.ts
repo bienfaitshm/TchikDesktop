@@ -23,6 +23,14 @@ export const getClassrooms = (params: GetClassroomParams) => {
     .then((res) => res.data);
 };
 
+export const getClassroom = (classId: string) => {
+  return clientApis
+    .get<TWithOption<TClassroom>>("classrooms/:classId", {
+      params: { classId },
+    })
+    .then((res) => res.data);
+};
+
 /**
  * @function createClassroom
  * @description Client action to create a new classroom.

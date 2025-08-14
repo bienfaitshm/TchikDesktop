@@ -21,6 +21,13 @@ export function useGetClassrooms(params: apis.GetClassroomParams) {
   });
 }
 
+export function useGetClassroom(classId: string) {
+  return useSuspenseQuery<TWithOption<TClassroom>, Error>({
+    queryKey: ["GET_CLASSROOM_BY_ID", classId],
+    queryFn: () => apis.getClassroom(classId),
+  });
+}
+
 /**
  * @function useCreateClassroom
  * @description Hook to create a new classroom.

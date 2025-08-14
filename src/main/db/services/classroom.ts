@@ -5,8 +5,8 @@ import { getDefinedAttributes } from "../models/utils";
 
 export async function getClassrooms({
   schoolId,
-  params,
   yearId,
+  params = {},
 }: QueryParams<WithSchoolAndYearId, Partial<TClassroomInsert>>) {
   const whereClause = getDefinedAttributes({ schoolId, yearId, ...params });
   return ClassRoom.findAll({
