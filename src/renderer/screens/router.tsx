@@ -21,6 +21,8 @@ import {
   NewStudyYearConfigurationPage
 } from "@/renderer/screens/config";
 
+import { ClassroomStudentsPage } from "@/renderer/screens/classrooms/students"
+
 
 export default function RouterProvider(): JSX.Element {
   return (
@@ -34,6 +36,7 @@ export default function RouterProvider(): JSX.Element {
           <Route path="students" element={<StudentScreen />} />
           <Route path="options" element={<OptionScreen />} />
           <Route path="classrooms" element={<ClassroomScreen />} />
+          <Route path="classrooms/:classroomId" element={<ClassroomStudentsPage />} />
           <Route path="locals" element={<LocalScreen />} />
           {/* other */}
           <Route path="school-years" element={<SchoolYearScreen />} />

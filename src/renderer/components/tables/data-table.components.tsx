@@ -28,7 +28,7 @@ export function DraggableRow<T>({ row, rowOrginalId: id }: DraggableRowProps<T>)
             }}
         >
             {row.getVisibleCells().map((cell) => (
-                <TableCell className="p-2" key={cell.id}>
+                <TableCell className="p-2 text-xs" key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
             ))}

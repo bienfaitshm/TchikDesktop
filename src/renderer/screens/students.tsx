@@ -25,7 +25,7 @@ const ClassroomSection: React.FC<CurrentYearSchoolProps<{ section: SECTION }>> =
     return (
         <div className="grid grid-cols-3 gap-5 mt-5">
             {classrooms.map(classroom => (
-                <Link to="#" className="rounded-xl cursor-pointer p-4 bg-accent-foreground/5 hover:bg-accent-foreground/10 transition-colors">
+                <Link to={`/classrooms/${classroom.classId}`} className="rounded-xl cursor-pointer p-4 bg-accent-foreground/5 hover:bg-accent-foreground/10 transition-colors">
                     <div className="bg-primary rounded-full p-2 w-fit">
                         <Shapes className="text-white size-8" />
                     </div>
