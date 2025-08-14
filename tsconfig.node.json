@@ -5,15 +5,15 @@
     "src/main/*",
     "src/preload/*",
     "src/main/**/*",
-    "src/camons/*",
-    "src/camons/**/*"
+    "src/commons/*",
+    "src/commons/**/*"
   ],
   "compilerOptions": {
     "composite": true,
     "types": ["electron-vite/node"],
     "paths": {
       "@/main/*": ["./src/main/*"],
-      "@/camons/*": ["./src/camons/*"]
+      "@/commons/*": ["./src/commons/*"]
     }
   }
 }

@@ -5,8 +5,8 @@
     "src/renderer/**/*",
     "src/renderer/**/*.tsx",
     "src/preload/*.d.ts",
-    "src/camons/*",
-    "src/camons/**/*"
+    "src/commons/*",
+    "src/commons/**/*"
   ],
   "compilerOptions": {
     "composite": true,
@@ -14,7 +14,7 @@
     "baseUrl": ".",
     "paths": {
       "@/renderer/*": ["src/renderer/*"],
-      "@/camons/*": ["src/camons/*"]
+      "@/commons/*": ["src/commons/*"]
     }
   }
 }
