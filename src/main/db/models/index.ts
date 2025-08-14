@@ -4,7 +4,7 @@ import {
   STUDENT_STATUS,
   USER_GENDER,
   USER_ROLE,
-} from "@/camons/constants/enum";
+} from "@/commons/constants/enum";
 import { sequelize } from "../config";
 import { PRIMARY_KEY, primaryKey } from "./base";
 import { getDefaultEnrolementCode, getDefaultUsername } from "./utils";
@@ -18,7 +18,7 @@ import type {
   TEnrolementInsert,
   TUserInsert,
   TUser,
-} from "@/camons/types/models";
+} from "@/commons/types/models";
 
 // =====================
 // MODEL TYPES

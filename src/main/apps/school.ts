@@ -1,6 +1,6 @@
-import { server } from "@/camons/libs/electron-apis/server";
-import { response } from "@/camons/libs/electron-apis/utils";
-import { Status } from "@/camons/libs/electron-apis/constant";
+import { server } from "@/commons/libs/electron-apis/server";
+import { response } from "@/commons/libs/electron-apis/utils";
+import { Status } from "@/commons/libs/electron-apis/constant";
 import {
   ClassRoomService,
   OptionService,
@@ -15,7 +15,7 @@ import type {
   OptionAttributesInsert,
   SchoolAttributesInsert,
   StudyYearAttributesInsert,
-} from "@/camons/types/services";
+} from "@/commons/types/services";
 import { WithSchoolIdParams } from "./types";
 
 // --- Routes pour Options ---

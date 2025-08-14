@@ -1,10 +1,13 @@
-import { server } from "@/camons/libs/electron-apis/server";
-import { response } from "@/camons/libs/electron-apis/utils";
-import { Status } from "@/camons/libs/electron-apis/constant";
+import { server } from "@/commons/libs/electron-apis/server";
+import { response } from "@/commons/libs/electron-apis/utils";
+import { Status } from "@/commons/libs/electron-apis/constant";
 import * as services from "@/main/db/services/classroom";
 import { mapModelToPlain, mapModelsToPlainList } from "@/main/db/models/utils";
-import type { WithSchoolAndYearId, QueryParams } from "@/camons/types/services";
-import { TClassroomInsert } from "@/camons/types/models";
+import type {
+  WithSchoolAndYearId,
+  QueryParams,
+} from "@/commons/types/services";
+import { TClassroomInsert } from "@/commons/types/models";
 
 // --- Routes pour Classrooms ---
 

@@ -5,7 +5,7 @@ import type {
   OptionAttributes,
   StudyYearAttributes,
   UserAttributes,
-} from "@/camons/types/models";
+} from "@/commons/types/models";
 
 export type WithSchoolId<T> = T & { schoolId: string };
 export type WithSchoolAndYearId<T> = T & { schoolId: string; yearId?: string };

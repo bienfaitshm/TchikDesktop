@@ -1,5 +1,5 @@
-import { server } from "@/camons/libs/electron-apis/server";
-import { response } from "@/camons/libs/electron-apis/utils";
+import { server } from "@/commons/libs/electron-apis/server";
+import { response } from "@/commons/libs/electron-apis/utils";
 
 import { getSystemInformation } from "@/main/libs/sys-info";
 

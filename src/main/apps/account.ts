@@ -1,6 +1,6 @@
-import { server } from "@/camons/libs/electron-apis/server";
-import { response } from "@/camons/libs/electron-apis/utils";
-import { Status } from "@/camons/libs/electron-apis/constant";
+import { server } from "@/commons/libs/electron-apis/server";
+import { response } from "@/commons/libs/electron-apis/utils";
+import { Status } from "@/commons/libs/electron-apis/constant";
 import { UserService } from "@/main/db/services";
 import { mapModelToPlain, mapModelsToPlainList } from "@/main/db/models/utils";
 import type { UserAttributes, WithSchoolId } from "@/main/db/services/types";

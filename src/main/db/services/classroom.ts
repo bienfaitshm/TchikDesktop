@@ -1,6 +1,9 @@
 import { ClassRoom, Option, StudyYear } from "../models";
-import type { TClassroomInsert } from "@/camons/types/models";
-import type { QueryParams, WithSchoolAndYearId } from "@/camons/types/services";
+import type { TClassroomInsert } from "@/commons/types/models";
+import type {
+  QueryParams,
+  WithSchoolAndYearId,
+} from "@/commons/types/services";
 import { getDefinedAttributes } from "../models/utils";
 
 export async function getClassrooms({

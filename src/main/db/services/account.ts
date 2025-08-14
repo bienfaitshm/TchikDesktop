@@ -1,30 +1,39 @@
 import { ClassroomEnrolement, User } from "../models";
-import { TUserInsert } from "@/camons/types/models";
-import type { QueryParams, WithSchoolAndYearId } from "@/camons/types/services";
+import { TUserInsert } from "@/commons/types/models";
+import type {
+  QueryParams,
+  WithSchoolAndYearId,
+} from "@/commons/types/services";
 import {
   getDefaultUsername,
   getDefinedAttributes,
 } from "@/main/db/models/utils";
-import { getDefaultEnrolementCode } from "@/main/db/services/utils";
 
 const DEFAULT_STUDENT_PASSWORD = "000000";
 
 export async function getUsers({
   schoolId,
   yearId,
-  params: { classroomId, ...params },
+  params,
 }: QueryParams<
   WithSchoolAndYearId,
   Partial<TUserInsert & { classroomId: string }>
 >) {
-  const whereClause = getDefinedAttributes({ schoolId, ...params });
+  const whereClause = getDefinedAttributes({
+    schoolId,
+    ...params,
+    classroomId: undefined,
+  });
   return User.findAll({
     where: whereClause,
     include: [
       User,
       {
         model: ClassroomEnrolement,
-        where: getDefinedAttributes({ yearId, classroomId }),
+        where: getDefinedAttributes({
+          yearId,
+          classroomId: params?.classroomId,
+        }),
       },
     ],
   });

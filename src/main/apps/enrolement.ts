@@ -2,10 +2,10 @@ import type {
   TQuickEnrolementInsert,
   WithSchoolAndYearId,
   QueryParams,
-} from "@/camons/types/services";
-import type { TEnrolementInsert } from "@/camons/types/models";
-import { server } from "@/camons/libs/electron-apis/server";
-import { response } from "@/camons/libs/electron-apis/utils";
+} from "@/commons/types/services";
+import type { TEnrolementInsert } from "@/commons/types/models";
+import { server } from "@/commons/libs/electron-apis/server";
+import { response } from "@/commons/libs/electron-apis/utils";
 import { mapModelsToPlainList, mapModelToPlain } from "@/main/db/models/utils";
 import * as services from "@/main/db/services/enrolements";
 

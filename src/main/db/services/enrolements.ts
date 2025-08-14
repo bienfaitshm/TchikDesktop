@@ -1,9 +1,9 @@
-import type { TEnrolementInsert } from "@/camons/types/models";
+import type { TEnrolementInsert } from "@/commons/types/models";
 import type {
   QueryParams,
   WithSchoolAndYearId,
   TQuickEnrolementInsert,
-} from "@/camons/types/services";
+} from "@/commons/types/services";
 import { ClassroomEnrolement, User, ClassRoom } from "../models";
 import { getDefinedAttributes } from "../models/utils";
 import { createUser } from "./account";

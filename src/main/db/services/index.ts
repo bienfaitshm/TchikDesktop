@@ -14,7 +14,7 @@ import {
   OptionAttributesInsert,
   StudyYearAttributesInsert,
   UserAttributesInsert,
-} from "@/camons/types/services";
+} from "@/commons/types/services";
 
 // --- School CRUD ---
 export const SchoolService = {
