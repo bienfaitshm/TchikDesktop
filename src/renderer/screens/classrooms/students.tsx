@@ -22,6 +22,7 @@ import { STUDENT_STATUS, USER_GENDER } from "@/commons/constants/enum";
 import { cn } from "@/renderer/utils";
 import { QuickEnrollmentDialogForm } from "./students.dialog-form";
 import { useQueryClient } from "@tanstack/react-query";
+import { StudentDetailSheet, useStudentDetailSheet } from "./students.detail-sheet";
 
 const tableMenus: DataTableMenu[] = [
     { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
@@ -114,6 +115,7 @@ const StudentList: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
     const { classroomId } = useParams<{ classroomId: string }>()
     const queryClient = useQueryClient()
     const params = React.useMemo(() => ({ schoolId, yearId, params: { classroomId } }), [schoolId, yearId, classroomId])
+    const { sheetRef, showStudentInfos } = useStudentDetailSheet()
 
     const { data: students = [] } = useGetEnrolements(params)
 
@@ -152,10 +154,14 @@ const StudentList: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
 
                 <DataTableContent>
                     <DataContentHead />
-                    <DataContentBody />
+                    <DataContentBody onClick={(row) => {
+                        showStudentInfos(row.original)
+                        console.log(row.original)
+                    }} />
                 </DataTableContent>
                 <DataTablePagination />
             </DataTable>
+            <StudentDetailSheet ref={sheetRef} schoolId={schoolId} yearId={yearId} />
         </div>
     )
 }

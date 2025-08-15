@@ -1,16 +1,10 @@
 import type { TEnrolement, TWithUser } from "@/commons/types/models";
 import type { ColumnDef } from "@tanstack/react-table";
 import { TypographySmall } from "@/renderer/components/ui/typography";
-import { Badge } from "@/renderer/components/ui/badge";
-import {
-    USER_GENDER,
-    USER_GENDER_TRANSLATIONS,
-    STUDENT_STATUS_TRANSLATIONS,
-    STUDENT_STATUS,
-} from "@/commons/constants/enum";
 import { Avatar, AvatarFallback } from "@/renderer/components/ui/avatar";
 import { Checkbox } from "@/renderer/components/ui/checkbox";
-import { Mars, Venus } from "lucide-react";
+import { GenderBadge } from "../user-gender";
+import { StudentStatusBadge } from "../student-status";
 
 export const StudentColumns: ColumnDef<TWithUser<TEnrolement>>[] = [
     {
@@ -65,17 +59,7 @@ export const StudentColumns: ColumnDef<TWithUser<TEnrolement>>[] = [
     {
         accessorKey: "sexe",
         header: "Sexe",
-        cell: ({ row }) => {
-            const isMale = row.original.User.gender === USER_GENDER.MALE;
-            return (
-                <Badge variant={isMale ? "secondary" : "outline"} className="px-2 ">
-                    {isMale ? <Mars className="size-4" /> : <Venus className="size-4" />}
-                    <span className="ml-2">
-                        {USER_GENDER_TRANSLATIONS[row.original.User.gender]}
-                    </span>
-                </Badge>
-            );
-        },
+        cell: ({ row }) => <GenderBadge withIcon gender={row.original.User.gender} />
     },
     {
         accessorKey: "code",
@@ -85,17 +69,6 @@ export const StudentColumns: ColumnDef<TWithUser<TEnrolement>>[] = [
     {
         accessorKey: "section",
         header: "Status",
-        cell: ({ row }) => (
-            <div>
-                <Badge
-                    variant={
-                        row.original.status === STUDENT_STATUS.EN_COURS ? "default" : "destructive"
-                    }
-                    className="px-2"
-                >
-                    {STUDENT_STATUS_TRANSLATIONS[row.original.status]}
-                </Badge>
-            </div>
-        ),
+        cell: ({ row }) => <StudentStatusBadge status={row.original.status} />
     },
 ];
