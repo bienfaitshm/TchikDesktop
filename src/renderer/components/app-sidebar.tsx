@@ -1,9 +1,15 @@
 import {
-    Frame,
-    Map,
-    PieChart,
     Home,
-    type LucideIcon, // Import LucideIcon type for better typing
+    Users,
+    // SquarePen,
+    LayoutDashboard,
+    GraduationCap,
+    School,
+    Clipboard,
+    CalendarDays,
+    // Settings,
+    List,
+    type LucideIcon,
 } from "lucide-react";
 import { NavLink } from "react-router";
 
@@ -67,7 +73,7 @@ interface SidebarData {
  * @constant APP_SIDEBAR_NAVIGATION_DATA
  * @description Static data defining the structure and content of the application's main sidebar navigation.
  */
-const APP_SIDEBAR_NAVIGATION_DATA: SidebarData = {
+export const APP_SIDEBAR_NAVIGATION_DATA: SidebarData = {
     user: {
         name: "shadcn",
         email: "m@example.com",
@@ -77,46 +83,46 @@ const APP_SIDEBAR_NAVIGATION_DATA: SidebarData = {
         {
             name: "Accueil",
             url: "/",
-            icon: Home,
+            icon: Home, // Idéal pour l'accueil
         },
         {
             name: "Inscriptions",
             url: "/inscriptions",
-            icon: Frame,
+            icon: Clipboard, // Un presse-papiers ou un formulaire est pertinent pour les inscriptions
         },
         {
             name: "Mise en place",
             url: "/mise-en-places",
-            icon: Map,
+            icon: LayoutDashboard, // Un tableau de bord ou une mise en page est une bonne représentation
         },
     ],
     school: [
         {
             name: "Élèves",
             url: "/students",
-            icon: Frame,
+            icon: Users, // Un groupe d'utilisateurs représente mieux les élèves
         },
         {
             name: "Options",
             url: "/options",
-            icon: PieChart,
+            icon: GraduationCap, // Une toque de diplômé est une bonne icône pour les options scolaires
         },
         {
             name: "Classes",
             url: "/classrooms",
-            icon: Map,
+            icon: School, // Un bâtiment ou une école est pertinent pour les classes
         },
         {
             name: "Locaux",
             url: "/locals",
-            icon: Map,
+            icon: List, // Une liste pour représenter les locaux
         },
     ],
     others: [
         {
             name: "Années scolaires",
             url: "/school-years",
-            icon: Frame,
+            icon: CalendarDays, // Un calendrier ou une horloge est parfait pour les années
         },
     ],
 };
