@@ -4,6 +4,7 @@ import {
     Table as TanstackTable,
     ColumnDef,
     flexRender,
+    Row,
 } from "@tanstack/react-table";
 import {
     DndContext,
@@ -135,7 +136,10 @@ export function DataContentHead() {
     );
 }
 
-export function DataContentBody() {
+interface DataContentBodyProps<T> {
+    onClick?(row: Row<T>): void
+}
+export function DataContentBody<T>(props?: DataContentBodyProps<T>) {
     const ctx = useDataTableContext();
     const rows = ctx?.tableInstance?.getRowModel().rows ?? [];
     return (
@@ -147,6 +151,7 @@ export function DataContentBody() {
                 >
                     {rows.map((row) => (
                         <DraggableRow
+                            onClick={props?.onClick}
                             key={row.id}
                             rowOriginalId={ctx!.keyExtractor(row.original)}
                             row={row}
