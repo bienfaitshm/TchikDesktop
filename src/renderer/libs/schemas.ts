@@ -20,12 +20,6 @@ export const SchoolSchema = z.object({
  */
 export type SchoolAttributes = z.infer<typeof SchoolSchema>;
 
-export const UserRoleSchema = z.object({
-  role: z.nativeEnum(USER_ROLE, {
-    errorMap: () => ({ message: "Rôle d'utilisateur invalide." }),
-  }),
-});
-
 export const BaseUserSchema = z.object({
   lastName: z.string().nonempty("Le nom de famille ne peut pas être vide."),
   middleName: z.string().nonempty("Le deuxième prénom ne peut pas être vide."),
@@ -35,6 +29,9 @@ export const BaseUserSchema = z.object({
   }),
   birthDate: z.date().nullable().optional(),
   birthPlace: z.string().nullable().optional(),
+  role: z.nativeEnum(USER_ROLE, {
+    errorMap: () => ({ message: "Rôle d'utilisateur invalide." }),
+  }),
 });
 
 export type BaseUserSchemaAttributes = z.infer<typeof BaseUserSchema>;
@@ -143,9 +140,9 @@ export const ClassSchema = z.object({
 export type ClassAttributes = z.infer<typeof ClassSchema>;
 
 /**
- * Schéma Zod pour ClassroomEnrolementAttributes.
+ * Schéma Zod pour EnrollmentSchemaAttributes.
  */
-export const ClassroomEnrolementSchema = z.object({
+export const EnrollmentSchemaSchema = z.object({
   classroomId: z.string().nonempty("L'ID de la classe ne peut pas être vide."),
   studentId: z.string().optional(),
   isNewStudent: z.boolean(),
@@ -154,21 +151,19 @@ export const ClassroomEnrolementSchema = z.object({
 });
 
 /**
- * Type TypeScript inféré du schéma ClassroomEnrolementSchema.
+ * Type TypeScript inféré du schéma EnrollmentSchemaSchema.
  */
-export type ClassroomEnrolementAttributes = z.infer<
-  typeof ClassroomEnrolementSchema
->;
+export type EnrollmentSchemaAttributes = z.infer<typeof EnrollmentSchemaSchema>;
 
 /**
  *
  */
 export const QuickEnrollmentSchema = z
   .object({
-    student: BaseUserSchema.merge(UserRoleSchema),
+    student: BaseUserSchema,
     isInSystem: z.boolean().optional(),
   })
-  .merge(ClassroomEnrolementSchema);
+  .merge(EnrollmentSchemaSchema);
 
 /**
  *

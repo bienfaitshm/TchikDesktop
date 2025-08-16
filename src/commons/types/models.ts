@@ -4,7 +4,7 @@ import type {
   USER_ROLE,
   STUDENT_STATUS,
   ENROLEMENT_ACTION,
-} from "@/camons/constants/enum";
+} from "@/commons/constants/enum";
 // =====================
 // ATTRIBUTE INTERFACES
 // =====================
@@ -80,8 +80,8 @@ export interface ClassAttributes {
 
 export type TClassroom = Required<ClassAttributes>;
 export type TClassroomInsert = Omit<ClassAttributes, "classId">;
-export type TWithClassroom<T> = T & { Classroom: TClassroom };
-export type TWithClassrooms<T> = T & { Classroom: TClassroom[] };
+export type TWithClassroom<T> = T & { ClassRoom: TClassroom };
+export type TWithClassrooms<T> = T & { ClassRoom: TClassroom[] };
 
 export interface ClassroomEnrolementAttributes {
   enrolementId: string;

@@ -7,7 +7,6 @@ import {
     SheetTitle,
 } from "@/renderer/components/ui/sheet";
 import { ScrollArea } from "@/renderer/components/ui/scroll-area";
-import { TypographyH3 } from "@/renderer/components/ui/typography";
 import { StudentDetailsCard } from "@/renderer/components/student-details-infos";
 
 export type Student = any
@@ -81,7 +80,7 @@ export const StudentDetailSheet = React.forwardRef<
                         {state.student && (
                             <>
 
-                                <StudentDetailsCard data={state.student} />
+                                <StudentDetailsCard schoolId={schoolId} yearId={yearId as string} data={state.student} />
 
                             </>
                         )}
