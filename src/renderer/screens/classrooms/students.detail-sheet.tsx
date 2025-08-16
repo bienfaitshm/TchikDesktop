@@ -77,16 +77,12 @@ export const StudentDetailSheet = React.forwardRef<
                             Détails complets concernant l'élève.
                         </SheetDescription>
                     </SheetHeader>
-                    <div className="p-6">
+                    <div className="p-6 mb-10">
                         {state.student && (
                             <>
-                                <TypographyH3 className="mb-4">
-                                    {state.student.firstName} {state.student.lastName}
-                                </TypographyH3>
+
                                 <StudentDetailsCard data={state.student} />
-                                {/* <pre className="p-4 bg-slate-800 rounded-md overflow-auto text-sm">
-                                    {JSON.stringify(state.student, null, 2)}
-                                </pre> */}
+
                             </>
                         )}
                     </div>
