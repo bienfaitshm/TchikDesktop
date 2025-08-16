@@ -26,3 +26,18 @@ export const quickEnrolement = (data: TQuickEnrolementInsert) => {
     .post<TEnrolement, TQuickEnrolementInsert>("enrolements/quick", data)
     .then((res) => res.data);
 };
+
+export const updateEnrolement = (
+  enrolementId: string,
+  data: Partial<TEnrolementInsert>
+) => {
+  return clientApis
+    .put("enrolements/:enrolementId", data, { params: { enrolementId } })
+    .then((res) => res.data);
+};
+
+export const deleteEnrolement = (enrolementId: string) => {
+  return clientApis
+    .put("enrolements/:enrolementId", { params: { enrolementId } })
+    .then((res) => res.data);
+};

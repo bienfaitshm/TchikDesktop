@@ -65,7 +65,7 @@ export async function updateUser(userId: string, data: Partial<TUserInsert>) {
   return user.update(data);
 }
 
-export async function deleteEnrolement(userId: string) {
+export async function deleteUser(userId: string) {
   const whereClause = getDefinedAttributes({ userId });
   const user = await User.findOne({ where: whereClause });
   if (!user) return false;

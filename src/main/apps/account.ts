@@ -1,20 +1,31 @@
 import { server } from "@/commons/libs/electron-apis/server";
 import { response } from "@/commons/libs/electron-apis/utils";
 import { Status } from "@/commons/libs/electron-apis/constant";
-import { UserService } from "@/main/db/services";
 import { mapModelToPlain, mapModelsToPlainList } from "@/main/db/models/utils";
-import type { UserAttributes, WithSchoolId } from "@/main/db/services/types";
-
-// Type utilitaire pour les paramètres avec schoolId et userId
-type UserRouteParams = WithSchoolId<{ userId: string }>;
+import * as services from "@/main/db/services/account";
+import {
+  QueryParams,
+  TUserInsert,
+  WithSchoolAndYearId,
+} from "@/commons/types/services";
 
 /**
  * @route GET /users
  * @description Récupère la liste de tous les utilisateurs pour une école donnée.
  */
-server.get<any, WithSchoolId<{}>>("users", async ({ params: { schoolId } }) => {
+server.get<
+  any,
+  QueryParams<
+    WithSchoolAndYearId,
+    Partial<
+      TUserInsert & {
+        classroomId: string;
+      }
+    >
+  >
+>("users", async ({ params }) => {
   try {
-    const users = await UserService.findAll(schoolId);
+    const users = await services.getUsers(params);
     return response(mapModelsToPlainList(users));
   } catch (error) {
     console.error(`Erreur lors de la récupération des utilisateurs: ${error}`);
@@ -30,32 +41,28 @@ server.get<any, WithSchoolId<{}>>("users", async ({ params: { schoolId } }) => {
  * @route POST /users
  * @description Crée un nouvel utilisateur.
  */
-server.post<any, WithSchoolId<UserAttributes>, WithSchoolId<{}>>(
-  "users",
-  async ({ data, params: { schoolId } }) => {
-    try {
-      const newUser = await UserService.create({ ...data, schoolId });
-      return response(mapModelToPlain(newUser));
-    } catch (error) {
-      console.error(`Erreur lors de la création de l'utilisateur: ${error}`);
-      return response(
-        {},
-        Status.INTERNAL_SERVER,
-        "Erreur interne du serveur lors de la création de l'utilisateur."
-      );
-    }
+server.post<any, TUserInsert>("users", async ({ data }) => {
+  try {
+    return response(mapModelToPlain(services.createUser(data)));
+  } catch (error) {
+    console.error(`Erreur lors de la création de l'utilisateur: ${error}`);
+    return response(
+      {},
+      Status.INTERNAL_SERVER,
+      "Erreur interne du serveur lors de la création de l'utilisateur."
+    );
   }
-);
+});
 
 /**
  * @route PUT /users
  * @description Met à jour un utilisateur existant.
  */
-server.put<any, Partial<UserAttributes>, UserRouteParams>(
-  "users",
-  async ({ params: { schoolId, userId }, data }) => {
+server.put<any, Partial<TUserInsert>, { userId: string }>(
+  "users/:userId",
+  async ({ params: { userId }, data }) => {
     try {
-      const updatedUser = await UserService.update(schoolId, userId, data);
+      const updatedUser = await services.updateUser(userId, data);
       if (updatedUser) {
         return response(mapModelToPlain(updatedUser));
       }
@@ -81,11 +88,11 @@ server.put<any, Partial<UserAttributes>, UserRouteParams>(
  * @route DELETE /users
  * @description Supprime un utilisateur.
  */
-server.delete<any, UserRouteParams>(
-  "users",
-  async ({ params: { schoolId, userId } }) => {
+server.delete<any, { userId: string }>(
+  "users/:userId",
+  async ({ params: { userId } }) => {
     try {
-      const success = await UserService.delete(schoolId, userId);
+      const success = await services.deleteUser(userId);
       if (success) {
         return response({ message: "Utilisateur supprimé avec succès." });
       }

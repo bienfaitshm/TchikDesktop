@@ -47,6 +47,7 @@ export async function createQuickEnrolement({
     ...studendValue,
     schoolId: data.schoolId,
   });
+  // TODO: fix error type ClassroomEnrolement.create
   return ClassroomEnrolement.create({ ...data, studentId: student.userId });
 }
 

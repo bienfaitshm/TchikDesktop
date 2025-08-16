@@ -8,6 +8,7 @@ import { server } from "@/commons/libs/electron-apis/server";
 import { response } from "@/commons/libs/electron-apis/utils";
 import { mapModelsToPlainList, mapModelToPlain } from "@/main/db/models/utils";
 import * as services from "@/main/db/services/enrolements";
+import { Status } from "@/commons/libs/electron-apis/constant";
 
 server.post<any, TQuickEnrolementInsert>(
   "enrolements/quick",
@@ -23,10 +24,39 @@ server.get<any, QueryParams<WithSchoolAndYearId, Partial<TEnrolementInsert>>>(
   }
 );
 
-server.post("enrolements", async () => {
-  return response({});
-});
+server.put<any, Partial<TEnrolementInsert>, { enrolementId: string }>(
+  "enrolements/:enrolementId",
+  async ({ data, params: { enrolementId } }) => {
+    const update = await services.updateEnrolement(enrolementId, data);
+    if (!update) {
+      return response({}, Status.NOT_FOUND, "L'inscription no trouvee");
+    }
+    return response(mapModelToPlain(update));
+  }
+);
 
-server.delete("enrolements", async () => {
-  return response({});
-});
+server.delete<any, { enrolementId: string }>(
+  "enrolements/:enrolementId",
+  async ({ params: { enrolementId } }) => {
+    try {
+      const success = await services.deleteEnrolement(enrolementId);
+      if (success) {
+        return response({ message: "Inscription supprimée avec succès." });
+      }
+      return response(
+        {},
+        Status.NOT_FOUND,
+        "Inscription non trouvée ou impossible à supprimer."
+      );
+    } catch (error) {
+      console.error(
+        `Erreur lors de la suppression de l'Inscription ${enrolementId}: ${error}`
+      );
+      return response(
+        {},
+        Status.INTERNAL_SERVER,
+        "Erreur interne du serveur lors de la suppression de l'Inscription."
+      );
+    }
+  }
+);
