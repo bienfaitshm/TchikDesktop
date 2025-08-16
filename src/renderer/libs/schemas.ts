@@ -20,26 +20,21 @@ export const SchoolSchema = z.object({
  */
 export type SchoolAttributes = z.infer<typeof SchoolSchema>;
 
-export const BaseUserSchema = z.object({
-  lastName: z.string().nonempty("Le nom de famille ne peut pas être vide."),
-  middleName: z.string().nonempty("Le deuxième prénom ne peut pas être vide."),
-  firstName: z
-    .string()
-    .nonempty("Le prénom ne peut pas être vide.")
-    .nullable()
-    .optional(),
+export const UserRoleSchema = z.object({
   role: z.nativeEnum(USER_ROLE, {
     errorMap: () => ({ message: "Rôle d'utilisateur invalide." }),
   }),
+});
+
+export const BaseUserSchema = z.object({
+  lastName: z.string().nonempty("Le nom de famille ne peut pas être vide."),
+  middleName: z.string().nonempty("Le deuxième prénom ne peut pas être vide."),
+  firstName: z.string().nullable().optional(),
   gender: z.nativeEnum(USER_GENDER, {
     errorMap: () => ({ message: "Genre d'utilisateur invalide." }),
   }),
   birthDate: z.date().nullable().optional(),
-  birthPlace: z
-    .string()
-    .nonempty("Le lieu de naissance ne peut pas être vide.")
-    .nullable()
-    .optional(),
+  birthPlace: z.string().nullable().optional(),
 });
 
 export type BaseUserSchemaAttributes = z.infer<typeof BaseUserSchema>;
@@ -170,7 +165,7 @@ export type ClassroomEnrolementAttributes = z.infer<
  */
 export const QuickEnrollmentSchema = z
   .object({
-    student: BaseUserSchema,
+    student: BaseUserSchema.merge(UserRoleSchema),
     isInSystem: z.boolean().optional(),
   })
   .merge(ClassroomEnrolementSchema);
