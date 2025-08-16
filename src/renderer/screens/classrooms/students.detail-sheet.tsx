@@ -67,7 +67,7 @@ export const StudentDetailSheet = React.forwardRef<
 
     // 4. Amélioration du rendu et du contenu
     return (
-        <Sheet open={state.open} onOpenChange={handleOpenChange}>
+        <Sheet modal={false} open={state.open} onOpenChange={handleOpenChange}>
             <SheetContent className="sm:max-w-xl p-0">
                 <ScrollArea className="h-full">
                     <SheetHeader className="p-6">

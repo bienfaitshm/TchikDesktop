@@ -15,11 +15,11 @@ import { USER_GENDER, USER_ROLE } from "@/commons/constants/enum";
 import { Input } from "@/renderer/components/ui/input";
 import { GenderInput } from "./fields/gender";
 import { Label } from "@/renderer/components/ui/label";
-import { DatePickerInput } from "@/renderer/components/date-input";
 import { RadioGroup, RadioGroupItem } from "@/renderer/components/ui/radio-group";
 import { UseFormReturn } from "react-hook-form";
 import { cn } from "@/renderer/utils";
 import { Combobox } from "../ui/combobox";
+import { DateInput } from "@/renderer/components/form/fields/date";
 
 // Exporte les utilitaires du formulaire pour les composants parents
 export * from "./utils";
@@ -119,7 +119,7 @@ const StudentFields: React.FC<{
                             <FormLabel className="mt-1 mb-1">Date de naissance</FormLabel>
                             <FormControl>
                                 <div className="w-full">
-                                    <DatePickerInput
+                                    <DateInput
                                         value={field.value ?? new Date()}
                                         onChange={field.onChange}
                                         placeholder="Sélectionner la date de naissance"

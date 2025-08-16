@@ -62,7 +62,7 @@ export const QuickEnrollmentDialogForm: React.FC<
     }, []);
 
     return (
-        <Dialog>
+        <Dialog modal={false}>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <FormSubmitter>
                 <DialogContent className="min-w-max">

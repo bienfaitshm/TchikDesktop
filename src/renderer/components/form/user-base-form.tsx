@@ -15,6 +15,7 @@ import { Input } from "@/renderer/components/ui/input";
 import { GenderInput } from "./fields/gender";
 import { Label } from "@/renderer/components/ui/label";
 import { DatePickerInput } from "@/renderer/components/date-input";
+import { DateInput } from "./fields/date";
 
 
 // Exporte les utilitaires du formulaire pour les composants parents
@@ -123,7 +124,7 @@ export const BaseUserSchemaForm = React.forwardRef<
                                     <FormLabel className="mt-1 mb-1">Date de naissance</FormLabel>
                                     <FormControl>
                                         <div className="w-full">
-                                            <DatePickerInput
+                                            <DateInput
                                                 value={field.value ?? new Date()}
                                                 onChange={field.onChange}
                                                 placeholder="Sélectionner la date de naissance"

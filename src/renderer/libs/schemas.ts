@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { SECTION, USER_GENDER, USER_ROLE } from "@/commons/constants/enum";
+import {
+  SECTION,
+  STUDENT_STATUS,
+  USER_GENDER,
+  USER_ROLE,
+} from "@/commons/constants/enum";
 
 // =====================
 // SCHÉMAS ZOD ET LEURS TYPES INFÉRÉS
@@ -148,6 +153,11 @@ export const EnrollmentSchemaSchema = z.object({
   isNewStudent: z.boolean(),
   schoolId: z.string().nonempty("L'ID de l'école ne peut pas être vide."),
   yearId: z.string().nonempty("L'ID de l'annee scolaire ne doit pas etre vide"),
+  status: z
+    .nativeEnum(STUDENT_STATUS, {
+      errorMap: () => ({ message: "Statut invalide." }),
+    })
+    .optional(),
 });
 
 /**
