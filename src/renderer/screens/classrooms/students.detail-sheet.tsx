@@ -61,11 +61,6 @@ export const StudentDetailSheet = React.forwardRef<
         }),
         [handleOpenSheet]
     );
-
-    // Utiliser les props schoolId et yearId (exemple)
-    console.log('School ID:', schoolId, 'Year ID:', yearId);
-
-    // 4. Amélioration du rendu et du contenu
     return (
         <Sheet modal={false} open={state.open} onOpenChange={handleOpenChange}>
             <SheetContent className="sm:max-w-xl p-0">
@@ -78,11 +73,11 @@ export const StudentDetailSheet = React.forwardRef<
                     </SheetHeader>
                     <div className="p-6 mb-10">
                         {state.student && (
-                            <>
-
-                                <StudentDetailsCard schoolId={schoolId} yearId={yearId as string} data={state.student} />
-
-                            </>
+                            <StudentDetailsCard
+                                schoolId={schoolId}
+                                yearId={yearId as string}
+                                data={state.student}
+                            />
                         )}
                     </div>
                 </ScrollArea>

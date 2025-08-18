@@ -119,7 +119,17 @@ const EditStudentInfos = ({ user, schoolId, onRefress }: { user: StudentDetails[
     );
 };
 
-const EditEnrollmentInfos = ({ enrollment, schoolId, yearId, onRefress }: { enrollment: Omit<StudentDetails, 'User'>, yearId: string, schoolId: string, onRefress?(): void }) => {
+const EditEnrollmentInfos = ({
+    enrollment,
+    schoolId,
+    yearId,
+    onRefress
+}: {
+    enrollment: Omit<StudentDetails, 'User'>,
+    yearId: string,
+    schoolId: string,
+    onRefress?(): void
+}) => {
     const handleChangeFrame = useChangeAnimatedFrame();
     const updateMutation = useUpdateEnrollment();
     const classroomsOptions = useGetClassroomAsOption({ schoolId, yearId, params: {} }, { label: "short" })
@@ -139,6 +149,8 @@ const EditEnrollmentInfos = ({ enrollment, schoolId, yearId, onRefress }: { enro
         schoolId: enrollment.schoolId,
         yearId: enrollment.ClassRoom.yearId,
         studentId: enrollment.studentId,
+        status: enrollment.status,
+        isNewStudent: enrollment.isNewStudent
     }
 
     return (
