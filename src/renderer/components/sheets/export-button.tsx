@@ -12,7 +12,10 @@ import {
     SheetTrigger,
 } from "@/renderer/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/renderer/components/ui/tabs";
+import { useExportStudentEnrollementDocument, useExportTestSheet, useExportSheetDataToJson } from "@/renderer/libs/queries/document-export";
+import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { FileText, FileSpreadsheet } from "lucide-react";
+import { ButtonLoader } from "../form/button-loader";
 
 /**
  * Composant pour le bouton d'exportation de données.
@@ -20,6 +23,10 @@ import { FileText, FileSpreadsheet } from "lucide-react";
  * le format d'exportation (document ou Excel).
  */
 export const ButtonDataExport = () => {
+    const mutate = useExportSheetDataToJson()
+    const handleExport = () => {
+        mutate.mutate({}, createMutationCallbacksWithNotifications({}))
+    }
     return (
         <Sheet>
             <SheetTrigger asChild>
@@ -89,7 +96,7 @@ export const ButtonDataExport = () => {
                             Fermer
                         </Button>
                     </SheetClose>
-                    <Button type="submit">Exporter</Button>
+                    <ButtonLoader isLoading={mutate.isPending} type="submit" onClick={handleExport}>Exporter</ButtonLoader>
                 </SheetFooter>
             </SheetContent>
         </Sheet>

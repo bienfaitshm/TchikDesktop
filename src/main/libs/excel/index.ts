@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+export * from "./utils";
 
 type JsonToExcelBufferParams<T> = {
   data: T[];
@@ -8,7 +9,7 @@ type JsonToExcelBufferParams<T> = {
 export function jsonToExcelBuffer<TData>({
   data,
   sheetName = "Feuille1",
-}: JsonToExcelBufferParams<TData>): void {
+}: JsonToExcelBufferParams<TData>) {
   const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
 
   const workbook: XLSX.WorkBook = XLSX.utils.book_new();
