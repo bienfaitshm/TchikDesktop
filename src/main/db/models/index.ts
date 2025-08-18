@@ -64,7 +64,7 @@ const User = sequelize.define(
     fullname: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.lastName} ${this.middleName} ${this.lastName ?? ""}`.toUpperCase();
+        return `${this.lastName} ${this.middleName} ${this.firstName ?? ""}`.toUpperCase();
       },
     },
     username: {
