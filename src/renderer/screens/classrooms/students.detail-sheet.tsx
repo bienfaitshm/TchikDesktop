@@ -8,6 +8,7 @@ import {
 } from "@/renderer/components/ui/sheet";
 import { ScrollArea } from "@/renderer/components/ui/scroll-area";
 import { StudentDetailsCard } from "@/renderer/components/student-details-infos";
+import { Suspense } from "@/renderer/libs/queries/suspense";
 
 export type Student = any
 
@@ -73,11 +74,13 @@ export const StudentDetailSheet = React.forwardRef<
                     </SheetHeader>
                     <div className="p-6 mb-10">
                         {state.student && (
-                            <StudentDetailsCard
-                                schoolId={schoolId}
-                                yearId={yearId as string}
-                                data={state.student}
-                            />
+                            <Suspense>
+                                <StudentDetailsCard
+                                    schoolId={schoolId}
+                                    yearId={yearId as string}
+                                    data={state.student}
+                                />
+                            </Suspense>
                         )}
                     </div>
                 </ScrollArea>
@@ -93,3 +96,8 @@ export function useStudentDetailSheet() {
     }, []);
     return { sheetRef, showStudentInfos };
 }
+
+/**
+ * Error
+A component suspended while responding to synchronous input. This will cause the UI to be replaced with a loading indicator. To fix, updates that suspend should be wrapped with startTransition.
+ */

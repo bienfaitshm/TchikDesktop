@@ -16,6 +16,7 @@ import { ButtonLoader } from "./form/button-loader";
 import { useUpdateUser } from "../libs/queries/account";
 import { useGetEnrollment, useUpdateEnrollment } from "../libs/queries/enrolement";
 import { useGetClassroomAsOption } from "../hooks/data-as-options";
+import { Suspense } from "../libs/queries/suspense";
 
 export type StudentDetails = TWithClassroom<TWithUser<TEnrolement>>
 
@@ -209,11 +210,13 @@ export const StudentDetailsCard = ({ schoolId, yearId, data }: StudentDetailsCar
                             <StudentPersonalInfos user={enrollment.User} />
                         </AnimatedFrame>
                         <AnimatedFrame name="edit-student-infos">
-                            <EditStudentInfos
-                                schoolId={schoolId}
-                                user={enrollment.User}
-                                onRefress={onRefress}
-                            />
+                            <Suspense>
+                                <EditStudentInfos
+                                    schoolId={schoolId}
+                                    user={enrollment.User}
+                                    onRefress={onRefress}
+                                />
+                            </Suspense>
                         </AnimatedFrame>
                     </AnimatedFrameSwitcherProvider>
                 </CardContent>
@@ -239,12 +242,14 @@ export const StudentDetailsCard = ({ schoolId, yearId, data }: StudentDetailsCar
                             <StudentInscriptionInfos enrollment={enrollment} />
                         </AnimatedFrame>
                         <AnimatedFrame name="edit-enrollment-infos">
-                            <EditEnrollmentInfos
-                                onRefress={onRefress}
-                                schoolId={schoolId}
-                                yearId={yearId}
-                                enrollment={enrollment}
-                            />
+                            <Suspense>
+                                <EditEnrollmentInfos
+                                    onRefress={onRefress}
+                                    schoolId={schoolId}
+                                    yearId={yearId}
+                                    enrollment={enrollment}
+                                />
+                            </Suspense>
                         </AnimatedFrame>
                     </AnimatedFrameSwitcherProvider>
                 </CardContent>
