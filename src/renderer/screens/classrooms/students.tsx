@@ -21,6 +21,7 @@ import { cn } from "@/renderer/utils";
 import { DataRefresher } from "@/renderer/providers/refrecher";
 import { QuickEnrollmentDialogForm } from "./students.dialog-form";
 import { StudentDetailSheet, useStudentDetailSheet } from "./students.detail-sheet";
+import { LoaderCurrentConfig } from "../base/current-config";
 
 const InformationCard: React.FC<{ title: string, students?: TUser[], variant?: "DESTRUCTIVE" | "DEFAULT" }> = ({ title, variant = "DEFAULT", students = [] }) => {
     const totalStudents = students.length
@@ -149,13 +150,5 @@ const StudentList: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
 }
 
 export function ClassroomStudentsPage() {
-    const { schoolId, yearId } = useGetCurrentYearSchool()
-    if (!schoolId && !yearId) {
-        return null;
-    }
-    return (
-        <div>
-            <StudentList schoolId={schoolId} yearId={yearId} />
-        </div>
-    )
+    return <LoaderCurrentConfig screen={StudentList} />
 }

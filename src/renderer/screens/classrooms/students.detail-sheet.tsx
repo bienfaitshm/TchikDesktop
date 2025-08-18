@@ -96,8 +96,3 @@ export function useStudentDetailSheet() {
     }, []);
     return { sheetRef, showStudentInfos };
 }
-
-/**
- * Error
-A component suspended while responding to synchronous input. This will cause the UI to be replaced with a loading indicator. To fix, updates that suspend should be wrapped with startTransition.
- */

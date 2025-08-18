@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ren
 import { formatDate } from "@/commons/libs/times";
 import type { TEnrolement, TWithUser, TWithClassroom } from "@/commons/types/models"
 import { Button } from '@/renderer/components/ui/button';
-import { PencilIcon } from 'lucide-react';
+import { PencilIcon, CheckCircle2Icon } from 'lucide-react';
 import { GenderBadge } from "./user-gender";
 import { StudentStatusBadge } from "./student-status";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
@@ -18,6 +18,12 @@ import { useGetEnrollment, useUpdateEnrollment } from "@/renderer/libs/queries/e
 import { useGetClassroomAsOption } from "@/renderer/hooks/data-as-options";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { useOnValidateDataRefresh } from "@/renderer/providers/refrecher";
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/renderer/components/ui/alert"
+import { useParams } from "react-router";
 
 export type StudentDetails = TWithClassroom<TWithUser<TEnrolement>>
 
@@ -189,9 +195,9 @@ const EditEnrollmentInfos = ({
 };
 
 export const StudentDetailsCard = ({ schoolId, yearId, data }: StudentDetailsCardProps) => {
+    const { classroomId } = useParams<{ classroomId: string }>()
     const { data: enrollment, refetch } = useGetEnrollment(data.enrolementId, { initialData: data })
     const invalidateData = useOnValidateDataRefresh()
-    console.log("StudentDetailsCard", { enrollment })
 
     const onRefress = useCallback(() => {
         refetch()
@@ -200,6 +206,15 @@ export const StudentDetailsCard = ({ schoolId, yearId, data }: StudentDetailsCar
 
     return (
         <div className="space-y-6">
+            {data.classroomId !== classroomId && (
+                <Alert>
+                    <CheckCircle2Icon />
+                    <AlertTitle>Élève transféré</AlertTitle>
+                    <AlertDescription>
+                        Cet élève ne fait plus partie de cette classe. Il a peut-être été transféré.
+                    </AlertDescription>
+                </Alert>
+            )}
             {/* Informations Personnelles */}
             <Card className="relative h-full">
                 <CardHeader>
