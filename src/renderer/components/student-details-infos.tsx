@@ -206,15 +206,6 @@ export const StudentDetailsCard = ({ schoolId, yearId, data }: StudentDetailsCar
 
     return (
         <div className="space-y-6">
-            {data.classroomId !== classroomId && (
-                <Alert>
-                    <CheckCircle2Icon />
-                    <AlertTitle>Élève transféré</AlertTitle>
-                    <AlertDescription>
-                        Cet élève ne fait plus partie de cette classe. Il a peut-être été transféré.
-                    </AlertDescription>
-                </Alert>
-            )}
             {/* Informations Personnelles */}
             <Card className="relative h-full">
                 <CardHeader>
@@ -243,6 +234,15 @@ export const StudentDetailsCard = ({ schoolId, yearId, data }: StudentDetailsCar
             </Card>
 
             {/* Détails de la classe et de l'inscription */}
+            {enrollment.classroomId !== classroomId && (
+                <Alert>
+                    <CheckCircle2Icon />
+                    <AlertTitle>Élève transféré</AlertTitle>
+                    <AlertDescription>
+                        Cet élève ne fait plus partie de cette classe. Il a peut-être été transféré.
+                    </AlertDescription>
+                </Alert>
+            )}
             <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between">

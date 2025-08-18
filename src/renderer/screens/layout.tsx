@@ -11,7 +11,10 @@ export default function Layout() {
         return <Navigate to="configuration" replace />
     }
     return (
-        <SidebarProvider>
+        <SidebarProvider style={{
+            "--sidebar-width": "12rem",
+            "--sidebar-width-mobile": "20rem",
+        }}>
             <ApplicationSidebar />
             <SidebarInset>
                 <header className="bg-background sticky top-0 flex shrink-0 items-center gap-2 border-b p-4">

@@ -15,7 +15,6 @@ import { TypographyH2, TypographySmall } from "@/renderer/components/ui/typograp
 import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
 import { TEnrolement, TUser, TWithUser, WithSchoolAndYearId } from "@/commons/types/services";
 import { useGetClassroom } from "@/renderer/libs/queries/classroom";
-import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store";
 import { STUDENT_STATUS, USER_GENDER } from "@/commons/constants/enum";
 import { cn } from "@/renderer/utils";
 import { DataRefresher } from "@/renderer/providers/refrecher";
