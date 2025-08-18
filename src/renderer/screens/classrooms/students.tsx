@@ -14,7 +14,7 @@ import { Button } from "@/renderer/components/ui/button";
 import { StudentColumns } from "@/renderer/components/tables/columns.students"
 import { Card, CardContent, CardHeader, CardTitle } from "@/renderer/components/ui/card";
 import { TypographyH2, TypographySmall } from "@/renderer/components/ui/typography";
-import { useGetEnrolements } from "@/renderer/libs/queries/enrolement";
+import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
 import { TEnrolement, TUser, TWithUser, WithSchoolAndYearId } from "@/commons/types/services";
 import { useGetClassroom } from "@/renderer/libs/queries/classroom";
 import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store";
@@ -117,7 +117,7 @@ const StudentList: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
     const params = React.useMemo(() => ({ schoolId, yearId, params: { classroomId } }), [schoolId, yearId, classroomId])
     const { sheetRef, showStudentInfos } = useStudentDetailSheet()
 
-    const { data: students = [] } = useGetEnrolements(params)
+    const { data: students = [] } = useGetEnrollments(params)
 
     const onValidateData = React.useCallback(() => {
         queryClient.invalidateQueries({ queryKey: ["GET_ENROLEMENTS", params] })

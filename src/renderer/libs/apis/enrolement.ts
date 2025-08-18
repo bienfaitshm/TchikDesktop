@@ -5,6 +5,7 @@ import type {
   QueryParams,
   WithSchoolAndYearId,
   TEnrolementInsert,
+  TWithClassroom,
 } from "@/commons/types/services";
 import { clientApis } from "./client";
 
@@ -15,13 +16,21 @@ export type GetEnrolementParams = QueryParams<
 
 export const getEnrolements = (params: GetEnrolementParams) => {
   return clientApis
-    .get<TWithUser<TEnrolement>[]>("enrolements", {
+    .get<TWithUser<TWithClassroom<TEnrolement>>[]>("enrolements", {
       params,
     })
     .then((res) => res.data);
 };
 
-export const quickEnrolement = (data: TQuickEnrolementInsert) => {
+export const getEnrolement = (enrolementId: string) => {
+  return clientApis
+    .get<TWithUser<TWithClassroom<TEnrolement>>>("enrolements/:enrolementId", {
+      params: { enrolementId },
+    })
+    .then((res) => res.data);
+};
+
+export const quickCreateEnrolement = (data: TQuickEnrolementInsert) => {
   return clientApis
     .post<TEnrolement, TQuickEnrolementInsert>("enrolements/quick", data)
     .then((res) => res.data);

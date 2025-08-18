@@ -14,7 +14,7 @@ import { type EnrollmentFormData, EnrollmentForm } from "./form/enrollment-form"
 import { FormSubmitter } from "./form/form-submiter";
 import { ButtonLoader } from "./form/button-loader";
 import { useUpdateUser } from "../libs/queries/account";
-import { useUpdateEnrollment } from "../libs/queries/enrolement";
+import { useGetEnrollment, useUpdateEnrollment } from "../libs/queries/enrolement";
 import { useGetClassroomAsOption } from "../hooks/data-as-options";
 
 export type StudentDetails = TWithClassroom<TWithUser<TEnrolement>>
@@ -87,7 +87,7 @@ const StudentInscriptionInfos = ({ enrollment }: { enrollment: StudentDetails })
     );
 };
 
-const EditStudentInfos = ({ user, schoolId }: { user: StudentDetails['User']; schoolId: string }) => {
+const EditStudentInfos = ({ user, schoolId, onRefress }: { user: StudentDetails['User']; schoolId: string, onRefress?(): void }) => {
     const handleChangeFrame = useChangeAnimatedFrame();
     const updateMutation = useUpdateUser()
     const handlerGoBack = useCallback(() => handleChangeFrame("student-infos"), [])
@@ -95,6 +95,7 @@ const EditStudentInfos = ({ user, schoolId }: { user: StudentDetails['User']; sc
         updateMutation.mutate({ userId: user.userId, data }, createMutationCallbacksWithNotifications({
             onSuccess() {
                 handlerGoBack()
+                onRefress?.()
             }
         }))
     }, [schoolId]);
@@ -118,7 +119,7 @@ const EditStudentInfos = ({ user, schoolId }: { user: StudentDetails['User']; sc
     );
 };
 
-const EditEnrollmentInfos = ({ enrollment, schoolId, yearId }: { enrollment: Omit<StudentDetails, 'User'>, yearId: string, schoolId: string }) => {
+const EditEnrollmentInfos = ({ enrollment, schoolId, yearId, onRefress }: { enrollment: Omit<StudentDetails, 'User'>, yearId: string, schoolId: string, onRefress?(): void }) => {
     const handleChangeFrame = useChangeAnimatedFrame();
     const updateMutation = useUpdateEnrollment();
     const classroomsOptions = useGetClassroomAsOption({ schoolId, yearId, params: {} }, { label: "short" })
@@ -128,6 +129,7 @@ const EditEnrollmentInfos = ({ enrollment, schoolId, yearId }: { enrollment: Omi
         updateMutation.mutate({ enrolementId: enrollment.enrolementId, data }, createMutationCallbacksWithNotifications({
             onSuccess() {
                 handlerGoBack()
+                onRefress?.()
             }
         }))
     }, [enrollment.enrolementId]);
@@ -173,24 +175,33 @@ const EditEnrollmentInfos = ({ enrollment, schoolId, yearId }: { enrollment: Omi
 };
 
 export const StudentDetailsCard = ({ schoolId, yearId, data }: StudentDetailsCardProps) => {
+    const { data: enrollment, refetch } = useGetEnrollment(data.enrolementId, { initialData: data })
+    console.log("StudentDetailsCard", { enrollment })
+    const onRefress = useCallback(() => {
+        refetch()
+    }, [])
     return (
         <div className="space-y-6">
             {/* Informations Personnelles */}
             <Card className="relative h-full">
                 <CardHeader>
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-2xl">{data.User.fullname}</CardTitle>
-                        <GenderBadge withIcon gender={data.User.gender} />
+                        <CardTitle className="text-2xl">{enrollment.User.fullname}</CardTitle>
+                        <GenderBadge withIcon gender={enrollment.User.gender} />
                     </div>
                     <CardDescription>Détails personnels de l'élève.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <AnimatedFrameSwitcherProvider defaultActiveFrame="student-infos">
                         <AnimatedFrame name="student-infos">
-                            <StudentPersonalInfos user={data.User} />
+                            <StudentPersonalInfos user={enrollment.User} />
                         </AnimatedFrame>
                         <AnimatedFrame name="edit-student-infos">
-                            <EditStudentInfos user={data.User} schoolId={schoolId} />
+                            <EditStudentInfos
+                                schoolId={schoolId}
+                                user={enrollment.User}
+                                onRefress={onRefress}
+                            />
                         </AnimatedFrame>
                     </AnimatedFrameSwitcherProvider>
                 </CardContent>
@@ -205,7 +216,7 @@ export const StudentDetailsCard = ({ schoolId, yearId, data }: StudentDetailsCar
                             <CardDescription>Informations sur la scolarité actuelle de l'élève.</CardDescription>
                         </div>
                         <div className="flex flex-col items-end">
-                            <StudentStatusBadge status={data.status} />
+                            <StudentStatusBadge status={enrollment.status} />
                             <p className="text-sm text-muted-foreground">Statut de l'élève</p>
                         </div>
                     </div>
@@ -213,13 +224,14 @@ export const StudentDetailsCard = ({ schoolId, yearId, data }: StudentDetailsCar
                 <CardContent>
                     <AnimatedFrameSwitcherProvider defaultActiveFrame="inscription-infos">
                         <AnimatedFrame name="inscription-infos">
-                            <StudentInscriptionInfos enrollment={data} />
+                            <StudentInscriptionInfos enrollment={enrollment} />
                         </AnimatedFrame>
                         <AnimatedFrame name="edit-enrollment-infos">
                             <EditEnrollmentInfos
+                                onRefress={onRefress}
                                 schoolId={schoolId}
                                 yearId={yearId}
-                                enrollment={data}
+                                enrollment={enrollment}
                             />
                         </AnimatedFrame>
                     </AnimatedFrameSwitcherProvider>

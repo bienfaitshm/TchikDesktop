@@ -10,17 +10,28 @@ import { mapModelsToPlainList, mapModelToPlain } from "@/main/db/models/utils";
 import * as services from "@/main/db/services/enrolements";
 import { Status } from "@/commons/libs/electron-apis/constant";
 
-server.post<any, TQuickEnrolementInsert>(
-  "enrolements/quick",
-  async ({ data }) => {
-    return response(mapModelToPlain(services.createQuickEnrolement(data)));
-  }
-);
-
 server.get<any, QueryParams<WithSchoolAndYearId, Partial<TEnrolementInsert>>>(
   "enrolements",
   async ({ params }) => {
     return response(mapModelsToPlainList(services.getEnrolements(params)));
+  }
+);
+
+server.get<any, { enrolementId: string }>(
+  "enrolements/:enrolementId",
+  async ({ params: { enrolementId } }) => {
+    const result = await services.getEnrolement(enrolementId);
+    if (!result) {
+      return response({}, Status.NOT_FOUND, "L'inscription no trouvee");
+    }
+    return response(mapModelToPlain(result));
+  }
+);
+
+server.post<any, TQuickEnrolementInsert>(
+  "enrolements/quick",
+  async ({ data }) => {
+    return response(mapModelToPlain(services.createQuickEnrolement(data)));
   }
 );
 
