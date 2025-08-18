@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/renderer/components/ui/card";
 import { formatDate } from "@/commons/libs/times";
 import type { TEnrolement, TWithUser, TWithClassroom } from "@/commons/types/models"
@@ -13,10 +13,10 @@ import { BaseUserSchemaForm, type BaseUserSchemaFormData } from "./form/user-bas
 import { type EnrollmentFormData, EnrollmentForm } from "./form/enrollment-form"
 import { FormSubmitter } from "./form/form-submiter";
 import { ButtonLoader } from "./form/button-loader";
-import { useUpdateUser } from "../libs/queries/account";
-import { useGetEnrollment, useUpdateEnrollment } from "../libs/queries/enrolement";
-import { useGetClassroomAsOption } from "../hooks/data-as-options";
-import { Suspense } from "../libs/queries/suspense";
+import { useUpdateUser } from "@/renderer/libs/queries/account";
+import { useGetEnrollment, useUpdateEnrollment } from "@/renderer/libs/queries/enrolement";
+import { useGetClassroomAsOption } from "@/renderer/hooks/data-as-options";
+import { Suspense } from "@/renderer/libs/queries/suspense";
 
 export type StudentDetails = TWithClassroom<TWithUser<TEnrolement>>
 
@@ -63,7 +63,7 @@ const StudentPersonalInfos = ({ user }: { user: StudentDetails['User'] }) => {
 
 const StudentInscriptionInfos = ({ enrollment }: { enrollment: StudentDetails }) => {
     const handleChangeFrame = useChangeAnimatedFrame();
-    const sectionTranslation = SECTION_TRANSLATIONS[enrollment.ClassRoom.section];
+    const sectionTranslation = useMemo(() => SECTION_TRANSLATIONS[enrollment.ClassRoom.section], [enrollment])
 
     return (
         <>
