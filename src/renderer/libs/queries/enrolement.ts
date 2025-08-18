@@ -3,6 +3,7 @@ import type {
   TEnrolement,
   TWithUser,
   TQuickEnrolementInsert,
+  TEnrolementInsert,
 } from "@/commons/types/services";
 import * as apis from "@/renderer/libs/apis/enrolement";
 
@@ -20,9 +21,17 @@ export function useCreateQuickEnrolement() {
   });
 }
 
-// export function useCreateEnrolement() {
-//   return useMutation<TEnrolement, Error, TQuickEnrolementInsert>({
-//     mutationKey: ["CREATE_ENROLEMENT"],
-//     mutationFn: (data) => apis.createEnrolement(data),
-//   });
-// }
+export function useUpdateEnrollment() {
+  return useMutation<
+    TEnrolement,
+    Error,
+    {
+      enrolementId: string;
+      data: Partial<TEnrolementInsert>;
+    }
+  >({
+    mutationKey: ["UPDATE_ENROLEMENT"],
+    mutationFn: ({ data, enrolementId }) =>
+      apis.updateEnrolement(enrolementId, data),
+  });
+}

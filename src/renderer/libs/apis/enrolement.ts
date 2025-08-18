@@ -32,12 +32,15 @@ export const updateEnrolement = (
   data: Partial<TEnrolementInsert>
 ) => {
   return clientApis
-    .put("enrolements/:enrolementId", data, { params: { enrolementId } })
+    .put<
+      TEnrolement,
+      Partial<TEnrolementInsert>
+    >("enrolements/:enrolementId", data, { params: { enrolementId } })
     .then((res) => res.data);
 };
 
 export const deleteEnrolement = (enrolementId: string) => {
   return clientApis
-    .put("enrolements/:enrolementId", { params: { enrolementId } })
+    .delete("enrolements/:enrolementId", { params: { enrolementId } })
     .then((res) => res.data);
 };

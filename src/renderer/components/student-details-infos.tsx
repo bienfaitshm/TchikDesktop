@@ -6,15 +6,16 @@ import { Button } from '@/renderer/components/ui/button';
 import { PencilIcon } from 'lucide-react';
 import { GenderBadge } from "./user-gender";
 import { StudentStatusBadge } from "./student-status";
-
+import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { SECTION_TRANSLATIONS } from '@/commons/constants/enum';
 import { AnimatedFrameSwitcherProvider, AnimatedFrame, useChangeAnimatedFrame } from "@/renderer/components/animated-frame-switcher";
 import { BaseUserSchemaForm, type BaseUserSchemaFormData } from "./form/user-base-form";
 import { type EnrollmentFormData, EnrollmentForm } from "./form/enrollment-form"
 import { FormSubmitter } from "./form/form-submiter";
 import { ButtonLoader } from "./form/button-loader";
+import { useUpdateUser } from "../libs/queries/account";
+import { useUpdateEnrollment } from "../libs/queries/enrolement";
 
-// --- 1. Définition des types ---
 export type StudentDetails = TWithClassroom<TWithUser<TEnrolement>>
 
 
@@ -24,7 +25,6 @@ interface StudentDetailsCardProps {
     yearId: string;
 }
 
-// --- 2. Composants atomiques réutilisables ---
 const TextInfo = ({ title, value }: { title: string; value: string | number }) => (
     <div className="space-y-1">
         <p className="text-sm text-gray-500">{title}</p>
@@ -32,7 +32,6 @@ const TextInfo = ({ title, value }: { title: string; value: string | number }) =
     </div>
 );
 
-// --- 3. Composants "Frames" pour l'animation ---
 const StudentPersonalInfos = ({ user }: { user: StudentDetails['User'] }) => {
     const handleChangeFrame = useChangeAnimatedFrame();
     const formattedBirthDate = user.birthDate ? formatDate(user.birthDate) : "-";
@@ -89,8 +88,14 @@ const StudentInscriptionInfos = ({ enrollment }: { enrollment: StudentDetails })
 
 const EditStudentInfos = ({ user, schoolId }: { user: StudentDetails['User']; schoolId: string }) => {
     const handleChangeFrame = useChangeAnimatedFrame();
-    const onSubmit = useCallback((value: BaseUserSchemaFormData) => {
-        console.log("Submit Student:", schoolId, value);
+    const updateMutation = useUpdateUser()
+    const handlerGoBack = useCallback(() => handleChangeFrame("student-infos"), [])
+    const onSubmit = useCallback((data: BaseUserSchemaFormData) => {
+        updateMutation.mutate({ userId: user.userId, data }, createMutationCallbacksWithNotifications({
+            onSuccess() {
+                handlerGoBack()
+            }
+        }))
     }, [schoolId]);
 
     return (
@@ -99,11 +104,11 @@ const EditStudentInfos = ({ user, schoolId }: { user: StudentDetails['User']; sc
                 <BaseUserSchemaForm initialValues={user} onSubmit={onSubmit} />
             </FormSubmitter.Wrapper>
             <div className="mt-6 flex justify-end gap-2 pt-4 border-t">
-                <Button size="sm" className="h-8" onClick={() => handleChangeFrame("student-infos")} variant="secondary">
+                <Button size="sm" className="h-8" onClick={handlerGoBack} variant="secondary">
                     Annuler
                 </Button>
                 <FormSubmitter.Trigger asChild>
-                    <ButtonLoader size="sm" className="h-8" isLoadingText="Enregistrement...">
+                    <ButtonLoader size="sm" className="h-8" isLoading={updateMutation.isPending} isLoadingText="Enregistrement...">
                         Enregistrer
                     </ButtonLoader>
                 </FormSubmitter.Trigger>
@@ -114,8 +119,15 @@ const EditStudentInfos = ({ user, schoolId }: { user: StudentDetails['User']; sc
 
 const EditEnrollmentInfos = ({ enrollment }: { enrollment: Omit<StudentDetails, 'User'> }) => {
     const handleChangeFrame = useChangeAnimatedFrame();
-    const onSubmit = useCallback((value: EnrollmentFormData) => {
-        console.log("Submit Enrollment:", enrollment.enrolementId, value);
+    const updateMutation = useUpdateEnrollment()
+    const handlerGoBack = useCallback(() => handleChangeFrame("inscription-infos"), [])
+
+    const onSubmit = useCallback((data: EnrollmentFormData) => {
+        updateMutation.mutate({ enrolementId: enrollment.enrolementId, data }, createMutationCallbacksWithNotifications({
+            onSuccess() {
+                handlerGoBack()
+            }
+        }))
     }, [enrollment.enrolementId]);
 
     const initialValues = {
@@ -131,11 +143,11 @@ const EditEnrollmentInfos = ({ enrollment }: { enrollment: Omit<StudentDetails, 
                 <EnrollmentForm initialValues={initialValues} onSubmit={onSubmit} />
             </FormSubmitter.Wrapper>
             <div className="mt-6 flex justify-end gap-2 pt-4 border-t">
-                <Button size="sm" className="h-8" onClick={() => handleChangeFrame("inscription-infos")} variant="secondary">
+                <Button size="sm" className="h-8" onClick={handlerGoBack} variant="secondary">
                     Annuler
                 </Button>
                 <FormSubmitter.Trigger asChild>
-                    <ButtonLoader size="sm" className="h-8" isLoadingText="Enregistrement...">
+                    <ButtonLoader size="sm" className="h-8" isLoading={updateMutation.isPending} isLoadingText="Enregistrement...">
                         Enregistrer
                     </ButtonLoader>
                 </FormSubmitter.Trigger>
