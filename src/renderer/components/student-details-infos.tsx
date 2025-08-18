@@ -17,6 +17,7 @@ import { useUpdateUser } from "@/renderer/libs/queries/account";
 import { useGetEnrollment, useUpdateEnrollment } from "@/renderer/libs/queries/enrolement";
 import { useGetClassroomAsOption } from "@/renderer/hooks/data-as-options";
 import { Suspense } from "@/renderer/libs/queries/suspense";
+import { useOnValidateDataRefresh } from "@/renderer/providers/refrecher";
 
 export type StudentDetails = TWithClassroom<TWithUser<TEnrolement>>
 
@@ -189,10 +190,14 @@ const EditEnrollmentInfos = ({
 
 export const StudentDetailsCard = ({ schoolId, yearId, data }: StudentDetailsCardProps) => {
     const { data: enrollment, refetch } = useGetEnrollment(data.enrolementId, { initialData: data })
+    const invalidateData = useOnValidateDataRefresh()
     console.log("StudentDetailsCard", { enrollment })
+
     const onRefress = useCallback(() => {
         refetch()
+        invalidateData()
     }, [])
+
     return (
         <div className="space-y-6">
             {/* Informations Personnelles */}

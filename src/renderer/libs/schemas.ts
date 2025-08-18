@@ -32,7 +32,7 @@ export const BaseUserSchema = z.object({
   gender: z.nativeEnum(USER_GENDER, {
     errorMap: () => ({ message: "Genre d'utilisateur invalide." }),
   }),
-  birthDate: z.date().nullable().optional(),
+  birthDate: z.coerce.date().nullable().optional(),
   birthPlace: z.string().nullable().optional(),
   role: z.nativeEnum(USER_ROLE, {
     errorMap: () => ({ message: "Rôle d'utilisateur invalide." }),

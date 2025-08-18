@@ -1,4 +1,4 @@
-import React, { createContext, useContext, PropsWithChildren } from 'react';
+import React, { createContext, useContext, PropsWithChildren, useCallback } from 'react';
 
 /**
  * Interface pour la valeur du contexte de rafraîchissement des données.
@@ -21,6 +21,11 @@ export const useDataRefresh = () => {
     return context;
 };
 
+
+export const useOnValidateDataRefresh = () => {
+    const ctx = useDataRefresh()
+    return useCallback(() => { ctx.refresh() }, [ctx])
+}
 /**
  * Propriétés pour le composant DataRefresher.
  * @property onDataChange - Fonction de rappel à exécuter pour rafraîchir les données.
@@ -39,13 +44,12 @@ interface DataRefresherProps {
  */
 export const DataRefresher = ({ onDataChange, children }: PropsWithChildren<DataRefresherProps>) => {
     const refresh = React.useCallback(() => {
+        console.log("refresh => DataRefresher")
         onDataChange();
     }, [onDataChange]);
 
-    const value = { refresh };
-
     return (
-        <DataRefreshContext.Provider value={value}>
+        <DataRefreshContext.Provider value={{ refresh }}>
             {children}
         </DataRefreshContext.Provider>
     );

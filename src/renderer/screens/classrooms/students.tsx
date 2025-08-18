@@ -1,15 +1,13 @@
 import React from "react";
 import { useParams } from "react-router"
-import { DataTableMenu } from "@/renderer/components/button-menus";
 import {
     Accordion,
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
 } from "@/renderer/components/ui/accordion"
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { DataContentBody, DataContentHead, DataTable, DataTableColumnFilter, DataTableContent, DataTablePagination } from "@/renderer/components/tables";
-import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
 import { Button } from "@/renderer/components/ui/button";
 import { StudentColumns } from "@/renderer/components/tables/columns.students"
 import { Card, CardContent, CardHeader, CardTitle } from "@/renderer/components/ui/card";
@@ -20,15 +18,9 @@ import { useGetClassroom } from "@/renderer/libs/queries/classroom";
 import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store";
 import { STUDENT_STATUS, USER_GENDER } from "@/commons/constants/enum";
 import { cn } from "@/renderer/utils";
+import { DataRefresher } from "@/renderer/providers/refrecher";
 import { QuickEnrollmentDialogForm } from "./students.dialog-form";
-import { useQueryClient } from "@tanstack/react-query";
 import { StudentDetailSheet, useStudentDetailSheet } from "./students.detail-sheet";
-
-const tableMenus: DataTableMenu[] = [
-    { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
-    { key: "delete", label: "Supprimer", separator: true, icon: <Trash2 className="size-3" /> },
-];
-
 
 const InformationCard: React.FC<{ title: string, students?: TUser[], variant?: "DESTRUCTIVE" | "DEFAULT" }> = ({ title, variant = "DEFAULT", students = [] }) => {
     const totalStudents = students.length
@@ -113,56 +105,46 @@ const RoomHeader: React.FC<Pick<HeaderProps, "students"> & { classId: string, }>
 
 const StudentList: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
     const { classroomId } = useParams<{ classroomId: string }>()
-    const queryClient = useQueryClient()
-    const params = React.useMemo(() => ({ schoolId, yearId, params: { classroomId } }), [schoolId, yearId, classroomId])
     const { sheetRef, showStudentInfos } = useStudentDetailSheet()
+    const { data: students = [], refetch } = useGetEnrollments({ schoolId, yearId, params: { classroomId } })
 
-    const { data: students = [] } = useGetEnrollments(params)
-
-    const onValidateData = React.useCallback(() => {
-        queryClient.invalidateQueries({ queryKey: ["GET_ENROLEMENTS", params] })
-    }, [params])
     return (
-        <div className="mx-auto container max-w-screen-lg mt-10">
-            <RoomHeader classId={classroomId as string} students={students} />
-            <DataTable
-                data={students}
-                columns={enhanceColumnsWithMenu({
-                    onPressMenu: () => console.log(),
-                    columns: StudentColumns,
-                    menus: tableMenus,
-                })}
-                keyExtractor={(student: any) => `${student.enrolementId}`}
-            >
-                <div className="flex items-center justify-end my-5">
-                    <div className="flex items-center gap-5">
-                        <DataTableColumnFilter />
-                        <QuickEnrollmentDialogForm
-                            classId={classroomId as string}
-                            schoolId={schoolId}
-                            yearId={yearId}
-                            onValidateData={onValidateData}
-                        >
+        <DataRefresher onDataChange={refetch}>
+            <div className="mx-auto container max-w-screen-lg mt-10">
+                <RoomHeader classId={classroomId as string} students={students} />
+                <DataTable
+                    data={students}
+                    columns={StudentColumns}
+                    keyExtractor={(student: any) => `${student.enrolementId}`}
+                >
+                    <div className="flex items-center justify-end my-5">
+                        <div className="flex items-center gap-5">
+                            <DataTableColumnFilter />
+                            <QuickEnrollmentDialogForm
+                                classId={classroomId as string}
+                                schoolId={schoolId}
+                                yearId={yearId}
+                            >
 
-                            <Button size="sm">
-                                <Plus className="size-4" />
-                                <span>Ajouter un eleves</span>
-                            </Button>
-                        </QuickEnrollmentDialogForm>
+                                <Button size="sm">
+                                    <Plus className="size-4" />
+                                    <span>Ajouter un eleves</span>
+                                </Button>
+                            </QuickEnrollmentDialogForm>
+                        </div>
                     </div>
-                </div>
 
-                <DataTableContent>
-                    <DataContentHead />
-                    <DataContentBody onClick={(row) => {
-                        showStudentInfos(row.original)
-                        console.log(row.original)
-                    }} />
-                </DataTableContent>
-                <DataTablePagination />
-            </DataTable>
-            <StudentDetailSheet ref={sheetRef} schoolId={schoolId} yearId={yearId} />
-        </div>
+                    <DataTableContent>
+                        <DataContentHead />
+                        <DataContentBody onClick={(row) => {
+                            showStudentInfos(row.original)
+                        }} />
+                    </DataTableContent>
+                    <DataTablePagination />
+                </DataTable>
+                <StudentDetailSheet ref={sheetRef} schoolId={schoolId} yearId={yearId} />
+            </div>
+        </DataRefresher>
     )
 }
 
