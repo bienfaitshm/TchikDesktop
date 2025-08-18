@@ -15,6 +15,7 @@ import { FormSubmitter } from "./form/form-submiter";
 import { ButtonLoader } from "./form/button-loader";
 import { useUpdateUser } from "../libs/queries/account";
 import { useUpdateEnrollment } from "../libs/queries/enrolement";
+import { useGetClassroomAsOption } from "../hooks/data-as-options";
 
 export type StudentDetails = TWithClassroom<TWithUser<TEnrolement>>
 
@@ -27,7 +28,7 @@ interface StudentDetailsCardProps {
 
 const TextInfo = ({ title, value }: { title: string; value: string | number }) => (
     <div className="space-y-1">
-        <p className="text-sm text-gray-500">{title}</p>
+        <p className="text-sm text-muted-foreground">{title}</p>
         <p className="font-medium">{value}</p>
     </div>
 );
@@ -117,9 +118,10 @@ const EditStudentInfos = ({ user, schoolId }: { user: StudentDetails['User']; sc
     );
 };
 
-const EditEnrollmentInfos = ({ enrollment }: { enrollment: Omit<StudentDetails, 'User'> }) => {
+const EditEnrollmentInfos = ({ enrollment, schoolId, yearId }: { enrollment: Omit<StudentDetails, 'User'>, yearId: string, schoolId: string }) => {
     const handleChangeFrame = useChangeAnimatedFrame();
-    const updateMutation = useUpdateEnrollment()
+    const updateMutation = useUpdateEnrollment();
+    const classroomsOptions = useGetClassroomAsOption({ schoolId, yearId, params: {} }, { label: "short" })
     const handlerGoBack = useCallback(() => handleChangeFrame("inscription-infos"), [])
 
     const onSubmit = useCallback((data: EnrollmentFormData) => {
@@ -140,14 +142,28 @@ const EditEnrollmentInfos = ({ enrollment }: { enrollment: Omit<StudentDetails, 
     return (
         <FormSubmitter>
             <FormSubmitter.Wrapper>
-                <EnrollmentForm initialValues={initialValues} onSubmit={onSubmit} />
+                <EnrollmentForm
+                    classrooms={classroomsOptions}
+                    initialValues={initialValues}
+                    onSubmit={onSubmit}
+                />
             </FormSubmitter.Wrapper>
             <div className="mt-6 flex justify-end gap-2 pt-4 border-t">
-                <Button size="sm" className="h-8" onClick={handlerGoBack} variant="secondary">
+                <Button
+                    size="sm"
+                    className="h-8"
+                    onClick={handlerGoBack}
+                    variant="secondary"
+                >
                     Annuler
                 </Button>
                 <FormSubmitter.Trigger asChild>
-                    <ButtonLoader size="sm" className="h-8" isLoading={updateMutation.isPending} isLoadingText="Enregistrement...">
+                    <ButtonLoader
+                        size="sm"
+                        className="h-8"
+                        isLoading={updateMutation.isPending}
+                        isLoadingText="Enregistrement..."
+                    >
                         Enregistrer
                     </ButtonLoader>
                 </FormSubmitter.Trigger>
@@ -156,7 +172,7 @@ const EditEnrollmentInfos = ({ enrollment }: { enrollment: Omit<StudentDetails, 
     );
 };
 
-export const StudentDetailsCard = ({ schoolId, data }: StudentDetailsCardProps) => {
+export const StudentDetailsCard = ({ schoolId, yearId, data }: StudentDetailsCardProps) => {
     return (
         <div className="space-y-6">
             {/* Informations Personnelles */}
@@ -200,7 +216,11 @@ export const StudentDetailsCard = ({ schoolId, data }: StudentDetailsCardProps) 
                             <StudentInscriptionInfos enrollment={data} />
                         </AnimatedFrame>
                         <AnimatedFrame name="edit-enrollment-infos">
-                            <EditEnrollmentInfos enrollment={data} />
+                            <EditEnrollmentInfos
+                                schoolId={schoolId}
+                                yearId={yearId}
+                                enrollment={data}
+                            />
                         </AnimatedFrame>
                     </AnimatedFrameSwitcherProvider>
                 </CardContent>
