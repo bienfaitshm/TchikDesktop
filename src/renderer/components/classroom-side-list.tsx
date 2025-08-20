@@ -1,7 +1,7 @@
 import type { TWithOption, TClassroom } from "@/commons/types/services";
 import { useMemo } from "react";
 import { SECTION_TRANSLATIONS } from "@/commons/constants/enum";
-import { NavLink, useLocation } from "react-router";
+import { NavLink } from "react-router";
 import { groupBy, convertGroupedObjectToArray } from "@/commons/utils";
 import { cn } from "@/renderer/utils";
 
@@ -18,7 +18,6 @@ type ClassroomSideListProps = {
 };
 
 export const ClassroomSideList = ({ classrooms = [] }: ClassroomSideListProps) => {
-    const location = useLocation();
 
     const classGrouped = useMemo<ClassroomGroup[]>(() => {
         const groupedData = groupBy(classrooms, "section");
@@ -39,12 +38,11 @@ export const ClassroomSideList = ({ classrooms = [] }: ClassroomSideListProps) =
                             <AccordionContent className="pb-0">
                                 <div className="flex flex-col space-y-1">
                                     {group.data.map((classroom) => {
-                                        const isActive = location.pathname === `/classrooms/${classroom.classId}`;
                                         return (
                                             <NavLink
                                                 key={classroom.classId}
-                                                to={`/classrooms/${classroom.classId}`}
-                                                className={cn(
+                                                to={`/classrooms/${classroom.classId}/students`}
+                                                className={({ isActive }) => cn(
                                                     buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
                                                     "justify-start text-sm font-normal py-2 px-2",
                                                     isActive ? "text-primary font-medium" : "text-muted-foreground"

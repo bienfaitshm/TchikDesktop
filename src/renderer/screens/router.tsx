@@ -21,7 +21,10 @@ import {
   NewStudyYearConfigurationPage
 } from "@/renderer/screens/config";
 
+// classroom
 import { ClassroomStudentsPage } from "@/renderer/screens/classrooms/students"
+import { ClassroomLayout } from "@/renderer/screens/classrooms/classrooms.layout"
+import { ClassroomSection } from "@/renderer/screens/classrooms/classrooms.section"
 
 
 export default function RouterProvider(): JSX.Element {
@@ -35,8 +38,12 @@ export default function RouterProvider(): JSX.Element {
           {/* schools */}
           <Route path="students" element={<StudentScreen />} />
           <Route path="options" element={<OptionScreen />} />
-          <Route path="classrooms" element={<ClassroomScreen />} />
-          <Route path="classrooms/:classroomId" element={<ClassroomStudentsPage />} />
+          {/* classrooms */}
+          <Route path="classrooms" element={<ClassroomLayout />}>
+            <Route index element={<ClassroomScreen />} />
+            <Route path=":section" element={<ClassroomSection />} />
+          </Route>
+          <Route path="classrooms/:classroomId/students" element={<ClassroomStudentsPage />} />
           <Route path="locals" element={<LocalScreen />} />
           {/* other */}
           <Route path="school-years" element={<SchoolYearScreen />} />
