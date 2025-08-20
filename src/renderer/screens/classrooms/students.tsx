@@ -22,6 +22,7 @@ import { QuickEnrollmentDialogForm } from "./students.dialog-form";
 import { StudentDetailSheet, useStudentDetailSheet } from "./students.detail-sheet";
 import { LoaderCurrentConfig } from "../base/current-config";
 import { ButtonDataExport } from "@/renderer/components/sheets/export-button";
+import { ButtonSheetStudentStat } from "./students.stat";
 
 const InformationCard: React.FC<{ title: string, students?: TUser[], variant?: "DESTRUCTIVE" | "DEFAULT" }> = ({ title, variant = "DEFAULT", students = [] }) => {
     const totalStudents = students.length
@@ -126,6 +127,7 @@ const StudentList: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
                         <div className="flex items-center gap-5">
                             <DataTableColumnFilter />
                             <ButtonDataExport />
+                            <ButtonSheetStudentStat students={students} />
                             <QuickEnrollmentDialogForm
                                 classId={classroomId as string}
                                 schoolId={schoolId}
