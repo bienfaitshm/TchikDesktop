@@ -26,6 +26,9 @@ import { ClassroomStudentsPage } from "@/renderer/screens/classrooms/students"
 import { ClassroomLayout } from "@/renderer/screens/classrooms/classrooms.layout"
 import { ClassroomSection } from "@/renderer/screens/classrooms/classrooms.section"
 
+// classroom/:classId
+import { StudentsLayout } from "@/renderer/screens/classrooms/students.layout"
+
 
 export default function RouterProvider(): JSX.Element {
   return (
@@ -43,7 +46,9 @@ export default function RouterProvider(): JSX.Element {
             <Route index element={<ClassroomScreen />} />
             <Route path=":section" element={<ClassroomSection />} />
           </Route>
-          <Route path="classrooms/:classroomId/students" element={<ClassroomStudentsPage />} />
+          <Route path="classrooms/:classroomId" element={<StudentsLayout />}>
+            <Route path="students" element={<ClassroomStudentsPage />} />
+          </Route>
           <Route path="locals" element={<LocalScreen />} />
           {/* other */}
           <Route path="school-years" element={<SchoolYearScreen />} />

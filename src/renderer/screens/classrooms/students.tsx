@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/renderer/components/
 import { TypographyH2, TypographySmall } from "@/renderer/components/ui/typography";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
 import { TEnrolement, TUser, TWithUser, WithSchoolAndYearId } from "@/commons/types/services";
-import { useGetClassroom, useGetClassrooms } from "@/renderer/libs/queries/classroom";
+import { useGetClassroom } from "@/renderer/libs/queries/classroom";
 import { STUDENT_STATUS, USER_GENDER } from "@/commons/constants/enum";
 import { cn } from "@/renderer/utils";
 import { DataRefresher } from "@/renderer/providers/refrecher";
@@ -22,8 +22,6 @@ import { QuickEnrollmentDialogForm } from "./students.dialog-form";
 import { StudentDetailSheet, useStudentDetailSheet } from "./students.detail-sheet";
 import { LoaderCurrentConfig } from "../base/current-config";
 import { ButtonDataExport } from "@/renderer/components/sheets/export-button";
-import { ClassroomSideList } from "@/renderer/components/classroom-side-list";
-import { Suspense } from "@/renderer/libs/queries/suspense";
 
 const InformationCard: React.FC<{ title: string, students?: TUser[], variant?: "DESTRUCTIVE" | "DEFAULT" }> = ({ title, variant = "DEFAULT", students = [] }) => {
     const totalStudents = students.length
@@ -108,10 +106,6 @@ const RoomHeader: React.FC<Pick<HeaderProps, "students"> & { classId: string, }>
 
 
 
-const ClassroomSideNav: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
-    const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId, params: {} })
-    return <ClassroomSideList classrooms={classrooms} />
-}
 
 const StudentList: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
     const { classroomId } = useParams<{ classroomId: string }>()
@@ -145,23 +139,13 @@ const StudentList: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
                             </QuickEnrollmentDialogForm>
                         </div>
                     </div>
-                    <div className="relative grid grid-cols-4 gap-5 mx-4 items-start">
-                        <div className="col-span-1 fixe top-10 z-0">
-                            <Suspense>
-                                <ClassroomSideNav schoolId={schoolId} yearId={yearId} />
-                            </Suspense>
-                        </div>
-                        <div className="col-span-3">
-                            <DataTableContent>
-                                <DataContentHead />
-                                <DataContentBody onClick={(row) => {
-                                    showStudentInfos(row.original)
-                                }} />
-                            </DataTableContent>
-                            <DataTablePagination />
-                        </div>
-                    </div>
-
+                    <DataTableContent>
+                        <DataContentHead />
+                        <DataContentBody onClick={(row) => {
+                            showStudentInfos(row.original)
+                        }} />
+                    </DataTableContent>
+                    <DataTablePagination />
                 </DataTable>
                 <StudentDetailSheet ref={sheetRef} schoolId={schoolId} yearId={yearId} />
             </div>
