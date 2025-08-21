@@ -5,7 +5,7 @@ import { GetClassroomParams } from "@/commons/types/services";
 type ClassroomOptions = {
   label?: "short" | "long" | "both";
 };
-export function useGetClassroomAsOption(
+export function useGetClassroomAsOptions(
   params: GetClassroomParams,
   options: ClassroomOptions = { label: "both" }
 ) {

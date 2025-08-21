@@ -16,24 +16,12 @@ import {
 import { useCreateQuickEnrolement } from "@/renderer/libs/queries/enrolement";
 import { FormSubmitter } from "@/renderer/components/form/form-submiter";
 import React from "react";
-import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
-import { WithSchoolAndYearId } from "@/commons/types/services";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import { Button } from "@/renderer/components/ui/button";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { useOnValidateDataRefresh } from "@/renderer/providers/refrecher";
+import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
 
-export function useGetClassroomsAsOptions({ schoolId, yearId }: WithSchoolAndYearId) {
-    const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId });
-    return React.useMemo(
-        () =>
-            classrooms.map((classroom) => ({
-                value: classroom.classId,
-                label: `${classroom.identifier} (${classroom.shortIdentifier})`,
-            })),
-        [classrooms]
-    );
-}
 
 interface QuickEnrollmentDialogFormProps {
     classId: string;
@@ -45,7 +33,7 @@ export const QuickEnrollmentDialogForm: React.FC<
     React.PropsWithChildren<QuickEnrollmentDialogFormProps>
 > = ({ classId, schoolId, yearId, children }) => {
     const form = useFormHandleRef<QuickEnrollmentFormData>();
-    const classrooms = useGetClassroomsAsOptions({ schoolId, yearId });
+    const classrooms = useGetClassroomAsOptions({ schoolId, yearId }, { label: "long" })
     const onValidateData = useOnValidateDataRefresh()
 
     const quickEnrollmentMutation = useCreateQuickEnrolement();

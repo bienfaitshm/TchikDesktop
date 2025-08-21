@@ -53,6 +53,7 @@ import {
 import { Button } from "@/renderer/components/ui/button";
 import { useDataTable } from "./hooks";
 import { DraggableRow } from "./data-table.components";
+import { cn } from "@/renderer/utils";
 
 type ContextTable<T> = {
     dndId: string;
@@ -293,3 +294,34 @@ export function DataTableColumnFilter() {
         </DropdownMenu>
     );
 }
+
+
+interface DataTableToolbarProps extends React.HTMLAttributes<HTMLDivElement> {
+    children?: React.ReactNode;
+}
+/**
+ * `DataTableToolbar` est un composant de barre d'outils pour les tableaux de données.
+ * Il fournit un conteneur stylisé pour les filtres, les actions et d'autres contrôles
+ * associés à un `DataTable`.
+ *
+ * @param {DataTableToolbarProps} props Les propriétés du composant.
+ * @param {React.ReactNode} props.children Le contenu à rendre à l'intérieur de la barre d'outils.
+ * @param {string} [props.className] Des classes CSS supplémentaires à appliquer au conteneur.
+ */
+export const DataTableToolbar = ({
+    children,
+    className,
+    ...props
+}: DataTableToolbarProps) => {
+    return (
+        <div
+            className={cn(
+                "flex items-center justify-between py-4",
+                className // Applique les classes supplémentaires passées via les props
+            )}
+            {...props} // Passe toutes les autres props HTML au div racine
+        >
+            {children}
+        </div>
+    );
+};

@@ -6,7 +6,7 @@ import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store"
 import { ButtonLoader } from "@/renderer/components/form/button-loader"
 import { useCreateQuickEnrolement } from "@/renderer/libs/queries/enrolement"
 import { createMutationCallbacksWithNotifications } from "../utils/mutation-toast"
-import { useGetClassroomAsOption } from "../hooks/data-as-options"
+import { useGetClassroomAsOptions } from "../hooks/data-as-options"
 
 type InscriptionFormLoaderProps = {
     schoolId: string;
@@ -15,7 +15,7 @@ type InscriptionFormLoaderProps = {
 const InscriptionFormLoader: React.FC<InscriptionFormLoaderProps> = ({ schoolId, yearId }) => {
     const form = useFormHandleRef<QuickEnrollmentFormData>()
     const quickEnrolementMutation = useCreateQuickEnrolement()
-    const classroomsOptions = useGetClassroomAsOption({ schoolId, yearId, params: {} })
+    const classroomsOptions = useGetClassroomAsOptions({ schoolId, yearId, params: {} })
 
     const onSubmit = React.useCallback((value: QuickEnrollmentFormData) => {
         quickEnrolementMutation.mutate(value, createMutationCallbacksWithNotifications({

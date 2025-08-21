@@ -1,13 +1,10 @@
 import {
     Home,
-    Users,
-    // SquarePen,
     LayoutDashboard,
     GraduationCap,
     School,
     Clipboard,
     CalendarDays,
-    // Settings,
     List,
     type LucideIcon,
 } from "lucide-react";
@@ -27,6 +24,7 @@ import {
 } from "@/renderer/components/ui/sidebar";
 import { SidebarHead } from "./app-sidebar.head";
 import { SidebarFoot } from "./app-sidebar.foot";
+import { Suspense } from "../libs/queries/suspense";
 
 /**
  * @interface UserProfile
@@ -97,16 +95,7 @@ export const APP_SIDEBAR_NAVIGATION_DATA: SidebarData = {
         },
     ],
     school: [
-        {
-            name: "Élèves",
-            url: "/students",
-            icon: Users, // Un groupe d'utilisateurs représente mieux les élèves
-        },
-        {
-            name: "Options",
-            url: "/options",
-            icon: GraduationCap, // Une toque de diplômé est une bonne icône pour les options scolaires
-        },
+
         {
             name: "Classes",
             url: "/classrooms",
@@ -116,6 +105,11 @@ export const APP_SIDEBAR_NAVIGATION_DATA: SidebarData = {
             name: "Locaux",
             url: "/locals",
             icon: List, // Une liste pour représenter les locaux
+        },
+        {
+            name: "Options",
+            url: "/options",
+            icon: GraduationCap, // Une toque de diplômé est une bonne icône pour les options scolaires
         },
     ],
     others: [
@@ -218,9 +212,10 @@ export function ApplicationSidebar() {
                 </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>
-                <SidebarFoot user={APP_SIDEBAR_NAVIGATION_DATA.user} />
+                <Suspense>
+                    <SidebarFoot />
+                </Suspense>
             </SidebarFooter>
-
         </Sidebar>
     );
 }

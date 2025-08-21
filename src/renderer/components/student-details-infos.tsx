@@ -15,7 +15,7 @@ import { FormSubmitter } from "./form/form-submiter";
 import { ButtonLoader } from "./form/button-loader";
 import { useUpdateUser } from "@/renderer/libs/queries/account";
 import { useGetEnrollment, useUpdateEnrollment } from "@/renderer/libs/queries/enrolement";
-import { useGetClassroomAsOption } from "@/renderer/hooks/data-as-options";
+import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { useOnValidateDataRefresh } from "@/renderer/providers/refrecher";
 import {
@@ -140,7 +140,7 @@ const EditEnrollmentInfos = ({
 }) => {
     const handleChangeFrame = useChangeAnimatedFrame();
     const updateMutation = useUpdateEnrollment();
-    const classroomsOptions = useGetClassroomAsOption({ schoolId, yearId, params: {} }, { label: "short" })
+    const classroomsOptions = useGetClassroomAsOptions({ schoolId, yearId, params: {} }, { label: "short" })
     const handlerGoBack = useCallback(() => handleChangeFrame("inscription-infos"), [])
 
     const onSubmit = useCallback((data: EnrollmentFormData) => {

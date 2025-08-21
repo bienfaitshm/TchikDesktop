@@ -13,7 +13,6 @@ export const ClassroomLayout = () => {
     return (
         <div className="container max-w-screen-lg space-y-8 py-8">
             <TypographyH3>Les Salles de classe</TypographyH3>
-
             <Tabs defaultValue="all" className="w-full">
                 <div className="flex justify-between items-center">
                     <TabsList className="rounded-full">

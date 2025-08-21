@@ -1,165 +1,148 @@
+"use client";
+
 import React from "react";
-import { useParams } from "react-router"
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/renderer/components/ui/accordion"
+import { useParams } from "react-router"; // Assurez-vous d'utiliser react-router-dom
 import { Plus } from "lucide-react";
-import { DataContentBody, DataContentHead, DataTable, DataTableColumnFilter, DataTableContent, DataTablePagination } from "@/renderer/components/tables";
+
+import {
+    DataTable,
+    DataTableColumnFilter,
+    DataTableContent,
+    DataContentHead,
+    DataContentBody,
+    DataTablePagination,
+    DataTableToolbar, // Supposons que votre DataTable offre un composant Toolbar ou que vous le créez.
+} from "@/renderer/components/tables";
 import { Button } from "@/renderer/components/ui/button";
-import { StudentColumns } from "@/renderer/components/tables/columns.students"
-import { Card, CardContent, CardHeader, CardTitle } from "@/renderer/components/ui/card";
-import { TypographyH2, TypographySmall } from "@/renderer/components/ui/typography";
+import { StudentColumns } from "@/renderer/components/tables/columns.students";
+import { TypographyH2 } from "@/renderer/components/ui/typography";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
-import { TEnrolement, TUser, TWithUser, WithSchoolAndYearId } from "@/commons/types/services";
+import { WithSchoolAndYearId } from "@/commons/types/services";
 import { useGetClassroom } from "@/renderer/libs/queries/classroom";
-import { STUDENT_STATUS, USER_GENDER } from "@/commons/constants/enum";
-import { cn } from "@/renderer/utils";
+
 import { DataRefresher } from "@/renderer/providers/refrecher";
 import { QuickEnrollmentDialogForm } from "./students.dialog-form";
 import { StudentDetailSheet, useStudentDetailSheet } from "./students.detail-sheet";
-import { LoaderCurrentConfig } from "../base/current-config";
 import { ButtonDataExport } from "@/renderer/components/sheets/export-button";
 import { ButtonSheetStudentStat } from "./students.stat";
+import { Suspense } from "@/renderer/libs/queries/suspense"; // Assurez-vous que ce composant gère bien le fallback de chargement
+import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
 
-const InformationCard: React.FC<{ title: string, students?: TUser[], variant?: "DESTRUCTIVE" | "DEFAULT" }> = ({ title, variant = "DEFAULT", students = [] }) => {
-    const totalStudents = students.length
-    const { femaleStudents, maleStudents } = React.useMemo(() => ({
-        maleStudents: students.filter(student => student.gender === USER_GENDER.MALE).length,
-        femaleStudents: students.filter(student => student.gender !== USER_GENDER.MALE).length
-    }), [students])
+// Composants Shadcn UI supplémentaires nécessaires (si non déjà installés)
+import { Card, CardContent, CardHeader } from "@/renderer/components/ui/card";
+import { Skeleton } from "@/renderer/components/ui/skeleton"; // Pour un meilleur état de chargement
 
-    return (
-        <Card>
-            <CardHeader className="space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-center">{title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className={cn("text-2xl font-bold text-center mb-2", variant !== "DEFAULT" && "text-destructive")}>{totalStudents}</div>
-                <div className="grid grid-cols-2 gap-5 text-muted-foreground text-sm">
-                    <div className="flex flex-col gap-2 justify-center items-center">
-                        <TypographySmall className="text-xs">Homme</TypographySmall>
-                        <TypographySmall className={cn(variant !== "DEFAULT" && "text-destructive-foreground")}>{maleStudents}</TypographySmall>
-                        <TypographySmall className={cn("block text-xs", variant !== "DEFAULT" && "text-destructive")}>Soit {totalStudents > 0 ? ((maleStudents / totalStudents) * 100).toFixed(0) : totalStudents} %</TypographySmall>
-                    </div>
-                    <div className="flex flex-col gap-2 justify-center items-center">
-                        <TypographySmall className="text-xs">Femme</TypographySmall>
-                        <TypographySmall>{femaleStudents}</TypographySmall>
-                        <TypographySmall className="block text-xs">Soit {totalStudents > 0 ? ((femaleStudents / totalStudents) * 100).toFixed(0) : totalStudents} %</TypographySmall>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+/**
+ * Composant d'en-tête de la page de la classe.
+ * Affiche le nom de la classe et gère son chargement.
+ * Utilise un Skeleton pour une meilleure expérience utilisateur pendant le chargement.
+ */
+const ClassroomHeader: React.FC<{ classId: string }> = ({ classId }) => {
+    // `useGetClassroom` devrait être enveloppé par Suspense pour gérer le chargement ou utiliser un état de chargement interne.
+    // Pour un comportement "pro", on suppose que Suspense gérera l'état de chargement en amont,
+    // ou que le hook lui-même pourrait retourner un isLoading.
+    const { data: classroom, isLoading } = useGetClassroom(classId);
 
-    )
-}
-interface HeaderProps {
-    roomName: string;
-    students?: TWithUser<TEnrolement>[]
-}
-
-const Header: React.FC<HeaderProps> = ({
-    roomName,
-    students = []
-}) => {
-
-    const totalStudents = React.useMemo(() => students.map(enrol => enrol.User), [students])
-    const actifStudents = React.useMemo(() => students.filter(st => st.status === STUDENT_STATUS.EN_COURS).map(enrol => enrol.User), [students])
-    const dropStudents = React.useMemo(() => students.filter(st => st.status !== STUDENT_STATUS.EN_COURS).map(enrol => enrol.User), [students])
-    return (
-        <header className="bg-background p-4 rounded-lg">
-            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 md:space-x-4">
-                {/* Section du titre */}
-                <div className="flex-shrink-0 w-full">
-                    <TypographyH2 className="uppercase font-bold mb-0">{roomName}</TypographyH2>
-                    <Accordion className="w-full" type="single" collapsible >
-                        <AccordionItem className="border-b-0" value="item-1">
-                            <AccordionTrigger className="text-sm text-muted-foreground mt-1 justify-start items-center gap-2">Informations détaillées sur les élèves</AccordionTrigger>
-                            <AccordionContent>
-                                <div className="grid grid-cols-3 gap-2">
-                                    <InformationCard title="Total" students={totalStudents} />
-                                    <InformationCard title="Actifs" students={actifStudents} />
-                                    <InformationCard title="Abandonnees" variant="DESTRUCTIVE" students={dropStudents} />
-                                </div>
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
-                </div>
+    if (isLoading) {
+        return (
+            <div className="space-y-2">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-4 w-96" />
             </div>
+        );
+    }
+
+    return (
+        <header className="py-4">
+            <TypographyH2 className="uppercase font-bold mb-1 tracking-tight text-3xl">
+                {classroom?.identifier || "Nom de la classe inconnu"}
+            </TypographyH2>
+            <p className="text-sm text-muted-foreground">
+                Liste des élèves inscrits dans cette classe.
+            </p>
         </header>
     );
 };
 
+/**
+ * Composant principal affichant la liste des élèves pour une classe spécifique.
+ * Il récupère les données des élèves et gère les interactions (détails, ajout, export, stats).
+ * Ce composant est enveloppé par `withCurrentConfig` pour obtenir `schoolId` et `yearId`.
+ */
+const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
+    const { classroomId } = useParams<{ classroomId: string }>();
+    // Assurez-vous que classroomId est toujours une chaîne valide ici,
+    // car il provient de useParams et est nécessaire pour les requêtes.
+    const currentClassroomId = classroomId as string;
 
-
-
-const RoomHeader: React.FC<Pick<HeaderProps, "students"> & { classId: string, }> = ({ classId, students }) => {
-    const { data: classroom } = useGetClassroom(classId)
-    return (
-        <Header
-            roomName={classroom.identifier}
-            students={students}
-        />
-    )
-}
-
-
-
-
-const StudentList: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
-    const { classroomId } = useParams<{ classroomId: string }>()
-    const { sheetRef, showStudentInfos } = useStudentDetailSheet()
-    const { data: students = [], refetch } = useGetEnrollments({ schoolId, yearId, params: { classroomId } })
+    const { sheetRef, showStudentInfos } = useStudentDetailSheet();
+    const { data: students = [], refetch } = useGetEnrollments({
+        schoolId,
+        yearId,
+        params: { classroomId: currentClassroomId },
+    });
 
     return (
-
         <DataRefresher onDataChange={refetch}>
-            <div>
-                <RoomHeader classId={classroomId as string} students={students} />
-                <DataTable
-                    data={students}
-                    columns={StudentColumns}
-                    keyExtractor={(student: any) => `${student.enrolementId}`}
-                >
-                    <div className="flex items-center justify-end my-5">
-                        <div className="flex items-center gap-5">
-                            <DataTableColumnFilter />
-                            <ButtonDataExport />
+            <Card className="p-0 overflow-hidden border-none bg-background text-card-foreground shadow-none">
+                <CardHeader className="py-4 px-6 border-b">
+                    <Suspense fallback={<ClassroomHeader classId={currentClassroomId} />}>
+                        {/* L'en-tête de la classe, qui peut charger ses propres données */}
+                        <ClassroomHeader classId={currentClassroomId} />
+                    </Suspense>
+                </CardHeader>
+                <CardContent className="pt-6 pb-4 px-6">
+                    {/* Barre d'outils de la table : filtres et actions */}
+                    <DataTableToolbar>
+                        <DataTableColumnFilter />
+                        <div className="flex items-center gap-3 ml-auto">
+                            {/* Le bouton d'exportation des données */}
+                            <ButtonDataExport data={students} fileName={`eleves_${currentClassroomId}`} />
+                            {/* Le bouton pour les statistiques des élèves */}
                             <ButtonSheetStudentStat students={students} />
+                            {/* Formulaire d'inscription rapide d'un nouvel élève */}
                             <QuickEnrollmentDialogForm
-                                classId={classroomId as string}
+                                classId={currentClassroomId}
                                 schoolId={schoolId}
                                 yearId={yearId}
                             >
-
-                                <Button size="sm">
+                                <Button size="sm" className="flex items-center gap-2">
                                     <Plus className="size-4" />
-                                    <span>Ajouter un eleves</span>
+                                    <span>Nouvel élève</span>
                                 </Button>
                             </QuickEnrollmentDialogForm>
                         </div>
+                    </DataTableToolbar>
+
+                    {/* La table des données des élèves */}
+                    <div className="my-4">
+                        <DataTable
+                            data={students}
+                            columns={StudentColumns}
+                            keyExtractor={(student: any) => `${student.enrolementId}`}
+
+                        >
+                            <DataTableContent>
+                                <DataContentHead />
+                                {/* Le clic sur une ligne ouvre la feuille de détails de l'élève */}
+                                <DataContentBody
+                                    onClick={(row) => {
+                                        showStudentInfos(row.original);
+                                    }}
+                                />
+                            </DataTableContent>
+                            <DataTablePagination />
+                        </DataTable>
                     </div>
-                    <DataTableContent>
-                        <DataContentHead />
-                        <DataContentBody onClick={(row) => {
-                            showStudentInfos(row.original)
-                        }} />
-                    </DataTableContent>
-                    <DataTablePagination />
-                </DataTable>
-                <StudentDetailSheet ref={sheetRef} schoolId={schoolId} yearId={yearId} />
-            </div>
+                </CardContent>
+            </Card>
+
+            {/* La feuille de détails de l'élève, toujours présente mais cachée jusqu'à l'ouverture */}
+            <StudentDetailSheet ref={sheetRef} schoolId={schoolId} yearId={yearId} />
         </DataRefresher>
-    )
+    );
+};
 
-}
-
-export function ClassroomStudentsPage() {
-    return (
-        <div className="container max-w-screen-xl">
-            <LoaderCurrentConfig screen={StudentList} />
-        </div>
-    )
-}
+// Exporte le composant StudentListContent enveloppé dans le HOC withCurrentConfig.
+// Cela assure que `schoolId` et `yearId` sont injectés ou qu'un message de configuration est affiché.
+export const StudentsOfClassrrom = withCurrentConfig(StudentListContent);
