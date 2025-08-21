@@ -1,41 +1,63 @@
-import type { ClassAttributes } from "@/commons/types/models"
+import type { TClassroom } from "@/commons/types/models"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
-import { Badge } from "@/renderer/components/ui/badge"
-import { SECTION_TRANSLATIONS } from "@/commons/constants/enum"
+import { SectionBadge } from "@/renderer/components/section-badge"
 
 
-export const ClassroomColumns: ColumnDef<ClassAttributes>[] = [
+export const ClassroomColumns: ColumnDef<TClassroom>[] = [
     {
-        accessorKey: "yearId",
-        header: "#ID",
+
+        accessorKey: "classId",
+        header: "ID",
         cell: ({ row }) => {
-            return <TypographySmall>{row.original.classId}</TypographySmall>
+
+            return (
+                <TypographySmall className="font-mono text-muted-foreground">
+                    {row.original.classId.substring(0, 8)}...
+                </TypographySmall>
+            );
         },
+        enableSorting: true,
         enableHiding: false,
+        enableColumnFilter: false,
     },
     {
-        accessorKey: "yearName",
-        header: "Nom de l'année scolaire",
+
+        accessorKey: "identifier",
+        header: "Nom complet",
         cell: ({ row }) => {
-            return <TypographySmall>{row.original.identifier}</TypographySmall>
+            return (
+                <TypographySmall className="font-medium text-foreground">
+                    {row.original.identifier}
+                </TypographySmall>
+            );
         },
-        enableHiding: false,
+        enableSorting: true,
+        enableHiding: true,
+        enableColumnFilter: true,
     },
     {
-        accessorKey: "startDate",
-        header: "Date de début",
-        cell: ({ row }) => <TypographySmall>{row.original.shortIdentifier}</TypographySmall>
-    },
-    {
-        accessorKey: "endDate",
-        header: "Date de fin",
+
+        accessorKey: "shortIdentifier",
+        header: "Nom court",
         cell: ({ row }) => (
-            <div className="w-32">
-                <Badge variant="outline" className="text-muted-foreground px-1.5">
-                    {SECTION_TRANSLATIONS[row.original.section]}
-                </Badge>
-            </div>
+            <TypographySmall className="text-muted-foreground">
+                {row.original.shortIdentifier}
+            </TypographySmall>
         ),
+        enableSorting: true,
+        enableHiding: true,
+        enableColumnFilter: true,
+    },
+    {
+
+        accessorKey: "section",
+        header: "Section",
+        cell: ({ row }) => (
+            <SectionBadge section={row.original.section} />
+        ),
+        enableSorting: true,
+        enableHiding: true,
+        enableColumnFilter: true,
     },
 ]

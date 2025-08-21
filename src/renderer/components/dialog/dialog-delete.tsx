@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     Dialog,
     DialogClose,
@@ -44,6 +44,15 @@ export const DialogConfirmDelete = <T extends object>({
     onConfirm: (item: T) => void;
     isLoading?: boolean;
 }) => {
+    useEffect(() => {
+        if (!open) {
+            document.body.style.pointerEvents = "auto";
+        }
+        return () => {
+            document.body.style.pointerEvents = "auto";
+        };
+    }, [open]);
+
     const handleConfirm = useCallback(() => {
         if (item) {
             onConfirm(item);

@@ -1,13 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
     DataTable,
     DataContentBody,
     DataContentHead,
     DataTableContent,
     DataTablePagination,
-    DataTableColumnFilter,
 } from "@/renderer/components/tables/data-table";
-import { TypographyH3 } from "@/renderer/components/ui/typography";
 import { ClassroomForm, type ClassroomFormData as FormValueType } from "@/renderer/components/form/classroom-form";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/renderer/components/ui/dialog";
 import { Button } from "@/renderer/components/ui/button";
@@ -16,16 +14,16 @@ import { ClassroomColumns } from "@/renderer/components/tables/columns.classroom
 import type { ClassAttributes } from "@/commons/types/models";
 import type { DataTableMenu } from "@/renderer/components/button-menus";
 import { Pencil, Trash2 } from "lucide-react";
-import { DialogConfirmDelete, useConfirmDeleteDialog } from "../components/dialog/dialog-delete";
+import { DialogConfirmDelete, useConfirmDeleteDialog } from "@/renderer/components/dialog/dialog-delete";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import { useQueryClient } from "@tanstack/react-query";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { FormSubmitter } from "@/renderer/components/form/form-submiter"
 import { useGetOptions } from "@/renderer/libs/queries/school";
-import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { MUTATION_ACTION } from "@/commons/constants/enum";
 import { useCreateClassroom, useDeleteClassroom, useGetClassrooms, useUpdateClassroom } from "@/renderer/libs/queries/classroom";
+import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
 
 type DialogDescription = {
     title: string;
@@ -131,6 +129,15 @@ const ClassroomFormDialog: React.FC<WithSchoolAndYearId<ClassroomFormDialogProps
         options.map((option) => ({ label: option.optionName, value: option.optionId }))
     ), [options]);
 
+    useEffect(() => {
+        if (!open) {
+            document.body.style.pointerEvents = "auto";
+        }
+        return () => {
+            document.body.style.pointerEvents = "auto";
+        };
+    }, [open]);
+
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <FormSubmitter>
@@ -173,7 +180,7 @@ type ClassroomTableProps = {
     onAction: (key: string, item: ClassAttributes) => void;
 }
 
-const ClassroomTable: React.FC<WithSchoolAndYearId<ClassroomTableProps>> = ({ schoolId, yearId, onAction, onOpenCreateDialog }) => {
+const ClassroomTable: React.FC<WithSchoolAndYearId<ClassroomTableProps>> = ({ schoolId, yearId, onAction }) => {
     const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId, params: {} })
     const columns = React.useMemo(() => enhanceColumnsWithMenu({
         onPressMenu: onAction,
@@ -186,12 +193,6 @@ const ClassroomTable: React.FC<WithSchoolAndYearId<ClassroomTableProps>> = ({ sc
             columns={columns}
             keyExtractor={(item) => `${item.classId}`}
         >
-            <div className="flex items-center justify-end my-5">
-                <div className="flex items-center gap-5">
-                    <DataTableColumnFilter />
-                    <Button size="sm" onClick={onOpenCreateDialog}>Ajouter un La classe</Button>
-                </div>
-            </div>
             <DataTableContent>
                 <DataContentHead />
                 <DataContentBody />
@@ -250,7 +251,7 @@ const FormManagementDialog = React.forwardRef<FormManagementDialogRef, Required<
         },
     }), [openCreateDialog, openEditDialog])
     return (
-        <div>
+        <div >
             <ClassroomFormDialog
                 initialValues={dialogState.initialData}
                 open={dialogState.isOpen}
@@ -291,10 +292,8 @@ const ClassroomManagement: React.FC<Required<WithSchoolAndYearId<{}>>> = ({ scho
         }
     }, [formManagementDialogRef]);
     return (
-        <div className="my-10 mx-auto h-full container max-w-screen-lg">
-            <div className="mb-6">
-                <TypographyH3>Gestion des classes Scolaires</TypographyH3>
-            </div>
+        <div className="mt-6">
+
             <ClassroomTable
                 schoolId={schoolId}
                 yearId={yearId}
@@ -312,13 +311,4 @@ const ClassroomManagement: React.FC<Required<WithSchoolAndYearId<{}>>> = ({ scho
     )
 }
 
-const ClassroomPage = () => {
-    console.log("ClassroomPage")
-    const { schoolId, yearId } = useGetCurrentYearSchool()
-    if (!schoolId && !yearId) {
-        return null;
-    }
-    return <ClassroomManagement schoolId={schoolId} yearId={yearId} />
-}
-
-export default ClassroomPage;
+export const ClassroomTables = withCurrentConfig(ClassroomManagement)

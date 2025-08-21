@@ -17,7 +17,5 @@ const Classrooms: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
 }
 
 export const ClassroomSection = withCurrentConfig(Classrooms)
-// () => {
-//     return <LoaderCurrentConfig screen={Classrooms} />
-// }
+
 

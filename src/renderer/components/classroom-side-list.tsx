@@ -1,21 +1,14 @@
 import type { TWithOption, TClassroom } from "@/commons/types/services";
-import { useMemo } from "react";
 import { SECTION_TRANSLATIONS } from "@/commons/constants/enum";
 import { NavLink } from "react-router";
-import { groupBy, convertGroupedObjectToArray } from "@/commons/utils";
 import { cn } from "@/renderer/utils";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/renderer/components/ui/accordion";
 import { buttonVariants } from "@/renderer/components/ui/button";
 import { Frown } from "lucide-react";
+import { useGetClassroomGroupedBySection } from "../hooks/other";
 
-/**
- * Interface pour un groupe de classes par section.
- */
-interface ClassroomGroup {
-    section: string;
-    data: TWithOption<Required<TClassroom>>[];
-}
+
 
 /**
  * Propriétés pour le composant ClassroomSideList.
@@ -29,10 +22,9 @@ type ClassroomSideListProps = {
  * Utilise l'Accordion de Shadcn UI pour une navigation structurée et interactive.
  */
 export const ClassroomSideList = ({ classrooms = [] }: ClassroomSideListProps) => {
-    const classGrouped = useMemo<ClassroomGroup[]>(() => {
-        const groupedData = groupBy(classrooms, "section");
-        return convertGroupedObjectToArray(groupedData);
-    }, [classrooms]);
+    const classGrouped = useGetClassroomGroupedBySection(classrooms)
+
+
 
     return (
         <div className="flex-1">

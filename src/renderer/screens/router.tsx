@@ -6,7 +6,6 @@ import Launcher from "@/renderer/screens/launcher";
 // 
 import Home from "@/renderer/screens/home";
 import OptionScreen from "@/renderer/screens/options";
-import ClassroomScreen from "@/renderer/screens/classrooms";
 import StudentScreen from "@/renderer/screens/students";
 import LocalScreen from "@/renderer/screens/locals";
 import InscriptionScreen from "@/renderer/screens/inscriptions";
@@ -22,11 +21,12 @@ import {
 } from "@/renderer/screens/config";
 
 // classroom
-import { StudentsOfClassrrom } from "@/renderer/screens/classrooms/students"
+import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms"
 import { ClassroomLayout } from "@/renderer/screens/classrooms/classrooms.layout"
 import { ClassroomSection } from "@/renderer/screens/classrooms/classrooms.section"
 
 // classroom/:classId
+import { StudentsOfClassrrom } from "@/renderer/screens/classrooms/students"
 import { StudentsLayout } from "@/renderer/screens/classrooms/students.layout"
 
 
@@ -43,7 +43,7 @@ export default function RouterProvider(): JSX.Element {
           <Route path="options" element={<OptionScreen />} />
           {/* classrooms */}
           <Route path="classrooms" element={<ClassroomLayout />}>
-            <Route index element={<ClassroomScreen />} />
+            <Route index element={<ClassroomPage />} />
             <Route path=":section" element={<ClassroomSection />} />
           </Route>
           {/* Classroom-details */}
