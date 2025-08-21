@@ -123,7 +123,7 @@ export function SidebarHead() {
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-primary text-xs" asChild>
-                            <Link to={"#"}>
+                            <Link to={"/schools"}>
                                 <PlusCircle className="mr-2 size-4" />
                                 <span>Ajouter une nouvelle année scolaire</span>
                             </Link>

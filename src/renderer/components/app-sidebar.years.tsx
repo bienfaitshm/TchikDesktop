@@ -151,7 +151,7 @@ export const SidebarMenuItemSchoolYear = () => {
                     <DropdownMenuSeparator />
 
                     <DropdownMenuItem className="text-primary text-xs" asChild>
-                        <Link to={"#"}>
+                        <Link to={"/school-years"}>
                             <PlusCircle className="mr-2 size-4" />
                             <span>Ajouter une nouvelle année scolaire</span>
                         </Link>

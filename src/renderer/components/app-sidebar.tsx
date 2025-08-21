@@ -4,7 +4,6 @@ import {
     GraduationCap,
     School,
     Clipboard,
-    CalendarDays,
     List,
     type LucideIcon,
 } from "lucide-react";
@@ -64,7 +63,7 @@ interface SidebarData {
     user: UserProfile;
     applications: NavItem[];
     school: NavItem[];
-    others: NavItem[];
+
 }
 
 /**
@@ -81,17 +80,17 @@ export const APP_SIDEBAR_NAVIGATION_DATA: SidebarData = {
         {
             name: "Accueil",
             url: "/",
-            icon: Home, // Idéal pour l'accueil
+            icon: Home,
         },
         {
             name: "Inscriptions",
             url: "/inscriptions",
-            icon: Clipboard, // Un presse-papiers ou un formulaire est pertinent pour les inscriptions
+            icon: Clipboard,
         },
         {
             name: "Mise en place",
             url: "/mise-en-places",
-            icon: LayoutDashboard, // Un tableau de bord ou une mise en page est une bonne représentation
+            icon: LayoutDashboard,
         },
     ],
     school: [
@@ -99,24 +98,17 @@ export const APP_SIDEBAR_NAVIGATION_DATA: SidebarData = {
         {
             name: "Classes",
             url: "/classrooms",
-            icon: School, // Un bâtiment ou une école est pertinent pour les classes
+            icon: School,
         },
         {
             name: "Locaux",
             url: "/locals",
-            icon: List, // Une liste pour représenter les locaux
+            icon: List,
         },
         {
             name: "Options",
             url: "/options",
-            icon: GraduationCap, // Une toque de diplômé est une bonne icône pour les options scolaires
-        },
-    ],
-    others: [
-        {
-            name: "Années scolaires",
-            url: "/school-years",
-            icon: CalendarDays, // Un calendrier ou une horloge est parfait pour les années
+            icon: GraduationCap,
         },
     ],
 };
@@ -130,7 +122,7 @@ export const APP_SIDEBAR_NAVIGATION_DATA: SidebarData = {
  * @returns {JSX.Element} The rendered application sidebar.
  *
  * @example
- * // This component would typically be used in your main application layout:
+ * 
  * ```tsx
  * import { ApplicationSidebar } from "@/path/to/this/file";
  * import { Outlet } from "react-router-dom";
@@ -140,7 +132,7 @@ export const APP_SIDEBAR_NAVIGATION_DATA: SidebarData = {
  * <div className="flex h-screen">
  * <ApplicationSidebar />
  * <main className="flex-1 overflow-auto p-4">
- * <Outlet /> // Renders the matched route component
+ * <Outlet /> 
  * </main>
  * </div>
  * );
@@ -179,25 +171,6 @@ export function ApplicationSidebar() {
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {APP_SIDEBAR_NAVIGATION_DATA.school.map((item) => (
-                                <SidebarMenuItem key={item.name}>
-                                    <SidebarMenuButton asChild>
-                                        <NavLink to={item.url}>
-                                            <item.icon />
-                                            <span>{item.name}</span>
-                                        </NavLink>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                {/* Others Section */}
-                <SidebarGroup>
-                    <SidebarGroupLabel>Autres</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
-                            {APP_SIDEBAR_NAVIGATION_DATA.others.map((item) => (
                                 <SidebarMenuItem key={item.name}>
                                     <SidebarMenuButton asChild>
                                         <NavLink to={item.url}>

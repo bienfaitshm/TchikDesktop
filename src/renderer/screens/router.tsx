@@ -4,13 +4,17 @@ import { HashRouter as Router, Route, Routes } from "react-router"
 
 import Launcher from "@/renderer/screens/launcher";
 // 
-import Home from "@/renderer/screens/home";
+import { HomePage } from "@/renderer/screens/home";
+
+// Schools
+import SchoolYearScreen from "@/renderer/screens/study-years";
+import { SchoolPage } from "@/renderer/screens/schools";
+// 
 import OptionScreen from "@/renderer/screens/options";
 import StudentScreen from "@/renderer/screens/students";
 import LocalScreen from "@/renderer/screens/locals";
 import InscriptionScreen from "@/renderer/screens/inscriptions";
 import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
-import SchoolYearScreen from "@/renderer/screens/study-years";
 import Layout from "@/renderer/screens/layout";
 import {
   ConfigurationLayoutScreen,
@@ -35,7 +39,7 @@ export default function RouterProvider(): JSX.Element {
     <Router>
       <Routes>
         <Route element={<Layout />} errorElement={<Launcher />}>
-          <Route index element={<Home />} />
+          <Route index element={<HomePage />} />
           <Route path="inscriptions" element={<InscriptionScreen />} />
           <Route path="mise-en-places" element={<MiseEnPlaceScreen />} />
           {/* schools */}
@@ -53,6 +57,7 @@ export default function RouterProvider(): JSX.Element {
           <Route path="locals" element={<LocalScreen />} />
           {/* other */}
           <Route path="school-years" element={<SchoolYearScreen />} />
+          <Route path="schools" element={<SchoolPage />} />
         </Route>
         <Route path="configuration" element={<ConfigurationLayoutScreen />}>
           <Route index element={<SchoolConfigurationScreen />} />
