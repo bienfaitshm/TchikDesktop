@@ -1,5 +1,5 @@
 import { ClassroomEnrolement, User } from "../models";
-import { TUserInsert } from "@/commons/types/models";
+import { TUserInsert, TUser, TWithEnrolements } from "@/commons/types/models";
 import type {
   QueryParams,
   WithSchoolAndYearId,
@@ -10,65 +10,164 @@ import {
 } from "@/main/db/models/utils";
 import { Sequelize } from "sequelize";
 
+/**
+ * Mot de passe par défaut attribué aux nouveaux élèves.
+ */
 const DEFAULT_STUDENT_PASSWORD = "000000";
 
+/**
+ * Récupère une liste d'utilisateurs en fonction de critères de recherche.
+ * Permet de filtrer par ID d'école, ID d'année scolaire et, optionnellement, ID de classe
+ * via l'association `ClassroomEnrolement`.
+ *
+ * @param {QueryParams<WithSchoolAndYearId, Partial<TUserInsert & { classroomId?: string }>>} queryArgs
+ * Arguments de la requête incluant `schoolId`, `yearId` et des paramètres optionnels.
+ * @returns {Promise<TWithEnrolements<TUser>[]>} Une promesse qui résout en un tableau d'instances `User`
+ * avec leurs enrôlements associés.
+ */
 export async function getUsers({
   schoolId,
   yearId,
   params,
 }: QueryParams<
   WithSchoolAndYearId,
-  Partial<TUserInsert & { classroomId: string }>
->) {
-  const whereClause = getDefinedAttributes({
+  Partial<TUserInsert & { classroomId?: string }>
+>): Promise<TWithEnrolements<TUser>[]> {
+  const userWhereClause = getDefinedAttributes({
     schoolId,
     ...params,
     classroomId: undefined,
   });
-  return User.findAll({
-    where: whereClause,
-    order: [
-      [Sequelize.fn("LOWER", Sequelize.col("last_name")), "ASC"],
-      [Sequelize.fn("LOWER", Sequelize.col("middle_name")), "ASC"][
-        (Sequelize.fn("LOWER", Sequelize.col("first_name")), "ASC")
+
+  const enrollmentWhereClause = getDefinedAttributes({
+    yearId,
+    classroomId: params?.classroomId,
+  });
+
+  try {
+    return User.findAll({
+      where: userWhereClause,
+      order: [
+        [Sequelize.fn("LOWER", Sequelize.col("last_name")), "ASC"],
+        [Sequelize.fn("LOWER", Sequelize.col("middle_name")), "ASC"],
+        [Sequelize.fn("LOWER", Sequelize.col("first_name")), "ASC"],
       ],
-    ],
-    include: [
-      User,
-      {
-        model: ClassroomEnrolement,
-        where: getDefinedAttributes({
-          yearId,
-          classroomId: params?.classroomId,
-        }),
-      },
-    ],
-  });
+      include: [
+        {
+          model: ClassroomEnrolement,
+          where: enrollmentWhereClause,
+          required: true,
+        },
+      ],
+    }) as unknown as Promise<TWithEnrolements<TUser>[]>;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des utilisateurs:", error);
+    throw new Error("Impossible de récupérer les utilisateurs.");
+  }
 }
 
-export async function getUser(userId) {
-  return User.findByPk(userId, {
-    include: [User, ClassroomEnrolement],
-  });
+/**
+ * Récupère un utilisateur unique par son ID.
+ *
+ * @param {string} userId L'ID unique de l'utilisateur.
+ * @returns {Promise<TWithEnrolements<TUser> | null>} Une promesse qui résout en l'instance `User`
+ * avec ses enrôlements, ou `null` si non trouvé.
+ */
+export async function getUser(
+  userId: string
+): Promise<TWithEnrolements<TUser> | null> {
+  if (!userId) {
+    console.error("getUser: L'ID utilisateur ne peut pas être vide.");
+    return null;
+  }
+  try {
+    return User.findByPk(userId, {
+      include: [ClassroomEnrolement],
+    }) as Promise<TWithEnrolements<TUser> | null>;
+  } catch (error) {
+    console.error(
+      `Erreur lors de la récupération de l'utilisateur ${userId}:`,
+      error
+    );
+    throw new Error(`Impossible de récupérer l'utilisateur ${userId}.`);
+  }
 }
 
-export async function createUser(data: TUserInsert) {
+/**
+ * Crée un nouvel utilisateur avec un mot de passe par défaut et un nom d'utilisateur généré.
+ *
+ * @param {TUserInsert} data Les données pour le nouvel utilisateur.
+ * @returns {Promise<User>} Une promesse qui résout en l'instance `User` nouvellement créée.
+ */
+export async function createUser(data: TUserInsert): Promise<TUser> {
   const password = DEFAULT_STUDENT_PASSWORD;
   const username = getDefaultUsername();
-  return User.create({ password, ...data, username });
+
+  try {
+    return User.create({ password, ...data, username });
+  } catch (error) {
+    console.error("Erreur lors de la création de l'utilisateur:", error);
+
+    throw error;
+  }
 }
 
-export async function updateUser(userId: string, data: Partial<TUserInsert>) {
-  const whereClause = getDefinedAttributes({ userId });
-  const user = await User.findOne({ where: whereClause });
-  if (!user) return null;
-  return user.update(data);
+/**
+ * Met à jour les données d'un utilisateur existant.
+ *
+ * @param {string} userId L'ID de l'utilisateur à mettre à jour.
+ * @param {Partial<TUserInsert>} data Les données partielles à mettre à jour.
+ * @returns {Promise<User | null>} Une promesse qui résout en l'instance `User` mise à jour,
+ * ou `null` si l'utilisateur n'a pas été trouvé.
+ */
+export async function updateUser(
+  userId: string,
+  data: Partial<TUserInsert>
+): Promise<TUser | null> {
+  if (!userId) {
+    console.error("updateUser: L'ID utilisateur ne peut pas être vide.");
+    return null;
+  }
+
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      console.warn(`updateUser: Utilisateur avec l'ID ${userId} non trouvé.`);
+      return null;
+    }
+    return user.update(data);
+  } catch (error) {
+    console.error(
+      `Erreur lors de la mise à jour de l'utilisateur ${userId}:`,
+      error
+    );
+    throw new Error(`Impossible de mettre à jour l'utilisateur ${userId}.`);
+  }
 }
 
-export async function deleteUser(userId: string) {
-  const whereClause = getDefinedAttributes({ userId });
-  const user = await User.findOne({ where: whereClause });
-  if (!user) return false;
-  await user.destroy();
-  return true;
+/**
+ * Supprime un utilisateur par son ID.
+ *
+ * @param {string} userId L'ID de l'utilisateur à supprimer.
+ * @returns {Promise<boolean>} Une promesse qui résout en `true` si l'utilisateur a été supprimé,
+ * `false` sinon (ex: utilisateur non trouvé).
+ */
+export async function deleteUser(userId: string): Promise<boolean> {
+  if (!userId) {
+    console.error("deleteUser: L'ID utilisateur ne peut pas être vide.");
+    return false;
+  }
+
+  try {
+    const deletedRowCount = await User.destroy({
+      where: { userId },
+    });
+    return deletedRowCount > 0;
+  } catch (error) {
+    console.error(
+      `Erreur lors de la suppression de l'utilisateur ${userId}:`,
+      error
+    );
+    throw new Error(`Impossible de supprimer l'utilisateur ${userId}.`);
+  }
 }

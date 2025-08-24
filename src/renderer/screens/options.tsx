@@ -6,6 +6,7 @@ import {
     DataTableContent,
     DataTablePagination,
     DataTableColumnFilter,
+    DataTableToolbar,
 } from "@/renderer/components/tables/data-table";
 import { TypographyH3, TypographySmall } from "@/renderer/components/ui/typography";
 import { OptionForm, type OptionFormData as FormValueType } from "@/renderer/components/form/option-form";
@@ -189,10 +190,6 @@ const OptionManagementPage = () => {
 
     return (
         <div className="my-10 mx-auto h-full container max-w-screen-lg">
-            <div className="mb-6">
-                <TypographyH3>Gestion des options de l'établissement</TypographyH3>
-            </div>
-
             <DataTable
                 data={schools}
                 columns={enhanceColumnsWithMenu({
@@ -202,15 +199,14 @@ const OptionManagementPage = () => {
                 })}
                 keyExtractor={(item) => item.optionId}
             >
-                <div className="flex items-center justify-end my-5">
-                    <div className="flex items-center gap-5">
-                        <DataTableColumnFilter />
-                        <Button size="sm" onClick={openCreateDialog}>
-                            <Plus className="size-4" />
-                            <span>Ajouter une option</span>
-                        </Button>
-                    </div>
-                </div>
+                <DataTableToolbar className="justify-between">
+                    <TypographyH3>Gestion des options de l'établissement</TypographyH3>
+
+                    <Button size="sm" className="rounded-full" onClick={openCreateDialog}>
+                        <Plus className="size-4" />
+                        <span>Ajouter une option</span>
+                    </Button>
+                </DataTableToolbar>
                 {deleteMutation.isPending && (
                     <div className="py-1 px-5 my-1 bg-red-400/30 rounded-md">
                         <TypographySmall>Suppression en cours....</TypographySmall>

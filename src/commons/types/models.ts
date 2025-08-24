@@ -67,6 +67,11 @@ export interface StudyYearAttributes {
   schoolId: string;
 }
 
+export type TStudyYear = Required<StudyYearAttributes>;
+export type TStudyYearInsert = Omit<StudyYearAttributes, "yearId">;
+export type TWithStudyYear<T> = T & { StudyYear: TOption };
+export type TWithStudyYears<T> = T & { StudyYear: TOption[] };
+
 export interface ClassAttributes {
   classId?: string;
   //
