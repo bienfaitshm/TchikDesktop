@@ -58,7 +58,7 @@ server.post<any, TOptionInsert, WithSchoolAndYearId<{}>>(
  * @description Met à jour une option existante.
  */
 server.put<any, Partial<TOptionInsert>, { optionId: string }>(
-  "options",
+  "options/:optionId",
   async ({ params: { optionId }, data }) => {
     try {
       const updatedOption = await services.updateOption(optionId, data);
@@ -88,7 +88,7 @@ server.put<any, Partial<TOptionInsert>, { optionId: string }>(
  * @description Supprime une option.
  */
 server.delete<any, Pick<TOption, "optionId">>(
-  "options",
+  "options/:optionId",
   async ({ params: { optionId } }) => {
     try {
       const success = await services.deleteOption(optionId);
