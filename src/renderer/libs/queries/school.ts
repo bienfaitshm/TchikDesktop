@@ -1,11 +1,9 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import type {
-  OptionAttributes,
-  SchoolAttributes,
-  StudyYearAttributes,
-  OptionAttributesInsert,
-  SchoolAttributesInsert,
-  StudyYearAttributesInsert,
+  TSchool,
+  TSchoolInsert,
+  TStudyYear,
+  TStudyYearInsert,
 } from "@/commons/types/services";
 import * as apis from "@/renderer/libs/apis/school";
 
@@ -16,7 +14,7 @@ import * as apis from "@/renderer/libs/apis/school";
  * @description Hook to fetch all schools.
  */
 export function useGetSchools() {
-  return useSuspenseQuery<SchoolAttributes[], Error>({
+  return useSuspenseQuery<TSchool[], Error>({
     queryKey: ["GET_SCHOOLS"],
     queryFn: () => apis.getSchools(),
   });
@@ -27,9 +25,9 @@ export function useGetSchools() {
  * @description Hook to fetch a single school by its ID.
  */
 export function useGetSchoolById(schoolId: string) {
-  return useSuspenseQuery<SchoolAttributes, Error>({
+  return useSuspenseQuery<TSchool, Error>({
     queryKey: ["GET_SCHOOL_BY_ID", schoolId],
-    queryFn: () => apis.getSchoolById(schoolId),
+    queryFn: () => apis.getSchool(schoolId),
   });
 }
 
@@ -38,7 +36,7 @@ export function useGetSchoolById(schoolId: string) {
  * @description Hook to create a new school.
  */
 export function useCreateSchool() {
-  return useMutation<SchoolAttributes, Error, SchoolAttributesInsert>({
+  return useMutation<TSchool, Error, TSchoolInsert>({
     mutationKey: ["CREATE_SCHOOL"],
     mutationFn: (data) => apis.createSchool(data),
   });
@@ -50,12 +48,12 @@ export function useCreateSchool() {
  */
 export function useUpdateSchool() {
   return useMutation<
-    SchoolAttributes,
+    TSchool,
     Error,
-    { data: Partial<SchoolAttributesInsert>; schoolId: string }
+    { data: Partial<TSchoolInsert>; schoolId: string }
   >({
     mutationKey: ["UPDATE_SCHOOL"],
-    mutationFn: ({ data, schoolId }) => apis.updateSchool(data, schoolId),
+    mutationFn: ({ data, schoolId }) => apis.updateSchool(schoolId, data),
   });
 }
 
@@ -70,58 +68,6 @@ export function useDeleteSchool() {
   });
 }
 
-// --- Option Hooks ---
-
-/**
- * @function useGetOptions
- * @description Hook to fetch all options for a given school.
- */
-export function useGetOptions(schoolId: string) {
-  return useSuspenseQuery<OptionAttributes[], Error>({
-    queryKey: ["GET_OPTIONS", schoolId],
-    queryFn: () => apis.getOptions(schoolId),
-  });
-}
-
-/**
- * @function useCreateOption
- * @description Hook to create a new option.
- */
-export function useCreateOption() {
-  return useMutation<OptionAttributes, Error, OptionAttributesInsert>({
-    mutationKey: ["CREATE_OPTION"],
-    mutationFn: (data) => apis.createOption(data),
-  });
-}
-
-/**
- * @function useUpdateOption
- * @description Hook to update an existing option.
- */
-export function useUpdateOption() {
-  return useMutation<
-    OptionAttributes,
-    Error,
-    { data: Partial<OptionAttributes>; schoolId: string; optionId: string }
-  >({
-    mutationKey: ["UPDATE_OPTION"],
-    mutationFn: ({ data, schoolId, optionId }) =>
-      apis.updateOption(data, schoolId, optionId),
-  });
-}
-
-/**
- * @function useDeleteOption
- * @description Hook to delete an option.
- */
-export function useDeleteOption() {
-  return useMutation<any, Error, { schoolId: string; optionId: string }>({
-    mutationKey: ["DELETE_OPTION"],
-    mutationFn: ({ schoolId, optionId }) =>
-      apis.deleteOption(schoolId, optionId),
-  });
-}
-
 // --- Study Year Hooks ---
 
 /**
@@ -129,7 +75,7 @@ export function useDeleteOption() {
  * @description Hook to fetch all study years for a given school.
  */
 export function useGetStudyYears(schoolId: string) {
-  return useSuspenseQuery<StudyYearAttributes[], Error>({
+  return useSuspenseQuery<TStudyYear[], Error>({
     queryKey: ["GET_STUDY_YEARS", schoolId],
     queryFn: () => apis.getStudyYears(schoolId),
   });
@@ -140,7 +86,7 @@ export function useGetStudyYears(schoolId: string) {
  * @description Hook to create a new study year.
  */
 export function useCreateStudyYear() {
-  return useMutation<StudyYearAttributes, Error, StudyYearAttributesInsert>({
+  return useMutation<TStudyYear, Error, TStudyYearInsert>({
     mutationKey: ["CREATE_STUDY_YEAR"],
     mutationFn: (data) => apis.createStudyYear(data),
   });
@@ -152,10 +98,10 @@ export function useCreateStudyYear() {
  */
 export function useUpdateStudyYear() {
   return useMutation<
-    StudyYearAttributes,
+    TStudyYear,
     Error,
     {
-      data: Partial<StudyYearAttributesInsert>;
+      data: Partial<TStudyYearInsert>;
       schoolId: string;
       studyYearId: string;
     }
