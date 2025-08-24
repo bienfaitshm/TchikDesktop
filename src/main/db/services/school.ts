@@ -1,10 +1,5 @@
 import { School, StudyYear } from "@/main/db/models";
-import type {
-  TSchool,
-  TSchoolInsert,
-  TStudyYear,
-  TStudyYearInsert,
-} from "@/commons/types/services";
+import type { TSchoolInsert, TStudyYearInsert } from "@/commons/types/services";
 import { getDefinedAttributes } from "@/main/db/models/utils";
 import { Sequelize } from "sequelize";
 
@@ -47,7 +42,7 @@ export async function getSchool(schoolId: string) {
     return null;
   }
   try {
-    return School.findByPk(schoolId, {}) as Promise<TSchool | null>;
+    return School.findByPk(schoolId, {});
   } catch (error) {
     console.error(
       `Erreur lors de la récupération de l'école ${schoolId}:`,
@@ -133,6 +128,8 @@ export async function deleteSchool(schoolId: string): Promise<boolean> {
   }
 }
 
+// StudyYear
+
 /**
  * Récupère une liste d'années d'études pour une école spécifique.
  *
@@ -161,7 +158,7 @@ export async function getStudyYears(
         [Sequelize.fn("LOWER", Sequelize.col("year_name")), "ASC"],
         ["startDate", "ASC"],
       ],
-    }) as Promise<TStudyYear[]>;
+    });
   } catch (error) {
     console.error(
       `Erreur lors de la récupération des années d'étude pour l'école ${schoolId}:`,
@@ -204,9 +201,7 @@ export async function getStudyYear(yearId: string) {
  * @param {TStudyYearInsert} data Les données pour la nouvelle année d'étude.
  * @returns {Promise<TStudyYear>} Une promesse qui résout en l'instance `StudyYear` nouvellement créée.
  */
-export async function createStudyYear(
-  data: TStudyYearInsert
-): Promise<TStudyYear> {
+export async function createStudyYear(data: TStudyYearInsert) {
   try {
     if (!data.schoolId) {
       throw new Error(

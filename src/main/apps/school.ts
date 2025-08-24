@@ -1,127 +1,15 @@
+import type {
+  WithSchoolId,
+  TSchoolInsert,
+  TStudyYearInsert,
+  QueryParams,
+} from "@/commons/types/services";
 import { server } from "@/commons/libs/electron-apis/server";
 import { response } from "@/commons/libs/electron-apis/utils";
 import { Status } from "@/commons/libs/electron-apis/constant";
-import {
-  ClassRoomService,
-  OptionService,
-  StudyYearService,
-  SchoolService,
-} from "@/main/db/services";
 import { mapModelToPlain, mapModelsToPlainList } from "@/main/db/models/utils";
-import type {
-  WithSchoolId,
-  WithSchoolAndYearId,
-  ClassAttributesInsert,
-  OptionAttributesInsert,
-  SchoolAttributesInsert,
-  StudyYearAttributesInsert,
-} from "@/commons/types/services";
-import { WithSchoolIdParams } from "./types";
 
-// --- Routes pour Options ---
-
-/**
- * @route GET /options
- * @description Récupère la liste de toutes les options pour une école et une année données.
- */
-server.get<any, WithSchoolId<{}>>(
-  "options",
-  async ({ params: { schoolId } }) => {
-    try {
-      const options = await OptionService.findAll(schoolId);
-      return response(mapModelsToPlainList(options));
-    } catch (error) {
-      console.error(`Erreur lors de la récupération des options: ${error}`);
-      return response(
-        {},
-        Status.INTERNAL_SERVER,
-        "Erreur interne du serveur lors de la récupération des options."
-      );
-    }
-  }
-);
-
-/**
- * @route POST /options
- * @description Crée une nouvelle option.
- */
-server.post<any, OptionAttributesInsert, WithSchoolAndYearId<{}>>(
-  "options",
-  async ({ data }) => {
-    try {
-      const newOption = await OptionService.create(data);
-      return response(mapModelToPlain(newOption));
-    } catch (error) {
-      console.error(`Erreur lors de la création de l'option: ${error}`);
-      return response(
-        {},
-        Status.INTERNAL_SERVER,
-        "Erreur interne du serveur lors de la création de l'option."
-      );
-    }
-  }
-);
-
-/**
- * @route PUT /options
- * @description Met à jour une option existante.
- */
-server.put<
-  any,
-  Partial<OptionAttributesInsert>,
-  WithSchoolIdParams<{ optionId: string }>
->("options", async ({ params: { schoolId, optionId }, data }) => {
-  try {
-    const updatedOption = await OptionService.update(schoolId, optionId, data);
-    if (updatedOption) {
-      return response(mapModelToPlain(updatedOption));
-    }
-    return response(
-      {},
-      Status.NOT_FOUND,
-      "Option non trouvée ou aucune mise à jour effectuée."
-    );
-  } catch (error) {
-    console.error(
-      `Erreur lors de la mise à jour de l'option ${optionId}: ${error}`
-    );
-    return response(
-      {},
-      Status.INTERNAL_SERVER,
-      "Erreur interne du serveur lors de la mise à jour de l'option."
-    );
-  }
-});
-
-/**
- * @route DELETE /options
- * @description Supprime une option.
- */
-server.delete<any, WithSchoolIdParams<{ optionId: string }>>(
-  "options",
-  async ({ params: { schoolId, optionId } }) => {
-    try {
-      const success = await OptionService.delete(schoolId, optionId);
-      if (success) {
-        return response({ message: "Option supprimée avec succès." });
-      }
-      return response(
-        {},
-        Status.NOT_FOUND,
-        "Option non trouvée ou impossible à supprimer."
-      );
-    } catch (error) {
-      console.error(
-        `Erreur lors de la suppression de l'option ${optionId}: ${error}`
-      );
-      return response(
-        {},
-        Status.INTERNAL_SERVER,
-        "Erreur interne du serveur lors de la suppression de l'option."
-      );
-    }
-  }
-);
+import * as services from "@/main/db/services/school";
 
 // --- Routes pour StudyYears ---
 
@@ -129,14 +17,13 @@ server.delete<any, WithSchoolIdParams<{ optionId: string }>>(
  * @route GET /study-years
  * @description Récupère la liste de toutes les années d'étude pour une école donnée.
  */
-server.get<any, WithSchoolId<{}>>(
+server.get<any, QueryParams<WithSchoolId, TStudyYearInsert>>(
   "study-years",
-  async ({ params: { schoolId } }) => {
+  async ({ params: { schoolId, params } }) => {
     try {
-      const studyYears = await mapModelsToPlainList(
-        StudyYearService.findAll(schoolId)
+      return response(
+        mapModelsToPlainList(services.getStudyYears(schoolId, params))
       );
-      return response(studyYears);
     } catch (error) {
       console.error(
         `Erreur lors de la récupération des années d'étude: ${error}`
@@ -151,70 +38,91 @@ server.get<any, WithSchoolId<{}>>(
 );
 
 /**
- * @route POST /study-years
- * @description Crée une nouvelle année d'étude.
+ * @route GET /schools/:schoolId
+ * @description Récupère une école par son ID.
  */
-server.post<any, StudyYearAttributesInsert, WithSchoolId<{}>>(
-  "study-years",
-  async ({ data }) => {
+server.get<any, { yearId: string }>(
+  "study-years/:yearId",
+  async ({ params: { yearId } }) => {
     try {
-      const newStudyYear = await mapModelToPlain(StudyYearService.create(data));
-      return response(newStudyYear);
+      const school = await services.getStudyYear(yearId);
+      if (school) {
+        return response(mapModelToPlain(school));
+      }
+      return response(
+        {},
+        Status.NOT_FOUND,
+        "Année d'étude non trouvée ou aucune mise à jour effectuée."
+      );
     } catch (error) {
-      console.error(`Erreur lors de la création de l'année d'étude: ${error}`);
+      console.error(
+        `Erreur lors de la mise à jour de l'année d'étude ${yearId}: ${error}`
+      );
       return response(
         {},
         Status.INTERNAL_SERVER,
-        "Erreur interne du serveur lors de la création de l'année d'étude."
+        "Erreur interne du serveur lors de la mise à jour de l'année d'étude."
       );
     }
   }
 );
 
 /**
- * @route PUT /study-years
- * @description Met à jour une année d'étude existante.
+ * @route POST /study-years
+ * @description Crée une nouvelle année d'étude.
  */
-server.put<
-  any,
-  Partial<StudyYearAttributesInsert>,
-  WithSchoolIdParams<{ studyYearId: string }>
->("study-years", async ({ params: { schoolId, studyYearId }, data }) => {
+server.post<any, TStudyYearInsert>("study-years", async ({ data }) => {
   try {
-    const updatedStudyYear = await StudyYearService.update(
-      schoolId,
-      studyYearId,
-      data
-    );
-    if (updatedStudyYear) {
-      return response(await mapModelToPlain(updatedStudyYear));
-    }
-    return response(
-      {},
-      Status.NOT_FOUND,
-      "Année d'étude non trouvée ou aucune mise à jour effectuée."
-    );
+    return response(mapModelToPlain(services.createStudyYear(data)));
   } catch (error) {
-    console.error(
-      `Erreur lors de la mise à jour de l'année d'étude ${studyYearId}: ${error}`
-    );
+    console.error(`Erreur lors de la création de l'année d'étude: ${error}`);
     return response(
       {},
       Status.INTERNAL_SERVER,
-      "Erreur interne du serveur lors de la mise à jour de l'année d'étude."
+      "Erreur interne du serveur lors de la création de l'année d'étude."
     );
   }
 });
 
 /**
+ * @route PUT /study-years
+ * @description Met à jour une année d'étude existante.
+ */
+server.put<any, Partial<TStudyYearInsert>, { yearId: string }>(
+  "study-years/:yearId",
+  async ({ params: { yearId }, data }) => {
+    try {
+      const updatedStudyYear = await services.updateStudyYear(yearId, data);
+      if (updatedStudyYear) {
+        return response(await mapModelToPlain(updatedStudyYear));
+      }
+      return response(
+        {},
+        Status.NOT_FOUND,
+        "Année d'étude non trouvée ou aucune mise à jour effectuée."
+      );
+    } catch (error) {
+      console.error(
+        `Erreur lors de la mise à jour de l'année d'étude ${yearId}: ${error}`
+      );
+      return response(
+        {},
+        Status.INTERNAL_SERVER,
+        "Erreur interne du serveur lors de la mise à jour de l'année d'étude."
+      );
+    }
+  }
+);
+
+/**
  * @route DELETE /study-years
  * @description Supprime une année d'étude.
  */
-server.delete<any, WithSchoolIdParams<{ studyYearId: string }>>(
-  "study-years",
-  async ({ params: { schoolId, studyYearId } }) => {
+server.delete<any, { yearId: string }>(
+  "study-years/:yearId",
+  async ({ params: { yearId } }) => {
     try {
-      const success = await StudyYearService.delete(schoolId, studyYearId);
+      const success = await services.deleteStudyYear(yearId);
       if (success) {
         return response({ message: "Année d'étude supprimée avec succès." });
       }
@@ -225,7 +133,7 @@ server.delete<any, WithSchoolIdParams<{ studyYearId: string }>>(
       );
     } catch (error) {
       console.error(
-        `Erreur lors de la suppression de l'année d'étude ${studyYearId}: ${error}`
+        `Erreur lors de la suppression de l'année d'étude ${yearId}: ${error}`
       );
       return response(
         {},
@@ -242,7 +150,7 @@ server.delete<any, WithSchoolIdParams<{ studyYearId: string }>>(
  */
 server.get("schools", async () => {
   try {
-    return response(mapModelsToPlainList(SchoolService.findAll()));
+    return response(mapModelsToPlainList(services.getSchools()));
   } catch (error) {
     console.error(`Erreur lors de la récupération des écoles: ${error}`);
     return response(
@@ -257,11 +165,11 @@ server.get("schools", async () => {
  * @route GET /schools/:schoolId
  * @description Récupère une école par son ID.
  */
-server.get<any, WithSchoolIdParams<{}>>(
+server.get<any, WithSchoolId>(
   "schools/:schoolId",
   async ({ params: { schoolId } }) => {
     try {
-      const school = await SchoolService.findById(schoolId);
+      const school = await services.getSchool(schoolId);
       if (school) {
         return response(mapModelToPlain(school));
       }
@@ -283,9 +191,9 @@ server.get<any, WithSchoolIdParams<{}>>(
  * @route POST /schools
  * @description Crée une nouvelle école.
  */
-server.post<any, SchoolAttributesInsert, {}>("schools", async ({ data }) => {
+server.post<any, TSchoolInsert>("schools", async ({ data }) => {
   try {
-    return response(mapModelToPlain(SchoolService.create(data)));
+    return response(mapModelToPlain(services.createSchool(data)));
   } catch (error) {
     console.error(`Erreur lors de la création de l'école: ${error}`);
     return response(
@@ -300,11 +208,11 @@ server.post<any, SchoolAttributesInsert, {}>("schools", async ({ data }) => {
  * @route PUT /schools
  * @description Met à jour une école existante.
  */
-server.put<any, Partial<SchoolAttributesInsert>, WithSchoolIdParams<{}>>(
-  "schools",
+server.put<any, Partial<TSchoolInsert>, WithSchoolId>(
+  "schools/:schoolId",
   async ({ params: { schoolId }, data }) => {
     try {
-      const updatedSchool = await SchoolService.update(schoolId, data);
+      const updatedSchool = await services.updateSchool(schoolId, data);
       if (updatedSchool) {
         return response(mapModelToPlain(updatedSchool));
       }
@@ -330,11 +238,11 @@ server.put<any, Partial<SchoolAttributesInsert>, WithSchoolIdParams<{}>>(
  * @route DELETE /schools
  * @description Supprime une école.
  */
-server.delete<any, WithSchoolIdParams<{}>>(
-  "schools",
+server.delete<any, WithSchoolId>(
+  "schools/:schoolId",
   async ({ params: { schoolId } }) => {
     try {
-      const success = await SchoolService.delete(schoolId);
+      const success = await services.deleteSchool(schoolId);
       if (success) {
         return response({ message: "École supprimée avec succès." });
       }
