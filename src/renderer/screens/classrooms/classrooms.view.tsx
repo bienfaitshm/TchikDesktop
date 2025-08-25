@@ -1,5 +1,5 @@
 import { SECTION, SECTION_TRANSLATIONS } from "@/commons/constants/enum";
-import { TClassroom, WithSchoolAndYearId } from "@/commons/types/services";
+import { TClassroom, TWithOption } from "@/commons/types/services";
 import {
     Card,
     CardDescription,
@@ -11,17 +11,18 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@/renderer/components/ui/accordion"
+} from "@/renderer/components/ui/accordion";
 import { useGetClassroomGroupedBySection } from "@/renderer/hooks/other";
-import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
-import { Shapes } from "lucide-react";
+import { CircleFadingPlus, Shapes } from "lucide-react";
 import { Link } from "react-router";
+import { Alert, AlertDescription, AlertTitle } from "@/renderer/components/ui/alert";
 
 
 
-const ClassroomGridView: React.FC<{ classrooms: TClassroom[] }> = ({ classrooms }) => {
+const ClassroomCardGrid: React.FC<{ classrooms: TClassroom[] }> = ({ classrooms }) => {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 goupe">
+
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             {classrooms.map((classroom) => (
                 <Link
                     to={`/classrooms/${classroom.classId}/students`}
@@ -45,38 +46,52 @@ const ClassroomGridView: React.FC<{ classrooms: TClassroom[] }> = ({ classrooms 
                 </Link>
             ))}
         </div>
-    )
-}
+    );
+};
 
-export const ClassroomSectionView: React.FC<
-    WithSchoolAndYearId<{ section?: SECTION, groupe?: boolean }>
-> = ({ schoolId, section, yearId, groupe }) => {
-    const { data: classrooms = [] } = useGetClassrooms({
-        schoolId,
-        yearId,
-        params: section ? { section } : {},
-    });
 
-    const classGrouped = useGetClassroomGroupedBySection(classrooms)
-    if (!groupe) {
-        return <ClassroomGridView classrooms={classrooms} />
+
+export const ClassroomListOrGroup: React.FC<{ isGroupedView?: boolean, classrooms: TWithOption<TClassroom>[] }> = ({ isGroupedView, classrooms }) => {
+
+    const groupedClassrooms = useGetClassroomGroupedBySection(classrooms);
+
+
+    if (classrooms.length === 0) {
+        return (
+            <div className="py-12 flex flex-col items-center justify-center text-center">
+                <CircleFadingPlus className="size-12 text-primary/70 mb-4" />
+                <Alert className="max-w-md">
+                    <AlertTitle className="text-xl font-bold">Aucune classe trouvée</AlertTitle>
+                    <AlertDescription>
+                        Il semble qu'aucune classe n'ait été enregistrée pour l'instant. Commencez par créer une nouvelle classe.
+                    </AlertDescription>
+                </Alert>
+            </div>
+        );
     }
+
+    if (!isGroupedView) {
+        return <ClassroomCardGrid classrooms={classrooms} />;
+    }
+
 
     return (
         <Accordion
             type="single"
             collapsible
             className="w-full"
-            defaultValue="item-1"
+            defaultValue={SECTION.SECONDARY}
         >
-            {classGrouped.map(item => (
+            {groupedClassrooms.map((item) => (
                 <AccordionItem key={item.section} value={item.section}>
                     <AccordionTrigger>{SECTION_TRANSLATIONS[item.section]}</AccordionTrigger>
                     <AccordionContent>
-                        <ClassroomGridView classrooms={item.data} />
+                        <ClassroomCardGrid classrooms={item.data} />
                     </AccordionContent>
                 </AccordionItem>
             ))}
         </Accordion>
-    )
-}
+    );
+};
+
+// 0975929597

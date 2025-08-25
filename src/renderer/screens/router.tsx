@@ -26,8 +26,6 @@ import {
 import { QuickEnrollement } from "@/renderer/screens/inscriptions";
 // classroom
 import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms"
-import { ClassroomLayout } from "@/renderer/screens/classrooms/classrooms.layout"
-import { ClassroomSection } from "@/renderer/screens/classrooms/classrooms.section"
 
 // classroom/:classId
 import { StudentsOfClassrrom } from "@/renderer/screens/classrooms/students"
@@ -46,10 +44,8 @@ export default function RouterProvider(): JSX.Element {
           <Route path="students" element={<StudentScreen />} />
           <Route path="options" element={<OptionPage />} />
           {/* classrooms */}
-          <Route path="classrooms" element={<ClassroomLayout />}>
-            <Route index element={<ClassroomPage />} />
-            <Route path=":section" element={<ClassroomSection />} />
-          </Route>
+          <Route path="classrooms" element={<ClassroomPage />} />
+
           {/* Classroom-details */}
           <Route path="classrooms/:classroomId" element={<StudentsLayout />}>
             <Route path="students" element={<StudentsOfClassrrom />} />
