@@ -13,41 +13,34 @@ import {
     useFormHandleRef,
     QuickEnrollmentFormData,
 } from "@/renderer/components/form/quick-enrolement-form";
-import { useCreateQuickEnrolement } from "@/renderer/libs/queries/enrolement";
 import { FormSubmitter } from "@/renderer/components/form/form-submiter";
 import React from "react";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import { Button } from "@/renderer/components/ui/button";
-import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { useOnValidateDataRefresh } from "@/renderer/providers/refrecher";
 import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
+import { useQuickEnrollement } from "@/renderer/hooks/query.actions";
+import type { WithSchoolAndYearId } from "@/commons/types/services";
 
 
 interface QuickEnrollmentDialogFormProps {
     classId: string;
-    schoolId: string;
-    yearId?: string;
 }
 
 export const QuickEnrollmentDialogForm: React.FC<
-    React.PropsWithChildren<QuickEnrollmentDialogFormProps>
+    React.PropsWithChildren<WithSchoolAndYearId<QuickEnrollmentDialogFormProps>>
 > = ({ classId, schoolId, yearId, children }) => {
     const form = useFormHandleRef<QuickEnrollmentFormData>();
-    const classrooms = useGetClassroomAsOptions({ schoolId, yearId }, { label: "long" })
+    const classrooms = useGetClassroomAsOptions({ schoolId, yearId }, { labelFormat: "short" })
     const onValidateData = useOnValidateDataRefresh()
 
-    const quickEnrollmentMutation = useCreateQuickEnrolement();
-    const onSubmit = React.useCallback((value: QuickEnrollmentFormData) => {
-        quickEnrollmentMutation.mutate(
-            value,
-            createMutationCallbacksWithNotifications({
-                onSuccess() {
-                    form.current?.reset();
-                    onValidateData?.()
-                },
-            })
-        );
-    }, []);
+    const { onSubmit, quickEnrolementMutation } = useQuickEnrollement({
+        onSuccess() {
+            form.current?.reset()
+            onValidateData?.()
+        },
+    })
+
 
     return (
         <Dialog modal={false}>
@@ -74,7 +67,7 @@ export const QuickEnrollmentDialogForm: React.FC<
                         </DialogClose>
                         <FormSubmitter.Trigger asChild>
                             <ButtonLoader
-                                isLoading={quickEnrollmentMutation.isPending}
+                                isLoading={quickEnrolementMutation.isPending}
                                 isLoadingText="Inscription en cours..."
                             >
                                 Inscrire

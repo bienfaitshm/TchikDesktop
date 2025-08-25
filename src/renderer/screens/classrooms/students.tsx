@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useParams } from "react-router"; // Assurez-vous d'utiliser react-router-dom
+import { useParams } from "react-router";
 import { Plus } from "lucide-react";
 
 import {
@@ -11,7 +11,7 @@ import {
     DataContentHead,
     DataContentBody,
     DataTablePagination,
-    DataTableToolbar, // Supposons que votre DataTable offre un composant Toolbar ou que vous le créez.
+    DataTableToolbar,
 } from "@/renderer/components/tables";
 import { Button } from "@/renderer/components/ui/button";
 import { StudentColumns } from "@/renderer/components/tables/columns.students";
@@ -25,12 +25,12 @@ import { QuickEnrollmentDialogForm } from "./students.dialog-form";
 import { StudentDetailSheet, useStudentDetailSheet } from "./students.detail-sheet";
 import { ButtonDataExport } from "@/renderer/components/sheets/export-button";
 import { ButtonSheetStudentStat } from "./students.stat";
-import { Suspense } from "@/renderer/libs/queries/suspense"; // Assurez-vous que ce composant gère bien le fallback de chargement
+import { Suspense } from "@/renderer/libs/queries/suspense";
 import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
 
 // Composants Shadcn UI supplémentaires nécessaires (si non déjà installés)
 import { Card, CardContent, CardHeader } from "@/renderer/components/ui/card";
-import { Skeleton } from "@/renderer/components/ui/skeleton"; // Pour un meilleur état de chargement
+import { Skeleton } from "@/renderer/components/ui/skeleton";
 
 /**
  * Composant d'en-tête de la page de la classe.
@@ -38,9 +38,9 @@ import { Skeleton } from "@/renderer/components/ui/skeleton"; // Pour un meilleu
  * Utilise un Skeleton pour une meilleure expérience utilisateur pendant le chargement.
  */
 const ClassroomHeader: React.FC<{ classId: string }> = ({ classId }) => {
-    // `useGetClassroom` devrait être enveloppé par Suspense pour gérer le chargement ou utiliser un état de chargement interne.
-    // Pour un comportement "pro", on suppose que Suspense gérera l'état de chargement en amont,
-    // ou que le hook lui-même pourrait retourner un isLoading.
+
+
+
     const { data: classroom, isLoading } = useGetClassroom(classId);
 
     if (isLoading) {
@@ -71,8 +71,6 @@ const ClassroomHeader: React.FC<{ classId: string }> = ({ classId }) => {
  */
 const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
     const { classroomId } = useParams<{ classroomId: string }>();
-    // Assurez-vous que classroomId est toujours une chaîne valide ici,
-    // car il provient de useParams et est nécessaire pour les requêtes.
     const currentClassroomId = classroomId as string;
 
     const { sheetRef, showStudentInfos } = useStudentDetailSheet();
@@ -97,7 +95,7 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
                         <DataTableColumnFilter />
                         <div className="flex items-center gap-3 ml-auto">
                             {/* Le bouton d'exportation des données */}
-                            <ButtonDataExport data={students} fileName={`eleves_${currentClassroomId}`} />
+                            <ButtonDataExport />
                             {/* Le bouton pour les statistiques des élèves */}
                             <ButtonSheetStudentStat students={students} />
                             {/* Formulaire d'inscription rapide d'un nouvel élève */}
