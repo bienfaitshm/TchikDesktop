@@ -33,15 +33,14 @@ export const createStudyYear = (data: TStudyYearInsert) => {
  * @description Client action to update an existing study year.
  */
 export const updateStudyYear = (
-  data: Partial<TStudyYearInsert>,
-  schoolId: string,
-  studyYearId: string
+  yearId: string,
+  data: Partial<TStudyYearInsert>
 ) => {
   return clientApis
     .put<
       TStudyYear,
       Partial<TStudyYearInsert>
-    >("study-years/:yearId", data, { params: { schoolId, studyYearId } })
+    >("study-years/:yearId", data, { params: { yearId } })
     .then((res) => res.data);
 };
 
@@ -49,10 +48,10 @@ export const updateStudyYear = (
  * @function deleteStudyYear
  * @description Client action to delete a study year.
  */
-export const deleteStudyYear = (schoolId: string, studyYearId: string) => {
+export const deleteStudyYear = (yearId: string) => {
   return clientApis
     .delete<{ message: string }>("study-years/:yearId", {
-      params: { schoolId, studyYearId },
+      params: { yearId },
     })
     .then((res) => res.data);
 };

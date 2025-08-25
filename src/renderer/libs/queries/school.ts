@@ -6,6 +6,7 @@ import type {
   TStudyYearInsert,
 } from "@/commons/types/services";
 import * as apis from "@/renderer/libs/apis/school";
+import { TQueryUpdate } from "./type";
 
 // --- School Hooks ---
 
@@ -21,10 +22,10 @@ export function useGetSchools() {
 }
 
 /**
- * @function useGetSchoolById
+ * @function useGetSchool
  * @description Hook to fetch a single school by its ID.
  */
-export function useGetSchoolById(schoolId: string) {
+export function useGetSchool(schoolId: string) {
   return useSuspenseQuery<TSchool, Error>({
     queryKey: ["GET_SCHOOL_BY_ID", schoolId],
     queryFn: () => apis.getSchool(schoolId),
@@ -47,13 +48,9 @@ export function useCreateSchool() {
  * @description Hook to update an existing school.
  */
 export function useUpdateSchool() {
-  return useMutation<
-    TSchool,
-    Error,
-    { data: Partial<TSchoolInsert>; schoolId: string }
-  >({
+  return useMutation<TSchool, Error, TQueryUpdate<TSchoolInsert>>({
     mutationKey: ["UPDATE_SCHOOL"],
-    mutationFn: ({ data, schoolId }) => apis.updateSchool(schoolId, data),
+    mutationFn: ({ data, id }) => apis.updateSchool(id, data),
   });
 }
 
@@ -97,18 +94,9 @@ export function useCreateStudyYear() {
  * @description Hook to update an existing study year.
  */
 export function useUpdateStudyYear() {
-  return useMutation<
-    TStudyYear,
-    Error,
-    {
-      data: Partial<TStudyYearInsert>;
-      schoolId: string;
-      studyYearId: string;
-    }
-  >({
+  return useMutation<TStudyYear, Error, TQueryUpdate<TStudyYearInsert>>({
     mutationKey: ["UPDATE_STUDY_YEAR"],
-    mutationFn: ({ data, schoolId, studyYearId }) =>
-      apis.updateStudyYear(data, schoolId, studyYearId),
+    mutationFn: ({ data, id }) => apis.updateStudyYear(id, data),
   });
 }
 
@@ -117,9 +105,8 @@ export function useUpdateStudyYear() {
  * @description Hook to delete a study year.
  */
 export function useDeleteStudyYear() {
-  return useMutation<any, Error, { schoolId: string; studyYearId: string }>({
+  return useMutation<any, Error, string>({
     mutationKey: ["DELETE_STUDY_YEAR"],
-    mutationFn: ({ schoolId, studyYearId }) =>
-      apis.deleteStudyYear(schoolId, studyYearId),
+    mutationFn: (id) => apis.deleteStudyYear(id),
   });
 }

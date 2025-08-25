@@ -5,6 +5,7 @@ import {
 } from "@/commons/types/services";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import * as apis from "@/renderer/libs/apis/classroom";
+import { TQueryUpdate } from "./type";
 
 export const GET_CLASSROOMS_KEY = "GET_CLASSROOMS";
 
@@ -44,13 +45,9 @@ export function useCreateClassroom() {
  * @description Hook to update an existing classroom.
  */
 export function useUpdateClassroom() {
-  return useMutation<
-    TClassroom,
-    Error,
-    { data: Partial<TClassroom>; classId: string }
-  >({
+  return useMutation<TClassroom, Error, TQueryUpdate<TClassroomInsert>>({
     mutationKey: ["UPDATE_CLASSROOM"],
-    mutationFn: ({ data, classId }) => apis.updateClassroom(classId, data),
+    mutationFn: ({ data, id }) => apis.updateClassroom(id, data),
   });
 }
 
@@ -59,8 +56,8 @@ export function useUpdateClassroom() {
  * @description Hook to delete a classroom.
  */
 export function useDeleteClassroom() {
-  return useMutation<any, Error, { classId: string }>({
+  return useMutation<any, Error, string>({
     mutationKey: ["DELETE_CLASSROOM"],
-    mutationFn: ({ classId }) => apis.deleteClassroom(classId),
+    mutationFn: (classId) => apis.deleteClassroom(classId),
   });
 }

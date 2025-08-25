@@ -7,9 +7,11 @@ import {
 } from "@/renderer/libs/apis/account";
 import {
   QueryParams,
+  TUser,
   TUserInsert,
   WithSchoolAndYearId,
 } from "@/commons/types/services";
+import { TQueryUpdate } from "./type";
 
 export function useGetUsers(
   params?: QueryParams<
@@ -24,22 +26,16 @@ export function useGetUsers(
 }
 
 export function useCreateUser() {
-  return useMutation({
+  return useMutation<TUser, Error, TUserInsert>({
     mutationKey: ["CREATE_USER"],
-    mutationFn: (data: TUserInsert) => createUser(data),
+    mutationFn: (data) => createUser(data),
   });
 }
 
 export function useUpdateUser() {
-  return useMutation({
+  return useMutation<TUser, Error, TQueryUpdate<TUserInsert>>({
     mutationKey: ["UPDATE_USER"],
-    mutationFn: ({
-      userId,
-      data,
-    }: {
-      userId: string;
-      data: Partial<TUserInsert>;
-    }) => updateUser(userId, data),
+    mutationFn: ({ id, data }) => updateUser(id, data),
   });
 }
 

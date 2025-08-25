@@ -3,9 +3,9 @@ import type {
     TOption,
     TOptionInsert,
 } from "@/commons/types/services";
+import type { TQueryUpdate } from "./type";
 import * as apis from "@/renderer/libs/apis/option";
 
-// --- Option Hooks ---
 
 /**
  * @function useGetOptions
@@ -37,11 +37,11 @@ export function useUpdateOption() {
     return useMutation<
         TOption,
         Error,
-        { data: Partial<TOption>; optionId: string }
+        TQueryUpdate<TOptionInsert>
     >({
         mutationKey: ["UPDATE_OPTION"],
-        mutationFn: ({ data, optionId }) =>
-            apis.updateOption(data, optionId),
+        mutationFn: ({ data, id }) =>
+            apis.updateOption(id, data),
     });
 }
 
@@ -50,9 +50,9 @@ export function useUpdateOption() {
  * @description Hook to delete an option.
  */
 export function useDeleteOption() {
-    return useMutation<any, Error, { optionId: string }>({
+    return useMutation<any, Error, string>({
         mutationKey: ["DELETE_OPTION"],
-        mutationFn: ({ optionId }) =>
+        mutationFn: (optionId) =>
             apis.deleteOption(optionId),
     });
 }

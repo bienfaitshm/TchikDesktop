@@ -30,8 +30,8 @@ export const createOption = (data: TOptionInsert) => {
  * @description Client action to update an existing option.
  */
 export const updateOption = (
-  data: Partial<TOptionInsert>,
-  optionId: string
+  optionId: string,
+  data: Partial<TOptionInsert>
 ) => {
   return clientApis
     .put<
