@@ -214,45 +214,49 @@ export const OptionForm = React.forwardRef<
                         )}
                     />
 
-                    {/* Option Short Name Field */}
-                    <FormField
-                        control={form.control}
-                        name="optionShortName"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Nom abrégé</FormLabel>
-                                <FormControl>
-                                    <Input {...field} />
-                                </FormControl>
-                                <FormDescription>
-                                    Saisissez le nom abrégé de l’option (ex. : ELEC, HSC, TCC).
-                                </FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <div className="grid grid-cols-2 gap-2">
 
-                    {/* Section Select Field */}
-                    <FormField
-                        control={form.control}
-                        name="section"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Section</FormLabel>
-                                <FormControl>
-                                    <SectionSelect
-                                        options={SECTION_SELECT_OPTIONS}
-                                        value={field.value}
-                                        onChangeValue={field.onChange}
-                                    />
-                                </FormControl>
-                                <FormDescription>
-                                    Précisez la section ici.
-                                </FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                        {/* Option Short Name Field */}
+                        <FormField
+                            control={form.control}
+                            name="optionShortName"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Nom abrégé</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Saisissez le nom abrégé de l’option (ex. : ELEC, HSC, TCC).
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Section Select Field */}
+                        <FormField
+                            control={form.control}
+                            name="section"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Section</FormLabel>
+                                    <FormControl>
+                                        <SectionSelect
+                                            options={SECTION_SELECT_OPTIONS}
+                                            value={field.value}
+                                            onChangeValue={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Précisez la section ici.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+
                     {children} {/* Render any additional children passed to the form */}
                 </form>
             </Form>

@@ -10,10 +10,9 @@ import { HomePage } from "@/renderer/screens/home";
 import SchoolYearScreen from "@/renderer/screens/study-years";
 import { SchoolPage } from "@/renderer/screens/schools";
 // 
-import OptionScreen from "@/renderer/screens/options";
+import { OptionPage } from "@/renderer/screens/options";
 import StudentScreen from "@/renderer/screens/students";
 import LocalScreen from "@/renderer/screens/locals";
-import InscriptionScreen from "@/renderer/screens/inscriptions";
 import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
 import Layout from "@/renderer/screens/layout";
 import {
@@ -24,6 +23,7 @@ import {
   NewStudyYearConfigurationPage
 } from "@/renderer/screens/config";
 
+import { QuickEnrollement } from "@/renderer/screens/inscriptions";
 // classroom
 import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms"
 import { ClassroomLayout } from "@/renderer/screens/classrooms/classrooms.layout"
@@ -40,11 +40,11 @@ export default function RouterProvider(): JSX.Element {
       <Routes>
         <Route element={<Layout />} errorElement={<Launcher />}>
           <Route index element={<HomePage />} />
-          <Route path="inscriptions" element={<InscriptionScreen />} />
+          <Route path="inscriptions" element={<QuickEnrollement />} />
           <Route path="mise-en-places" element={<MiseEnPlaceScreen />} />
           {/* schools */}
           <Route path="students" element={<StudentScreen />} />
-          <Route path="options" element={<OptionScreen />} />
+          <Route path="options" element={<OptionPage />} />
           {/* classrooms */}
           <Route path="classrooms" element={<ClassroomLayout />}>
             <Route index element={<ClassroomPage />} />

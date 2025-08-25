@@ -37,11 +37,13 @@ export const USER_GENDER_TRANSLATIONS: Record<USER_GENDER, string> = {
 export enum MUTATION_ACTION {
   CREATE = "CREATE",
   EDIT = "EDIT",
+  DELETE = "DELETE",
 }
 
 export const MUTATION_ACTION_TRANSLATIONS: Record<MUTATION_ACTION, string> = {
   [MUTATION_ACTION.CREATE]: "Créer",
   [MUTATION_ACTION.EDIT]: "Modifier",
+  [MUTATION_ACTION.DELETE]: "Supprimer",
 };
 
 export enum STUDENT_STATUS {

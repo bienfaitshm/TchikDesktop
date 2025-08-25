@@ -15,15 +15,15 @@ import type { ClassAttributes } from "@/commons/types/models";
 import type { DataTableMenu } from "@/renderer/components/button-menus";
 import { Pencil, Trash2 } from "lucide-react";
 import { DialogConfirmDelete, useConfirmDeleteDialog } from "@/renderer/components/dialog/dialog-delete";
-import { ButtonLoader } from "@/renderer/components/form/button-loader";
-import { useQueryClient } from "@tanstack/react-query";
-import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
+
 import { FormSubmitter } from "@/renderer/components/form/form-submiter"
-import { useGetOptions } from "@/renderer/libs/queries/school";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { MUTATION_ACTION } from "@/commons/constants/enum";
-import { useCreateClassroom, useDeleteClassroom, useGetClassrooms, useUpdateClassroom } from "@/renderer/libs/queries/classroom";
+import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
 import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
+import { useClassroomManagement } from "@/renderer/hooks/query.mangements";
+import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
+import { ButtonLoader } from "@/renderer/components/form/button-loader";
 
 type DialogDescription = {
     title: string;
@@ -60,60 +60,6 @@ const tableMenus: DataTableMenu[] = [
     { key: "delete", label: "Supprimer", separator: true, icon: <Trash2 className="size-3" /> },
 ];
 
-const useClassroomManagement = ({ schoolId }: WithSchoolAndYearId<{}>) => {
-    const queryClient = useQueryClient();
-    const createMutation = useCreateClassroom();
-    const updateMutation = useUpdateClassroom();
-    const deleteMutation = useDeleteClassroom();
-
-    // Helper function to invalidate the classroom cache, triggering a refetch.
-    const invalidateClassroomsCache = React.useCallback(() => {
-        queryClient.invalidateQueries({ queryKey: ["GET_CLASSROOMS"] });
-    }, [queryClient]);
-
-    // Handler for creating a new classroom.
-    const handleCreate = React.useCallback((values: FormValueType) => {
-        createMutation.mutate(values, createMutationCallbacksWithNotifications({
-            successMessageTitle: "La classe créé !",
-            successMessageDescription: `La classe '${values.identifier}' a été ajoutée avec succès.`,
-            errorMessageTitle: "Échec de la création de la classe.",
-            onSuccess: invalidateClassroomsCache,
-        }));
-    }, [createMutation, invalidateClassroomsCache]);
-
-    // Handler for updating an existing classroom.
-    const handleUpdate = React.useCallback((classId: string, values: Partial<FormValueType>) => {
-        updateMutation.mutate({ classId, data: values }, createMutationCallbacksWithNotifications({
-            successMessageTitle: "La classe mis à jour !",
-            successMessageDescription: `La classe '${values.identifier}' a été modifié avec succès.`,
-            errorMessageTitle: "Échec de la mise à jour de la classe.",
-            onSuccess: invalidateClassroomsCache,
-        }));
-    }, [updateMutation, schoolId, invalidateClassroomsCache]);
-
-    // Handler for deleting a classroom.
-    const handleDelete = React.useCallback((classId: string) => {
-        deleteMutation.mutate({ classId }, createMutationCallbacksWithNotifications({
-            successMessageTitle: "La classe supprimé !",
-            successMessageDescription: "La classe a été supprimé avec succès.",
-            errorMessageTitle: "Échec de la suppression de la classe.",
-            onSuccess: invalidateClassroomsCache,
-            onError(error) {
-                console.log("Error===>", error)
-            },
-        }));
-    }, [deleteMutation, schoolId, invalidateClassroomsCache]);
-
-    return {
-        createMutation,
-        updateMutation,
-        deleteMutation,
-        handleCreate,
-        handleUpdate,
-        handleDelete,
-    };
-};
-
 type ClassroomFormDialogProps = {
     open: boolean;
     info: DialogDescription;
@@ -123,11 +69,7 @@ type ClassroomFormDialogProps = {
     initialValues?: Partial<FormValueType>
 }
 const ClassroomFormDialog: React.FC<WithSchoolAndYearId<ClassroomFormDialogProps>> = ({ open, schoolId, yearId, info, initialValues, isPending, onClose, onSubmit }) => {
-    const { data: options = [] } = useGetOptions(schoolId);
-
-    const formattedOptions = React.useMemo(() => (
-        options.map((option) => ({ label: option.optionName, value: option.optionId }))
-    ), [options]);
+    const options = useGetClassroomAsOptions({ schoolId, yearId })
 
     useEffect(() => {
         if (!open) {
@@ -148,7 +90,7 @@ const ClassroomFormDialog: React.FC<WithSchoolAndYearId<ClassroomFormDialogProps
                     </DialogHeader>
                     <FormSubmitter.Wrapper>
                         <ClassroomForm
-                            options={formattedOptions}
+                            options={options}
                             initialValues={{ ...initialValues, yearId, schoolId }}
                             onSubmit={onSubmit}
                         />
@@ -216,7 +158,7 @@ const FormManagementDialog = React.forwardRef<FormManagementDialogRef, Required<
         handleCreate,
         handleUpdate,
         handleDelete,
-    } = useClassroomManagement({ schoolId, yearId });
+    } = useClassroomManagement();
 
     const [dialogState, setDialogState] = React.useState<ClassroomDialogState>({
         isOpen: false,
@@ -230,15 +172,15 @@ const FormManagementDialog = React.forwardRef<FormManagementDialogRef, Required<
     const closeDialog = React.useCallback(() => setDialogState({ isOpen: false, type: MUTATION_ACTION.CREATE }), []);
 
     const onConfirmDelete = React.useCallback((item: ClassAttributes) => {
-        handleDelete(item.classId as string);
+        handleDelete(item.classId as string, item.identifier);
         confirmDelete.onClose();
     }, [handleDelete, confirmDelete.onClose]);
 
     const onSubmitDialog = React.useCallback((values: FormValueType) => {
         if (dialogState.type === MUTATION_ACTION.CREATE) {
-            handleCreate(values);
+            handleCreate(values, values.identifier);
         } else if (dialogState.type === MUTATION_ACTION.EDIT && dialogState.initialData?.classId) {
-            handleUpdate(dialogState.initialData.classId, values);
+            handleUpdate(dialogState.initialData?.classId, values, values.identifier);
         }
         closeDialog();
     }, [dialogState, handleCreate, handleUpdate, closeDialog]);
@@ -276,6 +218,7 @@ const FormManagementDialog = React.forwardRef<FormManagementDialogRef, Required<
 FormManagementDialog.displayName = "FormManagementDialog"
 
 
+
 const ClassroomManagement: React.FC<Required<WithSchoolAndYearId<{}>>> = ({ schoolId, yearId }) => {
     const formManagementDialogRef = React.useRef<FormManagementDialogRef | null>(null)
 
@@ -293,7 +236,6 @@ const ClassroomManagement: React.FC<Required<WithSchoolAndYearId<{}>>> = ({ scho
     }, [formManagementDialogRef]);
     return (
         <div className="mt-6">
-
             <ClassroomTable
                 schoolId={schoolId}
                 yearId={yearId}

@@ -46,4 +46,4 @@ const Inscription: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
     )
 }
 
-export const InscriptionScreen = withCurrentConfig(Inscription)
+export const QuickEnrollement = withCurrentConfig(Inscription)

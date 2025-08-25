@@ -47,7 +47,7 @@ export const useSchoolManagement = createManagementHook<TSchool, TSchoolInsert>(
     useUpdateMutation: useUpdateSchool,
     useDeleteMutation: useDeleteSchool,
   }
-)();
+);
 
 /**
  * @description Hook de gestion pour l'entité StudyYear (Année d'étude).
@@ -61,7 +61,7 @@ export const useStudyYearManagement = createManagementHook<
   useCreateMutation: useCreateStudyYear,
   useUpdateMutation: useUpdateStudyYear,
   useDeleteMutation: useDeleteStudyYear,
-})();
+});
 
 /**
  * @description Hook de gestion pour l'entité Option.
