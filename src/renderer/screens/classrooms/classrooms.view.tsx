@@ -74,13 +74,14 @@ export const ClassroomListOrGroup: React.FC<{ isGroupedView?: boolean, classroom
         return <ClassroomCardGrid classrooms={classrooms} />;
     }
 
+    const defaultValue = groupedClassrooms[0]?.section || SECTION.SECONDARY
 
     return (
         <Accordion
             type="single"
             collapsible
             className="w-full"
-            defaultValue={SECTION.SECONDARY}
+            defaultValue={defaultValue}
         >
             {groupedClassrooms.map((item) => (
                 <AccordionItem key={item.section} value={item.section}>
