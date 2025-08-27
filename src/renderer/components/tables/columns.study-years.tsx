@@ -1,12 +1,12 @@
 import type { StudyYearAttributes } from "@/commons/types/models";
 import type { ColumnDef } from "@tanstack/react-table";
 import { TypographySmall } from "@/renderer/components/ui/typography";
-import { format } from "date-fns";
 import React from "react";
 import { Badge } from "@/renderer/components/ui/badge";
 import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
 import { Checkbox } from "@/renderer/components/ui/checkbox";
 import { CheckCircle, MinusCircle } from "lucide-react";
+import { formatDate } from "@/commons/libs/times";
 
 
 /**
@@ -79,14 +79,14 @@ export const StudyYearColumns: ColumnDef<StudyYearAttributes>[] = [
         accessorKey: "startDate",
         header: "Date de début",
         cell: ({ row }) => (
-            <TypographySmall>{format(new Date(row.original.startDate), "PPP")}</TypographySmall>
+            <TypographySmall>{formatDate(row.original.startDate)}</TypographySmall>
         ),
     },
     {
         accessorKey: "endDate",
         header: "Date de fin",
         cell: ({ row }) => (
-            <TypographySmall>{format(new Date(row.original.endDate), "PPP")}</TypographySmall>
+            <TypographySmall>{formatDate(row.original.endDate)}</TypographySmall>
         ),
     },
     {

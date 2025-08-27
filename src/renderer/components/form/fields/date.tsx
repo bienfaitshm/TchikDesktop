@@ -76,6 +76,7 @@ export const DateInput = forwardRef<HTMLButtonElement, DateInputProps>(
                         locale={fr}
                         className="rounded-md border shadow-sm"
                         captionLayout="dropdown"
+                        endMonth={new Date(2080, 12)}
                     />
                 </PopoverContent>
             </Popover>

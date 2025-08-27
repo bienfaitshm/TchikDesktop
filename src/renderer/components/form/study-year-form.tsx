@@ -12,7 +12,7 @@ import {
 } from "@/renderer/components/ui/form";
 import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { Input } from "@/renderer/components/ui/input";
-import { DatePickerInput } from "@/renderer/components/date-input";
+import { DateInput } from "@/renderer/components/form/fields/date";
 
 export * from "./utils"
 
@@ -151,7 +151,7 @@ export const StudyYearForm = React.forwardRef<
                                 <FormItem className="flex flex-col">
                                     <FormLabel>Date de début</FormLabel>
                                     <FormControl>
-                                        <DatePickerInput
+                                        <DateInput
                                             value={field.value}
                                             onChange={field.onChange}
                                             placeholder="Sélectionner la date de début"
@@ -175,7 +175,7 @@ export const StudyYearForm = React.forwardRef<
                                 <FormItem className="flex flex-col">
                                     <FormLabel>Date de fin</FormLabel>
                                     <FormControl>
-                                        <DatePickerInput
+                                        <DateInput
                                             value={field.value}
                                             onChange={field.onChange}
                                             placeholder="Sélectionner la date de fin"

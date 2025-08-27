@@ -161,6 +161,7 @@ function FormActionDialog({
     const dialogInfos = getDialogTextInfos(itemName, type);
     return (
         <Dialog
+            modal={true}
             open={isOpen}
             onOpenChange={onOpenChange}
         >
