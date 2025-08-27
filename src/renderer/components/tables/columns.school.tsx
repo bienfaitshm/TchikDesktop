@@ -1,4 +1,4 @@
-import type { SchoolAttributes } from "@/commons/types/models"
+import type { TSchool } from "@/commons/types/models"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
 import React from "react";
@@ -26,7 +26,7 @@ const SchoolStatusBadge: React.FC<{ schoolId: string }> = ({ schoolId }) => {
         </Badge>
     );
 };
-export const SchoolColumns: ColumnDef<SchoolAttributes>[] = [
+export const SchoolColumns: ColumnDef<TSchool>[] = [
     {
         id: "select",
         header: ({ table }) => (

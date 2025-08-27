@@ -8,7 +8,7 @@ import { HomePage } from "@/renderer/screens/home";
 
 // Schools
 import { StudyYearsPage } from "@/renderer/screens/study-years";
-import { SchoolPage } from "@/renderer/screens/schools";
+import { SchoolsPage } from "@/renderer/screens/schools";
 // 
 import { OptionPage } from "@/renderer/screens/options";
 import StudentScreen from "@/renderer/screens/students";
@@ -53,7 +53,7 @@ export default function RouterProvider(): JSX.Element {
           <Route path="locals" element={<LocalScreen />} />
           {/* other */}
           <Route path="school-years" element={<StudyYearsPage />} />
-          <Route path="schools" element={<SchoolPage />} />
+          <Route path="schools" element={<SchoolsPage />} />
         </Route>
         <Route path="configuration" element={<ConfigurationLayoutScreen />}>
           <Route index element={<SchoolConfigurationScreen />} />
