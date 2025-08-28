@@ -1,4 +1,8 @@
-import { USER_GENDER, STUDENT_STATUS } from "@/commons/constants/enum";
+import {
+  USER_GENDER,
+  STUDENT_STATUS,
+  STUDENT_STATUS_TRANSLATIONS,
+} from "@/commons/constants/enum";
 import { formatDate } from "@/commons/libs/times";
 import type { EnrollmentData } from "@/main/db/services/document";
 
@@ -60,16 +64,16 @@ export function enrollmentToExcelData(enrollments: ClassroomEnrollment[]) {
       excelData.push({
         "Code de classe": classroom.className,
         "Nom de classe court": classroom.shortClassName,
-        "Nom complet": student.fullName,
+        "Nom, postnom et Prénom": student.fullName,
         Nom: student.lastName,
         Postnom: student.middleName,
         Prénom: student.firstName || "",
-        Genre: student.gender,
+        Sexe: student.gender,
         "Date de naissance": student.birthDate
           ? formatDate(student.birthDate)
           : "",
         "Lieu de naissance": student.birthPlace || "",
-        Statut: student.status,
+        Statut: STUDENT_STATUS_TRANSLATIONS[student.status],
         "Code d'inscription": student.enrollmentCode,
       });
     }

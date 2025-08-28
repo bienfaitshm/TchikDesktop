@@ -11,7 +11,7 @@ import {
 } from "@/renderer/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/renderer/components/ui/tabs";
 import { FileText, FileSpreadsheet } from "lucide-react";
-import { DocumentExportList, documentExports } from "@/renderer/components/documents/document";
+import { DocumentExportList, documentExports, sheetExports } from "@/renderer/components/documents";
 import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 
@@ -53,7 +53,7 @@ export const SheetDataExport: React.FC<WithSchoolAndYearId> = ({ schoolId, yearI
                         <DocumentExportList schoolId={schoolId} yearId={yearId} documents={documentExports} />
                     </TabsContent>
                     <TabsContent value="excel" className="mt-4">
-                        <DocumentExportList schoolId={schoolId} yearId={yearId} documents={documentExports} />
+                        <DocumentExportList schoolId={schoolId} yearId={yearId} documents={sheetExports} />
                     </TabsContent>
                 </Tabs>
                 <SheetFooter className="pt-5">

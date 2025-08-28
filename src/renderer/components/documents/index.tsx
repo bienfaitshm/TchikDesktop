@@ -1,9 +1,10 @@
-import { CotationDocumentExport, EnrollmentDocumentExport } from "@/renderer/components/documents/cotation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/renderer/components/ui/accordion";
 import { TypographySmall } from "@/renderer/components/ui/typography";
 import type { WithSchoolAndYearId } from "@/commons/types/services";
 import { FileText } from "lucide-react";
 import React from "react";
+import { CotationDocumentExport, EnrollmentDocumentExport } from "@/renderer/components/documents/documents";
+import { EnrollmentSheetExport } from "@/renderer/components/documents/sheets";
 
 // Types pour une meilleure lisibilité et maintenance
 type DocumentExportation = {
@@ -28,8 +29,19 @@ export const documentExports: DocumentExportation[] = [
         icon: <FileText className="size-4" />,
         title: "Liste des élèves inscrits",
         subTitle: "Exportez la liste des inscriptions de vos élèves par classe.",
-        code: "FC00e",
+        code: "FC002",
         render: EnrollmentDocumentExport,
+    },
+];
+
+
+export const sheetExports: DocumentExportation[] = [
+    {
+        icon: <FileText className="size-4" />,
+        title: "Liste des élèves inscrits",
+        subTitle: "Exportez la liste des inscriptions de vos élèves par classe.",
+        code: "FC001",
+        render: EnrollmentSheetExport,
     },
 ];
 
