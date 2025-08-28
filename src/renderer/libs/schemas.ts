@@ -182,3 +182,27 @@ export const QuickEnrollmentSchema = z
 export type QuickEnrollmentSchemaAttributes = z.infer<
   typeof QuickEnrollmentSchema
 >;
+
+export const DocumentExportSchema = z.object({
+  schoolId: z.string().nonempty(),
+  yearId: z.string().nonempty().optional(),
+  sections: z
+    .array(
+      z.nativeEnum(SECTION, {
+        errorMap: () => ({ message: "Statut invalide." }),
+      })
+    )
+    .min(1),
+  status: z
+    .array(
+      z.nativeEnum(STUDENT_STATUS, {
+        errorMap: () => ({ message: "Statut invalide." }),
+      })
+    )
+    .min(1),
+  classrooms: z.array(z.string()).min(1),
+});
+
+export type DocumentExportSchemaAttributes = z.infer<
+  typeof DocumentExportSchema
+>;
