@@ -15,7 +15,7 @@ export const WORD_FILE_OPTIONS: SaveFileOptions = {
 };
 
 export const EXCEL_FILE_OPTIONS: SaveFileOptions = {
-  defaultPath: "Excel.xlsx",
+  defaultPath: "Excel Document.xlsx",
   title: "Enregistrer le fichier Excel",
   filters: [
     { name: "Fichiers Excel", extensions: ["xlsx"] },
