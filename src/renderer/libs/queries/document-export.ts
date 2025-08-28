@@ -19,6 +19,15 @@ export function useExportCotationDocument() {
 
 // sheet
 
+export function useExportStudentEnrollementSheet() {
+  return useMutation({
+    mutationKey: ["EXPORT/SHEET/ENROLLMENT"],
+    mutationFn: (data: DocumentFilter) =>
+      apis.exportStudentsEnrollementSheet(data),
+  });
+}
+
+//TODO: to delete
 export function useExportTestSheet() {
   return useMutation({
     mutationKey: ["EXPORT/SHEET/TEST"],
