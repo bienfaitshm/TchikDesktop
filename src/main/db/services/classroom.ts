@@ -5,6 +5,7 @@ import type {
   WithSchoolAndYearId,
 } from "@/commons/types/services";
 import { getDefinedAttributes } from "../models/utils";
+import { Sequelize } from "sequelize";
 
 export async function getClassrooms({
   schoolId,
@@ -15,6 +16,10 @@ export async function getClassrooms({
   return ClassRoom.findAll({
     where: whereClause,
     include: [Option, StudyYear],
+    order: [
+      [Sequelize.fn("LOWER", Sequelize.col("identifier")), "ASC"],
+      [Sequelize.fn("LOWER", Sequelize.col("shortIdentifier")), "ASC"],
+    ],
   });
 }
 

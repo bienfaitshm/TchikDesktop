@@ -17,6 +17,12 @@ export const exportStudentsEnrollementDocument = (data: ExportData) => {
     .then((res) => res.data);
 };
 
+export const exportCotationDocument = (data: ExportData) => {
+  return clientApis
+    .post<TResponse<unknown>>("export/document/cotation-students", data)
+    .then((res) => res.data);
+};
+
 /**
  * Exporte des données de test au format feuille de calcul (.xlsx).
  * Le nom `exportSheetTest` est correct si la fonction a pour but de faire un test,

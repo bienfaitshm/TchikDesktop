@@ -1,5 +1,6 @@
 import type { TEnrolementInsert, TUserInsert } from "@/commons/types/models";
-import { TClassroomInsert } from "./models";
+import type { TClassroomInsert } from "./models";
+import type { SECTION } from "@/commons/constants/enum";
 export * from "./models";
 
 export type WithSchoolId<T = {}> = T & { schoolId: string };
@@ -18,3 +19,8 @@ export type GetClassroomParams = QueryParams<
   WithSchoolAndYearId,
   Partial<TClassroomInsert>
 >;
+
+export type DocumentFilter = WithSchoolAndYearId<{
+  sections: SECTION[] | SECTION;
+  classrooms: string[] | string;
+}>;

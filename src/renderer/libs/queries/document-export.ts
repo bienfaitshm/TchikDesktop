@@ -8,6 +8,13 @@ export function useExportStudentEnrollementDocument() {
   });
 }
 
+export function useExportCotationDocument() {
+  return useMutation({
+    mutationKey: ["EXPORT/DOCUMENT/COTATION"],
+    mutationFn: (data: any) => apis.exportCotationDocument(data),
+  });
+}
+
 // sheet
 
 export function useExportTestSheet() {

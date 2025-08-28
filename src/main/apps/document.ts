@@ -1,4 +1,5 @@
 import {
+  DocumentFilter,
   TEnrolement,
   TWithClassroom,
   TWithUser,
@@ -11,6 +12,10 @@ import { generateDocxReport, resolveTemplatePath } from "@/main/libs/docx";
 import { saveFileWithDialog, WORD_FILE_OPTIONS } from "@/main/libs/save-files";
 import { mapModelsToPlainList } from "../db/models/utils";
 import { Status } from "@/commons/libs/electron-apis/constant";
+import {
+  type EnrollmentData,
+  getEnrollmentSchoolData,
+} from "../db/services/document";
 
 // Le nom de la route est plus descriptif pour une exportation spécifique.
 const EXPORT_DOCUMENT_ROUTE = "export/document/enrollment-students";
@@ -69,5 +74,15 @@ server.post<any, WithSchoolAndYearId>(
         "Il y a eu une erreur lors de l'exportation du document."
       );
     }
+  }
+);
+
+server.post<any, DocumentFilter>(
+  "export/document/cotation-students",
+  async ({ data }) => {
+    const responseData: EnrollmentData[] = (await mapModelsToPlainList(
+      getEnrollmentSchoolData(data)
+    )) as EnrollmentData[];
+    return response(responseData);
   }
 );

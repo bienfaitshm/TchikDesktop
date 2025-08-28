@@ -12,7 +12,7 @@ import {
     SheetTrigger,
 } from "@/renderer/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/renderer/components/ui/tabs";
-import { useExportStudentEnrollementDocument, useExportTestSheet, useExportSheetDataToJson } from "@/renderer/libs/queries/document-export";
+import { useExportStudentEnrollementDocument, useExportTestSheet, useExportSheetDataToJson, useExportCotationDocument } from "@/renderer/libs/queries/document-export";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { FileText, FileSpreadsheet } from "lucide-react";
 import { ButtonLoader } from "../form/button-loader";
@@ -23,9 +23,13 @@ import { ButtonLoader } from "../form/button-loader";
  * le format d'exportation (document ou Excel).
  */
 export const ButtonDataExport = () => {
-    const mutate = useExportSheetDataToJson()
+    const mutate = useExportCotationDocument()
     const handleExport = () => {
-        mutate.mutate({}, createMutationCallbacksWithNotifications({}))
+        mutate.mutate({ schoolId: "fakeId" }, createMutationCallbacksWithNotifications({
+            onSuccess(data) {
+                console.log(data)
+            },
+        }))
     }
     return (
         <Sheet>

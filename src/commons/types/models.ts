@@ -56,7 +56,7 @@ export interface OptionAttributes {
 export type TOption = Required<OptionAttributes>;
 export type TOptionInsert = Omit<OptionAttributes, "optionId">;
 export type TWithOption<T> = T & { Option: TOption };
-export type TWithOptions<T> = T & { Option: TOption[] };
+export type TWithOptions<T> = T & { Options: TOption[] };
 
 export interface StudyYearAttributes {
   yearId: string;
@@ -70,7 +70,7 @@ export interface StudyYearAttributes {
 export type TStudyYear = Required<StudyYearAttributes>;
 export type TStudyYearInsert = Omit<StudyYearAttributes, "yearId">;
 export type TWithStudyYear<T> = T & { StudyYear: TOption };
-export type TWithStudyYears<T> = T & { StudyYear: TOption[] };
+export type TWithStudyYears<T> = T & { StudyYears: TOption[] };
 
 export interface ClassAttributes {
   classId?: string;
@@ -86,7 +86,7 @@ export interface ClassAttributes {
 export type TClassroom = Required<ClassAttributes>;
 export type TClassroomInsert = Omit<ClassAttributes, "classId">;
 export type TWithClassroom<T> = T & { ClassRoom: TClassroom };
-export type TWithClassrooms<T> = T & { ClassRoom: TClassroom[] };
+export type TWithClassrooms<T> = T & { ClassRooms: TClassroom[] };
 
 export interface ClassroomEnrolementAttributes {
   enrolementId: string;
@@ -106,7 +106,7 @@ export type TEnrolementInsert = Omit<
   "enrolementId"
 >;
 export type TWithEnrolement<T> = T & { ClassroomEnrolement: TEnrolement };
-export type TWithEnrolements<T> = T & { ClassroomEnrolement: TEnrolement[] };
+export type TWithEnrolements<T> = T & { ClassroomEnrolements: TEnrolement[] };
 
 export interface ClassroomEnrolementActionAttributes {
   actionId: string;
