@@ -15,11 +15,10 @@ import { USER_GENDER, USER_ROLE } from "@/commons/constants/enum";
 import { Input } from "@/renderer/components/ui/input";
 import { GenderInput } from "./fields/gender";
 import { Label } from "@/renderer/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/renderer/components/ui/radio-group";
 import { UseFormReturn } from "react-hook-form";
-import { cn } from "@/renderer/utils";
 import { Combobox } from "../ui/combobox";
 import { DateInput } from "@/renderer/components/form/fields/date";
+import { StudentSeniorityStatusSelect } from "./fields/student-seriority-statut";
 
 // Exporte les utilitaires du formulaire pour les composants parents
 export * from "./utils";
@@ -41,7 +40,7 @@ const DEFAULT_QUICK_ENROLLMENT_VALUES: QuickEnrollmentFormData = {
         role: USER_ROLE.STUDENT,
         birthDate: new Date(),
         gender: USER_GENDER.MALE,
-        birthPlace: "123",
+        birthPlace: "Lubumbashi",
     },
 };
 
@@ -99,7 +98,7 @@ const StudentFields: React.FC<{
                     )}
                 />
             </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <FormField
                     control={form.control}
                     name="student.gender"
@@ -130,20 +129,21 @@ const StudentFields: React.FC<{
                         </FormItem>
                     )}
                 />
+                <FormField
+                    control={form.control}
+                    name="student.birthPlace"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Lieu de naissance</FormLabel>
+                            <FormControl>
+                                <Input {...field} value={field.value ?? ""} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
             </div>
-            <FormField
-                control={form.control}
-                name="student.birthPlace"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Lieu de naissance</FormLabel>
-                        <FormControl>
-                            <Input {...field} value={field.value ?? ""} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+
         </div>
     );
 };
@@ -199,50 +199,12 @@ export const QuickEnrollmentForm = React.forwardRef<
                         <FormItem className="space-y-3">
                             <FormLabel>Statut de l'élève</FormLabel>
                             <FormControl>
-                                <RadioGroup
-                                    onValueChange={(value) => field.onChange(value === "true")}
-                                    value={field.value ? "true" : "false"}
-                                    className="flex flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0"
-                                >
-                                    <FormItem
-                                        className={cn(
-                                            "flex items-center space-x-3 rounded-lg border p-4",
-                                            field.value && "border-primary"
-                                        )}
-                                    >
-                                        <FormControl>
-                                            <RadioGroupItem value="true" />
-                                        </FormControl>
-                                        <div className="space-y-1">
-                                            <FormLabel className="font-semibold">Nouvel élève</FormLabel>
-                                            <FormDescription>
-                                                L'élève n'a jamais été inscrit dans cette école.
-                                            </FormDescription>
-                                        </div>
-                                    </FormItem>
-                                    <FormItem
-                                        className={cn(
-                                            "flex items-center space-x-3 rounded-lg border p-4",
-                                            !field.value && "border-primary"
-                                        )}
-                                    >
-                                        <FormControl>
-                                            <RadioGroupItem value="false" />
-                                        </FormControl>
-                                        <div className="space-y-1">
-                                            <FormLabel className="font-semibold">Ancien élève</FormLabel>
-                                            <FormDescription>
-                                                L'élève a déjà été inscrit dans cette école.
-                                            </FormDescription>
-                                        </div>
-                                    </FormItem>
-                                </RadioGroup>
+                                <StudentSeniorityStatusSelect value={field.value} onChangeValue={field.onChange} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-
                 <StudentFields form={form} />
                 {children}
             </form>
