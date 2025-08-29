@@ -11,6 +11,7 @@ import type {
   TWithClassroom,
 } from "@/commons/types/services";
 import * as apis from "@/renderer/libs/apis/enrolement";
+import { TQueryUpdate } from "./type";
 
 export function useGetEnrollments(params: apis.GetEnrolementParams) {
   return useSuspenseQuery<TWithUser<TEnrolement>[], Error>({
@@ -42,16 +43,8 @@ export function useCreateQuickEnrolement() {
 }
 
 export function useUpdateEnrollment() {
-  return useMutation<
-    TEnrolement,
-    Error,
-    {
-      enrolementId: string;
-      data: Partial<TEnrolementInsert>;
-    }
-  >({
+  return useMutation<TEnrolement, Error, TQueryUpdate<TEnrolementInsert>>({
     mutationKey: ["UPDATE_ENROLEMENT"],
-    mutationFn: ({ data, enrolementId }) =>
-      apis.updateEnrolement(enrolementId, data),
+    mutationFn: ({ data, id }) => apis.updateEnrolement(id, data),
   });
 }

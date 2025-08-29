@@ -66,9 +66,9 @@ export const StudentDetailSheet = React.forwardRef<
         <Sheet modal={false} open={state.open} onOpenChange={handleOpenChange}>
             <SheetContent className="sm:max-w-xl p-0">
                 <ScrollArea className="h-full">
-                    <SheetHeader className="p-6">
+                    <SheetHeader className="p-6 space-y-1">
                         <SheetTitle>Informations de l'élève</SheetTitle>
-                        <SheetDescription>
+                        <SheetDescription className="text-xs">
                             Détails complets concernant l'élève.
                         </SheetDescription>
                     </SheetHeader>
