@@ -69,11 +69,11 @@ export const DocumentTypeSelect: React.FC<DocumentTypeSelectProps> = ({ onChange
                     variant="outline"
                     role="combobox"
                     aria-expanded={isOpen}
-                    className="w-[300px] justify-between h-auto py-2 px-4 text-left"
+                    className="w-full justify-between h-auto py-2 px-4 text-left"
                 >
                     <div className="flex flex-col items-start space-y-1">
-                        <span className="font-semibold text-base">{selectedDocument.title}</span>
-                        <span className="text-sm text-muted-foreground">{selectedDocument.subTitle}</span>
+                        <span className="font-semibold text-xs">{selectedDocument.title}</span>
+                        <span className="text-xs font-normal text-muted-foreground text-wrap">{selectedDocument.subTitle}</span>
                     </div>
                     <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -95,8 +95,8 @@ export const DocumentTypeSelect: React.FC<DocumentTypeSelectProps> = ({ onChange
                                         }}
                                     >
                                         <div className="flex flex-col w-full">
-                                            <p className="font-medium">{doc.label.title}</p>
-                                            <p className="text-sm text-muted-foreground">{doc.label.subTitle}</p>
+                                            <p className="font-medium text-xs">{doc.label.title}</p>
+                                            <p className="text-xs text-muted-foreground text-wrap">{doc.label.subTitle}</p>
                                         </div>
                                         <Check
                                             className={cn(

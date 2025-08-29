@@ -152,7 +152,7 @@ export const FilterCheckboxInput: React.FC<FilterCheckboxInputProps> = ({
                                             handleCheckedChange(!!checked, option.value);
                                         }}
                                     />
-                                    <Label htmlFor={checkboxId} className="w-full font-normal cursor-pointer">
+                                    <Label htmlFor={checkboxId} className="w-full font-normal cursor-pointer text-xs">
                                         {option.label}
                                     </Label>
                                 </div>
