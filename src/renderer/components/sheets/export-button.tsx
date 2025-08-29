@@ -40,7 +40,7 @@ export const SheetDataExport: React.FC<WithSchoolAndYearId<{ currentClassroom?: 
                     <span>Exporter</span>
                 </Button>
             </SheetTrigger>
-            <SheetContent>
+            <SheetContent className="flex flex-col sm:max-w-xl">
                 <FormSubmitter>
                     <SheetHeader>
                         <SheetTitle>Options d'exportation</SheetTitle>
@@ -57,7 +57,7 @@ export const SheetDataExport: React.FC<WithSchoolAndYearId<{ currentClassroom?: 
                                 Fermer
                             </Button>
                         </SheetClose>
-                        <FormSubmitter.Trigger>
+                        <FormSubmitter.Trigger asChild>
                             <ButtonLoader className="text-sm" size="sm">
                                 Exporter
                             </ButtonLoader>

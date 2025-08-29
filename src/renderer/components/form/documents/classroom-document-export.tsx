@@ -158,7 +158,7 @@ export const DocumentEnrollmentForm = forwardRef<
                                         onChangeValue={field.onChange}
                                     />
                                 </FormControl>
-                                <FormMessage />
+                                <FormMessage className="text-xs" />
                             </FormItem>
                         )}
                     />
@@ -185,7 +185,7 @@ export const DocumentEnrollmentForm = forwardRef<
                                         onChangeValue={field.onChange}
                                     />
                                 </FormControl>
-                                <FormMessage />
+                                <FormMessage className="text-xs" />
                             </FormItem>
                         )}
                     />
@@ -214,7 +214,7 @@ export const DocumentEnrollmentForm = forwardRef<
                                             onChangeValue={field.onChange}
                                         />
                                     </FormControl>
-                                    <FormMessage />
+                                    <FormMessage className="text-xs" />
                                 </FormItem>
                             )}
                         />
@@ -241,7 +241,7 @@ export const DocumentEnrollmentForm = forwardRef<
                                             onChangeValue={field.onChange}
                                         />
                                     </FormControl>
-                                    <FormMessage />
+                                    <FormMessage className="text-xs" />
                                 </FormItem>
                             )}
                         />

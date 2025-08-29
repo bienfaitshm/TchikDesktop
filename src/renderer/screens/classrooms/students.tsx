@@ -95,7 +95,7 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
                         <DataTableColumnFilter />
                         <div className="flex items-center gap-3 ml-auto">
                             {/* Le bouton d'exportation des données */}
-                            <ButtonDataExport />
+                            <ButtonDataExport currentClassroom={classroomId} />
                             {/* Le bouton pour les statistiques des élèves */}
                             <ButtonSheetStudentStat students={students} />
                             {/* Formulaire d'inscription rapide d'un nouvel élève */}
