@@ -51,7 +51,7 @@ export const ClassroomSideList = ({ classrooms = [] }: ClassroomSideListProps) =
                                             className={({ isActive }) =>
                                                 cn(
                                                     buttonVariants({ variant: "ghost" }),
-                                                    "justify-start text-sm font-normal py-2 px-3 rounded-md",
+                                                    "justify-start text-xs font-normal px-3 rounded-md",
                                                     "hover:bg-accent hover:text-accent-foreground",
                                                     isActive
                                                         ? "bg-secondary text-secondary-foreground font-medium"

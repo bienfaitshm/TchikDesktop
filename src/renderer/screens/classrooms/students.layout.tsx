@@ -46,13 +46,13 @@ const Layout: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
             >
                 {/* Panneau de la barre latérale (liste des classes) */}
                 <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
-                    <div className="flex flex-col h-full p-4 space-y-4 bg-sidebar-accent/30">
+                    <div className="flex flex-col h-full p-4 space-y-4">
                         {/* En-tête de la barre latérale */}
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
                             <Button onClick={handleGoBack} size="icon" variant="outline" className="h-8">
                                 <ArrowLeft />
                             </Button>
-                            <TypographyH2 className="mb-0 text-xl font-semibold">Listes des classes</TypographyH2>
+                            <TypographyH2 className="mb-0 pb-0 text-md font-semibold">Listes des classes</TypographyH2>
                         </div>
                         <Separator />
 
@@ -71,7 +71,9 @@ const Layout: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
                 {/* Panneau du contenu principal */}
                 <ResizablePanel defaultSize={75}>
                     <ScrollArea className="h-full bg-background">
-                        <Outlet />
+                        <div className="mx-auto max-w-screen-lg mt-10">
+                            <Outlet />
+                        </div>
                     </ScrollArea>
                 </ResizablePanel>
             </ResizablePanelGroup>

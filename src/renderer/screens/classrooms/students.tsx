@@ -15,7 +15,7 @@ import {
 } from "@/renderer/components/tables";
 import { Button } from "@/renderer/components/ui/button";
 import { StudentColumns } from "@/renderer/components/tables/columns.students";
-import { TypographyH2 } from "@/renderer/components/ui/typography";
+import { TypographyH2, TypographySmall } from "@/renderer/components/ui/typography";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { useGetClassroom } from "@/renderer/libs/queries/classroom";
@@ -27,9 +27,6 @@ import { ButtonDataExport } from "@/renderer/components/sheets/export-button";
 import { ButtonSheetStudentStat } from "./students.stat";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
-
-// Composants Shadcn UI supplémentaires nécessaires (si non déjà installés)
-import { Card, CardContent, CardHeader } from "@/renderer/components/ui/card";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
 
 /**
@@ -38,9 +35,6 @@ import { Skeleton } from "@/renderer/components/ui/skeleton";
  * Utilise un Skeleton pour une meilleure expérience utilisateur pendant le chargement.
  */
 const ClassroomHeader: React.FC<{ classId: string }> = ({ classId }) => {
-
-
-
     const { data: classroom, isLoading } = useGetClassroom(classId);
 
     if (isLoading) {
@@ -53,11 +47,11 @@ const ClassroomHeader: React.FC<{ classId: string }> = ({ classId }) => {
     }
 
     return (
-        <header className="py-4">
-            <TypographyH2 className="uppercase font-bold mb-1 tracking-tight text-3xl">
+        <header className="">
+            <TypographyH2 className="uppercase font-bold mb-0 pb-0 tracking-tight text-xl">
                 {classroom?.identifier || "Nom de la classe inconnu"}
             </TypographyH2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
                 Liste des élèves inscrits dans cette classe.
             </p>
         </header>
@@ -82,36 +76,13 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
 
     return (
         <DataRefresher onDataChange={refetch}>
-            <Card className="p-0 overflow-hidden border-none bg-background text-card-foreground shadow-none">
-                <CardHeader className="py-4 px-6 border-b">
-                    <Suspense fallback={<ClassroomHeader classId={currentClassroomId} />}>
+            <div className="overflow-hidden bg-background">
+                <div className="pt-6 pb-4 px-6">
+                    {/* Barre d'outils de la table : filtres et actions */}
+                    <Suspense fallback={<TypographySmall>Chargement...</TypographySmall>}>
                         {/* L'en-tête de la classe, qui peut charger ses propres données */}
                         <ClassroomHeader classId={currentClassroomId} />
                     </Suspense>
-                </CardHeader>
-                <CardContent className="pt-6 pb-4 px-6">
-                    {/* Barre d'outils de la table : filtres et actions */}
-                    <DataTableToolbar>
-                        <DataTableColumnFilter />
-                        <div className="flex items-center gap-3 ml-auto">
-                            {/* Le bouton d'exportation des données */}
-                            <ButtonDataExport currentClassroom={classroomId} />
-                            {/* Le bouton pour les statistiques des élèves */}
-                            <ButtonSheetStudentStat students={students} />
-                            {/* Formulaire d'inscription rapide d'un nouvel élève */}
-                            <QuickEnrollmentDialogForm
-                                classId={currentClassroomId}
-                                schoolId={schoolId}
-                                yearId={yearId}
-                            >
-                                <Button size="sm" className="flex items-center gap-2">
-                                    <Plus className="size-4" />
-                                    <span>Nouvel élève</span>
-                                </Button>
-                            </QuickEnrollmentDialogForm>
-                        </div>
-                    </DataTableToolbar>
-
                     {/* La table des données des élèves */}
                     <div className="my-4">
                         <DataTable
@@ -120,6 +91,26 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
                             keyExtractor={(student: any) => `${student.enrolementId}`}
 
                         >
+                            <DataTableToolbar>
+                                <DataTableColumnFilter />
+                                <div className="flex items-center gap-3 ml-auto">
+                                    {/* Le bouton d'exportation des données */}
+                                    <ButtonDataExport currentClassroom={classroomId} />
+                                    {/* Le bouton pour les statistiques des élèves */}
+                                    <ButtonSheetStudentStat students={students} />
+                                    {/* Formulaire d'inscription rapide d'un nouvel élève */}
+                                    <QuickEnrollmentDialogForm
+                                        classId={currentClassroomId}
+                                        schoolId={schoolId}
+                                        yearId={yearId}
+                                    >
+                                        <Button size="sm" className="flex items-center gap-2">
+                                            <Plus className="size-4" />
+                                            <span>Nouvel élève</span>
+                                        </Button>
+                                    </QuickEnrollmentDialogForm>
+                                </div>
+                            </DataTableToolbar>
                             <DataTableContent>
                                 <DataContentHead />
                                 {/* Le clic sur une ligne ouvre la feuille de détails de l'élève */}
@@ -132,8 +123,8 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
                             <DataTablePagination />
                         </DataTable>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* La feuille de détails de l'élève, toujours présente mais cachée jusqu'à l'ouverture */}
             <StudentDetailSheet ref={sheetRef} schoolId={schoolId} yearId={yearId} />
