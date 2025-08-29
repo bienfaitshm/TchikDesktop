@@ -9,7 +9,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/renderer/components/ui/sheet";
-import { FileText } from "lucide-react";
+import { FileText, Loader } from "lucide-react";
 import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { FormSubmitter } from "@/renderer/components/form/form-submiter";
@@ -18,6 +18,27 @@ import { useCallback } from "react";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
 
+
+
+interface LoaderIndicatorProps {
+    message?: string;
+}
+
+export const LoaderIndicator: React.FC<LoaderIndicatorProps> = ({ message = "Exportation en cours..." }) => {
+    return (
+        <div className="flex flex-col items-center p-2 space-y-1 rounded-lg border bg-background text-center">
+            <Loader className="h-4 w-4 animate-spin" />
+            <div>
+                <h3 className="text-sm font-semibold">
+                    {message}
+                </h3>
+                <p className="text-xs text-muted-foreground ">
+                    Veuillez patienter pendant le traitement de votre demande.
+                </p>
+            </div>
+        </div>
+    );
+};
 
 const SheetFormContent: React.FC<WithSchoolAndYearId<{ onSubmit(data: DocumentEnrollmentFormData): void, currentClassroom?: string }>> = ({ schoolId, yearId, currentClassroom, onSubmit }) => {
     const classrooms = useGetClassroomAsOptions({ schoolId, yearId }, { labelFormat: "short" })
@@ -51,6 +72,7 @@ export const SheetDataExport: React.FC<WithSchoolAndYearId<{ currentClassroom?: 
                     <div className="mt-5 mb-10">
                         <SheetFormContent onSubmit={onSubmit} {...props} />
                     </div>
+                    <LoaderIndicator message="Exportation..." />
                     <SheetFooter className="pt-5">
                         <SheetClose asChild>
                             <Button className="text-sm" size="sm" type="button" variant="secondary">
