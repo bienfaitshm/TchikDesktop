@@ -2,7 +2,7 @@
  * Represents the different types of documents available for export.
  * Each type has a specific purpose and format.
  */
-export enum DocumentType {
+export enum DOCUMENT_TYPE {
   /**
    * Represents a list of enrolled students.
    * This document is typically used for administrative purposes or attendance tracking.
@@ -33,24 +33,24 @@ export type DocumentMetaData = {
   type: "sheet" | "document";
 };
 
-export const DOCUMENT_METADATA: Record<DocumentType, DocumentMetaData> = {
-  [DocumentType.STUDENT_LIST]: {
+export const DOCUMENT_METADATA: Record<DOCUMENT_TYPE, DocumentMetaData> = {
+  [DOCUMENT_TYPE.STUDENT_LIST]: {
     type: "document",
     title: "Liste des élèves inscrits",
     subTitle:
       "Exporter la liste des élèves inscrits pour une ou plusieurs classes.",
   },
-  [DocumentType.GRADING_SHEET]: {
+  [DOCUMENT_TYPE.GRADING_SHEET]: {
     type: "document",
     title: "Fiche de cotation",
     subTitle: "Générer les fiches de cotation pour les élèves sélectionnés.",
   },
-  [DocumentType.ENROLLMENT_EXCEL]: {
+  [DOCUMENT_TYPE.ENROLLMENT_EXCEL]: {
     type: "sheet",
     title: "Liste des inscriptions (Excel)",
     subTitle: "Exporter les données d'inscription dans un fichier Excel.",
   },
-  [DocumentType.ENROLLMENT_STATISTICS]: {
+  [DOCUMENT_TYPE.ENROLLMENT_STATISTICS]: {
     type: "document",
     title: "Statistiques d'inscription",
     subTitle:
@@ -58,9 +58,9 @@ export const DOCUMENT_METADATA: Record<DocumentType, DocumentMetaData> = {
   },
 };
 
-type DocumentOption = {
-  value: DocumentType;
-  label: DocumentMetaData;
+type DocumentOption = Pick<DocumentMetaData, "type"> & {
+  value: DOCUMENT_TYPE;
+  label: Pick<DocumentMetaData, "subTitle" | "title">;
 };
 
 /**
@@ -68,8 +68,12 @@ type DocumentOption = {
  * @returns Un tableau d'objets, chaque objet contenant la valeur de l'enum et le titre du document.
  */
 export function getDocumentOptions(): DocumentOption[] {
-  return Object.values(DocumentType).map((documentType) => ({
-    value: documentType,
-    label: DOCUMENT_METADATA[documentType],
-  }));
+  return Object.values(DOCUMENT_TYPE).map((documentType) => {
+    const { type, ...rest } = DOCUMENT_METADATA[documentType];
+    return {
+      type,
+      value: documentType,
+      label: rest,
+    };
+  });
 }

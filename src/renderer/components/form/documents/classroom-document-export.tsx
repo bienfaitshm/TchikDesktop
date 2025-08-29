@@ -1,4 +1,4 @@
-import { forwardRef, type PropsWithChildren } from "react";
+import { forwardRef, useMemo, useState, type PropsWithChildren } from "react";
 import { useControlledForm } from "@/commons/libs/forms";
 import { SECTION, SECTION_TRANSLATIONS, STUDENT_STATUS, STUDENT_STATUS_TRANSLATIONS } from "@/commons/constants/enum";
 import { type DocumentExportSchemaAttributes, DocumentExportSchema } from "@/renderer/libs/schemas";
@@ -11,25 +11,109 @@ import {
     FormLabel,
     FormMessage,
 } from "@/renderer/components/ui/form";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/renderer/components/ui/command"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/renderer/components/ui/popover"
 import { useFormImperativeHandle, type ImperativeFormHandle } from "../utils";
 import { getEnumKeyValueList } from "@/commons/utils";
 import { FilterCheckboxInput } from "../fields/filter-checkbox-input";
+import { DOCUMENT_METADATA, DOCUMENT_TYPE } from "@/commons/libs/document";
+import { Check, ChevronDown } from "lucide-react";
+import { cn } from "@/renderer/utils";
+import { Button } from "../../ui/button";
+import { getProcessedDocumentOptions } from "./utils";
 
 
 export * from "../utils";
 
 export type DocumentEnrollmentFormData = DocumentExportSchemaAttributes;
 
+
+
 const DEFAULT_VALUES: DocumentEnrollmentFormData = {
     schoolId: "",
     yearId: "",
+    documentType: DOCUMENT_TYPE.STUDENT_LIST,
     classrooms: [],
     status: [STUDENT_STATUS.EN_COURS],
     sections: [SECTION.SECONDARY, SECTION.PRIMARY, SECTION.KINDERGARTEN],
 };
 
-const SECTIONS_VALUES = getEnumKeyValueList(SECTION, SECTION_TRANSLATIONS);
-const STATUS_VALUE = getEnumKeyValueList(STUDENT_STATUS, STUDENT_STATUS_TRANSLATIONS);
+const SECTIONS_OPTIONS = getEnumKeyValueList(SECTION, SECTION_TRANSLATIONS);
+const STATUS_OPTIONS = getEnumKeyValueList(STUDENT_STATUS, STUDENT_STATUS_TRANSLATIONS);
+const DOCUMENT_OPTIONS = getProcessedDocumentOptions()
+
+type DocumentTypeSelectProps = {
+    value: DOCUMENT_TYPE,
+    onChangeValue: (value: DOCUMENT_TYPE) => void
+}
+
+export const DocumentTypeSelect: React.FC<DocumentTypeSelectProps> = ({ onChangeValue, value }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const selectedDocument = useMemo(() => DOCUMENT_METADATA[value], [value]);
+
+    return (
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <PopoverTrigger asChild>
+                <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={isOpen}
+                    className="w-[300px] justify-between h-auto py-2 px-4 text-left"
+                >
+                    <div className="flex flex-col items-start space-y-1">
+                        <span className="font-semibold text-base">{selectedDocument.title}</span>
+                        <span className="text-sm text-muted-foreground">{selectedDocument.subTitle}</span>
+                    </div>
+                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[300px] p-0" side="right" align="start">
+                <Command>
+                    <CommandInput placeholder="Rechercher un document..." />
+                    <CommandList>
+                        <CommandEmpty>Aucun document trouvé.</CommandEmpty>
+                        {DOCUMENT_OPTIONS.map(({ section, data: documents }) => (
+                            <CommandGroup key={section} heading={section}>
+                                {documents.map((doc) => (
+                                    <CommandItem
+                                        key={doc.value}
+                                        value={doc.label.title}
+                                        onSelect={() => {
+                                            onChangeValue(doc.value);
+                                            setIsOpen(false);
+                                        }}
+                                    >
+                                        <div className="flex flex-col w-full">
+                                            <p className="font-medium">{doc.label.title}</p>
+                                            <p className="text-sm text-muted-foreground">{doc.label.subTitle}</p>
+                                        </div>
+                                        <Check
+                                            className={cn(
+                                                'ml-auto h-4 w-4',
+                                                value === doc.value ? 'opacity-100' : 'opacity-0'
+                                            )}
+                                        />
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        ))}
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    );
+};
 
 export interface DocumentEnrollmentFormProps {
     onSubmit?: (value: DocumentEnrollmentFormData) => void;
@@ -57,6 +141,29 @@ export const DocumentEnrollmentForm = forwardRef<
                 <div className="mx-1 space-y-4">
                     <FormField
                         control={form.control}
+                        name="documentType"
+                        render={({ field }) => (
+                            <FormItem>
+                                <div>
+                                    {/* Le label est plus descriptif et indique clairement l'action */}
+                                    <FormLabel className="text-xs">Type de document à exporter</FormLabel>
+                                    {/* La description est plus claire et conviviale */}
+                                    <FormDescription className="text-xs">
+                                        Choisissez un type de document pour l'exportation.
+                                    </FormDescription>
+                                </div>
+                                <FormControl>
+                                    <DocumentTypeSelect
+                                        value={field.value}
+                                        onChangeValue={field.onChange}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
                         name="sections"
                         render={({ field }) => (
                             <FormItem>
@@ -73,7 +180,7 @@ export const DocumentEnrollmentForm = forwardRef<
                                         name="section"
                                         // Le placeholder suggère une action de recherche ou de filtrage
                                         placeholder="Rechercher une section..."
-                                        options={SECTIONS_VALUES}
+                                        options={SECTIONS_OPTIONS}
                                         value={field.value}
                                         onChangeValue={field.onChange}
                                     />
@@ -129,7 +236,7 @@ export const DocumentEnrollmentForm = forwardRef<
                                             name="statut"
                                             // Le placeholder guide l'utilisateur vers l'action de recherche
                                             placeholder="Rechercher un statut..."
-                                            options={STATUS_VALUE}
+                                            options={STATUS_OPTIONS}
                                             value={field.value}
                                             onChangeValue={field.onChange}
                                         />

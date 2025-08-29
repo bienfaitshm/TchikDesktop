@@ -5,6 +5,7 @@ import {
   USER_GENDER,
   USER_ROLE,
 } from "@/commons/constants/enum";
+import { DOCUMENT_TYPE } from "@/commons/libs/document";
 
 // =====================
 // SCHÉMAS ZOD ET LEURS TYPES INFÉRÉS
@@ -189,14 +190,17 @@ export const DocumentExportSchema = z.object({
   sections: z
     .array(
       z.nativeEnum(SECTION, {
-        errorMap: () => ({ message: "Statut invalide." }),
+        errorMap: () => ({ message: "section invalide." }),
       })
     )
     .min(1),
+  documentType: z.nativeEnum(DOCUMENT_TYPE, {
+    errorMap: () => ({ message: "type de document invalide" }),
+  }),
   status: z
     .array(
       z.nativeEnum(STUDENT_STATUS, {
-        errorMap: () => ({ message: "Statut invalide." }),
+        errorMap: () => ({ message: "statut invalide." }),
       })
     )
     .min(1),
