@@ -61,7 +61,7 @@ export const QuickEnrollmentDialogForm: React.FC<
                             onSubmit={onSubmit}
                         />
                     </FormSubmitter.Wrapper>
-                    <DialogFooter>
+                    <DialogFooter className="border-t pt-10">
                         <DialogClose asChild>
                             <Button variant="secondary">Fermer</Button>
                         </DialogClose>
