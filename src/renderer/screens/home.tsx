@@ -13,6 +13,7 @@ import { GenderBar } from "../components/charts/gender-bar";
  * @returns 
  */
 
+
 export const HomePage = () => {
   return (
     <div className="mx-auto max-w-screen-lg mt-10">

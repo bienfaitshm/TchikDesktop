@@ -6,3 +6,4 @@ export * from "./classroom";
 export * from "./application";
 export * from "./document";
 export * from "./document.sheet";
+export * from "./statistiques";
