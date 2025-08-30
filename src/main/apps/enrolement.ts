@@ -71,3 +71,24 @@ server.delete<any, { enrolementId: string }>(
     }
   }
 );
+
+/**
+ * Endpoint pour récupérer l'historique des inscriptions.
+ * Requête GET: /statistiques/enrolement-history
+ * Paramètres: { schoolId: string, yearId?: string, classId?: string }
+ */
+server.get<any, WithSchoolAndYearId<{ classId?: string }>>(
+  "enrolements/history",
+  async ({ params }) => {
+    try {
+      const result = await services.getEnrolementHistory(params);
+      return response(mapModelsToPlainList(result));
+    } catch (error) {
+      return response(
+        {},
+        Status.INTERNAL_SERVER,
+        "Erreur interne du serveur lors de la récupération de l'historique des inscriptions."
+      );
+    }
+  }
+);

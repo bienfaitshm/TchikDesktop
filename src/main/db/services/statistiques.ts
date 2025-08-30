@@ -3,7 +3,6 @@ import {
   ClassroomEnrolement,
   Option,
   User,
-  StudyYear,
   sequelize,
 } from "@/main/db/models";
 import { getDefinedAttributes } from "@/main/db/models/utils";
@@ -20,9 +19,10 @@ import { SECTION, USER_GENDER } from "@/commons/constants/enum";
  */
 export async function getTotalStudentsInSchool(params: WithSchoolAndYearId) {
   const whereClause = getDefinedAttributes(params);
-  return ClassroomEnrolement.count({
+  const total = await ClassroomEnrolement.count({
     where: whereClause,
   });
+  return { total };
 }
 
 /**
@@ -236,45 +236,5 @@ export async function getGenderAndStatusCountForClass(classId: string) {
     group: ["ClassroomEnrolement.status"],
     raw: true,
   });
-  return results;
-}
-
-/**
- * Récupère l'historique des inscriptions en se basant sur une école, une année scolaire ou une classe.
- * @param {object} params - Paramètres de la requête.
- * @param {string} [params.schoolId] - (Optionnel) L'identifiant de l'école.
- * @param {string} [params.yearId] - (Optionnel) L'identifiant de l'année scolaire.
- * @param {string} [params.classId] - (Optionnel) L'identifiant de la classe.
- * @returns {Promise<Array<object>>} Un tableau d'inscriptions correspondant aux critères de recherche.
- */
-export async function getEnrolementHistory({
-  schoolId,
-  yearId,
-  classId,
-}: WithSchoolAndYearId<{ classId?: string }>) {
-  const whereClause = getDefinedAttributes({ schoolId, classId, yearId });
-
-  const includeConditions: any[] = [];
-  if (yearId) {
-    includeConditions.push({
-      model: ClassRoom,
-      attributes: [],
-      required: true,
-      include: [
-        {
-          model: StudyYear,
-          attributes: [],
-          required: true,
-          where: { yearId },
-        },
-      ],
-    });
-  }
-
-  const results = await ClassroomEnrolement.findAll({
-    where: whereClause,
-    include: includeConditions.length > 0 ? includeConditions : undefined,
-  });
-
   return results;
 }

@@ -22,6 +22,21 @@ export const getEnrolements = (params: GetEnrolementParams) => {
     .then((res) => res.data);
 };
 
+/**
+ * Récupère l'historique des inscriptions, filtrable par école, année et/ou classe.
+ * @param {{ schoolId: string; yearId?: string; classId?: string }} params - Les critères de recherche.
+ * @returns {Promise<EnrolementHistory>} Un tableau d'objets représentant l'historique d'inscriptions.
+ */
+export const getEnrolementHistory = (
+  params: WithSchoolAndYearId<{ classId?: string }>
+) => {
+  return clientApis
+    .get<TEnrolement[]>("enrolements/history", {
+      params,
+    })
+    .then((res) => res.data);
+};
+
 export const getEnrolement = (enrolementId: string) => {
   return clientApis
     .get<TWithUser<TWithClassroom<TEnrolement>>>("enrolements/:enrolementId", {

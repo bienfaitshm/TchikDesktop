@@ -4,7 +4,7 @@ import type {
   WithSchoolAndYearId,
   TQuickEnrolementInsert,
 } from "@/commons/types/services";
-import { ClassroomEnrolement, User, ClassRoom } from "../models";
+import { ClassroomEnrolement, User, ClassRoom, StudyYear } from "../models";
 import { getDefinedAttributes } from "../models/utils";
 import { createUser } from "./account";
 import { Sequelize } from "sequelize";
@@ -27,6 +27,45 @@ export async function getEnrolements({
       [Sequelize.literal('LOWER("User"."first_name")'), "ASC"],
     ],
   });
+}
+/**
+ * Récupère l'historique des inscriptions en se basant sur une école, une année scolaire ou une classe.
+ * @param {object} params - Paramètres de la requête.
+ * @param {string} [params.schoolId] - (Optionnel) L'identifiant de l'école.
+ * @param {string} [params.yearId] - (Optionnel) L'identifiant de l'année scolaire.
+ * @param {string} [params.classId] - (Optionnel) L'identifiant de la classe.
+ * @returns {Promise<Array<object>>} Un tableau d'inscriptions correspondant aux critères de recherche.
+ */
+export async function getEnrolementHistory({
+  schoolId,
+  yearId,
+  classId,
+}: WithSchoolAndYearId<{ classId?: string }>) {
+  const whereClause = getDefinedAttributes({ schoolId, classId, yearId });
+
+  const includeConditions: any[] = [];
+  if (yearId) {
+    includeConditions.push({
+      model: ClassRoom,
+      attributes: [],
+      required: true,
+      include: [
+        {
+          model: StudyYear,
+          attributes: [],
+          required: true,
+          where: { yearId },
+        },
+      ],
+    });
+  }
+
+  const results = await ClassroomEnrolement.findAll({
+    where: whereClause,
+    include: includeConditions.length > 0 ? includeConditions : undefined,
+  });
+
+  return results;
 }
 
 export async function getEnrolement(enrolementId) {

@@ -14,8 +14,7 @@ server.get<any, WithSchoolAndYearId>(
   "statistiques/total-students",
   async ({ params }) => {
     try {
-      const total = await services.getTotalStudentsInSchool(params);
-      return response({ total });
+      return response(services.getTotalStudentsInSchool(params));
     } catch (error) {
       return response(
         {},
@@ -135,27 +134,6 @@ server.get<any, { classId: string }>(
         {},
         Status.INTERNAL_SERVER,
         "Erreur interne du serveur lors de la récupération des genres et statuts pour la classe."
-      );
-    }
-  }
-);
-
-/**
- * Endpoint pour récupérer l'historique des inscriptions.
- * Requête GET: /statistiques/enrolement-history
- * Paramètres: { schoolId: string, yearId?: string, classId?: string }
- */
-server.get<any, { schoolId: string; yearId?: string; classId?: string }>(
-  "statistiques/enrolement-history",
-  async ({ params }) => {
-    try {
-      const result = await services.getEnrolementHistory(params);
-      return response(mapModelsToPlainList(result));
-    } catch (error) {
-      return response(
-        {},
-        Status.INTERNAL_SERVER,
-        "Erreur interne du serveur lors de la récupération de l'historique des inscriptions."
       );
     }
   }
