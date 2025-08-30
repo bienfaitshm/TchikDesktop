@@ -34,11 +34,11 @@ const chartData = [
 const chartConfig = {
     F: {
         label: "Fille",
-        color: "var(--chart-1)",
+        color: "hsl(var(--chart-1))",
     },
     M: {
         label: "Garcons",
-        color: "var(--chart-2)",
+        color: "hsl(var(--chart-2))",
     },
 } satisfies ChartConfig
 
