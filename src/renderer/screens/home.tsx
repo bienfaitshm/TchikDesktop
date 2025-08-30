@@ -1,6 +1,9 @@
 import { TypographyH2 } from "@/renderer/components/ui/typography";
 import { ChartPie } from "../components/charts/pie";
 import { GenderBar } from "../components/charts/gender-bar";
+import { withCurrentConfig } from "../hooks/with-application-config";
+import { useDashboardStatistics } from "../libs/queries/statistiques";
+import { WithSchoolAndYearId } from "@/commons/types/services";
 
 /**
  * 1. Pour toute l'ecole (garcon et fille; total d'eleve inscrit)
@@ -14,7 +17,9 @@ import { GenderBar } from "../components/charts/gender-bar";
  */
 
 
-export const HomePage = () => {
+export const Home: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
+  const [{ data: totalStudent }, { data: studentBySection }] = useDashboardStatistics({ schoolId })
+  console.log({ totalStudent, studentBySection })
   return (
     <div className="mx-auto max-w-screen-lg mt-10">
       <TypographyH2>Dashboard</TypographyH2>
@@ -26,3 +31,5 @@ export const HomePage = () => {
     </div>
   );
 };
+
+export const HomePage = withCurrentConfig(Home)

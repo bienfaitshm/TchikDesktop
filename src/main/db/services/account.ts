@@ -32,7 +32,7 @@ export async function getUsers({
 }: QueryParams<
   WithSchoolAndYearId,
   Partial<TUserInsert & { classroomId?: string }>
->): Promise<TWithEnrolements<TUser>[]> {
+>) {
   const userWhereClause = getDefinedAttributes({
     schoolId,
     ...params,
@@ -59,7 +59,7 @@ export async function getUsers({
           required: true,
         },
       ],
-    }) as unknown as Promise<TWithEnrolements<TUser>[]>;
+    });
   } catch (error) {
     console.error("Erreur lors de la récupération des utilisateurs:", error);
     throw new Error("Impossible de récupérer les utilisateurs.");
@@ -73,9 +73,7 @@ export async function getUsers({
  * @returns {Promise<TWithEnrolements<TUser> | null>} Une promesse qui résout en l'instance `User`
  * avec ses enrôlements, ou `null` si non trouvé.
  */
-export async function getUser(
-  userId: string
-): Promise<TWithEnrolements<TUser> | null> {
+export async function getUser(userId: string) {
   if (!userId) {
     console.error("getUser: L'ID utilisateur ne peut pas être vide.");
     return null;
@@ -99,7 +97,7 @@ export async function getUser(
  * @param {TUserInsert} data Les données pour le nouvel utilisateur.
  * @returns {Promise<User>} Une promesse qui résout en l'instance `User` nouvellement créée.
  */
-export async function createUser(data: TUserInsert): Promise<TUser> {
+export async function createUser(data: TUserInsert) {
   const password = DEFAULT_STUDENT_PASSWORD;
   const username = getDefaultUsername();
 
@@ -120,10 +118,7 @@ export async function createUser(data: TUserInsert): Promise<TUser> {
  * @returns {Promise<User | null>} Une promesse qui résout en l'instance `User` mise à jour,
  * ou `null` si l'utilisateur n'a pas été trouvé.
  */
-export async function updateUser(
-  userId: string,
-  data: Partial<TUserInsert>
-): Promise<TUser | null> {
+export async function updateUser(userId: string, data: Partial<TUserInsert>) {
   if (!userId) {
     console.error("updateUser: L'ID utilisateur ne peut pas être vide.");
     return null;
@@ -152,7 +147,7 @@ export async function updateUser(
  * @returns {Promise<boolean>} Une promesse qui résout en `true` si l'utilisateur a été supprimé,
  * `false` sinon (ex: utilisateur non trouvé).
  */
-export async function deleteUser(userId: string): Promise<boolean> {
+export async function deleteUser(userId: string) {
   if (!userId) {
     console.error("deleteUser: L'ID utilisateur ne peut pas être vide.");
     return false;

@@ -29,7 +29,7 @@ export async function mapModelsToPlainList<T extends Model>(
   callback?: (e: T) => unknown
 ): Promise<Record<string, any>[]> {
   const models = await data;
-  const _func = callback ? callback : (model) => model.toJSON();
+  const _func = callback ? callback : (model) => model?.toJSON() || model;
   return models.map(_func);
 }
 
@@ -44,7 +44,7 @@ export async function mapModelToPlain<T extends Model>(
   data: Promise<T> | T
 ): Promise<Record<string, any>> {
   const model = await data;
-  return model.toJSON();
+  return model?.toJSON() || model;
 }
 
 /**
