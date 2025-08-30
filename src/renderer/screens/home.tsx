@@ -17,9 +17,9 @@ import { WithSchoolAndYearId } from "@/commons/types/services";
  */
 
 
-export const Home: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
-  const [{ data: totalStudent }, { data: studentBySection }] = useDashboardStatistics({ schoolId })
-  console.log({ totalStudent, studentBySection })
+export const Home: React.FC<WithSchoolAndYearId> = (props) => {
+  const [{ data: totalStudent }, { data: studentBySection }, { data: secondary }] = useDashboardStatistics(props)
+  console.log({ totalStudent, studentBySection, secondary })
   return (
     <div className="mx-auto max-w-screen-lg mt-10">
       <TypographyH2>Dashboard</TypographyH2>

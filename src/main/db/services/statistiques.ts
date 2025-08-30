@@ -17,10 +17,21 @@ import { SECTION, USER_GENDER } from "@/commons/constants/enum";
  * @param {string} [params.yearId] - (Optionnel) L'identifiant de l'année scolaire pour filtrer les résultats.
  * @returns {Promise<number>} Le nombre total d'inscriptions.
  */
-export async function getTotalStudentsInSchool(params: WithSchoolAndYearId) {
-  const whereClause = getDefinedAttributes(params);
+export async function getTotalStudentsInSchool({
+  schoolId,
+  yearId,
+}: WithSchoolAndYearId) {
+  const whereClause = getDefinedAttributes({ schoolId });
   const total = await ClassroomEnrolement.count({
     where: whereClause,
+    include: [
+      {
+        model: ClassRoom,
+        attributes: [],
+        required: true,
+        where: getDefinedAttributes({ yearId }),
+      },
+    ],
   });
   return { total };
 }
@@ -32,8 +43,11 @@ export async function getTotalStudentsInSchool(params: WithSchoolAndYearId) {
  * @param {string} [params.yearId] - (Optionnel) L'identifiant de l'année scolaire.
  * @returns {Promise<Array<object>>} Un tableau d'objets, chacun contenant le nom de la section et le nombre d'élèves.
  */
-export async function getStudentsBySection(params: WithSchoolAndYearId) {
-  const whereClause = getDefinedAttributes(params);
+export async function getStudentsBySection({
+  schoolId,
+  yearId,
+}: WithSchoolAndYearId) {
+  const whereClause = getDefinedAttributes({ schoolId });
   const results = await ClassroomEnrolement.findAll({
     attributes: [
       [
@@ -43,11 +57,35 @@ export async function getStudentsBySection(params: WithSchoolAndYearId) {
         ),
         "studentCount",
       ],
+      [
+        sequelize.fn(
+          "COUNT",
+          sequelize.literal(
+            `CASE WHEN User.gender = '${USER_GENDER.FEMALE}' THEN 1 END`
+          )
+        ),
+        "femaleCount",
+      ],
+      [
+        sequelize.fn(
+          "COUNT",
+          sequelize.literal(
+            `CASE WHEN User.gender = '${USER_GENDER.MALE}' THEN 1 END`
+          )
+        ),
+        "maleCount",
+      ],
       [sequelize.col("ClassRoom.section"), "section"],
     ],
     include: [
       {
         model: ClassRoom,
+        attributes: [],
+        required: true,
+        where: getDefinedAttributes({ yearId }),
+      },
+      {
+        model: User,
         attributes: [],
         required: true,
       },
@@ -119,10 +157,11 @@ export async function getGenderCountByClassAndSection(
  * @param {string} [params.yearId] - (Optionnel) L'identifiant de l'année scolaire.
  * @returns {Promise<Array<object>>} Un tableau d'objets avec le nom de l'option et le nombre d'élèves.
  */
-export async function getStudentsByOptionForSecondary(
-  params: WithSchoolAndYearId
-) {
-  const whereClause = getDefinedAttributes(params);
+export async function getStudentsByOptionForSecondary({
+  schoolId,
+  yearId,
+}: WithSchoolAndYearId) {
+  const whereClause = getDefinedAttributes({ schoolId });
   const results = await ClassroomEnrolement.findAll({
     attributes: [
       [
@@ -132,14 +171,15 @@ export async function getStudentsByOptionForSecondary(
         ),
         "studentCount",
       ],
-      [sequelize.col("ClassRoom->Option.optionName"), "optionName"],
+      [sequelize.col("ClassRoom.Option.option_name"), "optionName"],
+      [sequelize.col("ClassRoom.Option.option_short_name"), "optionShortName"],
     ],
     include: [
       {
         model: ClassRoom,
         attributes: [],
         required: true,
-        where: { section: SECTION.SECONDARY },
+        where: getDefinedAttributes({ yearId, section: SECTION.SECONDARY }),
         include: [
           {
             model: Option,
@@ -150,7 +190,7 @@ export async function getStudentsByOptionForSecondary(
       },
     ],
     where: whereClause,
-    group: ["ClassRoom->Option.optionName"],
+    group: ["ClassRoom.Option.option_name"],
     raw: true,
   });
 

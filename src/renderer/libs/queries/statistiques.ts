@@ -13,6 +13,10 @@ export const useDashboardStatistics = (params: WithSchoolAndYearId) => {
         queryKey: ["TOTAL_STUDENT_SECTION", params],
         queryFn: () => apis.getStudentsBySection(params),
       },
+      {
+        queryKey: ["FOR_SECONDARY", params],
+        queryFn: () => apis.getStudentsByOptionForSecondary(params),
+      },
     ],
   });
 };
