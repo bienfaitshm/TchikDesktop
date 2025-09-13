@@ -3,11 +3,9 @@ import type { UserOptions } from "docx-templates/lib/types";
 import fs from "fs";
 import path from "path";
 
-const TEMPLATE_DIR = "docx-templates";
+const TEMPLATE_DIR = "documents_templates";
 
-const DOCX_REPORT_OPTIONS: Partial<UserOptions> = {
-  cmdDelimiter: ["{{", "}}"],
-};
+const DOCX_REPORT_OPTIONS: Partial<UserOptions> = {};
 
 /**
  * Generates a DOCX report based on a template and provided data.
