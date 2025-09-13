@@ -22,7 +22,34 @@ export async function getTotalStudentsInSchool({
   yearId,
 }: WithSchoolAndYearId) {
   const whereClause = getDefinedAttributes({ schoolId });
-  const total = await ClassroomEnrolement.count({
+  return ClassroomEnrolement.findOne({
+    attributes: [
+      [
+        sequelize.fn(
+          "COUNT",
+          sequelize.col("ClassroomEnrolement.enrolement_id")
+        ),
+        "studentCount",
+      ],
+      [
+        sequelize.fn(
+          "COUNT",
+          sequelize.literal(
+            `CASE WHEN User.gender = '${USER_GENDER.FEMALE}' THEN 1 END`
+          )
+        ),
+        "femaleCount",
+      ],
+      [
+        sequelize.fn(
+          "COUNT",
+          sequelize.literal(
+            `CASE WHEN User.gender = '${USER_GENDER.MALE}' THEN 1 END`
+          )
+        ),
+        "maleCount",
+      ],
+    ],
     where: whereClause,
     include: [
       {
@@ -31,9 +58,14 @@ export async function getTotalStudentsInSchool({
         required: true,
         where: getDefinedAttributes({ yearId }),
       },
+      {
+        model: User,
+        attributes: [],
+        required: true,
+      },
     ],
+    raw: true,
   });
-  return { total };
 }
 
 /**
@@ -110,41 +142,40 @@ export async function getGenderCountByClassAndSection(
 ) {
   const whereClause = getDefinedAttributes(params);
   const results = await ClassRoom.findAll({
-    attributes: ["classId", "identifier"],
+    attributes: [
+      "classId",
+      "identifier",
+      "shortIdentifier",
+      [
+        sequelize.literal(
+          `SUM(CASE WHEN "ClassroomEnrolements->User"."gender" = '${USER_GENDER.FEMALE}' THEN 1 ELSE 0 END)`
+        ),
+        "femaleCount",
+      ],
+      [
+        sequelize.literal(
+          `SUM(CASE WHEN "ClassroomEnrolements->User"."gender" = '${USER_GENDER.MALE}' THEN 1 ELSE 0 END)`
+        ),
+        "maleCount",
+      ],
+    ],
     include: [
       {
         model: ClassroomEnrolement,
-        attributes: [
-          [
-            sequelize.fn(
-              "COUNT",
-              sequelize.literal(
-                `CASE WHEN User.gender = '${USER_GENDER.FEMALE}' THEN 1 END`
-              )
-            ),
-            "femaleCount",
-          ],
-          [
-            sequelize.fn(
-              "COUNT",
-              sequelize.literal(
-                `CASE WHEN User.gender = '${USER_GENDER.MALE}' THEN 1 END`
-              )
-            ),
-            "maleCount",
-          ],
-        ],
+        attributes: [],
+        required: false,
         include: [
           {
             model: User,
             attributes: [],
-            required: true,
+            required: false,
+            as: "User",
           },
         ],
       },
     ],
     where: whereClause,
-    group: ["ClassRoom.classId"],
+    group: ["classId"],
   });
 
   return results;

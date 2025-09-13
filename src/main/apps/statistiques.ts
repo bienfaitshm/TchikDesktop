@@ -14,7 +14,11 @@ server.get<any, WithSchoolAndYearId>(
   "statistiques/total-students",
   async ({ params }) => {
     try {
-      return response(services.getTotalStudentsInSchool(params));
+      const result = await services.getTotalStudentsInSchool(params);
+      if (result) {
+        return response(mapModelToPlain(result));
+      }
+      return response({}, Status.NOT_FOUND, "Ecole non trouvee");
     } catch (error) {
       return response(
         {},
