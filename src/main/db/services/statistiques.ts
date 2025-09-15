@@ -227,6 +227,7 @@ export async function getStudentsByOptionForSecondary({
       {
         model: User,
         required: true,
+        attributes: [],
       },
       {
         model: ClassRoom,

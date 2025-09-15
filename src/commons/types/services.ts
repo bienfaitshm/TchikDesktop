@@ -61,7 +61,7 @@ export type StudentsBySection = CountResult & {
 export type GenderCountByClassAndSection = {
   classId: string;
   identifier: string;
-  ClassroomEnrolements: GenderCountResult[];
+  ClassroomEnrolements: (GenderCountResult & CountResult)[];
 };
 
 /**
@@ -75,12 +75,53 @@ export type StudentsByOptionForSecondary = CountResult & {
  * Retour de `getGenderCountForClass`.
  * @type {object | null} Un objet de comptage de genre ou `null`.
  */
-export type GenderCountForClass = GenderCountResult | null;
+export type GenderCountForClass = (GenderCountResult & CountResult) | null;
 
 /**
  * Retour de `getGenderAndStatusCountForClass`.
  * @type {Array<object>} Un tableau de résultats par statut et genre.
  */
-export type GenderAndStatusCountForClass = GenderCountResult & {
+export type GenderAndStatusCountForClass = (GenderCountResult & CountResult) & {
   status: STUDENT_STATUS;
+};
+
+// Type pour les objets dans le tableau `genderCountByClassAndSection`
+export type ClassGenderCount = {
+  classId: string;
+  femaleCount: number;
+  identifier: string;
+  maleCount: number;
+  shortIdentifier: string;
+};
+
+// Type pour les objets dans le tableau `secondaryStudentsByOption`
+export type OptionStudentCount = {
+  femaleCount: number;
+  maleCount: number;
+  optionName: string;
+  optionShortName: string;
+  studentCount: number;
+};
+
+// Type pour les objets dans le tableau `studentsBySection`
+export type SectionStudentCount = {
+  femaleCount: number;
+  maleCount: number;
+  section: string;
+  studentCount: number;
+};
+
+// Type pour l'objet `totalStudents`
+export type TotalStudentCount = {
+  femaleCount: number;
+  maleCount: number;
+  studentCount: number;
+};
+
+// Type global qui encapsule tous les autres
+export type StudentData = {
+  genderCountByClassAndSection: ClassGenderCount[];
+  secondaryStudentsByOption: OptionStudentCount[];
+  studentsBySection: SectionStudentCount[];
+  totalStudents: TotalStudentCount;
 };
