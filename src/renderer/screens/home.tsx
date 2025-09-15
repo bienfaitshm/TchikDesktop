@@ -1,9 +1,10 @@
 import { TypographyH2 } from "@/renderer/components/ui/typography";
 import { ChartPie } from "../components/charts/pie";
-import { GenderBar } from "../components/charts/gender-bar";
+import { BarChart } from "../components/charts/gender-bar";
 import { withCurrentConfig } from "../hooks/with-application-config";
 import { useDashboardStatistics } from "../libs/queries/statistiques";
 import { WithSchoolAndYearId } from "@/commons/types/services";
+import { SecondaryStudentsByOptionChartConfig } from "../components/charts/constants";
 
 /**
  * 1. Pour toute l'ecole (garcon et fille; total d'eleve inscrit)
@@ -26,7 +27,12 @@ export const Home: React.FC<WithSchoolAndYearId> = (props) => {
 
       <div className="grid grid-cols-3 gap-5">
         <ChartPie />
-        <GenderBar />
+        <BarChart
+          data={secondaryStudentsByOption}
+          dataKey="optionName"
+          bars={["optionName", "studentCount"]}
+          chartConfig={SecondaryStudentsByOptionChartConfig}
+        />
       </div>
     </div>
   );

@@ -29,7 +29,7 @@ export const getTotalStudentsInSchool = (params: WithSchoolAndYearId) => {
  */
 export const getStudentsBySection = (params: WithSchoolAndYearId) => {
   return clientApis
-    .get<StudentsBySection>("statistiques/students-by-section", {
+    .get<StudentsBySection[]>("statistiques/students-by-section", {
       params,
     })
     .then((res) => res.data);
@@ -44,7 +44,7 @@ export const getGenderCountByClassAndSection = (
   params: WithSchoolAndYearId
 ) => {
   return clientApis
-    .get<GenderCountByClassAndSection>("statistiques/gender-count-by-class", {
+    .get<GenderCountByClassAndSection[]>("statistiques/gender-count-by-class", {
       params,
     })
     .then((res) => res.data);
@@ -59,7 +59,7 @@ export const getStudentsByOptionForSecondary = (
   params: WithSchoolAndYearId
 ) => {
   return clientApis
-    .get<StudentsByOptionForSecondary>(
+    .get<StudentsByOptionForSecondary[]>(
       "statistiques/students-by-option/secondary",
       {
         params,
