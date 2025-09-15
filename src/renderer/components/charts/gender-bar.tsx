@@ -59,7 +59,7 @@ export function BarChart<TData>(props: GenderBarProps<TData>) {
                         dataKey={bar}
                         stackId="a"
                         fill={`var(--color-${bar})`}
-                        radius={[0, 0, 4, 4]}
+                        radius={[4, 4, 4, 4]}
                     />
                 ))}
             </BarChartCn>

@@ -30,7 +30,7 @@ export const Home: React.FC<WithSchoolAndYearId> = (props) => {
         <BarChart
           data={secondaryStudentsByOption}
           dataKey="optionName"
-          bars={["optionName", "studentCount"]}
+          bars={["maleCount", "femaleCount"]}
           chartConfig={SecondaryStudentsByOptionChartConfig}
         />
       </div>
