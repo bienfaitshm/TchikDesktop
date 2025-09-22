@@ -6,6 +6,7 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/renderer/components/ui/chart"
+import { useMemo } from "react"
 
 export const description = "A pie chart with a label"
 
@@ -43,7 +44,21 @@ const chartConfig = {
     },
 } satisfies ChartConfig
 
-export function ChartPie() {
+
+type TData = {
+    label: string;
+    total: number,
+}
+type ChartPieProps = {
+    data: TData[]
+    dataKey: keyof TData;
+    chartConfig: ChartConfig;
+    centerDataInfos?: { total: number | string; totalLabel: string }
+}
+export function ChartPie({ data, dataKey, centerDataInfos, chartConfig }: ChartPieProps) {
+    const chartData: (TData & { fill: string })[] = useMemo(() => data.map(r => ({
+        ...r, fill: `var(--color-${r.label})`
+    })), [])
     return (
         <ChartContainer
             config={chartConfig}
@@ -51,9 +66,15 @@ export function ChartPie() {
         >
             <PieChart>
                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                <Pie data={chartData} dataKey="visitors" label nameKey="browser" innerRadius={50}
-                    strokeWidth={5}>
-                    <Label
+                <Pie
+                    label
+                    data={chartData}
+                    dataKey={String(dataKey)}
+                    nameKey="browser"
+                    innerRadius={centerDataInfos ? 50 : 0}
+                    strokeWidth={5}
+                >
+                    {centerDataInfos && <Label
                         content={({ viewBox }) => {
                             if (viewBox && "cx" in viewBox && "cy" in viewBox) {
                                 return (
@@ -68,20 +89,20 @@ export function ChartPie() {
                                             y={viewBox.cy}
                                             className="fill-foreground text-3xl font-bold"
                                         >
-                                            500
+                                            {centerDataInfos.total}
                                         </tspan>
                                         <tspan
                                             x={viewBox.cx}
                                             y={(viewBox.cy || 0) + 24}
                                             className="fill-muted-foreground"
                                         >
-                                            Eleves inscrits
+                                            {centerDataInfos.totalLabel}
                                         </tspan>
                                     </text>
                                 )
                             }
                         }}
-                    />
+                    />}
                 </Pie>
             </PieChart>
         </ChartContainer>

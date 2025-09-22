@@ -4,7 +4,7 @@ import { BarChart } from "../components/charts/gender-bar";
 import { withCurrentConfig } from "../hooks/with-application-config";
 import { useDashboardStatistics } from "../libs/queries/statistiques";
 import { WithSchoolAndYearId } from "@/commons/types/services";
-import { SecondaryStudentsByOptionChartConfig } from "../components/charts/constants";
+import { SecondaryStudentsByOptionChartConfig, TOTAL_STUDENT } from "../components/charts/constants";
 
 /**
  * 1. Pour toute l'ecole (garcon et fille; total d'eleve inscrit)
@@ -26,12 +26,17 @@ export const Home: React.FC<WithSchoolAndYearId> = (props) => {
       <TypographyH2>Dashboard</TypographyH2>
 
       <div className="grid grid-cols-3 gap-5">
-        <ChartPie />
+        <ChartPie
+          data={totalStudents}
+          dataKey="studentCount"
+          chartConfig={TOTAL_STUDENT}
+        />
         <BarChart
           data={secondaryStudentsByOption}
-          dataKey="optionName"
+          dataKey="optionShortName"
           bars={["maleCount", "femaleCount"]}
           chartConfig={SecondaryStudentsByOptionChartConfig}
+
         />
       </div>
     </div>

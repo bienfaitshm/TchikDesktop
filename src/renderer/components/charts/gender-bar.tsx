@@ -12,26 +12,6 @@ import {
 
 export const description = "A stacked bar chart with a legend"
 
-const chartData = [
-    { month: "January", F: 186, M: 80 },
-    { month: "February", F: 305, M: 200 },
-    { month: "March", F: 237, M: 120 },
-    { month: "April", F: 73, M: 190 },
-    { month: "May", F: 209, M: 130 },
-    { month: "June", F: 214, M: 140 },
-]
-
-const chartConfig = {
-    F: {
-        label: "Fille",
-        color: "hsl(var(--chart-1))",
-    },
-    M: {
-        label: "Garcons",
-        color: "hsl(var(--chart-2))",
-    },
-} satisfies ChartConfig
-
 type GenderBarProps<TData> = {
     chartConfig: ChartConfig;
     data: TData[];
