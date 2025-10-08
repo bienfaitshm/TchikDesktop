@@ -23,7 +23,7 @@ import {
   NewStudyYearConfigurationPage
 } from "@/renderer/screens/config";
 
-import { QuickEnrollement } from "@/renderer/screens/inscriptions";
+import { QuickEnrollmentPage } from "@/renderer/screens/enrollments";
 // classroom
 import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms"
 
@@ -38,7 +38,7 @@ export default function RouterProvider(): JSX.Element {
       <Routes>
         <Route element={<Layout />} errorElement={<Launcher />}>
           <Route index element={<HomePage />} />
-          <Route path="inscriptions" element={<QuickEnrollement />} />
+          <Route path="inscriptions" element={<QuickEnrollmentPage />} />
           <Route path="mise-en-places" element={<MiseEnPlaceScreen />} />
           {/* schools */}
           <Route path="students" element={<StudentScreen />} />

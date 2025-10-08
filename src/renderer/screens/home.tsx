@@ -5,6 +5,8 @@ import { withCurrentConfig } from "../hooks/with-application-config";
 import { useDashboardStatistics } from "../libs/queries/statistiques";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { SecondaryStudentsByOptionChartConfig, TOTAL_STUDENT } from "../components/charts/constants";
+import { convertObjectToArray } from "@/commons/data/convert-data";
+import { useMemo } from "react";
 
 /**
  * 1. Pour toute l'ecole (garcon et fille; total d'eleve inscrit)
@@ -20,15 +22,19 @@ import { SecondaryStudentsByOptionChartConfig, TOTAL_STUDENT } from "../componen
 
 export const Home: React.FC<WithSchoolAndYearId> = (props) => {
   const { totalStudents, genderCountByClassAndSection, secondaryStudentsByOption, studentsBySection } = useDashboardStatistics(props)
-  console.log({ totalStudents, genderCountByClassAndSection, secondaryStudentsByOption, studentsBySection })
+  // console.log({ totalStudents, genderCountByClassAndSection, secondaryStudentsByOption, studentsBySection })
+  const students = useMemo(() => convertObjectToArray(totalStudents, [{ key: "femaleCount", label: "Filles" }, { key: "maleCount", label: "Homme" }]).map(item => ({
+    total: item.value,
+    label: item.key
+  })), [totalStudents])
   return (
     <div className="mx-auto max-w-screen-lg mt-10">
       <TypographyH2>Dashboard</TypographyH2>
 
       <div className="grid grid-cols-3 gap-5">
         <ChartPie
-          data={totalStudents}
-          dataKey="studentCount"
+          data={students}
+          dataKey="total"
           chartConfig={TOTAL_STUDENT}
         />
         <BarChart

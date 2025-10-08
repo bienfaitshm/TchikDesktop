@@ -20,7 +20,8 @@ import { Button } from "@/renderer/components/ui/button";
 import { useOnValidateDataRefresh } from "@/renderer/providers/refrecher";
 import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
 import { useQuickEnrollement } from "@/renderer/hooks/query.actions";
-import type { WithSchoolAndYearId } from "@/commons/types/services";
+import type { TEnrolement, WithSchoolAndYearId } from "@/commons/types/services";
+import { TypographyLead } from "@/renderer/components/ui/typography";
 
 
 interface QuickEnrollmentDialogFormProps {
@@ -30,13 +31,16 @@ interface QuickEnrollmentDialogFormProps {
 export const QuickEnrollmentDialogForm: React.FC<
     React.PropsWithChildren<WithSchoolAndYearId<QuickEnrollmentDialogFormProps>>
 > = ({ classId, schoolId, yearId, children }) => {
+    const [lastStudentEnrolled, setLastStudentEnrolled] = React.useState<TEnrolement | undefined>(undefined)
     const form = useFormHandleRef<QuickEnrollmentFormData>();
     const classrooms = useGetClassroomAsOptions({ schoolId, yearId }, { labelFormat: "short" })
     const onValidateData = useOnValidateDataRefresh()
 
     const { onSubmit, quickEnrolementMutation } = useQuickEnrollement({
-        onSuccess() {
+        onSuccess(lastStudentEnrolled) {
+            console.log(lastStudentEnrolled)
             form.current?.reset()
+            setLastStudentEnrolled(lastStudentEnrolled)
             onValidateData?.()
         },
     })
@@ -53,6 +57,11 @@ export const QuickEnrollmentDialogForm: React.FC<
                             Inscription et ajout de l'élève dans la salle ouverte
                         </DialogDescription>
                     </DialogHeader>
+                    {lastStudentEnrolled ? (
+                        <div>
+                            <TypographyLead>Dernier eleves inscrits {lastStudentEnrolled.code}</TypographyLead>
+                        </div>
+                    ) : null}
                     <FormSubmitter.Wrapper>
                         <QuickEnrollmentForm
                             ref={form}
