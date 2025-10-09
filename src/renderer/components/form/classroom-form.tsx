@@ -1,4 +1,4 @@
-import { forwardRef, type PropsWithChildren } from "react";
+import { forwardRef, useCallback, type PropsWithChildren } from "react";
 import { useControlledForm } from "@/commons/libs/forms";
 import { SECTION, SECTION_TRANSLATIONS } from "@/commons/constants/enum";
 import { type ClassAttributes, ClassSchema } from "@/renderer/libs/schemas";
@@ -45,6 +45,7 @@ export interface ClassroomFormProps {
     onSubmit?: (value: ClassroomFormData) => void;
     initialValues?: Partial<ClassroomFormData>;
     options?: { label: string; value: string }[];
+    onGenerateSugestion?(optionId: string | string, name: string): { name: string, shortName: string }
 }
 
 export interface ClassroomFormHandle extends ImperativeFormHandle<ClassroomFormData> { }
@@ -84,7 +85,7 @@ function OptionsSelect({ options, placeholder }: SelectProps) {
 export const ClassroomForm = forwardRef<
     ClassroomFormHandle,
     PropsWithChildren<ClassroomFormProps>
->(({ children, onSubmit, initialValues = {}, options = [] }, ref) => {
+>(({ children, onSubmit, onGenerateSugestion, initialValues = {}, options = [] }, ref) => {
     const [form, handleSubmit] = useControlledForm({
         schema: ClassSchema,
         defaultValues: { ...DEFAULT_CLASSROOM_VALUES, ...initialValues },
@@ -92,6 +93,17 @@ export const ClassroomForm = forwardRef<
     });
 
     useFormImperativeHandle(ref, form);
+
+    const handleGenerate = useCallback(() => {
+        const { identifier, optionId } = form.getValues()
+        if (identifier && optionId) {
+            const result = onGenerateSugestion?.(optionId, identifier)
+            if (result) {
+                form.setValue("identifier", result?.name)
+                form.setValue("shortIdentifier", result?.shortName)
+            }
+        }
+    }, [form])
 
     return (
         <Form {...form}>
@@ -103,7 +115,7 @@ export const ClassroomForm = forwardRef<
                         <FormItem>
                             <div className="flex items-center justify-between">
                                 <FormLabel>Nom complet</FormLabel>
-                                <ButtonAi />
+                                <ButtonAi onClick={handleGenerate} />
                             </div>
                             <FormControl>
                                 <Input {...field} />
@@ -122,10 +134,7 @@ export const ClassroomForm = forwardRef<
                     name="shortIdentifier"
                     render={({ field }) => (
                         <FormItem>
-                            <div className="flex items-center justify-between">
-                                <FormLabel>Nom abrégé</FormLabel>
-                                <ButtonAi />
-                            </div>
+                            <FormLabel>Nom abrégé</FormLabel>
                             <FormControl>
                                 <Input {...field} />
                             </FormControl>

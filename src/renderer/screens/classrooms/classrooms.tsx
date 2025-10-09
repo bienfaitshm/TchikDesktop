@@ -1,4 +1,4 @@
-import { ClassroomForm, type ClassroomFormData as FormValueType } from "@/renderer/components/form/classroom-form";
+import { ClassroomForm, getSuffixe, type ClassroomFormData as FormValueType } from "@/renderer/components/form/classroom-form";
 import type { TClassroom } from "@/commons/types/models";
 
 import { MUTATION_ACTION } from "@/commons/constants/enum";
@@ -52,7 +52,7 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
 
 
     const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId });
-    const options = useGetOptionAsOptions(schoolId)
+    const { options, data: optionsData } = useGetOptionAsOptions(schoolId)
 
     const tableAction = useTableAction<TClassroom>();
     const onConfirmDelete = useCallback(
@@ -177,6 +177,14 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
                             options={options}
                             onSubmit={onSubmit}
                             initialValues={{ ...initialData, schoolId, yearId }}
+                            onGenerateSugestion={(optionId, name) => {
+                                const seletedOption = optionsData.find(option => option.optionId == optionId)
+                                const suffix = getSuffixe(name)
+                                return ({
+                                    name: `${suffix} ${seletedOption?.optionName}`,
+                                    shortName: `${suffix} ${seletedOption?.optionShortName}`
+                                })
+                            }}
                         />
                     )
                 }) as any}
