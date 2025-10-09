@@ -4,20 +4,12 @@ import { WithSchoolAndYearId } from '@/commons/types/services';
 
 // --- UI Component Imports ---
 import { Button } from '@/renderer/components/ui/button';
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/renderer/components/ui/dialog';
 import { TypographyH1 } from '@/renderer/components/ui/typography';
 import { DataTable, DataContentHead, DataTableContent, DataContentBody } from '@/renderer/components/tables';
 import { EnrollmentHistoricsColumns } from '@/renderer/components/tables/columns.enrollment-history';
 
-// --- Form Component Imports ---
-import { QuickEnrollmentForm, QuickEnrollmentFormData, useFormHandleRef } from '@/renderer/components/form/quick-enrolement-form';
-import { ButtonLoader } from '@/renderer/components/form/button-loader';
-import { FormSubmitter } from '@/renderer/components/form/form-submiter';
 
-// --- Hooks and Utils ---
 import { Suspense } from '@/renderer/libs/queries/suspense';
-import { useGetClassroomAsOptions } from '@/renderer/hooks/data-as-options';
-import { useQuickEnrollement } from '@/renderer/hooks/query.actions';
 import { withCurrentConfig } from '@/renderer/hooks/with-application-config';
 import { EnrollmentDialog } from '../components/dialog/quick-enrollment-dialog-form';
 // Assuming you have a hook to fetch the enrollment history
@@ -64,7 +56,9 @@ const EnrollmentPage: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => 
 
                 {/* Suspense is great if the dialog or its data dependencies are lazy-loaded */}
                 <Suspense fallback={<Button size="sm" disabled>Chargement...</Button>}>
-                    <EnrollmentDialog schoolId={schoolId} yearId={yearId} />
+                    <EnrollmentDialog schoolId={schoolId} yearId={yearId}>
+                        <Button size="sm">Nouvelle inscription</Button>
+                    </EnrollmentDialog>
                 </Suspense>
             </header>
 
