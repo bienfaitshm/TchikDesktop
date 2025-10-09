@@ -19,15 +19,14 @@ import { TypographyH2, TypographySmall } from "@/renderer/components/ui/typograp
 import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { useGetClassroom } from "@/renderer/libs/queries/classroom";
-
-import { DataRefresher } from "@/renderer/providers/refrecher";
-import { QuickEnrollmentDialogForm } from "./students.dialog-form";
 import { StudentDetailSheet, useStudentDetailSheet } from "./students.detail-sheet";
 import { ButtonDataExport } from "@/renderer/components/sheets/export-button";
 import { ButtonSheetStudentStat } from "./students.stat";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
+import { EnrollmentDialog } from "@/renderer/components/dialog/quick-enrollment-dialog-form";
+import { StudentDetailsCard } from "@/renderer/components/student-details-infos";
 
 /**
  * Composant d'en-tête de la page de la classe.
@@ -75,7 +74,7 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
     });
 
     return (
-        <DataRefresher onDataChange={refetch}>
+        <>
             <div className="overflow-hidden bg-background">
                 <div className="pt-6 pb-4 px-6">
                     {/* Barre d'outils de la table : filtres et actions */}
@@ -99,16 +98,20 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
                                     {/* Le bouton pour les statistiques des élèves */}
                                     <ButtonSheetStudentStat students={students} />
                                     {/* Formulaire d'inscription rapide d'un nouvel élève */}
-                                    <QuickEnrollmentDialogForm
-                                        classId={currentClassroomId}
-                                        schoolId={schoolId}
-                                        yearId={yearId}
-                                    >
-                                        <Button size="sm" className="flex items-center gap-2">
-                                            <Plus className="size-4" />
-                                            <span>Nouvel élève</span>
-                                        </Button>
-                                    </QuickEnrollmentDialogForm>
+                                    <Suspense fallback={<Button size="sm" disabled>Chargement...</Button>}>
+                                        <EnrollmentDialog
+                                            schoolId={schoolId}
+                                            yearId={yearId}
+                                            initialValues={{ classroomId: currentClassroomId }}
+                                            dialogDescription="Inscription et ajout de l'élève dans la salle ouverte"
+                                            onSuccess={refetch}
+                                        >
+                                            <Button size="sm" className="flex items-center gap-2">
+                                                <Plus className="size-4" />
+                                                <span>Nouvel élève</span>
+                                            </Button>
+                                        </EnrollmentDialog>
+                                    </Suspense>
                                 </div>
                             </DataTableToolbar>
                             <DataTableContent>
@@ -127,8 +130,10 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
             </div>
 
             {/* La feuille de détails de l'élève, toujours présente mais cachée jusqu'à l'ouverture */}
-            <StudentDetailSheet ref={sheetRef} schoolId={schoolId} yearId={yearId} />
-        </DataRefresher>
+            <StudentDetailSheet ref={sheetRef}>
+                {student => <StudentDetailsCard data={student} schoolId={schoolId} yearId={yearId as string} onRefresh={refetch} />}
+            </StudentDetailSheet>
+        </>
     );
 };
 

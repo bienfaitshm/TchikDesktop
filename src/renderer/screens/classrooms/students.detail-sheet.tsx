@@ -7,7 +7,6 @@ import {
     SheetTitle,
 } from "@/renderer/components/ui/sheet";
 import { ScrollArea } from "@/renderer/components/ui/scroll-area";
-import { StudentDetailsCard } from "@/renderer/components/student-details-infos";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 
 export type Student = any
@@ -17,11 +16,7 @@ type StudentDetailSheetState = {
     student?: Student;
 };
 
-type StudentDetailSheetProps = {
-    schoolId: string;
-    yearId?: string;
-};
-
+type StudentDetailSheetProps = { children: (student: Student) => React.ReactNode }
 type StudentDetailSheetRef = {
     showInfos(student: Student): void;
 };
@@ -29,7 +24,7 @@ type StudentDetailSheetRef = {
 export const StudentDetailSheet = React.forwardRef<
     StudentDetailSheetRef,
     StudentDetailSheetProps
->(({ schoolId, yearId }, ref) => {
+>(({ children }, ref) => {
     const [state, setState] = React.useState<StudentDetailSheetState>({
         open: false,
         student: undefined,
@@ -75,11 +70,7 @@ export const StudentDetailSheet = React.forwardRef<
                     <div className="p-6 mb-10">
                         {state.student && (
                             <Suspense>
-                                <StudentDetailsCard
-                                    schoolId={schoolId}
-                                    yearId={yearId as string}
-                                    data={state.student}
-                                />
+                                <>{children(state.student)}</>
                             </Suspense>
                         )}
                     </div>
