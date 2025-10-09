@@ -177,7 +177,7 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
                             options={options}
                             onSubmit={onSubmit}
                             initialValues={{ ...initialData, schoolId, yearId }}
-                            onGenerateSugestion={(optionId, name) => {
+                            onGenerateSuggestion={(optionId, name) => {
                                 const seletedOption = optionsData.find(option => option.optionId == optionId)
                                 const suffix = getSuffixe(name)
                                 return ({

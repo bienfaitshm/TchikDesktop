@@ -45,7 +45,7 @@ export interface ClassroomFormProps {
     onSubmit?: (value: ClassroomFormData) => void;
     initialValues?: Partial<ClassroomFormData>;
     options?: { label: string; value: string }[];
-    onGenerateSugestion?(optionId: string | string, name: string): { name: string, shortName: string }
+    onGenerateSuggestion?(optionId: string | string, name: string): { name: string, shortName: string }
 }
 
 export interface ClassroomFormHandle extends ImperativeFormHandle<ClassroomFormData> { }
@@ -85,7 +85,7 @@ function OptionsSelect({ options, placeholder }: SelectProps) {
 export const ClassroomForm = forwardRef<
     ClassroomFormHandle,
     PropsWithChildren<ClassroomFormProps>
->(({ children, onSubmit, onGenerateSugestion, initialValues = {}, options = [] }, ref) => {
+>(({ children, onSubmit, onGenerateSuggestion, initialValues = {}, options = [] }, ref) => {
     const [form, handleSubmit] = useControlledForm({
         schema: ClassSchema,
         defaultValues: { ...DEFAULT_CLASSROOM_VALUES, ...initialValues },
@@ -95,16 +95,28 @@ export const ClassroomForm = forwardRef<
     useFormImperativeHandle(ref, form);
 
     const handleGenerate = useCallback(() => {
-        const { identifier, optionId } = form.getValues()
-        if (identifier && optionId) {
-            const result = onGenerateSugestion?.(optionId, identifier)
-            if (result) {
-                form.setValue("identifier", result?.name)
-                form.setValue("shortIdentifier", result?.shortName)
-            }
+        const { identifier, optionId } = form.getValues();
+        form.clearErrors(["identifier", "optionId"]);
+        if (!identifier) {
+            form.setError("identifier", { type: "required", message: "L'identifiant est requis pour générer une suggestion." });
+            return;
         }
-    }, [form])
 
+        if (!optionId) {
+            form.setError("optionId", { type: "required", message: "L'option de suggestion est requise, Veuillez sélectionner une option." });
+            return;
+        }
+
+        // 2. Logique de Génération (maintenant assurée d'avoir les valeurs)
+        const result = onGenerateSuggestion?.(optionId, identifier);
+
+        if (result) {
+            form.setValue("identifier", result?.name);
+            form.setValue("shortIdentifier", result?.shortName);
+        }
+
+        form.clearErrors(["identifier", "optionId"]);
+    }, [form, onGenerateSuggestion]);
     return (
         <Form {...form}>
             <form onSubmit={handleSubmit} className="space-y-4">

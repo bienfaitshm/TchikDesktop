@@ -1,13 +1,16 @@
 import React, { useCallback, useRef, useState, useImperativeHandle, type ReactNode } from "react";
 import {
     Sheet,
+    SheetClose,
     SheetContent,
     SheetDescription,
+    SheetFooter,
     SheetHeader,
     SheetTitle,
 } from "@/renderer/components/ui/sheet";
 import { ScrollArea } from "@/renderer/components/ui/scroll-area";
 import { Suspense } from "@/renderer/libs/queries/suspense";
+import { Button } from "../ui/button";
 
 
 
@@ -112,15 +115,15 @@ export const DataSheetViewer = React.forwardRef((
 
     return (
         <Sheet modal={false} open={state.open} onOpenChange={handleOpenChange}>
-            <SheetContent className="sm:max-w-xl p-0">
-                <ScrollArea className="h-full">
-                    <SheetHeader className="p-6 space-y-1">
-                        <SheetTitle>{title}</SheetTitle>
-                        <SheetDescription className="text-xs">
-                            {description}
-                        </SheetDescription>
-                    </SheetHeader>
-                    <div className="p-6 mb-10">
+            <SheetContent className="sm:max-w-xl p-0 flex flex-col h-full">
+                <SheetHeader className="p-6 border-b sticky top-0 z-10">
+                    <SheetTitle>{title}</SheetTitle>
+                    <SheetDescription className="text-xs">
+                        {description}
+                    </SheetDescription>
+                </SheetHeader>
+                <ScrollArea className="flex-1 overflow-y-auto">
+                    <div className="p-6">
                         {state.value !== undefined && (
                             <Suspense>
                                 <>{children(state.value)}</>
@@ -128,6 +131,13 @@ export const DataSheetViewer = React.forwardRef((
                         )}
                     </div>
                 </ScrollArea>
+                <SheetFooter className="p-4 border-t sticky bottom-0 z-10 justify-end"> {/* Ajout d'une bordure en haut pour séparer le pied de page */}
+                    <SheetClose asChild>
+                        <Button type="button" variant="outline">
+                            Fermer
+                        </Button>
+                    </SheetClose>
+                </SheetFooter>
             </SheetContent>
         </Sheet>
     );
