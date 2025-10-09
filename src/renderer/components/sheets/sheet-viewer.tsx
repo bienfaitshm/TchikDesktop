@@ -121,10 +121,8 @@ export const DataSheetViewer = React.forwardRef((
                         </SheetDescription>
                     </SheetHeader>
                     <div className="p-6 mb-10">
-                        {/* state.value est de type TValue | undefined */}
                         {state.value !== undefined && (
                             <Suspense>
-                                {/* children est appelé avec une valeur de type TValue */}
                                 <>{children(state.value)}</>
                             </Suspense>
                         )}

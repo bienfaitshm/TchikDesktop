@@ -19,7 +19,6 @@ import { TypographyH2, TypographySmall } from "@/renderer/components/ui/typograp
 import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { useGetClassroom } from "@/renderer/libs/queries/classroom";
-import { StudentDetailSheet, useStudentDetailSheet } from "./students.detail-sheet";
 import { ButtonDataExport } from "@/renderer/components/sheets/export-button";
 import { ButtonSheetStudentStat } from "./students.stat";
 import { Suspense } from "@/renderer/libs/queries/suspense";
@@ -27,6 +26,7 @@ import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
 import { EnrollmentDialog } from "@/renderer/components/dialog/quick-enrollment-dialog-form";
 import { StudentDetailsCard } from "@/renderer/components/student-details-infos";
+import { DataSheetViewer, useDataSheetViewer } from "@/renderer/components/sheets/sheet-viewer"
 
 /**
  * Composant d'en-tête de la page de la classe.
@@ -66,7 +66,7 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
     const { classroomId } = useParams<{ classroomId: string }>();
     const currentClassroomId = classroomId as string;
 
-    const { sheetRef, showStudentInfos } = useStudentDetailSheet();
+    const { sheetRef, showDetails } = useDataSheetViewer<any>();
     const { data: students = [], refetch } = useGetEnrollments({
         schoolId,
         yearId,
@@ -119,7 +119,7 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
                                 {/* Le clic sur une ligne ouvre la feuille de détails de l'élève */}
                                 <DataContentBody
                                     onClick={(row) => {
-                                        showStudentInfos(row.original);
+                                        showDetails(row.original)
                                     }}
                                 />
                             </DataTableContent>
@@ -130,9 +130,9 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
             </div>
 
             {/* La feuille de détails de l'élève, toujours présente mais cachée jusqu'à l'ouverture */}
-            <StudentDetailSheet ref={sheetRef}>
+            <DataSheetViewer ref={sheetRef}>
                 {student => <StudentDetailsCard data={student} schoolId={schoolId} yearId={yearId as string} onRefresh={refetch} />}
-            </StudentDetailSheet>
+            </DataSheetViewer>
         </>
     );
 };
