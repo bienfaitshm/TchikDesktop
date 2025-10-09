@@ -21,6 +21,7 @@ import {
     SelectValue,
 } from "@/renderer/components/ui/select";
 import { getEnumKeyValueList } from "@/commons/utils";
+import { ButtonAi } from "../buttons/button-ai";
 
 export * from "./utils";
 
@@ -100,7 +101,10 @@ export const ClassroomForm = forwardRef<
                     name="identifier"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Nom complet</FormLabel>
+                            <div className="flex items-center justify-between">
+                                <FormLabel>Nom complet</FormLabel>
+                                <ButtonAi />
+                            </div>
                             <FormControl>
                                 <Input {...field} />
                             </FormControl>
@@ -118,7 +122,10 @@ export const ClassroomForm = forwardRef<
                     name="shortIdentifier"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Nom abrégé</FormLabel>
+                            <div className="flex items-center justify-between">
+                                <FormLabel>Nom abrégé</FormLabel>
+                                <ButtonAi />
+                            </div>
                             <FormControl>
                                 <Input {...field} />
                             </FormControl>
