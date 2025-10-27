@@ -55,7 +55,9 @@ export const EnrollmentDialog: React.FC<EnrollmentDialogProps> = ({
 
     const { onSubmit, quickEnrolementMutation } = useQuickEnrollement({
         onSuccess: (enrolement) => {
-            formRef.current?.reset(getDefaultValues({ schoolId, yearId, ...initialValues }));
+            const value = getDefaultValues({ schoolId, yearId, ...initialValues });
+            console.log({ value })
+            formRef.current?.reset();
             onSuccess?.()
             setPrevEnrollement(enrolement)
         },

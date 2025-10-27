@@ -17,6 +17,7 @@ import { DocumentEnrollmentForm, DocumentEnrollmentFormData } from "@/renderer/c
 import { useCallback } from "react";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
+import { useExportCotationDocument, useExportStudentEnrollementSheet } from "@/renderer/libs/queries/document-export";
 
 
 
@@ -50,9 +51,15 @@ const SheetFormContent: React.FC<WithSchoolAndYearId<{ onSubmit(data: DocumentEn
 }
 
 export const SheetDataExport: React.FC<WithSchoolAndYearId<{ currentClassroom?: string }>> = (props) => {
+    const mutation = useExportCotationDocument()
     const onSubmit = useCallback((value: DocumentEnrollmentFormData) => {
-        console.log(value)
+        mutation.mutate(value, {
+            onSuccess(data) {
+                console.log(value, data)
+            },
+        })
     }, [])
+
     return (
         <Sheet modal={false}>
             <SheetTrigger asChild>

@@ -66,10 +66,18 @@ server.post<any, WithSchoolAndYearId>("export/sheet/test", async ({ data }) => {
 server.post<any, DocumentFilter>(
   "export/sheet/enrollment-students",
   async ({ data }) => {
+    console.log(data);
+    // return response({ filenamePath: "okey" });
+
     try {
       // 1. Récupération des données des élèves
       const classrooms: EnrollmentData[] = (await mapModelsToPlainList(
-        getEnrollmentSchoolData(data)
+        getEnrollmentSchoolData({
+          classrooms: data.classrooms,
+          schoolId: data.schoolId,
+          sections: data.sections,
+          yearId: data.yearId,
+        })
       )) as EnrollmentData[];
 
       // 2. Traitement des données

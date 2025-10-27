@@ -14,7 +14,7 @@ import { mapModelsToPlainList } from "../db/models/utils";
 import { Status } from "@/commons/libs/electron-apis/constant";
 import {
   type EnrollmentData,
-  getEnrollmentSchoolData,
+  getClassesWithStudents,
 } from "../db/services/document";
 
 // Le nom de la route est plus descriptif pour une exportation spécifique.
@@ -81,7 +81,7 @@ server.post<any, DocumentFilter>(
   "export/document/cotation-students",
   async ({ data }) => {
     const responseData: EnrollmentData[] = (await mapModelsToPlainList(
-      getEnrollmentSchoolData(data)
+      getClassesWithStudents(data)
     )) as EnrollmentData[];
     return response(responseData);
   }

@@ -117,6 +117,20 @@ const StudentFields: React.FC<{
                         </FormItem>
                     )}
                 />
+
+                <FormField
+                    control={form.control}
+                    name="student.birthPlace"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Lieu de naissance</FormLabel>
+                            <FormControl>
+                                <Input {...field} value={field.value ?? ""} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="student.birthDate"
@@ -131,19 +145,6 @@ const StudentFields: React.FC<{
                                         placeholder="Sélectionner la date de naissance"
                                     />
                                 </div>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="student.birthPlace"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Lieu de naissance</FormLabel>
-                            <FormControl>
-                                <Input {...field} value={field.value ?? ""} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

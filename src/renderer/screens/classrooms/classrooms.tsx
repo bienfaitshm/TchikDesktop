@@ -72,19 +72,13 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
                     tableAction.onClose();
                 });
             } else if (type === MUTATION_ACTION.EDIT && initialData) {
-
                 handleUpdate(initialData.classId, data, data.identifier, () => {
-
                     tableAction.onClose();
                 });
             }
         },
         [handleCreate, handleUpdate, schoolId, tableAction]
     );
-
-
-
-
 
     const { menus, handleMenusAction: onPressMenu } = useMemo(
         () =>
@@ -94,8 +88,6 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
             }),
         [tableAction.onUpdate, tableAction.onDelete]
     );
-
-
 
     const enhancedColumns = useMemo(
         () =>
@@ -115,7 +107,6 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
         <div className="my-10 mx-auto h-full container max-w-screen-lg">
             <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "list" | "edit")}>
                 {/* Contenu de l'onglet "Vue Liste" */}
-
                 <DataTable<TClassroom>
                     data={classrooms}
                     columns={enhancedColumns}
@@ -159,9 +150,7 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
                             <DataTablePagination />
                         </TabsContent>
                     </Suspense>
-
                 </DataTable>
-
             </Tabs>
 
             {/* Les dialogues sont rendus au niveau racine pour une meilleure accessibilité et superposition */}
