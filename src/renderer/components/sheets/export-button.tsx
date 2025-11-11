@@ -14,10 +14,9 @@ import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { FormSubmitter } from "@/renderer/components/form/form-submiter";
 import { DocumentEnrollmentForm, DocumentEnrollmentFormData } from "@/renderer/components/form/documents/classroom-document-export";
-import { useCallback } from "react";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
-import { useExportCotationDocument, useExportStudentEnrollementSheet } from "@/renderer/libs/queries/document-export";
+import { useExport } from "@/renderer/hooks/documents";
 
 
 
@@ -45,20 +44,22 @@ const SheetFormContent: React.FC<WithSchoolAndYearId<{ onSubmit(data: DocumentEn
     const classrooms = useGetClassroomAsOptions({ schoolId, yearId }, { labelFormat: "short" })
     return (
         <FormSubmitter.Wrapper>
-            <DocumentEnrollmentForm classrooms={classrooms} initialValues={{ schoolId, yearId, classrooms: currentClassroom ? [currentClassroom] : [] }} onSubmit={onSubmit} />
+            <DocumentEnrollmentForm
+                classrooms={classrooms}
+                initialValues={{
+                    schoolId,
+                    yearId,
+                    classrooms: currentClassroom ? [currentClassroom] : []
+                }}
+                onSubmit={onSubmit}
+            />
         </FormSubmitter.Wrapper>
     )
 }
 
 export const SheetDataExport: React.FC<WithSchoolAndYearId<{ currentClassroom?: string }>> = (props) => {
-    const mutation = useExportCotationDocument()
-    const onSubmit = useCallback((value: DocumentEnrollmentFormData) => {
-        mutation.mutate(value, {
-            onSuccess(data) {
-                console.log(value, data)
-            },
-        })
-    }, [])
+    const [isPending, onSubmit] = useExport()
+
 
     return (
         <Sheet modal={false}>
@@ -79,15 +80,25 @@ export const SheetDataExport: React.FC<WithSchoolAndYearId<{ currentClassroom?: 
                     <div className="mt-5 mb-10">
                         <SheetFormContent onSubmit={onSubmit} {...props} />
                     </div>
-                    <LoaderIndicator message="Exportation..." />
+                    {isPending && <LoaderIndicator message="Exportation..." />}
                     <SheetFooter className="pt-5">
                         <SheetClose asChild>
-                            <Button className="text-sm" size="sm" type="button" variant="secondary">
+                            <Button
+                                className="text-sm"
+                                size="sm"
+                                type="button"
+                                variant="secondary"
+                                disabled={isPending}
+                            >
                                 Fermer
                             </Button>
                         </SheetClose>
                         <FormSubmitter.Trigger asChild>
-                            <ButtonLoader className="text-sm" size="sm">
+                            <ButtonLoader
+                                className="text-sm"
+                                size="sm"
+                                disabled={isPending}
+                            >
                                 Exporter
                             </ButtonLoader>
                         </FormSubmitter.Trigger>
