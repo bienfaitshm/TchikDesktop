@@ -1,4 +1,11 @@
-import type { TEnrolementInsert, TUserInsert } from "@/commons/types/models";
+import type {
+  TClassroom,
+  TEnrolement,
+  TEnrolementInsert,
+  TUserInsert,
+  TWithEnrolements,
+  TWithUser,
+} from "@/commons/types/models";
 import type { TClassroomInsert } from "./models";
 import type { SECTION, STUDENT_STATUS } from "@/commons/constants/enum";
 export * from "./models";
@@ -124,4 +131,8 @@ export type StudentData = {
   secondaryStudentsByOption: OptionStudentCount[];
   studentsBySection: SectionStudentCount[];
   totalStudents: TotalStudentCount;
+};
+
+export type ClassesWithStudents = TClassroom & {
+  ClassroomEnrolements: TWithUser<TEnrolement>[];
 };

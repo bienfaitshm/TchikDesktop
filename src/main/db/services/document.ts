@@ -7,6 +7,11 @@ import type {
 } from "@/commons/types/models";
 import type { DocumentFilter } from "@/commons/types/services";
 import { getDefinedAttributes } from "@/main/db/models/utils";
+
+// Définition du type d'entrée/sortie
+export type ClassesWithStudents = TClassroom & {
+  ClassroomEnrolements: TWithUser<TEnrolement>[];
+};
 /**
  * filter
  * schoolId; yearId ;section or all; list of schools;
@@ -110,11 +115,16 @@ export async function getClassesWithStudents(filter: DocumentFilter) {
               as: "User", // Nom de l'association ClassroomEnrolement.belongsTo(User)
               attributes: { exclude: ["password", "schoolId"] }, // Exclut les champs sensibles/redondants
               // 4. TRI DES ÉLÈVES PAR NOM DE FAMILLE (last_name)
-              order: [
-                ["lastName", "ASC"],
-                ["middleName", "ASC"],
-              ],
+              // order: [
+              //   [Sequelize.fn("LOWER", Sequelize.col("lastName")), "ASC"],
+              //   [Sequelize.fn("LOWER", Sequelize.col("middleName")), "ASC"],
+              // ],
             },
+          ],
+          order: [
+            [Sequelize.literal('LOWER("User"."last_name")'), "ASC"],
+            [Sequelize.literal('LOWER("User"."middle_name")'), "ASC"],
+            [Sequelize.literal('LOWER("User"."first_name")'), "ASC"],
           ],
         },
       ],
@@ -136,4 +146,37 @@ export async function getClassesWithStudents(filter: DocumentFilter) {
     );
     throw new Error("Impossible de récupérer les données d'inscription.");
   }
+}
+
+/**
+ * Trie les élèves (ClassroomEnrolements) d'une classe par leur nom complet (fullname)
+ * par ordre alphabétique (ASC).
+ *
+ * @param classData L'objet de données de la classe avec la liste des élèves.
+ * @returns Le même objet de données, mais avec les élèves triés.
+ */
+export function sortStudentsByFullName(
+  classDatas: ClassesWithStudents[]
+): ClassesWithStudents[] {
+  // 1. Récupération de la liste des inscriptions
+  return classDatas.map((classData) => {
+    const enrolements = classData.ClassroomEnrolements;
+    // console.log(
+    //   "TYPE==========================",
+    //   JSON.stringify(enrolements, null, 4)
+    // );
+    // 2. Tri du tableau d'inscriptions
+    classData.ClassroomEnrolements.sort((a, b) => {
+      // Les objets TWithUser<TEnrolement> contiennent l'objet User.
+      const nameA = a.User.fullname || ""; // Utilise le fullname de l'utilisateur A (ou chaîne vide si absent)
+      const nameB = b.User.fullname || ""; // Utilise le fullname de l'utilisateur B (ou chaîne vide si absent)
+
+      // Comparaison locale pour un tri alphabétique correct (ASC)
+      return nameA.localeCompare(nameB);
+    });
+
+    // 3. Le tableau 'enrolements' étant un pointeur vers classData.ClassroomEnrolements,
+    // le tri modifie directement l'objet d'entrée.
+    return classData;
+  });
 }

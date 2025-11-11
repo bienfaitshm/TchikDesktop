@@ -15,6 +15,7 @@ import { Status } from "@/commons/libs/electron-apis/constant";
 import {
   type EnrollmentData,
   getClassesWithStudents,
+  sortStudentsByFullName,
 } from "../db/services/document";
 
 // Le nom de la route est plus descriptif pour une exportation spécifique.
@@ -80,9 +81,44 @@ server.post<any, WithSchoolAndYearId>(
 server.post<any, DocumentFilter>(
   "export/document/cotation-students",
   async ({ data }) => {
-    const responseData: EnrollmentData[] = (await mapModelsToPlainList(
-      getClassesWithStudents(data)
-    )) as EnrollmentData[];
-    return response(responseData);
+    try {
+      const responseData: EnrollmentData[] = (await mapModelsToPlainList(
+        getClassesWithStudents(data)
+      )) as EnrollmentData[];
+
+      const _data = {
+        classrooms: sortStudentsByFullName(responseData as any),
+      };
+      const document = await generateDocxReport(
+        resolveTemplatePath("cotations-secondary.docx"),
+        _data
+      );
+
+      // 4. Sauvegarde du fichier via la boîte de dialogue
+      const filenamePath = await saveFileWithDialog(
+        document,
+        WORD_FILE_OPTIONS
+      );
+
+      // 5. Envoi de la réponse à l'application
+      if (filenamePath) {
+        return response({ filenamePath, responseData });
+      }
+
+      // Si l'utilisateur annule le dialogue de sauvegarde
+      return response(
+        { message: "Opération annulée par l'utilisateur." },
+        Status.INTERNAL_SERVER // Ou Status.CLIENT_ERROR selon l'intention
+      );
+      // return response(responseData);
+    } catch (error) {
+      // Gestion centralisée des erreurs
+      console.error("Erreur lors de l'exportation du document:", error);
+      return response(
+        { error: String(error) },
+        Status.INTERNAL_SERVER,
+        "Il y a eu une erreur lors de l'exportation du document."
+      );
+    }
   }
 );
