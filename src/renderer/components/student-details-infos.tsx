@@ -20,15 +20,15 @@ import { useGetEnrollment, useUpdateEnrollment } from "@/renderer/libs/queries/e
 import { useUserManagement } from "@/renderer/hooks/query.mangements";
 import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-import { useOnValidateDataRefresh } from "@/renderer/providers/refrecher";
 import type { TEnrolement, TWithUser, TWithClassroom } from "@/commons/types/models";
 
 // Types
 export type StudentDetails = TWithClassroom<TWithUser<TEnrolement>>;
-interface StudentDetailsCardProps {
+export interface StudentDetailsCardProps {
     data: StudentDetails;
     schoolId: string;
     yearId: string;
+    onRefresh?(): void;
 }
 
 // Composant pour afficher une ligne d'information
@@ -184,15 +184,14 @@ const EditEnrollmentInfos = ({
     );
 };
 
-export const StudentDetailsCard = ({ schoolId, yearId, data }: StudentDetailsCardProps) => {
+export const StudentDetailsCard = ({ schoolId, yearId, data, onRefresh: globalRefesh }: StudentDetailsCardProps) => {
     const { classroomId } = useParams<{ classroomId: string }>();
     const { data: enrollment, refetch } = useGetEnrollment(data.enrolementId, { initialData: data });
-    const invalidateData = useOnValidateDataRefresh();
 
     const onRefresh = useCallback(() => {
         refetch();
-        invalidateData();
-    }, [refetch, invalidateData]);
+        globalRefesh?.();
+    }, [refetch, globalRefesh]);
 
     return (
         <div className="space-y-6">

@@ -13,7 +13,7 @@ type GenderInputProps = {
 }
 export const GenderInput = React.forwardRef<any, GenderInputProps>(({ onChange, value = USER_GENDER.MALE }, ref) => {
     return (
-        <Select onValueChange={onChange} defaultValue={value}>
+        <Select onValueChange={onChange} defaultValue={value} value={value}>
             <FormControl>
                 <SelectTrigger>
                     <SelectValue ref={ref} placeholder="Sélectionner le sexe ici..." />

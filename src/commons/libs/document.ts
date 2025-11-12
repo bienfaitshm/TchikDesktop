@@ -9,6 +9,8 @@ export enum DOCUMENT_TYPE {
    */
   STUDENT_LIST = "STUDENT_LIST",
 
+  COTATION_LISTE = "COTATION_LIST",
+
   /**
    * Represents a grading sheet used to record and manage student grades.
    */
@@ -55,6 +57,13 @@ export const DOCUMENT_METADATA: Record<DOCUMENT_TYPE, DocumentMetaData> = {
     title: "Statistiques d'inscription",
     subTitle:
       "Créer un document statistique sur les inscriptions pour une ou plusieurs classes.",
+  },
+
+  [DOCUMENT_TYPE.COTATION_LISTE]: {
+    type: "document",
+    title: "Fiches des contations",
+    subTitle:
+      "Exporter les fiches des cotation  pour une ou plusieurs classes.",
   },
 };
 

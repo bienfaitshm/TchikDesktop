@@ -26,7 +26,7 @@ export * from "./utils";
 // Définition du type pour les données du formulaire
 export type QuickEnrollmentFormData = QuickEnrollmentSchemaAttributes;
 
-const DEFAULT_QUICK_ENROLLMENT_VALUES: QuickEnrollmentFormData = {
+export const DEFAULT_QUICK_ENROLLMENT_VALUES: QuickEnrollmentFormData = {
     classroomId: "",
     isNewStudent: false,
     schoolId: "",
@@ -43,6 +43,13 @@ const DEFAULT_QUICK_ENROLLMENT_VALUES: QuickEnrollmentFormData = {
         birthPlace: "Lubumbashi",
     },
 };
+
+
+export const getDefaultValues = (initialValues: Partial<QuickEnrollmentFormData>): Partial<QuickEnrollmentFormData> => {
+    return ({
+        ...initialValues, student: { ...initialValues?.student, ...DEFAULT_QUICK_ENROLLMENT_VALUES.student }
+    })
+}
 
 // Interface pour les options de classe
 interface ClassroomOption {
@@ -110,6 +117,20 @@ const StudentFields: React.FC<{
                         </FormItem>
                     )}
                 />
+
+                <FormField
+                    control={form.control}
+                    name="student.birthPlace"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Lieu de naissance</FormLabel>
+                            <FormControl>
+                                <Input {...field} value={field.value ?? ""} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="student.birthDate"
@@ -124,19 +145,6 @@ const StudentFields: React.FC<{
                                         placeholder="Sélectionner la date de naissance"
                                     />
                                 </div>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="student.birthPlace"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Lieu de naissance</FormLabel>
-                            <FormControl>
-                                <Input {...field} value={field.value ?? ""} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

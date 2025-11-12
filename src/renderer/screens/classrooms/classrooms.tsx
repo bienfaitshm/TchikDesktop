@@ -1,4 +1,4 @@
-import { ClassroomForm, type ClassroomFormData as FormValueType } from "@/renderer/components/form/classroom-form";
+import { ClassroomForm, getSuffixe, type ClassroomFormData as FormValueType } from "@/renderer/components/form/classroom-form";
 import type { TClassroom } from "@/commons/types/models";
 
 import { MUTATION_ACTION } from "@/commons/constants/enum";
@@ -52,7 +52,7 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
 
 
     const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId });
-    const options = useGetOptionAsOptions(schoolId)
+    const { options, data: optionsData } = useGetOptionAsOptions(schoolId)
 
     const tableAction = useTableAction<TClassroom>();
     const onConfirmDelete = useCallback(
@@ -72,19 +72,13 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
                     tableAction.onClose();
                 });
             } else if (type === MUTATION_ACTION.EDIT && initialData) {
-
                 handleUpdate(initialData.classId, data, data.identifier, () => {
-
                     tableAction.onClose();
                 });
             }
         },
         [handleCreate, handleUpdate, schoolId, tableAction]
     );
-
-
-
-
 
     const { menus, handleMenusAction: onPressMenu } = useMemo(
         () =>
@@ -94,8 +88,6 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
             }),
         [tableAction.onUpdate, tableAction.onDelete]
     );
-
-
 
     const enhancedColumns = useMemo(
         () =>
@@ -115,7 +107,6 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
         <div className="my-10 mx-auto h-full container max-w-screen-lg">
             <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "list" | "edit")}>
                 {/* Contenu de l'onglet "Vue Liste" */}
-
                 <DataTable<TClassroom>
                     data={classrooms}
                     columns={enhancedColumns}
@@ -159,9 +150,7 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
                             <DataTablePagination />
                         </TabsContent>
                     </Suspense>
-
                 </DataTable>
-
             </Tabs>
 
             {/* Les dialogues sont rendus au niveau racine pour une meilleure accessibilité et superposition */}
@@ -177,6 +166,14 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
                             options={options}
                             onSubmit={onSubmit}
                             initialValues={{ ...initialData, schoolId, yearId }}
+                            onGenerateSuggestion={(optionId, name) => {
+                                const seletedOption = optionsData.find(option => option.optionId == optionId)
+                                const suffix = getSuffixe(name)
+                                return ({
+                                    name: `${suffix} ${seletedOption?.optionName}`,
+                                    shortName: `${suffix} ${seletedOption?.optionShortName}`
+                                })
+                            }}
                         />
                     )
                 }) as any}

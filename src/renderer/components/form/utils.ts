@@ -164,3 +164,7 @@ export function mergeFormDefaultValues<T extends {}>(
 ): Partial<T> {
   return args.reduce((prev, current) => ({ ...prev, ...current }), {} as T);
 }
+
+export function getSuffixe(value: string | number) {
+  return value === "1" ? `${value}er` : `${value}e`;
+}

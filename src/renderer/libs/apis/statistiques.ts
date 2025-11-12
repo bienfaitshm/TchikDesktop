@@ -5,6 +5,11 @@ import type {
   GenderCountByClassAndSection,
   StudentsBySection,
   TotalStudentsInSchool,
+  TotalStudentCount,
+  ClassGenderCount,
+  GenderCountResult,
+  OptionStudentCount,
+  SectionStudentCount,
   WithSchoolAndYearId,
 } from "@/commons/types/services";
 import { clientApis } from "./client";
@@ -16,7 +21,7 @@ import { clientApis } from "./client";
  */
 export const getTotalStudentsInSchool = (params: WithSchoolAndYearId) => {
   return clientApis
-    .get<TotalStudentsInSchool>("statistiques/total-students", {
+    .get<TotalStudentCount>("statistiques/total-students", {
       params,
     })
     .then((res) => res.data);
@@ -29,7 +34,7 @@ export const getTotalStudentsInSchool = (params: WithSchoolAndYearId) => {
  */
 export const getStudentsBySection = (params: WithSchoolAndYearId) => {
   return clientApis
-    .get<StudentsBySection>("statistiques/students-by-section", {
+    .get<SectionStudentCount[]>("statistiques/students-by-section", {
       params,
     })
     .then((res) => res.data);
@@ -38,13 +43,13 @@ export const getStudentsBySection = (params: WithSchoolAndYearId) => {
 /**
  * Récupère le nombre de garçons et de filles pour chaque classe de l'école.
  * @param {WithSchoolAndYearId} params - L'ID de l'école et l'ID de l'année scolaire.
- * @returns {Promise<GenderCountByClassAndSection>} Un tableau d'objets avec le décompte des genres par classe.
+ * @returns {Promise<ClassGenderCount>} Un tableau d'objets avec le décompte des genres par classe.
  */
 export const getGenderCountByClassAndSection = (
   params: WithSchoolAndYearId
 ) => {
   return clientApis
-    .get<GenderCountByClassAndSection>("statistiques/gender-count-by-class", {
+    .get<ClassGenderCount[]>("statistiques/gender-count-by-class", {
       params,
     })
     .then((res) => res.data);
@@ -53,18 +58,15 @@ export const getGenderCountByClassAndSection = (
 /**
  * Récupère le nombre d'élèves par option pour la section secondaire.
  * @param {WithSchoolAndYearId} params - L'ID de l'école et l'ID de l'année scolaire.
- * @returns {Promise<StudentsByOptionForSecondary>} Un tableau d'objets avec le nombre d'élèves par option du secondaire.
+ * @returns {Promise<OptionStudentCount>} Un tableau d'objets avec le nombre d'élèves par option du secondaire.
  */
 export const getStudentsByOptionForSecondary = (
   params: WithSchoolAndYearId
 ) => {
   return clientApis
-    .get<StudentsByOptionForSecondary>(
-      "statistiques/students-by-option/secondary",
-      {
-        params,
-      }
-    )
+    .get<OptionStudentCount[]>("statistiques/students-by-option/secondary", {
+      params,
+    })
     .then((res) => res.data);
 };
 

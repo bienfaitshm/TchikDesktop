@@ -115,19 +115,21 @@ export function useGetClassroomAsOptions(
  *
  * @param {string} schoolId L'ID de l'école pour laquelle récupérer les options.
  * @param {DataToOptionConverterOptions} [options] Options de formatage du libellé.
- * @returns {Option[]} Un tableau d'options académiques.
  */
 export function useGetOptionAsOptions(
   schoolId: string,
   options?: DataToOptionConverterOptions
-): Option[] {
+) {
   const { data: dataOptions = [] } = useGetOptions(schoolId);
-
-  return useDataToOptions({
+  const _options = useDataToOptions({
     data: dataOptions,
     valueKey: "optionId",
     labelKeyLong: "optionName",
     labelKeyShort: "optionShortName",
     options,
   });
+  return {
+    options: _options,
+    data: dataOptions,
+  };
 }

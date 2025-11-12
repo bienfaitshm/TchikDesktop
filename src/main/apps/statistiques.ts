@@ -16,7 +16,7 @@ server.get<any, WithSchoolAndYearId>(
     try {
       const result = await services.getTotalStudentsInSchool(params);
       if (result) {
-        return response(mapModelToPlain(result));
+        return response(mapModelToPlain(result as any));
       }
       return response({}, Status.NOT_FOUND, "Ecole non trouvee");
     } catch (error) {

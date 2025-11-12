@@ -202,10 +202,33 @@ export async function getStudentsByOptionForSecondary({
         ),
         "studentCount",
       ],
+      [
+        sequelize.fn(
+          "COUNT",
+          sequelize.literal(
+            `CASE WHEN User.gender = '${USER_GENDER.FEMALE}' THEN 1 END`
+          )
+        ),
+        "femaleCount",
+      ],
+      [
+        sequelize.fn(
+          "COUNT",
+          sequelize.literal(
+            `CASE WHEN User.gender = '${USER_GENDER.MALE}' THEN 1 END`
+          )
+        ),
+        "maleCount",
+      ],
       [sequelize.col("ClassRoom.Option.option_name"), "optionName"],
       [sequelize.col("ClassRoom.Option.option_short_name"), "optionShortName"],
     ],
     include: [
+      {
+        model: User,
+        required: true,
+        attributes: [],
+      },
       {
         model: ClassRoom,
         attributes: [],
