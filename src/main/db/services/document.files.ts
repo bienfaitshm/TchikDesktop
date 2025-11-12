@@ -74,6 +74,24 @@ const handleStudentList: IDocumentProcessor = async ({ school, filter }) => {
 
 /**
  * @async
+ * @function handleStudentList
+ * Gère la génération du document de liste d'étudiants au format Word.
+ * @param {DocumentProcessParams} params - Les paramètres incluant l'école et les filtres.
+ * @returns {Promise<DocumentGenerationResult>}
+ */
+const handleCotationList: IDocumentProcessor = async ({ school, filter }) => {
+  // 1. Récupération et formatage des données brutes (classes + étudiants)
+  const classrooms = await parseClassroomWithStudent(filter);
+
+  // 2. Génération du document Word
+  const data = await generateContationDocument({ school, classrooms });
+
+  // 3. Retour du contenu et des options de sauvegarde
+  return { data, options: WORD_FILE_OPTIONS };
+};
+
+/**
+ * @async
  * @function handleEnrollmentExcel
  * Gère la génération du fichier Excel d'inscription. (À implémenter)
  * @param {DocumentProcessParams} params - Les paramètres incluant l'école et les filtres.
@@ -120,6 +138,7 @@ export const DocumentProcessors: Record<DOCUMENT_TYPE, IDocumentProcessor> = {
   [DOCUMENT_TYPE.ENROLLMENT_EXCEL]: handleEnrollmentExcel,
   [DOCUMENT_TYPE.ENROLLMENT_STATISTICS]: handleEnrollmentStatistics,
   [DOCUMENT_TYPE.GRADING_SHEET]: handleGradingSheet,
+  [DOCUMENT_TYPE.COTATION_LISTE]: handleCotationList,
 };
 
 // --- Fonction d'Entrée Principale ---
