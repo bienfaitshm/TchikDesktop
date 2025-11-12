@@ -72,7 +72,7 @@ server.post<any, DocumentFilter>("export/documents", async ({ data }) => {
       );
     }
     return response(
-      { error: "Document processing failed" },
+      { error: result.errorMessage || "Document processing failed" },
       Status.INTERNAL_SERVER
     );
   } catch (error) {
