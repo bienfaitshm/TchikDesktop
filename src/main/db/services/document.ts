@@ -65,7 +65,9 @@ export async function getEnrollmentSchoolData({
  * @param yearId L'identifiant de l'année scolaire.
  * @returns Une promesse résolue avec un tableau de type EnrollmentData.
  */
-export async function getClassesWithStudents(filter: DocumentFilter) {
+export async function getClassesWithStudents(
+  filter: Omit<DocumentFilter, "documentType">
+) {
   // Construction dynamique de la clause WHERE
   const whereClause: WhereOptions = {
     schoolId: filter.schoolId,
