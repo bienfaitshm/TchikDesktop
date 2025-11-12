@@ -66,7 +66,7 @@ const handleStudentList: IDocumentProcessor = async ({ school, filter }) => {
   const classrooms = await parseClassroomWithStudent(filter);
 
   // 2. Génération du document Word
-  const data = generateEnrollementDocument({ school, classrooms });
+  const data = await generateEnrollementDocument({ school, classrooms });
 
   // 3. Retour du contenu et des options de sauvegarde
   return { data, options: WORD_FILE_OPTIONS };

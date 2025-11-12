@@ -21,6 +21,7 @@ export async function generateContationDocument(data: CotationData) {
 }
 
 export async function generateEnrollementDocument(data: CotationData) {
+  console.log(JSON.stringify(data, null, 4));
   const document = await generateDocxReport(
     resolveTemplatePath(DOCUMENT_NAME.enrollementStudent),
     data

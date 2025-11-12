@@ -1,4 +1,4 @@
 export const DOCUMENT_NAME = {
   contationSecondary: "cotations-secondary.docx",
-  enrollementStudent: "enrollement-students.docx",
+  enrollementStudent: "enrollment-students.docx",
 } as const;
