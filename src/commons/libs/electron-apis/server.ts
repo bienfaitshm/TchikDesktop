@@ -16,11 +16,15 @@ interface ServerRequest<
 
 type ServerResponse<R> = TResponse<R>;
 
-type RouteHandler<TRes, TData, TParams extends object> = (
+export type RouteHandler<TRes, TData, TParams extends object> = (
   request: ServerRequest<TData, TParams>
 ) => Promise<ServerResponse<TRes> | TRes>;
 
-interface Route<TRes = unknown, TData = unknown, TParams extends object = {}> {
+export interface Route<
+  TRes = unknown,
+  TData = unknown,
+  TParams extends object = {},
+> {
   name: string;
   handler: RouteHandler<TRes, TData, TParams>;
 }

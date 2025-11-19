@@ -20,6 +20,8 @@ export const Status = {
   INTERNAL_SERVER: 500,
   BAD_GETAWAY: 502,
   GETAWAY_TIMEOUT: 504,
+
+  CLIENT_ERROR: 499,
 } as const;
 
 export const SuccessStatus: number[] = [

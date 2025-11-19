@@ -51,37 +51,40 @@ import { processDocument } from "@/main/db/services/document.files";
 //   }
 // );
 
-server.post<any, DocumentFilter>("export/documents", async ({ data }) => {
-  try {
-    const result = await processDocument(data);
-    if (result.success) {
-      // 4. Sauvegarde du fichier via la boîte de dialogue
-      const filenamePath = await saveFileWithDialog(
-        result.result.data,
-        result.result.options
-      );
+server.post<any, DocumentFilter>(
+  "export/documents",
+  async ({ data, headers, params }) => {
+    try {
+      const result = await processDocument(data);
+      if (result.success) {
+        // 4. Sauvegarde du fichier via la boîte de dialogue
+        const filenamePath = await saveFileWithDialog(
+          result.result.data,
+          result.result.options
+        );
 
-      // 5. Envoi de la réponse à l'application
-      if (filenamePath) {
-        return response({ filenamePath });
+        // 5. Envoi de la réponse à l'application
+        if (filenamePath) {
+          return response({ filenamePath });
+        }
+        // Si l'utilisateur annule le dialogue de sauvegarde
+        return response(
+          { message: "Opération annulée par l'utilisateur." },
+          Status.INTERNAL_SERVER // Ou Status.CLIENT_ERROR selon l'intention
+        );
       }
-      // Si l'utilisateur annule le dialogue de sauvegarde
       return response(
-        { message: "Opération annulée par l'utilisateur." },
-        Status.INTERNAL_SERVER // Ou Status.CLIENT_ERROR selon l'intention
+        { error: result.errorMessage || "Document processing failed" },
+        Status.INTERNAL_SERVER
+      );
+    } catch (error) {
+      // Gestion centralisée des erreurs
+      console.error("Erreur lors de l'exportation du document:", error);
+      return response(
+        { error: String(error) },
+        Status.INTERNAL_SERVER,
+        "Il y a eu une erreur lors de l'exportation du document."
       );
     }
-    return response(
-      { error: result.errorMessage || "Document processing failed" },
-      Status.INTERNAL_SERVER
-    );
-  } catch (error) {
-    // Gestion centralisée des erreurs
-    console.error("Erreur lors de l'exportation du document:", error);
-    return response(
-      { error: String(error) },
-      Status.INTERNAL_SERVER,
-      "Il y a eu une erreur lors de l'exportation du document."
-    );
   }
-});
+);
