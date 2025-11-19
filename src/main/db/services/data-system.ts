@@ -17,8 +17,6 @@ export interface DataSystemHandler {
   handler: DataRequestHandler;
 }
 
-// --- Fichier DataSystem.ts (Code refactorisé) ---
-
 /**
  * 💾 Résultat de l'appel au système de données.
  * Utilise un type discriminant pour garantir la gestion explicite du succès ou de l'échec.
