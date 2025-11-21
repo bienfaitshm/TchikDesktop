@@ -111,3 +111,22 @@ export class AppDataSystem implements IDataSystem {
     }
   }
 }
+
+/**
+ * 🛠️ Crée un objet de configuration `DataSystemHandler`.
+ * Cette fonction utilitaire facilite l'enregistrement des requêtes en s'assurant
+ * que la structure de l'objet est correctement formée (clé-valeur).
+ *
+ * @param name Le nom unique (clé) de la requête de données (ex: 'GET_USER_BY_ID').
+ * @param handler La fonction de traitement qui exécute la logique d'extraction de données.
+ * @returns L'objet `DataSystemHandler` prêt à être injecté dans l'AppDataSystem.
+ */
+export function createDataSystemHandler(
+  name: string,
+  handler: DataRequestHandler
+): DataSystemHandler {
+  return {
+    requestName: name,
+    handler: handler,
+  };
+}
