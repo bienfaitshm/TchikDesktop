@@ -1,7 +1,7 @@
 import { ClassRoom, ClassroomEnrolement, User } from "@/main/db/models";
 import { Sequelize, WhereOptions, FindOptions, literal } from "sequelize";
 import { getDefinedAttributes } from "@/main/db/models/utils";
-import { applyInFilterToWhere } from "./utils"; // Assurez-vous que cette fonction est correctement typée
+import { applyInFilterToWhere } from "./utils";
 import type {
   TClassroom,
   TWithUser,
