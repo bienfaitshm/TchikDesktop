@@ -15,7 +15,7 @@ import { WithSchoolAndYearId } from "@/commons/types/services";
 import { FormSubmitter } from "@/renderer/components/form/form-submiter";
 import { DocumentEnrollmentForm, DocumentEnrollmentFormData } from "@/renderer/components/form/documents/classroom-document-export";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
-import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
+import { useGetClassroomAsOptions, useGetDocumentInfoAsOptions } from "@/renderer/hooks/data-as-options";
 import { useExport } from "@/renderer/hooks/documents";
 
 
@@ -42,10 +42,13 @@ export const LoaderIndicator: React.FC<LoaderIndicatorProps> = ({ message = "Exp
 
 const SheetFormContent: React.FC<WithSchoolAndYearId<{ onSubmit(data: DocumentEnrollmentFormData): void, currentClassroom?: string }>> = ({ schoolId, yearId, currentClassroom, onSubmit }) => {
     const classrooms = useGetClassroomAsOptions({ schoolId, yearId }, { labelFormat: "short" })
+    const documentInfos = useGetDocumentInfoAsOptions()
+
     return (
         <FormSubmitter.Wrapper>
             <DocumentEnrollmentForm
                 classrooms={classrooms}
+                documentInfos={documentInfos}
                 initialValues={{
                     schoolId,
                     yearId,
@@ -59,8 +62,6 @@ const SheetFormContent: React.FC<WithSchoolAndYearId<{ onSubmit(data: DocumentEn
 
 export const SheetDataExport: React.FC<WithSchoolAndYearId<{ currentClassroom?: string }>> = (props) => {
     const [isPending, onSubmit] = useExport()
-
-
     return (
         <Sheet modal={false}>
             <SheetTrigger asChild>

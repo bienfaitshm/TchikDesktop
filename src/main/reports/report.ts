@@ -36,6 +36,8 @@ export abstract class AbstractDocumentHandler implements DocumentHandler {
   // --- Propriétés à Définir par la Classe Fille ---
   /** 🔑 Clé unique pour identifier ce document dans le système. */
   public abstract readonly key: string;
+  /** 📄 Type de document affiché à l'utilisateur. */
+  public abstract readonly type?: string;
   /** 📄 Titre lisible affiché à l'utilisateur. */
   public abstract readonly title: string;
   /** 📖 Description du contenu du document. */
@@ -48,6 +50,10 @@ export abstract class AbstractDocumentHandler implements DocumentHandler {
   /** Retourne la clé unique pour ce document. (Implémentation DRY) */
   public getKey(): string {
     return this.key;
+  }
+  /** Retourne la clé unique pour ce document. (Implémentation DRY) */
+  public getType(): string {
+    return this?.type || "docx";
   }
   /** Retourne le titre public pour ce document. (Implémentation DRY) */
   public getTitle(): string {

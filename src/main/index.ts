@@ -6,8 +6,8 @@ import log from "electron-log";
 
 import icon from "../../resources/icon.png?asset";
 import { server } from "@/commons/libs/electron-apis/server";
-import "@/main/apps";
 import { sequelize } from "./db/config";
+import "@/main/apps";
 
 // Configure le logger (optionnel)
 autoUpdater.logger = log;
@@ -28,7 +28,7 @@ const createMainWindow = (): void => {
   });
 
   sequelize
-    .sync({ alter: ALTER_DB })
+    .sync({ alter: ALTER_DB, logging: false })
     .then(() => {
       console.log("Database synchronized!");
       server.listen(mainWindow, (routes) => {

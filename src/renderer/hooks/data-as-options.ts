@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
 import { GetClassroomParams } from "@/commons/types/services";
 import { useGetOptions } from "@/renderer/libs/queries/option";
+import { useGetDocumentInfos } from "@/renderer/libs/queries/document-export";
+import { getProcessedDocumentOptions } from "@/renderer/components/form/documents/utils";
 
 /**
  * Définit les options de formatage pour la conversion de données en options de sélection.
@@ -132,4 +134,10 @@ export function useGetOptionAsOptions(
     options: _options,
     data: dataOptions,
   };
+}
+
+export function useGetDocumentInfoAsOptions() {
+  const { data, error } = useGetDocumentInfos();
+  console.log(data, error);
+  return useMemo(() => getProcessedDocumentOptions(data), [data]);
 }

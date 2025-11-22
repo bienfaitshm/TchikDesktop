@@ -22,6 +22,8 @@ export type DocumentGenerationResult = {
 export interface DocumentInfo {
   /** Clé unique identifiant le type de document (utilisé dans la requête d'exportation). */
   key: string;
+  /** Le type de document ex.(PDf, Word, Sheet etc) */
+  type: string;
   /** Titre lisible du document. */
   title: string;
   /** Description détaillée de ce que le document contient. */
@@ -49,6 +51,12 @@ export type DataSystemResult =
   | { success: true; data: unknown }
   | { success: false; errorMessage: string };
 
+export type TApiHandler<
+  TRes,
+  TData,
+  TParams extends {} = {},
+> = () => RouteHandler<TRes, TData, TParams>;
+
 /**
  * 📜 Interface définissant un gestionnaire (Handler) de document exportable.
  * Chaque implémentation est responsable de sa propre logique d'extraction, de validation et de génération.
@@ -56,6 +64,8 @@ export type DataSystemResult =
 export interface DocumentHandler {
   /** Retourne la clé unique pour ce document. */
   getKey(): string;
+  /** Retourne le type pulique pour ce document.*/
+  getType(): string;
   /** Retourne le titre public pour ce document. */
   getTitle(): string;
   /** Retourne la description publique pour ce document. */
@@ -98,9 +108,9 @@ export interface DocumentServiceConfig {
  */
 interface IDocumentExportService<TRes, TData, TParams extends object> {
   /** Route pour obtenir la liste des documents disponibles. */
-  getDocumentInfos: RouteHandler<TRes, TData, TParams>;
+  getDocumentInfos: () => RouteHandler<TRes, TData, TParams>;
   /** Route pour exporter un document spécifique. */
-  exportDocument: RouteHandler<TRes, TData, TParams>;
+  exportDocument: () => RouteHandler<TRes, TData, TParams>;
 }
 
 /**
@@ -124,6 +134,7 @@ export class DocumentExportService
     configuration: DocumentServiceConfig
   ) {
     this.configuration = configuration;
+
     this.initDocumentHandlers(documents);
   }
 
@@ -137,6 +148,7 @@ export class DocumentExportService
       this.documentToExport.set(key, doc);
       this.documentInfos.push({
         key,
+        type: doc.getType(),
         title: doc.getTitle(),
         description: doc.getDescription(),
       });
@@ -155,8 +167,10 @@ export class DocumentExportService
    * 📤 Endpoint pour obtenir les informations sur les documents exportables.
    * @returns Une réponse contenant un tableau de `DocumentInfo`.
    */
-  public async getDocumentInfos(): Promise<ReturnType<typeof response>> {
-    return response(this.documentInfos);
+  public getDocumentInfos() {
+    return async ({}) => {
+      return response(this.documentInfos);
+    };
   }
 
   /**
@@ -242,41 +256,44 @@ export class DocumentExportService
    * 📤 Endpoint pour l'exportation effective du document.
    * @param payload La charge utile de la requête, contenant `documentType` et les paramètres.
    */
-  public async exportDocument({
-    data: { documentType, ...documentParams },
-  }: {
-    data: DocumentFilter;
-  }): Promise<ReturnType<typeof response>> {
-    const handler = this.getDocumentHandler(documentType);
+  public exportDocument() {
+    return async ({
+      data: { documentType, ...documentParams },
+    }: {
+      data: DocumentFilter;
+    }) => {
+      console.log("exportDocument ", documentParams);
+      const handler = this.getDocumentHandler(documentType);
 
-    if (!handler) {
-      // ⚠️ Document non trouvé
-      return response(
-        {
-          message: `Le type de document '${documentType}' n'est pas implémenté ou n'existe pas.`,
-        },
-        Status.NOT_FOUND
-      );
-    }
+      if (!handler) {
+        // ⚠️ Document non trouvé
+        return response(
+          {
+            message: `Le type de document '${documentType}' n'est pas implémenté ou n'existe pas.`,
+          },
+          Status.NOT_FOUND
+        );
+      }
 
-    try {
-      return await this.processExport(handler, documentParams);
-    } catch (error) {
-      // 🛑 Gestion des erreurs non capturées (erreurs inattendues)
-      console.error(
-        "Erreur critique lors de l'exportation du document:",
-        error
-      );
-      const errorMessage =
-        error instanceof Error ? error.message : "Erreur inconnue";
-      return response(
-        {
-          error: errorMessage,
-          message:
-            "Une erreur système inattendue s'est produite lors de l'exportation.",
-        },
-        Status.INTERNAL_SERVER
-      );
-    }
+      try {
+        return await this.processExport(handler, documentParams);
+      } catch (error) {
+        // 🛑 Gestion des erreurs non capturées (erreurs inattendues)
+        console.error(
+          "Erreur critique lors de l'exportation du document:",
+          error
+        );
+        const errorMessage =
+          error instanceof Error ? error.message : "Erreur inconnue";
+        return response(
+          {
+            error: errorMessage,
+            message:
+              "Une erreur système inattendue s'est produite lors de l'exportation.",
+          },
+          Status.INTERNAL_SERVER
+        );
+      }
+    };
   }
 }

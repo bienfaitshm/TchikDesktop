@@ -1,6 +1,7 @@
 // Fichier: InvoiceDocumentHandler.ts
 
 import z from "zod";
+import {} from "@/commons/constants/enum";
 import { AbstractDocumentHandler, ProcessHandleResult } from "./report";
 
 const InvoiceParamsSchema = z.object({
@@ -11,6 +12,7 @@ const InvoiceParamsSchema = z.object({
 export class InvoiceDocumentHandler extends AbstractDocumentHandler {
   // Propriétés Abstraites implémentées
   public readonly key = "INVOICE_REPORT";
+  public readonly type = "docx";
   public readonly title = "Rapport de Facturation Mensuel";
   public readonly description = "Exporte toutes les factures du mois spécifié.";
   public readonly requestName = "GET_MONTHLY_INVOICES";

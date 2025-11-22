@@ -31,7 +31,8 @@ import { DOCUMENT_METADATA, DOCUMENT_TYPE } from "@/commons/libs/document";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/renderer/utils";
 import { Button } from "../../ui/button";
-import { getProcessedDocumentOptions } from "./utils";
+import type { GroupedDocumentOption } from "./utils";
+
 
 
 export * from "../utils";
@@ -51,14 +52,14 @@ const DEFAULT_VALUES: DocumentEnrollmentFormData = {
 
 const SECTIONS_OPTIONS = getEnumKeyValueList(SECTION, SECTION_TRANSLATIONS);
 const STATUS_OPTIONS = getEnumKeyValueList(STUDENT_STATUS, STUDENT_STATUS_TRANSLATIONS);
-const DOCUMENT_OPTIONS = getProcessedDocumentOptions()
 
 type DocumentTypeSelectProps = {
-    value: DOCUMENT_TYPE,
-    onChangeValue: (value: DOCUMENT_TYPE) => void
+    options: GroupedDocumentOption[],
+    value: string,
+    onChangeValue: (value: string) => void
 }
 
-export const DocumentTypeSelect: React.FC<DocumentTypeSelectProps> = ({ onChangeValue, value }) => {
+export const DocumentTypeSelect: React.FC<DocumentTypeSelectProps> = ({ onChangeValue, value, options }) => {
     const [isOpen, setIsOpen] = useState(false);
     const selectedDocument = useMemo(() => DOCUMENT_METADATA[value], [value]);
 
@@ -83,7 +84,7 @@ export const DocumentTypeSelect: React.FC<DocumentTypeSelectProps> = ({ onChange
                     <CommandInput placeholder="Rechercher un document..." />
                     <CommandList>
                         <CommandEmpty>Aucun document trouvé.</CommandEmpty>
-                        {DOCUMENT_OPTIONS.map(({ section, data: documents }) => (
+                        {options.map(({ section, data: documents }) => (
                             <CommandGroup key={section} heading={section}>
                                 {documents.map((doc) => (
                                     <CommandItem
@@ -119,6 +120,7 @@ export interface DocumentEnrollmentFormProps {
     onSubmit?: (value: DocumentEnrollmentFormData) => void;
     initialValues?: Partial<DocumentEnrollmentFormData>;
     classrooms?: { label: string; value: string }[];
+    documentInfos?: GroupedDocumentOption[]
 }
 
 export interface DocumentEnrollmentFormHandle extends ImperativeFormHandle<DocumentEnrollmentFormData> { }
@@ -126,7 +128,8 @@ export interface DocumentEnrollmentFormHandle extends ImperativeFormHandle<Docum
 export const DocumentEnrollmentForm = forwardRef<
     DocumentEnrollmentFormHandle,
     PropsWithChildren<DocumentEnrollmentFormProps>
->(({ children, onSubmit, initialValues = {}, classrooms = [] }, ref) => {
+>(({ children, onSubmit, initialValues = {}, classrooms = [], documentInfos = [] }, ref) => {
+    // 
     const [form, handleSubmit] = useControlledForm({
         schema: DocumentExportSchema,
         defaultValues: { ...DEFAULT_VALUES, ...initialValues },
@@ -154,6 +157,7 @@ export const DocumentEnrollmentForm = forwardRef<
                                 </div>
                                 <FormControl>
                                     <DocumentTypeSelect
+                                        options={documentInfos}
                                         value={field.value}
                                         onChangeValue={field.onChange}
                                     />

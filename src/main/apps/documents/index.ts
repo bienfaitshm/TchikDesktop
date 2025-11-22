@@ -17,13 +17,13 @@ export const documentExportService = new DocumentExportService(
 );
 
 // Route pour récupérer la liste des documents disponibles
-server.post<unknown, DocumentFilter>(
+server.get<unknown, DocumentFilter>(
   DOCUMENT_EXPORT_ROUTES.GET_INFOS,
-  documentExportService.getDocumentInfos
+  documentExportService.getDocumentInfos()
 );
 
 // Route pour exporter un document spécifique
 server.post<unknown, DocumentFilter>(
   DOCUMENT_EXPORT_ROUTES.EXPORT_DOCUMENT,
-  documentExportService.exportDocument
+  documentExportService.exportDocument()
 );
