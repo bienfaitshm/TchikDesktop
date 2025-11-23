@@ -13,7 +13,7 @@ import { FileText, Loader } from "lucide-react";
 import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { FormSubmitter } from "@/renderer/components/form/form-submiter";
-import { DocumentEnrollmentForm, DocumentEnrollmentFormData } from "@/renderer/components/form/documents/classroom-document-export";
+import { DocumentEnrollmentForm, DocumentFormData } from "@/renderer/components/form/documents/classroom-document-export";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import { useGetClassroomAsOptions, useGetDocumentInfoAsOptions } from "@/renderer/hooks/data-as-options";
 import { useExport } from "@/renderer/hooks/documents";
@@ -40,18 +40,19 @@ export const LoaderIndicator: React.FC<LoaderIndicatorProps> = ({ message = "Exp
     );
 };
 
-const SheetFormContent: React.FC<WithSchoolAndYearId<{ onSubmit(data: DocumentEnrollmentFormData): void, currentClassroom?: string }>> = ({ schoolId, yearId, currentClassroom, onSubmit }) => {
+const SheetFormContent: React.FC<WithSchoolAndYearId<{ onSubmit(data: DocumentFormData): void, currentClassroom?: string }>> = ({ schoolId, yearId, currentClassroom, onSubmit }) => {
     const classrooms = useGetClassroomAsOptions({ schoolId, yearId }, { labelFormat: "short" })
-    const documentInfos = useGetDocumentInfoAsOptions()
-
+    const { defaultValue, options: documentOptions } = useGetDocumentInfoAsOptions()
+    console.log("SheetForm", defaultValue, documentOptions)
     return (
         <FormSubmitter.Wrapper>
             <DocumentEnrollmentForm
                 classrooms={classrooms}
-                documentInfos={documentInfos}
+                documentOptions={documentOptions}
                 initialValues={{
                     schoolId,
                     yearId,
+                    documentType: defaultValue,
                     classrooms: currentClassroom ? [currentClassroom] : []
                 }}
                 onSubmit={onSubmit}

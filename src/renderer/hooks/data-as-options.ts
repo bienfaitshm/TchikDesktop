@@ -137,7 +137,7 @@ export function useGetOptionAsOptions(
 }
 
 export function useGetDocumentInfoAsOptions() {
-  const { data, error } = useGetDocumentInfos();
-  console.log(data, error);
-  return useMemo(() => getProcessedDocumentOptions(data), [data]);
+  const { data } = useGetDocumentInfos();
+  const options = useMemo(() => getProcessedDocumentOptions(data), [data]);
+  return { options, defaultValue: data?.[0]?.key, data };
 }
