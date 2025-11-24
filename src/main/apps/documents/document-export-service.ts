@@ -4,17 +4,15 @@ import { Status } from "@/commons/libs/electron-apis/constant";
 import type { RouteHandler } from "@/commons/libs/electron-apis/server";
 import { DocumentFilter } from "@/commons/types/services";
 import { CustomLogger, getLogger } from "@/main/libs/logger";
+import { getProcessedDocumentOptions } from "./utils";
+import { DocumentInfo } from "@/commons/types/services.documents";
+import { DOCUMENT_EXTENSION } from "@/commons/constants/file-extension";
 
 export type DocumentGenerationResult = {
   data: any;
   options: SaveFileOptions;
 };
-export interface DocumentInfo {
-  key: string;
-  type: string;
-  title: string;
-  description: string;
-}
+
 export type ValidationResult =
   | { success: true; data: unknown }
   | { success: false; message: string };
@@ -31,7 +29,7 @@ export type TApiHandler<
 > = () => RouteHandler<TRes, TData, TParams>;
 export interface DocumentHandler {
   getKey(): string;
-  getType(): string;
+  getType(): DOCUMENT_EXTENSION;
   getTitle(): string;
   getDescription(): string;
   validate(params: unknown): ValidationResult;
@@ -99,9 +97,16 @@ export class DocumentExportService
   /**
    * 📤 Endpoint pour obtenir les informations sur les documents exportables.
    */
-  public getDocumentInfos() {
-    return async ({}) => {
+  public getDocumentInfos(): RouteHandler<
+    unknown,
+    unknown,
+    { format?: "grouped" | "mapped" }
+  > {
+    return async ({ params }) => {
       this.logger.info("API: Demande de liste des documents exportables.");
+      if (params?.format === "grouped") {
+        return response(getProcessedDocumentOptions(this.documentInfos));
+      }
       return response(this.documentInfos);
     };
   }

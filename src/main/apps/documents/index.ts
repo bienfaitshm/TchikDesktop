@@ -17,7 +17,7 @@ export const documentExportService = new DocumentExportService(
 );
 
 // Route pour récupérer la liste des documents disponibles
-server.get<unknown, DocumentFilter>(
+server.get(
   DOCUMENT_EXPORT_ROUTES.GET_INFOS,
   documentExportService.getDocumentInfos()
 );

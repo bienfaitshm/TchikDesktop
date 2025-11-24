@@ -1,6 +1,10 @@
 import { SaveFileOptions } from "@/main/libs/save-files";
 import { ZodSchema } from "zod";
 import { DocumentHandler } from "@/main/apps/documents/document-export-service";
+import {
+  DOCUMENT_EXTENSION,
+  DOCUMENT_EXTENSION_TRANSLATIONS,
+} from "@/commons/constants/file-extension";
 
 /**
  * 📄 Résultat de la génération d'un document.
@@ -37,7 +41,7 @@ export abstract class AbstractDocumentHandler implements DocumentHandler {
   /** 🔑 Clé unique pour identifier ce document dans le système. */
   public abstract readonly key: string;
   /** 📄 Type de document affiché à l'utilisateur. */
-  public abstract readonly type?: string;
+  public abstract readonly type?: DOCUMENT_EXTENSION;
   /** 📄 Titre lisible affiché à l'utilisateur. */
   public abstract readonly title: string;
   /** 📖 Description du contenu du document. */
@@ -52,8 +56,8 @@ export abstract class AbstractDocumentHandler implements DocumentHandler {
     return this.key;
   }
   /** Retourne la clé unique pour ce document. (Implémentation DRY) */
-  public getType(): string {
-    return this?.type || "docx";
+  public getType(): DOCUMENT_EXTENSION {
+    return this?.type || DOCUMENT_EXTENSION.DOCX;
   }
   /** Retourne le titre public pour ce document. (Implémentation DRY) */
   public getTitle(): string {
@@ -66,6 +70,16 @@ export abstract class AbstractDocumentHandler implements DocumentHandler {
   /** Retourne le nom de la requête à exécuter sur le système de données. (Implémentation DRY) */
   public getRequestName(): string {
     return this.requestName;
+  }
+
+  public getFilters(): Electron.FileFilter[] | undefined {
+    const extention = this.getType();
+    return [
+      {
+        extensions: [extention],
+        name: DOCUMENT_EXTENSION_TRANSLATIONS[extention],
+      },
+    ];
   }
 
   /**

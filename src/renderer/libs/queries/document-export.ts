@@ -9,9 +9,9 @@ export function useExportDocuments() {
   });
 }
 
-export function useGetDocumentInfos() {
+export function useGetDocumentInfos(params?: {}) {
   return useQuery({
     queryKey: ["DOCUMENTS/INFOS"],
-    queryFn: () => apis.getDocumentInfos(),
+    queryFn: () => apis.getDocumentInfos(params),
   });
 }

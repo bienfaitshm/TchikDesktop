@@ -43,7 +43,6 @@ export const LoaderIndicator: React.FC<LoaderIndicatorProps> = ({ message = "Exp
 const SheetFormContent: React.FC<WithSchoolAndYearId<{ onSubmit(data: DocumentFormData): void, currentClassroom?: string }>> = ({ schoolId, yearId, currentClassroom, onSubmit }) => {
     const classrooms = useGetClassroomAsOptions({ schoolId, yearId }, { labelFormat: "short" })
     const { defaultValue, options: documentOptions } = useGetDocumentInfoAsOptions()
-    console.log("SheetForm", defaultValue, documentOptions)
     return (
         <FormSubmitter.Wrapper>
             <DocumentEnrollmentForm

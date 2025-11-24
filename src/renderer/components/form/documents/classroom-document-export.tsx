@@ -30,7 +30,7 @@ import { Button } from "@/renderer/components/ui/button";
 import { useFormImperativeHandle, type ImperativeFormHandle } from "../utils";
 import { FilterCheckboxInput } from "../fields/filter-checkbox-input";
 import { cn } from "@/renderer/utils";
-import type { GroupedDocumentOption } from "./utils"; // Assumed path
+import type { GroupedDocumentOption } from "@/commons/types/services.documents";
 
 
 export type DocumentFormData = DocumentExportSchemaAttributes;

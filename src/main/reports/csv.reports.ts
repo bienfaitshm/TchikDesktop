@@ -2,6 +2,7 @@ import { DocumentExportSchema } from "./schema";
 import { AbstractDocumentHandler, ProcessHandleResult } from "./report";
 import { SaveFileOptions } from "@/main/libs/save-files";
 import type { ZodType, ZodTypeDef } from "zod";
+import { DOCUMENT_EXTENSION } from "@/commons/constants/file-extension";
 
 /**
  * Fonction utilitaire simple pour convertir un tableau d'objets en CSV.
@@ -44,7 +45,7 @@ function convertToCsv(data: Array<Record<string, any>>): string {
 export class EnrollmentCsvHandler extends AbstractDocumentHandler {
   // Propriétés Abstraites implémentées
   public readonly key = "ENROLLMENT_CSV";
-  public readonly type = "csv"; // Type de fichier
+  public readonly type = DOCUMENT_EXTENSION.CSV;
   public readonly title = "Liste des Inscrits (CSV)";
   public readonly description =
     "Exporte les données d'inscription brutes en format CSV (compatible tableur).";

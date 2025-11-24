@@ -1,6 +1,7 @@
 import { DocumentExportSchema } from "./schema";
 import { AbstractDocumentHandler, ProcessHandleResult } from "./report";
 import { SaveFileOptions } from "@/main/libs/save-files";
+import { DOCUMENT_EXTENSION } from "@/commons/constants/file-extension";
 
 /**
  * 📝 Gestionnaire d'exportation pour le format JSON.
@@ -8,7 +9,7 @@ import { SaveFileOptions } from "@/main/libs/save-files";
 export class EnrollmentJsonHandler extends AbstractDocumentHandler {
   // Propriétés Abstraites implémentées
   public readonly key = "ENROLLMENT_JSON";
-  public readonly type = "json";
+  public readonly type = DOCUMENT_EXTENSION.JSON;
   public readonly title = "Liste des Inscrits (JSON)";
   public readonly description =
     "Exporte les données d'inscription brutes en format JSON.";

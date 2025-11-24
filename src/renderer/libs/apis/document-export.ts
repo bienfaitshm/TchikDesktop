@@ -1,7 +1,10 @@
 import type { DocumentFilter } from "@/commons/types/services";
 import { DOCUMENT_EXPORT_ROUTES } from "@/commons/constants/routes";
 import { clientApis } from "./client";
-import { DocumentInfo } from "@/commons/types/services.decuments";
+import {
+  DocumentInfo,
+  GroupedDocumentOption,
+} from "@/commons/types/services.documents";
 
 export const exportDocuments = (data: DocumentFilter) => {
   return clientApis
@@ -11,8 +14,10 @@ export const exportDocuments = (data: DocumentFilter) => {
     .then((res) => res.data);
 };
 
-export const getDocumentInfos = () => {
+export const getDocumentInfos = (params = {}) => {
   return clientApis
-    .get<DocumentInfo[]>(DOCUMENT_EXPORT_ROUTES.GET_INFOS)
+    .get<
+      GroupedDocumentOption[] | DocumentInfo[]
+    >(DOCUMENT_EXPORT_ROUTES.GET_INFOS, { params })
     .then((res) => res.data);
 };

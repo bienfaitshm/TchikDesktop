@@ -3,11 +3,12 @@
 import { DocumentExportSchema } from "./schema";
 import { AbstractDocumentHandler, ProcessHandleResult } from "./report";
 import { SaveFileOptions } from "../libs/save-files";
+import { DOCUMENT_EXTENSION } from "@/commons/constants/file-extension";
 
 export class InvoiceDocumentHandler extends AbstractDocumentHandler {
   // Propriétés Abstraites implémentées
   public readonly key = "INVOICE_REPORT";
-  public readonly type = "docx";
+  public readonly type = DOCUMENT_EXTENSION.PDF;
   public readonly title = "Rapport de Facturation Mensuel";
   public readonly description = "Exporte toutes les factures du mois spécifié.";
   public readonly requestName = "GET_MONTHLY_INVOICES";
@@ -31,7 +32,7 @@ export class InvoiceDocumentHandler extends AbstractDocumentHandler {
         options: {
           defaultPath: "Rapport-Factures-2025",
           title: this.getTitle(),
-          filters: [{ extensions: ["pdf"], name: "Document Portable" }],
+          filters: this.getFilters(),
         },
       },
     };
@@ -44,7 +45,7 @@ export class InvoiceDocumentHandler extends AbstractDocumentHandler {
 export class EnrollementDocumentHandler extends AbstractDocumentHandler {
   // Propriétés Abstraites implémentées
   public readonly key = "ENROLLMENT_DOCX";
-  public readonly type = "docx";
+  public readonly type = DOCUMENT_EXTENSION.DOCX;
   public readonly title = "Fiches des Inscrits";
   public readonly description =
     "Exporte la liste des élèves selon les filtres d'inscription.";
@@ -70,7 +71,7 @@ export class EnrollementDocumentHandler extends AbstractDocumentHandler {
       title: this.getTitle(),
       defaultPath: "Liste-Inscrits",
       // Format d'options plus standard
-      filters: [{ extensions: ["docx"], name: "Document Word" }],
+      filters: this.getFilters(),
       // mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // MIME type standard pour DOCX
     };
 

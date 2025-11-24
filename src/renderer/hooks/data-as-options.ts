@@ -3,7 +3,7 @@ import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
 import { GetClassroomParams } from "@/commons/types/services";
 import { useGetOptions } from "@/renderer/libs/queries/option";
 import { useGetDocumentInfos } from "@/renderer/libs/queries/document-export";
-import { getProcessedDocumentOptions } from "@/renderer/components/form/documents/utils";
+import { GroupedDocumentOption } from "@/commons/types/services.documents";
 
 /**
  * Définit les options de formatage pour la conversion de données en options de sélection.
@@ -136,8 +136,11 @@ export function useGetOptionAsOptions(
   };
 }
 
-export function useGetDocumentInfoAsOptions() {
-  const { data } = useGetDocumentInfos();
-  const options = useMemo(() => getProcessedDocumentOptions(data), [data]);
-  return { options, defaultValue: data?.[0]?.key, data };
+export function useGetDocumentInfoAsOptions(params = {}) {
+  const { data } = useGetDocumentInfos({ format: "grouped", ...params });
+  return {
+    options: data as unknown as GroupedDocumentOption[],
+    defaultValue: undefined,
+    data,
+  };
 }
