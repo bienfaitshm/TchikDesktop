@@ -1,8 +1,9 @@
 // Fichier: InvoiceDocumentHandler.ts
 
 import z from "zod";
-import {} from "@/commons/constants/enum";
+import { DocumentExportSchema } from "./schema";
 import { AbstractDocumentHandler, ProcessHandleResult } from "./report";
+import { SaveFileOptions } from "../libs/save-files";
 
 const InvoiceParamsSchema = z.object({
   invoiceId: z.string().uuid("L'ID de la facture doit être un UUID valide."),
@@ -38,6 +39,52 @@ export class InvoiceDocumentHandler extends AbstractDocumentHandler {
           allowedExtensions: ["pdf"],
           mimeType: "application/pdf",
         },
+      },
+    };
+  }
+}
+
+/**
+ * Gère l'exportation des fiches d'inscription des élèves.
+ */
+export class EnrollementDocumentHandler extends AbstractDocumentHandler {
+  // Propriétés Abstraites implémentées
+  public readonly key = "ENROLLMENT_DOCX";
+  public readonly type = "docx";
+  public readonly title = "Fiches des Inscrits";
+  public readonly description =
+    "Exporte la liste des élèves selon les filtres d'inscription.";
+  public readonly requestName = "classrooms.enrollments";
+  // Utilisation du schéma importé
+  public readonly schema = DocumentExportSchema;
+
+  /**
+   * Traite les données d'inscription et génère le document DOCX.
+   */
+  public async processHandle(data: unknown): Promise<ProcessHandleResult> {
+    // ⚠️ Supposons que 'data' est le résultat de l'appel API, c'est-à-dire un tableau d'inscriptions.
+    const enrollments = data as Array<any>;
+    console.log("processHandle =>   ", enrollments);
+    // --- 1. Logique de transformation et de génération ---
+
+    // Simuler la génération du document DOCX
+    const generatedContent = Buffer.from(
+      `Contenu du DOCX pour ${enrollments.length} inscriptions`
+    );
+
+    // --- 2. Définition des options d'exportation ---
+    const exportOptions: SaveFileOptions = {
+      defaultPath: "Liste-Inscrits",
+      // Format d'options plus standard
+      filters: [{ extensions: ["docx"], name: "Document Word" }],
+      // mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // MIME type standard pour DOCX
+    };
+
+    return {
+      success: true,
+      result: {
+        data: generatedContent,
+        options: exportOptions,
       },
     };
   }

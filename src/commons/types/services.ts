@@ -3,12 +3,10 @@ import type {
   TEnrolement,
   TEnrolementInsert,
   TUserInsert,
-  TWithEnrolements,
   TWithUser,
 } from "@/commons/types/models";
 import type { TClassroomInsert } from "./models";
 import type { SECTION, STUDENT_STATUS } from "@/commons/constants/enum";
-import type { DOCUMENT_TYPE } from "@/commons/libs/document";
 export * from "./models";
 
 export type WithSchoolId<T = {}> = T & { schoolId: string };
@@ -29,8 +27,10 @@ export type GetClassroomParams = QueryParams<
 >;
 
 export type DocumentFilter = WithSchoolAndYearId<{
-  documentType: DOCUMENT_TYPE;
-  sections: SECTION[] | SECTION;
+  schoolId: string;
+  yearId?: string;
+  documentType: string;
+  sections: string[] | string;
   classrooms: string[] | string;
 }>;
 

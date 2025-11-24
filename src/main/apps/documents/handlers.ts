@@ -1,4 +1,7 @@
-import { InvoiceDocumentHandler } from "@/main/reports/word.report";
+import {
+  InvoiceDocumentHandler,
+  EnrollementDocumentHandler,
+} from "@/main/reports/word.report";
 import { DocumentHandler } from "./document-export-service";
 
 /**
@@ -7,4 +10,5 @@ import { DocumentHandler } from "./document-export-service";
  */
 export const DOCUMENT_HANDLERS_MANIFEST: DocumentHandler[] = [
   new InvoiceDocumentHandler(),
+  new EnrollementDocumentHandler(),
 ];

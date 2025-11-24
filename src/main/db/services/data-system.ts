@@ -1,3 +1,5 @@
+import { mapModelsToPlainList, mapModelToPlain } from "../models/utils";
+
 /**
  * 💡 Type de la fonction de traitement (Handler) d'une requête de données.
  * Cette fonction est responsable de l'accès et de l'extraction des données brutes.
@@ -37,7 +39,7 @@ export interface IDataSystem {
    * @param params Les paramètres de filtrage ou de sélection.
    * @returns Un objet `DataSystemResult` indiquant le succès et les données, ou l'échec et le message d'erreur.
    */
-  getData(requestName: string, params: unknown): DataSystemResult;
+  getData(requestName: string, params: unknown): Promise<DataSystemResult>;
 }
 
 /**
@@ -68,7 +70,10 @@ export class AppDataSystem implements IDataSystem {
    * @param params Les paramètres de la requête.
    * @returns Le résultat de l'exécution (données ou erreur).
    */
-  public getData(requestName: string, params: unknown): DataSystemResult {
+  public async getData(
+    requestName: string,
+    params: unknown
+  ): Promise<DataSystemResult> {
     const handler = this.requestHandlers.get(requestName);
 
     // 1. Vérification de l'existence du Handler
@@ -85,7 +90,11 @@ export class AppDataSystem implements IDataSystem {
     // 2. Exécution du Handler avec gestion des exceptions (Guard)
     try {
       // Le handler est exécuté et est supposé retourner les données brutes.
-      const data = handler(params);
+      const _data = await handler(params);
+
+      const data = await (Array.isArray(_data)
+        ? mapModelsToPlainList(_data)
+        : mapModelToPlain(_data as any));
 
       console.info(
         `[DataSystem] ✅ Données récupérées avec succès pour: ${requestName}`
