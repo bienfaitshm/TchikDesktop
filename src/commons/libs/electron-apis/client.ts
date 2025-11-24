@@ -19,9 +19,9 @@
  * ```
  */
 
-import type { IpcRenderer } from "electron";
 import { formatRouteMethodName, actionFn, TResponse } from "./utils";
 import { Methods } from "./constant";
+import type { IpcRenderer } from "@electron-toolkit/preload";
 
 type TCreateClientParams = {
   ipcRender?: IpcRenderer;

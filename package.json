@@ -104,7 +104,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.16",
     "drizzle-kit": "^0.31.4",
-    "electron": "^37.2.3",
+    "electron": "^39.2.3",
     "electron-builder": "^24.6.3",
     "electron-vite": "^4.0.0",
     "eslint": "^8.47.0",
