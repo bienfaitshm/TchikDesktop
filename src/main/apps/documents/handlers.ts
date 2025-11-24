@@ -2,6 +2,9 @@ import {
   InvoiceDocumentHandler,
   EnrollementDocumentHandler,
 } from "@/main/reports/word.report";
+
+import { EnrollmentCsvHandler } from "@/main/reports/csv.reports";
+import { EnrollmentJsonHandler } from "@/main/reports/json.reports";
 import { DocumentHandler } from "./document-export-service";
 
 /**
@@ -11,4 +14,6 @@ import { DocumentHandler } from "./document-export-service";
 export const DOCUMENT_HANDLERS_MANIFEST: DocumentHandler[] = [
   new InvoiceDocumentHandler(),
   new EnrollementDocumentHandler(),
+  new EnrollmentCsvHandler(),
+  new EnrollmentJsonHandler(),
 ];

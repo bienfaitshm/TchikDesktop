@@ -1,14 +1,8 @@
 // Fichier: InvoiceDocumentHandler.ts
 
-import z from "zod";
 import { DocumentExportSchema } from "./schema";
 import { AbstractDocumentHandler, ProcessHandleResult } from "./report";
 import { SaveFileOptions } from "../libs/save-files";
-
-const InvoiceParamsSchema = z.object({
-  invoiceId: z.string().uuid("L'ID de la facture doit être un UUID valide."),
-  format: z.enum(["PDF", "CSV"]).default("PDF"),
-});
 
 export class InvoiceDocumentHandler extends AbstractDocumentHandler {
   // Propriétés Abstraites implémentées
@@ -17,7 +11,7 @@ export class InvoiceDocumentHandler extends AbstractDocumentHandler {
   public readonly title = "Rapport de Facturation Mensuel";
   public readonly description = "Exporte toutes les factures du mois spécifié.";
   public readonly requestName = "GET_MONTHLY_INVOICES";
-  public readonly schema = InvoiceParamsSchema;
+  public readonly schema = DocumentExportSchema;
 
   // Méthode Abstraite implémentée
   public async processHandle(data: unknown): Promise<ProcessHandleResult> {
@@ -64,7 +58,6 @@ export class EnrollementDocumentHandler extends AbstractDocumentHandler {
   public async processHandle(data: unknown): Promise<ProcessHandleResult> {
     // ⚠️ Supposons que 'data' est le résultat de l'appel API, c'est-à-dire un tableau d'inscriptions.
     const enrollments = data as Array<any>;
-    console.log("processHandle =>   ", enrollments);
     // --- 1. Logique de transformation et de génération ---
 
     // Simuler la génération du document DOCX
