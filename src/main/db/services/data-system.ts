@@ -1,9 +1,8 @@
-import { mapModelsToPlainList, mapModelToPlain } from "../models/utils";
+import { mapModelsToPlainList, mapModelToPlain } from "@/main/db/models/utils";
+import { getLogger, CustomLogger } from "@/main/libs/logger";
 
 /**
  * 💡 Type de la fonction de traitement (Handler) d'une requête de données.
- * Cette fonction est responsable de l'accès et de l'extraction des données brutes.
- * Elle ne doit pas générer d'erreurs (throw) mais retourner les données ou gérer l'échec en interne si possible.
  * @param params Les paramètres de filtrage ou de sélection de la requête.
  * @returns Les données brutes (non typées) résultant de l'exécution de la requête.
  */
@@ -21,7 +20,6 @@ export interface DataSystemHandler {
 
 /**
  * 💾 Résultat de l'appel au système de données.
- * Utilise un type discriminant pour garantir la gestion explicite du succès ou de l'échec.
  */
 export type DataSystemResult =
   | { success: true; data: unknown }
@@ -29,46 +27,31 @@ export type DataSystemResult =
 
 /**
  * 📦 Interface du système de données (Data System).
- * Responsable de l'extraction des données brutes nécessaires à la génération du document.
- * C'est le point d'entrée pour toute requête de données nommée.
  */
 export interface IDataSystem {
-  /**
-   * Récupère les données en fonction du nom de la requête et des paramètres fournis.
-   * @param requestName Le nom de la requête à exécuter.
-   * @param params Les paramètres de filtrage ou de sélection.
-   * @returns Un objet `DataSystemResult` indiquant le succès et les données, ou l'échec et le message d'erreur.
-   */
   getData(requestName: string, params: unknown): Promise<DataSystemResult>;
 }
 
 /**
  * 🚀 Implémentation concrète du service de données d'application.
- * Il agit comme un **Registry** qui mappe les noms de requêtes aux fonctions de traitement (handlers) correspondantes.
- * Cela permet de centraliser et de découpler la logique d'accès aux données.
  */
 export class AppDataSystem implements IDataSystem {
-  /**
-   * Mappage des noms de requêtes vers leurs fonctions de traitement (Handlers).
-   * L'utilisation de `Map` est préférable aux objets `{}` pour les registres de ce type en TypeScript.
-   */
   private readonly requestHandlers: Map<string, DataRequestHandler>;
+  // 🆕 Logger dédié pour le système de données
+  private readonly logger: CustomLogger = getLogger("DataSystem");
 
-  /**
-   * @param handlers Configuration de toutes les requêtes de données disponibles dans le système.
-   */
   constructor(handlers: DataSystemHandler[]) {
     // Initialisation du registre des handlers
     this.requestHandlers = new Map(
       handlers.map((item) => [item.requestName, item.handler])
     );
+    this.logger.info(
+      `Initialisation du DataSystem avec ${handlers.length} handler(s).`
+    );
   }
 
   /**
    * Récupère les données brutes en exécutant le handler de requête correspondant.
-   * @param requestName Le nom unique de la requête à exécuter.
-   * @param params Les paramètres de la requête.
-   * @returns Le résultat de l'exécution (données ou erreur).
    */
   public async getData(
     requestName: string,
@@ -78,27 +61,37 @@ export class AppDataSystem implements IDataSystem {
 
     // 1. Vérification de l'existence du Handler
     if (!handler) {
-      console.warn(
-        `[DataSystem] ⚠️ Requête non reconnue. Échec de la récupération des données: ${requestName}`
-      );
+      // ❌ Log d'avertissement pour les requêtes inconnues
+      this.logger.warn(`Requête non reconnue. Échec de la récupération.`, {
+        requestName,
+        params,
+      });
+
       return {
         success: false,
         errorMessage: `Requête non reconnue: '${requestName}'. Veuillez vérifier la configuration du DataSystem.`,
       };
     }
 
+    // Log pour le début de l'exécution
+    this.logger.info(`Exécution du handler: ${requestName}`, { params });
+
     // 2. Exécution du Handler avec gestion des exceptions (Guard)
     try {
       // Le handler est exécuté et est supposé retourner les données brutes.
       const _data = await handler(params);
 
+      // Conversion des modèles de base de données en objets plain JavaScript
       const data = await (Array.isArray(_data)
         ? mapModelsToPlainList(_data)
         : mapModelToPlain(_data as any));
 
-      console.info(
-        `[DataSystem] ✅ Données récupérées avec succès pour: ${requestName}`
-      );
+      // ✅ Log de succès
+      this.logger.info(`Données récupérées avec succès.`, {
+        requestName,
+        dataType: Array.isArray(data) ? `Array[${data.length}]` : typeof data,
+      });
+
       return {
         success: true,
         data: data,
@@ -108,9 +101,11 @@ export class AppDataSystem implements IDataSystem {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
 
-      console.error(
-        `[DataSystem] ❌ Erreur lors de l'exécution du handler '${requestName}':`,
-        error
+      // ❌ Log d'erreur détaillé
+      this.logger.error(
+        `Erreur lors de l'exécution du handler.`,
+        error instanceof Error ? error : String(error),
+        { requestName, params }
       );
 
       return {
@@ -125,10 +120,6 @@ export class AppDataSystem implements IDataSystem {
  * 🛠️ Crée un objet de configuration `DataSystemHandler`.
  * Cette fonction utilitaire facilite l'enregistrement des requêtes en s'assurant
  * que la structure de l'objet est correctement formée (clé-valeur).
- *
- * @param name Le nom unique (clé) de la requête de données (ex: 'GET_USER_BY_ID').
- * @param handler La fonction de traitement qui exécute la logique d'extraction de données.
- * @returns L'objet `DataSystemHandler` prêt à être injecté dans l'AppDataSystem.
  */
 export function createDataSystemHandler(
   name: string,

@@ -87,6 +87,7 @@ export class Client implements IClient {
    */
   create({ headers, ipcRender }: TCreateClientParams) {
     if (ipcRender) {
+      console.log(JSON.stringify(ipcRender, null, 4));
       this.ipcRender = ipcRender;
     }
     this.headers = headers || {};
