@@ -1,22 +1,24 @@
 import "dotenv/config";
-import { Sequelize } from "sequelize";
+import { type Options, Sequelize } from "sequelize";
 import * as fs from "fs/promises"; // Utilisation de fs/promises pour les opérations asynchrones
 import * as path from "path"; // Pour manipuler les chemins de fichiers
 import { getLogger } from "@/main/libs/logger";
 
 // Logger dédié pour la configuration de la base de données
-const dbConfigLogger = getLogger("DBConfig");
-
+const dbLogger = getLogger("DataBase");
 export const DEFAULT_DB_FILENAME = "./database.sqlite";
 const BACKUP_DIR = "./backups";
 const MAX_BACKUPS = 5; // Limite le nombre de sauvegardes pour ne pas saturer le disque
 
-const config = {
+const config: Options = {
   dialect: "sqlite",
   storage: DEFAULT_DB_FILENAME,
+  logging(sql, timing) {
+    dbLogger.info(sql, timing);
+  },
 };
 
-export const sequelize = new Sequelize(config as any);
+export const sequelize = new Sequelize(config);
 
 // -----------------------------------------------------
 // 💾 Système de Sauvegarde (Backup)
@@ -54,12 +56,12 @@ async function cleanupOldBackups(): Promise<void> {
 
       for (const file of filesToDelete) {
         await fs.unlink(path.join(BACKUP_DIR, file.name));
-        dbConfigLogger.info(`Ancienne sauvegarde supprimée : ${file.name}`);
+        dbLogger.info(`Ancienne sauvegarde supprimée : ${file.name}`);
       }
     }
   } catch (error) {
     // Log d'erreur, mais ne bloque pas l'opération de backup si le cleanup échoue
-    dbConfigLogger.error(
+    dbLogger.error(
       "Échec du nettoyage des anciennes sauvegardes.",
       error instanceof Error ? error : String(error)
     );
@@ -75,7 +77,7 @@ export async function performBackup(): Promise<string | undefined> {
   const dbExists = await fs.stat(dbPath).catch(() => null);
 
   if (!dbExists) {
-    dbConfigLogger.warn(
+    dbLogger.warn(
       `Impossible de faire la sauvegarde : le fichier source ${dbPath} n'existe pas.`
     );
     return undefined;
@@ -94,7 +96,7 @@ export async function performBackup(): Promise<string | undefined> {
     // 3. Copie le fichier (méthode simple et efficace pour SQLite)
     await fs.copyFile(dbPath, backupPath);
 
-    dbConfigLogger.info(`Sauvegarde de la base de données réussie.`, {
+    dbLogger.info(`Sauvegarde de la base de données réussie.`, {
       path: backupPath,
     });
 
@@ -103,7 +105,7 @@ export async function performBackup(): Promise<string | undefined> {
 
     return backupPath;
   } catch (error) {
-    dbConfigLogger.error(
+    dbLogger.error(
       "Échec de l'opération de sauvegarde de la base de données.",
       error instanceof Error ? error : String(error)
     );

@@ -6,3 +6,4 @@ releases
 *.log*
 .env
 loggs
+backups
