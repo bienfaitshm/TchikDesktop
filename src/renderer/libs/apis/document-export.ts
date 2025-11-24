@@ -4,7 +4,6 @@ import { clientApis } from "./client";
 import { DocumentInfo } from "@/commons/types/services.decuments";
 
 export const exportDocuments = (data: DocumentFilter) => {
-  console.log("APis DocumentFilter", data);
   return clientApis
     .post<{
       filenamePath: string;

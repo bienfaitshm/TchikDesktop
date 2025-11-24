@@ -77,8 +77,6 @@ export abstract class AbstractDocumentHandler implements DocumentHandler {
    */
   public validate(params: unknown): ValidationResult {
     const result = this.schema.safeParse(params);
-    console.log("validate: Params", params);
-    console.log("validate", JSON.stringify(result, null, 4));
     if (result.success) {
       return { success: true, data: result.data };
     }

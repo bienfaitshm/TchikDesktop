@@ -35,9 +35,9 @@ export class InvoiceDocumentHandler extends AbstractDocumentHandler {
       result: {
         data: generatedContent,
         options: {
-          defaultFilename: "Rapport-Factures-2025",
-          allowedExtensions: ["pdf"],
-          mimeType: "application/pdf",
+          defaultPath: "Rapport-Factures-2025",
+          title: this.getTitle(),
+          filters: [{ extensions: ["pdf"], name: "Document Portable" }],
         },
       },
     };
@@ -74,6 +74,7 @@ export class EnrollementDocumentHandler extends AbstractDocumentHandler {
 
     // --- 2. Définition des options d'exportation ---
     const exportOptions: SaveFileOptions = {
+      title: this.getTitle(),
       defaultPath: "Liste-Inscrits",
       // Format d'options plus standard
       filters: [{ extensions: ["docx"], name: "Document Word" }],
