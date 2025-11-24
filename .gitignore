@@ -5,3 +5,4 @@ release
 releases
 *.log*
 .env
+loggs
