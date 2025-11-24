@@ -9,6 +9,7 @@ import icon from "../../resources/icon.png?asset";
 import { server } from "@/commons/libs/electron-apis/server";
 import { sequelize } from "@/main/db/config";
 import { getLogger } from "@/main/libs/logger";
+import { performBackup } from "@/main/db/config";
 
 import "@/main/apps";
 
@@ -91,11 +92,13 @@ const createMainWindow = (): void => {
   }
 };
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   mainLogger.info("Application prête (whenReady).");
 
   electronApp.setAppUserModelId("com.electron.tchik");
   mainLogger.info("AppUserModelId défini.");
+
+  await performBackup();
 
   app.on("browser-window-created", (_, window) => {
     mainLogger.info(
@@ -116,11 +119,12 @@ app.whenReady().then(() => {
   });
 });
 
-app.on("window-all-closed", () => {
+app.on("window-all-closed", async () => {
   if (process.platform !== "darwin") {
     mainLogger.info(
       'Événement "window-all-closed": Fermeture de l\'application.'
     );
+    await performBackup();
     app.quit();
   }
 });
