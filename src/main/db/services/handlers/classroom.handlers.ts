@@ -9,6 +9,7 @@ import type {
 import { BaseQueryHandler } from "./handler";
 import * as queries from "./classroom";
 import * as schemas from "./schemas.classroom";
+import { mapRawEnrollmentsToReportStructure } from "../utils/parsers";
 
 /**
  * 🧱 Interface des paramètres de filtrage génériques.
@@ -41,6 +42,9 @@ export class ClassroomEnrollmentQueryHandler extends BaseQueryHandler {
   public queryName: string = "classrooms.enrollments";
   public schema = schemas.DocumentExportSchema;
   public logger = getLogger("ClassroomEnrollment");
+  public async cleanData(data: any): Promise<any> {
+    return mapRawEnrollmentsToReportStructure(data);
+  }
   public executeQueryset(
     validatedParams: ClassroomFilterParams
   ): Promise<Model<any, any> | Model<any, any>[]> {

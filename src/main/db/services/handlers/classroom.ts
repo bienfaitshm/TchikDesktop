@@ -93,32 +93,3 @@ export function fetchClassroomsWithEnrollments(
   // 2. Exécution de la requête
   return ClassRoom.findAll(baseQuery);
 }
-
-/**
- * @function sortStudentsByFullName
- * @description Trie les inscriptions (élèves) d'une classe par leur nom complet (fullname)
- * par ordre alphabétique (ASC) côté application (JavaScript/TypeScript).
- *
- * @param {ClassroomWithEnrollments[]} classDatas - Le tableau des données de la classe avec la liste des élèves à trier.
- * @returns {ClassroomWithEnrollments[]} Le même tableau d'objets, mais avec les listes d'élèves triées.
- */
-export function sortStudentsByFullName(
-  classDatas: ClassroomWithEnrollments[]
-): ClassroomWithEnrollments[] {
-  return classDatas.map((classData) => {
-    // Vérifie et trie les inscriptions si elles existent
-    if (
-      classData.ClassroomEnrolements &&
-      Array.isArray(classData.ClassroomEnrolements)
-    ) {
-      classData.ClassroomEnrolements.sort((a, b) => {
-        const nameA = a.User?.fullname || "";
-        const nameB = b.User?.fullname || "";
-
-        // Comparaison locale pour un tri alphabétique correct (ASC)
-        return nameA.localeCompare(nameB);
-      });
-    }
-    return classData;
-  });
-}
