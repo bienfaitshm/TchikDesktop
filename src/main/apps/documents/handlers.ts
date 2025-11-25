@@ -1,5 +1,5 @@
 import {
-  InvoiceDocumentHandler,
+  CotationDocumentHandler,
   EnrollementDocumentHandler,
 } from "@/main/reports/word.report";
 
@@ -24,7 +24,7 @@ function registerHandlers(
  * C'est le manifeste qui référence les classes, et non les objets instanciés.
  */
 const HANDLERS_CLASSES_MANIFEST: HandlerConstructor[] = [
-  InvoiceDocumentHandler,
+  CotationDocumentHandler,
   EnrollementDocumentHandler,
   EnrollmentCsvHandler,
   EnrollmentJsonHandler,

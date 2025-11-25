@@ -1,78 +1,132 @@
-// Fichier: InvoiceDocumentHandler.ts
+/**
+ * MODULE: Gestionnaires d'Exportation de Documents
+ * * Ce module contient les implémentations concrètes des gestionnaires de documents
+ * pour l'exportation de données académiques (cotations, inscriptions) au format DOCX.
+ * Chaque classe étend l'AbstractDocumentHandler pour définir les métadonnées
+ * du document et la logique de génération du contenu.
+ */
 
 import { DocumentExportSchema } from "./schema";
 import { AbstractDocumentHandler, ProcessHandleResult } from "./report";
-import { SaveFileOptions } from "../libs/save-files";
+import { SaveFileOptions } from "@/main/libs/save-files";
 import { DOCUMENT_EXTENSION } from "@/commons/constants/file-extension";
+import {
+  generateDocxReport,
+  resolveTemplatePath,
+} from "@/main/libs/docx/config";
+import { DOCUMENT_TAMPLATES } from "./constants";
 
-export class InvoiceDocumentHandler extends AbstractDocumentHandler {
-  // Propriétés Abstraites implémentées
-  public readonly key = "INVOICE_REPORT";
-  public readonly type = DOCUMENT_EXTENSION.PDF;
-  public readonly title = "Rapport de Facturation Mensuel";
-  public readonly description = "Exporte toutes les factures du mois spécifié.";
-  public readonly requestName = "GET_MONTHLY_INVOICES";
+/**
+ * Type attendu pour les données passées aux gestionnaires (typiquement des listes de classes).
+ */
+type ClassroomExportData = unknown; // Remplacer 'unknown' par le type réel de la structure de données des classes si disponible
+
+/**
+ * Gère l'exportation des fiches de cotations secondaires.
+ * * Cette classe définit les métadonnées pour l'interface utilisateur (clé, titre, description)
+ * et implémente la logique pour générer un document DOCX à partir du template
+ * des cotations secondaires, en utilisant les données de classes fournies.
+ */
+export class CotationDocumentHandler extends AbstractDocumentHandler {
+  /** Clé d'identification unique pour ce gestionnaire. Utilisée dans l'API. */
+  public readonly key = "COTATIONS_SECONDARY" as const;
+
+  /** Type de fichier d'exportation (ex: .docx). */
+  public readonly type = DOCUMENT_EXTENSION.DOCX;
+
+  /** Titre affiché à l'utilisateur lors de l'exportation. */
+  public readonly title = "Fiches de cotations secondaire";
+
+  /** Description détaillée de la fonctionnalité pour l'interface utilisateur. */
+  public readonly description =
+    "Génère des fiches de cotations secondaires détaillées pour les classes spécifiées.";
+
+  /** Nom de la requête ou de l'endpoint utilisé pour récupérer les données. */
+  public readonly requestName = "classrooms.enrollments";
+
+  /** Schéma de validation pour les options d'exportation. */
   public readonly schema = DocumentExportSchema;
 
-  // Méthode Abstraite implémentée
-  public async processHandle(data: unknown): Promise<ProcessHandleResult> {
-    // Le type de 'data' est connu ici grâce à la configuration du DataSystem
-    const invoices = data as Array<any>;
-
-    // 1. Logique de transformation et de génération du fichier
-    // ... générer le PDF ...
-    const generatedContent = Buffer.from(
-      `Contenu du PDF pour ${invoices.length} factures`
+  /**
+   * Logique principale de traitement des données et de génération de document.
+   * @param data Les données d'exportation, typiquement une liste d'inscriptions/classes.
+   * @returns Le résultat du traitement, contenant le contenu du fichier et ses options de sauvegarde.
+   */
+  public async processHandle(
+    data: ClassroomExportData
+  ): Promise<ProcessHandleResult> {
+    // Génération du contenu DOCX
+    const generatedContent = await generateDocxReport(
+      resolveTemplatePath(DOCUMENT_TAMPLATES.contationSecondary),
+      {
+        // 'school' est indéfini ou null si non pertinent pour ce template spécifique
+        school: undefined,
+        classrooms: data,
+      }
     );
+
+    const exportOptions: SaveFileOptions = {
+      defaultPath: "Fiches de cotations",
+      title: this.getTitle(),
+      filters: this.getFilters(),
+    };
 
     return {
       success: true,
       result: {
         data: generatedContent,
-        options: {
-          defaultPath: "Rapport-Factures-2025",
-          title: this.getTitle(),
-          filters: this.getFilters(),
-        },
+        options: exportOptions,
       },
     };
   }
 }
 
 /**
- * Gère l'exportation des fiches d'inscription des élèves.
+ * Gère l'exportation de la liste des élèves inscrits.
+ * * Cette classe permet de générer un document DOCX reprenant la liste des
+ * élèves inscrits, en appliquant des filtres si nécessaire.
  */
 export class EnrollementDocumentHandler extends AbstractDocumentHandler {
-  // Propriétés Abstraites implémentées
-  public readonly key = "ENROLLMENT_DOCX";
+  /** Clé d'identification unique pour ce gestionnaire. */
+  public readonly key = "ENROLLMENT_DOCX" as const;
+
+  /** Type de fichier d'exportation. */
   public readonly type = DOCUMENT_EXTENSION.DOCX;
+
+  /** Titre affiché à l'utilisateur. */
   public readonly title = "Fiches des Inscrits";
+
+  /** Description de la fonctionnalité. */
   public readonly description =
-    "Exporte la liste des élèves selon les filtres d'inscription.";
+    "Exporte la liste des élèves inscrits, filtrée selon les critères de sélection (classe, période, etc.).";
+
+  /** Nom de la requête associée. */
   public readonly requestName = "classrooms.enrollments";
-  // Utilisation du schéma importé
+
+  /** Schéma de validation des options. */
   public readonly schema = DocumentExportSchema;
 
   /**
    * Traite les données d'inscription et génère le document DOCX.
+   * @param data Les données d'exportation (liste des classes et leurs inscrits).
+   * @returns Le résultat du traitement, contenant le contenu du fichier et ses options de sauvegarde.
    */
-  public async processHandle(data: unknown): Promise<ProcessHandleResult> {
-    // ⚠️ Supposons que 'data' est le résultat de l'appel API, c'est-à-dire un tableau d'inscriptions.
-    const enrollments = data as Array<any>;
-    // --- 1. Logique de transformation et de génération ---
-
-    // Simuler la génération du document DOCX
-    const generatedContent = Buffer.from(
-      `Contenu du DOCX pour ${enrollments.length} inscriptions`
+  public async processHandle(
+    data: ClassroomExportData
+  ): Promise<ProcessHandleResult> {
+    // Génération du contenu DOCX basé sur le template d'inscription étudiant
+    const generatedContent = await generateDocxReport(
+      resolveTemplatePath(DOCUMENT_TAMPLATES.enrollementStudent),
+      {
+        school: undefined,
+        classrooms: data,
+      }
     );
 
-    // --- 2. Définition des options d'exportation ---
     const exportOptions: SaveFileOptions = {
       title: this.getTitle(),
       defaultPath: "Liste-Inscrits",
-      // Format d'options plus standard
       filters: this.getFilters(),
-      // mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // MIME type standard pour DOCX
     };
 
     return {
