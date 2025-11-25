@@ -1,12 +1,14 @@
-import { mapModelsToPlainList, mapModelToPlain } from "@/main/db/models/utils";
 import { getLogger, CustomLogger } from "@/main/libs/logger";
+import { BaseQueryHandler } from "./handlers/handler";
 
 /**
  * 💡 Type de la fonction de traitement (Handler) d'une requête de données.
  * @param params Les paramètres de filtrage ou de sélection de la requête.
  * @returns Les données brutes (non typées) résultant de l'exécution de la requête.
  */
-export type DataRequestHandler = (params: unknown) => unknown;
+export type DataRequestHandler = (
+  params: unknown
+) => Promise<unknown> | unknown;
 
 /**
  * 🧱 Structure de configuration pour l'enregistrement d'un Data Handler.
@@ -23,7 +25,7 @@ export interface DataSystemHandler {
  */
 export type DataSystemResult =
   | { success: true; data: unknown }
-  | { success: false; errorMessage: string };
+  | { success: false; errorMessage: string; errors?: unknown };
 
 /**
  * 📦 Interface du système de données (Data System).
@@ -36,18 +38,16 @@ export interface IDataSystem {
  * 🚀 Implémentation concrète du service de données d'application.
  */
 export class AppDataSystem implements IDataSystem {
-  private readonly requestHandlers: Map<string, DataRequestHandler>;
+  private readonly requestHandlers: Map<string, BaseQueryHandler>;
   // 🆕 Logger dédié pour le système de données
   private readonly logger: CustomLogger = getLogger("DataSystem");
 
-  constructor(handlers: DataSystemHandler[]) {
+  constructor(handlers: BaseQueryHandler[]) {
     // Initialisation du registre des handlers
     this.requestHandlers = new Map(
-      handlers.map((item) => [item.requestName, item.handler])
+      handlers.map((item) => [item.queryName, item])
     );
-    this.logger.info(
-      `Initialisation du DataSystem avec ${handlers.length} handler(s).`
-    );
+    this.logger.info(`Initialisation avec ${handlers.length} handler(s).`);
   }
 
   /**
@@ -79,12 +79,16 @@ export class AppDataSystem implements IDataSystem {
     // 2. Exécution du Handler avec gestion des exceptions (Guard)
     try {
       // Le handler est exécuté et est supposé retourner les données brutes.
-      const _data = await handler(params);
+      const data = await handler.handle(params);
 
-      // Conversion des modèles de base de données en objets plain JavaScript
-      const data = await (Array.isArray(_data)
-        ? mapModelsToPlainList(_data)
-        : mapModelToPlain(_data as any));
+      if (!data.success) {
+        this.logger.error(`Erreur lors de l'exécution du handler.`);
+        return {
+          success: false,
+          errorMessage: data.message,
+          errors: data.errors,
+        };
+      }
 
       // ✅ Log de succès
       this.logger.info(`Données récupérées avec succès.`, {
@@ -94,7 +98,7 @@ export class AppDataSystem implements IDataSystem {
 
       return {
         success: true,
-        data: data,
+        data: data.data,
       };
     } catch (error) {
       // 3. Gestion des erreurs d'exécution (si le handler throw)
