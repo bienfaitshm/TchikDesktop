@@ -8,6 +8,7 @@ import type {
 
 import { BaseQueryHandler } from "./handler";
 import * as queries from "./classroom";
+import * as schemas from "./schemas.classroom";
 
 /**
  * 🧱 Interface des paramètres de filtrage génériques.
@@ -38,7 +39,7 @@ export type ClassroomWithEnrollments = TClassroom & {
  */
 export class ClassroomEnrollmentQueryHandler extends BaseQueryHandler {
   public queryName: string = "classrooms.enrollments";
-  public schema: any = {};
+  public schema = schemas.DocumentExportSchema;
   public logger = getLogger("ClassroomEnrollment");
   public executeQueryset(
     validatedParams: ClassroomFilterParams
