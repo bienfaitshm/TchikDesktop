@@ -1,12 +1,15 @@
+import { Sequelize, WhereOptions, FindOptions, Model } from "sequelize";
 import { ClassRoom, ClassroomEnrolement, User } from "@/main/db/models";
-import { Sequelize, WhereOptions, FindOptions, literal } from "sequelize";
+import { getLogger } from "@/main/libs/logger";
 import { getDefinedAttributes } from "@/main/db/models/utils";
-import { applyInFilterToWhere } from "./utils";
 import type {
   TClassroom,
   TWithUser,
   TEnrolement,
 } from "@/commons/types/models";
+
+import { applyInFilterToWhere } from "./utils";
+import { BaseQueryHandler } from "./handler";
 
 /**
  * 🧱 Interface des paramètres de filtrage génériques.
@@ -76,17 +79,24 @@ function _getClassroomBaseQuery(
  * @param params Les paramètres de filtrage (schoolId, yearId, sections, classrooms).
  * @returns Une Promise résolue avec un tableau d'objets `ClassroomWithEnrollments`.
  */
-export async function fetchClassroomEnrollments(params: ClassroomFilterParams) {
-  const baseQuery = _getClassroomBaseQuery(params);
+export class ClassroomEnrollmentQueryHandler extends BaseQueryHandler {
+  public queryName: string = "classrooms.enrollments";
+  public schema: any = {};
+  public logger = getLogger("ClassroomEnrollment");
+  public executeQueryset(
+    validatedParams: ClassroomFilterParams
+  ): Promise<Model<any, any> | Model<any, any>[]> {
+    const baseQuery = _getClassroomBaseQuery(validatedParams);
 
-  // 1. Tri par identifiant de la salle de classe
-  baseQuery.order = [
-    [Sequelize.fn("LOWER", Sequelize.col("identifier")), "ASC"],
-    [Sequelize.fn("LOWER", Sequelize.col("shortIdentifier")), "ASC"],
-  ];
+    // 1. Tri par identifiant de la salle de classe
+    baseQuery.order = [
+      [Sequelize.fn("LOWER", Sequelize.col("identifier")), "ASC"],
+      [Sequelize.fn("LOWER", Sequelize.col("shortIdentifier")), "ASC"],
+    ];
 
-  // 2. Exécution et retour (le type est inféré par le modèle et l'inclusion)
-  return ClassRoom.findAll(baseQuery);
+    // 2. Exécution et retour (le type est inféré par le modèle et l'inclusion)
+    return ClassRoom.findAll(baseQuery);
+  }
 }
 
 /**
@@ -97,29 +107,24 @@ export async function fetchClassroomEnrollments(params: ClassroomFilterParams) {
  * @param params Les paramètres de filtrage (schoolId, yearId, sections, classrooms).
  * @returns Une promesse résolue avec un tableau d'objets `ClassroomWithEnrollments` triés par nom d'élève.
  */
-export async function fetchClassroomStudentsDetailed(
-  params: ClassroomFilterParams
-) {
-  const baseQuery = _getClassroomBaseQuery(params);
+export class ClassroomStudentsQueryHandler extends BaseQueryHandler {
+  public queryName: string = "classrooms.students";
+  public schema: any = {};
+  public logger = getLogger("ClassroomStudents");
+  public executeQueryset(
+    validatedParams: ClassroomFilterParams
+  ): Promise<Model<any, any> | Model<any, any>[]> {
+    const baseQuery = _getClassroomBaseQuery(validatedParams);
 
-  // 1. Assurer une jointure externe (LEFT JOIN) pour inclure les classes sans élèves
-  (baseQuery.include![0] as any).required = false;
+    // 1. Tri par identifiant de la salle de classe
+    baseQuery.order = [
+      [Sequelize.fn("LOWER", Sequelize.col("identifier")), "ASC"],
+      [Sequelize.fn("LOWER", Sequelize.col("shortIdentifier")), "ASC"],
+    ];
 
-  // 2. Tri des élèves au sein des inscriptions (nécessite une syntaxe Sequelize LITERAL)
-  (baseQuery.include![0] as any).order = [
-    [literal('LOWER("ClassroomEnrolements->User"."last_name")'), "ASC"],
-    [literal('LOWER("ClassroomEnrolements->User"."middle_name")'), "ASC"],
-    [literal('LOWER("ClassroomEnrolements->User"."first_name")'), "ASC"],
-  ];
-
-  // 3. Tri des classes par identifiant principal
-  baseQuery.order = [["identifier", "ASC"]];
-
-  // 4. Options pour nettoyer le résultat
-  baseQuery.raw = false;
-  baseQuery.nest = true;
-
-  return ClassRoom.findAll(baseQuery);
+    // 2. Exécution et retour (le type est inféré par le modèle et l'inclusion)
+    return ClassRoom.findAll(baseQuery);
+  }
 }
 
 /**
