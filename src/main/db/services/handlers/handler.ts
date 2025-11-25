@@ -38,8 +38,6 @@ type QuerySuccess<TData> = {
  */
 export type QueryResult<TData = PlainData> = QueryError | QuerySuccess<TData>;
 
-// --- Interface du Gestionnaire de Requête (Query Handler) ---
-
 /**
  * @interface IQueryHandler
  * @description Interface fondamentale pour un Query Handler.
@@ -67,8 +65,6 @@ export interface IQueryHandler<
   ): Promise<TPlainData>;
   handle(rawParams: unknown): Promise<QueryResult<TPlainData>>;
 }
-
-// --- Implémentation de la Classe Abstraite ---
 
 /**
  * @abstract
