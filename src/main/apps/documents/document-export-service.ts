@@ -37,7 +37,7 @@ export interface DocumentHandler {
   processHandle(data: unknown): Promise<ProcessHandleResult>;
 }
 export interface DataSystem {
-  getData(requestName: string, params: unknown): DataSystemResult;
+  getData(requestName: string, params: unknown): Promise<DataSystemResult>;
 }
 export interface DocumentServiceConfig {
   dataSystem: DataSystem;
@@ -149,7 +149,7 @@ export class DocumentExportService
       `Étape 2/5: Extraction des données (Requête: ${requestName}).`
     );
 
-    const dataExtraction = this.configuration.dataSystem.getData(
+    const dataExtraction = await this.configuration.dataSystem.getData(
       requestName,
       documentParams
     );
