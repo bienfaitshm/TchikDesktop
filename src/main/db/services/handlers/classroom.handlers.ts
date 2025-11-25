@@ -42,7 +42,7 @@ export class ClassroomEnrollmentQueryHandler extends BaseQueryHandler {
   public queryName: string = "classrooms.enrollments";
   public schema = schemas.DocumentExportSchema;
   public logger = getLogger("ClassroomEnrollment");
-  public async cleanData(data: any): Promise<any> {
+  public async cleanData(data: ClassroomWithEnrollments[]): Promise<any> {
     return mapRawEnrollmentsToReportStructure(data);
   }
   public executeQueryset(

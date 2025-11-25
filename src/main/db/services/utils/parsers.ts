@@ -28,7 +28,7 @@ export interface IStudentProfile {
  * @description Structure des données d'un rapport de classe, regroupant les élèves.
  */
 export interface IClassroomReport {
-  classId: string; // Ajouté pour la cohérence avec le mapping
+  classId: string;
   className: string;
   shortClassName: string;
   students: IStudentProfile[];
@@ -48,7 +48,7 @@ export type TExcelRow = {
   Sexe: USER_GENDER;
   "Date de naissance": string;
   "Lieu de naissance": string;
-  Statut: string; // Traduction du statut
+  Statut: string;
   "Code d'inscription": string;
 };
 

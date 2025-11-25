@@ -111,7 +111,7 @@ export abstract class BaseQueryHandler<
   /**
    * cleanData
    */
-  public async cleanData(data: Promise<TPlainData> | TPlainData) {
+  public cleanData(data: TPlainData) {
     return data;
   }
 
@@ -189,7 +189,9 @@ export abstract class BaseQueryHandler<
       }
 
       // 4. Nettoyage des données
-      const plainData = await this.cleanData(this.mapModelsToPlainData(models));
+      const plainData = await this.cleanData(
+        await this.mapModelsToPlainData(models)
+      );
 
       const endTime = process.hrtime.bigint();
       const durationMs = Number(endTime - startTime) / 1000000;
