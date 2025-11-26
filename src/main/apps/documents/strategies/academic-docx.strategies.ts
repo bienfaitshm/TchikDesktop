@@ -113,7 +113,10 @@ export class EnrollementDocxStrategy extends AbstractExportStrategy<
   public readonly displayName = "Rapport d'Inscriptions Élèves";
   public readonly description =
     "Exporte la liste détaillée des élèves inscrits (par classe, période, etc.) au format DOCX.";
-  public readonly dataSourceDefinition = "classrooms.enrollments";
+  public readonly dataSourceDefinition = {
+    classrooms: "classrooms.enrollments",
+    school: "school.find.byId",
+  };
   public readonly validationSchema = DocumentExportSchema;
 
   /**

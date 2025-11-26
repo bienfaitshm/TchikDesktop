@@ -6,6 +6,7 @@
 
 import { DataQueryBus, IQueryBus } from "./query-bus.service";
 import * as classooms from "./handlers/classroom.query-handler.ts";
+import * as schools from "./handlers/school.query-handlers";
 import { AbstractDataQueryHandler } from "./handlers/data-query-handler";
 import { getLogger } from "@/main/libs/logger";
 
@@ -34,6 +35,10 @@ type QueryHandlerConstructor = new (
  */
 const QUERY_HANDLER_CLASSES_REGISTRY: QueryHandlerConstructor[] = [
   classooms.ClassroomEnrollmentQueryHandler,
+  // schools
+  schools.FindSchoolByIdQueryHandler,
+  schools.FindSchoolsQueryHandler,
+  schools.FindStudyYearsQueryHandler,
 ];
 
 // ==========================================
