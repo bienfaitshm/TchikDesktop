@@ -13,7 +13,7 @@ import {
 import { SaveFileOptions } from "@/main/libs/save-files";
 import { DOCUMENT_EXTENSION } from "@/commons/constants/file-extension";
 import * as schemas from "./schemas";
-
+import { json2csv } from "json-2-csv";
 // ==========================================
 // 1. CSV Utility (Module d'Ingénierie)
 // ==========================================
@@ -30,7 +30,7 @@ const CSV_DELIMITER = ";";
  * @param data Tableau d'objets plats.
  * @returns La chaîne CSV formatée.
  */
-function serializeToCsv(data: Array<Record<string, unknown>>): string {
+export function serializeToCsv(data: Array<Record<string, unknown>>): string {
   if (!data || data.length === 0) return "";
 
   // 1. Extraction des en-têtes à partir du premier objet (Assumer l'uniformité)
@@ -96,7 +96,7 @@ export class EnrollmentCsvStrategy extends AbstractExportStrategy<
   ): Promise<ServiceOperationResult<ExportArtifact>> {
     try {
       // --- 1. Sérialisation ---
-      const csvContent = serializeToCsv(data);
+      const csvContent = json2csv(data);
       // Utilisation de Buffer.from pour un encodage explicite (bonne pratique)
       const generatedBuffer = Buffer.from(csvContent, "utf-8");
 
