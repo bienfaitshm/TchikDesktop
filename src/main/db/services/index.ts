@@ -1,12 +1,14 @@
-import { AppDataSystem } from "./data-system";
-import * as classooms from "./handlers/classroom.handlers";
-import { BaseQueryHandler } from "./handlers/handler";
+import { DataQueryBus } from "./query-bus.service";
+import * as classooms from "./handlers/classroom.query-handler.ts";
+import { AbstractDataQueryHandler } from "./handlers/data-query-handler";
 
 /**
  * 🛠️ Type d'un Constructeur de Query Handler.
  * Définit une classe qui peut être instanciée pour produire un BaseQueryHandler.
  */
-type HandlerConstructor = new (...args: any[]) => BaseQueryHandler<any, any>;
+type HandlerConstructor = new (
+  ...args: any[]
+) => AbstractDataQueryHandler<any, any>;
 
 /**
  * 🏭 Fonction Wrapper pour instancier les classes de Handlers.
@@ -17,7 +19,7 @@ type HandlerConstructor = new (...args: any[]) => BaseQueryHandler<any, any>;
  */
 function registerHandlers(
   handlerClasses: HandlerConstructor[]
-): BaseQueryHandler[] {
+): AbstractDataQueryHandler[] {
   return handlerClasses.map((HandlerClass) => new HandlerClass());
 }
 
@@ -35,4 +37,4 @@ const HANDLERS_CLASSES_MANIFEST: HandlerConstructor[] = [
 const HANDLERS_INSTANCES_MANIFEST = registerHandlers(HANDLERS_CLASSES_MANIFEST);
 
 // 2. Initialisation du système de données avec les instances créées.
-export const appDataSystem = new AppDataSystem(HANDLERS_INSTANCES_MANIFEST);
+export const appDataSystem = new DataQueryBus(HANDLERS_INSTANCES_MANIFEST);
