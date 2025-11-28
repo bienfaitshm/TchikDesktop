@@ -1,6 +1,6 @@
-import * as Words from "@/main/apps/documents/strategies/academic-docx.strategies";
-import { EnrollmentCsvStrategy } from "@/main/apps/documents/strategies/enrollment-csv.strategy";
-import { EnrollmentJsonStrategy } from "@/main/apps/documents/strategies/enrollment-json.strategy";
+import * as Words from "@/main/services/documents-exports/strategies/academic-docx.strategies";
+import { EnrollmentCsvStrategy } from "@/main/services/documents-exports/strategies/enrollment-csv.strategy";
+import { EnrollmentJsonStrategy } from "@/main/services/documents-exports/strategies/enrollment-json.strategy";
 import { IDocumentExportStrategy } from "../document-export.service";
 
 /**

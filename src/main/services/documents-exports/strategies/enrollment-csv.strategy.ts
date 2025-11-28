@@ -9,7 +9,7 @@ import { AbstractExportStrategy } from "./abstract-document-strategy";
 import {
   ServiceOperationResult,
   ExportArtifact,
-} from "@/main/apps/documents/document-export.service";
+} from "@/main/services/documents-exports/document-export.service";
 import { SaveFileOptions } from "@/main/libs/save-files";
 import { DOCUMENT_EXTENSION } from "@/commons/constants/file-extension";
 import * as schemas from "./schemas";

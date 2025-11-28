@@ -5,4 +5,4 @@ export * from "./enrolement";
 export * from "./classroom";
 export * from "./application";
 export * from "./statistiques";
-export * from "./documents/index";
+export * from "./document";

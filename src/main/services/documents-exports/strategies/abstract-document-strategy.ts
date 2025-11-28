@@ -14,7 +14,7 @@ import {
   DataSourceQueryDefinition,
   ServiceOperationResult,
   ExportArtifact,
-} from "@/main/apps/documents/document-export.service";
+} from "@/main/services/documents-exports/document-export.service";
 
 /**
  * Base abstract class for all document export strategies.
