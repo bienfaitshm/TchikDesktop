@@ -47,8 +47,11 @@ export class CotationDocxStrategy extends AbstractExportStrategy<
   public readonly displayName = "Fiches de Cotations Secondaire";
   public readonly description =
     "Génère un rapport DOCX avec les fiches de cotations secondaires détaillées pour les classes spécifiées.";
-  public readonly dataSourceDefinition = "classrooms.enrollments";
   public readonly validationSchema = DocumentExportSchema;
+  public readonly dataSourceDefinition = {
+    classrooms: "classrooms.enrollments",
+    school: "school.find.byId",
+  };
 
   /**
    * Logique de génération DOCX.

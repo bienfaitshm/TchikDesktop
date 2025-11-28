@@ -3,10 +3,13 @@
 import { z } from "zod";
 
 /** Schéma de base pour les IDs (utilisé pour les Find/Delete/Update par PK) */
-export const IdSchema = z.object({
-  id: z.string().min(1, "L'ID ne peut pas être vide."),
+export const SchoolDetailParamSchema = z.object({
+  schoolId: z.string().min(1, "L'ID ne peut pas être vide."),
 });
 
+export const YearDetailParamSchema = z.object({
+  yeaderId: z.string().min(1, "L'ID ne peut pas être vide."),
+});
 /** Schéma pour les filtres de recherche d'écoles */
 export const GetSchoolsParamsSchema = z
   .object({

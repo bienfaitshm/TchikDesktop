@@ -50,7 +50,7 @@ export class FindSchoolsQueryHandler extends AbstractDataQueryHandler<
 // ==========================================
 
 // TParams : ID unique
-type FindSchoolByIdParams = z.infer<typeof schemas.IdSchema>;
+type FindSchoolByIdParams = z.infer<typeof schemas.SchoolDetailParamSchema>;
 // TPlainPayload : Un seul objet TSchool (ou null)
 // type SingleSchoolPayload = TSchool | null;
 
@@ -59,17 +59,17 @@ type FindSchoolByIdParams = z.infer<typeof schemas.IdSchema>;
  * @queryId "school.find.byId"
  */
 export class FindSchoolByIdQueryHandler extends AbstractDataQueryHandler<
-  typeof schemas.IdSchema,
+  typeof schemas.SchoolDetailParamSchema,
   any
 > {
   public readonly queryId: string = "school.find.byId";
-  public readonly schema = schemas.IdSchema;
+  public readonly schema = schemas.SchoolDetailParamSchema;
 
   public async execute(
     validatedParams: FindSchoolByIdParams
   ): Promise<Model<any, any> | Model<any, any>[]> {
     // Si l'exécution trouve un seul élément, il est retourné tel quel.
-    return schoolRepository.findSchoolById(validatedParams.id) as any;
+    return schoolRepository.findSchoolById(validatedParams.schoolId) as any;
   }
 }
 

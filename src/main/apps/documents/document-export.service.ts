@@ -275,7 +275,9 @@ export class DocumentExportService
     const generation = await strategy.generateArtifact(dataResolution.payload);
 
     if (!generation.success) {
-      log.error("Artifact generation failed.", String(generation.error));
+      log.error("Artifact generation failed.", String(generation.error), {
+        error: generation.error,
+      });
       return response(
         {
           message: "Error generating file content.",
