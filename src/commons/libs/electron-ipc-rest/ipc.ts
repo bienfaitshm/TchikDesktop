@@ -4,7 +4,7 @@
  * Fournit une abstraction HTTP-like au-dessus d'Electron IPC.
  */
 
-import { BrowserWindow, ipcMain, type IpcMainInvokeEvent } from "electron";
+import { BrowserWindow, type IpcMainInvokeEvent } from "electron";
 import type { IpcRenderer } from "@electron-toolkit/preload";
 
 import { HttpMethod, HttpStatus } from "./constant";
@@ -60,17 +60,17 @@ interface RouteDefinition {
  * Fournit un "Error Boundary" centralisé pour capturer les exceptions des handlers.
  */
 export class IpcServer {
+  private ipcMainInstance: Electron.IpcMain;
   private routes: Map<string, RouteDefinition> = new Map();
   private isListening = false;
-  private readonly ipcMainInstance: typeof ipcMain;
 
   /**
    * @constructor
    * @param customIpcMain Permet d'injecter une instance mockée de ipcMain pour les tests unitaires.
    */
-  constructor(customIpcMain?: typeof ipcMain) {
+  constructor(customIpcMain: Electron.IpcMain) {
     // Utilise l'instance injectée ou l'instance statique d'Electron par défaut
-    this.ipcMainInstance = customIpcMain ?? ipcMain;
+    this.ipcMainInstance = customIpcMain;
   }
 
   // Méthodes HTTP pour l'enregistrement de routes (get, post, put, delete, patch...)
@@ -174,7 +174,7 @@ export class IpcServer {
   }
 }
 
-export const server = new IpcServer();
+// export const server = new IpcServer();
 
 // --- III. IpcClient (Processus Renderer) avec Intercepteurs ---
 
