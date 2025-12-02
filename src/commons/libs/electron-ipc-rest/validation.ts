@@ -22,13 +22,26 @@ export type ValidatedHandler<TRes, TBody, TParams> = (
   req: ServerRequest<TBody, TParams>
 ) => Promise<TRes> | TRes;
 
+// ... (Imports, ValidationSchemas, ValidatedHandler restent inchangés)
+
+/**
+ * Options de configuration pour la fonction createRouteHandler.
+ */
+interface HandlerOptions {
+  schemas?: ValidationSchemas;
+  /** * Message d'erreur personnalisé à utiliser lorsque la validation Zod échoue (HTTP 400).
+   * Par défaut: "Échec de la validation de la requête."
+   */
+  validationErrorMessage?: string;
+}
+
 /**
  * @function createRouteHandler
  * @description Fonction wrapper qui prend des schémas Zod, valide les données IPC entrantes, et exécute le handler final.
  * Si la validation échoue, lève une HttpException (400 BAD_REQUEST) contenant les détails de l'erreur.
  *
- * @param schemas Les schémas Zod pour le corps, les paramètres et les en-têtes.
  * @param handler Le handler de logique métier qui sera exécuté avec des données garanties d'être valides.
+ * @param options Configuration, incluant les schémas Zod et un message d'erreur de validation personnalisé.
  * @returns Le RouteHandler prêt à être passé à IpcServer.get/post/etc.
  */
 export function createRouteHandler<
@@ -39,15 +52,20 @@ export function createRouteHandler<
     : Record<string, unknown>,
   TRes = unknown,
 >(
-  schemas: S,
-  handler: ValidatedHandler<TRes, TBody, TParams>
+  handler: ValidatedHandler<TRes, TBody, TParams>,
+  options: HandlerOptions = {}
 ): RouteHandler<TRes, TBody, TParams> {
-  // L'objet retourné est le handler que IpcServer.get() attend.
+  const schemas = options.schemas; // Extraction des schémas pour la logique interne
+
+  // Message d'erreur par défaut
+  const errorMessage =
+    options.validationErrorMessage || "Échec de la validation de la requête.";
+
   return async (req) => {
     const errors: { path: string[]; message: string }[] = [];
 
     // --- 1. Validation du Body ---
-    if (schemas.body) {
+    if (schemas?.body) {
       const result = schemas.body.safeParse(req.body);
       if (!result.success) {
         result.error.issues.forEach((issue) =>
@@ -57,13 +75,13 @@ export function createRouteHandler<
           })
         );
       } else {
-        // Optionnel: Mettre à jour req.body avec la version 'coercée' et validée par Zod
+        // Mise à jour de req.body avec la version validée
         (req.body as TBody) = result.data;
       }
     }
 
     // --- 2. Validation des Params ---
-    if (schemas.params) {
+    if (schemas?.params) {
       const result = schemas.params.safeParse(req.params);
       if (!result.success) {
         result.error.issues.forEach((issue) =>
@@ -73,14 +91,13 @@ export function createRouteHandler<
           })
         );
       } else {
-        // Mettre à jour req.params avec la version validée et typée
+        // Mise à jour de req.params avec la version validée
         (req.params as TParams) = result.data;
       }
     }
 
     // --- 3. Validation des Headers ---
-    if (schemas.headers) {
-      // Les headers IPC sont généralement passés en camelCase par convention
+    if (schemas?.headers) {
       const result = schemas.headers.safeParse(req.headers);
       if (!result.success) {
         result.error.issues.forEach((issue) =>
@@ -90,23 +107,22 @@ export function createRouteHandler<
           })
         );
       } else {
-        // Optionnel: Mettre à jour req.headers avec la version validée
+        // Mise à jour de req.headers avec la version validée
         (req.headers as any) = result.data;
       }
     }
 
-    // --- 4. Gestion des Erreurs ---
+    // --- 4. Gestion des Erreurs (400 BAD REQUEST) ---
     if (errors.length > 0) {
-      // Lève une exception qui sera capturée par le 'Error Boundary' de IpcServer
       throw new HttpException(
-        "Échec de la validation de la requête.",
+        // Utilisation du message customisé
+        errorMessage,
         HttpStatus.BAD_REQUEST, // 400
-        errors // Les détails contiennent la liste structurée des erreurs
+        errors // Les détails structurés restent pour le débogage client
       );
     }
 
     // --- 5. Exécution du Handler Final ---
-    // Si tout est valide, nous appelons le handler original avec les données validées.
     return handler(req as ServerRequest<TBody, TParams>);
   };
 }

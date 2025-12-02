@@ -9,8 +9,6 @@ import type {
 } from "@/commons/types/services";
 import { TClassroomInsert } from "@/commons/types/models";
 
-// --- Routes pour Classrooms ---
-
 /**
  * @route GET /classrooms
  * @description Récupère la liste de toutes les salles de classe pour une école donnée.

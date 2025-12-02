@@ -4,7 +4,7 @@ import type {
   QueryParams,
   WithSchoolAndYearId,
 } from "@/commons/types/services";
-import { getDefinedAttributes } from "../models/utils";
+import { pruneUndefined } from "../models/utils";
 import { Sequelize } from "sequelize";
 
 export async function getClassrooms({
@@ -12,7 +12,7 @@ export async function getClassrooms({
   yearId,
   params = {},
 }: QueryParams<WithSchoolAndYearId, Partial<TClassroomInsert>>) {
-  const whereClause = getDefinedAttributes({ schoolId, yearId, ...params });
+  const whereClause = pruneUndefined({ schoolId, yearId, ...params });
   return ClassRoom.findAll({
     where: whereClause,
     include: [Option, StudyYear],
@@ -35,14 +35,14 @@ export async function updateClassroom(
   classId: string,
   data: Partial<TClassroomInsert>
 ) {
-  const whereClause = getDefinedAttributes({ classId });
+  const whereClause = pruneUndefined({ classId });
   const classRoom = await ClassRoom.findOne({ where: whereClause });
   if (!classRoom) return null;
   return classRoom.update(data);
 }
 
 export async function deleteClassroom(classId: string) {
-  const whereClause = getDefinedAttributes({ classId });
+  const whereClause = pruneUndefined({ classId });
   const classRoom = await ClassRoom.findOne({ where: whereClause });
   if (!classRoom) return false;
   await classRoom.destroy();

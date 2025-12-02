@@ -5,10 +5,12 @@ import type {
   STUDENT_STATUS,
   ENROLEMENT_ACTION,
 } from "@/commons/constants/enum";
-// =====================
-// ATTRIBUTE INTERFACES
-// =====================
 
+// =============================================================================
+//  1. SCHOOL INTERFACES
+// =============================================================================
+
+/** Attributs de base du modèle School (lectures depuis la DB) */
 export interface SchoolAttributes {
   schoolId: string;
   name: string;
@@ -19,31 +21,46 @@ export interface SchoolAttributes {
 
 export type TSchool = Required<SchoolAttributes>;
 export type TSchoolInsert = Omit<SchoolAttributes, "schoolId">;
+
+/** Types pour les associations */
 export type TWithSchool<T> = T & { School: TSchool };
 export type TWithSchools<T> = T & { School: TSchool[] };
 
+// =============================================================================
+//  2. USER INTERFACES
+// =============================================================================
+
+/** Attributs de base du modèle User */
 export interface UserAttributes {
   userId?: string;
-  //
+  // Champs requis
   lastName: string;
   middleName: string;
+  // Champs optionnels ou virtuels
   firstName?: string | null;
-  fullname?: string;
+  fullname?: string; // Virtuel
   gender?: USER_GENDER;
   role?: USER_ROLE;
   birthDate?: Date | null;
   birthPlace?: string | null;
-  //
+  // Clés/Authentification
   username?: string;
   schoolId?: string;
   password?: string;
 }
 
 export type TUser = Required<UserAttributes>;
-export type TUserInsert = Omit<UserAttributes, "userId">;
+export type TUserInsert = Omit<UserAttributes, "userId" | "fullname">; // On retire aussi fullname (Virtuel)
+
+/** Types pour les associations */
 export type TWithUser<T> = T & { User: TUser };
 export type TWithUsers<T> = T & { User: TUser[] };
 
+// =============================================================================
+//  3. OPTION INTERFACES
+// =============================================================================
+
+/** Attributs de base du modèle Option */
 export interface OptionAttributes {
   optionId: string;
   //
@@ -55,9 +72,16 @@ export interface OptionAttributes {
 
 export type TOption = Required<OptionAttributes>;
 export type TOptionInsert = Omit<OptionAttributes, "optionId">;
+
+/** Types pour les associations */
 export type TWithOption<T> = T & { Option: TOption };
 export type TWithOptions<T> = T & { Options: TOption[] };
 
+// =============================================================================
+//  4. STUDY YEAR INTERFACES
+// =============================================================================
+
+/** Attributs de base du modèle StudyYear */
 export interface StudyYearAttributes {
   yearId: string;
   //
@@ -69,10 +93,18 @@ export interface StudyYearAttributes {
 
 export type TStudyYear = Required<StudyYearAttributes>;
 export type TStudyYearInsert = Omit<StudyYearAttributes, "yearId">;
-export type TWithStudyYear<T> = T & { StudyYear: TOption };
-export type TWithStudyYears<T> = T & { StudyYears: TOption[] };
 
-export interface ClassAttributes {
+/** Types pour les associations */
+export type TWithStudyYear<T> = T & { StudyYear: TStudyYear }; // CORRIGÉ
+export type TWithStudyYears<T> = T & { StudyYears: TStudyYear[] }; // CORRIGÉ
+
+// =============================================================================
+//  5. CLASSROOM INTERFACES
+// =============================================================================
+
+/** Attributs de base du modèle ClassRoom */
+export interface ClassroomAttributes {
+  // Renommé de ClassAttributes
   classId?: string;
   //
   identifier: string;
@@ -83,11 +115,18 @@ export interface ClassAttributes {
   optionId?: string | null;
 }
 
-export type TClassroom = Required<ClassAttributes>;
-export type TClassroomInsert = Omit<ClassAttributes, "classId">;
+export type TClassroom = Required<ClassroomAttributes>;
+export type TClassroomInsert = Omit<ClassroomAttributes, "classId">;
+
+/** Types pour les associations */
 export type TWithClassroom<T> = T & { ClassRoom: TClassroom };
 export type TWithClassrooms<T> = T & { ClassRooms: TClassroom[] };
 
+// =============================================================================
+//  6. CLASSROOM ENROLEMENT INTERFACES
+// =============================================================================
+
+/** Attributs de base du modèle ClassroomEnrolement */
 export interface ClassroomEnrolementAttributes {
   enrolementId: string;
   //
@@ -105,9 +144,16 @@ export type TEnrolementInsert = Omit<
   ClassroomEnrolementAttributes,
   "enrolementId"
 >;
+
+/** Types pour les associations */
 export type TWithEnrolement<T> = T & { ClassroomEnrolement: TEnrolement };
 export type TWithEnrolements<T> = T & { ClassroomEnrolements: TEnrolement[] };
 
+// =============================================================================
+//  7. ENROLEMENT ACTION INTERFACES
+// =============================================================================
+
+/** Attributs pour tracer les actions sur les inscriptions (historique de statut) */
 export interface ClassroomEnrolementActionAttributes {
   actionId: string;
   //
@@ -116,12 +162,14 @@ export interface ClassroomEnrolementActionAttributes {
   action: ENROLEMENT_ACTION;
 }
 
-export type UserAttributesInsert = Omit<UserAttributes, "userId">;
-export type SchoolAttributesInsert = Omit<SchoolAttributes, "schoolId">;
-export type ClassAttributesInsert = Omit<ClassAttributes, "classId">;
-export type OptionAttributesInsert = Omit<OptionAttributes, "optionId">;
-export type StudyYearAttributesInsert = Omit<StudyYearAttributes, "yearId">;
-export type ClassroomEnrolementAttributesInsert = Omit<
-  ClassroomEnrolementAttributes,
-  "enrolementId"
->;
+// =============================================================================
+//  8. ALIAS D'INSERTION SIMPLIFIÉS
+// =============================================================================
+
+/** Alias pour la création de nouvelles entrées dans la DB. */
+export type UserAttributesInsert = TUserInsert;
+export type SchoolAttributesInsert = TSchoolInsert;
+export type ClassAttributesInsert = TClassroomInsert;
+export type OptionAttributesInsert = TOptionInsert;
+export type StudyYearAttributesInsert = TStudyYearInsert;
+export type ClassroomEnrolementAttributesInsert = TEnrolementInsert;

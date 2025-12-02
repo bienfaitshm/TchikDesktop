@@ -6,8 +6,11 @@ import {
   USER_ROLE,
 } from "@/commons/constants/enum";
 import { sequelize } from "../config";
-import { PRIMARY_KEY, primaryKey } from "./base";
-import { getDefaultEnrolementCode, getDefaultUsername } from "./utils";
+import { primaryKeyColumn } from "./base";
+import {
+  generateNumericEnrollmentCode,
+  generateProvisionalUsername,
+} from "./utils";
 import type {
   SchoolAttributes,
   OptionAttributes,
@@ -41,7 +44,7 @@ type ModelStatic<
 const School = sequelize.define(
   "School",
   {
-    schoolId: primaryKey({ field: "school_id" }),
+    schoolId: primaryKeyColumn({ field: "school_id" }),
     name: { type: DataTypes.STRING, allowNull: false, field: "name" },
     adress: { type: DataTypes.STRING, allowNull: false, field: "adress" },
     town: { type: DataTypes.STRING, allowNull: false, field: "town" },
@@ -53,7 +56,7 @@ const School = sequelize.define(
 const User = sequelize.define(
   "User",
   {
-    userId: primaryKey({ field: "user_id" }),
+    userId: primaryKeyColumn({ field: "user_id" }),
     lastName: { type: DataTypes.STRING, allowNull: false, field: "last_name" },
     middleName: {
       type: DataTypes.STRING,
@@ -67,12 +70,13 @@ const User = sequelize.define(
         return `${this.lastName} ${this.middleName} ${this.firstName ?? ""}`.toUpperCase();
       },
     },
+
     username: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
       field: "username",
-      defaultValue: getDefaultUsername,
+      defaultValue: generateProvisionalUsername,
       set(val: string) {
         this.setDataValue("username", `${this.role}_${val}`);
       },
@@ -112,7 +116,7 @@ const User = sequelize.define(
 const Option = sequelize.define(
   "Option",
   {
-    optionId: primaryKey({ field: "option_id" }),
+    optionId: primaryKeyColumn({ field: "option_id" }),
     optionName: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -141,7 +145,7 @@ const Option = sequelize.define(
 const StudyYear = sequelize.define(
   "StudyYear",
   {
-    yearId: primaryKey({ field: "year_id" }),
+    yearId: primaryKeyColumn({ field: "year_id" }),
     yearName: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -170,7 +174,7 @@ const StudyYear = sequelize.define(
 const ClassRoom = sequelize.define(
   "ClassRoom",
   {
-    classId: primaryKey({ field: "class_id" }),
+    classId: primaryKeyColumn({ field: "class_id" }),
     identifier: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -208,10 +212,9 @@ const ClassRoom = sequelize.define(
 const ClassroomEnrolement = sequelize.define(
   "ClassroomEnrolement",
   {
-    enrolementId: {
-      ...PRIMARY_KEY,
+    enrolementId: primaryKeyColumn({
       field: "enrolement_id",
-    },
+    }),
     classroomId: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -233,7 +236,7 @@ const ClassroomEnrolement = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       field: "student_code",
-      defaultValue: getDefaultEnrolementCode,
+      defaultValue: generateNumericEnrollmentCode,
     },
     studentId: {
       type: DataTypes.STRING,
