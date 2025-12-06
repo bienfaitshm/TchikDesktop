@@ -5,7 +5,7 @@ import type {
   TQuickEnrolementInsert,
 } from "@/commons/types/services";
 import { ClassroomEnrolement, User, ClassRoom, StudyYear } from "../models";
-import { getDefinedAttributes } from "../models/utils";
+import { pruneUndefined } from "../models/utils";
 import { createUser } from "./account";
 import { Sequelize } from "sequelize";
 
@@ -14,13 +14,10 @@ export async function getEnrolements({
   yearId,
   params = {},
 }: QueryParams<WithSchoolAndYearId, Partial<TEnrolementInsert>>) {
-  const whereClause = getDefinedAttributes({ schoolId, ...params });
+  const whereClause = pruneUndefined({ schoolId, ...params });
   return ClassroomEnrolement.findAll({
     where: whereClause,
-    include: [
-      User,
-      { model: ClassRoom, where: getDefinedAttributes({ yearId }) },
-    ],
+    include: [User, { model: ClassRoom, where: pruneUndefined({ yearId }) }],
     order: [
       [Sequelize.literal('LOWER("User"."last_name")'), "ASC"],
       [Sequelize.literal('LOWER("User"."middle_name")'), "ASC"],
@@ -41,7 +38,7 @@ export async function getEnrolementHistory({
   yearId,
   classId,
 }: WithSchoolAndYearId<{ classId?: string }>) {
-  const whereClause = getDefinedAttributes({ schoolId, classId, yearId });
+  const whereClause = pruneUndefined({ schoolId, classId, yearId });
 
   const includeConditions: any[] = [];
   if (yearId) {
@@ -94,14 +91,14 @@ export async function updateEnrolement(
   enrolementId: string,
   data: Partial<TEnrolementInsert>
 ) {
-  const whereClause = getDefinedAttributes({ enrolementId });
+  const whereClause = pruneUndefined({ enrolementId });
   const classRoom = await ClassroomEnrolement.findOne({ where: whereClause });
   if (!classRoom) return null;
   return classRoom.update(data);
 }
 
 export async function deleteEnrolement(enrolementId: string) {
-  const whereClause = getDefinedAttributes({ enrolementId });
+  const whereClause = pruneUndefined({ enrolementId });
   const classRoom = await ClassroomEnrolement.findOne({ where: whereClause });
   if (!classRoom) return false;
   await classRoom.destroy();

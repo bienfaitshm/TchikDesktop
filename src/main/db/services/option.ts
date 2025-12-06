@@ -4,7 +4,7 @@ import type {
   TOptionInsert,
   WithSchoolAndYearId,
 } from "@/commons/types/services";
-import { getDefinedAttributes } from "@/main/db/models/utils";
+import { pruneUndefined } from "@/main/db/models/utils";
 import { Sequelize } from "sequelize";
 
 /**
@@ -20,7 +20,7 @@ export async function getOptions({
   yearId,
   params,
 }: QueryParams<WithSchoolAndYearId, Partial<TOptionInsert>>) {
-  const optionWhereClause = getDefinedAttributes({
+  const optionWhereClause = pruneUndefined({
     schoolId,
     yearId,
     ...params,

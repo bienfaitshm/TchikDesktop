@@ -1,4 +1,4 @@
-import { ClassroomEnrolement, User } from "../models";
+import { ClassroomEnrolement, User } from "../models/model";
 import { TUserInsert, TUser, TWithEnrolements } from "@/commons/types/models";
 import type {
   QueryParams,

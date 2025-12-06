@@ -1,5 +1,5 @@
 //user.service.ts
-import { ClassroomEnrolement, User } from "../models/model"; // Assurez-vous que le chemin est correct
+import { ClassroomEnrolement, User } from "../models/model";
 import type {
   TUserInsert,
   TUser,
