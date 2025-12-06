@@ -1,6 +1,6 @@
 import { z } from "zod";
 import * as queries from "@/main/db/services/classroom";
-import { createRouteHandler } from "@/commons/libs/electron-ipc-rest";
+import { createValidatedHandler } from "@/commons/libs/electron-ipc-rest";
 import {
   ClassRoomFilterSchema,
   ClassroomCreationSchema,
@@ -28,7 +28,7 @@ const UpdateClassroomSchema = ClassroomCreationSchema.partial();
  * @handler GET /classes
  * @description Récupère la liste des classes en appliquant les filtres de requête.
  */
-export const getClassrooms = createRouteHandler(
+export const getClassrooms = createValidatedHandler(
   createPersistenceHandler<any, unknown, TClassRoomFilter>(
     ({ params }) => queries.getClassrooms(params) as any
   ),
@@ -43,7 +43,7 @@ export const getClassrooms = createRouteHandler(
  * @handler GET /classes/:classId
  * @description Récupère une salle de classe spécifique par son ID.
  */
-export const getClassroom = createRouteHandler(
+export const getClassroom = createValidatedHandler(
   createPersistenceHandler<
     unknown,
     Partial<TClassroomCreation>,
@@ -60,7 +60,7 @@ export const getClassroom = createRouteHandler(
  * @handler POST /classes
  * @description Crée une nouvelle salle de classe.
  */
-export const createClassroom = createRouteHandler(
+export const createClassroom = createValidatedHandler(
   createPersistenceHandler<unknown, TClassroomCreation>(({ body }) =>
     queries.createClassroom(body)
   ),
@@ -75,7 +75,7 @@ export const createClassroom = createRouteHandler(
  * @handler PUT /classes/:classId
  * @description Met à jour une salle de classe existante.
  */
-export const updateClassroom = createRouteHandler(
+export const updateClassroom = createValidatedHandler(
   createPersistenceHandler<
     unknown,
     Partial<TClassroomCreation>,
@@ -93,7 +93,7 @@ export const updateClassroom = createRouteHandler(
  * @handler DELETE /classes/:classId
  * @description Supprime une salle de classe par son ID.
  */
-export const deleteClassroom = createRouteHandler(
+export const deleteClassroom = createValidatedHandler(
   createPersistenceHandler<boolean, unknown, z.infer<typeof IdParamSchema>>(
     ({ params }) => queries.deleteClassroom(params.classId) as any
   ),

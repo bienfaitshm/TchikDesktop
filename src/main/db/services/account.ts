@@ -4,10 +4,7 @@ import type {
   QueryParams,
   WithSchoolAndYearId,
 } from "@/commons/types/services";
-import {
-  getDefaultUsername,
-  getDefinedAttributes,
-} from "@/main/db/models/utils";
+import { getDefaultUsername, pruneUndefined } from "@/main/db/models/utils";
 import { Sequelize } from "sequelize";
 
 /**
@@ -33,13 +30,13 @@ export async function getUsers({
   WithSchoolAndYearId,
   Partial<TUserInsert & { classroomId?: string }>
 >) {
-  const userWhereClause = getDefinedAttributes({
+  const userWhereClause = pruneUndefined({
     schoolId,
     ...params,
     classroomId: undefined,
   });
 
-  const enrollmentWhereClause = getDefinedAttributes({
+  const enrollmentWhereClause = pruneUndefined({
     yearId,
     classroomId: params?.classroomId,
   });

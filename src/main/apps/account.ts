@@ -1,4 +1,5 @@
 import { server } from "@/commons/libs/electron-apis/server";
+import { ipcServer } from "./config.ipc.server";
 import { response } from "@/commons/libs/electron-apis/utils";
 import { Status } from "@/commons/libs/electron-apis/constant";
 import { mapModelToPlain, mapModelsToPlainList } from "@/main/db/models/utils";
@@ -13,7 +14,7 @@ import {
  * @route GET /users
  * @description Récupère la liste de tous les utilisateurs pour une école donnée.
  */
-server.get<
+ipcServer.get<
   any,
   QueryParams<
     WithSchoolAndYearId,

@@ -1,9 +1,8 @@
 import type { Model } from "sequelize";
 import {
-  type ValidatedHandler,
-  type ServerRequest,
   HttpException,
   HttpStatus,
+  IpcRequest,
 } from "@/commons/libs/electron-ipc-rest";
 import { resolveToPlain, resolveToPlainList } from "@/main/db/models/utils";
 
@@ -12,7 +11,7 @@ import { resolveToPlain, resolveToPlainList } from "@/main/db/models/utils";
  * It is agnostic of HTTP concerns (status codes, headers).
  */
 export type RepositoryAction<TBody, TParams, TModel extends Model> = (
-  request: ServerRequest<TBody, TParams>
+  request: IpcRequest<TBody, TParams>
 ) => Promise<TModel | TModel[] | null> | TModel | TModel[] | null;
 
 /**

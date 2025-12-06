@@ -61,57 +61,6 @@ export function getDefaultEnrolementCode(lenght = 10) {
   return shortCode.randomUUID(lenght);
 }
 
-/**TODO: delete
- * Transforms a promise resolving to an array of Sequelize models into
- * an array of plain JavaScript objects.
- *
- * @param data - A promise that resolves to an array of Sequelize Model instances.
- * @returns A promise that resolves to an array of plain objects.
- */
-export async function mapModelsToPlainList<T extends Model>(
-  data: Promise<T[]> | T[],
-  callback?: (e: T) => unknown
-): Promise<Record<string, any>[]> {
-  const models = await data;
-  const _func = callback ? callback : (model) => model?.toJSON?.() || model;
-  return models.map(_func);
-}
-
-/**
- * TODO: delete
- * Transforms a promise resolving to a single Sequelize model into
- * a plain JavaScript object.
- *
- * @param data - A promise that resolves to a Sequelize Model instance.
- * @returns A promise that resolves to a plain object.
- */
-export async function mapModelToPlain<T extends Model>(
-  data: Promise<T> | T
-): Promise<Record<string, any>> {
-  const model = await data;
-  return model?.toJSON?.() || model;
-}
-
-/**TODO: delete
- * @description Filtre un objet pour ne garder que les attributs dont la valeur est définie (pas 'undefined').
- * @param obj L'objet à filtrer.
- * @returns Un nouvel objet contenant seulement les clés avec des valeurs définies.
- */
-export function getDefinedAttributes<T extends {} = {}>(
-  obj: Partial<T>
-): Partial<T> {
-  if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
-    return {};
-  }
-
-  return Object.keys(obj).reduce((result, key) => {
-    if (obj[key] !== undefined) {
-      result[key] = obj[key];
-    }
-    return result;
-  }, {} as T);
-}
-
 /**
  * A generic type representing a plain JavaScript object.
  * Using 'unknown' is safer than 'any' in strict TypeScript environments.

@@ -1,6 +1,6 @@
 import { School, StudyYear } from "@/main/db/models";
 import type { TSchoolInsert, TStudyYearInsert } from "@/commons/types/services";
-import { getDefinedAttributes } from "@/main/db/models/utils";
+import { pruneUndefined } from "@/main/db/models/utils";
 import { Sequelize } from "sequelize";
 
 /**
@@ -14,7 +14,7 @@ import { Sequelize } from "sequelize";
 export async function getSchools(queryArgs?: {
   params?: Partial<TSchoolInsert & { schoolId?: string }>;
 }) {
-  const schoolWhereClause = getDefinedAttributes({
+  const schoolWhereClause = pruneUndefined({
     ...queryArgs?.params,
   });
 
@@ -146,7 +146,7 @@ export async function getStudyYears(
     return [];
   }
 
-  const whereClause = getDefinedAttributes({
+  const whereClause = pruneUndefined({
     schoolId,
     ...params,
   });

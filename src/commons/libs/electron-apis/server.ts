@@ -36,11 +36,11 @@ export interface Route<
  * import { server } from "./lib/electron-apis/server";
  * import { BrowserWindow } from "electron";
  *
- * server.get("example", (request) => ({
+ * server.get("example", async (request) => ({
  *   data: { message: "GET request received", params: request.params }
  * }));
  *
- * server.post("example", (request) => ({
+ * server.post("example", async (request) => ({
  *   data: { message: "POST request received", data: request.data }
  * }));
  *
