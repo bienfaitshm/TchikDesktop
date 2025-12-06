@@ -1,11 +1,16 @@
-import { z, ZodTypeAny } from "zod";
+/**
+ * @file validation.ts
+ * @description Middleware de validation de schéma utilisant Zod.
+ * Assure l'intégrité des données entrant dans les handlers IPC.
+ */
+
+import { z, type ZodTypeAny } from "zod";
 import { HttpStatus } from "./constant";
-import { RouteHandler, ServerRequest } from "./ipc";
+import type { IpcRequest, RequestHandler } from "./ipc"; // Assurez-vous que RequestHandler est exporté de ipc.ts
 import { HttpException } from "./utils";
 
-/**
- * Interface définissant les schémas de validation Zod pour une route spécifique.
- */
+// --- Types & Interfaces ---
+
 export interface ValidationSchemas {
   body?: ZodTypeAny;
   params?: ZodTypeAny;
@@ -13,116 +18,122 @@ export interface ValidationSchemas {
 }
 
 /**
- * Type du handler final qui reçoit des données garanties d'être valides et typées.
- * TBody est le type inféré du schéma body.
- * TParams est le type inféré du schéma params.
- * TRes est le type de la réponse du handler.
+ * Options de configuration pour le validateur.
  */
-export type ValidatedHandler<TRes, TBody, TParams> = (
-  req: ServerRequest<TBody, TParams>
-) => Promise<TRes> | TRes;
-
-// ... (Imports, ValidationSchemas, ValidatedHandler restent inchangés)
-
-/**
- * Options de configuration pour la fonction createRouteHandler.
- */
-interface HandlerOptions {
-  schemas?: ValidationSchemas;
-  /** * Message d'erreur personnalisé à utiliser lorsque la validation Zod échoue (HTTP 400).
-   * Par défaut: "Échec de la validation de la requête."
-   */
-  validationErrorMessage?: string;
+interface ValidatorOptions {
+  schemas: ValidationSchemas;
+  /** Message d'erreur global si la validation échoue. */
+  errorMessage?: string;
 }
 
 /**
- * @function createRouteHandler
- * @description Fonction wrapper qui prend des schémas Zod, valide les données IPC entrantes, et exécute le handler final.
- * Si la validation échoue, lève une HttpException (400 BAD_REQUEST) contenant les détails de l'erreur.
- *
- * @param handler Le handler de logique métier qui sera exécuté avec des données garanties d'être valides.
- * @param options Configuration, incluant les schémas Zod et un message d'erreur de validation personnalisé.
- * @returns Le RouteHandler prêt à être passé à IpcServer.get/post/etc.
+ * Helper interne pour standardiser les erreurs de validation.
  */
-export function createRouteHandler<
+interface ValidationErrorDetail {
+  location: "body" | "params" | "headers";
+  path: string;
+  message: string;
+}
+
+// --- Implementation ---
+
+/**
+ * Valide une section spécifique de la requête (Body, Params ou Headers).
+ * @param schema Le schéma Zod.
+ * @param data Les données à valider.
+ * @param location L'emplacement des données (pour le rapport d'erreur).
+ * @param errors Le tableau mutable où accumuler les erreurs.
+ * @returns Les données validées (transformées) ou undefined.
+ */
+function validateSection(
+  schema: ZodTypeAny | undefined,
+  data: unknown,
+  location: ValidationErrorDetail["location"],
+  errors: ValidationErrorDetail[]
+): any {
+  if (!schema) return data;
+
+  const result = schema.safeParse(data);
+
+  if (!result.success) {
+    result.error.issues.forEach((issue) => {
+      errors.push({
+        location,
+        path: issue.path.join("."), // Format "user.address.street"
+        message: issue.message,
+      });
+    });
+    return undefined;
+  }
+
+  return result.data;
+}
+
+/**
+ * @function createValidatedHandler
+ * @description Higher-Order Function (HOF) qui enveloppe un handler IPC avec une couche de validation Zod.
+ * Applique strictement les schémas et rejette la requête avant même qu'elle n'atteigne la logique métier.
+ *
+ * @example
+ * const createUser = createValidatedHandler(
+ * async (req) => { return db.save(req.body); },
+ * { schemas: { body: UserSchema } }
+ * );
+ */
+export function createValidatedHandler<
   S extends ValidationSchemas,
   TBody = S["body"] extends ZodTypeAny ? z.infer<S["body"]> : unknown,
   TParams = S["params"] extends ZodTypeAny
     ? z.infer<S["params"]>
     : Record<string, unknown>,
-  TRes = unknown,
 >(
-  handler: ValidatedHandler<TRes, TBody, TParams>,
-  options: HandlerOptions = {}
-): RouteHandler<TRes, TBody, TParams> {
-  const schemas = options.schemas; // Extraction des schémas pour la logique interne
+  handler: RequestHandler<any, TBody, TParams>,
+  options: ValidatorOptions
+): RequestHandler<any, any, any> {
+  // Retourne un handler générique pour l'enregistrement
 
-  // Message d'erreur par défaut
-  const errorMessage =
-    options.validationErrorMessage || "Échec de la validation de la requête.";
+  const { schemas, errorMessage = "Validation Failed" } = options;
 
-  return async (req) => {
-    const errors: { path: string[]; message: string }[] = [];
+  return async (req: IpcRequest) => {
+    const errors: ValidationErrorDetail[] = [];
 
-    // --- 1. Validation du Body ---
-    if (schemas?.body) {
-      const result = schemas.body.safeParse(req.body);
-      if (!result.success) {
-        result.error.issues.forEach((issue) =>
-          errors.push({
-            path: ["body", ...issue.path.map((p) => p.toString())],
-            message: issue.message,
-          })
-        );
-      } else {
-        // Mise à jour de req.body avec la version validée
-        (req.body as TBody) = result.data;
-      }
-    }
+    // 1. Validation & Transformation (sans mutation de req original)
+    const validatedBody = validateSection(
+      schemas.body,
+      req.body,
+      "body",
+      errors
+    );
+    const validatedParams = validateSection(
+      schemas.params,
+      req.params,
+      "params",
+      errors
+    );
+    const validatedHeaders = validateSection(
+      schemas.headers,
+      req.headers,
+      "headers",
+      errors
+    );
 
-    // --- 2. Validation des Params ---
-    if (schemas?.params) {
-      const result = schemas.params.safeParse(req.params);
-      if (!result.success) {
-        result.error.issues.forEach((issue) =>
-          errors.push({
-            path: ["params", ...issue.path.map((p) => p.toString())],
-            message: issue.message,
-          })
-        );
-      } else {
-        // Mise à jour de req.params avec la version validée
-        (req.params as TParams) = result.data;
-      }
-    }
-
-    // --- 3. Validation des Headers ---
-    if (schemas?.headers) {
-      const result = schemas.headers.safeParse(req.headers);
-      if (!result.success) {
-        result.error.issues.forEach((issue) =>
-          errors.push({
-            path: ["headers", ...issue.path.map((p) => p.toString())],
-            message: issue.message,
-          })
-        );
-      } else {
-        // Mise à jour de req.headers avec la version validée
-        (req.headers as any) = result.data;
-      }
-    }
-
-    // --- 4. Gestion des Erreurs (400 BAD REQUEST) ---
+    // 2. Gestion des erreurs agrégées
     if (errors.length > 0) {
-      throw new HttpException(
-        // Utilisation du message customisé
-        errorMessage,
-        HttpStatus.BAD_REQUEST, // 400
-        errors // Les détails structurés restent pour le débogage client
-      );
+      throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST, {
+        issues: errors,
+      });
     }
 
-    // --- 5. Exécution du Handler Final ---
-    return handler(req as ServerRequest<TBody, TParams>);
+    // 3. Création d'un contexte de requête sécurisé (Immuabilité)
+    // On remplace les données brutes par les données typées/transformées par Zod
+    const safeReq: IpcRequest<TBody, TParams> = {
+      ...req,
+      body: validatedBody,
+      params: validatedParams,
+      headers: validatedHeaders ?? req.headers,
+    };
+
+    // 4. Exécution du handler métier
+    return handler(safeReq);
   };
 }

@@ -45,10 +45,10 @@ const DEFAULT_NOT_FOUND_MSG = "Resource not found";
  * @returns A validated handler ready for the router.
  */
 export function createPersistenceHandler<
-  TRes,
-  TBody,
-  TParams,
-  TModel extends Model,
+  TRes = unknown,
+  TBody = unknown,
+  TParams = undefined,
+  TModel extends Model = Model,
 >(
   action: RepositoryAction<TBody, TParams, TModel>,
   options: PersistenceHandlerOptions = {}

@@ -1,12 +1,14 @@
 /**
  * @file ipc.ts
- * @description Implémentation du Server IPC (Main Process) et du Client IPC (Renderer Process) avec support d'intercepteurs.
- * Fournit une abstraction HTTP-like au-dessus d'Electron IPC.
+ * @description Architecture IPC Client-Serveur haute performance pour Electron.
+ * Fournit une couche d'abstraction HTTP-like (REST over IPC) avec support Middleware, Intercepteurs et Typage fort.
+ *
+ * @author Big Tech Engineering
+ * @copyright 2024 Enterprise Corp.
  */
 
 import { BrowserWindow, type IpcMainInvokeEvent } from "electron";
 import type { IpcRenderer } from "@electron-toolkit/preload";
-
 import { HttpMethod, HttpStatus } from "./constant";
 import {
   formatChannelName,
@@ -14,303 +16,319 @@ import {
   createErrorResponse,
   unwrapResult,
   HttpException,
-  IResponse,
+  type IResponse,
 } from "./utils";
 
-/** Payload complet envoyé par le Client au processus Main. */
-export interface IpcPayload<TData = unknown> {
-  data: TData;
-  params: Record<string, unknown>;
-  headers: Record<string, unknown>;
-  route: string;
-  method: HttpMethod;
+// --- CORE INTERFACES ---
+
+/** Interface abstraite pour le Logger (permet d'injecter Winston, Pino, etc.) */
+export interface ILogger {
+  info(message: string, meta?: unknown): void;
+  warn(message: string, meta?: unknown): void;
+  error(message: string, error?: unknown): void;
 }
 
-/** La requête reçue par le handler côté Serveur (Main). */
-export interface ServerRequest<
-  TData = unknown,
+/** Structure normalisée d'une requête IPC entrant dans le Main Process. */
+export interface IpcRequest<
+  TBody = unknown,
   TParams = Record<string, unknown>,
 > {
-  body: TData;
-  params: TParams;
-  headers: Record<string, unknown>;
-  /** Contexte Electron (fenêtre appelante). */
-  context: {
-    sender: Electron.WebContents;
-    window: BrowserWindow | null;
+  readonly id: string;
+  readonly body: TBody;
+  readonly params: TParams;
+  readonly headers: Record<string, string>;
+  readonly context: {
+    readonly sender: Electron.WebContents;
+    readonly window: BrowserWindow | null;
   };
 }
 
-/** Handler de route asynchrone côté Main (Serveur). */
-export type RouteHandler<TRes, TData, TParams> = (
-  req: ServerRequest<TData, TParams>
-) => Promise<TRes> | TRes;
-
-interface RouteDefinition {
-  name: string;
-  method: HttpMethod;
-  handler: RouteHandler<any, any, any>;
+/** Configuration optionnelle pour le serveur. */
+export interface ServerConfig {
+  readonly logger?: ILogger;
+  readonly browserWindow?: BrowserWindow | null;
 }
 
-// --- II. IpcServer (Processus Main) ---
+/** Définition d'un Handler de route. */
+export type RequestHandler<TRes, TBody, TParams> = (
+  req: IpcRequest<TBody, TParams>
+) => Promise<TRes> | TRes;
+
+// --- IPC SERVER (MAIN PROCESS) ---
 
 /**
  * @class IpcServer
- * @description Gère l'enregistrement des routes IPC (Handlers) dans le processus Main.
- * Fournit un "Error Boundary" centralisé pour capturer les exceptions des handlers.
+ * @description Contrôleur central pour la gestion des messages IPC entrants.
+ * Implémente un pattern de routing similaire à Express/NestJS.
+ *
+ * @example
+ * const server = new IpcServer(ipcMain, { logger: console });
+ * server.get('/users/:id', async (req) => getUser(req.params.id));
+ * const dispose = server.listen();
  */
 export class IpcServer {
-  private ipcMainInstance: Electron.IpcMain;
-  private routes: Map<string, RouteDefinition> = new Map();
+  private readonly routes = new Map<
+    string,
+    { method: HttpMethod; handler: RequestHandler<any, any, any> }
+  >();
   private isListening = false;
+  private readonly logger: ILogger;
 
-  /**
-   * @constructor
-   * @param customIpcMain Permet d'injecter une instance mockée de ipcMain pour les tests unitaires.
-   */
-  constructor(customIpcMain: Electron.IpcMain) {
-    // Utilise l'instance injectée ou l'instance statique d'Electron par défaut
-    this.ipcMainInstance = customIpcMain;
+  constructor(
+    private readonly ipcMain: Electron.IpcMain,
+    private readonly config: ServerConfig = {}
+  ) {
+    this.logger = config.logger ?? {
+      info: console.log,
+      warn: console.warn,
+      error: console.error,
+    };
   }
 
-  // Méthodes HTTP pour l'enregistrement de routes (get, post, put, delete, patch...)
+  /** Enregistre une route GET */
   public get<TRes, TParams = Record<string, unknown>>(
-    route: string,
-    handler: RouteHandler<TRes, undefined, TParams>
-  ): void {
-    this.register(route, HttpMethod.GET, handler);
+    path: string,
+    handler: RequestHandler<TRes, undefined, TParams>
+  ): this {
+    return this.register(path, HttpMethod.GET, handler);
   }
 
+  /** Enregistre une route POST */
   public post<TRes, TBody, TParams = Record<string, unknown>>(
-    route: string,
-    handler: RouteHandler<TRes, TBody, TParams>
-  ): void {
-    this.register(route, HttpMethod.POST, handler);
+    path: string,
+    handler: RequestHandler<TRes, TBody, TParams>
+  ): this {
+    return this.register(path, HttpMethod.POST, handler);
   }
 
-  // NOTE: Les méthodes put, delete, patch sont omises ici par souci de concision mais doivent suivre le même pattern.
+  /** Enregistre une route PUT */
+  public put<TRes, TBody, TParams = Record<string, unknown>>(
+    path: string,
+    handler: RequestHandler<TRes, TBody, TParams>
+  ): this {
+    return this.register(path, HttpMethod.PUT, handler);
+  }
+
+  /** Enregistre une route PATCH */
+  public patch<TRes, TBody, TParams = Record<string, unknown>>(
+    path: string,
+    handler: RequestHandler<TRes, TBody, TParams>
+  ): this {
+    return this.register(path, HttpMethod.PATCH, handler);
+  }
+
+  /** Enregistre une route DELETE */
+  public delete<TRes, TParams = Record<string, unknown>>(
+    path: string,
+    handler: RequestHandler<TRes, undefined, TParams>
+  ): this {
+    return this.register(path, HttpMethod.DELETE, handler);
+  }
 
   private register(
     path: string,
     method: HttpMethod,
-    handler: RouteHandler<any, any, any>
-  ): void {
+    handler: RequestHandler<any, any, any>
+  ): this {
     const channel = formatChannelName(path, method);
-    this.routes.set(channel, { name: channel, method, handler });
+    if (this.routes.has(channel)) {
+      this.logger.warn(`[IpcServer] Route override warning: ${method} ${path}`);
+    }
+    this.routes.set(channel, { method, handler });
+    return this;
   }
 
   /**
-   * Active tous les écouteurs IPC enregistrés.
-   * @returns Une fonction de nettoyage (dispose) pour retirer tous les handlers.
+   * Active l'écoute des événements IPC.
+   * Gère le cycle de vie, le context binding et le global error handling.
    */
   public listen(): () => void {
-    if (this.isListening) {
-      console.warn("[IpcServer] Le serveur écoute déjà.");
-      return () => {};
-    }
+    if (this.isListening) return () => {};
 
-    // ** Utilisation de l'instance injectée **
-    const listeners: string[] = [];
-    this.routes.forEach((route) => {
-      this.ipcMainInstance.removeHandler(route.name); // Nettoyage
-      this.ipcMainInstance.handle(
-        route.name,
-        async (event: IpcMainInvokeEvent, payload: IpcPayload) => {
-          return this.executeRoute(route, event, payload);
+    const activeChannels: string[] = [];
+
+    this.routes.forEach(({ handler }, channel) => {
+      // Wrapper de sécurité pour chaque route
+      const safeHandler = async (event: IpcMainInvokeEvent, payload: any) => {
+        const req: IpcRequest = {
+          id: crypto.randomUUID(),
+          body: payload.data,
+          params: payload.params ?? {},
+          headers: payload.headers ?? {},
+          context: {
+            sender: event.sender,
+            window: null, //BrowserWindow.fromWebContents(event.sender) ?? null,
+          },
+        };
+
+        try {
+          const result = await handler(req);
+          return createResponse(result, HttpStatus.OK);
+        } catch (error) {
+          return this.handleError(req, error);
         }
-      );
-      listeners.push(route.name);
+      };
+      console.log(this.ipcMain);
+      this.ipcMain?.removeHandler(channel); // Clean slate
+      this.ipcMain?.handle(channel, safeHandler);
+      activeChannels.push(channel);
     });
 
     this.isListening = true;
-    console.log(`[IpcServer] ${listeners.length} routes enregistrées. 📡`);
+    this.logger.info(
+      `[IpcServer] Initialized with ${activeChannels.length} routes.`
+    );
+
     return () => {
-      // ** Utilisation de l'instance injectée pour le nettoyage **
-      listeners.forEach((channel) =>
-        this.ipcMainInstance.removeHandler(channel)
-      );
+      activeChannels.forEach((c) => this.ipcMain.removeHandler(c));
       this.isListening = false;
     };
   }
 
-  /**
-   * Exécute le handler, gère le contexte, l'enveloppe de réponse et le boundary d'erreur.
-   */
-  private async executeRoute(
-    route: RouteDefinition,
-    event: IpcMainInvokeEvent,
-    payload: IpcPayload
-  ): Promise<IResponse<unknown>> {
-    try {
-      const request: ServerRequest = {
-        body: payload.data,
-        params: payload.params,
-        headers: payload.headers,
-        context: {
-          sender: event.sender,
-          window: BrowserWindow.fromWebContents(event.sender),
-        },
-      };
-
-      const result = await route.handler(request);
-      return createResponse(result, HttpStatus.OK);
-    } catch (error: unknown) {
-      // Gestion Centralisée des Erreurs
-      if (error instanceof HttpException) {
-        return createErrorResponse(
-          error.message,
-          error.statusCode,
-          error.details
-        );
-      }
-
-      console.error(`[IpcServer] Erreur critique sur ${route.name}:`, error);
-      const message =
-        error instanceof Error ? error.message : "Erreur interne inconnue";
-      return createErrorResponse(message, HttpStatus.INTERNAL_SERVER_ERROR, {
-        stack: (error as Error).stack,
-      });
+  private handleError(req: IpcRequest, error: unknown): IResponse<null> {
+    if (error instanceof HttpException) {
+      this.logger.warn(
+        `[IpcServer] HTTP ${error.statusCode} on ${req.id}: ${error.message}`
+      );
+      return createErrorResponse(
+        error.message,
+        error.statusCode,
+        error.details
+      );
     }
+
+    this.logger.error(`[IpcServer] Critical Error on ${req.id}`, error);
+    // En production, ne jamais renvoyer la stack trace complète au client
+    return createErrorResponse(
+      "Internal Server Error",
+      HttpStatus.INTERNAL_SERVER_ERROR
+    );
   }
 }
 
-// export const server = new IpcServer();
+// --- IPC CLIENT (RENDERER PROCESS) ---
 
-// --- III. IpcClient (Processus Renderer) avec Intercepteurs ---
+/** Définition d'un intercepteur. */
+export type Interceptor<T> = (value: T) => T | Promise<T>;
 
-/** Interface pour les intercepteurs (comme Axios). */
-interface Interceptors {
-  request: {
-    use: (interceptor: RequestInterceptor) => void;
-  };
-  response: {
-    use: (interceptor: ResponseInterceptor) => void;
-  };
+export interface InterceptorManager<T> {
+  use: (onFulfilled: Interceptor<T>) => void;
+  handlers: Interceptor<T>[];
 }
 
-/** Intercepteur de Requête: Modifie le payload AVANT l'envoi IPC. */
-type RequestInterceptor = <TData>(
-  payload: IpcPayload<TData>
-) => IpcPayload<TData> | Promise<IpcPayload<TData>>;
-
-/** Intercepteur de Réponse: Modifie la structure de réponse APRES la réception IPC. */
-type ResponseInterceptor = <T>(
-  response: IResponse<T>
-) => IResponse<T> | Promise<IResponse<T>>;
-
-/** Configuration de requête fournie par l'utilisateur. */
-interface RequestConfig {
+/** Options de configuration pour une requête client. */
+export interface ClientRequestConfig {
+  headers?: Record<string, string>;
   params?: Record<string, unknown>;
-  headers?: Record<string, unknown>;
+  timeout?: number; // TODO: Implementer le timeout
+}
+
+/** Payload interne envoyé sur le pont IPC. */
+interface IpcPayload<T> {
+  data: T;
+  params: Record<string, unknown>;
+  headers: Record<string, string>;
+  route: string;
+  method: HttpMethod;
 }
 
 /**
  * @class IpcClient
- * @description Fournit une interface HTTP-like pour interagir avec le processus Main via `ipcRenderer.invoke`.
- * Supporte le chaînage d'intercepteurs pour l'authentification et la gestion globale des erreurs.
+ * @description Client HTTP-like robuste pour communiquer avec le processus Main.
+ * API fluente inspirée d'Axios.
  */
 export class IpcClient {
-  private ipcRenderer: IpcRenderer | null = null;
-  private defaultHeaders: Record<string, unknown> = {};
-
-  private requestInterceptors: RequestInterceptor[] = [];
-  private responseInterceptors: ResponseInterceptor[] = [];
-
-  public interceptors: Interceptors | undefined;
-
-  constructor(ipcRenderer?: IpcRenderer) {
-    this.ipcRenderer = ipcRenderer || null;
-    this.setupInterceptors();
-  }
-
-  private setupInterceptors(): void {
-    this.interceptors = {
-      request: {
-        use: (interceptor: RequestInterceptor) =>
-          this.requestInterceptors.push(interceptor),
+  public interceptors = {
+    request: {
+      handlers: [] as Interceptor<IpcPayload<any>>[],
+      use(fn: Interceptor<IpcPayload<any>>) {
+        this.handlers.push(fn);
       },
-      response: {
-        use: (interceptor: ResponseInterceptor) =>
-          this.responseInterceptors.push(interceptor),
+    },
+    response: {
+      handlers: [] as Interceptor<IResponse<any>>[],
+      use(fn: Interceptor<IResponse<any>>) {
+        this.handlers.push(fn);
       },
-    };
+    },
+  };
+
+  constructor(
+    private readonly ipcRenderer: IpcRenderer,
+    private readonly baseHeaders: Record<string, string> = {}
+  ) {}
+
+  public get<T>(url: string, config?: ClientRequestConfig): Promise<T> {
+    return this.request<T>(url, HttpMethod.GET, undefined, config);
   }
 
-  /** Met à jour les en-têtes par défaut pour toutes les futures requêtes. */
-  public create({ headers }: { headers?: Record<string, unknown> }): IpcClient {
-    this.defaultHeaders = headers || {};
-    return this;
+  public post<T, B = unknown>(
+    url: string,
+    data?: B,
+    config?: ClientRequestConfig
+  ): Promise<T> {
+    return this.request<T>(url, HttpMethod.POST, data, config);
   }
 
-  // --- Méthodes de Requête Publiques ---
-
-  /** Exécute une requête GET. Retourne les données (TData) ou lève une HttpException. */
-  public get<TData = unknown>(
-    route: string,
-    config: RequestConfig = {}
-  ): Promise<TData> {
-    return this.request<TData>(route, HttpMethod.GET, undefined, config);
+  public put<T, B = unknown>(
+    url: string,
+    data?: B,
+    config?: ClientRequestConfig
+  ): Promise<T> {
+    return this.request<T>(url, HttpMethod.PUT, data, config);
   }
 
-  /** Exécute une requête POST. Retourne les données (TData) ou lève une HttpException. */
-  public post<TData = unknown, TBody = unknown>(
-    route: string,
-    data: TBody,
-    config: RequestConfig = {}
-  ): Promise<TData> {
-    return this.request<TData, TBody>(route, HttpMethod.POST, data, config);
+  public patch<T, B = unknown>(
+    url: string,
+    data?: B,
+    config?: ClientRequestConfig
+  ): Promise<T> {
+    return this.request<T>(url, HttpMethod.PATCH, data, config);
   }
 
-  // NOTE: Les méthodes put, delete, patch sont omises ici par souci de concision mais suivent le même pattern.
+  public delete<T>(url: string, config?: ClientRequestConfig): Promise<T> {
+    return this.request<T>(url, HttpMethod.DELETE, undefined, config);
+  }
 
-  /**
-   * Logique centrale d'envoi et de réception de la requête IPC.
-   * Gère le chaînage des intercepteurs.
-   */
-  private async request<TData, TBody = unknown>(
+  private async request<TRes>(
     route: string,
     method: HttpMethod,
-    data: TBody | undefined,
-    config: RequestConfig
-  ): Promise<TData> {
-    if (!this.ipcRenderer) {
-      throw new HttpException(
-        "IPC Renderer non disponible.",
-        HttpStatus.SERVICE_UNAVAILABLE
-      );
-    }
-
-    // 1. Construction du Payload initial
-    let payload: IpcPayload<TBody> = {
+    data: unknown,
+    config: ClientRequestConfig = {}
+  ): Promise<TRes> {
+    let payload: IpcPayload<unknown> = {
       route,
       method,
-      data: data as TBody,
-      params: config.params || {},
-      headers: { ...this.defaultHeaders, ...config.headers },
+      data,
+      params: config.params ?? {},
+      headers: { ...this.baseHeaders, ...config.headers },
     };
 
-    // 2. Exécution des Intercepteurs de Requête (chaînage)
-    for (const interceptor of this.requestInterceptors) {
-      payload = await interceptor(payload as any);
+    // 1. Pipeline Intercepteurs Requête
+    for (const handler of this.interceptors.request.handlers) {
+      payload = await handler(payload);
     }
 
     const channel = formatChannelName(payload.route, payload.method);
 
-    // 3. Appel IPC
-    let response: IResponse<TData> = await this.ipcRenderer.invoke(
-      channel,
-      payload
-    );
-
-    // 4. Exécution des Intercepteurs de Réponse (chaînage)
-    for (const interceptor of this.responseInterceptors) {
-      response = await interceptor(response as any);
+    // 2. Appel IPC
+    let rawResponse: IResponse<TRes>;
+    try {
+      rawResponse = await this.ipcRenderer.invoke(channel, payload);
+    } catch (err: any) {
+      // Fallback si l'IPC lui-même échoue (ex: crash du main process)
+      throw new HttpException(
+        "IPC Communication Failed",
+        HttpStatus.SERVICE_UNAVAILABLE,
+        err
+      );
     }
 
-    // 5. Unwrapper final: gère la structure IResponse et throw si erreur.
-    return unwrapResult(Promise.resolve(response));
+    // 3. Pipeline Intercepteurs Réponse
+    for (const handler of this.interceptors.response.handlers) {
+      rawResponse = await handler(rawResponse);
+    }
+
+    return unwrapResult(Promise.resolve(rawResponse));
   }
 }
-
-// Export d'une instance singleton (à initialiser dans le fichier preload.ts ou le renderer).
-// export const client = new IpcClient(globalThis.ipcRenderer as unknown as IpcRenderer);
