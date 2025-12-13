@@ -3,17 +3,20 @@
   "include": [
     "electron.vite.config.*",
     "src/main/*",
-    "src/preload/*",
     "src/main/**/*",
+    "src/preload/*",
     "src/commons/*",
-    "src/commons/**/*"
+    "src/commons/**/*",
+    "src/packages/*",
+    "src/packages/**/*"
   ],
   "compilerOptions": {
     "composite": true,
     "types": ["electron-vite/node"],
     "paths": {
       "@/main/*": ["./src/main/*"],
-      "@/commons/*": ["./src/commons/*"]
+      "@/commons/*": ["./src/commons/*"],
+      "@/packages/*": ["./src/packages/*"]
     }
   }
 }

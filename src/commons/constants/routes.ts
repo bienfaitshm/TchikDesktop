@@ -4,6 +4,10 @@ export const DOCUMENT_EXPORT_ROUTES = {
 } as const;
 
 export const IPCApiRoutes = {
-  classrooms: "classes",
+  classrooms: "/classes",
   classroom: "/classes/:classId",
+  schools: "/schools",
+  school: "/schools/schoolId",
+  studyYears: "/study-years",
+  studyYear: "/study-years/:yearId",
 } as const;

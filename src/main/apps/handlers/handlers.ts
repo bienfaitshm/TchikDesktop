@@ -3,6 +3,7 @@ import {
   HttpException,
   HttpStatus,
   IpcRequest,
+  RequestHandler,
 } from "@/commons/libs/electron-ipc-rest";
 import { resolveToPlain, resolveToPlainList } from "@/main/db/models/utils";
 
@@ -51,7 +52,7 @@ export function createPersistenceHandler<
 >(
   action: RepositoryAction<TBody, TParams, TModel>,
   options: PersistenceHandlerOptions = {}
-): ValidatedHandler<TRes, TBody, TParams> {
+): RequestHandler<TRes, TBody, TParams> {
   // Pre-compute messages to avoid object creation on every request
   const notFoundMsg = options.notFoundMessage ?? DEFAULT_NOT_FOUND_MSG;
   const errorMsg = options.errorMessage ?? DEFAULT_ERROR_MSG;
