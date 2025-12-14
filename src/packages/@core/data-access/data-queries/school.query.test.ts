@@ -1,6 +1,6 @@
 // school.service.test.ts
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { SchoolService } from "./school.service";
+import { SchoolService } from "./school.query";
 import { School, StudyYear } from "@/main/db/models/model";
 
 // 1. Mocker les dépendances (Sequelize Models)

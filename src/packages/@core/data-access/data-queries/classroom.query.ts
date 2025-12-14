@@ -1,15 +1,13 @@
-// classroom.service.ts
+// classroom.Query.ts
 
 import type { TClassRoomFilter } from "@/packages/@core/data-access/schema-validations";
-import type {
-  TClassroomInsert,
-  TClassroom,
-} from "@/packages/@core/data-access/db";
 import {
   ClassRoom,
   Option,
   StudyYear,
   pruneUndefined,
+  TClassroomInsert,
+  TClassroom,
 } from "@/packages/@core/data-access/db";
 import { Sequelize, type WhereOptions } from "sequelize";
 
@@ -33,10 +31,10 @@ const logger = {
 };
 
 /**
- * Service de gestion des Salles de Classe (ClassRoom).
+ * Query de gestion des Salles de Classe (ClassRoom).
  * Fournit les méthodes de requête et de mutation pour cette entité.
  */
-export class ClassroomService {
+export class ClassroomQuery {
   // =============================================================================
   //  FETCH OPERATIONS
   // =============================================================================
@@ -46,7 +44,7 @@ export class ClassroomService {
    *
    * @param filters - Objet contenant les filtres de base, plus la pagination (`limit`, `offset`) et le tri.
    * @returns Une promesse qui résout en un tableau de DTOs de salles de classe avec leurs relations.
-   * @throws {Error} Erreur de service si la requête DB échoue.
+   * @throws {Error} Erreur de Query si la requête DB échoue.
    */
   static async getClassrooms(
     filters: TClassRoomFilter
@@ -73,8 +71,8 @@ export class ClassroomService {
       // Retourne un tableau de DTOs purs (toJSON)
       return classRooms.map((cr) => cr.toJSON()) as TClassroomDTO[];
     } catch (error) {
-      logger.error("ClassroomService.getClassrooms: DB query failed.", error);
-      throw new Error("Service unavailable: Unable to retrieve classrooms.");
+      logger.error("ClassroomQuery.getClassrooms: DB query failed.", error);
+      throw new Error("Query unavailable: Unable to retrieve classrooms.");
     }
   }
 
@@ -83,7 +81,7 @@ export class ClassroomService {
    *
    * @param classId - L'identifiant (clé primaire) de la salle de classe.
    * @returns Le DTO de la salle de classe ou `null` si non trouvée.
-   * @throws {Error} Erreur de service si la requête DB échoue.
+   * @throws {Error} Erreur de Query si la requête DB échoue.
    */
   static async getClassroomById(
     classId: string
@@ -98,12 +96,10 @@ export class ClassroomService {
       return classRoom ? (classRoom.toJSON() as TClassroomDTO) : null;
     } catch (error) {
       logger.error(
-        `ClassroomService.getClassroomById: Error for ID ${classId}.`,
+        `ClassroomQuery.getClassroomById: Error for ID ${classId}.`,
         error
       );
-      throw new Error(
-        "Service unavailable: Unable to fetch classroom details."
-      );
+      throw new Error("Query unavailable: Unable to fetch classroom details.");
     }
   }
 
@@ -124,7 +120,7 @@ export class ClassroomService {
       logger.info(`Classroom created: ${classRoom.classId}`);
       return classRoom.toJSON();
     } catch (error) {
-      logger.error("ClassroomService.createClassroom: Creation failed.", error);
+      logger.error("ClassroomQuery.createClassroom: Creation failed.", error);
       throw error; // Laisse le contrôleur gérer les erreurs de validation (400)
     }
   }
@@ -135,7 +131,7 @@ export class ClassroomService {
    * @param classId - L'identifiant de la salle de classe à mettre à jour.
    * @param updates - Les données partielles à appliquer.
    * @returns Le DTO de la salle de classe mise à jour, ou `null` si non trouvée.
-   * @throws {Error} Erreur de service si l'opération DB échoue.
+   * @throws {Error} Erreur de Query si l'opération DB échoue.
    */
   static async updateClassroom(
     classId: string,
@@ -147,9 +143,7 @@ export class ClassroomService {
       const classRoom = await ClassRoom.findByPk(classId);
 
       if (!classRoom) {
-        logger.warn(
-          `ClassroomService.updateClassroom: ID ${classId} not found.`
-        );
+        logger.warn(`ClassroomQuery.updateClassroom: ID ${classId} not found.`);
         return null;
       }
 
@@ -157,10 +151,10 @@ export class ClassroomService {
       return updatedClassRoom.toJSON();
     } catch (error) {
       logger.error(
-        `ClassroomService.updateClassroom: Error updating ${classId}.`,
+        `ClassroomQuery.updateClassroom: Error updating ${classId}.`,
         error
       );
-      throw new Error("Service unavailable: Update operation failed.");
+      throw new Error("Query unavailable: Update operation failed.");
     }
   }
 
@@ -169,7 +163,7 @@ export class ClassroomService {
    *
    * @param classId - L'identifiant de la salle de classe à supprimer.
    * @returns `true` si la suppression a réussi, ou `false` si non trouvée.
-   * @throws {Error} Erreur de service si l'opération DB échoue (ex: contrainte de clé étrangère).
+   * @throws {Error} Erreur de Query si l'opération DB échoue (ex: contrainte de clé étrangère).
    */
   static async deleteClassroom(classId: string): Promise<boolean> {
     if (!classId) return false;
@@ -179,11 +173,11 @@ export class ClassroomService {
       return deletedRowCount > 0;
     } catch (error) {
       logger.error(
-        `ClassroomService.deleteClassroom: Error deleting ${classId}.`,
+        `ClassroomQuery.deleteClassroom: Error deleting ${classId}.`,
         error
       );
       throw new Error(
-        "Service error: Delete operation failed, check related constraints."
+        "Query error: Delete operation failed, check related constraints."
       );
     }
   }

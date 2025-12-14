@@ -1,10 +1,13 @@
-// enrolement.service.test.ts
-
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { EnrolementService } from "@/main/db/services/enrolement.service";
-import { ClassroomEnrolement, User, ClassRoom, StudyYear } from "../models";
-import { pruneUndefined } from "../models/utils";
-import { createUser } from "./account"; // Dépendance externe
+import {
+  ClassroomEnrolement,
+  User,
+  ClassRoom,
+  StudyYear,
+  pruneUndefined,
+} from "@/packages/@core/data-access/db";
+import { UserQuery } from "@/packages/@core/data-access/data-queries";
 
 // Constantes de mock
 const MOCK_ENROLEMENT_ID = "enrol-001";
@@ -175,7 +178,7 @@ describe("EnrolementService", () => {
         enrolementId: MOCK_ENROLEMENT_ID,
       });
 
-      vi.mocked(createUser).mockResolvedValue(createdStudent as any);
+      vi.mocked(UserQuery.createUser).mockResolvedValue(createdStudent as any);
       vi.mocked(ClassroomEnrolement.create).mockResolvedValue(
         createdEnrolement as any
       );
@@ -187,7 +190,7 @@ describe("EnrolementService", () => {
       });
 
       // Assert
-      expect(createUser).toHaveBeenCalledWith(
+      expect(UserQuery.createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           ...mockStudentPayload,
           schoolId: MOCK_SCHOOL_ID,
@@ -210,14 +213,12 @@ describe("EnrolementService", () => {
         enrolementId: MOCK_ENROLEMENT_ID,
         studentId: MOCK_USER_ID,
       });
-      existingEnrolement.update = vi
-        .fn()
-        .mockResolvedValue(
-          mockModelInstance({
-            enrolementId: MOCK_ENROLEMENT_ID,
-            studentId: "new-user",
-          })
-        );
+      existingEnrolement.update = vi.fn().mockResolvedValue(
+        mockModelInstance({
+          enrolementId: MOCK_ENROLEMENT_ID,
+          studentId: "new-user",
+        })
+      );
 
       vi.mocked(ClassroomEnrolement.findByPk).mockResolvedValue(
         existingEnrolement as any

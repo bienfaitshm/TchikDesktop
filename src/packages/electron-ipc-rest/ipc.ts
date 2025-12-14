@@ -125,7 +125,7 @@ export class IpcServer {
     return this.register(path, HttpMethod.DELETE, handler);
   }
 
-  private register(
+  public register(
     path: string,
     method: HttpMethod,
     handler: RequestHandler<any, any, any>

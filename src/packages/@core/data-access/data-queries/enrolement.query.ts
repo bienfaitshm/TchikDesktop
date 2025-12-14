@@ -1,4 +1,9 @@
-import type {
+import {
+  ClassroomEnrolement,
+  User,
+  ClassRoom,
+  StudyYear,
+  pruneUndefined,
   TEnrolementInsert,
   TEnrolement,
   TUser,
@@ -6,17 +11,14 @@ import type {
   TStudyYear,
 } from "@/packages/@core/data-access/db";
 
-import {
-  ClassroomEnrolement,
-  User,
-  ClassRoom,
-  StudyYear,
-  pruneUndefined,
-} from "@/packages/@core/data-access/db";
 import { Sequelize, type Includeable, WhereOptions } from "sequelize";
 
-import { UserService } from "./user.service";
-import { TQuickEnrolementInsert } from "@/commons/types/services";
+import { UserQuery } from "./user.query";
+import {
+  QueryParams,
+  TQuickEnrolementInsert,
+  WithSchoolAndYearId,
+} from "@/commons/types/services";
 
 /**
  * DTO complet d'un enrôlement avec les relations User et ClassRoom chargées.
@@ -216,7 +218,7 @@ export class EnrolementService {
   }: TQuickEnrolementInsert): Promise<TEnrolement> {
     try {
       // 1. Création du nouvel utilisateur (via le service User/Account)
-      const student = await UserService.createUser({
+      const student = await UserQuery.createUser({
         ...studentValue,
         schoolId: enrolementData.schoolId, // S'assurer que le schoolId est propagé
       });

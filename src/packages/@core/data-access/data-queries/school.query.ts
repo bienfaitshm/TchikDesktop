@@ -1,15 +1,16 @@
-//school.service.ts
-import { School, StudyYear } from "@/main/db/models/model";
-import type {
+//school.query.ts
+import {
+  School,
+  StudyYear,
   StudyYearAttributesInsert,
   StudyYearAttributes,
   SchoolAttributes,
   SchoolAttributesInsert,
-} from "@/commons/types/models";
-import { Sequelize, type WhereOptions } from "sequelize";
-import { pruneUndefined } from "../models/utils";
+  pruneUndefined,
+} from "@/packages/@core/data-access/db";
 
-// --- Logger Interface (Pattern Adapter pour scalabilité) ---
+import { Sequelize, type WhereOptions } from "sequelize";
+
 const logger = {
   info: (msg: string, meta?: object) => console.info(`[INFO] ${msg}`, meta),
   error: (msg: string, error?: unknown) =>
@@ -18,10 +19,10 @@ const logger = {
 };
 
 /**
- * Service gérant la logique métier pour les Écoles et les Années Scolaires.
+ * Query gérant la logique métier pour les Écoles et les Années Scolaires.
  * Conçu pour être stateless et hautement testable.
  */
-export class SchoolService {
+export class SchoolQuery {
   // ===========================================================================
   //  SCHOOL OPERATIONS
   // ===========================================================================
@@ -47,8 +48,8 @@ export class SchoolService {
       });
       return schools.map((s) => s.toJSON());
     } catch (error) {
-      logger.error("SchoolService.findSchools: DB Error", error);
-      throw new Error("Service unavailable: Unable to retrieve schools.");
+      logger.error("SchoolQuery.findSchools: DB Error", error);
+      throw new Error("Query unavailable: Unable to retrieve schools.");
     }
   }
 
@@ -62,7 +63,7 @@ export class SchoolService {
     schoolId: string
   ): Promise<SchoolAttributes | null> {
     if (!schoolId) {
-      logger.warn("SchoolService.getSchoolById: Called with empty ID");
+      logger.warn("SchoolQuery.getSchoolById: Called with empty ID");
       return null;
     }
 
@@ -71,10 +72,10 @@ export class SchoolService {
       return school ? school.toJSON() : null;
     } catch (error) {
       logger.error(
-        `SchoolService.getSchoolById: Error for ID ${schoolId}`,
+        `SchoolQuery.getSchoolById: Error for ID ${schoolId}`,
         error
       );
-      throw new Error("Service unavailable: Unable to fetch school details.");
+      throw new Error("Query unavailable: Unable to fetch school details.");
     }
   }
 
@@ -92,7 +93,7 @@ export class SchoolService {
       logger.info(`School created: ${school.schoolId}`);
       return school.toJSON();
     } catch (error) {
-      logger.error("SchoolService.createSchool: Creation failed", error);
+      logger.error("SchoolQuery.createSchool: Creation failed", error);
       throw error; // On relance l'erreur pour que le contrôleur gère les erreurs de validation (400) vs serveur (500)
     }
   }
@@ -113,7 +114,7 @@ export class SchoolService {
     try {
       const school = await School.findByPk(schoolId);
       if (!school) {
-        logger.warn(`SchoolService.updateSchool: ID ${schoolId} not found`);
+        logger.warn(`SchoolQuery.updateSchool: ID ${schoolId} not found`);
         return null;
       }
 
@@ -121,10 +122,10 @@ export class SchoolService {
       return updatedSchool.toJSON();
     } catch (error) {
       logger.error(
-        `SchoolService.updateSchool: Error updating ${schoolId}`,
+        `SchoolQuery.updateSchool: Error updating ${schoolId}`,
         error
       );
-      throw new Error("Service unavailable: Update failed.");
+      throw new Error("Query unavailable: Update failed.");
     }
   }
 
@@ -139,10 +140,10 @@ export class SchoolService {
       return count > 0;
     } catch (error) {
       logger.error(
-        `SchoolService.deleteSchool: Error deleting ${schoolId}`,
+        `SchoolQuery.deleteSchool: Error deleting ${schoolId}`,
         error
       );
-      throw new Error("Service error: Delete operation failed.");
+      throw new Error("Query error: Delete operation failed.");
     }
   }
 
@@ -179,7 +180,7 @@ export class SchoolService {
       return years.map((y) => y.toJSON());
     } catch (error) {
       logger.error(
-        `SchoolService.getStudyYears: Error for school ${schoolId}`,
+        `SchoolQuery.getStudyYears: Error for school ${schoolId}`,
         error
       );
       throw new Error("Unable to retrieve study years.");
@@ -195,7 +196,7 @@ export class SchoolService {
       const year = await StudyYear.findByPk(yearId);
       return year ? year.toJSON() : null;
     } catch (error) {
-      logger.error(`SchoolService.getStudyYearById: Error ${yearId}`, error);
+      logger.error(`SchoolQuery.getStudyYearById: Error ${yearId}`, error);
       throw new Error("Unable to fetch study year.");
     }
   }
@@ -211,7 +212,7 @@ export class SchoolService {
       const year = await StudyYear.create(payload);
       return year.toJSON();
     } catch (error) {
-      logger.error("SchoolService.createStudyYear: Failed", error);
+      logger.error("SchoolQuery.createStudyYear: Failed", error);
       throw error;
     }
   }
@@ -229,7 +230,7 @@ export class SchoolService {
       const updatedYear = await year.update(updates);
       return updatedYear.toJSON();
     } catch (error) {
-      logger.error(`SchoolService.updateStudyYear: Error ${yearId}`, error);
+      logger.error(`SchoolQuery.updateStudyYear: Error ${yearId}`, error);
       throw new Error("Update failed.");
     }
   }
@@ -241,7 +242,7 @@ export class SchoolService {
       const count = await StudyYear.destroy({ where: { yearId } });
       return count > 0;
     } catch (error) {
-      logger.error(`SchoolService.deleteStudyYear: Error ${yearId}`, error);
+      logger.error(`SchoolQuery.deleteStudyYear: Error ${yearId}`, error);
       throw new Error("Delete failed.");
     }
   }

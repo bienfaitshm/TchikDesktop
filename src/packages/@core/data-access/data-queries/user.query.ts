@@ -1,4 +1,3 @@
-//user.service.ts
 import { ClassroomEnrolement, User } from "@/packages/@core/data-access/db";
 import type {
   TUserInsert,
@@ -29,7 +28,7 @@ const logger = {
  * Service de gestion des Utilisateurs (étudiants, professeurs, administrateurs).
  * Ce service gère l'accès à la base de données pour l'entité User.
  */
-export class UserService {
+export class UserQuery {
   // ===========================================================================
   //  FETCH OPERATIONS
   // ===========================================================================

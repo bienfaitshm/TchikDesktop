@@ -1,6 +1,6 @@
 // user.service.test.ts
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { UserService } from "./user.service";
+import { UserService } from "./user.query";
 import { ClassroomEnrolement, User } from "../models/model";
 import { UserAttributes } from "@/commons/types/models";
 import { USER_ROLE } from "@/commons/constants/enum";
