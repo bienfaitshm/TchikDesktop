@@ -1,8 +1,13 @@
-export * from "./school";
-export * from "./account";
-export * from "./option";
-export * from "./enrolement";
-export * from "./classroom";
-export * from "./application";
-export * from "./statistiques";
-export * from "./document";
+import { ipcMain } from "electron";
+import { IpcServer } from "@/packages/electron-ipc-rest";
+import {
+  instantiatedHandlers,
+  EndpointRegistrar,
+} from "@/packages/@core/apis/servers";
+
+export const ipcServer = new IpcServer(ipcMain);
+
+export const appEndpoints = new EndpointRegistrar(
+  ipcServer,
+  instantiatedHandlers
+);

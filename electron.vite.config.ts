@@ -7,6 +7,7 @@ export default defineConfig({
     resolve: {
       alias: {
         "@/main": resolve("src/main"),
+        "@/packages": resolve("src/packages"),
         "@/commons": resolve("src/commons"),
       },
     },
@@ -19,6 +20,7 @@ export default defineConfig({
     resolve: {
       alias: {
         "@/renderer": resolve("src/renderer"),
+        "@/packages": resolve("src/packages"),
         "@/commons": resolve("src/commons"),
       },
     },

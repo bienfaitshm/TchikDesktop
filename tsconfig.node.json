@@ -13,6 +13,7 @@
   "compilerOptions": {
     "composite": true,
     "types": ["electron-vite/node"],
+    "baseUrl": "./",
     "paths": {
       "@/main/*": ["./src/main/*"],
       "@/commons/*": ["./src/commons/*"],

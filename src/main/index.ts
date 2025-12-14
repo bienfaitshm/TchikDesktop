@@ -6,12 +6,11 @@ import { autoUpdater } from "electron-updater";
 import log from "electron-log";
 
 import icon from "../../resources/icon.png?asset";
-import { server } from "@/commons/libs/electron-apis/server";
 import { sequelize } from "@/main/db/config";
 import { getLogger } from "@/main/libs/logger";
 import { performBackup } from "@/main/db/config";
 
-import "@/main/apps";
+import { appEndpoints, ipcServer } from "@/main/apps";
 
 // Logger principal pour le process Electron
 const mainLogger = getLogger("MainProcess");
@@ -49,11 +48,8 @@ const createMainWindow = (): void => {
 
       // Démarrage du serveur API interne
       mainLogger.info("Démarrage du serveur API Electron...");
-      server.listen(mainWindow, (routes) => {
-        mainLogger.info(
-          `Serveur API actif, ${routes.length} routes initialisées.`
-        );
-      });
+      appEndpoints.registerEndpoints();
+      ipcServer.listen();
     })
     .catch((error) => {
       // Log professionnel en cas d'échec de la DB

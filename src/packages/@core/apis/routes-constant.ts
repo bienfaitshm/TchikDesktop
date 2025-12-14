@@ -35,6 +35,15 @@ export const SchoolRoutes: RouteEndpoints = {
 };
 
 /**
+ * Routes IPC pour la gestion des SCHOOLS (Écoles).
+ */
+export const StudyYearRoutes: RouteEndpoints = {
+  ALL: "studyYear",
+  // Utilise schoolId pour cibler une école spécifique
+  DETAIL: "studyYear/:yearId",
+};
+
+/**
  * Routes IPC pour la gestion des CLASSROOMS (Salles de Classe).
  */
 export const ClassroomRoutes: RouteEndpoints = {
@@ -62,4 +71,5 @@ export const IpcRoutes = {
   SCHOOLS: SchoolRoutes,
   CLASSROOMS: ClassroomRoutes,
   ENROLLEMENTS: EnrollementRoutes,
+  STUDY_YEAR: StudyYearRoutes,
 } as const;
