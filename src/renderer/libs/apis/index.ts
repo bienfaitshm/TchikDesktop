@@ -58,4 +58,6 @@ function initializeAppClients(ipcRendererInstance: IpcRenderer): AppClients {
  * Ces exports sont utilisés par les couches de logique métier (services, stores, etc.)
  * pour interagir avec les données via la communication Inter-Processus (IPC).
  */
-export const apis = initializeAppClients(window.electron.ipcRenderer);
+export const { classroom, enrollement, option, school } = initializeAppClients(
+  window.electron.ipcRenderer
+);
