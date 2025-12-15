@@ -1,4 +1,4 @@
-// option.service.ts
+// option.query.ts
 
 import { Option } from "@/main/db/models";
 import type { TOption } from "@/commons/types/models";
@@ -22,7 +22,7 @@ const logger = {
  * Service de gestion des Options Académiques.
  * Fournit les méthodes de requête et de mutation pour l'entité Option.
  */
-export class OptionService {
+export class OptionQuery {
   // =============================================================================
   //  FETCH OPERATIONS
   // =============================================================================
@@ -63,7 +63,7 @@ export class OptionService {
 
       return options.map((opt) => opt.toJSON());
     } catch (error) {
-      logger.error("OptionService.getOptions: DB query failed.", error);
+      logger.error("OptionQuery.getOptions: DB query failed.", error);
       throw new Error(
         "Service unavailable: Unable to retrieve academic options."
       );
@@ -79,7 +79,7 @@ export class OptionService {
    */
   static async getOptionById(optionId: string): Promise<TOption | null> {
     if (!optionId) {
-      logger.warn("OptionService.getOptionById: Called with empty ID.");
+      logger.warn("OptionQuery.getOptionById: Called with empty ID.");
       return null;
     }
     try {
@@ -87,7 +87,7 @@ export class OptionService {
       return option ? option.toJSON() : null;
     } catch (error) {
       logger.error(
-        `OptionService.getOptionById: Error for ID ${optionId}.`,
+        `OptionQuery.getOptionById: Error for ID ${optionId}.`,
         error
       );
       throw new Error("Service unavailable: Unable to fetch option details.");
@@ -113,7 +113,7 @@ export class OptionService {
       });
       return option.toJSON();
     } catch (error) {
-      logger.error("OptionService.createOption: Creation failed.", error);
+      logger.error("OptionQuery.createOption: Creation failed.", error);
       throw error; // Laisse le contrôleur gérer les erreurs de validation/unicité
     }
   }
@@ -136,7 +136,7 @@ export class OptionService {
       const option = await Option.findByPk(optionId);
 
       if (!option) {
-        logger.warn(`OptionService.updateOption: ID ${optionId} not found.`);
+        logger.warn(`OptionQuery.updateOption: ID ${optionId} not found.`);
         return null;
       }
 
@@ -144,7 +144,7 @@ export class OptionService {
       return updatedOption.toJSON();
     } catch (error) {
       logger.error(
-        `OptionService.updateOption: Error updating ${optionId}.`,
+        `OptionQuery.updateOption: Error updating ${optionId}.`,
         error
       );
       throw new Error("Service unavailable: Update operation failed.");
@@ -168,7 +168,7 @@ export class OptionService {
       return deletedRowCount > 0;
     } catch (error) {
       logger.error(
-        `OptionService.deleteOption: Error deleting ${optionId}.`,
+        `OptionQuery.deleteOption: Error deleting ${optionId}.`,
         error
       );
       // Ceci peut échouer à cause des classes toujours liées à cette option.

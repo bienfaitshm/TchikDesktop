@@ -37,10 +37,10 @@ const logger = {
 };
 
 /**
- * Service de gestion des Enrôlements (inscriptions de l'utilisateur à une classe).
+ * Queryde gestion des Enrôlements (inscriptions de l'utilisateur à une classe).
  * Gère les opérations de recherche, création, et mutation des liens entre utilisateur et classe.
  */
-export class EnrolementService {
+export class EnrolementQuery {
   // =============================================================================
   //  FETCH OPERATIONS
   // =============================================================================
@@ -50,7 +50,7 @@ export class EnrolementService {
    *
    * @param queryArgs - Paramètres incluant schoolId, yearId et filtres d'enrôlement supplémentaires.
    * @returns Liste des enrôlements avec les données utilisateur et de classe.
-   * @throws {Error} Erreur de service si la requête DB échoue.
+   * @throws {Error} Erreur de Querysi la requête DB échoue.
    */
   static async getEnrolements({
     schoolId,
@@ -88,7 +88,7 @@ export class EnrolementService {
       return enrolements.map((e) => e.toJSON()) as TEnrolementDTO[];
     } catch (error) {
       logger.error("EnrolementService.getEnrolements: DB query failed.", error);
-      throw new Error("Service unavailable: Unable to retrieve enrolements.");
+      throw new Error("Queryunavailable: Unable to retrieve enrolements.");
     }
   }
 
@@ -100,7 +100,7 @@ export class EnrolementService {
    *
    * @param params - Paramètres de la requête (`schoolId`, `yearId`, `classId`).
    * @returns Un tableau d'enrôlements correspondant aux critères.
-   * @throws {Error} Erreur de service si la requête DB échoue.
+   * @throws {Error} Erreur de Querysi la requête DB échoue.
    */
   static async getEnrolementHistory({
     schoolId,
@@ -145,7 +145,7 @@ export class EnrolementService {
         error
       );
       throw new Error(
-        "Service unavailable: Impossible de récupérer l'historique des enrôlements."
+        "Queryunavailable: Impossible de récupérer l'historique des enrôlements."
       );
     }
   }
@@ -172,7 +172,7 @@ export class EnrolementService {
         error
       );
       throw new Error(
-        "Service unavailable: Impossible de récupérer l'enrôlement."
+        "Queryunavailable: Impossible de récupérer l'enrôlement."
       );
     }
   }
@@ -193,7 +193,7 @@ export class EnrolementService {
       const enrolement = await ClassroomEnrolement.create(data);
       logger.info(`Enrolement created: ${enrolement.enrolementId}`, {
         studentId: data.studentId,
-        classId: enrolement.classId,
+        classId: enrolement.classroomId,
       });
       return enrolement.toJSON();
     } catch (error) {
@@ -217,7 +217,7 @@ export class EnrolementService {
     ...enrolementData
   }: TQuickEnrolementInsert): Promise<TEnrolement> {
     try {
-      // 1. Création du nouvel utilisateur (via le service User/Account)
+      // 1. Création du nouvel utilisateur (via le QueryUser/Account)
       const student = await UserQuery.createUser({
         ...studentValue,
         schoolId: enrolementData.schoolId, // S'assurer que le schoolId est propagé
@@ -268,7 +268,7 @@ export class EnrolementService {
         `EnrolementService.updateEnrolement: Error updating ${enrolementId}.`,
         error
       );
-      throw new Error("Service unavailable: Update operation failed.");
+      throw new Error("Queryunavailable: Update operation failed.");
     }
   }
 
@@ -291,7 +291,7 @@ export class EnrolementService {
         `EnrolementService.deleteEnrolement: Error deleting ${enrolementId}.`,
         error
       );
-      throw new Error("Service error: Delete operation failed.");
+      throw new Error("Queryerror: Delete operation failed.");
     }
   }
 }

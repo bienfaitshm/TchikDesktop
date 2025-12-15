@@ -49,7 +49,7 @@ export abstract class AbstractEndpoint<S extends ValidationSchemas> {
    * Message d'erreur personnalisé en cas d'échec de validation.
    * @protected
    */
-  public abstract readonly validationErrorMessage?: string;
+  public readonly validationErrorMessage?: string = undefined;
 
   /**
    * Logique métier de l'endpoint.
