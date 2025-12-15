@@ -169,4 +169,18 @@ export type TEnrolementActionCreate = Omit<
 export type TEnrolementActionFilter =
   WhereOptions<ClassroomEnrolementActionAttributes>;
 
-// Aucune TEnrolementActionUpdate n'est définie car l'historique d'audit ne devrait jamais être modifié.
+export type PaginationAndSort = {
+  // 'limit' est transformé en nombre (`z.coerce.number()`), mais reste optionnel (`.optional()`)
+  limit: number;
+
+  // 'offset' est transformé en nombre, optionnel, non négatif.
+  offset: number;
+
+  // 'orderBy' est du type déduit de ZodQueryFilter (ici, string ou undefined si non fourni).
+  orderBy: string | undefined;
+
+  // 'order' est optionnel et doit être l'une des deux chaînes de caractères.
+  order: "ASC" | "DESC" | undefined;
+};
+
+export type WithPaginationAndSort<TData> = Partial<PaginationAndSort> & TData;
