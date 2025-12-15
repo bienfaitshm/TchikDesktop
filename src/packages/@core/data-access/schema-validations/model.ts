@@ -12,8 +12,6 @@ import { createZodEnum } from "./utils";
 // I. ENUMS ZOD (Définitions Simples)
 // =============================================================================
 
-// Ces schémas doivent correspondre exactement aux valeurs de vos fichiers d'énumération.
-// Assurez-vous que l'implémentation de ces schémas reflète la réalité de vos `enum`.
 const ZSECTION = createZodEnum(SECTION);
 const ZUSER_GENDER = createZodEnum(USER_GENDER);
 const ZUSER_ROLE = createZodEnum(USER_ROLE);
@@ -33,13 +31,12 @@ const ZENROLEMENT_ACTION = createZodEnum(ENROLEMENT_ACTION);
  * @typedef {z.infer<typeof SchoolAttributesSchema>} SchoolAttributes
  */
 export const SchoolAttributesSchema = z.object({
-  schoolId: z.string().uuid().describe("Identifiant unique de l'école (UUID)"),
+  schoolId: z.string().describe("Identifiant unique de l'école (UUID)"),
   name: z.string().min(3).max(255).describe("Nom complet de l'école"),
   adress: z.string().max(255).describe("Adresse physique de l'école"),
   town: z.string().max(100).describe("Ville où se situe l'école"),
   logo: z
     .string()
-    .url()
     .nullable()
     .optional()
     .describe("URL ou chemin du logo, peut être null"),
@@ -56,7 +53,6 @@ export const SchoolAttributesSchema = z.object({
 export const UserAttributesSchema = z.object({
   userId: z
     .string()
-    .uuid()
     .optional()
     .describe(
       "Identifiant unique de l'utilisateur (optionnel pour l'insertion)"
@@ -96,7 +92,7 @@ export const UserAttributesSchema = z.object({
     .max(50)
     .optional()
     .describe("Nom d'utilisateur unique"),
-  schoolId: z.string().uuid().optional().describe("Clé étrangère vers l'École"),
+  schoolId: z.string().optional().describe("Clé étrangère vers l'École"),
   password: z
     .string()
     .min(6)
@@ -114,14 +110,14 @@ export const UserAttributesSchema = z.object({
  * @typedef {z.infer<typeof OptionAttributesSchema>} OptionAttributes
  */
 export const OptionAttributesSchema = z.object({
-  optionId: z.string().uuid().describe("Identifiant unique de l'option"),
+  optionId: z.string().describe("Identifiant unique de l'option"),
   optionName: z.string().min(3).max(100).describe("Nom complet de l'option"),
   optionShortName: z
     .string()
     .min(1)
     .max(10)
     .describe("Nom abrégé (sigle) de l'option"),
-  schoolId: z.string().uuid().describe("Clé étrangère vers l'École"),
+  schoolId: z.string().describe("Clé étrangère vers l'École"),
   section: ZSECTION.optional().describe(
     "Section à laquelle appartient l'option"
   ),
@@ -136,7 +132,7 @@ export const OptionAttributesSchema = z.object({
  * @typedef {z.infer<typeof StudyYearAttributesSchema>} StudyYearAttributes
  */
 export const StudyYearAttributesSchema = z.object({
-  yearId: z.string().uuid().describe("Identifiant unique de l'année d'étude"),
+  yearId: z.string().describe("Identifiant unique de l'année d'étude"),
   yearName: z
     .string()
     .min(4)
@@ -144,7 +140,7 @@ export const StudyYearAttributesSchema = z.object({
     .describe("Nom de l'année (ex: 2024-2025)"),
   startDate: z.coerce.date().describe("Date de début de l'année scolaire"),
   endDate: z.coerce.date().describe("Date de fin de l'année scolaire"),
-  schoolId: z.string().uuid().describe("Clé étrangère vers l'École"),
+  schoolId: z.string().describe("Clé étrangère vers l'École"),
 });
 
 // ---------------------------
@@ -158,7 +154,7 @@ export const StudyYearAttributesSchema = z.object({
 export const ClassroomAttributesSchema = z.object({
   classId: z
     .string()
-    .uuid()
+
     .optional()
     .describe("Identifiant unique de la classe"),
   identifier: z
@@ -171,12 +167,12 @@ export const ClassroomAttributesSchema = z.object({
     .min(1)
     .max(10)
     .describe("Identifiant court (ex: 7ème S)"),
-  yearId: z.string().uuid().describe("Clé étrangère vers l'Année d'Étude"),
-  schoolId: z.string().uuid().describe("Clé étrangère vers l'École"),
+  yearId: z.string().describe("Clé étrangère vers l'Année d'Étude"),
+  schoolId: z.string().describe("Clé étrangère vers l'École"),
   section: ZSECTION.optional().describe("Section de la classe"),
   optionId: z
     .string()
-    .uuid()
+
     .nullable()
     .optional()
     .describe("Clé étrangère vers l'Option (null si pas de filière)"),
@@ -193,17 +189,17 @@ export const ClassroomAttributesSchema = z.object({
 export const EnrolementAttributesSchema = z.object({
   enrolementId: z
     .string()
-    .uuid()
+
     .describe("Identifiant unique de l'inscription"),
-  classroomId: z.string().uuid().describe("Clé étrangère vers la Classe"),
+  classroomId: z.string().describe("Clé étrangère vers la Classe"),
   studentId: z
     .string()
-    .uuid()
+
     .describe("Clé étrangère vers l'Utilisateur (Étudiant)"),
   isNewStudent: z
     .boolean()
     .describe("Indique si c'est un nouvel étudiant dans l'école"),
-  schoolId: z.string().uuid().describe("Clé étrangère vers l'École"),
+  schoolId: z.string().describe("Clé étrangère vers l'École"),
   status: ZSTUDENT_STATUS.optional().describe(
     "Statut de l'étudiant dans cette classe"
   ),
@@ -223,10 +219,10 @@ export const EnrolementAttributesSchema = z.object({
  * @typedef {z.infer<typeof EnrolementActionAttributesSchema>} ClassroomEnrolementActionAttributes
  */
 export const EnrolementActionAttributesSchema = z.object({
-  actionId: z.string().uuid().describe("Identifiant unique de l'action"),
+  actionId: z.string().describe("Identifiant unique de l'action"),
   enrolementId: z
     .string()
-    .uuid()
+
     .describe("Clé étrangère vers l'inscription concernée"),
   reason: z
     .string()
@@ -308,12 +304,94 @@ export const ClassroomUpdateSchema = ClassroomCreateSchema.partial();
 /** Schéma pour la création d'une Inscription (exclut 'enrolementId'). */
 export const EnrolementCreateSchema = EnrolementAttributesSchema.omit({
   enrolementId: true,
+  code: true,
 });
 /** Schéma pour la mise à jour d'une Inscription (exclut les clés étrangères essentielles 'studentId' et 'classroomId' de la modification). */
 export const EnrolementUpdateSchema = EnrolementCreateSchema.omit({
   studentId: true,
   classroomId: true,
 }).partial();
+
+// Schéma de base des attributs de l'utilisateur pour la création, moins les champs système
+const BaseStudentSchema = UserCreateSchema.omit({
+  password: true,
+  username: true,
+  schoolId: true,
+});
+
+/**
+ * Schéma Zod pour la création rapide d'une inscription (Quick Enrolment).
+ *
+ * Ce schéma est conditionnel :
+ * 1. Si `isInSystem` est VRAI : `studentId` est requis, et `student` doit être omis.
+ * 2. Si `isInSystem` est FAUX : `student` est requis (pour créer le nouvel utilisateur), et `studentId` doit être omis.
+ *
+ * @typedef {z.infer<typeof EnrolementQuickCreateSchema>} TEnrolementQuickCreate
+ */
+export const EnrolementQuickCreateSchema = EnrolementCreateSchema.merge(
+  z.object({
+    // Indique si l'étudiant existe déjà dans le système. Défaut à FAUX.
+    isInSystem: z.boolean().default(false).optional(),
+
+    // ID de l'étudiant existant (requis si isInSystem est VRAI).
+    studentId: z.string().optional(),
+
+    // Données du nouvel étudiant (requis si isInSystem est FAUX).
+    student: BaseStudentSchema.optional(),
+  })
+)
+  // -------------------------------------------------------------------------
+  // Logique de validation conditionnelle appliquée via superRefine
+  // -------------------------------------------------------------------------
+  .superRefine((data, ctx) => {
+    const { isInSystem, studentId, student } = data;
+
+    if (isInSystem) {
+      // CAS 1 : L'étudiant existe (isInSystem = true ou undefined)
+
+      // studentId DOIT être fourni et être un UUID valide.
+      if (!studentId || !z.string().uuid().safeParse(studentId).success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "L'ID de l'étudiant existant (`studentId`) est requis lorsque l'étudiant est déjà dans le système.",
+          path: ["studentId"],
+        });
+      }
+
+      // Le corps du nouvel étudiant (`student`) DOIT être omis.
+      if (student) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Les données de l'étudiant (`student`) doivent être omises lorsque son ID (`studentId`) est fourni.",
+          path: ["student"],
+        });
+      }
+    } else {
+      // CAS 2 : L'étudiant est nouveau (isInSystem = false)
+
+      // Le corps du nouvel étudiant (`student`) DOIT être fourni.
+      if (!student) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Les données de l'étudiant (`student`) sont requises pour la création d'un nouvel utilisateur.",
+          path: ["student"],
+        });
+      }
+
+      // studentId DOIT être omis.
+      if (studentId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "L'ID de l'étudiant (`studentId`) doit être omis lors de la création d'un nouvel utilisateur.",
+          path: ["studentId"],
+        });
+      }
+    }
+  });
 
 // ---------------------------
 // 7. Enrolement Action CRUD
