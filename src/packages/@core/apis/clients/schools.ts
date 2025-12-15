@@ -1,5 +1,5 @@
 import { IpcClient } from "@/packages/electron-ipc-rest";
-import { SchoolRoutes } from "../routes-constant";
+import { SchoolRoutes, StudyYearRoutes } from "../routes-constant";
 
 /**
  * Interface représentant la structure des données d'une salle de classe (School).
@@ -58,6 +58,45 @@ export type SchoolApi = Readonly<{
    * @returns Une promesse résolue une fois la suppression terminée (souvent avec un objet vide ou un statut de succès).
    */
   deleteSchool(SchoolId: string): Promise<void>;
+
+  /**
+   * Récupère toutes les salles de classe, éventuellement filtrées par des paramètres.
+   * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
+   * @returns Une promesse résolue avec la liste des SchoolData.
+   */
+  fetchStudyYear(params?: SchoolQueryParams): Promise<SchoolData[]>;
+
+  /**
+   * Récupère les détails d'une salle de classe spécifique par son ID.
+   * @param SchoolId L'identifiant unique de la salle de classe.
+   * @returns Une promesse résolue avec l'objet SchoolData.
+   */
+  fetchStudyYearById(yearId: string): Promise<SchoolData>;
+
+  /**
+   * Crée une nouvelle salle de classe.
+   * @param data L'objet de données nécessaire pour créer la salle de classe.
+   * @returns Une promesse résolue avec l'objet SchoolData nouvellement créé.
+   */
+  createStudyYear(data: Omit<SchoolData, "id">): Promise<SchoolData>;
+
+  /**
+   * Met à jour une salle de classe existante.
+   * @param SchoolId L'identifiant unique de la salle de classe à mettre à jour.
+   * @param data Les champs partiels de SchoolData à modifier.
+   * @returns Une promesse résolue avec l'objet SchoolData mis à jour.
+   */
+  updateStudyYear(
+    yearId: string,
+    data: Partial<Omit<SchoolData, "id">>
+  ): Promise<SchoolData>;
+
+  /**
+   * Supprime une salle de classe par son ID.
+   * @param SchoolId L'identifiant unique de la salle de classe à supprimer.
+   * @returns Une promesse résolue une fois la suppression terminée (souvent avec un objet vide ou un statut de succès).
+   */
+  deleteStudyYear(yearId: string): Promise<void>;
 }>;
 
 /**
@@ -95,6 +134,35 @@ export function createSchoolApis(ipcClient: IpcClient): SchoolApi {
       // La suppression ne nécessite pas de corps de requête
       return ipcClient.delete(SchoolRoutes.DETAIL, {
         params: { SchoolId },
+      });
+    },
+
+    // StudyYear
+    fetchStudyYear(params) {
+      // Utilisation du 'params' optionnel de l'appel pour les filtres/pagination
+      return ipcClient.get(StudyYearRoutes.ALL, { params });
+    },
+
+    fetchStudyYearById(yearId) {
+      return ipcClient.get(StudyYearRoutes.DETAIL, { params: { yearId } });
+    },
+
+    createStudyYear(data) {
+      // Envoi des données dans le corps de la requête POST
+      return ipcClient.post(StudyYearRoutes.ALL, data);
+    },
+
+    updateStudyYear(yearId, data) {
+      // Envoi du corps pour la mise à jour (PATCH ou PUT, ici PUT est utilisé)
+      return ipcClient.put(StudyYearRoutes.DETAIL, data, {
+        params: { yearId },
+      });
+    },
+
+    deleteStudyYear(yearId) {
+      // La suppression ne nécessite pas de corps de requête
+      return ipcClient.delete(StudyYearRoutes.DETAIL, {
+        params: { yearId },
       });
     },
   } as const;
