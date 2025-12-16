@@ -1,19 +1,22 @@
 import { IpcClient } from "@/packages/electron-ipc-rest";
+import {
+  TOptionAttributes,
+  TOptionFilter,
+  TOptionCreate,
+  TOptionUpdate,
+} from "@/packages/@core/data-access/schema-validations";
 import { OptionRoutes } from "../routes-constant";
 
 /**
- * Interface représentant la structure des données d'une salle de classe (Option).
+ * type représentant la structure des données d'une salle de classe (Option).
  * Remplace 'unknown' par les propriétés réelles de votre Option.
  */
-export interface OptionData {
-  id: string;
-  name: string;
-}
+export type OptionData = TOptionAttributes;
 
 /**
  * Type définissant les paramètres de requête pour les listes.
  */
-export type OptionQueryParams = Record<string, unknown>;
+export type OptionQueryParams = TOptionFilter;
 
 /**
  * Type de l'objet API retourné. Le 'as const' garantit que toutes les propriétés
@@ -29,35 +32,32 @@ export type OptionApi = Readonly<{
 
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
-   * @param OptionId L'identifiant unique de la salle de classe.
+   * @param optionId L'identifiant unique de la salle de classe.
    * @returns Une promesse résolue avec l'objet OptionData.
    */
-  fetchOptionById(OptionId: string): Promise<OptionData>;
+  fetchOptionById(optionId: string): Promise<OptionData>;
 
   /**
    * Crée une nouvelle salle de classe.
    * @param data L'objet de données nécessaire pour créer la salle de classe.
    * @returns Une promesse résolue avec l'objet OptionData nouvellement créé.
    */
-  createOption(data: Omit<OptionData, "id">): Promise<OptionData>;
+  createOption(data: TOptionCreate): Promise<OptionData>;
 
   /**
    * Met à jour une salle de classe existante.
-   * @param OptionId L'identifiant unique de la salle de classe à mettre à jour.
+   * @param optionId L'identifiant unique de la salle de classe à mettre à jour.
    * @param data Les champs partiels de OptionData à modifier.
    * @returns Une promesse résolue avec l'objet OptionData mis à jour.
    */
-  updateOption(
-    OptionId: string,
-    data: Partial<Omit<OptionData, "id">>
-  ): Promise<OptionData>;
+  updateOption(optionId: string, data: TOptionUpdate): Promise<OptionData>;
 
   /**
    * Supprime une salle de classe par son ID.
-   * @param OptionId L'identifiant unique de la salle de classe à supprimer.
+   * @param optionId L'identifiant unique de la salle de classe à supprimer.
    * @returns Une promesse résolue une fois la suppression terminée (souvent avec un objet vide ou un statut de succès).
    */
-  deleteOption(OptionId: string): Promise<void>;
+  deleteOption(optionId: string): Promise<void>;
 }>;
 
 /**
@@ -75,8 +75,8 @@ export function createOptionApis(ipcClient: IpcClient): OptionApi {
       return ipcClient.get(OptionRoutes.ALL, { params });
     },
 
-    fetchOptionById(OptionId) {
-      return ipcClient.get(OptionRoutes.DETAIL, { params: { OptionId } });
+    fetchOptionById(optionId) {
+      return ipcClient.get(OptionRoutes.DETAIL, { params: { optionId } });
     },
 
     createOption(data) {
@@ -84,17 +84,17 @@ export function createOptionApis(ipcClient: IpcClient): OptionApi {
       return ipcClient.post(OptionRoutes.ALL, data);
     },
 
-    updateOption(OptionId, data) {
+    updateOption(optionId, data) {
       // Envoi du corps pour la mise à jour (PATCH ou PUT, ici PUT est utilisé)
       return ipcClient.put(OptionRoutes.DETAIL, data, {
-        params: { OptionId },
+        params: { optionId },
       });
     },
 
-    deleteOption(OptionId) {
+    deleteOption(optionId) {
       // La suppression ne nécessite pas de corps de requête
       return ipcClient.delete(OptionRoutes.DETAIL, {
-        params: { OptionId },
+        params: { optionId },
       });
     },
   } as const;

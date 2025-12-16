@@ -1,4 +1,14 @@
 import { IpcClient } from "@/packages/electron-ipc-rest";
+import {
+  TSchoolAttributes,
+  TSchoolCreate,
+  TSchoolFilter,
+  TSchoolUpdate,
+  TStudyYearAttributes,
+  TStudyYearCreate,
+  TStudyYearUpdate,
+  TStudyYearFilter,
+} from "@/packages/@core/data-access/schema-validations";
 import { SchoolRoutes, StudyYearRoutes } from "../routes-constant";
 
 /**
@@ -23,80 +33,77 @@ export type SchoolApi = Readonly<{
   /**
    * Récupère toutes les salles de classe, éventuellement filtrées par des paramètres.
    * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
-   * @returns Une promesse résolue avec la liste des SchoolData.
+   * @returns Une promesse résolue avec la liste des TSchoolAttributes.
    */
-  fetchSchools(params?: SchoolQueryParams): Promise<SchoolData[]>;
+  fetchSchools(params?: TSchoolFilter): Promise<TSchoolAttributes[]>;
 
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
-   * @param SchoolId L'identifiant unique de la salle de classe.
-   * @returns Une promesse résolue avec l'objet SchoolData.
+   * @param schoolId L'identifiant unique de la salle de classe.
+   * @returns Une promesse résolue avec l'objet TSchoolAttributes.
    */
-  fetchSchoolById(SchoolId: string): Promise<SchoolData>;
+  fetchSchoolById(schoolId: string): Promise<TSchoolAttributes>;
 
   /**
    * Crée une nouvelle salle de classe.
    * @param data L'objet de données nécessaire pour créer la salle de classe.
-   * @returns Une promesse résolue avec l'objet SchoolData nouvellement créé.
+   * @returns Une promesse résolue avec l'objet TSchoolAttributes nouvellement créé.
    */
-  createSchool(data: Omit<SchoolData, "id">): Promise<SchoolData>;
+  createSchool(data: TSchoolCreate): Promise<TSchoolAttributes>;
 
   /**
    * Met à jour une salle de classe existante.
-   * @param SchoolId L'identifiant unique de la salle de classe à mettre à jour.
-   * @param data Les champs partiels de SchoolData à modifier.
-   * @returns Une promesse résolue avec l'objet SchoolData mis à jour.
+   * @param schoolId L'identifiant unique de la salle de classe à mettre à jour.
+   * @param data Les champs partiels de TSchoolAttributes à modifier.
+   * @returns Une promesse résolue avec l'objet TSchoolAttributes mis à jour.
    */
   updateSchool(
-    SchoolId: string,
-    data: Partial<Omit<SchoolData, "id">>
-  ): Promise<SchoolData>;
+    schoolId: string,
+    data: TSchoolUpdate
+  ): Promise<TSchoolAttributes>;
 
   /**
    * Supprime une salle de classe par son ID.
-   * @param SchoolId L'identifiant unique de la salle de classe à supprimer.
+   * @param schoolId L'identifiant unique de la salle de classe à supprimer.
    * @returns Une promesse résolue une fois la suppression terminée (souvent avec un objet vide ou un statut de succès).
    */
-  deleteSchool(SchoolId: string): Promise<void>;
+  deleteSchool(schoolId: string): Promise<void>;
 
   /**
    * Récupère toutes les salles de classe, éventuellement filtrées par des paramètres.
    * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
-   * @returns Une promesse résolue avec la liste des SchoolData.
+   * @returns Une promesse résolue avec la liste des TStudyYearAttributes.
    */
-  fetchStudyYear(params?: SchoolQueryParams): Promise<SchoolData[]>;
+  fetchStudyYear(params?: TStudyYearFilter): Promise<TStudyYearAttributes[]>;
 
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
-   * @param SchoolId L'identifiant unique de la salle de classe.
-   * @returns Une promesse résolue avec l'objet SchoolData.
+   * @param schoolId L'identifiant unique de la salle de classe.
+   * @returns Une promesse résolue avec l'objet TSchoolAttributes.
    */
-  fetchStudyYearById(yearId: string): Promise<SchoolData>;
+  fetchStudyYearById(yearId: string): Promise<TStudyYearAttributes>;
 
   /**
    * Crée une nouvelle salle de classe.
    * @param data L'objet de données nécessaire pour créer la salle de classe.
    * @returns Une promesse résolue avec l'objet SchoolData nouvellement créé.
    */
-  createStudyYear(data: Omit<SchoolData, "id">): Promise<SchoolData>;
+  createStudyYear(data: TStudyYearCreate): Promise<TStudyYearAttributes>;
 
   /**
    * Met à jour une salle de classe existante.
-   * @param SchoolId L'identifiant unique de la salle de classe à mettre à jour.
+   * @param schoolId L'identifiant unique de la salle de classe à mettre à jour.
    * @param data Les champs partiels de SchoolData à modifier.
    * @returns Une promesse résolue avec l'objet SchoolData mis à jour.
    */
-  updateStudyYear(
-    yearId: string,
-    data: Partial<Omit<SchoolData, "id">>
-  ): Promise<SchoolData>;
+  updateStudyYear(yearId: string, data: TStudyYearUpdate): Promise<SchoolData>;
 
   /**
    * Supprime une salle de classe par son ID.
-   * @param SchoolId L'identifiant unique de la salle de classe à supprimer.
+   * @param schoolId L'identifiant unique de la salle de classe à supprimer.
    * @returns Une promesse résolue une fois la suppression terminée (souvent avec un objet vide ou un statut de succès).
    */
-  deleteStudyYear(yearId: string): Promise<void>;
+  deleteStudyYear(yearId: string): Promise<boolean>;
 }>;
 
 /**
@@ -114,8 +121,8 @@ export function createSchoolApis(ipcClient: IpcClient): SchoolApi {
       return ipcClient.get(SchoolRoutes.ALL, { params });
     },
 
-    fetchSchoolById(SchoolId) {
-      return ipcClient.get(SchoolRoutes.DETAIL, { params: { SchoolId } });
+    fetchSchoolById(schoolId) {
+      return ipcClient.get(SchoolRoutes.DETAIL, { params: { schoolId } });
     },
 
     createSchool(data) {
@@ -123,17 +130,17 @@ export function createSchoolApis(ipcClient: IpcClient): SchoolApi {
       return ipcClient.post(SchoolRoutes.ALL, data);
     },
 
-    updateSchool(SchoolId, data) {
+    updateSchool(schoolId, data) {
       // Envoi du corps pour la mise à jour (PATCH ou PUT, ici PUT est utilisé)
       return ipcClient.put(SchoolRoutes.DETAIL, data, {
-        params: { SchoolId },
+        params: { schoolId },
       });
     },
 
-    deleteSchool(SchoolId) {
+    deleteSchool(schoolId) {
       // La suppression ne nécessite pas de corps de requête
       return ipcClient.delete(SchoolRoutes.DETAIL, {
-        params: { SchoolId },
+        params: { schoolId },
       });
     },
 

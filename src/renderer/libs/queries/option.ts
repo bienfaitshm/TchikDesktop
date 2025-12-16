@@ -1,11 +1,17 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { option } from "@/renderer/libs/apis";
+import {
+  TOptionFilter,
+  TOptionUpdate,
+  TOptionCreate,
+} from "@/packages/@core/data-access/schema-validations";
+import { TQueryUpdate } from "./type";
 
 /**
  * @function useGetOptions
  * @description Hook to fetch all options
  */
-export function useGetOptions(params?: any) {
+export function useGetOptions(params?: TOptionFilter) {
   return useSuspenseQuery({
     queryKey: ["GET_OPTIONS", params],
     queryFn: () => option.fetchOptions(params),
@@ -29,7 +35,7 @@ export function useGetOptionById(optionId: string) {
 export function useCreateOption() {
   return useMutation({
     mutationKey: ["CREATE_OPTION"],
-    mutationFn: (data: any) => option.createOption(data),
+    mutationFn: (data: TOptionCreate) => option.createOption(data),
   });
 }
 
@@ -40,7 +46,8 @@ export function useCreateOption() {
 export function useUpdateOption() {
   return useMutation({
     mutationKey: ["UPDATE_OPTION"],
-    mutationFn: ({ data, id }: any) => option.updateOption(id, data),
+    mutationFn: ({ data, id }: TQueryUpdate<TOptionUpdate>) =>
+      option.updateOption(id, data),
   });
 }
 
