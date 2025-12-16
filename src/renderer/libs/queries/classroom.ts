@@ -1,5 +1,11 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { classroom } from "@/renderer/libs/apis";
+import {
+  TClassroomCreate,
+  TClassroomFilter,
+  TClassroomUpdate,
+} from "@/packages/@core/data-access/schema-validations";
+import { TQueryUpdate } from "./type";
 
 export const GET_CLASSROOMS_KEY = "GET_CLASSROOMS";
 
@@ -7,7 +13,7 @@ export const GET_CLASSROOMS_KEY = "GET_CLASSROOMS";
  * @function useGetClassrooms
  * @description Hook to fetch all classrooms for a given school, optionally filtered by year.
  */
-export function useGetClassrooms(params: any) {
+export function useGetClassrooms(params?: TClassroomFilter) {
   return useSuspenseQuery({
     queryKey: [GET_CLASSROOMS_KEY, params],
     queryFn: () => classroom.fetchClassrooms(params),
@@ -28,7 +34,7 @@ export function useGetClassroomById(classroomId: string) {
 export function useCreateClassroom() {
   return useMutation({
     mutationKey: ["CREATE_CLASSROOM"],
-    mutationFn: (data: any) => classroom.createClassroom(data),
+    mutationFn: (data: TClassroomCreate) => classroom.createClassroom(data),
   });
 }
 
@@ -39,7 +45,8 @@ export function useCreateClassroom() {
 export function useUpdateClassroom() {
   return useMutation({
     mutationKey: ["UPDATE_CLASSROOM"],
-    mutationFn: ({ data, id }: any) => classroom.updateClassroom(id, data),
+    mutationFn: ({ data, id }: TQueryUpdate<TClassroomUpdate>) =>
+      classroom.updateClassroom(id, data),
   });
 }
 
@@ -48,8 +55,8 @@ export function useUpdateClassroom() {
  * @description Hook to delete a classroom.
  */
 export function useDeleteClassroom() {
-  return useMutation<any, Error, string>({
+  return useMutation({
     mutationKey: ["DELETE_CLASSROOM"],
-    mutationFn: (classId) => classroom.deleteClassroom(classId),
+    mutationFn: (classId: string) => classroom.deleteClassroom(classId),
   });
 }

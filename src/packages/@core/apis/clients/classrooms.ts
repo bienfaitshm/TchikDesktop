@@ -1,15 +1,17 @@
 import { IpcClient } from "@/packages/electron-ipc-rest";
+import {
+  TClassroomCreate,
+  TClassroomFilter,
+  TClassroomUpdate,
+  TClassroomAttributes,
+} from "@/packages/@core/data-access/schema-validations";
 import { ClassroomRoutes } from "../routes-constant";
 
 /**
  * Interface représentant la structure des données d'une salle de classe (Classroom).
  * Remplace 'unknown' par les propriétés réelles de votre Classroom.
  */
-export interface ClassroomData {
-  id: string;
-  name: string;
-}
-
+export type ClassroomData = TClassroomAttributes;
 /**
  * Type définissant les paramètres de requête pour les listes.
  */
@@ -25,7 +27,7 @@ export type ClassroomApi = Readonly<{
    * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
    * @returns Une promesse résolue avec la liste des ClassroomData.
    */
-  fetchClassrooms(params?: ClassroomQueryParams): Promise<ClassroomData[]>;
+  fetchClassrooms(params?: TClassroomFilter): Promise<ClassroomData[]>;
 
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
@@ -39,7 +41,7 @@ export type ClassroomApi = Readonly<{
    * @param data L'objet de données nécessaire pour créer la salle de classe.
    * @returns Une promesse résolue avec l'objet ClassroomData nouvellement créé.
    */
-  createClassroom(data: Omit<ClassroomData, "id">): Promise<ClassroomData>;
+  createClassroom(data: TClassroomCreate): Promise<ClassroomData>;
 
   /**
    * Met à jour une salle de classe existante.
@@ -49,7 +51,7 @@ export type ClassroomApi = Readonly<{
    */
   updateClassroom(
     classroomId: string,
-    data: Partial<Omit<ClassroomData, "id">>
+    data: TClassroomUpdate
   ): Promise<ClassroomData>;
 
   /**
