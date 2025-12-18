@@ -5,6 +5,8 @@ import type {
   StudyYearAttributes,
 } from "@/commons/types/models";
 
+const APP_STORE_NAME = "app-global-configuration";
+
 // Définit l'état du store
 interface ConfigurationState {
   currentSchool?: SchoolAttributes;
@@ -52,7 +54,7 @@ export const useApplicationConfigurationStore = create<ConfigurationStore>()(
       },
     }),
     {
-      name: "app-global-configuration",
+      name: APP_STORE_NAME,
       storage: createJSONStorage(() => localStorage),
     }
   )

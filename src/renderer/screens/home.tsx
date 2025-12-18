@@ -21,18 +21,13 @@ import { useMemo } from "react";
 
 
 export const Home: React.FC<WithSchoolAndYearId> = (props) => {
-  const { totalStudents, genderCountByClassAndSection, secondaryStudentsByOption, studentsBySection } = useDashboardStatistics(props)
-  // console.log({ totalStudents, genderCountByClassAndSection, secondaryStudentsByOption, studentsBySection })
-  const students = useMemo(() => convertObjectToArray(totalStudents, [{ key: "femaleCount", label: "Filles" }, { key: "maleCount", label: "Homme" }]).map(item => ({
-    total: item.value,
-    label: item.key
-  })), [totalStudents])
+
   return (
     <div className="mx-auto max-w-screen-lg mt-10">
       <TypographyH2>Dashboard</TypographyH2>
 
       <div className="grid grid-cols-3 gap-5">
-        <ChartPie
+        {/* <ChartPie
           data={students}
           dataKey="total"
           chartConfig={TOTAL_STUDENT}
@@ -43,7 +38,7 @@ export const Home: React.FC<WithSchoolAndYearId> = (props) => {
           bars={["maleCount", "femaleCount"]}
           chartConfig={SecondaryStudentsByOptionChartConfig}
 
-        />
+        /> */}
       </div>
     </div>
   );

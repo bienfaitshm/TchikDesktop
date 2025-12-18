@@ -5,6 +5,8 @@ import {
   TClassroomUpdate,
   TClassroomAttributes,
 } from "@/packages/@core/data-access/schema-validations";
+
+import { TClassroomDTO } from "@/packages/@core/data-access/data-queries";
 import { ClassroomRoutes } from "../routes-constant";
 
 /**
@@ -25,16 +27,16 @@ export type ClassroomApi = Readonly<{
   /**
    * Récupère toutes les salles de classe, éventuellement filtrées par des paramètres.
    * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
-   * @returns Une promesse résolue avec la liste des ClassroomData.
+   * @returns Une promesse résolue avec la liste des TClassroomDTO.
    */
-  fetchClassrooms(params?: TClassroomFilter): Promise<ClassroomData[]>;
+  fetchClassrooms(params?: TClassroomFilter): Promise<TClassroomDTO[]>;
 
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
    * @param classroomId L'identifiant unique de la salle de classe.
    * @returns Une promesse résolue avec l'objet ClassroomData.
    */
-  fetchClassroomById(classroomId: string): Promise<ClassroomData>;
+  fetchClassroomById(classroomId: string): Promise<TClassroomDTO>;
 
   /**
    * Crée une nouvelle salle de classe.
@@ -52,7 +54,7 @@ export type ClassroomApi = Readonly<{
   updateClassroom(
     classroomId: string,
     data: TClassroomUpdate
-  ): Promise<ClassroomData>;
+  ): Promise<TClassroomDTO>;
 
   /**
    * Supprime une salle de classe par son ID.

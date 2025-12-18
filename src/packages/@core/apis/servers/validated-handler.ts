@@ -12,7 +12,7 @@ import {
   HttpException,
 } from "@/packages/electron-ipc-rest";
 
-// --- Types & Interfaces ---
+import { getLogger } from "@/packages/logger";
 
 export interface ValidationSchemas {
   body?: ZodTypeAny;
@@ -54,8 +54,7 @@ export type InferParams<S extends ValidationSchemas> =
     ? z.infer<S["params"]>
     : Record<string, unknown>;
 
-// --- Implementation ---
-
+const logger = getLogger("Validation");
 /**
  * Valide une section spécifique de la requête (Body, Params ou Headers).
  */
@@ -130,6 +129,11 @@ export function createValidatedHandler<S extends ValidationSchemas>(
 
     // 2. Gestion des erreurs agrégées
     if (errors.length > 0) {
+      logger.error(
+        `Erreur lors de la validation ${JSON.stringify(errors)}`,
+        undefined,
+        { issues: errors }
+      );
       throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST, {
         issues: errors,
       });
