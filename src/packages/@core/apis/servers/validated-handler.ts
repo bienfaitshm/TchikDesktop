@@ -108,23 +108,22 @@ export function createValidatedHandler<S extends ValidationSchemas>(
 
   return async (req: IpcRequest) => {
     const errors: ValidationErrorDetail[] = [];
-
     // 1. Validation & Transformation
     const validatedBody = validateSection(
-      schemas.body,
-      req.body,
+      schemas?.body,
+      req?.body,
       "body",
       errors
     );
     const validatedParams = validateSection(
-      schemas.params,
-      req.params,
+      schemas?.params,
+      req?.params,
       "params",
       errors
     );
     const validatedHeaders = validateSection(
-      schemas.headers,
-      req.headers,
+      schemas?.headers,
+      req?.headers,
       "headers",
       errors
     );

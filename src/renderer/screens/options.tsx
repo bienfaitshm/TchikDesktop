@@ -56,7 +56,7 @@ const OptionManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId }) => {
     } = useOptionManagement();
 
 
-    const { data: options = [] } = useGetOptions(schoolId);
+    const { data: options = [] } = useGetOptions({ schoolId });
     const tableAction = useTableAction<TOption>();
     const onConfirmDelete = useCallback(
         (item: TOption) => {

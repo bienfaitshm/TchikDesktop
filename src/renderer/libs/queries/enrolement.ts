@@ -3,48 +3,56 @@ import {
   useSuspenseQuery,
   UseSuspenseQueryOptions,
 } from "@tanstack/react-query";
-import type {
-  TEnrolement,
-  TWithUser,
-  TQuickEnrolementInsert,
-  TEnrolementInsert,
-  TWithClassroom,
-} from "@/commons/types/services";
-import * as apis from "@/renderer/libs/apis/enrolement";
+import {
+  TEnrolementAttributes,
+  TEnrolementCreate,
+  TEnrolementQuickCreate,
+  TEnrolementUpdate,
+  TEnrolementFilter,
+} from "@/packages/@core/data-access/schema-validations";
+import { enrollement } from "@/renderer/libs/apis";
 import { TQueryUpdate } from "./type";
 
-export function useGetEnrollments(params: apis.GetEnrolementParams) {
-  return useSuspenseQuery<TWithUser<TEnrolement>[], Error>({
+export function useGetEnrollments(params?: TEnrolementFilter) {
+  return useSuspenseQuery({
     queryKey: ["GET_ENROLLMENTS", params],
-    queryFn: () => apis.getEnrolements(params),
+    queryFn: () => enrollement.fetchEnrollements(params),
   });
 }
 
-export function useGetEnrollment(
+export function useGetEnrollmentById(
   enrolementId: string,
-  options?: Partial<
-    UseSuspenseQueryOptions<TWithUser<TWithClassroom<TEnrolement>>>
-  >
+  options?: Partial<UseSuspenseQueryOptions<TEnrolementAttributes>>
 ) {
-  return useSuspenseQuery<TWithUser<TWithClassroom<TEnrolement>>, Error>({
+  return useSuspenseQuery({
     queryKey: ["GET_ENROLLMENT", enrolementId],
-    queryFn: () => apis.getEnrolement(enrolementId),
+    queryFn: () => enrollement.fetchEnrollementById(enrolementId),
     ...options,
+  });
+}
+
+export function useCreateEnrolement() {
+  return useMutation({
+    mutationKey: ["CREATE_ENROLEMENT"],
+    mutationFn: (data: TEnrolementCreate) =>
+      enrollement.createEnrollement(data),
   });
 }
 
 //
 
 export function useCreateQuickEnrolement() {
-  return useMutation<TEnrolement, Error, TQuickEnrolementInsert>({
+  return useMutation({
     mutationKey: ["QUICK_ENROLEMENT"],
-    mutationFn: (data) => apis.quickCreateEnrolement(data),
+    mutationFn: (data: TEnrolementQuickCreate) =>
+      enrollement.createQuickEnrollement(data),
   });
 }
 
 export function useUpdateEnrollment() {
-  return useMutation<TEnrolement, Error, TQueryUpdate<TEnrolementInsert>>({
+  return useMutation({
     mutationKey: ["UPDATE_ENROLEMENT"],
-    mutationFn: ({ data, id }) => apis.updateEnrolement(id, data),
+    mutationFn: ({ data, id }: TQueryUpdate<TEnrolementUpdate>) =>
+      enrollement.updateEnrollement(id, data),
   });
 }

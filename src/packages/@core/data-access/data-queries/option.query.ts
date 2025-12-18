@@ -1,22 +1,18 @@
 // option.query.ts
+import { Sequelize } from "sequelize";
 
-import { Option } from "@/main/db/models";
-import type { TOption } from "@/commons/types/models";
-import type {
-  QueryParams,
-  TOptionInsert,
-  WithSchoolAndYearId,
-} from "@/commons/types/services";
-import { pruneUndefined } from "@/main/db/models/utils";
-import { Sequelize, type WhereOptions } from "sequelize";
+import {
+  Option,
+  OptionAttributes,
+  TOptionCreate,
+  TOptionUpdate,
+  pruneUndefined,
+} from "@/packages/@core/data-access/db";
 
-// --- Logger Interface (Simulé pour l'observabilité) ---
-const logger = {
-  info: (msg: string, meta?: object) => console.info(`[INFO] ${msg}`, meta),
-  error: (msg: string, error?: unknown) =>
-    console.error(`[ERROR] ${msg}`, error),
-  warn: (msg: string, meta?: object) => console.warn(`[WARN] ${msg}`, meta),
-};
+import { CustomLogger, getLogger } from "@/packages/logger";
+import { TOptionFilter } from "@/packages/@core/data-access/schema-validations";
+
+const logger: CustomLogger = getLogger("Option query");
 
 /**
  * Service de gestion des Options Académiques.
@@ -34,36 +30,29 @@ export class OptionQuery {
    * @returns Une promesse qui résout en un tableau de DTOs d'options.
    * @throws {Error} Erreur de service si la requête DB échoue.
    */
-  static async getOptions({
-    schoolId,
-    yearId,
-    params,
-  }: QueryParams<WithSchoolAndYearId, Partial<TOptionInsert>>): Promise<
-    TOption[]
-  > {
-    if (!schoolId || !yearId) {
+  static async getOptions(params?: TOptionFilter): Promise<OptionAttributes[]> {
+    if (params && !params?.schoolId) {
+      logger.error(
+        "Validation Error: schoolId are required for listing options."
+      );
       throw new Error(
-        "Validation Error: schoolId and yearId are required for listing options."
+        "Validation Error: schoolId are required for listing options."
       );
     }
 
     // La clause WHERE inclut les IDs de scope (schoolId, yearId) et les autres filtres.
-    const optionWhereClause = pruneUndefined({
-      schoolId,
-      yearId,
-      ...params,
-    }) as WhereOptions<TOption>;
+    const optionWhereClause = pruneUndefined(params);
 
     try {
       const options = await Option.findAll({
         where: optionWhereClause,
         // Tri professionnel par nom d'option (insensible à la casse)
-        order: [[Sequelize.fn("LOWER", Sequelize.col("option_name")), "ASC"]],
+        order: [[Sequelize.fn("LOWER", Sequelize.col("optionName")), "ASC"]],
       });
 
       return options.map((opt) => opt.toJSON());
     } catch (error) {
-      logger.error("OptionQuery.getOptions: DB query failed.", error);
+      logger.error("OptionQuery.getOptions: DB query failed.", error as Error);
       throw new Error(
         "Service unavailable: Unable to retrieve academic options."
       );
@@ -77,7 +66,9 @@ export class OptionQuery {
    * @returns L'option DTO trouvée, ou `null` si non trouvée.
    * @throws {Error} Erreur de service si la requête DB échoue.
    */
-  static async getOptionById(optionId: string): Promise<TOption | null> {
+  static async getOptionById(
+    optionId: string
+  ): Promise<OptionAttributes | null> {
     if (!optionId) {
       logger.warn("OptionQuery.getOptionById: Called with empty ID.");
       return null;
@@ -88,7 +79,7 @@ export class OptionQuery {
     } catch (error) {
       logger.error(
         `OptionQuery.getOptionById: Error for ID ${optionId}.`,
-        error
+        error as Error
       );
       throw new Error("Service unavailable: Unable to fetch option details.");
     }
@@ -105,7 +96,7 @@ export class OptionQuery {
    * @returns Le DTO de l'option nouvellement créée.
    * @throws {Error} Erreur DB si l'insertion échoue.
    */
-  static async createOption(data: TOptionInsert): Promise<TOption> {
+  static async createOption(data: TOptionCreate): Promise<OptionAttributes> {
     try {
       const option = await Option.create(data);
       logger.info(`Option created: ${option.optionId}`, {
@@ -113,7 +104,10 @@ export class OptionQuery {
       });
       return option.toJSON();
     } catch (error) {
-      logger.error("OptionQuery.createOption: Creation failed.", error);
+      logger.error(
+        "OptionQuery.createOption: Creation failed.",
+        error as Error
+      );
       throw error; // Laisse le contrôleur gérer les erreurs de validation/unicité
     }
   }
@@ -128,8 +122,8 @@ export class OptionQuery {
    */
   static async updateOption(
     optionId: string,
-    updates: Partial<TOptionInsert>
-  ): Promise<TOption | null> {
+    updates: TOptionUpdate
+  ): Promise<OptionAttributes | null> {
     if (!optionId) return null;
 
     try {
@@ -145,7 +139,7 @@ export class OptionQuery {
     } catch (error) {
       logger.error(
         `OptionQuery.updateOption: Error updating ${optionId}.`,
-        error
+        error as Error
       );
       throw new Error("Service unavailable: Update operation failed.");
     }
@@ -169,7 +163,7 @@ export class OptionQuery {
     } catch (error) {
       logger.error(
         `OptionQuery.deleteOption: Error deleting ${optionId}.`,
-        error
+        error as Error
       );
       // Ceci peut échouer à cause des classes toujours liées à cette option.
       throw new Error(

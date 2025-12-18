@@ -137,7 +137,7 @@ export async function resolveToPlain<T extends Model, R = PlainObject>(
  * const result = pruneUndefined(input);
  * // Result: { a: 1, c: 3 }
  */
-export function pruneUndefined<T extends Record<string, unknown>>(
+export function pruneUndefined<T extends object>(
   obj: T | null | undefined
 ): Partial<T> {
   // 1. Guard Clause: strict checks for null, undefined, or arrays to avoid runtime crashes.

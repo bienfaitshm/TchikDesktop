@@ -152,7 +152,7 @@ export class IpcServer {
       const safeHandler = async (event: IpcMainInvokeEvent, payload: any) => {
         const req: IpcRequest = {
           id: crypto.randomUUID(),
-          body: payload.data,
+          body: payload.data ?? {},
           params: payload.params ?? {},
           headers: payload.headers ?? {},
           context: {
@@ -161,15 +161,15 @@ export class IpcServer {
           },
         };
 
+        this.logger.info(`CALL APIs :${channel}`, { req });
         try {
           const result = await handler(req);
           return createResponse(result, HttpStatus.OK);
         } catch (error) {
-          return this.handleError(req, error);
+          return this.handleError(req, error as Error);
         }
       };
-      console.log(this.ipcMain);
-      this.ipcMain?.removeHandler(channel); // Clean slate
+      this.ipcMain?.removeHandler(channel);
       this.ipcMain?.handle(channel, safeHandler);
       activeChannels.push(channel);
     });
@@ -185,10 +185,11 @@ export class IpcServer {
     };
   }
 
-  private handleError(req: IpcRequest, error: unknown): IResponse<null> {
+  private handleError(req: IpcRequest, error: Error): IResponse<null> {
     if (error instanceof HttpException) {
       this.logger.warn(
-        `[IpcServer] HTTP ${error.statusCode} on ${req.id}: ${error.message}`
+        `[IpcServer] HTTP ${error.statusCode} on ${req.id}: ${error.message}`,
+        { error }
       );
       return createErrorResponse(
         error.message,
@@ -197,7 +198,10 @@ export class IpcServer {
       );
     }
 
-    this.logger.error(`[IpcServer] Critical Error on ${req.id}`, error);
+    this.logger.error(
+      `[IpcServer] Critical Error on ${req.id}: Message: ${error?.message}`,
+      error
+    );
     // En production, ne jamais renvoyer la stack trace complète au client
     return createErrorResponse(
       "Internal Server Error",

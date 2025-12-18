@@ -10,7 +10,7 @@ import {
   STUDENT_STATUS,
   USER_GENDER,
   USER_ROLE,
-} from "@/commons/constants/enum";
+} from "./enum";
 import { sequelize } from "./config";
 import { primaryKeyColumn } from "./base";
 import {
@@ -21,14 +21,21 @@ import type {
   SchoolAttributes,
   OptionAttributes,
   StudyYearAttributes,
-  TClassroomInsert,
   TClassroom,
   TEnrolement,
-  TEnrolementInsert,
-  TUserInsert,
   TUser,
   ClassroomEnrolementActionAttributes,
-} from "@/commons/types/models";
+} from "./model.type";
+
+import type {
+  TOptionCreate,
+  TClassroomCreate,
+  TUserCreate,
+  TEnrolementCreate,
+  TSchoolCreate,
+  TStudyYearCreate,
+  TEnrolementActionCreate,
+} from "./model.action.type";
 
 // =============================================================================
 //  1. SCHOOL MODEL
@@ -38,7 +45,7 @@ import type {
  * Entité racine représentant un établissement scolaire.
  * @table Schools
  */
-export class School extends Model<SchoolAttributes> {
+export class School extends Model<SchoolAttributes, TSchoolCreate> {
   public schoolId!: string;
   public name!: string;
   public adress!: string;
@@ -79,7 +86,7 @@ School.init(
  * Gère l'authentification et l'identité.
  * @table Users
  */
-export class User extends Model<TUser, TUserInsert> {
+export class User extends Model<TUser, TUserCreate> {
   public userId!: string;
   public lastName!: string;
   public middleName!: string;
@@ -175,7 +182,7 @@ User.init(
  * Filière ou option d'étude (ex: Scientifique, Littéraire).
  * @table Options
  */
-export class Option extends Model<OptionAttributes> {
+export class Option extends Model<OptionAttributes, TOptionCreate> {
   public optionId!: string;
   public optionName!: string;
   public optionShortName!: string;
@@ -223,7 +230,7 @@ Option.init(
  * @table StudyYears
  */
 export class StudyYear
-  extends Model<StudyYearAttributes>
+  extends Model<StudyYearAttributes, TStudyYearCreate>
   implements StudyYearAttributes
 {
   public yearId!: string;
@@ -265,7 +272,7 @@ StudyYear.init(
  * @table ClassRooms
  */
 export class ClassRoom
-  extends Model<TClassroom, TClassroomInsert>
+  extends Model<TClassroom, TClassroomCreate>
   implements TClassroom
 {
   public classId!: string;
@@ -323,7 +330,7 @@ ClassRoom.init(
  * Inscription d'un étudiant à une classe pour une période donnée.
  * @table ClassroomEnrolements
  */
-export class ClassroomEnrolement extends Model<TEnrolement, TEnrolementInsert> {
+export class ClassroomEnrolement extends Model<TEnrolement, TEnrolementCreate> {
   public enrolementId!: string;
   public classroomId!: string;
   public status!: STUDENT_STATUS;
@@ -390,10 +397,7 @@ ClassroomEnrolement.init(
  * @table ClassroomEnrolementActions
  */
 export class ClassroomEnrolementAction
-  extends Model<
-    ClassroomEnrolementActionAttributes,
-    Omit<ClassroomEnrolementActionAttributes, "actionId">
-  >
+  extends Model<ClassroomEnrolementActionAttributes, TEnrolementActionCreate>
   implements ClassroomEnrolementActionAttributes
 {
   public actionId!: string;

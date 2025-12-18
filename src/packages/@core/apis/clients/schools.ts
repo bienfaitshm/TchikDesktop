@@ -74,7 +74,7 @@ export type SchoolApi = Readonly<{
    * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
    * @returns Une promesse résolue avec la liste des TStudyYearAttributes.
    */
-  fetchStudyYear(params?: TStudyYearFilter): Promise<TStudyYearAttributes[]>;
+  fetchStudyYears(params?: TStudyYearFilter): Promise<TStudyYearAttributes[]>;
 
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
@@ -145,7 +145,7 @@ export function createSchoolApis(ipcClient: IpcClient): SchoolApi {
     },
 
     // StudyYear
-    fetchStudyYear(params) {
+    fetchStudyYears(params) {
       // Utilisation du 'params' optionnel de l'appel pour les filtres/pagination
       return ipcClient.get(StudyYearRoutes.ALL, { params });
     },

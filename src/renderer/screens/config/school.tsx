@@ -26,7 +26,8 @@ import { SchoolCreationForm, useSchoolNavigationAndSelection } from "./school.ne
  */
 const SchoolListDisplayTable: React.FC = () => {
     const setCurrentSchoolAndNavigate = useSchoolNavigationAndSelection();
-    const { data: schools } = useGetSchools();
+    const { data: schools, error } = useGetSchools();
+    console.log({ error })
     if (schools.length === 0) {
         return (
             <div className="p-4">
@@ -42,7 +43,6 @@ const SchoolListDisplayTable: React.FC = () => {
         <div>
             <TypographyH4 className="mb-6 text-center md:text-left">
                 Veuillez choisir l'établissement sur lequel vous souhaitez travailler.
-
             </TypographyH4>
             <Table>
                 <TableCaption>

@@ -1,6 +1,5 @@
 // classroom.Query.ts
 
-import type { TClassRoomFilter } from "@/packages/@core/data-access/schema-validations";
 import {
   ClassRoom,
   Option,
@@ -8,18 +7,19 @@ import {
   pruneUndefined,
   TClassroomInsert,
   TClassroom,
+  TOption,
+  TStudyYear,
 } from "@/packages/@core/data-access/db";
 import { Sequelize, type WhereOptions } from "sequelize";
-
-// --- Types DTO (Data Transfer Object) ---
+import { TClassroomFilter } from "@/packages/@core/data-access/schema-validations";
 
 /**
  * Type DTO représentant une salle de classe avec ses relations chargées.
  * Note: L'utilisation de `ClassRoom` ici est basée sur votre modèle local.
  */
 export type TClassroomDTO = TClassroom & {
-  Option: TClassroom["Option"]; // Utiliser directement le type du modèle si possible
-  StudyYear: TClassroom["StudyYear"];
+  Option: TOption;
+  StudyYear: TStudyYear;
 };
 
 // --- Logger Interface (Simulé pour l'observabilité) ---
@@ -47,7 +47,7 @@ export class ClassroomQuery {
    * @throws {Error} Erreur de Query si la requête DB échoue.
    */
   static async getClassrooms(
-    filters: TClassRoomFilter
+    filters: TClassroomFilter
   ): Promise<TClassroomDTO[]> {
     const { limit, offset, orderBy, order, ...dbFilters } = filters;
 

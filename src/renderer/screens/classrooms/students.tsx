@@ -18,7 +18,7 @@ import { StudentColumns } from "@/renderer/components/tables/columns.students";
 import { TypographyH2, TypographySmall } from "@/renderer/components/ui/typography";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
 import { WithSchoolAndYearId } from "@/commons/types/services";
-import { useGetClassroom } from "@/renderer/libs/queries/classroom";
+import { useGetClassroomById } from "@/renderer/libs/queries/classroom";
 import { ButtonDataExport } from "@/renderer/components/sheets/export-button";
 import { ButtonSheetStudentStat } from "./students.stat";
 import { Suspense } from "@/renderer/libs/queries/suspense";
@@ -34,7 +34,7 @@ import { DataSheetViewer, useDataSheetViewer } from "@/renderer/components/sheet
  * Utilise un Skeleton pour une meilleure expérience utilisateur pendant le chargement.
  */
 const ClassroomHeader: React.FC<{ classId: string }> = ({ classId }) => {
-    const { data: classroom, isLoading } = useGetClassroom(classId);
+    const { data: classroom, isLoading } = useGetClassroomById(classId);
 
     if (isLoading) {
         return (

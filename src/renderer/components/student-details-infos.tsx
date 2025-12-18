@@ -16,7 +16,7 @@ import { AnimatedFrame, AnimatedFrameSwitcherProvider, useChangeAnimatedFrame } 
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { SECTION_TRANSLATIONS } from '@/commons/constants/enum';
 import { formatDate } from "@/commons/libs/times";
-import { useGetEnrollment, useUpdateEnrollment } from "@/renderer/libs/queries/enrolement";
+import { useGetEnrollmentById, useUpdateEnrollment } from "@/renderer/libs/queries/enrolement";
 import { useUserManagement } from "@/renderer/hooks/query.mangements";
 import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
 import { Suspense } from "@/renderer/libs/queries/suspense";
@@ -186,7 +186,7 @@ const EditEnrollmentInfos = ({
 
 export const StudentDetailsCard = ({ schoolId, yearId, data, onRefresh: globalRefesh }: StudentDetailsCardProps) => {
     const { classroomId } = useParams<{ classroomId: string }>();
-    const { data: enrollment, refetch } = useGetEnrollment(data.enrolementId, { initialData: data });
+    const { data: enrollment, refetch } = useGetEnrollmentById(data.enrolementId, { initialData: data });
 
     const onRefresh = useCallback(() => {
         refetch();
