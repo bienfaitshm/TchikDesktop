@@ -5,10 +5,7 @@
  */
 
 import { getLogger, CustomLogger } from "@/packages/logger";
-import {
-  AbstractDataQueryHandler,
-  DataAccessResult,
-} from "./data-query-handler";
+import { AbstractQueryHandler, DataAccessResult } from "./query-handler";
 
 // ==========================================
 // 1. Core Types & Interfaces (Alignées sur le standard)
@@ -44,7 +41,7 @@ export interface IQueryBus {
  */
 export class DataQueryBus implements IQueryBus {
   // Le Map stocke les handlers sous leur identifiant unique
-  private readonly handlerRegistry: Map<string, AbstractDataQueryHandler> =
+  private readonly handlerRegistry: Map<string, AbstractQueryHandler<any>> =
     new Map();
 
   // Logger dédié pour le système de médiation
@@ -53,7 +50,7 @@ export class DataQueryBus implements IQueryBus {
   /**
    * @param handlers Liste des gestionnaires de requêtes (stratégies) à enregistrer.
    */
-  constructor(handlers: AbstractDataQueryHandler[]) {
+  constructor(handlers: AbstractQueryHandler<any>[]) {
     // Construction du registre: Map<queryId, handler>
     for (const handler of handlers) {
       if (this.handlerRegistry.has(handler.queryId)) {

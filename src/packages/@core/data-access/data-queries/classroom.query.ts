@@ -5,13 +5,18 @@ import {
   Option,
   StudyYear,
   pruneUndefined,
-  TClassroomInsert,
-  TClassroom,
-  TOption,
-  TStudyYear,
+  type TClassroomInsert,
+  type TClassroom,
+  type TOption,
+  type TStudyYear,
+  type TEnrolement,
+  type TUser,
+  User,
+  ClassroomEnrolement,
 } from "@/packages/@core/data-access/db";
-import { Sequelize, type WhereOptions } from "sequelize";
+import { FindOptions, Sequelize, type WhereOptions } from "sequelize";
 import { TClassroomFilter } from "@/packages/@core/data-access/schema-validations";
+import { getLogger } from "@/packages/logger";
 
 /**
  * Type DTO représentant une salle de classe avec ses relations chargées.
@@ -22,13 +27,12 @@ export type TClassroomDTO = TClassroom & {
   StudyYear: TStudyYear;
 };
 
-// --- Logger Interface (Simulé pour l'observabilité) ---
-const logger = {
-  info: (msg: string, meta?: object) => console.info(`[INFO] ${msg}`, meta),
-  error: (msg: string, error?: unknown) =>
-    console.error(`[ERROR] ${msg}`, error),
-  warn: (msg: string, meta?: object) => console.warn(`[WARN] ${msg}`, meta),
+export type ClassroomWithEnrollments = TClassroom & {
+  ClassroomEnrolements: (TUser & TEnrolement)[];
 };
+
+// --- Logger Interface (Simulé pour l'observabilité) ---
+const logger = getLogger("Classroom Queries");
 
 /**
  * Query de gestion des Salles de Classe (ClassRoom).
@@ -71,11 +75,37 @@ export class ClassroomQuery {
       // Retourne un tableau de DTOs purs (toJSON)
       return classRooms.map((cr) => cr.toJSON()) as TClassroomDTO[];
     } catch (error) {
-      logger.error("ClassroomQuery.getClassrooms: DB query failed.", error);
+      logger.error(
+        "ClassroomQuery.getClassrooms: DB query failed.",
+        error as Error
+      );
       throw new Error("Query unavailable: Unable to retrieve classrooms.");
     }
   }
 
+  /**
+   * @description Récupère toutes les salles de classe qui correspondent aux paramètres,
+   * incluant leurs inscriptions (élèves) et les détails des utilisateurs associés.
+   *
+   * @param {ClassroomFilterParams} validatedParams - Les paramètres de filtrage validés.
+   * @returns {Promise<ClassRoom[]>} Une promesse résolvant en un tableau d'instances Sequelize ClassRoom
+   * avec les relations `ClassroomEnrolements` incluses.
+   */
+  static async fetchClassroomsWithEnrollments(
+    validatedParams: ClassroomFilterParams
+  ) {
+    const baseQuery = buildClassroomQueryOptions(validatedParams);
+
+    // 1. Tri par identifiant de la salle de classe pour une présentation ordonnée
+    baseQuery.order = [
+      // Tri par ordre alphabétique non sensible à la casse
+      [Sequelize.fn("LOWER", Sequelize.col("identifier")), "ASC"],
+      [Sequelize.fn("LOWER", Sequelize.col("shortIdentifier")), "ASC"],
+    ];
+
+    // 2. Exécution de la requête
+    return ClassRoom.findAll(baseQuery);
+  }
   /**
    * Récupère une salle de classe par son identifiant principal, avec ses relations.
    *
@@ -181,4 +211,65 @@ export class ClassroomQuery {
       );
     }
   }
+}
+
+/**
+ * 🧱 Interface des paramètres de filtrage de salle de classe.
+ */
+export interface ClassroomFilterParams {
+  schoolId?: string;
+  yearId?: string;
+  sections?: string | string[];
+  classrooms?: string | string[];
+}
+
+/**
+ * 📝 Type de données de retour pour une Salle de Classe incluant ses Inscriptions (élèves).
+ * Combine le type de base TClassroom avec l'inclusion de TEnrolement typé TWithUser.
+ */
+export type ClassroomWithEnrollments = TClassroom & {
+  ClassroomEnrolements: TWithUser<TEnrolement>[];
+};
+
+/**
+ * @function buildClassroomQueryOptions
+ * @description Construit les options de base (WHERE et INCLUDE) pour la requête Sequelize des salles de classe.
+ * Cette fonction encapsule la logique de filtrage commune pour toutes les requêtes de classe.
+ *
+ * @param {ClassroomFilterParams} params - Les paramètres de filtrage à appliquer.
+ * @returns {FindOptions<typeof ClassRoom>} Les options de recherche Sequelize (WhereOptions et IncludeOptions).
+ */
+function buildClassroomQueryOptions(
+  params: ClassroomFilterParams
+): FindOptions<any> {
+  // 1. Détermination de la clause WHERE pour les filtres simples (schoolId, yearId)
+  let whereClause: WhereOptions = pruneUndefined({
+    schoolId: params.schoolId,
+    yearId: params.yearId,
+  });
+
+  // 2. Application des filtres complexes (WHERE IN) pour les sections et les classes
+  applyInFilterToWhere(whereClause, "section", params.sections);
+  applyInFilterToWhere(whereClause, "classId", params.classrooms);
+
+  // 3. Définition des options d'inclusion : inscriptions et utilisateurs (élèves)
+  const includeOptions = [
+    {
+      model: ClassroomEnrolement,
+      as: "enrollements" as const,
+      include: [
+        {
+          model: User,
+          as: "user" as const,
+          // Exclure les données sensibles de l'utilisateur
+          attributes: { exclude: ["password", "schoolId"] },
+        },
+      ],
+    },
+  ];
+
+  return {
+    where: whereClause,
+    include: includeOptions,
+  };
 }

@@ -152,11 +152,7 @@ export const StudyYearAttributesSchema = z.object({
  * @typedef {z.infer<typeof ClassroomAttributesSchema>} ClassroomAttributes
  */
 export const ClassroomAttributesSchema = z.object({
-  classId: z
-    .string()
-
-    .optional()
-    .describe("Identifiant unique de la classe"),
+  classId: z.string().describe("Identifiant unique de la classe"),
   identifier: z
     .string()
     .min(1)

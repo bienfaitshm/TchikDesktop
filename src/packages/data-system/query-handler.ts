@@ -1,26 +1,11 @@
 /**
- * @file data-query-handler.ts
+ * @file query-handler.ts
  * @description Classe abstraite de base pour les gestionnaires d'accès aux données (Query Handlers).
  * Fournit un pipeline standardisé pour la validation Zod, l'exécution DB, le mapping et le logging des performances.
  */
 
-import { z, type Schema } from "zod";
-import { Model } from "sequelize";
-import {
-  resolveToPlain,
-  resolveToPlainList,
-} from "@/packages/@core/data-access/db";
-import { CustomLogger, getLogger } from "@/main/libs/logger";
-
-// ==========================================
-// 1. Core Types & Utilities
-// ==========================================
-
-/** Représente une instance de modèle Sequelize typée pour la cohérence. */
-type SequelizeInstance = Model;
-
-/** Représente un objet JavaScript simple (POJO). */
-type PlainObject = Record<string, unknown>;
+import { z } from "zod";
+import { CustomLogger, getLogger } from "@/packages/logger";
 
 /**
  * Type de retour standardisé pour toutes les opérations d'accès aux données.
@@ -43,37 +28,25 @@ export type DataAccessResult<TPayload> =
  * @template TSchema - Schéma Zod définissant les paramètres d'entrée.
  * @template TPlainPayload - Type de données simples (POJO ou POJO[]) retourné.
  */
-export interface IDataQueryHandler<
-  TSchema extends Schema,
-  TPlainPayload extends PlainObject | PlainObject[],
-> {
+export interface IQueryHandler<TSchema> {
   readonly queryId: string;
-  readonly schema: TSchema;
+  readonly schema: z.ZodSchema<TSchema>;
   readonly logger?: CustomLogger;
 
   /**
    * Valide les paramètres bruts contre le schéma Zod.
    */
-  validate(rawParams: unknown): DataAccessResult<z.infer<TSchema>>;
+  validate(rawParams: unknown): DataAccessResult<TSchema>;
 
   /**
    * Exécute la logique d'accès à la base de données (e.g., Sequelize.findAll).
    */
-  execute(
-    validatedParams: z.infer<TSchema>
-  ): Promise<SequelizeInstance | SequelizeInstance[]>;
-
-  /**
-   * Convertit les instances ORM en objets JavaScript simples (POJO).
-   */
-  mapToPlain(
-    models: SequelizeInstance | SequelizeInstance[]
-  ): Promise<TPlainPayload>;
+  execute<T>(validatedParams: TSchema): Promise<T | T[]>;
 
   /**
    * Point d'entrée principal du pipeline de requête.
    */
-  handle(rawParams: unknown): Promise<DataAccessResult<TPlainPayload>>;
+  handle<T>(rawParams: unknown): Promise<DataAccessResult<T>>;
 }
 
 // ==========================================
@@ -84,15 +57,12 @@ export interface IDataQueryHandler<
  * Classe abstraite de base pour les gestionnaires de requêtes.
  * Fournit l'implémentation standard pour la validation, le mapping et le pipeline d'exécution.
  * @template TSchema - Schéma Zod.
- * @template TPlainPayload - Type de données simples retourné.
  */
-export abstract class AbstractDataQueryHandler<
-  TSchema extends Schema = z.ZodSchema<any>,
-  TPlainPayload extends PlainObject | PlainObject[] = any,
-> implements IDataQueryHandler<TSchema, TPlainPayload>
+export abstract class AbstractQueryHandler<TSchema>
+  implements IQueryHandler<TSchema>
 {
   public abstract readonly queryId: string;
-  public abstract readonly schema: TSchema;
+  public abstract readonly schema: z.ZodSchema<TSchema>;
 
   getLogger() {
     return getLogger(`Query:${this.queryId}`);
@@ -100,19 +70,17 @@ export abstract class AbstractDataQueryHandler<
   /** Logger injecté ou créé pour cette requête spécifique. */
 
   // Méthodes abstraites
-  public abstract execute(
-    validatedParams: z.infer<TSchema>
-  ): Promise<SequelizeInstance | SequelizeInstance[]>;
+  public abstract execute<T>(validatedParams: TSchema): Promise<T[]>;
 
   /**
    * @inheritdoc
    * Implémentation de la validation des paramètres Zod avec gestion des erreurs structurées.
    */
-  public validate(rawParams: unknown): DataAccessResult<z.infer<TSchema>> {
+  public validate(rawParams: unknown): DataAccessResult<TSchema> {
     const result = this.schema.safeParse(rawParams);
 
     if (result.success) {
-      return { success: true, payload: result.data as z.infer<TSchema> };
+      return { success: true, payload: result.data as TSchema };
     }
 
     const errors = result.error.errors;
@@ -131,38 +99,21 @@ export abstract class AbstractDataQueryHandler<
   }
 
   /**
-   * @inheritdoc
-   * Convertit les instances ORM en objets JavaScript simples (POJO).
-   */
-  public async mapToPlain(
-    models: SequelizeInstance | SequelizeInstance[]
-  ): Promise<TPlainPayload> {
-    if (Array.isArray(models)) {
-      // Nettoyage sécurisé pour la liste
-      return resolveToPlainList(models) as unknown as TPlainPayload;
-    }
-    // Nettoyage sécurisé pour un seul modèle
-    return resolveToPlain(models) as unknown as TPlainPayload;
-  }
-
-  /**
    * Nettoyage ou transformation finale des données avant l'envoi.
    * Cette méthode peut être surchargée par les classes filles.
    */
-  protected transformPayload(data: TPlainPayload): TPlainPayload {
-    return data;
+  protected transformPayload<T>(data: unknown): T {
+    return data as T;
   }
 
   /**
    * @inheritdoc
    * Méthode principale orchestrant le pipeline d'exécution.
    */
-  public async handle(
-    rawParams: unknown
-  ): Promise<DataAccessResult<TPlainPayload>> {
+  public async handle<T>(rawParams: unknown): Promise<DataAccessResult<T>> {
     const startTime = process.hrtime.bigint();
     const log = this.getLogger();
-    let validatedParams: z.infer<TSchema> | undefined;
+    let validatedParams: TSchema | undefined;
 
     log.info(`[${this.queryId}] Starting query execution.`, { rawParams });
 
@@ -172,7 +123,7 @@ export abstract class AbstractDataQueryHandler<
       log.warn(`[${this.queryId}] Parameter validation failed.`, {
         error: validationResult.error,
       });
-      return validationResult as DataAccessResult<TPlainPayload>;
+      return validationResult as DataAccessResult<T>;
     }
     validatedParams = validationResult.payload;
 
@@ -194,10 +145,7 @@ export abstract class AbstractDataQueryHandler<
         const emptyPayload: any = isArray ? [] : null;
         return { success: true, payload: emptyPayload };
       }
-
-      // 3. Mapping et Transformation des données
-      const rawPayload = await this.mapToPlain(models);
-      const finalPayload = this.transformPayload(rawPayload);
+      const finalPayload = this.transformPayload(models) as T;
 
       const endTime = process.hrtime.bigint();
       const durationMs = Number(endTime - startTime) / 1000000;

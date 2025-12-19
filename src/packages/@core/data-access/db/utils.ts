@@ -1,4 +1,4 @@
-import type { Model } from "sequelize";
+import { Op, WhereOptions, type Model } from "sequelize";
 import ShortUniqueId, { ShortUniqueIdOptions } from "short-unique-id";
 
 /** Configuration pour les identifiants courts (alphanumérique par défaut) */
@@ -158,3 +158,34 @@ export function pruneUndefined<T extends object>(
     return acc;
   }, {} as Partial<T>);
 }
+
+/**
+ * Type utilitaire pour extraire les types de valeurs autorisés
+ * (Scalaires ou Tableaux de ces scalaires)
+ */
+type FilterValue = string | number | boolean | Array<string | number>;
+
+/**
+ * Construit dynamiquement une clause WHERE typée pour Sequelize.
+ * * @template T - L'interface ou le modèle Sequelize cible
+ * @param {Partial<Record<keyof T, FilterValue>>} filters - Un objet dont les clés sont des attributs de T
+ * @returns {WhereOptions<T>} - Un objet de configuration compatible avec Sequelize
+ */
+export const buildWhereClause = <T extends object>(
+  filters: Partial<Record<keyof T, FilterValue>>
+): WhereOptions<T> => {
+  const prunedFilters = pruneUndefined(filters);
+  const where: WhereOptions<T> = {};
+
+  for (const [key, value] of Object.entries(prunedFilters)) {
+    if (Array.isArray(value)) {
+      where[key] = {
+        [Op.in]: value,
+      };
+    } else {
+      where[key] = value;
+    }
+  }
+
+  return where;
+};
