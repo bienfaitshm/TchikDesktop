@@ -1,10 +1,13 @@
 // school.service.test.ts
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { SchoolService } from "./school.query";
-import { School, StudyYear } from "@/main/db/models/model";
+import {
+  SchoolQuery,
+  StudyYearQuery,
+} from "@/packages/@core/data-access/data-queries";
+import { School, StudyYear } from "@/packages/@core/data-access/db";
 
 // 1. Mocker les dépendances (Sequelize Models)
-vi.mock("@/main/db/models/model", () => ({
+vi.mock("@/packages/@core/data-access/db", () => ({
   School: {
     findAll: vi.fn(),
     findByPk: vi.fn(),
@@ -30,7 +33,7 @@ const mockModelInstance = (data: any) => ({
   }),
 });
 
-describe("SchoolService", () => {
+describe("SchoolQuery", () => {
   afterEach(() => {
     vi.clearAllMocks(); // Nettoyer les mocks entre chaque test
   });
@@ -44,7 +47,7 @@ describe("SchoolService", () => {
       vi.mocked(School.findAll).mockResolvedValue(mockSchools as any);
 
       // Act
-      const result = await SchoolService.getSchools({ name: "Polytech" });
+      const result = await SchoolQuery.findMany({ name: "Polytech" });
 
       // Assert
       expect(School.findAll).toHaveBeenCalledWith(
@@ -61,13 +64,13 @@ describe("SchoolService", () => {
         new Error("DB connection lost")
       );
 
-      await expect(SchoolService.getSchools()).rejects.toThrow(
+      await expect(SchoolQuery.findMany()).rejects.toThrow(
         "Service unavailable: Unable to retrieve schools."
       );
     });
   });
 
-  describe("createSchool", () => {
+  describe("create", () => {
     it("should create and return a school", async () => {
       const payload = {
         name: "New School",
@@ -78,14 +81,14 @@ describe("SchoolService", () => {
 
       vi.mocked(School.create).mockResolvedValue(createdMock as any);
 
-      const result = await SchoolService.createSchool(payload);
+      const result = await SchoolQuery.create(payload);
 
       expect(School.create).toHaveBeenCalledWith(payload);
       expect(result.schoolId).toBe("123");
     });
   });
 
-  describe("updateSchool", () => {
+  describe("update", () => {
     it("should update school if exists", async () => {
       const existingSchool = mockModelInstance({
         schoolId: "1",
@@ -100,7 +103,7 @@ describe("SchoolService", () => {
 
       vi.mocked(School.findByPk).mockResolvedValue(existingSchool as any);
 
-      const result = await SchoolService.updateSchool("1", {
+      const result = await SchoolQuery.update("1", {
         name: "New Name",
       });
 
@@ -111,16 +114,16 @@ describe("SchoolService", () => {
     it("should return null if school ID does not exist", async () => {
       vi.mocked(School.findByPk).mockResolvedValue(null);
 
-      const result = await SchoolService.updateSchool("999", { name: "Test" });
+      const result = await SchoolQuery.update("999", { name: "Test" });
 
       expect(result).toBeNull();
     });
   });
 
-  describe("getStudyYears", () => {
+  describe("findMany", () => {
     it("should throw strict error if schoolId is missing", async () => {
       // @ts-ignore force null pour tester le runtime check
-      await expect(SchoolService.getStudyYears(null)).rejects.toThrow(
+      await expect(StudyYearQuery.findMany({ schoolId: null })).rejects.toThrow(
         "Validation Error: schoolId is required"
       );
     });
@@ -129,7 +132,7 @@ describe("SchoolService", () => {
       const mockYears = [mockModelInstance({ yearId: "y1", yearName: "2024" })];
       vi.mocked(StudyYear.findAll).mockResolvedValue(mockYears as any);
 
-      const result = await SchoolService.getStudyYears("school-1");
+      const result = await StudyYearQuery.findMany({ schoolId: "school-1" });
 
       expect(StudyYear.findAll).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -1,10 +1,10 @@
 //school.query.ts
-import { Sequelize } from "sequelize";
+import { FindOptions, Sequelize } from "sequelize";
 import { getLogger } from "@/packages/logger";
 import {
   School,
   StudyYear,
-  pruneUndefined,
+  buildFindOptions,
   type TSchool,
   type TStudyYear,
 } from "@/packages/@core/data-access/db";
@@ -23,6 +23,16 @@ const logger = getLogger("School-StudyYear");
  * Query gérant la logique métier pour les Écoles et les Années Scolaires.
  * Conçu pour être stateless et hautement testable.
  */
+
+const SCHOOL_DEFAULT_SORT_ORDER: FindOptions["order"] = [
+  [Sequelize.fn("LOWER", Sequelize.col("name")), "ASC"],
+];
+
+const YEAR_DEFAULT_SORT_ORDER: FindOptions["order"] = [
+  [Sequelize.fn("LOWER", Sequelize.col("year_name")), "ASC"],
+  ["startDate", "ASC"],
+];
+
 export class SchoolQuery {
   // ===========================================================================
   //  SCHOOL OPERATIONS
@@ -31,17 +41,17 @@ export class SchoolQuery {
   /**
    * Récupère une liste d'écoles filtrée.
    *
-   * @param params - Critères de filtrage (ex: schoolId, name). Les valeurs undefined sont ignorées.
+   * @param filters - Critères de filtrage (ex: schoolId, name). Les valeurs undefined sont ignorées.
    * @returns Liste des écoles correspondant aux critères.
    * @throws {Error} Si la base de données est inaccessible.
    */
-  static async getSchools(params?: TSchoolFilter): Promise<TSchool[]> {
-    const whereClause = pruneUndefined(params);
+  static async findMany(filters?: TSchoolFilter): Promise<TSchool[]> {
+    const optionsFilters = buildFindOptions(
+      filters || {},
+      SCHOOL_DEFAULT_SORT_ORDER
+    );
     try {
-      const schools = await School.findAll({
-        where: whereClause,
-        order: [[Sequelize.fn("LOWER", Sequelize.col("name")), "ASC"]],
-      });
+      const schools = await School.findAll(optionsFilters);
       return schools.map((s) => s.toJSON());
     } catch (error) {
       logger.error("SchoolQuery.findSchools: DB Error", error as Error);
@@ -55,9 +65,9 @@ export class SchoolQuery {
    * @param schoolId - UUID de l'école.
    * @returns L'objet école ou null si introuvable.
    */
-  static async getSchoolById(schoolId: string): Promise<TSchool | null> {
+  static async findById(schoolId: string): Promise<TSchool | null> {
     if (!schoolId) {
-      logger.warn("SchoolQuery.getSchoolById: Called with empty ID");
+      logger.warn("SchoolQuery.findById: Called with empty ID");
       return null;
     }
 
@@ -66,7 +76,7 @@ export class SchoolQuery {
       return school ? school.toJSON() : null;
     } catch (error) {
       logger.error(
-        `SchoolQuery.getSchoolById: Error for ID ${schoolId}`,
+        `SchoolQuery.findById: Error for ID ${schoolId}`,
         error as Error
       );
       throw new Error("Query unavailable: Unable to fetch school details.");
@@ -79,13 +89,13 @@ export class SchoolQuery {
    * @param payload - Données de création.
    * @returns L'école créée.
    */
-  static async createSchool(payload: TSchoolCreate): Promise<TSchool> {
+  static async create(payload: TSchoolCreate): Promise<TSchool> {
     try {
       const school = await School.create(payload);
       logger.info(`School created: ${school.schoolId}`);
       return school.toJSON();
     } catch (error) {
-      logger.error("SchoolQuery.createSchool: Creation failed", error as Error);
+      logger.error("SchoolQuery.create: Creation failed", error as Error);
       throw error;
     }
   }
@@ -97,7 +107,7 @@ export class SchoolQuery {
    * @param updates - Champs à modifier.
    * @returns L'école mise à jour ou null si l'ID n'existe pas.
    */
-  static async updateSchool(
+  static async update(
     schoolId: string,
     updates: TSchoolUpdate
   ): Promise<TSchool | null> {
@@ -106,7 +116,7 @@ export class SchoolQuery {
     try {
       const school = await School.findByPk(schoolId);
       if (!school) {
-        logger.warn(`SchoolQuery.updateSchool: ID ${schoolId} not found`);
+        logger.warn(`SchoolQuery.update: ID ${schoolId} not found`);
         return null;
       }
 
@@ -114,7 +124,7 @@ export class SchoolQuery {
       return updatedSchool.toJSON();
     } catch (error) {
       logger.error(
-        `SchoolQuery.updateSchool: Error updating ${schoolId}`,
+        `SchoolQuery.update: Error updating ${schoolId}`,
         error as Error
       );
       throw new Error("Query unavailable: Update failed.");
@@ -138,7 +148,9 @@ export class SchoolQuery {
       throw new Error("Query error: Delete operation failed.");
     }
   }
+}
 
+export class StudyYearQuery {
   // ===========================================================================
   //  STUDY YEAR OPERATIONS
   // ===========================================================================
@@ -146,9 +158,7 @@ export class SchoolQuery {
   /**
    * Liste les années scolaires pour une école donnée.
    */
-  static async getStudyYears(
-    filters?: TStudyYearFilter
-  ): Promise<TStudyYear[]> {
+  static async findMany(filters?: TStudyYearFilter): Promise<TStudyYear[]> {
     if (!filters?.schoolId) {
       logger.error(
         "Validation Error: schoolId is required to fetch study years."
@@ -158,44 +168,33 @@ export class SchoolQuery {
       );
     }
 
-    const whereClause = pruneUndefined(filters);
+    const optionsFilters = buildFindOptions(filters, YEAR_DEFAULT_SORT_ORDER);
 
     try {
-      const years = await StudyYear.findAll({
-        where: whereClause,
-        order: [
-          [Sequelize.fn("LOWER", Sequelize.col("year_name")), "ASC"],
-          ["startDate", "ASC"],
-        ],
-      });
+      const years = await StudyYear.findAll(optionsFilters);
       return years.map((y) => y.toJSON());
     } catch (error) {
       logger.error(
-        `SchoolQuery.getStudyYears: Error for school ${filters.schoolId}`,
+        `SchoolQuery.finMany: Error for school ${filters.schoolId}`,
         error as Error
       );
       throw new Error("Unable to retrieve study years.");
     }
   }
 
-  static async getStudyYearById(yearId: string): Promise<TStudyYear | null> {
+  static async findById(yearId: string): Promise<TStudyYear | null> {
     if (!yearId) return null;
 
     try {
       const year = await StudyYear.findByPk(yearId);
       return year ? year.toJSON() : null;
     } catch (error) {
-      logger.error(
-        `SchoolQuery.getStudyYearById: Error ${yearId}`,
-        error as Error
-      );
+      logger.error(`SchoolQuery.findById: Error ${yearId}`, error as Error);
       throw new Error("Unable to fetch study year.");
     }
   }
 
-  static async createStudyYear(
-    payload: TStudyYearCreate
-  ): Promise<TStudyYearCreate> {
+  static async create(payload: TStudyYearCreate): Promise<TStudyYearCreate> {
     if (!payload.schoolId) {
       logger.error("Validation Error: schoolId is mandatory.");
       throw new Error("Validation Error: schoolId is mandatory.");
@@ -205,12 +204,12 @@ export class SchoolQuery {
       const year = await StudyYear.create(payload);
       return year.toJSON();
     } catch (error) {
-      logger.error("SchoolQuery.createStudyYear: Failed", error as Error);
+      logger.error("SchoolQuery.create: Failed", error as Error);
       throw error;
     }
   }
 
-  static async updateStudyYear(
+  static async update(
     yearId: string,
     updates: TStudyYearUpdate
   ): Promise<TStudyYear | null> {
@@ -223,25 +222,19 @@ export class SchoolQuery {
       const updatedYear = await year.update(updates);
       return updatedYear.toJSON();
     } catch (error) {
-      logger.error(
-        `SchoolQuery.updateStudyYear: Error ${yearId}`,
-        error as Error
-      );
+      logger.error(`SchoolQuery.update: Error ${yearId}`, error as Error);
       throw new Error("Update failed.");
     }
   }
 
-  static async deleteStudyYear(yearId: string): Promise<boolean> {
+  static async delete(yearId: string): Promise<boolean> {
     if (!yearId) return false;
 
     try {
       const count = await StudyYear.destroy({ where: { yearId } });
       return count > 0;
     } catch (error) {
-      logger.error(
-        `SchoolQuery.deleteStudyYear: Error ${yearId}`,
-        error as Error
-      );
+      logger.error(`SchoolQuery.delete: Error ${yearId}`, error as Error);
       throw new Error("Delete failed.");
     }
   }
