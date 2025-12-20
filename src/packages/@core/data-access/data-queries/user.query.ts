@@ -1,28 +1,29 @@
-import { ClassroomEnrolement, User } from "@/packages/@core/data-access/db";
-import type {
-  TUserInsert,
+import {
+  ClassroomEnrolement,
+  User,
+  buildFindOptions,
   TUser,
-  TWithEnrolements,
-} from "@/commons/types/models";
-import type {
-  QueryParams,
-  WithSchoolAndYearId,
-} from "@/commons/types/services";
-import { getDefaultUsername, pruneUndefined } from "@/main/db/models/utils";
-import { Sequelize, type WhereOptions, type Includeable } from "sequelize";
+  TUserCreate,
+  getDefaultUsername,
+  TUserUpdate,
+} from "@/packages/@core/data-access/db";
+import { TUserFilter } from "@/packages/@core/data-access/schema-validations";
+import { Sequelize, type Includeable, FindOptions } from "sequelize";
+
+import { getLogger } from "@/packages/logger";
 
 // --- Configuration ---
 
 /** Mot de passe par défaut hashing/salté ou placeholder avant hachage réel (production). */
 const DEFAULT_STUDENT_PASSWORD = "000000";
 
-// --- Logger Interface (Simulé pour l'observabilité) ---
-const logger = {
-  info: (msg: string, meta?: object) => console.info(`[INFO] ${msg}`, meta),
-  error: (msg: string, error?: unknown) =>
-    console.error(`[ERROR] ${msg}`, error),
-  warn: (msg: string, meta?: object) => console.warn(`[WARN] ${msg}`, meta),
-};
+const DEFAULT_SORT_ORDER: FindOptions["order"] = [
+  [Sequelize.fn("LOWER", Sequelize.col("last_name")), "ASC"],
+  [Sequelize.fn("LOWER", Sequelize.col("middle_name")), "ASC"],
+  [Sequelize.fn("LOWER", Sequelize.col("first_name")), "ASC"],
+];
+
+const logger = getLogger("User Query");
 
 /**
  * Service de gestion des Utilisateurs (étudiants, professeurs, administrateurs).
@@ -44,52 +45,45 @@ export class UserQuery {
    * @returns {Promise<TWithEnrolements<TUser>[]>} Liste des instances `User` avec leurs `ClassroomEnrolements`.
    * @throws {Error} Erreur de service si la requête DB échoue.
    */
-  static async findUsers({
-    schoolId,
+  static async findMany({
     yearId,
-    params,
-  }: QueryParams<
-    WithSchoolAndYearId,
-    Partial<TUserInsert & { classroomId?: string }>
-  >): Promise<TWithEnrolements<TUser>[]> {
-    if (!schoolId || !yearId) {
+    classroomId,
+    ...filters
+  }: TUserFilter & {
+    yearId?: string | string[];
+    classroomId?: string | string[];
+  }): Promise<TUser[]> {
+    if (!filters.schoolId) {
       throw new Error(
-        "Validation Error: schoolId and yearId are required for listing users."
+        "Validation Error: schoolId are required for listing users."
       );
     }
 
-    // 1. Clauses WHERE pour User (exclut classroomId car il est pour l'association)
-    const { classroomId, ...userFilters } = params ?? {};
-    const userWhereClause = pruneUndefined({ schoolId, ...userFilters });
-
-    // 2. Clause WHERE pour l'association ClassroomEnrolement
-    const enrollmentWhereClause = pruneUndefined({
+    const userOptions = buildFindOptions(filters, DEFAULT_SORT_ORDER);
+    const enrollmentOptions = buildFindOptions({
       yearId,
-      classroomId: classroomId,
+      classroomId,
+      schoolId: filters.schoolId,
     });
 
-    const includeOptions: Includeable[] = [
-      {
+    const includeOptions: Includeable[] = [];
+    if (yearId && classroomId) {
+      includeOptions.push({
         model: ClassroomEnrolement,
-        where: enrollmentWhereClause as WhereOptions<ClassroomEnrolement>,
-        required: true, // IMPORTANT: Fait un INNER JOIN, ne retourne que les Users AYANT un enrôlement correspondant.
-      },
-    ];
+        required: true,
+        ...enrollmentOptions,
+      } as unknown as Includeable);
+    }
 
     try {
       // Sequelize.col() et Sequelize.fn('LOWER') sont utilisés pour un tri insensible à la casse et robuste.
       const users = await User.findAll({
-        where: userWhereClause as WhereOptions<TUser>,
-        order: [
-          [Sequelize.fn("LOWER", Sequelize.col("last_name")), "ASC"],
-          [Sequelize.fn("LOWER", Sequelize.col("middle_name")), "ASC"],
-          [Sequelize.fn("LOWER", Sequelize.col("first_name")), "ASC"],
-        ],
         include: includeOptions,
+        ...userOptions,
       });
 
       // Mappage en DTO (Data Transfer Object) avec enrôlements
-      return users.map((u) => u.toJSON()) as TWithEnrolements<TUser>[];
+      return users.map((u) => u.toJSON()) as TUser[];
     } catch (error) {
       logger.error("UserService.findUsers: DB query failed.", error);
       throw new Error("Service unavailable: Unable to retrieve users.");
@@ -103,19 +97,15 @@ export class UserQuery {
    * @returns L'utilisateur trouvé avec ses enrôlements, ou `null`.
    * @throws {Error} Erreur de service si la requête DB échoue.
    */
-  static async getUserById(
-    userId: string
-  ): Promise<TWithEnrolements<TUser> | null> {
+  static async findById(userId: string): Promise<TUser | null> {
     if (!userId) {
       logger.warn("UserService.getUserById: Called with empty ID.");
       return null;
     }
 
     try {
-      const user = await User.findByPk(userId, {
-        include: [ClassroomEnrolement], // Récupère tous les enrôlements (pas filtré par année)
-      });
-      return user ? (user.toJSON() as TWithEnrolements<TUser>) : null;
+      const user = await User.findByPk(userId);
+      return user ? (user.toJSON() as TUser) : null;
     } catch (error) {
       logger.error(`UserService.getUserById: Error for ID ${userId}.`, error);
       throw new Error("Service unavailable: Unable to fetch user details.");
@@ -136,7 +126,7 @@ export class UserQuery {
    * @returns L'utilisateur créé (DTO).
    * @throws {Error} Si la validation ou l'insertion DB échoue.
    */
-  static async createUser(payload: TUserInsert): Promise<TUser> {
+  static async create(payload: TUserCreate): Promise<TUser> {
     // 1. Logique métier d'initialisation
     const password = DEFAULT_STUDENT_PASSWORD; // Placez ici le hash réel si ce n'est pas fait dans un hook Sequelize
     const username = getDefaultUsername(); // Le modèle User ajoute le préfixe du rôle ici (ex: STUDENT_123456)
@@ -159,9 +149,9 @@ export class UserQuery {
    * @returns L'utilisateur mis à jour (DTO) ou `null` si introuvable.
    * @throws {Error} Erreur de service si l'opération DB échoue.
    */
-  static async updateUser(
+  static async update(
     userId: string,
-    updates: Partial<TUserInsert>
+    updates: TUserUpdate
   ): Promise<TUser | null> {
     if (!userId) return null;
 
@@ -187,7 +177,7 @@ export class UserQuery {
    * @returns `true` si l'utilisateur a été supprimé, `false` sinon.
    * @throws {Error} Erreur de service si l'opération DB échoue.
    */
-  static async deleteUser(userId: string): Promise<boolean> {
+  static async delete(userId: string): Promise<boolean> {
     if (!userId) return false;
 
     try {

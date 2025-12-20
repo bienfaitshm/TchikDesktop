@@ -1,5 +1,5 @@
-import { Op, WhereOptions, type Model } from "sequelize";
-import ShortUniqueId, { ShortUniqueIdOptions } from "short-unique-id";
+import { type FindOptions, Op, type WhereOptions, type Model } from "sequelize";
+import ShortUniqueId, { type ShortUniqueIdOptions } from "short-unique-id";
 
 /** Configuration pour les identifiants courts (alphanumérique par défaut) */
 const BASE_ID_CONFIG: Partial<ShortUniqueIdOptions> = { length: 5 };
@@ -172,7 +172,7 @@ type FilterValue = string | number | boolean | Array<string | number>;
  * @returns {WhereOptions<T>} - Un objet de configuration compatible avec Sequelize
  */
 export const buildWhereClause = <T extends object>(
-  filters: Partial<Record<keyof T, FilterValue>>
+  filters: Partial<Record<keyof T, FilterValue | undefined | null>>
 ): WhereOptions<T> => {
   const prunedFilters = pruneUndefined(filters);
   const where: WhereOptions<T> = {};
@@ -189,3 +189,52 @@ export const buildWhereClause = <T extends object>(
 
   return where;
 };
+
+// Interface minimale attendue pour les filtres (Pagination + Tri)
+export interface BaseFilter {
+  limit?: number;
+  offset?: number;
+  orderBy?: string;
+  order?: "ASC" | "DESC";
+  [key: string]: any; // Pour les critères dynamiques
+}
+
+/**
+ * Convertit un objet de filtres API (incluant pagination, tri et critères)
+ * en un objet d'options complet compatible avec Sequelize.
+ *
+ * @template T - Le type de l'objet de filtre (doit étendre BaseFilter).
+ * @param {T} filters - L'objet contenant les paramètres de requête (req.query validé).
+ * @param {FindOptions['order']} [defaultSortOrder] - (Optionnel) L'ordre de tri par défaut si aucun tri n'est spécifié dans les filtres.
+ * @returns {FindOptions} Un objet de configuration prêt à être passé à `Model.findAll()`.
+ *
+ * @example
+ * // 1. Définir un tri par défaut
+ * const defaultSort: FindOptions['order'] = [['createdAt', 'DESC']];
+ *
+ * // 2. Convertir les filtres entrants
+ * const queryOptions = buildFindOptions(reqQuery, defaultSort);
+ *
+ * // 3. Utiliser avec Sequelize
+ * const results = await User.findAll(queryOptions);
+ */
+export function buildFindOptions<T extends BaseFilter>(
+  filters: T,
+  defaultSortOrder?: FindOptions["order"]
+): FindOptions {
+  // 1. Extraction des méta-données de pagination et de tri
+  const { limit, offset, orderBy, order, ...criteria } = filters;
+
+  // 2. Construction de la clause WHERE pour les critères restants
+  const where = buildWhereClause(criteria);
+
+  // 3. Assemblage de l'objet FindOptions
+  return {
+    where,
+    // Si orderBy est présent, on l'utilise, sinon on fallback sur le defaultSortOrder
+    order: orderBy ? [[orderBy, order ?? "ASC"]] : defaultSortOrder,
+    // Injection conditionnelle (seulement si défini)
+    ...(limit !== undefined && { limit }),
+    ...(offset !== undefined && { offset }),
+  };
+}

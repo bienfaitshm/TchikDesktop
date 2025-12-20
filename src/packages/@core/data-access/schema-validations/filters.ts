@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   SchoolAttributesSchema,
   UserAttributesSchema,
@@ -9,136 +10,86 @@ import {
   WithPaginationAndSortSchema,
 } from "./model";
 
+const orArray = <T extends z.ZodTypeAny>(schema: T) =>
+  z.union([schema, z.array(schema)]);
+
 // =============================================================================
-// I. SCHÉMAS DE FILTRE
+// I. SCHÉMAS DE FILTRE (Supportant Valeurs Simples ou Tableaux)
 // =============================================================================
 
-// ---------------------------
 // 1. School Filter
-// ---------------------------
-
-/**
- * Schéma Zod pour filtrer les Écoles.
- * Permet le filtrage par nom, adresse ou ville (ou une partie) et inclut la pagination.
- * @typedef {z.infer<typeof SchoolFilterSchema>} TSchoolFilter
- */
 export const SchoolFilterSchema = WithPaginationAndSortSchema(
-  SchoolAttributesSchema.pick({
-    name: true,
-    adress: true,
-    town: true,
+  z.object({
+    name: orArray(SchoolAttributesSchema.shape.name),
+    adress: orArray(SchoolAttributesSchema.shape.adress),
+    town: orArray(SchoolAttributesSchema.shape.town),
   })
 );
 
-// ---------------------------
 // 2. User Filter
-// ---------------------------
-
-/**
- * Schéma Zod pour filtrer les Utilisateurs.
- * Permet le filtrage par identifiants, nom, rôle ou genre, et inclut la pagination.
- * @typedef {z.infer<typeof UserFilterSchema>} TUserFilter
- */
 export const UserFilterSchema = WithPaginationAndSortSchema(
-  UserAttributesSchema.pick({
-    userId: true,
-    lastName: true,
-    middleName: true,
-    firstName: true,
-    gender: true,
-    role: true,
-    schoolId: true,
+  z.object({
+    userId: orArray(UserAttributesSchema.shape.userId.unwrap()), // On unwrap si optionnel/nullable
+    lastName: orArray(UserAttributesSchema.shape.lastName),
+    middleName: orArray(UserAttributesSchema.shape.middleName),
+    firstName: orArray(UserAttributesSchema.shape.firstName.unwrap().unwrap()),
+    gender: orArray(UserAttributesSchema.shape.gender.unwrap()),
+    role: orArray(UserAttributesSchema.shape.role.unwrap()),
+    schoolId: orArray(UserAttributesSchema.shape.schoolId.unwrap()),
   })
 );
 
-// ---------------------------
 // 3. Option Filter
-// ---------------------------
-
-/**
- * Schéma Zod pour filtrer les Options (Filières).
- * Permet le filtrage par identifiants, nom ou section, et inclut la pagination.
- * @typedef {z.infer<typeof OptionFilterSchema>} TOptionFilter
- */
 export const OptionFilterSchema = WithPaginationAndSortSchema(
-  OptionAttributesSchema.pick({
-    optionId: true,
-    optionName: true,
-    optionShortName: true,
-    schoolId: true,
-    section: true,
+  z.object({
+    optionId: orArray(OptionAttributesSchema.shape.optionId),
+    optionName: orArray(OptionAttributesSchema.shape.optionName),
+    optionShortName: orArray(OptionAttributesSchema.shape.optionShortName),
+    schoolId: orArray(OptionAttributesSchema.shape.schoolId),
+    section: orArray(OptionAttributesSchema.shape.section.unwrap()),
   })
 );
 
-// ---------------------------
 // 4. StudyYear Filter
-// ---------------------------
-
-/**
- * Schéma Zod pour filtrer les Années d'Étude.
- * Permet le filtrage par nom, ou par l'école associée, et inclut la pagination.
- * @typedef {z.infer<typeof StudyYearFilterSchema>} TStudyYearFilter
- */
 export const StudyYearFilterSchema = WithPaginationAndSortSchema(
-  StudyYearAttributesSchema.pick({
-    yearId: true,
-    yearName: true,
-    schoolId: true,
+  z.object({
+    yearId: orArray(StudyYearAttributesSchema.shape.yearId),
+    yearName: orArray(StudyYearAttributesSchema.shape.yearName),
+    schoolId: orArray(StudyYearAttributesSchema.shape.schoolId),
   })
 );
 
-// ---------------------------
 // 5. Classroom Filter
-// ---------------------------
-
-/**
- * Schéma Zod pour filtrer les Classes.
- * Permet le filtrage par identifiants, année scolaire ou option, et inclut la pagination.
- * @typedef {z.infer<typeof ClassroomFilterSchema>} TClassroomFilter
- */
 export const ClassroomFilterSchema = WithPaginationAndSortSchema(
-  ClassroomAttributesSchema.pick({
-    classId: true,
-    identifier: true,
-    yearId: true,
-    schoolId: true,
-    section: true,
-    optionId: true,
+  z.object({
+    classId: orArray(ClassroomAttributesSchema.shape.classId),
+    identifier: orArray(ClassroomAttributesSchema.shape.identifier),
+    yearId: orArray(ClassroomAttributesSchema.shape.yearId),
+    schoolId: orArray(ClassroomAttributesSchema.shape.schoolId),
+    section: orArray(ClassroomAttributesSchema.shape.section.unwrap()),
+    optionId: orArray(
+      ClassroomAttributesSchema.shape.optionId.unwrap().unwrap()
+    ),
   })
 );
 
-// ---------------------------
 // 6. Enrolement Filter
-// ---------------------------
-
-/**
- * Schéma Zod pour filtrer les Inscriptions (ClassroomEnrolement).
- * Permet le filtrage par identifiants, statut, classe ou étudiant, et inclut la pagination.
- * @typedef {z.infer<typeof EnrolementFilterSchema>} TEnrolementFilter
- */
 export const EnrolementFilterSchema = WithPaginationAndSortSchema(
-  EnrolementAttributesSchema.pick({
-    enrolementId: true,
-    classroomId: true,
-    studentId: true,
-    schoolId: true,
-    status: true,
+  z.object({
+    enrolementId: orArray(EnrolementAttributesSchema.shape.enrolementId),
+    classroomId: orArray(EnrolementAttributesSchema.shape.classroomId),
+    studentId: orArray(EnrolementAttributesSchema.shape.studentId),
+    schoolId: orArray(EnrolementAttributesSchema.shape.schoolId),
+    yearId: orArray(EnrolementAttributesSchema.shape.yearId),
+    status: orArray(EnrolementAttributesSchema.shape.status.unwrap()),
   })
 );
 
-// ---------------------------
 // 7. Enrolement Action Filter
-// ---------------------------
-
-/**
- * Schéma Zod pour filtrer l'Historique d'Actions d'Inscription (Audit).
- * Permet le filtrage par ID d'inscription et type d'action, et inclut la pagination.
- * @typedef {z.infer<typeof EnrolementActionFilterSchema>} TEnrolementActionFilter
- */
 export const EnrolementActionFilterSchema = WithPaginationAndSortSchema(
-  EnrolementActionAttributesSchema.pick({
-    actionId: true,
-    enrolementId: true,
-    action: true,
+  z.object({
+    actionId: orArray(EnrolementActionAttributesSchema.shape.actionId),
+    enrolementId: orArray(EnrolementActionAttributesSchema.shape.enrolementId),
+    action: orArray(EnrolementActionAttributesSchema.shape.action),
   })
 );

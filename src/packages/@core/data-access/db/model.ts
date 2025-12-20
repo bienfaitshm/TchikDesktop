@@ -339,6 +339,8 @@ export class ClassroomEnrolement extends Model<TEnrolement, TEnrolementCreate> {
   public studentId!: string;
   public schoolId!: string;
 
+  public yearId!: string;
+
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -379,6 +381,7 @@ ClassroomEnrolement.init(
       field: "student_id",
     },
     schoolId: { type: DataTypes.STRING, allowNull: false, field: "school_id" },
+    yearId: { type: DataTypes.STRING, allowNull: false, field: "year_id" },
   },
   {
     sequelize,
@@ -462,6 +465,11 @@ ClassRoom.belongsTo(Option, { foreignKey: "optionId" });
 // StudyYear Relationships
 StudyYear.hasMany(ClassRoom, { foreignKey: "yearId" });
 ClassRoom.belongsTo(StudyYear, { foreignKey: "yearId" });
+
+//
+
+StudyYear.hasMany(ClassroomEnrolement, { foreignKey: "yearId" });
+ClassroomEnrolement.belongsTo(StudyYear, { foreignKey: "yearId" });
 
 // ClassRoom Relationships
 ClassRoom.hasMany(ClassroomEnrolement, { foreignKey: "classroomId" });

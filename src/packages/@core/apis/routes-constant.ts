@@ -40,6 +40,7 @@ export const StudyYearRoutes = {
  */
 export const ClassroomRoutes = {
   ALL: "classrooms",
+  ALL_ENROLLMENT: "classrooms/enrollments",
   // Utilise classroomId pour cibler une salle spécifique
   DETAIL: "classrooms/:classroomId",
 } as const;

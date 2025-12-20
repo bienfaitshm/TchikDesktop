@@ -196,6 +196,7 @@ export const EnrolementAttributesSchema = z.object({
     .boolean()
     .describe("Indique si c'est un nouvel étudiant dans l'école"),
   schoolId: z.string().describe("Clé étrangère vers l'École"),
+  yearId: z.string().describe("Clé étrangère vers l'Année d'Étude"),
   status: ZSTUDENT_STATUS.optional().describe(
     "Statut de l'étudiant dans cette classe"
   ),

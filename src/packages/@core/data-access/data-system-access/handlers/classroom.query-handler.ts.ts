@@ -4,34 +4,44 @@
  * Implémente le pipeline standard de validation, exécution DB, et transformation finale.
  */
 
-import { Model } from "sequelize";
-import type {
-  TClassroom,
-  TWithUser,
-  TEnrolement,
-} from "@/commons/types/models";
-import { AbstractDataQueryHandler } from "./query-handler";
-import * as queries from "./classroom";
-import * as schemas from "./schemas.classroom";
-import { mapRawEnrollmentsToReportStructure } from "../utils/parsers";
-import { z } from "zod";
-
-// ==========================================
-// 1. Types Spécifiques à la Requête
-// ==========================================
-
-/** * 📝 Type des paramètres de filtrage Zod (TParams).
- * Utilisation du schéma pour la définition des types.
- */
-type ClassroomFilterParams = z.infer<typeof schemas.DocumentExportSchema>;
+import { AbstractQueryHandler } from "@/packages/data-system";
+import { ClassroomQuery } from "@/packages/@core/data-access/data-queries";
+import {
+  ClassroomFilterSchema,
+  ClassroomAttributesSchema,
+  type TClassroomFilter,
+  type TClassroomAttributes,
+} from "@/packages/@core/data-access/schema-validations";
+import { ClassroomIds } from "./route-ids";
+// import { mapRawEnrollmentsToReportStructure } from "../utils/parsers";
 
 /**
- * 💾 Type des données brutes de l'ORM (TData).
- * Représente une Salle de Classe incluant ses Inscriptions (élèves).
+ * 🚀 Handler : Récupère une liste paginée/filtrée de salles de classes.
+ * @queryId "classroom.find.all"
  */
-export type RawClassroomWithEnrollments = TClassroom & {
-  ClassroomEnrolements: TWithUser<TEnrolement>[];
-};
+export class FindSchoolsQueryHandler extends AbstractQueryHandler<TClassroomFilter> {
+  public readonly queryId: string = ClassroomIds.findAllClassrooms;
+  public readonly schema = ClassroomFilterSchema;
+
+  public async execute(validatedParams: TClassroomFilter) {
+    return ClassroomQuery.findMany(validatedParams) as any;
+  }
+}
+
+/**
+ * 🚀 Handler : Récupère une seule école par son ID primaire.
+ * @queryId "school.find.byId"
+ */
+export class FindClassroomByIdQueryHandler extends AbstractQueryHandler<
+  Pick<TClassroomAttributes, "classId">
+> {
+  public readonly queryId: string = ClassroomIds.findClassroomById;
+  public readonly schema = ClassroomAttributesSchema.pick({ classId: true });
+
+  public async execute(validatedParams: Pick<TClassroomAttributes, "classId">) {
+    return ClassroomQuery.findById(validatedParams.classId) as any;
+  }
+}
 
 /**
  * 📊 Type de la donnée finale après transformation/nettoyage (TPlainPayload).
@@ -48,25 +58,21 @@ export type EnrollmentReportStructure = any;
  * 🚀 Handler : Récupère les salles de classe correspondant aux filtres, y compris
  * les inscriptions détaillées des élèves, et les mappe au format de rapport final.
  */
-export class ClassroomEnrollmentQueryHandler extends AbstractDataQueryHandler<
-  typeof schemas.DocumentExportSchema,
-  EnrollmentReportStructure[]
-> {
+export class ClassroomEnrollmentQueryHandler extends AbstractQueryHandler<TClassroomFilter> {
   /** Identifiant unique de la requête, utilisé par le Query Bus. */
-  public readonly queryId: string = "classrooms.enrollments";
+  public readonly queryId: string =
+    ClassroomIds.findAllClassroomsWithEnrollment;
 
   /** Schéma Zod pour la validation des paramètres d'entrée. */
-  public readonly schema = schemas.DocumentExportSchema;
+  public readonly schema = ClassroomFilterSchema;
 
   /**
    * @inheritdoc
    * Implémente la logique d'accès à la base de données (Sequelize).
    */
-  public async execute(
-    validatedParams: ClassroomFilterParams
-  ): Promise<Model<any, any> | Model<any, any>[]> {
+  public async execute(validatedParams: TClassroomFilter) {
     // La fonction de requête DB
-    return queries.fetchClassroomsWithEnrollments(validatedParams);
+    return ClassroomQuery.findWithEnrollments(validatedParams) as any;
   }
 
   /**
@@ -74,10 +80,10 @@ export class ClassroomEnrollmentQueryHandler extends AbstractDataQueryHandler<
    * Surcharge de la méthode de transformation finale (anciennement `cleanData`).
    * Cette méthode est appelée APRÈS le mapping ORM -> POJO.
    */
-  protected transformPayload(
-    data: RawClassroomWithEnrollments[]
-  ): EnrollmentReportStructure[] {
-    // Utiliser la fonction de parsing métier pour la transformation finale des données
-    return mapRawEnrollmentsToReportStructure(data);
-  }
+  // protected transformPayload(
+  //   data: RawClassroomWithEnrollments[]
+  // ): EnrollmentReportStructure[] {
+  //   // Utiliser la fonction de parsing métier pour la transformation finale des données
+  //   return mapRawEnrollmentsToReportStructure(data);
+  // }
 }

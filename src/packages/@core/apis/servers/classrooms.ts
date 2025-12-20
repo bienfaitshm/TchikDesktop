@@ -1,6 +1,7 @@
 import z from "zod";
 import { ClassroomQuery } from "@/packages/@core/data-access/data-queries";
 import {
+  ClassroomAttributesSchema,
   ClassroomCreateSchema,
   ClassroomUpdateSchema,
   ClassroomFilterSchema,
@@ -16,11 +17,10 @@ import {
 import { AbstractEndpoint } from "./abstract";
 import { ClassroomRoutes } from "../routes-constant";
 
-const ClassIdSchema = z.object({
-  classroomId: z.string().nonempty(),
-});
+const ClassIdSchema = ClassroomAttributesSchema.pick({ classId: true });
 
 type ClassId = z.infer<typeof ClassIdSchema>;
+
 export class GetClassrooms extends AbstractEndpoint<any> {
   route = ClassroomRoutes.ALL;
   method = HttpMethod.GET;
@@ -32,7 +32,22 @@ export class GetClassrooms extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, TClassroomFilter>): Promise<unknown> {
-    return ClassroomQuery.getClassrooms(params);
+    return ClassroomQuery.findMany(params);
+  }
+}
+
+export class GetClassroomsWithEnrollments extends AbstractEndpoint<any> {
+  route = ClassroomRoutes.ALL_ENROLLMENT;
+  method = HttpMethod.GET;
+  validationErrorMessage?: string | undefined = undefined;
+  schemas: ValidationSchemas = {
+    params: ClassroomFilterSchema,
+  };
+
+  protected handle({
+    params,
+  }: IpcRequest<any, TClassroomFilter>): Promise<unknown> {
+    return ClassroomQuery.findMany(params);
   }
 }
 
@@ -47,7 +62,7 @@ export class PostClassroom extends AbstractEndpoint<any> {
   protected handle({
     body,
   }: IpcRequest<TClassroomCreate, any>): Promise<unknown> {
-    return ClassroomQuery.createClassroom(body);
+    return ClassroomQuery.create(body);
   }
 }
 
@@ -59,7 +74,7 @@ export class GetClassroom extends AbstractEndpoint<any> {
     params: ClassIdSchema,
   };
   protected handle({ params }: IpcRequest<any, ClassId>): Promise<unknown> {
-    return ClassroomQuery.getClassroomById(params.classroomId);
+    return ClassroomQuery.findById(params.classId);
   }
 }
 
@@ -76,7 +91,7 @@ export class UpdateClassroom extends AbstractEndpoint<any> {
     params,
     body,
   }: IpcRequest<TClassroomUpdate, ClassId>): Promise<unknown> {
-    return ClassroomQuery.updateClassroom(params.classroomId, body);
+    return ClassroomQuery.update(params.classId, body);
   }
 }
 
@@ -89,6 +104,6 @@ export class DeleteClassroom extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, ClassId>): Promise<unknown> {
-    return ClassroomQuery.deleteClassroom(params.classroomId);
+    return ClassroomQuery.delete(params.classId);
   }
 }

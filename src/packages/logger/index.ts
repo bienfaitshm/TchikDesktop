@@ -44,7 +44,7 @@ export function getLogger(context: string) {
       mainLogger.info(message, { context, ...meta }),
     warn: (message: string, meta?: any) =>
       mainLogger.warn(message, { context, ...meta }),
-    error: (message: string, error?: Error | string, meta?: any) => {
+    error: (message: string, error?: Error | string | unknown, meta?: any) => {
       if (error instanceof Error) {
         // Envoie l'objet Error pour que 'format.errors({ stack: true })' l'utilise.
         mainLogger.error(message, { context, error, ...meta });

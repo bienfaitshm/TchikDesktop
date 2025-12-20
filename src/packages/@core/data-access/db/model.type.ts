@@ -134,6 +134,7 @@ export interface ClassroomEnrolementAttributes {
   studentId: string; // userId
   isNewStudent: boolean;
   schoolId: string;
+  yearId: string;
   //
   status?: STUDENT_STATUS;
   code?: string;

@@ -35,6 +35,7 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
 
   // classrooms
   classrooms.GetClassrooms,
+  classrooms.GetClassroomsWithEnrollments,
   classrooms.PostClassroom,
   classrooms.GetClassroom,
   classrooms.UpdateClassroom,

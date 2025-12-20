@@ -1,24 +1,29 @@
 // option.query.ts
-import { Sequelize } from "sequelize";
+import { type FindOptions, Sequelize } from "sequelize";
 
 import {
   Option,
   OptionAttributes,
   TOptionCreate,
   TOptionUpdate,
-  pruneUndefined,
+  buildFindOptions,
 } from "@/packages/@core/data-access/db";
 
 import { CustomLogger, getLogger } from "@/packages/logger";
 import { TOptionFilter } from "@/packages/@core/data-access/schema-validations";
+import { Query } from "./query";
 
 const logger: CustomLogger = getLogger("Option query");
+
+const DEFAULT_SORT_ORDER: FindOptions["order"] = [
+  [Sequelize.fn("LOWER", Sequelize.col("optionName")), "ASC"],
+];
 
 /**
  * Service de gestion des Options Académiques.
  * Fournit les méthodes de requête et de mutation pour l'entité Option.
  */
-export class OptionQuery {
+export class OptionQuery extends Query {
   // =============================================================================
   //  FETCH OPERATIONS
   // =============================================================================
@@ -30,26 +35,17 @@ export class OptionQuery {
    * @returns Une promesse qui résout en un tableau de DTOs d'options.
    * @throws {Error} Erreur de service si la requête DB échoue.
    */
-  static async getOptions(params?: TOptionFilter): Promise<OptionAttributes[]> {
-    if (params && !params?.schoolId) {
-      logger.error(
-        "Validation Error: schoolId are required for listing options."
-      );
-      throw new Error(
-        "Validation Error: schoolId are required for listing options."
-      );
+  static async findMany(filters?: TOptionFilter): Promise<OptionAttributes[]> {
+    if (!filters?.schoolId) {
+      return [];
     }
 
     // La clause WHERE inclut les IDs de scope (schoolId, yearId) et les autres filtres.
-    const optionWhereClause = pruneUndefined(params);
+    const optionFilters = buildFindOptions(filters, DEFAULT_SORT_ORDER);
 
     try {
-      const options = await Option.findAll({
-        where: optionWhereClause,
-        // Tri professionnel par nom d'option (insensible à la casse)
-        order: [[Sequelize.fn("LOWER", Sequelize.col("optionName")), "ASC"]],
-      });
-
+      const options = await Option.findAll(optionFilters);
+      // return this.cleanData(Option.findAll(optionFilters))
       return options.map((opt) => opt.toJSON());
     } catch (error) {
       logger.error("OptionQuery.getOptions: DB query failed.", error as Error);
@@ -66,9 +62,7 @@ export class OptionQuery {
    * @returns L'option DTO trouvée, ou `null` si non trouvée.
    * @throws {Error} Erreur de service si la requête DB échoue.
    */
-  static async getOptionById(
-    optionId: string
-  ): Promise<OptionAttributes | null> {
+  static async findById(optionId: string): Promise<OptionAttributes | null> {
     if (!optionId) {
       logger.warn("OptionQuery.getOptionById: Called with empty ID.");
       return null;
@@ -96,7 +90,7 @@ export class OptionQuery {
    * @returns Le DTO de l'option nouvellement créée.
    * @throws {Error} Erreur DB si l'insertion échoue.
    */
-  static async createOption(data: TOptionCreate): Promise<OptionAttributes> {
+  static async create(data: TOptionCreate): Promise<OptionAttributes> {
     try {
       const option = await Option.create(data);
       logger.info(`Option created: ${option.optionId}`, {
@@ -120,7 +114,7 @@ export class OptionQuery {
    * @returns Le DTO de l'option mise à jour, ou `null` si l'option n'a pas été trouvée.
    * @throws {Error} Erreur de service si l'opération DB échoue.
    */
-  static async updateOption(
+  static async update(
     optionId: string,
     updates: TOptionUpdate
   ): Promise<OptionAttributes | null> {
@@ -152,7 +146,7 @@ export class OptionQuery {
    * @returns `true` si l'option a été supprimée, `false` sinon.
    * @throws {Error} Erreur de service si l'opération DB échoue (ex: contrainte de clé étrangère).
    */
-  static async deleteOption(optionId: string): Promise<boolean> {
+  static async delete(optionId: string): Promise<boolean> {
     if (!optionId) return false;
 
     try {
