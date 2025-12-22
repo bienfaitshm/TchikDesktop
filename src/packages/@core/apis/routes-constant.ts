@@ -58,6 +58,11 @@ export const EnrollementRoutes = {
   QUICK_ENROLLEMENT: "enrollements/quick",
 } as const;
 
+export const DocumentExportRoutes = {
+  INFOS: "documents/infos",
+  EXPORTS: "documents/exports",
+};
+
 /**
  * Export global de toutes les routes pour une importation unique.
  */
@@ -67,4 +72,5 @@ export const IpcRoutes = {
   CLASSROOMS: ClassroomRoutes,
   ENROLLEMENTS: EnrollementRoutes,
   STUDY_YEAR: StudyYearRoutes,
+  DOCUMENT_EXPORT: DocumentExportRoutes,
 } as const;

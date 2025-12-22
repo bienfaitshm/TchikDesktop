@@ -14,7 +14,7 @@ import { getLogger } from "@/packages/logger";
 import {
   instantiateClasses,
   ClassConstructor,
-} from "@/packages/@core/utilities/handler-factory";
+} from "@/packages/handler-factory";
 
 const initializerLogger = getLogger("DataSystemInitializer");
 

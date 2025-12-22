@@ -134,7 +134,7 @@ export class SchoolQuery {
   /**
    * Supprime une école (Soft ou Hard delete selon la config modèle, ici Hard).
    */
-  static async deleteSchool(schoolId: string): Promise<boolean> {
+  static async delete(schoolId: string): Promise<boolean> {
     if (!schoolId) return false;
 
     try {
@@ -142,7 +142,7 @@ export class SchoolQuery {
       return count > 0;
     } catch (error) {
       logger.error(
-        `SchoolQuery.deleteSchool: Error deleting ${schoolId}`,
+        `SchoolQuery.delete: Error deleting ${schoolId}`,
         error as Error
       );
       throw new Error("Query error: Delete operation failed.");

@@ -2,7 +2,7 @@ import { getLogger } from "@/packages/logger";
 import {
   instantiateClasses,
   ClassConstructor,
-} from "@/packages/@core/utilities/handler-factory";
+} from "@/packages/handler-factory";
 import { AbstractEndpoint } from "./abstract";
 
 import * as schools from "./schools";

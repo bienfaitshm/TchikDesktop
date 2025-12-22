@@ -2,8 +2,7 @@ import { useMemo } from "react";
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
 import { GetClassroomParams } from "@/commons/types/services";
 import { useGetOptions } from "@/renderer/libs/queries/option";
-import { useGetDocumentInfos } from "@/renderer/libs/queries/document-export";
-import { GroupedDocumentOption } from "@/commons/types/services.documents";
+import { useGetAvailableExports } from "@/renderer/libs/queries/document-export";
 
 /**
  * Définit les options de formatage pour la conversion de données en options de sélection.
@@ -136,10 +135,10 @@ export function useGetOptionAsOptions(
   };
 }
 
-export function useGetDocumentInfoAsOptions(params = {}) {
-  const { data } = useGetDocumentInfos({ format: "grouped", ...params });
+export function useGetAvailableExportsAsOptions() {
+  const { data } = useGetAvailableExports();
   return {
-    options: data as unknown as GroupedDocumentOption[],
+    options: data,
     defaultValue: undefined,
     data,
   };

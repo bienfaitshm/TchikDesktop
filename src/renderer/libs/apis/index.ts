@@ -8,6 +8,8 @@ import {
   EnrollementApi,
   OptionApi,
   SchoolApi,
+  createDocumentExportApis,
+  DocumentExportApi,
 } from "@/packages/@core/apis/clients";
 import type { IpcRenderer } from "@electron-toolkit/preload";
 
@@ -24,6 +26,7 @@ export interface AppClients {
   readonly option: OptionApi;
   /** Client API pour la gestion des Écoles et Années Académiques. */
   readonly school: SchoolApi;
+  readonly exportDocuments: DocumentExportApi;
 }
 
 /**
@@ -46,6 +49,7 @@ function initializeAppClients(ipcRendererInstance: IpcRenderer): AppClients {
     enrollement: createEnrollementApis(ipcClient),
     option: createOptionApis(ipcClient),
     school: createSchoolApis(ipcClient),
+    exportDocuments: createDocumentExportApis(ipcClient),
   };
 
   // Utilisation du 'as const' pour garantir l'immutabilité des propriétés
@@ -58,6 +62,5 @@ function initializeAppClients(ipcRendererInstance: IpcRenderer): AppClients {
  * Ces exports sont utilisés par les couches de logique métier (services, stores, etc.)
  * pour interagir avec les données via la communication Inter-Processus (IPC).
  */
-export const { classroom, enrollement, option, school } = initializeAppClients(
-  window.electron.ipcRenderer
-);
+export const { classroom, enrollement, option, school, exportDocuments } =
+  initializeAppClients(window.electron.ipcRenderer);

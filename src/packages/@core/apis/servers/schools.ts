@@ -1,11 +1,16 @@
 import z from "zod";
-import { SchoolQuery } from "@/packages/@core/data-access/data-queries";
+import {
+  SchoolQuery,
+  StudyYearQuery,
+} from "@/packages/@core/data-access/data-queries";
 import {
   HttpMethod,
   IpcRequest,
   type ValidationSchemas,
 } from "@/packages/electron-ipc-rest";
 import {
+  SchoolAttributesSchema,
+  StudyYearAttributesSchema,
   SchoolCreateSchema,
   SchoolUpdateSchema,
   SchoolFilterSchema,
@@ -22,15 +27,11 @@ import {
 import { AbstractEndpoint } from "./abstract";
 import { SchoolRoutes, StudyYearRoutes } from "../routes-constant";
 
-const SchoolIdSchema = z.object({
-  schoolId: z.string().nonempty(),
-});
+const SchoolIdSchema = SchoolAttributesSchema.pick({ schoolId: true });
 
 type SchoolId = z.infer<typeof SchoolIdSchema>;
 
-const YearIdSchema = z.object({
-  yearId: z.string().nonempty(),
-});
+const YearIdSchema = StudyYearAttributesSchema.pick({ yearId: true });
 
 type YearId = z.infer<typeof YearIdSchema>;
 
@@ -45,7 +46,7 @@ export class GetSchools extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, TSchoolFilter>): Promise<unknown> {
-    return SchoolQuery.getSchools(params);
+    return SchoolQuery.findMany(params);
   }
 }
 
@@ -60,7 +61,7 @@ export class PostSchool extends AbstractEndpoint<any> {
   protected handle({
     body,
   }: IpcRequest<TSchoolCreate, unknown>): Promise<unknown> {
-    return SchoolQuery.createSchool(body);
+    return SchoolQuery.create(body);
   }
 }
 
@@ -73,7 +74,7 @@ export class GetSchool extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, SchoolId>): Promise<unknown> {
-    return SchoolQuery.getSchoolById(params.schoolId);
+    return SchoolQuery.findById(params.schoolId);
   }
 }
 
@@ -90,7 +91,7 @@ export class UpdateSchool extends AbstractEndpoint<any> {
     params,
     body,
   }: IpcRequest<TSchoolUpdate, SchoolId>): Promise<unknown> {
-    return SchoolQuery.updateSchool(params.schoolId, body);
+    return SchoolQuery.update(params.schoolId, body);
   }
 }
 
@@ -103,7 +104,7 @@ export class DeleteSchool extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, SchoolId>): Promise<unknown> {
-    return SchoolQuery.deleteSchool(params.schoolId);
+    return SchoolQuery.delete(params.schoolId);
   }
 }
 
@@ -120,7 +121,7 @@ export class GetStudyYears extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, TStudyYearFilter>): Promise<unknown> {
-    return SchoolQuery.getStudyYears(params);
+    return StudyYearQuery.findMany(params);
   }
 }
 
@@ -135,7 +136,7 @@ export class PostStudyYear extends AbstractEndpoint<any> {
   protected handle({
     body,
   }: IpcRequest<TStudyYearCreate, any>): Promise<unknown> {
-    return SchoolQuery.createStudyYear(body);
+    return StudyYearQuery.create(body);
   }
 }
 
@@ -148,7 +149,7 @@ export class GetStudyYear extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, YearId>): Promise<unknown> {
-    return SchoolQuery.getStudyYearById(params.yearId);
+    return StudyYearQuery.findById(params.yearId);
   }
 }
 
@@ -165,7 +166,7 @@ export class UpdateStudyYear extends AbstractEndpoint<any> {
     params,
     body,
   }: IpcRequest<TStudyYearUpdate, YearId>): Promise<unknown> {
-    return SchoolQuery.updateStudyYear(params.yearId, body);
+    return StudyYearQuery.update(params.yearId, body);
   }
 }
 
@@ -178,6 +179,6 @@ export class DeleteStudyYear extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, YearId>): Promise<unknown> {
-    return SchoolQuery.deleteStudyYear(params.yearId);
+    return StudyYearQuery.delete(params.yearId);
   }
 }

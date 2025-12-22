@@ -1,4 +1,8 @@
 import { ipcMain } from "electron";
-import { IpcServer } from "@/commons/libs/electron-ipc-rest";
+import { IpcServer } from "@/packages/electron-ipc-rest";
 
-export const ipcServer = new IpcServer(ipcMain);
+import { getLogger } from "@/packages/logger";
+
+export const ipcServer = new IpcServer(ipcMain, {
+  logger: getLogger("IPC Server"),
+});

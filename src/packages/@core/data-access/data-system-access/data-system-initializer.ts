@@ -10,9 +10,11 @@ import { getLogger } from "@/packages/logger";
 import {
   instantiateClasses,
   ClassConstructor,
-} from "@/packages/@core/utilities/handler-factory";
+} from "@/packages/handler-factory";
 
 import * as schools from "./handlers/school.query-handlers";
+import * as classrooms from "./handlers/classroom.query-handler.ts";
+// import * as enrollments from "./handlers/enrollment.handlers"
 
 const initializerLogger = getLogger("DataSystemInitializer");
 
@@ -22,6 +24,14 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractQueryHandler<any>>[] =
     schools.FindSchoolByIdQueryHandler,
     schools.FindStudyYearsQueryHandler,
     schools.FindStudyYearByIdQueryHandler,
+
+    //
+    classrooms.FindSchoolsQueryHandler,
+    classrooms.FindClassroomByIdQueryHandler,
+    classrooms.ClassroomEnrollmentQueryHandler,
+
+    //
+    // enrollments
   ];
 
 export const instantiatedHandlers = instantiateClasses(

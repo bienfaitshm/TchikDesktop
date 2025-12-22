@@ -3,14 +3,12 @@ import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { autoUpdater } from "electron-updater";
 // Importation de electron-log pour les événements de l'updater, mais nous l'encapsulons
-import log from "electron-log";
 
 import icon from "../../resources/icon.png?asset";
-import { sequelize } from "@/main/db/config";
-import { getLogger } from "@/main/libs/logger";
-import { performBackup } from "@/main/db/config";
+import { sequelize, performBackup } from "@/packages/@core/data-access/db";
+import { getLogger } from "@/packages/logger";
 
-import { appEndpoints, ipcServer } from "@/main/apps";
+import { apiGateway, ipcServer } from "@/main/apps";
 
 // Logger principal pour le process Electron
 const mainLogger = getLogger("MainProcess");
@@ -18,7 +16,7 @@ const dbLogger = getLogger("Database");
 const updaterLogger = getLogger("Updater");
 
 // Configure electron-log (nécessaire pour autoUpdater)
-autoUpdater.logger = log;
+autoUpdater.logger = updaterLogger;
 const ALTER_DB: boolean = false;
 
 const createMainWindow = (): void => {
@@ -48,7 +46,7 @@ const createMainWindow = (): void => {
 
       // Démarrage du serveur API interne
       mainLogger.info("Démarrage du serveur API Electron...");
-      appEndpoints.registerEndpoints();
+      apiGateway.registerEndpoints();
       ipcServer.listen();
     })
     .catch((error) => {

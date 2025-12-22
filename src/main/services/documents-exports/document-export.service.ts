@@ -69,7 +69,7 @@ export interface IDocumentExportStrategy {
   getStrategyId(): string;
 
   /** File extension associated with this strategy. */
-  getFileExtension(): DOCUMENT_EXTENSION;
+  getFileFilters(): DOCUMENT_EXTENSION;
 
   /** Human-readable title for UI. */
   getDisplayName(): string;
