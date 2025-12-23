@@ -52,7 +52,7 @@ const logger = getLogger("ClassroomQuery");
  */
 const DEFAULT_SORT_ORDER: FindOptions["order"] = [
   [Sequelize.fn("LOWER", Sequelize.col("ClassRoom.identifier")), "ASC"],
-  [Sequelize.fn("LOWER", Sequelize.col("ClassRoom.shortIdentifier")), "ASC"],
+  [Sequelize.fn("LOWER", Sequelize.col("ClassRoom.short_identifier")), "ASC"],
 ];
 
 // =============================================================================
@@ -85,12 +85,13 @@ export class ClassroomQuery {
           { model: StudyYear, required: true }, // INNER JOIN (une classe a toujours une année)
         ],
       });
-
+      console.log("Classsss", classRooms);
       return classRooms.map((c) => c.toJSON() as TClassroomDTO);
     } catch (error) {
       logger.error(
         "ClassroomQuery.findMany: Failed to fetch classrooms",
-        error
+        error,
+        JSON.stringify(error)
       );
       throw new Error("Impossible de récupérer la liste des classes.");
     }

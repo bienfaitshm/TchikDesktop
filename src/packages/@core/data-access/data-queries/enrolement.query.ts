@@ -71,8 +71,10 @@ export class EnrolementQuery {
           },
         ],
       });
+      console.log("REsult", enrolements);
       return enrolements.map((e) => e.toJSON()) as TEnrolementDTO[];
     } catch (error) {
+      console.log("Error ....", error, JSON.stringify(options, null, 4));
       logger.error("EnrolementService.getEnrolements: DB query failed.", error);
       throw new Error("Queryunavailable: Unable to retrieve enrolements.");
     }

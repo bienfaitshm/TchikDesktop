@@ -15,7 +15,7 @@ import { WithSchoolAndYearId } from "@/commons/types/services";
 import { FormSubmitter } from "@/renderer/components/form/form-submiter";
 import { DocumentEnrollmentForm, DocumentFormData } from "@/renderer/components/form/documents/classroom-document-export";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
-import { useGetClassroomAsOptions, useGetDocumentInfoAsOptions } from "@/renderer/hooks/data-as-options";
+import { useGetClassroomAsOptions, useGetAvailableExportsAsOptions } from "@/renderer/hooks/data-as-options";
 import { useExport } from "@/renderer/hooks/documents";
 
 
@@ -42,12 +42,13 @@ export const LoaderIndicator: React.FC<LoaderIndicatorProps> = ({ message = "Exp
 
 const SheetFormContent: React.FC<WithSchoolAndYearId<{ onSubmit(data: DocumentFormData): void, currentClassroom?: string }>> = ({ schoolId, yearId, currentClassroom, onSubmit }) => {
     const classrooms = useGetClassroomAsOptions({ schoolId, yearId }, { labelFormat: "short" })
-    const { defaultValue, options: documentOptions } = useGetDocumentInfoAsOptions()
+    const { defaultValue, options: documentOptions } = useGetAvailableExportsAsOptions()
+    console.log(documentOptions)
     return (
         <FormSubmitter.Wrapper>
             <DocumentEnrollmentForm
                 classrooms={classrooms}
-                documentOptions={documentOptions}
+                documentOptions={[]}
                 initialValues={{
                     schoolId,
                     yearId,
