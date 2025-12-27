@@ -79,8 +79,10 @@ export function createClassroomApis(ipcClient: IpcClient): ClassroomApi {
       return ipcClient.get(ClassroomRoutes.ALL, { params });
     },
 
-    fetchClassroomById(classroomId) {
-      return ipcClient.get(ClassroomRoutes.DETAIL, { params: { classroomId } });
+    fetchClassroomById(classId) {
+      return ipcClient.get(ClassroomRoutes.DETAIL, {
+        params: { classId },
+      });
     },
 
     createClassroom(data) {
@@ -88,17 +90,17 @@ export function createClassroomApis(ipcClient: IpcClient): ClassroomApi {
       return ipcClient.post(ClassroomRoutes.ALL, data);
     },
 
-    updateClassroom(classroomId, data) {
+    updateClassroom(classId, data) {
       // Envoi du corps pour la mise à jour (PATCH ou PUT, ici PUT est utilisé)
       return ipcClient.put(ClassroomRoutes.DETAIL, data, {
-        params: { classroomId },
+        params: { classId },
       });
     },
 
-    deleteClassroom(classroomId) {
+    deleteClassroom(classId) {
       // La suppression ne nécessite pas de corps de requête
       return ipcClient.delete(ClassroomRoutes.DETAIL, {
-        params: { classroomId },
+        params: { classId },
       });
     },
   } as const;

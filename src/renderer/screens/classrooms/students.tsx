@@ -70,7 +70,7 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
     const { data: students = [], refetch } = useGetEnrollments({
         schoolId,
         yearId,
-        params: { classroomId: currentClassroomId },
+        classroomId: currentClassroomId
     });
 
     return (
