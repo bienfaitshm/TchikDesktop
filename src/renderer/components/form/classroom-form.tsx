@@ -1,7 +1,6 @@
 import { forwardRef, useCallback, type PropsWithChildren } from "react";
-import { useControlledForm } from "@/commons/libs/forms";
-import { SECTION, SECTION_TRANSLATIONS } from "@/commons/constants/enum";
-import { type ClassAttributes, ClassSchema } from "@/renderer/libs/schemas";
+import { SECTION, SECTION_TRANSLATIONS, getEnumKeyValueList} from "@/packages/@core/data-access/db";
+import { ClassroomCreateSchema, type TClassroomCreate }  from "@/packages/@core/data-access/schema-validations"
 import {
     Form,
     FormControl,
@@ -11,7 +10,6 @@ import {
     FormLabel,
     FormMessage,
 } from "@/renderer/components/ui/form";
-import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { Input } from "@/renderer/components/ui/input";
 import {
     Select,
@@ -20,12 +18,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/renderer/components/ui/select";
-import { getEnumKeyValueList } from "@/commons/utils";
+import { useZodForm } from "@/packages/use-zod-form"
+import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { ButtonAi } from "../buttons/button-ai";
 
 export * from "./utils";
 
-export type ClassroomFormData = ClassAttributes;
+export type ClassroomFormData = TClassroomCreate;
 
 const DEFAULT_CLASSROOM_VALUES: ClassroomFormData = {
     identifier: "",
@@ -86,8 +85,8 @@ export const ClassroomForm = forwardRef<
     ClassroomFormHandle,
     PropsWithChildren<ClassroomFormProps>
 >(({ children, onSubmit, onGenerateSuggestion, initialValues = {}, options = [] }, ref) => {
-    const [form, handleSubmit] = useControlledForm({
-        schema: ClassSchema,
+    const form = useZodForm({
+        schema: ClassroomCreateSchema,
         defaultValues: { ...DEFAULT_CLASSROOM_VALUES, ...initialValues },
         onSubmit,
     });
@@ -119,7 +118,7 @@ export const ClassroomForm = forwardRef<
     }, [form, onGenerateSuggestion]);
     return (
         <Form {...form}>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={form.submit} className="space-y-4">
                 <FormField
                     control={form.control}
                     name="identifier"
