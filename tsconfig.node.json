@@ -5,24 +5,15 @@
     "src/main/*",
     "src/preload/*",
     "src/main/**/*",
-    "src/camons/*",
-    "src/camons/**/*"
+    "src/commons/*",
+    "src/commons/**/*"
   ],
   "compilerOptions": {
     "composite": true,
-    "types": [
-      "electron-vite/node"
-    ],
+    "types": ["electron-vite/node"],
     "paths": {
-      "@/main/*": [
-        "./src/main/*"
-      ],
-      "@/camontype/*":[
-        "./src/camons/types/*"
-      ],
-      "@/camons/*":[
-        "./src/camons/*"
-      ]
+      "@/main/*": ["./src/main/*"],
+      "@/commons/*": ["./src/commons/*"]
     }
   }
 }

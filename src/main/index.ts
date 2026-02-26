@@ -4,13 +4,14 @@ import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { autoUpdater } from "electron-updater";
 import log from "electron-log";
 
-// Configure le logger (optionnel)
-autoUpdater.logger = log;
-
 import icon from "../../resources/icon.png?asset";
-import { server } from "@/camons/libs/electron-apis/server";
+import { server } from "@/commons/libs/electron-apis/server";
 import "@/main/apps";
 import { sequelize } from "./db/config";
+
+// Configure le logger (optionnel)
+autoUpdater.logger = log;
+const ALTER_DB: boolean = false;
 
 const createMainWindow = (): void => {
   const mainWindow = new BrowserWindow({
@@ -26,12 +27,17 @@ const createMainWindow = (): void => {
     },
   });
 
-  sequelize.sync({}).then(() => {
-    console.log("Database synchronized!");
-    server.listen(mainWindow, (routes) => {
-      console.log(`Server active, ${routes.length} routes initialized`);
+  sequelize
+    .sync({ alter: ALTER_DB })
+    .then(() => {
+      console.log("Database synchronized!");
+      server.listen(mainWindow, (routes) => {
+        console.log(`Server active, ${routes.length} routes initialized`);
+      });
+    })
+    .catch((error) => {
+      console.log("Database NO synchronized!", JSON.stringify(error, null, 4));
     });
-  });
 
   mainWindow.once("ready-to-show", () => mainWindow.show());
 
@@ -74,7 +80,7 @@ autoUpdater.on("checking-for-update", () => {
   log.info("Checking for update...");
 });
 
-autoUpdater.on("update-available", (info) => {
+autoUpdater.on("update-available", () => {
   log.info("Update available.");
   dialog.showMessageBox({
     type: "info",
@@ -84,7 +90,7 @@ autoUpdater.on("update-available", (info) => {
   });
 });
 
-autoUpdater.on("update-not-available", (info) => {
+autoUpdater.on("update-not-available", () => {
   log.info("Update not available.");
 });
 
@@ -107,7 +113,7 @@ autoUpdater.on("download-progress", (progressObj) => {
   // mainWindow.webContents.send('download-progress', progressObj.percent);
 });
 
-autoUpdater.on("update-downloaded", (info) => {
+autoUpdater.on("update-downloaded", () => {
   log.info("Update downloaded.");
   dialog
     .showMessageBox({

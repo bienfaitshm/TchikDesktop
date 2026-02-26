@@ -1,0 +1,50 @@
+import { ClassRoom, Option, StudyYear } from "../models";
+import type { TClassroomInsert } from "@/commons/types/models";
+import type {
+  QueryParams,
+  WithSchoolAndYearId,
+} from "@/commons/types/services";
+import { getDefinedAttributes } from "../models/utils";
+import { Sequelize } from "sequelize";
+
+export async function getClassrooms({
+  schoolId,
+  yearId,
+  params = {},
+}: QueryParams<WithSchoolAndYearId, Partial<TClassroomInsert>>) {
+  const whereClause = getDefinedAttributes({ schoolId, yearId, ...params });
+  return ClassRoom.findAll({
+    where: whereClause,
+    include: [Option, StudyYear],
+    order: [
+      [Sequelize.fn("LOWER", Sequelize.col("identifier")), "ASC"],
+      [Sequelize.fn("LOWER", Sequelize.col("shortIdentifier")), "ASC"],
+    ],
+  });
+}
+
+export async function getClassroom(classId) {
+  return ClassRoom.findByPk(classId, { include: [Option, StudyYear] });
+}
+
+export async function createClassroom(data: TClassroomInsert) {
+  return ClassRoom.create(data);
+}
+
+export async function updateClassroom(
+  classId: string,
+  data: Partial<TClassroomInsert>
+) {
+  const whereClause = getDefinedAttributes({ classId });
+  const classRoom = await ClassRoom.findOne({ where: whereClause });
+  if (!classRoom) return null;
+  return classRoom.update(data);
+}
+
+export async function deleteClassroom(classId: string) {
+  const whereClause = getDefinedAttributes({ classId });
+  const classRoom = await ClassRoom.findOne({ where: whereClause });
+  if (!classRoom) return false;
+  await classRoom.destroy();
+  return true;
+}
