@@ -114,6 +114,7 @@ export class StatsService {
           col("ClassroomEnrolement.classroom_id"),
           col("ClassRoom.class_id"),
         ],
+        order: [[col("ClassRoom.short_identifier"), "ASC"]],
         raw: true,
       });
 
