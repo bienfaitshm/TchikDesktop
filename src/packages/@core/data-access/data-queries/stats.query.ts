@@ -110,7 +110,10 @@ export class StatsService {
             where: { yearId } as WhereOptions,
           },
         ],
-        group: ["ClassroomEnrolement.classroomId", "ClassRoom.classId"],
+        group: [
+          col("ClassroomEnrolement.classroom_id"),
+          col("ClassRoom.class_id"),
+        ],
         raw: true,
       });
 
@@ -121,6 +124,7 @@ export class StatsService {
         value: Number(item.value),
       }));
     } catch (error) {
+      console.log(error);
       logger.error("getStudentsCountByClass failed", error);
       return [];
     }
@@ -148,7 +152,7 @@ export class StatsService {
             ],
           },
         ],
-        group: ["ClassRoom.Option.optionName"],
+        group: [col("ClassRoom->Option.option_name")],
         raw: true,
       });
 
@@ -157,6 +161,7 @@ export class StatsService {
         value: Number(item.value),
       }));
     } catch (error) {
+      console.log(error);
       logger.error("getStudentsCountByOption failed", error);
       return [];
     }
