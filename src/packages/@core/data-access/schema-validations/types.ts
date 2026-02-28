@@ -37,6 +37,7 @@ import {
   ClassroomFilterSchema,
   EnrolementFilterSchema,
   EnrolementActionFilterSchema,
+  StatsFilterSchema,
 } from "./filters";
 
 // =============================================================================
@@ -146,3 +147,5 @@ export type TEnrolementFilter = z.infer<typeof EnrolementFilterSchema>;
 export type TEnrolementActionFilter = z.infer<
   typeof EnrolementActionFilterSchema
 >;
+
+export type TStatsFilter = z.infer<typeof StatsFilterSchema>;

@@ -5,8 +5,6 @@
  * Ces constantes sont utilisées par IpcClient et IpcServer pour la communication.
  */
 
-// --- 2. Constantes de Routes par Ressource ---
-
 /**
  * Routes IPC pour la gestion des OPTIONS.
  * Utilisées pour les choix et configurations simples.
@@ -64,7 +62,25 @@ export const DocumentExportRoutes = {
 };
 
 /**
- * Export global de toutes les routes pour une importation unique.
+ * Routes IPC pour les STATISTIQUES et ANALYTICS.
+ * Permet de récupérer les données agrégées pour les graphiques et KPI.
+ */
+export const StatsRoutes = {
+  // Global & KPI (Total étudiants, ratio, etc.)
+  SUMMARY: "stats/summary",
+
+  // Répartitions (Pie/Bar Charts)
+  STUDENTS_BY_STATUS: "stats/students/status",
+  STUDENTS_BY_GENDER: "stats/students/gender",
+  STUDENTS_BY_CLASS: "stats/students/class",
+  STUDENTS_BY_OPTION: "stats/students/option",
+
+  // Performance & Rétention
+  RETENTION: "stats/retention",
+} as const;
+
+/**
+ * Export global mis à jour
  */
 export const IpcRoutes = {
   OPTIONS: OptionRoutes,
@@ -73,4 +89,5 @@ export const IpcRoutes = {
   ENROLLEMENTS: EnrollementRoutes,
   STUDY_YEAR: StudyYearRoutes,
   DOCUMENT_EXPORT: DocumentExportRoutes,
+  STATS: StatsRoutes,
 } as const;

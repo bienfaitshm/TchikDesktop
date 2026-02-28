@@ -1,244 +1,150 @@
-// stats.service.ts
+import { fn, col, WhereOptions } from "sequelize";
+import {
+  ClassRoom,
+  Option,
+  User,
+  ClassroomEnrolement,
+  USER_ROLE,
+  STUDENT_STATUS,
+} from "@/packages/@core/data-access/db";
+import { getLogger } from "@/packages/logger";
 
-import { User, ClassroomEnrolement, ClassRoom, Option } from "@/main/db/models";
-import { USER_ROLE, STUDENT_STATUS } from "@/commons/constants/enum"; // Assurez-vous d'avoir les constantes d'énumération
-import { type WhereOptions, fn, col } from "sequelize";
+export interface ChartDataPoint {
+  label: string;
+  value: number;
+  fill?: string;
+}
 
-// =============================================================================
-//  TYPAGES DTO (Data Transfer Object)
-// =============================================================================
-
-/**
- * Type générique pour les résultats d'agrégation { key: count } (ex: Genre, Statut).
- */
-export type StatsCount = { [key: string]: number };
-
-/**
- * DTO pour le décompte des étudiants par classe.
- */
-export interface ClassCountDTO {
+export interface ClassStatsDTO extends ChartDataPoint {
   classId: string;
-  className: string;
   shortName: string;
-  studentCount: number;
 }
 
-/**
- * DTO pour le décompte des étudiants par option.
- */
-export interface OptionCountDTO {
-  optionName: string;
-  studentCount: number;
-}
+const logger = getLogger("StatsService");
 
 /**
- * DTO pour le décompte des étudiants par classe et année de promotion.
- */
-export interface PromotionCountDTO {
-  promotionYear: number;
-  studentCount: number;
-}
-
-// --- Logger Interface (Simulé pour l'observabilité) ---
-const logger = {
-  info: (msg: string, meta?: object) => console.info(`[INFO] ${msg}`, meta),
-  error: (msg: string, error?: unknown) =>
-    console.error(`[ERROR] ${msg}`, error),
-  warn: (msg: string, meta?: object) => console.warn(`[WARN] ${msg}`, meta),
-};
-
-/**
- * Service de gestion des statistiques et des métriques clés (KPIs).
- * Utilise les fonctions d'agrégation de Sequelize.
+ * Service de statistiques optimisé pour les tableaux de bord.
+ * Les données sont formatées pour être directement injectées dans Shadcn/Charts.
  */
 export class StatsService {
-  // =============================================================================
-  //  MÉTRIQUES DE BASE (Rendu plus robuste)
-  // =============================================================================
-
   /**
-   * @description Compte le nombre total d'étudiants actifs.
-   * @param schoolId L'ID de l'école.
-   * @returns Le nombre total d'étudiants.
-   * @throws {Error} Erreur de service si la requête DB échoue.
+   * Centralise les agrégations simples pour réduire la répétition et améliorer la maintenance.
    */
-  static async getTotalStudents(schoolId: string): Promise<number> {
+  private static async aggregateCount(
+    model: any,
+    groupField: string,
+    where: WhereOptions,
+    labelMapping?: Record<string, string>,
+  ): Promise<ChartDataPoint[]> {
     try {
-      return await User.count({
-        where: {
-          schoolId,
-          role: USER_ROLE.STUDENT,
-        } as WhereOptions<User>,
-      });
-    } catch (error) {
-      logger.error("StatsService.getTotalStudents failed.", error);
-      throw new Error(
-        "Service unavailable: Cannot retrieve total student count."
-      );
-    }
-  }
-
-  /**
-   * @description Compte le nombre d'étudiants par genre (masculin/féminin).
-   * @param schoolId L'ID de l'école.
-   * @returns Un objet avec le décompte par genre.
-   * @throws {Error} Erreur de service.
-   */
-  static async getStudentCountByGender(schoolId: string): Promise<StatsCount> {
-    try {
-      const result = await User.findAll({
-        attributes: ["gender", [fn("COUNT", col("gender")), "count"]],
-        where: {
-          schoolId,
-          role: USER_ROLE.STUDENT,
-        } as WhereOptions<User>,
-        group: ["gender"],
+      const results = await model.findAll({
+        attributes: [
+          [groupField, "groupKey"],
+          [fn("COUNT", col(groupField)), "count"],
+        ],
+        where,
+        group: ["groupKey"],
         raw: true,
       });
 
-      return result.reduce((acc, item: any) => {
-        // La clé de l'agrégation est dynamique (gender)
-        acc[item.gender] = parseInt(item.count, 10);
-        return acc;
-      }, {} as StatsCount);
+      return results.map((item: any) => ({
+        label: labelMapping
+          ? labelMapping[item.groupKey] || item.groupKey
+          : item.groupKey,
+        value: Number(item.count),
+      }));
     } catch (error) {
-      logger.error("StatsService.getStudentCountByGender failed.", error);
-      throw new Error(
-        "Service unavailable: Cannot retrieve student count by gender."
-      );
+      logger.error(`Aggregation failed on ${groupField}`, error);
+      return [];
     }
   }
 
+  // =============================================================================
+  //  MÉTRIQUES KPI (VALEURS UNIQUES)
+  // =============================================================================
+
+  static async getTotalStudents(schoolId: string): Promise<number> {
+    return User.count({
+      where: { schoolId, role: USER_ROLE.STUDENT } as WhereOptions,
+    }).catch((err) => {
+      logger.error("Failed to get total students", err);
+      return 0;
+    });
+  }
+
+  // =============================================================================
+  //  DONNÉES POUR GRAPHIQUES (ARRAY FORMAT)
+  // =============================================================================
+
   /**
-   * @description Compte le nombre de nouveaux étudiants pour l'année en cours.
-   * @param schoolId L'ID de l'école.
-   * @returns Le nombre de nouveaux étudiants.
-   * @throws {Error} Erreur de service.
+   * Idéal pour un PieChart (Répartition Hommes/Femmes)
    */
-  static async getNewStudentsCount(schoolId: string): Promise<number> {
-    try {
-      return await ClassroomEnrolement.count({
-        where: {
-          schoolId,
-          isNewStudent: true,
-        } as WhereOptions<ClassroomEnrolement>,
-      });
-    } catch (error) {
-      logger.error("StatsService.getNewStudentsCount failed.", error);
-      throw new Error(
-        "Service unavailable: Cannot retrieve new student count."
-      );
-    }
+  static async getGenderDistribution(
+    schoolId: string,
+  ): Promise<ChartDataPoint[]> {
+    const labels = { M: "Masculin", F: "Féminin", OTHER: "Autre" };
+    return this.aggregateCount(
+      User,
+      "gender",
+      { schoolId, role: USER_ROLE.STUDENT },
+      labels,
+    );
   }
 
-  // =============================================================================
-  //  MÉTRIQUES D'AGRÉGATION AVEC JOINTURES
-  // =============================================================================
-
   /**
-   * @description Compte le nombre d'étudiants par classe pour une année scolaire spécifique.
-   * @param schoolId L'ID de l'école.
-   * @param yearId L'ID de l'année scolaire.
-   * @returns Liste d'objets détaillés par classe.
-   * @throws {Error} Erreur de service.
+   * Idéal pour un BarChart (Nombre d'élèves par classe)
    */
   static async getStudentsCountByClass(
     schoolId: string,
-    yearId: string
-  ): Promise<ClassCountDTO[]> {
-    if (!schoolId || !yearId)
-      throw new Error("Validation Error: schoolId and yearId required.");
-
+    yearId: string,
+  ): Promise<ClassStatsDTO[]> {
     try {
-      const result = await ClassroomEnrolement.findAll({
-        attributes: [
-          "classroomId",
-          [fn("COUNT", col("student_id")), "studentCount"],
-        ],
-        where: { schoolId } as WhereOptions<ClassroomEnrolement>,
+      const results = await ClassroomEnrolement.findAll({
+        attributes: ["classroomId", [fn("COUNT", col("student_id")), "value"]],
+        where: { schoolId } as WhereOptions,
         include: [
           {
             model: ClassRoom,
             attributes: ["identifier", "shortIdentifier"],
             required: true,
-            where: { yearId } as WhereOptions<ClassRoom>,
+            where: { yearId } as WhereOptions,
           },
         ],
         group: ["ClassroomEnrolement.classroomId", "ClassRoom.classId"],
         raw: true,
       });
 
-      return result.map((item: any) => ({
+      return results.map((item: any) => ({
         classId: item.classroomId,
-        className: item["ClassRoom.identifier"],
+        label: item["ClassRoom.identifier"],
         shortName: item["ClassRoom.shortIdentifier"],
-        studentCount: parseInt(item.studentCount, 10),
+        value: Number(item.value),
       }));
     } catch (error) {
-      logger.error("StatsService.getStudentsCountByClass failed.", error);
-      throw new Error(
-        "Service unavailable: Cannot retrieve student count by class."
-      );
+      logger.error("getStudentsCountByClass failed", error);
+      return [];
     }
   }
 
   /**
-   * @description Compte le nombre d'étudiants par statut d'inscription (ex: EN_COURS, EXCLU).
-   * @param schoolId L'ID de l'école.
-   * @returns Un objet avec le décompte par statut.
-   * @throws {Error} Erreur de service.
-   */
-  static async getStudentCountByStatus(schoolId: string): Promise<StatsCount> {
-    try {
-      const result = await ClassroomEnrolement.findAll({
-        attributes: ["status", [fn("COUNT", col("status")), "count"]],
-        where: { schoolId } as WhereOptions<ClassroomEnrolement>,
-        group: ["status"],
-        raw: true,
-      });
-
-      return result.reduce((acc, item: any) => {
-        acc[item.status] = parseInt(item.count, 10);
-        return acc;
-      }, {} as StatsCount);
-    } catch (error) {
-      logger.error("StatsService.getStudentCountByStatus failed.", error);
-      throw new Error(
-        "Service unavailable: Cannot retrieve student count by status."
-      );
-    }
-  }
-
-  /**
-   * @description Compte le nombre total d'étudiants par option d'étude pour l'année en cours.
-   * @param schoolId L'ID de l'école.
-   * @param yearId L'ID de l'année scolaire.
-   * @returns Liste d'objets contenant le nom de l'option et le nombre d'étudiants.
-   * @throws {Error} Erreur de service.
+   * Répartition par Option (Ex: Informatique, Gestion, etc.)
    */
   static async getStudentsCountByOption(
     schoolId: string,
-    yearId: string
-  ): Promise<OptionCountDTO[]> {
-    if (!schoolId || !yearId)
-      throw new Error("Validation Error: schoolId and yearId required.");
-
+    yearId: string,
+  ): Promise<ChartDataPoint[]> {
     try {
-      const result = await ClassroomEnrolement.findAll({
-        attributes: [[fn("COUNT", col("student_id")), "studentCount"]],
-        where: { schoolId } as WhereOptions<ClassroomEnrolement>,
+      const results = await ClassroomEnrolement.findAll({
+        attributes: [[fn("COUNT", col("student_id")), "value"]],
+        where: { schoolId } as WhereOptions,
         include: [
           {
             model: ClassRoom,
-            attributes: [], // Seulement pour la jointure
+            attributes: [],
             required: true,
-            where: { yearId } as WhereOptions<ClassRoom>,
+            where: { yearId } as WhereOptions,
             include: [
-              {
-                model: Option,
-                attributes: ["optionName"],
-                required: true,
-              },
+              { model: Option, attributes: ["optionName"], required: true },
             ],
           },
         ],
@@ -246,105 +152,100 @@ export class StatsService {
         raw: true,
       });
 
-      return result.map((item: any) => ({
-        optionName: item["ClassRoom.Option.optionName"],
-        studentCount: parseInt(item.studentCount, 10),
+      return results.map((item: any) => ({
+        label: item["ClassRoom.Option.optionName"],
+        value: Number(item.value),
       }));
     } catch (error) {
-      logger.error("StatsService.getStudentsCountByOption failed.", error);
-      throw new Error(
-        "Service unavailable: Cannot retrieve student count by option."
-      );
+      logger.error("getStudentsCountByOption failed", error);
+      return [];
     }
   }
 
   /**
-   * @description Obtient le nombre total de classes par section (e.g., Primaire, Secondaire).
-   * @param schoolId L'ID de l'école.
-   * @returns Un objet avec le décompte des classes par section.
-   * @throws {Error} Erreur de service.
+   * Taux de rétention (KPI complexe)
+   * Retourne un pourcentage pour un graphique de type "Radial" ou "Gauge"
    */
-  static async getClassCountBySection(schoolId: string): Promise<StatsCount> {
+  static async getRetentionMetrics(
+    schoolId: string,
+    yearId: string,
+  ): Promise<ChartDataPoint[]> {
+    const where = { schoolId, status: STUDENT_STATUS.EN_COURS };
+    const include = [{ model: ClassRoom, required: true, where: { yearId } }];
+
+    const [total, news] = await Promise.all([
+      ClassroomEnrolement.count({ where, include }),
+      ClassroomEnrolement.count({
+        where: { ...where, isNewStudent: true },
+        include,
+      }),
+    ]);
+
+    const oldStudents = total - news;
+
+    return [
+      { label: "Anciens", value: oldStudents, fill: "var(--color-old)" },
+      { label: "Nouveaux", value: news, fill: "var(--color-new)" },
+    ];
+  }
+
+  /**
+   * Récupère la répartition des élèves par statut (Actif, Exclu, etc.)
+   * @param schoolId ID de l'école
+   * @param yearId ID de l'année scolaire (optionnel pour voir l'historique global)
+   */
+  static async getStudentStatusStats(
+    schoolId: string,
+    yearId: string,
+  ): Promise<ChartDataPoint[]> {
     try {
-      const result = await ClassRoom.findAll({
-        attributes: ["section", [fn("COUNT", col("section")), "count"]],
-        where: { schoolId } as WhereOptions<ClassRoom>,
-        group: ["section"],
+      // On récupère les comptes groupés par statut en une seule requête SQL
+      const results = await ClassroomEnrolement.findAll({
+        attributes: ["status", [fn("COUNT", col("enrolement_id")), "count"]],
+        where: { schoolId, yearId } as WhereOptions,
+        group: ["status"],
         raw: true,
       });
 
-      return result.reduce((acc, item: any) => {
-        acc[item.section] = parseInt(item.count, 10);
-        return acc;
-      }, {} as StatsCount);
+      // Mapping des labels pour l'affichage (traduction des ENUMS)
+      const statusLabels: Record<string, { label: string; color: string }> = {
+        [STUDENT_STATUS.EN_COURS]: {
+          label: "Actifs / Abonnés",
+          color: "var(--color-active)",
+        },
+        [STUDENT_STATUS.ABANDON]: {
+          label: "Abandons",
+          color: "var(--color-abandon)",
+        },
+        [STUDENT_STATUS.EXCLUT]: {
+          label: "Exclus",
+          color: "var(--color-excluded)",
+        },
+        // [STUDENT_STATUS.TRANSFERE]: { label: "Transférés", color: "var(--color-transferred)" },
+      };
+
+      // Formatage pour Shadcn Charts
+      return results.map((item: any) => ({
+        label: statusLabels[item.status]?.label || item.status,
+        value: Number(item.count),
+        fill: statusLabels[item.status]?.color || "var(--color-default)",
+      }));
     } catch (error) {
-      logger.error("StatsService.getClassCountBySection failed.", error);
-      throw new Error(
-        "Service unavailable: Cannot retrieve class count by section."
-      );
+      logger.error("StatsService.getStudentStatusStats failed", error);
+      return [];
     }
   }
 
-  // =============================================================================
-  //  MÉTHODES AVANCÉES (TENDANCES ET KPIS)
-  // =============================================================================
-
   /**
-   * @description Calcule le ratio Hommes/Femmes (KPI de parité).
-   * @param schoolId L'ID de l'école.
-   * @returns {Promise<number>} Ratio Hommes / Femmes.
+   * KPI Rapide pour les cartes de résumé (Summary Cards)
    */
-  static async getGenderRatio(schoolId: string): Promise<number> {
-    const counts = await this.getStudentCountByGender(schoolId);
-    const maleCount = counts["M"] || 0;
-    const femaleCount = counts["F"] || 0;
+  static async getQuickKpis(schoolId: string, yearId: string) {
+    const stats = await this.getStudentStatusStats(schoolId, yearId);
 
-    if (femaleCount === 0) return maleCount > 0 ? Infinity : 0; // Gère la division par zéro
-
-    return maleCount / femaleCount;
-  }
-
-  /**
-   * @description Calcule le taux de redoublement (Basé sur une année fictive de redoublement/ré-inscription).
-   * NOTE: Ceci nécessite une logique métier spécifique pour identifier les redoublants (ex: année précédente vs année actuelle).
-   * Nous allons simuler un taux basé sur les étudiants qui ne sont *pas* marqués comme 'isNewStudent' et qui ne sont pas exclus.
-   *
-   * @param schoolId L'ID de l'école.
-   * @param yearId L'ID de l'année scolaire.
-   * @returns {Promise<number>} Le taux de non-nouveaux étudiants (incluant les redoublants/anciens).
-   */
-  static async getRetentionRate(
-    schoolId: string,
-    yearId: string
-  ): Promise<number> {
-    try {
-      // 1. Total des inscriptions actives pour l'année
-      const totalEnrolements = await ClassroomEnrolement.count({
-        where: {
-          schoolId,
-          status: STUDENT_STATUS.EN_COURS,
-        } as WhereOptions<ClassroomEnrolement>,
-        include: [{ model: ClassRoom, required: true, where: { yearId } }],
-      });
-
-      if (totalEnrolements === 0) return 0;
-
-      // 2. Nombre de nouveaux étudiants (simulé pour l'année)
-      const newStudentsCount = await ClassroomEnrolement.count({
-        where: {
-          schoolId,
-          isNewStudent: true,
-          status: STUDENT_STATUS.EN_COURS,
-        } as WhereOptions<ClassroomEnrolement>,
-        include: [{ model: ClassRoom, required: true, where: { yearId } }],
-      });
-
-      // Rétention = 1 - (Nouveaux / Total)
-      const nonNewStudents = totalEnrolements - newStudentsCount;
-      return nonNewStudents / totalEnrolements;
-    } catch (error) {
-      logger.error("StatsService.getRetentionRate failed.", error);
-      throw new Error("Service unavailable: Cannot retrieve retention rate.");
-    }
+    return {
+      total: stats.reduce((acc, curr) => acc + curr.value, 0),
+      active: stats.find((s) => s.label.includes("Actif"))?.value || 0,
+      excluded: stats.find((s) => s.label.includes("Exclu"))?.value || 0,
+    };
   }
 }

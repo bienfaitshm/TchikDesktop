@@ -9,6 +9,7 @@ import * as schools from "./schools";
 import * as options from "./options";
 import * as classrooms from "./classrooms";
 import * as enrollments from "./enrollments";
+import * as stats from "./statistics";
 import * as exportDocument from "./document-exports";
 
 const initializerLogger = getLogger("IPC Server");
@@ -51,6 +52,14 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   enrollments.UpdateEnrollement,
   enrollments.DeleteEnrollement,
 
+  // stats
+  stats.GetStatsByClass,
+  stats.GetStatsByGender,
+  stats.GetStatsByOption,
+  stats.GetStatsByStatus,
+  stats.GetStatsRetention,
+  stats.GetStatsSummary,
+
   // export data
   exportDocument.ExportDocuments,
   exportDocument.GetInfosDocumentExports,
@@ -58,5 +67,5 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
 
 export const instantiatedHandlers = instantiateClasses(
   HANDLER_CLASSES_REGISTRY,
-  initializerLogger
+  initializerLogger,
 );

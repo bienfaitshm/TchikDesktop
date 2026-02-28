@@ -23,7 +23,7 @@ export const SchoolFilterSchema = WithPaginationAndSortSchema(
     name: orArray(SchoolAttributesSchema.shape.name),
     adress: orArray(SchoolAttributesSchema.shape.adress),
     town: orArray(SchoolAttributesSchema.shape.town),
-  })
+  }),
 );
 
 // 2. User Filter
@@ -36,7 +36,7 @@ export const UserFilterSchema = WithPaginationAndSortSchema(
     gender: orArray(UserAttributesSchema.shape.gender.unwrap()),
     role: orArray(UserAttributesSchema.shape.role.unwrap()),
     schoolId: orArray(UserAttributesSchema.shape.schoolId.unwrap()),
-  })
+  }),
 );
 
 // 3. Option Filter
@@ -47,7 +47,7 @@ export const OptionFilterSchema = WithPaginationAndSortSchema(
     optionShortName: orArray(OptionAttributesSchema.shape.optionShortName),
     schoolId: orArray(OptionAttributesSchema.shape.schoolId),
     section: orArray(OptionAttributesSchema.shape.section.unwrap()),
-  })
+  }),
 );
 
 // 4. StudyYear Filter
@@ -56,7 +56,7 @@ export const StudyYearFilterSchema = WithPaginationAndSortSchema(
     yearId: orArray(StudyYearAttributesSchema.shape.yearId),
     yearName: orArray(StudyYearAttributesSchema.shape.yearName),
     schoolId: orArray(StudyYearAttributesSchema.shape.schoolId),
-  })
+  }),
 );
 
 // 5. Classroom Filter
@@ -68,9 +68,9 @@ export const ClassroomFilterSchema = WithPaginationAndSortSchema(
     schoolId: orArray(ClassroomAttributesSchema.shape.schoolId),
     section: orArray(ClassroomAttributesSchema.shape.section.unwrap()),
     optionId: orArray(
-      ClassroomAttributesSchema.shape.optionId.unwrap().unwrap()
+      ClassroomAttributesSchema.shape.optionId.unwrap().unwrap(),
     ),
-  })
+  }),
 );
 
 // 6. Enrolement Filter
@@ -82,7 +82,7 @@ export const EnrolementFilterSchema = WithPaginationAndSortSchema(
     schoolId: orArray(EnrolementAttributesSchema.shape.schoolId),
     yearId: orArray(EnrolementAttributesSchema.shape.yearId),
     status: orArray(EnrolementAttributesSchema.shape.status.unwrap()),
-  })
+  }),
 );
 
 // 7. Enrolement Action Filter
@@ -91,5 +91,12 @@ export const EnrolementActionFilterSchema = WithPaginationAndSortSchema(
     actionId: orArray(EnrolementActionAttributesSchema.shape.actionId),
     enrolementId: orArray(EnrolementActionAttributesSchema.shape.enrolementId),
     action: orArray(EnrolementActionAttributesSchema.shape.action),
-  })
+  }),
 );
+
+// 8. Stats
+
+export const StatsFilterSchema = z.object({
+  schoolId: z.string().min(1, "L'ID de l'école est requis"),
+  yearId: z.string().min(1, "L'ID de l'année est requis"),
+});
