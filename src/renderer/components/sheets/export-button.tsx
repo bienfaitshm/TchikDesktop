@@ -10,7 +10,7 @@ import {
     SheetTrigger,
 } from "@/renderer/components/ui/sheet";
 import { FileText, Loader } from "lucide-react";
-import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
+import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { FormSubmitter } from "@/renderer/components/form/form-submiter";
 import { DocumentEnrollmentForm, DocumentFormData } from "@/renderer/components/form/documents/classroom-document-export";
@@ -112,4 +112,4 @@ export const SheetDataExport: React.FC<WithSchoolAndYearId<{ currentClassroom?: 
 };
 
 
-export const ButtonDataExport = withCurrentConfig(SheetDataExport)
+export const ButtonDataExport = withSchoolConfig(SheetDataExport)

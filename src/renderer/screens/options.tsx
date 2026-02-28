@@ -17,7 +17,7 @@ import type { DataTableMenu } from "@/renderer/components/button-menus";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { useOptionManagement } from "@/renderer/hooks/query.mangements";
-import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
+import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { createMenuActionManager } from "@/renderer/utils/handle-action";
 import { useGetOptions } from "@/renderer/libs/queries/option";
@@ -158,4 +158,4 @@ const Option: React.FC<WithSchoolAndYearId> = (props) => {
     );
 };
 
-export const OptionPage = withCurrentConfig(Option);
+export const OptionPage = withSchoolConfig(Option);

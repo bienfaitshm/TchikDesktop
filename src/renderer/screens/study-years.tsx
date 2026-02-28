@@ -19,7 +19,7 @@ import { TypographyH3 } from "@/renderer/components/ui/typography";
 import { StudyYearColumns } from "@/renderer/components/tables/columns.study-years";
 import type { TStudyYear } from "@/commons/types/models";
 import { useStudyYearManagement } from "@/renderer/hooks/query.mangements";
-import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
+import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { createMenuActionManager } from "@/renderer/utils/handle-action";
 import { useGetStudyYears } from "@/renderer/libs/queries/school";
@@ -150,4 +150,4 @@ const SttudyYear: React.FC<WithSchoolAndYearId> = (props) => {
     );
 };
 
-export const StudyYearsPage = withCurrentConfig(SttudyYear);
+export const StudyYearsPage = withSchoolConfig(SttudyYear);

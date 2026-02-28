@@ -7,7 +7,7 @@ import { ButtonLoader } from "@/renderer/components/form/button-loader"
 
 import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options"
 import { useQuickEnrollement } from "@/renderer/hooks/query.actions"
-import { withCurrentConfig } from "@/renderer/hooks/with-application-config"
+import { withSchoolConfig } from "@/renderer/hooks/with-application-config"
 
 
 const InscriptionFormLoader: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
@@ -46,4 +46,4 @@ const Inscription: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
     )
 }
 
-export const QuickEnrollement = withCurrentConfig(Inscription)
+export const QuickEnrollement = withSchoolConfig(Inscription)

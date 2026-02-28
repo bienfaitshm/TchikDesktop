@@ -19,7 +19,7 @@ import { ClassroomColumns } from "@/renderer/components/tables/columns.classroom
 import type { DataTableMenu } from "@/renderer/components/button-menus";
 import { LayoutGrid, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
+import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { createMenuActionManager } from "@/renderer/utils/handle-action";
 import {
@@ -191,4 +191,4 @@ const Classroom: React.FC<WithSchoolAndYearId> = (props) => {
 };
 
 
-export const ClassroomPage = withCurrentConfig(Classroom);
+export const ClassroomPage = withSchoolConfig(Classroom);

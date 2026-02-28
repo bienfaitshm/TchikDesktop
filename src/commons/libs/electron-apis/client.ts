@@ -46,26 +46,26 @@ interface IClient {
   create(params: TCreateClientParams): IClient;
   get<Data = unknown>(
     route: string,
-    config?: TConfig
+    config?: TConfig,
   ): Promise<TResponse<Data>>;
   delete<Data = unknown>(
     route: string,
-    config?: TConfig
+    config?: TConfig,
   ): Promise<TResponse<Data>>;
   post<Data = unknown, TData = unknown>(
     route: string,
     data: TData,
-    config?: TConfig
+    config?: TConfig,
   ): Promise<TResponse<Data>>;
   put<Data = unknown, TData = unknown>(
     route: string,
     data: TData,
-    config?: TConfig
+    config?: TConfig,
   ): Promise<TResponse<Data>>;
   patch<Data = unknown, TData = unknown>(
     route: string,
     data: TData,
-    config?: TConfig
+    config?: TConfig,
   ): Promise<TResponse<Data>>;
 }
 
@@ -87,7 +87,6 @@ export class Client implements IClient {
    */
   create({ headers, ipcRender }: TCreateClientParams) {
     if (ipcRender) {
-      console.log(JSON.stringify(ipcRender, null, 4), ipcRender);
       this.ipcRender = ipcRender;
     }
     this.headers = headers || {};
@@ -102,7 +101,7 @@ export class Client implements IClient {
    */
   get<Data = unknown>(
     route: string,
-    config?: TConfig
+    config?: TConfig,
   ): Promise<TResponse<Data>> {
     if (!this.ipcRender) {
       throw new Error("IPC Renderer is not initialized.");
@@ -110,8 +109,8 @@ export class Client implements IClient {
     return actionFn<Data>(
       this.ipcRender?.invoke(
         formatRouteMethodName(route, Methods.GET),
-        this.getRequest({ config })
-      )
+        this.getRequest({ config }),
+      ),
     );
   }
 
@@ -123,7 +122,7 @@ export class Client implements IClient {
    */
   delete<Data = unknown>(
     route: string,
-    config?: TConfig
+    config?: TConfig,
   ): Promise<TResponse<Data>> {
     if (!this.ipcRender) {
       throw new Error("IPC Renderer is not initialized.");
@@ -131,8 +130,8 @@ export class Client implements IClient {
     return actionFn<Data>(
       this.ipcRender?.invoke(
         formatRouteMethodName(route, Methods.DELETE),
-        this.getRequest({ config })
-      )
+        this.getRequest({ config }),
+      ),
     );
   }
 
@@ -146,7 +145,7 @@ export class Client implements IClient {
   post<Data = unknown, TData = unknown>(
     route: string,
     data: TData,
-    config?: TConfig
+    config?: TConfig,
   ): Promise<TResponse<Data>> {
     if (!this.ipcRender) {
       throw new Error("IPC Renderer is not initialized.");
@@ -154,8 +153,8 @@ export class Client implements IClient {
     return actionFn(
       this.ipcRender?.invoke(
         formatRouteMethodName(route, Methods.POST),
-        this.getRequest({ config, data })
-      )
+        this.getRequest({ config, data }),
+      ),
     );
   }
 
@@ -169,7 +168,7 @@ export class Client implements IClient {
   put<Data = unknown, TData = unknown>(
     route: string,
     data: TData,
-    config?: TConfig
+    config?: TConfig,
   ): Promise<TResponse<Data>> {
     if (!this.ipcRender) {
       throw new Error("IPC Renderer is not initialized.");
@@ -177,8 +176,8 @@ export class Client implements IClient {
     return actionFn<Data>(
       this.ipcRender?.invoke(
         formatRouteMethodName(route, Methods.PUT),
-        this.getRequest({ config, data })
-      )
+        this.getRequest({ config, data }),
+      ),
     );
   }
 
@@ -192,7 +191,7 @@ export class Client implements IClient {
   patch<Data = unknown, TData = unknown>(
     route: string,
     data: TData,
-    config?: TConfig
+    config?: TConfig,
   ): Promise<TResponse<Data>> {
     if (!this.ipcRender) {
       throw new Error("IPC Renderer is not initialized.");
@@ -200,8 +199,8 @@ export class Client implements IClient {
     return actionFn(
       this.ipcRender?.invoke(
         formatRouteMethodName(route, Methods.PATCH),
-        this.getRequest({ config, data })
-      )
+        this.getRequest({ config, data }),
+      ),
     );
   }
 

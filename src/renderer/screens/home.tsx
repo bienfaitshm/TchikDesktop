@@ -1,7 +1,7 @@
 import { TypographyH2 } from "@/renderer/components/ui/typography";
 import { ChartPie } from "../components/charts/pie";
 import { BarChart } from "../components/charts/gender-bar";
-import { withCurrentConfig } from "../hooks/with-application-config";
+import { withSchoolConfig } from "../hooks/with-application-config";
 import { useDashboardStatistics } from "../libs/queries/statistiques";
 import { WithSchoolAndYearId } from "@/commons/types/services";
 import { SecondaryStudentsByOptionChartConfig, TOTAL_STUDENT } from "../components/charts/constants";
@@ -44,4 +44,4 @@ export const Home: React.FC<WithSchoolAndYearId> = (props) => {
   );
 };
 
-export const HomePage = withCurrentConfig(Home)
+export const HomePage = withSchoolConfig(Home)

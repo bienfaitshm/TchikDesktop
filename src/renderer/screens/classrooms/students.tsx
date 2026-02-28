@@ -22,7 +22,7 @@ import { useGetClassroomById } from "@/renderer/libs/queries/classroom";
 import { ButtonDataExport } from "@/renderer/components/sheets/export-button";
 import { ButtonSheetStudentStat } from "./students.stat";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
+import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
 import { EnrollmentDialog } from "@/renderer/components/dialog/quick-enrollment-dialog-form";
 import { StudentDetailsCard } from "@/renderer/components/student-details-infos";
@@ -60,7 +60,7 @@ const ClassroomHeader: React.FC<{ classId: string }> = ({ classId }) => {
 /**
  * Composant principal affichant la liste des élèves pour une classe spécifique.
  * Il récupère les données des élèves et gère les interactions (détails, ajout, export, stats).
- * Ce composant est enveloppé par `withCurrentConfig` pour obtenir `schoolId` et `yearId`.
+ * Ce composant est enveloppé par `withSchoolConfig` pour obtenir `schoolId` et `yearId`.
  */
 const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
     const { classroomId } = useParams<{ classroomId: string }>();
@@ -137,6 +137,6 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
     );
 };
 
-// Exporte le composant StudentListContent enveloppé dans le HOC withCurrentConfig.
+// Exporte le composant StudentListContent enveloppé dans le HOC withSchoolConfig.
 // Cela assure que `schoolId` et `yearId` sont injectés ou qu'un message de configuration est affiché.
-export const StudentsOfClassrrom = withCurrentConfig(StudentListContent);
+export const StudentsOfClassrrom = withSchoolConfig(StudentListContent);
