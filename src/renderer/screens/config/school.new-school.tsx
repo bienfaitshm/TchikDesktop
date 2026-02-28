@@ -1,15 +1,12 @@
-import { TypographyH4 } from "@/renderer/components/ui/typography";
 import { useNavigate } from "react-router";
 import { useCreateSchool } from "@/renderer/libs/queries/school";
-
 import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
 import { SchoolForm, type SchoolFormData } from "@/renderer/components/form/school-form";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import React from "react";
 import type { SchoolAttributes } from "@/commons/types/models";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
-import { Button } from "@/renderer/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ConfigHeader } from "./config.header";
 
 
 
@@ -66,7 +63,7 @@ export const SchoolCreationForm: React.FC = () => {
     return (
         <div>
             <SchoolForm onSubmit={onSubmit}>
-                <div className="flex justify-end pt-4"> {/* Added padding top */}
+                <div className="flex justify-end pt-4">
                     <ButtonLoader
                         isLoading={mutation.isPending}
                         disabled={mutation.isPending}
@@ -80,17 +77,9 @@ export const SchoolCreationForm: React.FC = () => {
 };
 
 export const SchoolConfigurationNewSchoolScreen: React.FC = () => {
-    const navigate = useNavigate();
     return (
         <div className="space-y-5">
-            <div className="flex items-center gap-5">
-                <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
-                    <ArrowLeft />
-                </Button>
-                <TypographyH4 className="mb-0 text-center md:text-left">
-                    Creer l'établissement sur lequel vous souhaitez travailler.
-                </TypographyH4>
-            </div>
+            <ConfigHeader showBackButton title="Creer l'établissement sur lequel vous souhaitez travailler." />
             <SchoolCreationForm />
         </div>
     )

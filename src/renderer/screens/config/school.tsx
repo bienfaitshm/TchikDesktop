@@ -14,6 +14,7 @@ import { Suspense as DataSuspense } from "@/renderer/libs/queries/suspense";
 
 import React from "react";
 import { SchoolCreationForm, useSchoolNavigationAndSelection } from "./school.new-school";
+import { ConfigHeader } from "./config.header";
 
 
 /**
@@ -40,10 +41,8 @@ const SchoolListDisplayTable: React.FC = () => {
     }
 
     return (
-        <div>
-            <TypographyH4 className="mb-6 text-center md:text-left">
-                Veuillez choisir l'établissement sur lequel vous souhaitez travailler.
-            </TypographyH4>
+        <div className="space-y-4">
+            <ConfigHeader title=" Veuillez choisir l'établissement sur lequel vous souhaitez travailler." />
             <Table>
                 <TableCaption>
                     Liste des établissements enregistrés. <Link className="text-blue-600 hover:underline text-sm" to="/configuration/school/new">Ajouter un nouvel établissement</Link>

@@ -61,6 +61,6 @@ export function withSchoolConfig<TProps extends object>(
     // Configuration du nom d'affichage pour les React DevTools
     const displayName = WrappedComponent.displayName || WrappedComponent.name || "Component";
     ComponentWithConfig.displayName = `withSchoolConfig(${displayName})`;
-
+    console.log("withShoolConfig", ComponentWithConfig.displayName)
     return ComponentWithConfig;
 }
