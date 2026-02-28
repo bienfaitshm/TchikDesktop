@@ -148,16 +148,21 @@ export class StatsService {
             required: true,
             where: { yearId } as WhereOptions,
             include: [
-              { model: Option, attributes: ["optionName"], required: true },
+              {
+                model: Option,
+                attributes: ["optionShortName"],
+                required: true,
+              },
             ],
           },
         ],
         group: [col("ClassRoom->Option.option_name")],
+        order: [[col("ClassRoom->Option.option_short_name"), "ASC"]],
         raw: true,
       });
 
       return results.map((item: any) => ({
-        label: item["ClassRoom.Option.optionName"],
+        label: item["ClassRoom.Option.optionShortName"],
         value: Number(item.value),
       }));
     } catch (error) {
