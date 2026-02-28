@@ -112,7 +112,7 @@ const Home: React.FC<WithSchoolAndYearId> = (props) => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
 
         {/* Effectifs par Classe (Principal) */}
-        <Card className="lg:col-span-8 shadow-sm">
+        <Card className="lg:col-span-12 shadow-sm">
           <CardHeader>
             <CardTitle>Effectifs par Niveau</CardTitle>
             <CardDescription>Nombre d'élèves par classe physique</CardDescription>
