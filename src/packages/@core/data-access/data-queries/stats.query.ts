@@ -167,7 +167,6 @@ export class StatsService {
         value: Number(item.value),
       }));
     } catch (error) {
-      console.log(error);
       logger.error("getStudentsCountByOption failed", error);
       return [];
     }
@@ -181,7 +180,7 @@ export class StatsService {
     schoolId: string,
     yearId: string,
   ): Promise<ChartDataPoint[]> {
-    const where = { schoolId, status: STUDENT_STATUS.EN_COURS };
+    const where = { schoolId, yearId, status: STUDENT_STATUS.EN_COURS };
     const include = [{ model: ClassRoom, required: true, where: { yearId } }];
 
     const [total, news] = await Promise.all([
