@@ -232,7 +232,7 @@ export class EnrolementQuery {
         group: ["status"],
         raw: true,
       });
-      return results.map((item) => item.toJSON());
+      return results;
     } catch (error) {
       logger.error("StatsService.getStudentStatusStats failed", error);
       return [];
@@ -295,45 +295,47 @@ export class EnrolementQuery {
     student,
     isInSystem,
     studentId,
-    ...enrolement
+    ...enrolementData
   }: TEnrolementQuickCreate): Promise<TEnrolement> {
+    // 1. Initialisation de la transaction DB
+    const transaction = await ClassroomEnrolement.sequelize!.transaction();
+
     try {
-      let studentInstance: TUser | null = null;
+      let finalStudentId = studentId;
+
+      // 2. Logique d'existence de l'étudiant
       if (isInSystem && studentId) {
         const existingStudent = await UserQuery.findById(studentId);
-        if (!existingStudent) {
-          throw Error("L'eleve n'existe pas");
-        }
-        studentInstance = existingStudent;
+        if (!existingStudent) throw new Error("L'élève n'existe pas.");
+      } else if (!isInSystem && student) {
+        // Idéalement, UserQuery.create devrait aussi accepter la transaction en paramètre
+        const newStudent = await UserQuery.create(
+          { ...student, schoolId: enrolementData.schoolId },
+          { transaction },
+        );
+        finalStudentId = newStudent.userId;
+      } else {
+        throw new Error("Données de l'élève manquantes.");
       }
 
-      if (!isInSystem && student) {
-        // 2. Création du nouvel utilisateur (via le QueryUser/Account)
-        studentInstance = await UserQuery.create({
-          ...student,
-          schoolId: enrolement.schoolId,
-        });
-      }
-
-      if (!studentInstance) {
-        throw Error("Erreur lors de la creation de l'eleve");
-      }
-
-      // 3. Création de l'enrôlement avec l'ID du nouvel utilisateur
-      const enrolementInstance = await ClassroomEnrolement.create({
-        ...enrolement,
-        studentId: studentInstance.userId,
-      });
-
-      logger.info(
-        `Quick Enrolement created: ${enrolementInstance.enrolementId}`,
+      // 3. Création de l'enrôlement via le Repository (lié à la transaction)
+      const enrolement = await ClassroomEnrolement.create(
         {
-          studentId: studentInstance.userId,
+          ...enrolementData,
+          studentId: finalStudentId!,
         },
+        { transaction },
       );
-      return enrolementInstance.toJSON();
+
+      // 4. Validation finale (Commit)
+      await transaction.commit();
+      logger.info(`Quick Create Success for student: ${finalStudentId}`);
+
+      return enrolement;
     } catch (error) {
-      logger.error("EnrolementService.createQuickEnrolement: Failed.", error);
+      // 5. En cas de crash, on annule tout (Rollback) ! Aucun étudiant orphelin.
+      await transaction.rollback();
+      logger.error("quickCreate transaction failed and rolled back.", error);
       throw error;
     }
   }

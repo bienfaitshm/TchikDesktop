@@ -6,6 +6,7 @@ import {
   ClassroomEnrolement,
   USER_ROLE,
   STUDENT_STATUS,
+  buildFindOptions,
 } from "@/packages/@core/data-access/db";
 import { getLogger } from "@/packages/logger";
 
@@ -62,7 +63,7 @@ export class StatsService {
   // =============================================================================
   //  MÉTRIQUES KPI (VALEURS UNIQUES)
   // =============================================================================
-
+  // TODO: add yearId
   static async getTotalStudents(schoolId: string): Promise<number> {
     return User.count({
       where: { schoolId, role: USER_ROLE.STUDENT } as WhereOptions,
