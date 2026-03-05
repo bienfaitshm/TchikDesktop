@@ -3,14 +3,16 @@ import {
   User,
   ClassRoom,
   StudyYear,
-  TEnrolement,
-  TUser,
-  TClassroom,
-  TStudyYear,
+  Option,
   buildFindOptions,
+  STUDENT_STATUS,
+  type TEnrolement,
+  type TUser,
+  type TClassroom,
+  type TStudyYear,
 } from "@/packages/@core/data-access/db";
 import { getLogger } from "@/packages/logger";
-import {
+import type {
   TEnrolementFilter,
   TEnrolementQuickCreate,
   TEnrolementCreate,
@@ -45,6 +47,17 @@ export class EnrolementQuery {
   //  FETCH OPERATIONS
   // =============================================================================
 
+  private static getFilterOptions(
+    filters: TEnrolementFilter,
+    orders?: FindOptions["order"],
+  ) {
+    if (!filters.schoolId || !filters.yearId) {
+      throw new Error("Validation Error: schoolId and yearId are required.");
+    }
+
+    return buildFindOptions(filters, orders);
+  }
+
   /**
    * Récupère la liste des enrôlements actifs pour une école et une année donnée.
    *
@@ -53,11 +66,7 @@ export class EnrolementQuery {
    * @throws {Error} Erreur de Querysi la requête DB échoue.
    */
   static async findMany(filters: TEnrolementFilter): Promise<TEnrolementDTO[]> {
-    if (!filters.schoolId || !filters.yearId) {
-      throw new Error("Validation Error: schoolId and yearId are required.");
-    }
-
-    const options = buildFindOptions(filters, DEFAULT_SORT_ORDER);
+    const options = this.getFilterOptions(filters, DEFAULT_SORT_ORDER);
 
     try {
       const enrolements = await ClassroomEnrolement.findAll({
@@ -67,16 +76,98 @@ export class EnrolementQuery {
           {
             model: ClassRoom,
             include: [StudyYear],
-            required: true, // INNER JOIN pour garantir que la classe correspond au yearId
+            required: true,
           },
         ],
       });
-      console.log("REsult", enrolements);
       return enrolements.map((e) => e.toJSON()) as TEnrolementDTO[];
     } catch (error) {
-      console.log("Error ....", error, JSON.stringify(options, null, 4));
       logger.error("EnrolementService.getEnrolements: DB query failed.", error);
-      throw new Error("Queryunavailable: Unable to retrieve enrolements.");
+      return [];
+    }
+  }
+  static async getTotalStudents(filters: TEnrolementFilter): Promise<number> {
+    const options = this.getFilterOptions(filters, DEFAULT_SORT_ORDER);
+    return ClassroomEnrolement.count(options).catch((err) => {
+      logger.error("Failed to get total students", err);
+      return 0;
+    });
+  }
+  static async getStudentsCountByClass(
+    filters: TEnrolementFilter,
+  ): Promise<unknown[]> {
+    try {
+      const options = this.getFilterOptions(filters, [
+        [Sequelize.col("ClassRoom.short_identifier"), "ASC"],
+      ]);
+
+      const results = await ClassroomEnrolement.findAll({
+        attributes: [
+          "classroomId",
+          [Sequelize.fn("COUNT", Sequelize.col("student_id")), "value"],
+        ],
+        ...options,
+        include: [
+          {
+            model: ClassRoom,
+            attributes: ["identifier", "shortIdentifier"],
+            required: true,
+          },
+        ],
+        group: [
+          Sequelize.col("ClassroomEnrolement.classroom_id"),
+          Sequelize.col("ClassRoom.class_id"),
+        ],
+        raw: true,
+      });
+
+      return results.map((item) => item.toJSON());
+    } catch (error) {
+      console.log(error);
+      logger.error("EnrolementQuery.getStudentsCountByClass failed", error);
+      return [];
+    }
+  }
+
+  /**
+   * Répartition par Option (Ex: Informatique, Gestion, etc.)
+   */
+  static async getStudentsCountByOption(
+    filters: TEnrolementFilter,
+  ): Promise<unknown[]> {
+    try {
+      const options = this.getFilterOptions(filters, [
+        Sequelize.col("ClassRoom->Option.option_short_name"),
+        "ASC",
+      ]);
+      const results = await ClassroomEnrolement.findAll({
+        attributes: [
+          [Sequelize.fn("COUNT", Sequelize.col("student_id")), "value"],
+        ],
+        ...options,
+        include: [
+          {
+            model: ClassRoom,
+            attributes: [],
+            required: true,
+            include: [
+              {
+                model: Option,
+                attributes: ["optionShortName"],
+                required: true,
+              },
+            ],
+          },
+        ],
+        group: [Sequelize.col("ClassRoom->Option.option_name")],
+        order: [[Sequelize.col("ClassRoom->Option.option_short_name"), "ASC"]],
+        raw: true,
+      });
+
+      return results.map((item) => item.toJSON());
+    } catch (error) {
+      logger.error("EnrolementQuery.getStudentsCountByOption failed", error);
+      return [];
     }
   }
 
@@ -97,12 +188,72 @@ export class EnrolementQuery {
     } catch (error) {
       logger.error(
         `EnrolementService.getEnrolementById: Error for ID ${enrolementId}.`,
-        error
+        error,
       );
-      throw new Error(
-        "Queryunavailable: Impossible de récupérer l'enrôlement."
-      );
+      return null;
     }
+  }
+
+  /**
+   * Taux de rétention (KPI complexe)
+   * Retourne un pourcentage pour un graphique de type "Radial" ou "Gauge"
+   */
+  static async getRetentionMetrics(filters: TEnrolementFilter) {
+    const options = this.getFilterOptions(filters, DEFAULT_SORT_ORDER);
+    const include = [{ model: ClassRoom, required: true }];
+
+    const [total, news] = await Promise.all([
+      ClassroomEnrolement.count({ ...options, include }),
+      ClassroomEnrolement.count({
+        where: { ...options.where, isNewStudent: true },
+        include,
+      }),
+    ]);
+
+    const oldStudents = total - news;
+
+    return { total, oldStudents, news };
+  }
+
+  /**
+   * Récupère la répartition des élèves par statut (Actif, Exclu, etc.)
+   * @param schoolId ID de l'école
+   * @param yearId ID de l'année scolaire (optionnel pour voir l'historique global)
+   */
+  static async getStudentStatusStats(filters: TEnrolementFilter) {
+    try {
+      const options = this.getFilterOptions(filters, DEFAULT_SORT_ORDER);
+      const results = await ClassroomEnrolement.findAll({
+        ...options,
+        attributes: [
+          "status",
+          [Sequelize.fn("COUNT", Sequelize.col("enrolement_id")), "count"],
+        ],
+        group: ["status"],
+        raw: true,
+      });
+      return results.map((item) => item.toJSON());
+    } catch (error) {
+      logger.error("StatsService.getStudentStatusStats failed", error);
+      return [];
+    }
+  }
+
+  /**
+   * KPI Rapide pour les cartes de résumé (Summary Cards)
+   */
+  static async getQuickKpis(filters: TEnrolementFilter) {
+    const stats = await this.getStudentStatusStats(filters);
+
+    return {
+      total: stats.reduce((acc, curr) => acc + curr.count, 0),
+      active:
+        stats.find((s) => s.status === STUDENT_STATUS.EN_COURS)?.count || 0,
+      excluded:
+        stats.find((s) => s.status === STUDENT_STATUS.EXCLUT)?.count || 0,
+      inactive:
+        stats.find((s) => s.status === STUDENT_STATUS.ABANDON)?.count || 0,
+    };
   }
 
   // =============================================================================
@@ -127,7 +278,7 @@ export class EnrolementQuery {
     } catch (error) {
       logger.error(
         "EnrolementService.createEnrolement: Creation failed.",
-        error
+        error,
       );
       throw error;
     }
@@ -178,7 +329,7 @@ export class EnrolementQuery {
         `Quick Enrolement created: ${enrolementInstance.enrolementId}`,
         {
           studentId: studentInstance.userId,
-        }
+        },
       );
       return enrolementInstance.toJSON();
     } catch (error) {
@@ -196,7 +347,7 @@ export class EnrolementQuery {
    */
   static async update(
     enrolementId: string,
-    data: TEnrolementUpdate
+    data: TEnrolementUpdate,
   ): Promise<TEnrolement | null> {
     if (!enrolementId) return null;
 
@@ -205,7 +356,7 @@ export class EnrolementQuery {
 
       if (!enrolement) {
         logger.warn(
-          `EnrolementService.updateEnrolement: ID ${enrolementId} not found.`
+          `EnrolementService.updateEnrolement: ID ${enrolementId} not found.`,
         );
         return null;
       }
@@ -214,7 +365,7 @@ export class EnrolementQuery {
     } catch (error) {
       logger.error(
         `EnrolementService.updateEnrolement: Error updating ${enrolementId}.`,
-        error
+        error,
       );
       throw new Error("Queryunavailable: Update operation failed.");
     }
@@ -237,7 +388,7 @@ export class EnrolementQuery {
     } catch (error) {
       logger.error(
         `EnrolementService.deleteEnrolement: Error deleting ${enrolementId}.`,
-        error
+        error,
       );
       throw new Error("Queryerror: Delete operation failed.");
     }
