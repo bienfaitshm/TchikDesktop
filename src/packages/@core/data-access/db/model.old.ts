@@ -74,7 +74,7 @@ School.init(
     sequelize,
     tableName: "Schools",
     modelName: "School",
-  }
+  },
 );
 
 // =============================================================================
@@ -171,7 +171,7 @@ User.init(
     sequelize,
     tableName: "Users",
     modelName: "User",
-  }
+  },
 );
 
 // =============================================================================
@@ -218,7 +218,7 @@ Option.init(
     tableName: "Options",
     modelName: "Option",
     timestamps: false,
-  }
+  },
 );
 
 // =============================================================================
@@ -260,7 +260,7 @@ StudyYear.init(
     sequelize,
     tableName: "StudyYears",
     modelName: "StudyYear",
-  }
+  },
 );
 
 // =============================================================================
@@ -319,7 +319,7 @@ ClassRoom.init(
     sequelize,
     tableName: "ClassRooms",
     modelName: "ClassRoom",
-  }
+  },
 );
 
 // =============================================================================
@@ -387,7 +387,7 @@ ClassroomEnrolement.init(
     sequelize,
     tableName: "ClassroomEnrolements",
     modelName: "ClassroomEnrolement",
-  }
+  },
 );
 
 // =============================================================================
@@ -435,7 +435,7 @@ ClassroomEnrolementAction.init(
     sequelize,
     tableName: "ClassroomEnrolementActions",
     modelName: "ClassroomEnrolementAction",
-  }
+  },
 );
 
 // =============================================================================
