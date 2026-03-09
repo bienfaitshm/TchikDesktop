@@ -90,7 +90,7 @@ SeatingAssignment.init(
     enrolementId: {
       type: DataTypes.STRING,
       allowNull: false,
-      field: "classroom_id",
+      field: "enrolement_id",
     },
     rowPosition: {
       type: DataTypes.INTEGER,
@@ -108,7 +108,7 @@ SeatingAssignment.init(
     tableName: "SeatingAssignments",
     modelName: "SeatingAssignment",
     indexes: [
-      { unique: true, fields: ["session_id", "student_id"] },
+      { unique: true, fields: ["session_id", "enrolement_id"] },
       {
         unique: true,
         fields: [

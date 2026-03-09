@@ -2,7 +2,6 @@ import { app, shell, BrowserWindow, dialog } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { autoUpdater } from "electron-updater";
-// Importation de electron-log pour les événements de l'updater, mais nous l'encapsulons
 
 import icon from "../../resources/icon.png?asset";
 import { sequelize, performBackup } from "@/packages/@core/data-access/db";
@@ -37,7 +36,7 @@ const createMainWindow = (): void => {
 
   // Synchronisation de la base de données
   dbLogger.info(
-    `Tentative de synchronisation de la base de données (ALTER_DB: ${ALTER_DB}).`
+    `Tentative de synchronisation de la base de données (ALTER_DB: ${ALTER_DB}).`,
   );
   sequelize
     .sync({ alter: ALTER_DB, logging: false })
@@ -51,14 +50,15 @@ const createMainWindow = (): void => {
     })
     .catch((error) => {
       // Log professionnel en cas d'échec de la DB
+      console.log("error", error);
       dbLogger.error(
         "Échec de la synchronisation de la base de données!",
-        error
+        error,
       );
       // Optionnel: Afficher une boîte de dialogue critique à l'utilisateur
       dialog.showErrorBox(
         "Erreur Critique de Démarrage",
-        "La base de données n'a pas pu être initialisée. L'application pourrait ne pas fonctionner correctement."
+        "La base de données n'a pas pu être initialisée. L'application pourrait ne pas fonctionner correctement.",
       );
     });
 
@@ -76,7 +76,7 @@ const createMainWindow = (): void => {
   // Chargement de l'URL ou du fichier
   if (is.dev && process.env.ELECTRON_RENDERER_URL) {
     mainLogger.info(
-      `Chargement de l'URL de développement: ${process.env.ELECTRON_RENDERER_URL}`
+      `Chargement de l'URL de développement: ${process.env.ELECTRON_RENDERER_URL}`,
     );
     mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
@@ -96,7 +96,7 @@ app.whenReady().then(async () => {
 
   app.on("browser-window-created", (_, window) => {
     mainLogger.info(
-      "Nouvelle fenêtre de navigateur créée, optimisation des raccourcis."
+      "Nouvelle fenêtre de navigateur créée, optimisation des raccourcis.",
     );
     optimizer.watchWindowShortcuts(window);
   });
@@ -106,7 +106,7 @@ app.whenReady().then(async () => {
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       mainLogger.info(
-        'Événement "activate": Recréation de la fenêtre principale.'
+        'Événement "activate": Recréation de la fenêtre principale.',
       );
       createMainWindow();
     }
@@ -116,7 +116,7 @@ app.whenReady().then(async () => {
 app.on("window-all-closed", async () => {
   if (process.platform !== "darwin") {
     mainLogger.info(
-      'Événement "window-all-closed": Fermeture de l\'application.'
+      'Événement "window-all-closed": Fermeture de l\'application.',
     );
     await performBackup();
     app.quit();
@@ -173,7 +173,7 @@ autoUpdater.on("update-downloaded", () => {
     .then((result) => {
       if (result.response === 0) {
         updaterLogger.info(
-          "Commande de redémarrage et d'installation de la mise à jour."
+          "Commande de redémarrage et d'installation de la mise à jour.",
         );
         autoUpdater.quitAndInstall();
       } else {

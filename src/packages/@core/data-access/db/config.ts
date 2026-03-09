@@ -4,11 +4,10 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import { getLogger } from "@/packages/logger";
 
-// Logger dédié pour la configuration de la base de données
 const dbLogger = getLogger("DataBase");
 export const DEFAULT_DB_FILENAME = "./database.sqlite";
 const BACKUP_DIR = "./backups";
-// Limite le nombre de sauvegardes pour ne pas saturer le disque
+
 const MAX_BACKUPS = 5;
 
 const config: Options = {
@@ -30,13 +29,11 @@ export const sequelize = new Sequelize(config);
  */
 async function cleanupOldBackups(): Promise<void> {
   try {
+    const [dbFilname] = path.basename(DEFAULT_DB_FILENAME).split(".");
     const files = await fs.readdir(BACKUP_DIR);
 
     // Filtrer uniquement les fichiers de sauvegarde (commence par le nom de la DB)
-    const dbFiles = files.filter((f) =>
-      f.startsWith(path.basename(DEFAULT_DB_FILENAME)),
-    );
-
+    const dbFiles = files.filter((f) => f.startsWith(path.basename(dbFilname)));
     if (dbFiles.length > MAX_BACKUPS) {
       // Trie les fichiers par date (du plus ancien au plus récent)
       const sortedFiles = dbFiles

@@ -2,7 +2,7 @@ import z from "zod";
 import {
   SchoolQuery,
   StudyYearQuery,
-} from "@/packages/@core/data-access/data-queries";
+} from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcRequest,

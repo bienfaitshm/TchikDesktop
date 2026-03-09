@@ -58,7 +58,12 @@ export function getLogger(context: string) {
     error: (message: string, error?: any, meta?: any) => {
       // Si l'erreur est passée en 2ème argument, Winston la fusionne grâce à format.errors()
       if (error instanceof Error) {
-        mainLogger.error(message, { context, stack: error.stack, ...meta });
+        mainLogger.error(message, {
+          context,
+          message: error.message,
+          stack: error.stack,
+          ...meta,
+        });
       } else {
         mainLogger.error(
           `${message}${error ? " : " + JSON.stringify(error) : ""}`,
