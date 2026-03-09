@@ -8,7 +8,12 @@ import {
   TUserUpdate,
 } from "@/packages/@core/data-access/db";
 import { TUserFilter } from "@/packages/@core/data-access/schema-validations";
-import { Sequelize, type Includeable, FindOptions } from "sequelize";
+import {
+  Sequelize,
+  type Includeable,
+  FindOptions,
+  CreateOptions,
+} from "sequelize";
 
 import { getLogger } from "@/packages/logger";
 
@@ -69,14 +74,13 @@ export class UserQuery {
     }
 
     try {
-      // Sequelize.col() et Sequelize.fn('LOWER') sont utilisés pour un tri insensible à la casse et robuste.
       const users = await User.findAll({
         include: includeOptions,
         ...userOptions,
+        raw: true,
       });
 
-      // Mappage en DTO (Data Transfer Object) avec enrôlements
-      return users.map((u) => u.toJSON()) as TUser[];
+      return users as TUser[];
     } catch (error) {
       logger.error("UserService.findUsers: DB query failed.", error);
       throw new Error("Service unavailable: Unable to retrieve users.");
@@ -97,17 +101,13 @@ export class UserQuery {
     }
 
     try {
-      const user = await User.findByPk(userId);
-      return user ? (user.toJSON() as TUser) : null;
+      const user = await User.findByPk(userId, { raw: true });
+      return user as TUser | null;
     } catch (error) {
       logger.error(`UserService.getUserById: Error for ID ${userId}.`, error);
       throw new Error("Service unavailable: Unable to fetch user details.");
     }
   }
-
-  // ===========================================================================
-  //  MUTATION OPERATIONS
-  // ===========================================================================
 
   /**
    * Crée un nouvel utilisateur.
@@ -119,18 +119,23 @@ export class UserQuery {
    * @returns L'utilisateur créé (DTO).
    * @throws {Error} Si la validation ou l'insertion DB échoue.
    */
-  static async create(payload: TUserCreate): Promise<TUser> {
-    // 1. Logique métier d'initialisation
-    const password = DEFAULT_STUDENT_PASSWORD; // Placez ici le hash réel si ce n'est pas fait dans un hook Sequelize
-    const username = getDefaultUsername(); // Le modèle User ajoute le préfixe du rôle ici (ex: STUDENT_123456)
+  static async create(
+    payload: TUserCreate,
+    options?: CreateOptions<Required<TUser>>,
+  ): Promise<TUser> {
+    const password = DEFAULT_STUDENT_PASSWORD;
+    const username = getDefaultUsername();
 
     try {
-      const user = await User.create({ password, ...payload, username });
+      const user = await User.create(
+        { password, ...payload, username },
+        options,
+      );
       logger.info(`User created: ${user.userId}`, { role: user.role });
       return user.toJSON();
     } catch (error) {
       logger.error("UserService.createUser: Creation failed.", error);
-      throw error; // Laissez le contrôleur gérer les erreurs de validation/unicité (400)
+      throw error;
     }
   }
 
@@ -149,14 +154,14 @@ export class UserQuery {
     if (!userId) return null;
 
     try {
-      const user = await User.findByPk(userId);
+      const user = await User.findByPk(userId, { raw: true });
       if (!user) {
         logger.warn(`UserService.updateUser: ID ${userId} not found.`);
         return null;
       }
 
       const updatedUser = await user.update(updates);
-      return updatedUser.toJSON();
+      return updatedUser as TUser | null;
     } catch (error) {
       logger.error(`UserService.updateUser: Error updating ${userId}.`, error);
       throw new Error("Service unavailable: Update operation failed.");
@@ -174,15 +179,12 @@ export class UserQuery {
     if (!userId) return false;
 
     try {
-      // NOTE: Le modèle User devrait idéalement avoir un 'soft delete' (paranoid: true)
-      // pour éviter la perte de l'historique lié aux enrôlements.
       const deletedRowCount = await User.destroy({
         where: { userId },
       });
       return deletedRowCount > 0;
     } catch (error) {
       logger.error(`UserService.deleteUser: Error deleting ${userId}.`, error);
-      // Ceci pourrait échouer à cause des contraintes de clé étrangère (ex: inscriptions existantes)
       throw new Error(
         "Service error: Delete operation failed, check related data constraints.",
       );

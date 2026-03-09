@@ -1,4 +1,4 @@
-import { type FindOptions, Op, type WhereOptions, type Model } from "sequelize";
+import { type FindOptions, Op, type WhereOptions } from "sequelize";
 import ShortUniqueId, { type ShortUniqueIdOptions } from "short-unique-id";
 
 /** Configuration pour les identifiants courts (alphanumérique par défaut) */
@@ -62,69 +62,6 @@ export function getDefaultEnrolementCode(lenght = 10) {
 }
 
 /**
- * A generic type representing a plain JavaScript object.
- * Using 'unknown' is safer than 'any' in strict TypeScript environments.
- */
-export type PlainObject = Record<string, unknown>;
-
-/**
- * Resolves a Promise (or value) of Sequelize models into an array of plain objects.
- * * Features:
- * - Null-safe: Returns an empty array if input is null/undefined.
- * - Flexible: Accepts both Promises and direct values.
- * - Custom Mapping: Supports an optional transformation strategy.
- *
- * @template T - The Sequelize Model type.
- * @template R - The return type, defaults to PlainObject.
- * * @param dataOrPromise - A generic array of models or a promise resolving to one.
- * @param transformer - Optional function to transform each model. Defaults to `.toJSON()`.
- * * @returns A promise resolving to an array of plain objects (or type R).
- * * @example
- * const users = await resolveToPlainList(User.findAll());
- */
-export async function resolveToPlainList<T extends Model, R = PlainObject>(
-  dataOrPromise: T[] | Promise<T[]> | null | undefined,
-  transformer?: (model: T) => R
-): Promise<R[]> {
-  // 1. Await the data regardless of whether it's a promise or value
-  const models = await dataOrPromise;
-
-  // 2. Guard clause: fail fast and safely if data is missing
-  if (!models || !Array.isArray(models)) {
-    return [];
-  }
-
-  // 3. Define the mapping strategy
-  // Default strategy uses Sequelize's .toJSON(), falling back to the object itself.
-  const mapFn =
-    transformer ??
-    ((model: T) => (model.toJSON ? model.toJSON() : model) as unknown as R);
-
-  // 4. Execution
-  return models.map(mapFn);
-}
-
-/**
- * Resolves a Promise (or value) of a single Sequelize model into a plain object.
- *
- * @template T - The Sequelize Model type.
- * @template R - The return type, defaults to PlainObject.
- * * @param dataOrPromise - A model instance or a promise resolving to one.
- * @returns A promise resolving to a plain object, or null if input is null.
- */
-export async function resolveToPlain<T extends Model, R = PlainObject>(
-  dataOrPromise: T | Promise<T> | null | undefined
-): Promise<R | null> {
-  const model = await dataOrPromise;
-
-  if (!model) {
-    return null;
-  }
-
-  return (model.toJSON ? model.toJSON() : model) as unknown as R;
-}
-
-/**
  * Creates a shallow copy of the object, discarding any properties that are `undefined`.
  * * * Note: This does not recursively filter nested objects (shallow only).
  * * Performance: Optimized to reduce intermediate allocations.
@@ -138,7 +75,7 @@ export async function resolveToPlain<T extends Model, R = PlainObject>(
  * // Result: { a: 1, c: 3 }
  */
 export function pruneUndefined<T extends object>(
-  obj: T | null | undefined
+  obj: T | null | undefined,
 ): Partial<T> {
   // 1. Guard Clause: strict checks for null, undefined, or arrays to avoid runtime crashes.
   if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
@@ -172,7 +109,7 @@ type FilterValue = string | number | boolean | Array<string | number>;
  * @returns {WhereOptions<T>} - Un objet de configuration compatible avec Sequelize
  */
 export const buildWhereClause = <T extends object>(
-  filters: Partial<Record<keyof T, FilterValue | undefined | null>>
+  filters: Partial<Record<keyof T, FilterValue | undefined | null>>,
 ): WhereOptions<T> => {
   const prunedFilters = pruneUndefined(filters);
   const where: WhereOptions<T> = {};
@@ -220,7 +157,7 @@ export interface BaseFilter {
  */
 export function buildFindOptions<T extends BaseFilter>(
   filters: T,
-  defaultSortOrder?: FindOptions["order"]
+  defaultSortOrder?: FindOptions["order"],
 ): FindOptions {
   // 1. Extraction des méta-données de pagination et de tri
   const { limit, offset, orderBy, order, ...criteria } = filters;
@@ -247,7 +184,7 @@ export function buildFindOptions<T extends BaseFilter>(
  */
 export function getEnumKeyValueList<T extends Record<string, unknown>>(
   enumObject: T,
-  enumTranslation?: Record<string, string>
+  enumTranslation?: Record<string, string>,
 ): { key: string; value: T[keyof T]; label: string }[] {
   return Object.entries(enumObject).map(([key, value]) => ({
     key,

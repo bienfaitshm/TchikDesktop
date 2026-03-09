@@ -8,7 +8,6 @@ import {
 } from "@/packages/@core/data-access/db";
 import { CustomLogger, getLogger } from "@/packages/logger";
 import { TOptionFilter } from "@/packages/@core/data-access/schema-validations";
-import { Query } from "./query";
 
 const logger: CustomLogger = getLogger("Option query");
 
@@ -20,7 +19,7 @@ const DEFAULT_SORT_ORDER: FindOptions["order"] = [
  * Service de gestion des Options Académiques.
  * Fournit les méthodes de requête et de mutation pour l'entité Option.
  */
-export class OptionQuery extends Query {
+export class OptionQuery {
   /**
    * Récupère une liste d'options académiques basées sur des critères de filtrage.
    *
@@ -115,8 +114,8 @@ export class OptionQuery extends Query {
         return null;
       }
 
-      const updatedOption = await option.update(updates);
-      return updatedOption.toJSON();
+      const updatedOption = await option.update(updates, { raw: true });
+      return updatedOption;
     } catch (error) {
       logger.error(
         `OptionQuery.updateOption: Error updating ${optionId}.`,
