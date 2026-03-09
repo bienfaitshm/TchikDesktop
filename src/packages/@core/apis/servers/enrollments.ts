@@ -1,5 +1,5 @@
 import z from "zod";
-import { EnrolementQuery } from "@/packages/@core/data-access/data-queries";
+import { EnrolementQuery } from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcRequest,

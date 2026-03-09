@@ -1,5 +1,5 @@
 import z from "zod";
-import { ClassroomQuery } from "@/packages/@core/data-access/data-queries";
+import { ClassroomQuery } from "@/packages/@core/data-access/db/queries";
 import {
   ClassroomAttributesSchema,
   ClassroomCreateSchema,

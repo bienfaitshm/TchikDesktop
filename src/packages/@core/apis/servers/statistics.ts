@@ -5,7 +5,7 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { AbstractEndpoint } from "./abstract";
 import { StatsRoutes } from "../routes-constant";
-import { StatsService } from "@/packages/@core/data-access/data-queries";
+import { StatsService } from "@/packages/@core/data-access/db/queries";
 import {
   StatsFilterSchema,
   TStatsFilter,

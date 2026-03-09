@@ -1,5 +1,5 @@
 import z from "zod";
-import { OptionQuery } from "@/packages/@core/data-access/data-queries";
+import { OptionQuery } from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcRequest,
