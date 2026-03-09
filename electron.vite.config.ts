@@ -7,19 +7,30 @@ export default defineConfig({
     resolve: {
       alias: {
         "@/main": resolve("src/main"),
-        "@/commons": resolve("src/commons"),
+        "@/packages": resolve("src/packages"),
       },
     },
-    plugins: [externalizeDepsPlugin()],
+    plugins: [
+      externalizeDepsPlugin({
+        exclude: ["sqlite3", "pg-hstore"],
+      }),
+    ],
+    build: {
+      rollupOptions: {
+        external: ["pg", "pg-hstore", "mysql2", "tedious", "oracledb"],
+      },
+    },
   },
+
   preload: {
     plugins: [externalizeDepsPlugin()],
   },
+
   renderer: {
     resolve: {
       alias: {
         "@/renderer": resolve("src/renderer"),
-        "@/commons": resolve("src/commons"),
+        "@/packages": resolve("src/packages"),
       },
     },
     plugins: [react()],

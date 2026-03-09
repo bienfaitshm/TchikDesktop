@@ -2,7 +2,7 @@ import { WithSchoolAndYearId } from "@/commons/types/services";
 import { ClassroomSideList } from "@/renderer/components/classroom-side-list";
 import { Button } from "@/renderer/components/ui/button";
 import { TypographyH2 } from "@/renderer/components/ui/typography";
-import { withCurrentConfig } from "@/renderer/hooks/with-application-config";
+import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { ArrowLeft } from "lucide-react";
@@ -22,14 +22,14 @@ import { ScrollArea } from "@/renderer/components/ui/scroll-area";
  * @param {WithSchoolAndYearId} props - schoolId et yearId pour récupérer les classes.
  */
 const ClassroomSideNav: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
-    const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId, params: {} });
+    const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId });
     return <ClassroomSideList classrooms={classrooms} />;
 };
 
 /**
  * Layout principal pour les sections liées aux étudiants et aux classes.
  * Utilise un layout redimensionnable avec une barre latérale et une zone de contenu principale.
- * @param {WithSchoolAndYearId} props - schoolId et yearId passés par le HOC withCurrentConfig.
+ * @param {WithSchoolAndYearId} props - schoolId et yearId passés par le HOC withSchoolConfig.
  */
 const Layout: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
     const navigate = useNavigate();
@@ -81,4 +81,4 @@ const Layout: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
     );
 };
 
-export const StudentsLayout = withCurrentConfig(Layout);
+export const StudentsLayout = withSchoolConfig(Layout);

@@ -3,7 +3,9 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type {
   SchoolAttributes,
   StudyYearAttributes,
-} from "@/commons/types/models";
+} from "@/packages/@core/data-access/db";
+
+const APP_STORE_NAME = "app-global-configuration";
 
 // Définit l'état du store
 interface ConfigurationState {
@@ -52,19 +54,19 @@ export const useApplicationConfigurationStore = create<ConfigurationStore>()(
       },
     }),
     {
-      name: "app-global-configuration",
+      name: APP_STORE_NAME,
       storage: createJSONStorage(() => localStorage),
-    }
-  )
+    },
+  ),
 );
 
 // Hook pour obtenir les IDs de l'école et de l'année d'étude
 export const useGetCurrentYearSchool = () => {
   const schoolId = useApplicationConfigurationStore(
-    (s) => s.currentSchool?.schoolId as string
+    (s) => s.currentSchool?.schoolId as string,
   );
   const yearId = useApplicationConfigurationStore(
-    (s) => s.currentStudyYear?.yearId as string
+    (s) => s.currentStudyYear?.yearId as string,
   );
   return { schoolId, yearId } as const;
 };

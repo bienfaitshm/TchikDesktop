@@ -9,6 +9,9 @@ export const useExport = () => {
       onSuccess(data) {
         console.log(value, data);
       },
+      onError(error) {
+        console.log("Error", error);
+      },
     });
   }, []);
 

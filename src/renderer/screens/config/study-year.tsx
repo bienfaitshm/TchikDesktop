@@ -17,6 +17,8 @@ import { format } from "date-fns";
 import { StudyYearCreationForm, useStudyYearNavigationAndSelection } from "./study-year.new-study-year";
 import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
 import { Button } from "@/renderer/components/ui/button";
+import { ConfigHeader } from "./config.header";
+
 /**
  * @interface StudyYearDataDisplay
  * @description Defines the expected structure for study year data retrieved for display.
@@ -29,7 +31,7 @@ import { Button } from "@/renderer/components/ui/button";
  */
 interface StudyYearDataDisplay {
     yearId: string;
-    schoolId: string; // Keep if displayed or needed for keying
+    schoolId: string;
     yearName: string;
     startDate: Date;
     endDate: Date;
@@ -46,7 +48,6 @@ const StudyYearListDisplayTable: React.FC = () => {
     const setCurrentStudyYearAndNavigate = useStudyYearNavigationAndSelection();
     const currentSchool = useApplicationConfigurationStore((store) => store.currentSchool);
 
-    // Early exit if no school is selected, as study years are linked to a school
     if (!currentSchool?.schoolId) {
         return (
             <div className="p-6 text-center text-red-600">
@@ -61,9 +62,8 @@ const StudyYearListDisplayTable: React.FC = () => {
         );
     }
 
-    const { data: studyYears, isError } = useGetStudyYears(currentSchool.schoolId);
+    const { data: studyYears, isError } = useGetStudyYears({ schoolId: currentSchool.schoolId });
 
-    // Handle error state for the query
     if (isError) {
         return (
             <div className="flex flex-col items-center justify-center h-48 text-red-600">
@@ -73,7 +73,6 @@ const StudyYearListDisplayTable: React.FC = () => {
         );
     }
 
-    // If no study years exist, display the creation form
     if (studyYears.length === 0) {
         return (
             <div>
@@ -85,12 +84,9 @@ const StudyYearListDisplayTable: React.FC = () => {
         );
     }
 
-    // If study years exist, display the table
     return (
-        <div>
-            <TypographyH4 className="mb-6 text-center md:text-left">
-                Veuillez choisir l'année scolaire sur laquelle vous souhaitez travailler.
-            </TypographyH4>
+        <div className="space-y-4">
+            <ConfigHeader showBackButton title=" Veuillez choisir l'année scolaire sur laquelle vous souhaitez travailler." />
             <Table>
                 <TableCaption>
                     <span>Liste des années scolaires enregistrées pour <b>{currentSchool.name}</b>.</span> {" "}

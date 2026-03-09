@@ -1,112 +1,139 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import type {
-  TSchool,
-  TSchoolInsert,
-  TStudyYear,
-  TStudyYearInsert,
-} from "@/commons/types/services";
-import * as apis from "@/renderer/libs/apis/school";
+import {
+  TSchoolCreate,
+  TSchoolUpdate,
+  TSchoolFilter,
+  TStudyYearCreate,
+  TStudyYearUpdate,
+  TStudyYearFilter,
+} from "@/packages/@core/data-access/schema-validations";
+import { school } from "@/renderer/libs/apis";
 import { TQueryUpdate } from "./type";
 
-// --- School Hooks ---
+// =======================================================================
+// 📚 School Hooks
+// =======================================================================
 
 /**
  * @function useGetSchools
- * @description Hook to fetch all schools.
+ * @description Hook pour récupérer toutes les écoles, avec filtres optionnels.
+ * @param params Les filtres pour la pagination, le tri ou la recherche.
  */
-export function useGetSchools() {
-  return useSuspenseQuery<TSchool[], Error>({
-    queryKey: ["GET_SCHOOLS"],
-    queryFn: () => apis.getSchools(),
+export function useGetSchools(params?: TSchoolFilter) {
+  return useSuspenseQuery({
+    queryKey: ["GET_SCHOOLS", params],
+    queryFn: () => school.fetchSchools(params),
   });
 }
 
 /**
- * @function useGetSchool
- * @description Hook to fetch a single school by its ID.
+ * @function useGetSchoolById
+ * @description Hook pour récupérer une seule école par son ID.
+ * @param schoolId L'ID de l'école.
  */
-export function useGetSchool(schoolId: string) {
-  return useSuspenseQuery<TSchool, Error>({
+export function useGetSchoolById(schoolId: string) {
+  return useSuspenseQuery({
     queryKey: ["GET_SCHOOL_BY_ID", schoolId],
-    queryFn: () => apis.getSchool(schoolId),
+    queryFn: () => school.fetchSchoolById(schoolId),
   });
 }
 
 /**
  * @function useCreateSchool
- * @description Hook to create a new school.
+ * @description Hook pour créer une nouvelle école.
  */
 export function useCreateSchool() {
-  return useMutation<TSchool, Error, TSchoolInsert>({
+  // Le type de retour est TSchoolAttributes (l'objet créé avec son ID)
+  return useMutation({
     mutationKey: ["CREATE_SCHOOL"],
-    mutationFn: (data) => apis.createSchool(data),
+    mutationFn: (data: TSchoolCreate) => school.createSchool(data),
+    // Le code Big Tech ajouterait ici onMutate/onSuccess pour invalider le cache GET_SCHOOLS
   });
 }
 
 /**
  * @function useUpdateSchool
- * @description Hook to update an existing school.
+ * @description Hook pour mettre à jour une école existante.
  */
 export function useUpdateSchool() {
-  return useMutation<TSchool, Error, TQueryUpdate<TSchoolInsert>>({
+  // Le type de retour est TSchoolAttributes (l'objet mis à jour)
+  return useMutation({
     mutationKey: ["UPDATE_SCHOOL"],
-    mutationFn: ({ data, id }) => apis.updateSchool(id, data),
+    mutationFn: ({ data, id }: TQueryUpdate<TSchoolUpdate>) =>
+      school.updateSchool(id, data),
   });
 }
 
 /**
  * @function useDeleteSchool
- * @description Hook to delete a school.
+ * @description Hook pour supprimer une école.
  */
 export function useDeleteSchool() {
-  return useMutation<any, Error, string>({
+  // Le type de retour est généralement 'void' ou 'undefined' en cas de succès
+  return useMutation({
     mutationKey: ["DELETE_SCHOOL"],
-    mutationFn: (schoolId) => apis.deleteSchool(schoolId),
+    mutationFn: (schoolId: string) => school.deleteSchool(schoolId),
   });
 }
 
-// --- Study Year Hooks ---
+// =======================================================================
+// 🗓️ Study Year Hooks
+// =======================================================================
 
 /**
  * @function useGetStudyYears
- * @description Hook to fetch all study years for a given school.
+ * @description Hook pour récupérer toutes les années d'étude, avec filtres optionnels.
+ * @param params Les filtres pour la pagination, le tri ou la recherche (incluant potentiellement schoolId).
  */
-export function useGetStudyYears(schoolId: string) {
-  return useSuspenseQuery<TStudyYear[], Error>({
-    queryKey: ["GET_STUDY_YEARS", schoolId],
-    queryFn: () => apis.getStudyYears(schoolId),
+export function useGetStudyYears(params?: TStudyYearFilter) {
+  return useSuspenseQuery({
+    queryKey: ["GET_STUDY_YEARS", params],
+    queryFn: () => school.fetchStudyYears(params),
+  });
+}
+
+/**
+ * @function useGetStudyYearById
+ * @description Hook pour récupérer une seule année d'étude par son ID.
+ * @param yearId L'ID de l'année d'étude.
+ */
+export function useGetStudyYearById(yearId: string) {
+  return useSuspenseQuery({
+    queryKey: ["GET_STUDY_YEAR_BY_ID", yearId],
+    queryFn: () => school.fetchStudyYearById(yearId),
   });
 }
 
 /**
  * @function useCreateStudyYear
- * @description Hook to create a new study year.
+ * @description Hook pour créer une nouvelle année d'étude.
  */
 export function useCreateStudyYear() {
-  return useMutation<TStudyYear, Error, TStudyYearInsert>({
+  return useMutation({
     mutationKey: ["CREATE_STUDY_YEAR"],
-    mutationFn: (data) => apis.createStudyYear(data),
+    mutationFn: (data: TStudyYearCreate) => school.createStudyYear(data),
   });
 }
 
 /**
  * @function useUpdateStudyYear
- * @description Hook to update an existing study year.
+ * @description Hook pour mettre à jour une année d'étude existante.
  */
 export function useUpdateStudyYear() {
-  return useMutation<TStudyYear, Error, TQueryUpdate<TStudyYearInsert>>({
+  return useMutation({
     mutationKey: ["UPDATE_STUDY_YEAR"],
-    mutationFn: ({ data, id }) => apis.updateStudyYear(id, data),
+    mutationFn: ({ data, id }: TQueryUpdate<TStudyYearUpdate>) =>
+      school.updateStudyYear(id, data),
   });
 }
 
 /**
  * @function useDeleteStudyYear
- * @description Hook to delete a study year.
+ * @description Hook pour supprimer une année d'étude.
  */
 export function useDeleteStudyYear() {
-  return useMutation<any, Error, string>({
+  return useMutation({
     mutationKey: ["DELETE_STUDY_YEAR"],
-    mutationFn: (id) => apis.deleteStudyYear(id),
+    mutationFn: (id: string) => school.deleteStudyYear(id),
   });
 }

@@ -41,7 +41,7 @@ export const SidebarMenuItemSchoolYear = () => {
 
 
 
-    const { data: studyYears = [], isLoading } = useGetStudyYears(currentSchoolId);
+    const { data: studyYears = [], isLoading } = useGetStudyYears({ schoolId: currentSchoolId });
 
     const isDisabled = !currentSchoolId || isLoading;
 

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
 import { GetClassroomParams } from "@/commons/types/services";
 import { useGetOptions } from "@/renderer/libs/queries/option";
+import { useGetAvailableExports } from "@/renderer/libs/queries/document-export";
 
 /**
  * Définit les options de formatage pour la conversion de données en options de sélection.
@@ -120,7 +121,7 @@ export function useGetOptionAsOptions(
   schoolId: string,
   options?: DataToOptionConverterOptions
 ) {
-  const { data: dataOptions = [] } = useGetOptions(schoolId);
+  const { data: dataOptions = [] } = useGetOptions({ schoolId });
   const _options = useDataToOptions({
     data: dataOptions,
     valueKey: "optionId",
@@ -131,5 +132,14 @@ export function useGetOptionAsOptions(
   return {
     options: _options,
     data: dataOptions,
+  };
+}
+
+export function useGetAvailableExportsAsOptions() {
+  const { data } = useGetAvailableExports();
+  return {
+    options: data,
+    defaultValue: undefined,
+    data,
   };
 }

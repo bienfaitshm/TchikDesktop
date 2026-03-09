@@ -6,15 +6,17 @@
     "src/renderer/**/*.tsx",
     "src/preload/*.d.ts",
     "src/commons/*",
-    "src/commons/**/*"
+    "src/commons/**/*",
+    "src/packages/*",
+    "src/packages/**/*"
   ],
   "compilerOptions": {
     "composite": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
       "@/renderer/*": ["src/renderer/*"],
-      "@/commons/*": ["src/commons/*"]
+      "@/commons/*": ["src/commons/*"],
+      "@/packages/*": ["src/packages/*"]
     }
   }
 }

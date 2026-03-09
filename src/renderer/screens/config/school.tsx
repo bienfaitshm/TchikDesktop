@@ -1,3 +1,4 @@
+import React from "react";
 import { TypographyH4 } from "@/renderer/components/ui/typography";
 import {
     Table,
@@ -12,8 +13,8 @@ import { Link } from "react-router";
 import { useGetSchools } from "@/renderer/libs/queries/school";
 import { Suspense as DataSuspense } from "@/renderer/libs/queries/suspense";
 
-import React from "react";
 import { SchoolCreationForm, useSchoolNavigationAndSelection } from "./school.new-school";
+import { ConfigHeader } from "./config.header";
 
 
 /**
@@ -26,7 +27,8 @@ import { SchoolCreationForm, useSchoolNavigationAndSelection } from "./school.ne
  */
 const SchoolListDisplayTable: React.FC = () => {
     const setCurrentSchoolAndNavigate = useSchoolNavigationAndSelection();
-    const { data: schools } = useGetSchools();
+    const { data: schools, error } = useGetSchools();
+    console.log({ error })
     if (schools.length === 0) {
         return (
             <div className="p-4">
@@ -39,11 +41,8 @@ const SchoolListDisplayTable: React.FC = () => {
     }
 
     return (
-        <div>
-            <TypographyH4 className="mb-6 text-center md:text-left">
-                Veuillez choisir l'établissement sur lequel vous souhaitez travailler.
-
-            </TypographyH4>
+        <div className="space-y-4">
+            <ConfigHeader title=" Veuillez choisir l'établissement sur lequel vous souhaitez travailler." />
             <Table>
                 <TableCaption>
                     Liste des établissements enregistrés. <Link className="text-blue-600 hover:underline text-sm" to="/configuration/school/new">Ajouter un nouvel établissement</Link>

@@ -10,7 +10,7 @@ import { EnrollmentHistoricsColumns } from '@/renderer/components/tables/columns
 
 
 import { Suspense } from '@/renderer/libs/queries/suspense';
-import { withCurrentConfig } from '@/renderer/hooks/with-application-config';
+import { withSchoolConfig } from '@/renderer/hooks/with-application-config';
 import { EnrollmentDialog } from '../components/dialog/quick-enrollment-dialog-form';
 // Assuming you have a hook to fetch the enrollment history
 
@@ -72,4 +72,4 @@ const EnrollmentPage: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => 
 };
 
 
-export const QuickEnrollmentPage = withCurrentConfig(EnrollmentPage);
+export const QuickEnrollmentPage = withSchoolConfig(EnrollmentPage);

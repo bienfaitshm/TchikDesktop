@@ -194,9 +194,7 @@ export const DocumentExportSchema = z.object({
       })
     )
     .min(1),
-  documentType: z.nativeEnum(DOCUMENT_TYPE, {
-    errorMap: () => ({ message: "type de document invalide" }),
-  }),
+  documentType: z.string().nonempty(),
   status: z
     .array(
       z.nativeEnum(STUDENT_STATUS, {

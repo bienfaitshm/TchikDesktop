@@ -1,10 +1,16 @@
-import type { DocumentFilter } from "@/commons/types/services";
-import { useMutation } from "@tanstack/react-query";
-import * as apis from "@/renderer/libs/apis/document-export";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { exportDocuments } from "@/renderer/libs/apis";
 
 export function useExportDocuments() {
   return useMutation({
-    mutationKey: ["EXPORT/DOCUMENTS"],
-    mutationFn: (data: DocumentFilter) => apis.exportDocuments(data),
+    mutationKey: ["DOCUMENTS/EXPORT"],
+    mutationFn: (data: any) => exportDocuments.executeExport(data),
+  });
+}
+
+export function useGetAvailableExports() {
+  return useQuery({
+    queryKey: ["DOCUMENTS/INFOS"],
+    queryFn: () => exportDocuments.getAvailableExports(),
   });
 }

@@ -13,10 +13,11 @@ function App(): JSX.Element {
           <Router />
           <Toaster position="top-center" />
         </SuspenseErrorBoundary>
-
       </ThemeProvider>
     </QuerieProvider>
   );
+
+
 }
 
 export default App;
