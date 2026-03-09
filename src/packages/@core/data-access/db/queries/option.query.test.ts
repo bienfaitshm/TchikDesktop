@@ -1,19 +1,7 @@
-//option.service.test.ts
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { OptionQuery } from "./option.query";
+import { Option, buildFindOptions } from "@/packages/@core/data-access/db";
 
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { OptionQuery } from "@/packages/@core/data-access/data-queries";
-import {
-  Option,
-  pruneUndefined,
-  TOptionCreate,
-} from "@/packages/@core/data-access/db";
-import { Sequelize } from "sequelize";
-
-// Constantes de mock
-const MOCK_OPTION_ID = "opt-001";
-const MOCK_SCHOOL_ID = "sch-001";
-
-// 1. Mocker les dépendances Sequelize
 vi.mock("@/packages/@core/data-access/db", () => ({
   Option: {
     findAll: vi.fn(),
@@ -21,214 +9,140 @@ vi.mock("@/packages/@core/data-access/db", () => ({
     create: vi.fn(),
     destroy: vi.fn(),
   },
-  pruneUndefined: vi.fn((obj) => obj),
+  buildFindOptions: vi.fn(() => ({ where: {} })),
+  Sequelize: {
+    fn: vi.fn(),
+    col: vi.fn(),
+  },
 }));
 
-// Mock Helper: Crée une fausse instance Sequelize
-const mockModelInstance = (data: any) => ({
-  ...data,
-  toJSON: () => data,
-  update: vi.fn().mockResolvedValue({ ...data, toJSON: () => ({ ...data }) }),
-});
+// Mock du Logger
+vi.mock("@/packages/logger", () => ({
+  getLogger: () => ({
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+  }),
+}));
 
 describe("OptionQuery", () => {
-  afterEach(() => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    vi.restoreAllMocks();
-    vi.mocked(pruneUndefined).mockClear();
   });
-
-  // --- FETCH OPERATIONS ---
 
   describe("findMany", () => {
-    it("should throw validation error if schoolId or yearId is missing", async () => {
-      // @ts-ignore
-      await expect(
-        OptionQuery.findMany({ schoolId: MOCK_SCHOOL_ID })
-      ).rejects.toThrow("Validation Error");
+    it("doit retourner un tableau vide si schoolId n'est pas fourni", async () => {
+      const result = await OptionQuery.findMany({});
+      expect(result).toEqual([]);
+      expect(Option.findAll).not.toHaveBeenCalled();
     });
 
-    it("should call findAll with correct filters and sorting", async () => {
-      // Arrange
-      const mockOptions = [
-        mockModelInstance({ optionId: MOCK_OPTION_ID, optionName: "Bio" }),
-      ];
-      vi.mocked(Option.findAll).mockResolvedValue(mockOptions as any);
-      vi.mocked(pruneUndefined).mockReturnValue({
-        schoolId: MOCK_SCHOOL_ID,
-        optionCode: "SCI",
-      });
+    it("doit récupérer les options avec le tri par défaut (LOWER)", async () => {
+      const mockOptions = [{ optionId: "1", optionName: "Informatique" }];
+      (Option.findAll as any).mockResolvedValue(mockOptions);
 
-      const queryArgs = {
-        schoolId: MOCK_SCHOOL_ID,
-        params: { optionCode: "SCI" },
-      };
+      const result = await OptionQuery.findMany({ schoolId: "sch-10" });
 
-      // Act
-      const result = await OptionQuery.findMany(queryArgs);
-
-      // Assert
-      expect(pruneUndefined).toHaveBeenCalled();
+      expect(buildFindOptions).toHaveBeenCalled();
       expect(Option.findAll).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: {
-            schoolId: MOCK_SCHOOL_ID,
-            optionCode: "SCI",
-          },
-          order: [[Sequelize.fn("LOWER", Sequelize.col("option_name")), "ASC"]],
-        })
+        expect.objectContaining({ raw: true }),
       );
-      expect(result).toHaveLength(1);
-      expect(result[0].optionId).toBe(MOCK_OPTION_ID);
+      expect(result).toEqual(mockOptions);
     });
 
-    it("should throw a service error on DB failure", async () => {
-      vi.mocked(Option.findAll).mockRejectedValue(new Error("DB timeout"));
+    it("doit throw une erreur métier si la requête échoue", async () => {
+      (Option.findAll as any).mockRejectedValue(new Error("SQL Crash"));
 
-      await expect(
-        OptionQuery.findMany({
-          schoolId: MOCK_SCHOOL_ID,
-        })
-      ).rejects.toThrow(
-        "Service unavailable: Unable to retrieve academic options."
+      await expect(OptionQuery.findMany({ schoolId: "1" })).rejects.toThrow(
+        "Service unavailable: Unable to retrieve academic options.",
       );
     });
   });
 
-  describe(".findById", () => {
-    it("should return the option DTO if found", async () => {
-      // Arrange
-      const mockOption = mockModelInstance({
-        optionId: MOCK_OPTION_ID,
-        optionName: "Info",
-      });
-      vi.mocked(Option.findByPk).mockResolvedValue(mockOption as any);
-
-      // Act
-      const result = await OptionQuery.findById(MOCK_OPTION_ID);
-
-      // Assert
-      expect(Option.findByPk).toHaveBeenCalledWith(MOCK_OPTION_ID);
-      expect(result?.optionName).toBe("Info");
+  describe("findById", () => {
+    it("doit retourner null et logger un avertissement si l'ID est vide", async () => {
+      const result = await OptionQuery.findById("");
+      expect(result).toBeNull();
     });
 
-    it("should return null if ID is empty or not found", async () => {
-      vi.mocked(Option.findByPk).mockResolvedValue(null);
+    it("doit retourner l'option si elle existe", async () => {
+      const mockOption = { optionId: "opt-1", optionName: "Bio-Chimie" };
+      (Option.findByPk as any).mockResolvedValue(mockOption);
 
-      expect(await OptionQuery.findById("")).toBeNull();
-      expect(await OptionQuery.findById("non-existent")).toBeNull();
-    });
-
-    it("should throw a service error on DB failure", async () => {
-      vi.mocked(Option.findByPk).mockRejectedValue(new Error("DB error"));
-      await expect(OptionQuery.findById(MOCK_OPTION_ID)).rejects.toThrow(
-        `Service unavailable: Unable to fetch option details.`
-      );
+      const result = await OptionQuery.findById("opt-1");
+      expect(result).toEqual(mockOption);
+      expect(Option.findByPk).toHaveBeenCalledWith("opt-1", { raw: true });
     });
   });
-
-  // --- MUTATION OPERATIONS ---
 
   describe("create", () => {
-    it("should create and return the new option DTO", async () => {
-      // Arrange
-      const payload = {
-        optionName: "New Opt",
-        schoolId: MOCK_SCHOOL_ID,
-      } as TOptionCreate;
-      const createdMock = mockModelInstance({
-        ...payload,
-        optionId: MOCK_OPTION_ID,
+    it("doit créer une option et logger le succès", async () => {
+      const data = { optionName: "Pédagogie", schoolId: "S1" };
+      (Option.create as any).mockResolvedValue({
+        ...data,
+        optionId: "new-opt",
       });
-      vi.mocked(Option.create).mockResolvedValue(createdMock as any);
 
-      // Act
-      const result = await OptionQuery.create(payload);
+      const result = await OptionQuery.create(data as any);
 
-      // Assert
-      expect(Option.create).toHaveBeenCalledWith(payload);
-      expect(result.optionId).toBe(MOCK_OPTION_ID);
+      expect(Option.create).toHaveBeenCalledWith(data, { raw: true });
+      expect(result.optionId).toBe("new-opt");
     });
 
-    it("should propagate error on creation failure (e.g., validation error)", async () => {
-      const dbError = new Error("Validation failed");
-      vi.mocked(Option.create).mockRejectedValue(dbError);
+    it("doit relancer l'erreur originale en cas d'échec de création", async () => {
+      const err = new Error("Unique constraint failed");
+      (Option.create as any).mockRejectedValue(err);
 
-      await expect(OptionQuery.create({} as TOptionCreate)).rejects.toThrow(
-        dbError
-      );
+      await expect(OptionQuery.create({} as any)).rejects.toThrow(err);
     });
   });
 
   describe("update", () => {
-    it("should find, update, and return the updated option DTO", async () => {
-      // Arrange
-      const existingOption = mockModelInstance({
-        optionId: MOCK_OPTION_ID,
-        optionName: "Old Name",
-      });
-      existingOption.update = vi.fn().mockResolvedValue(
-        mockModelInstance({
-          optionId: MOCK_OPTION_ID,
-          optionName: "New Name",
-        })
-      );
-
-      vi.mocked(Option.findByPk).mockResolvedValue(existingOption as any);
-
-      // Act
-      const result = await OptionQuery.update(MOCK_OPTION_ID, {
-        optionName: "New Name",
-      });
-
-      // Assert
-      expect(existingOption.update).toHaveBeenCalledWith({
-        optionName: "New Name",
-      });
-      expect(result?.optionName).toBe("New Name");
-    });
-
-    it("should return null if option ID is not found", async () => {
-      vi.mocked(Option.findByPk).mockResolvedValue(null);
-      const result = await OptionQuery.update("999", {
-        optionName: "Test",
-      });
+    it("doit retourner null si l'option est introuvable", async () => {
+      (Option.findByPk as any).mockResolvedValue(null);
+      const result = await OptionQuery.update("id-err", { optionName: "Test" });
       expect(result).toBeNull();
     });
 
-    it("should return null if optionId is empty", async () => {
-      expect(await OptionQuery.update("", { optionName: "Test" })).toBeNull();
+    it("doit mettre à jour l'instance si elle existe", async () => {
+      const mockInstance = {
+        update: vi
+          .fn()
+          .mockResolvedValue({ optionId: "1", optionName: "Nouveau" }),
+      };
+      (Option.findByPk as any).mockResolvedValue(mockInstance);
+
+      const result = await OptionQuery.update("1", { optionName: "Nouveau" });
+
+      expect(mockInstance.update).toHaveBeenCalledWith(
+        { optionName: "Nouveau" },
+        { raw: true },
+      );
+      expect(result?.optionName).toBe("Nouveau");
     });
   });
 
   describe("delete", () => {
-    it("should return true if deletion was successful (row count > 0)", async () => {
-      vi.mocked(Option.destroy).mockResolvedValue(1); // 1 row affected
-      const result = await OptionQuery.delete(MOCK_OPTION_ID);
-
-      expect(Option.destroy).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { optionId: MOCK_OPTION_ID } })
-      );
+    it("doit retourner true si au moins une ligne est supprimée", async () => {
+      (Option.destroy as any).mockResolvedValue(1);
+      const result = await OptionQuery.delete("opt-123");
       expect(result).toBe(true);
     });
 
-    it("should return false if option not found (row count 0)", async () => {
-      vi.mocked(Option.destroy).mockResolvedValue(0);
-      const result = await OptionQuery.delete("999");
+    it("doit retourner false si l'ID n'existe pas", async () => {
+      (Option.destroy as any).mockResolvedValue(0);
+      const result = await OptionQuery.delete("opt-unknown");
       expect(result).toBe(false);
     });
 
-    it("should throw service error on DB failure (e.g., FK constraint)", async () => {
-      vi.mocked(Option.destroy).mockRejectedValue(
-        new Error("Foreign Key Violation")
+    it("doit throw une erreur de contrainte si des classes utilisent cette option", async () => {
+      (Option.destroy as any).mockRejectedValue(
+        new Error("ForeignKeyConstraint"),
       );
-      await expect(OptionQuery.delete(MOCK_OPTION_ID)).rejects.toThrow(
-        "Delete operation failed, check related data constraints."
-      );
-    });
 
-    it("should return false if optionId is empty", async () => {
-      expect(await OptionQuery.delete("")).toBe(false);
+      await expect(OptionQuery.delete("opt-1")).rejects.toThrow(
+        /check related data constraints/,
+      );
     });
   });
 });

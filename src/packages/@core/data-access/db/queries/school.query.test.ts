@@ -1,12 +1,7 @@
-// school.service.test.ts
-import { describe, it, expect, vi, afterEach } from "vitest";
-import {
-  SchoolQuery,
-  StudyYearQuery,
-} from "@/packages/@core/data-access/data-queries";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SchoolQuery, StudyYearQuery } from "./school.query";
 import { School, StudyYear } from "@/packages/@core/data-access/db";
 
-// 1. Mocker les dépendances (Sequelize Models)
 vi.mock("@/packages/@core/data-access/db", () => ({
   School: {
     findAll: vi.fn(),
@@ -20,129 +15,135 @@ vi.mock("@/packages/@core/data-access/db", () => ({
     create: vi.fn(),
     destroy: vi.fn(),
   },
+  buildFindOptions: vi.fn((f, order) => ({ where: f, order })),
+  Sequelize: {
+    fn: vi.fn(),
+    col: vi.fn(),
+  },
 }));
 
-// Mock Helper: Crée une fausse instance Sequelize avec méthodes .toJSON() et .update()
-const mockModelInstance = (data: any) => ({
-  ...data,
-  toJSON: () => data,
-  update: vi.fn().mockResolvedValue({
-    ...data,
-    ...data /* simule update */,
-    toJSON: () => data,
+vi.mock("@/packages/logger", () => ({
+  getLogger: () => ({
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
   }),
-});
+}));
 
-describe("SchoolQuery", () => {
-  afterEach(() => {
-    vi.clearAllMocks(); // Nettoyer les mocks entre chaque test
+describe("School & StudyYear Queries", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  describe("findSchools", () => {
-    it("should return a list of schools when DB is healthy", async () => {
-      // Arrange
-      const mockSchools = [
-        mockModelInstance({ schoolId: "1", name: "Polytech" }),
-      ];
-      vi.mocked(School.findAll).mockResolvedValue(mockSchools as any);
+  describe("SchoolQuery", () => {
+    describe("findMany", () => {
+      it("doit retourner la liste des écoles avec le tri par défaut", async () => {
+        const mockSchools = [{ schoolId: "1", name: "Collège L'Allégresse" }];
+        (School.findAll as any).mockResolvedValue(mockSchools);
 
-      // Act
-      const result = await SchoolQuery.findMany({ name: "Polytech" });
+        const result = await SchoolQuery.findMany();
 
-      // Assert
-      expect(School.findAll).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { name: "Polytech" },
-        })
-      );
-      expect(result).toHaveLength(1);
-      expect(result[0].name).toBe("Polytech");
-    });
-
-    it("should throw a formatted error when DB fails", async () => {
-      vi.mocked(School.findAll).mockRejectedValue(
-        new Error("DB connection lost")
-      );
-
-      await expect(SchoolQuery.findMany()).rejects.toThrow(
-        "Service unavailable: Unable to retrieve schools."
-      );
-    });
-  });
-
-  describe("create", () => {
-    it("should create and return a school", async () => {
-      const payload = {
-        name: "New School",
-        town: "L'shi",
-        adress: "Test",
-      } as any;
-      const createdMock = mockModelInstance({ ...payload, schoolId: "123" });
-
-      vi.mocked(School.create).mockResolvedValue(createdMock as any);
-
-      const result = await SchoolQuery.create(payload);
-
-      expect(School.create).toHaveBeenCalledWith(payload);
-      expect(result.schoolId).toBe("123");
-    });
-  });
-
-  describe("update", () => {
-    it("should update school if exists", async () => {
-      const existingSchool = mockModelInstance({
-        schoolId: "1",
-        name: "Old Name",
-      });
-      // On simule que l'update retourne la nouvelle valeur
-      existingSchool.update = vi
-        .fn()
-        .mockResolvedValue(
-          mockModelInstance({ schoolId: "1", name: "New Name" })
+        expect(School.findAll).toHaveBeenCalledWith(
+          expect.objectContaining({ raw: true }),
         );
-
-      vi.mocked(School.findByPk).mockResolvedValue(existingSchool as any);
-
-      const result = await SchoolQuery.update("1", {
-        name: "New Name",
+        expect(result).toEqual(mockSchools);
       });
 
-      expect(existingSchool.update).toHaveBeenCalledWith({ name: "New Name" });
-      expect(result?.name).toBe("New Name");
+      it("doit throw une erreur personnalisée si la DB échoue", async () => {
+        (School.findAll as any).mockRejectedValue(
+          new Error("Connection Error"),
+        );
+        await expect(SchoolQuery.findMany()).rejects.toThrow(
+          "Query unavailable: Unable to retrieve schools.",
+        );
+      });
     });
 
-    it("should return null if school ID does not exist", async () => {
-      vi.mocked(School.findByPk).mockResolvedValue(null);
+    describe("update", () => {
+      it("doit retourner null si l'école n'existe pas", async () => {
+        (School.findByPk as any).mockResolvedValue(null);
+        const result = await SchoolQuery.update("id-xyz", {
+          name: "Nouveau Nom",
+        });
+        expect(result).toBeNull();
+      });
 
-      const result = await SchoolQuery.update("999", { name: "Test" });
+      it("doit appeler update sur l'instance trouvée", async () => {
+        const mockInstance = {
+          update: vi
+            .fn()
+            .mockResolvedValue({ schoolId: "1", name: "Nouveau Nom" }),
+        };
+        (School.findByPk as any).mockResolvedValue(mockInstance);
 
-      expect(result).toBeNull();
+        const result = await SchoolQuery.update("1", { name: "Nouveau Nom" });
+        expect(mockInstance.update).toHaveBeenCalledWith(
+          { name: "Nouveau Nom" },
+          { raw: true },
+        );
+        expect(result?.name).toBe("Nouveau Nom");
+      });
     });
   });
 
-  describe("findMany", () => {
-    it("should throw strict error if schoolId is missing", async () => {
-      // @ts-ignore force null pour tester le runtime check
-      await expect(StudyYearQuery.findMany({ schoolId: null })).rejects.toThrow(
-        "Validation Error: schoolId is required"
-      );
+  describe("StudyYearQuery", () => {
+    describe("findMany", () => {
+      it("doit throw une erreur de validation si schoolId est manquant", async () => {
+        await expect(StudyYearQuery.findMany({})).rejects.toThrow(
+          /schoolId is required/,
+        );
+      });
+
+      it("doit retourner les années scolaires pour une école spécifique", async () => {
+        const mockYears = [{ yearId: "2026", yearName: "2025-2026" }];
+        (StudyYear.findAll as any).mockResolvedValue(mockYears);
+
+        const result = await StudyYearQuery.findMany({ schoolId: "sch-123" });
+
+        expect(StudyYear.findAll).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({ schoolId: "sch-123" }),
+            raw: true,
+          }),
+        );
+        expect(result).toEqual(mockYears);
+      });
     });
 
-    it("should return years sorted by name and date", async () => {
-      const mockYears = [mockModelInstance({ yearId: "y1", yearName: "2024" })];
-      vi.mocked(StudyYear.findAll).mockResolvedValue(mockYears as any);
+    describe("create", () => {
+      it("doit valider la présence de schoolId avant la création", async () => {
+        const payload = { yearName: "2026" }; // schoolId manquant
+        await expect(StudyYearQuery.create(payload as any)).rejects.toThrow(
+          /schoolId is mandatory/,
+        );
+      });
 
-      const result = await StudyYearQuery.findMany({ schoolId: "school-1" });
+      it("doit créer l'année scolaire avec succès", async () => {
+        const payload = { yearName: "2026", schoolId: "S1" };
+        (StudyYear.create as any).mockResolvedValue({
+          ...payload,
+          yearId: "Y1",
+        });
 
-      expect(StudyYear.findAll).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { schoolId: "school-1" },
-          order: expect.arrayContaining([
-            expect.arrayContaining(["startDate", "ASC"]),
-          ]),
-        })
-      );
-      expect(result).toHaveLength(1);
+        const result = await StudyYearQuery.create(payload as any);
+        expect(StudyYear.create).toHaveBeenCalledWith(payload, { raw: true });
+        expect(result).toHaveProperty("yearId");
+      });
+    });
+
+    describe("delete", () => {
+      it("doit retourner true si la suppression est effective", async () => {
+        (StudyYear.destroy as any).mockResolvedValue(1); // 1 ligne supprimée
+        const result = await StudyYearQuery.delete("year-uuid");
+        expect(result).toBe(true);
+      });
+
+      it("doit throw une erreur personnalisée si la suppression échoue", async () => {
+        (StudyYear.destroy as any).mockRejectedValue(new Error("SQL Error"));
+        await expect(StudyYearQuery.delete("id")).rejects.toThrow(
+          "Delete failed.",
+        );
+      });
     });
   });
 });

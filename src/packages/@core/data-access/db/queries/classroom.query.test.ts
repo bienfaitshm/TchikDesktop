@@ -1,21 +1,7 @@
-// classroom.service.test.ts
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ClassroomQuery } from "./classroom.query";
+import { ClassRoom } from "@/packages/@core/data-access/db";
 
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { ClassroomQuery } from "@/packages/@core/data-access/data-queries"; // Assurez-vous que l'alias est correct
-import {
-  ClassRoom,
-  Option,
-  StudyYear,
-  TClassroomInsert,
-} from "@/packages/@core/data-access/db";
-import { pruneUndefined } from "@/main/db/models/utils";
-
-// Constantes de mock
-const MOCK_CLASS_ID = "cls-123";
-const MOCK_SCHOOL_ID = "sch-1";
-const MOCK_YEAR_ID = "yr-2025";
-
-// Mocker les dépendances Sequelize
 vi.mock("@/packages/@core/data-access/db", () => ({
   ClassRoom: {
     findAll: vi.fn(),
@@ -25,178 +11,168 @@ vi.mock("@/packages/@core/data-access/db", () => ({
   },
   Option: {},
   StudyYear: {},
+  ClassroomEnrolement: {},
+  User: {},
+  buildFindOptions: vi.fn(() => ({ where: {} })),
+  Sequelize: {
+    fn: vi.fn(),
+    col: vi.fn(),
+  },
 }));
 
-// Mocker l'utilitaire de nettoyage pour la simplicité du test
-vi.mock("@/main/db/models/utils", () => ({
-  pruneUndefined: vi.fn((obj) => obj),
+vi.mock("@/packages/logger", () => ({
+  getLogger: () => ({
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+  }),
 }));
-
-// Mock Helper: Crée une fausse instance Sequelize avec .toJSON() et .update()
-const mockModelInstance = (data: any) => ({
-  ...data,
-  toJSON: () => data,
-  update: vi.fn().mockResolvedValue({ ...data, toJSON: () => ({ ...data }) }),
-});
 
 describe("ClassroomQuery", () => {
-  afterEach(() => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    vi.restoreAllMocks(); // Rétablit les mocks si vous utilisez un mock global
   });
 
-  // --- FETCH OPERATIONS ---
+  describe("findMany", () => {
+    it("doit retourner une liste de classes avec les inclusions requises", async () => {
+      const mockData = [{ classId: "1", identifier: "6eme Math-Physique" }];
+      (ClassRoom.findAll as any).mockResolvedValue(mockData);
 
-  describe("getClassrooms", () => {
-    it("should call findAll with correct filtering, inclusion, ordering, and pagination", async () => {
-      // Arrange
-      const mockClassRoom = mockModelInstance({
-        classId: MOCK_CLASS_ID,
-        identifier: "A1",
-      });
-      vi.mocked(ClassRoom.findAll).mockResolvedValue([mockClassRoom] as any);
-      vi.mocked(pruneUndefined).mockReturnValue({ schoolId: MOCK_SCHOOL_ID });
+      const result = await ClassroomQuery.findMany({ schoolId: "sch-1" });
 
-      const filters = {
-        schoolId: MOCK_SCHOOL_ID,
-        limit: 10,
-        offset: 5,
-        orderBy: "identifier" as const, // Ignoré dans la requête DB mais inclus ici
-        order: "ASC" as const,
-      };
-
-      // Act
-      const result = await ClassroomQuery.findMany(filters);
-
-      // Assert
-      expect(pruneUndefined).toHaveBeenCalledWith(
-        expect.objectContaining({ schoolId: MOCK_SCHOOL_ID })
-      );
       expect(ClassRoom.findAll).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { schoolId: MOCK_SCHOOL_ID },
-          include: [Option, StudyYear],
-          limit: 10,
-          offset: 5,
-          order: expect.any(Array), // Tri standard vérifié
-        })
+          include: expect.arrayContaining([
+            expect.objectContaining({ as: "option" }),
+            expect.objectContaining({ as: "studyYear" }),
+          ]),
+          raw: true,
+        }),
       );
-      expect(result).toHaveLength(1);
+      expect(result).toEqual(mockData);
     });
 
-    it("should throw a service error on DB failure", async () => {
-      vi.mocked(ClassRoom.findAll).mockRejectedValue(
-        new Error("DB Connection Error")
+    it("doit lever une erreur explicite en cas d'échec DB", async () => {
+      (ClassRoom.findAll as any).mockRejectedValue(
+        new Error("DB Connection Lost"),
       );
 
-      await expect(
-        ClassroomQuery.findMany({ schoolId: MOCK_SCHOOL_ID })
-      ).rejects.toThrow("Service unavailable: Unable to retrieve classrooms.");
+      await expect(ClassroomQuery.findMany({})).rejects.toThrow(
+        "Impossible de récupérer la liste des classes.",
+      );
     });
   });
 
-  describe("getClassroomById", () => {
-    it("should return the classroom DTO with relations if found", async () => {
-      // Arrange
-      const mockClassRoom = mockModelInstance({
-        classId: MOCK_CLASS_ID,
-        identifier: "B1",
-      });
-      vi.mocked(ClassRoom.findByPk).mockResolvedValue(mockClassRoom as any);
-
-      // Act
-      const result = await ClassroomQuery.findById(MOCK_CLASS_ID);
-
-      // Assert
-      expect(ClassRoom.findByPk).toHaveBeenCalledWith(MOCK_CLASS_ID, {
-        include: [Option, StudyYear],
-      });
-      expect(result?.classId).toBe(MOCK_CLASS_ID);
-    });
-
-    it("should return null if ID is empty or not found", async () => {
-      vi.mocked(ClassRoom.findByPk).mockResolvedValue(null);
-
-      expect(await ClassroomQuery.findById("")).toBeNull();
-      expect(await ClassroomQuery.findById("non-existent")).toBeNull();
-    });
-  });
-
-  // --- MUTATION OPERATIONS ---
-
-  describe("createClassroom", () => {
-    it("should create and return the new classroom DTO", async () => {
-      // Arrange
-      const payload = {
-        identifier: "C2",
-        schoolId: MOCK_SCHOOL_ID,
-        studyYearId: MOCK_YEAR_ID,
-      } as unknown as TClassroomInsert;
-      const createdMock = mockModelInstance({ ...payload, classId: "new-id" });
-      vi.mocked(ClassRoom.create).mockResolvedValue(createdMock as any);
-
-      // Act
-      const result = await ClassroomQuery.create(payload);
-
-      // Assert
-      expect(ClassRoom.create).toHaveBeenCalledWith(payload);
-      expect(result.classId).toBe("new-id");
-    });
-  });
-
-  describe("updateClassroom", () => {
-    it("should update and return the updated classroom DTO", async () => {
-      // Arrange
-      const existingClass = mockModelInstance({
-        classId: MOCK_CLASS_ID,
-        identifier: "Old",
-      });
-      existingClass.update = vi
-        .fn()
-        .mockResolvedValue(
-          mockModelInstance({ classId: MOCK_CLASS_ID, identifier: "New" })
-        );
-
-      vi.mocked(ClassRoom.findByPk).mockResolvedValue(existingClass as any);
-
-      // Act
-      const result = await ClassroomQuery.update(MOCK_CLASS_ID, {
-        identifier: "New",
-      });
-
-      // Assert
-      expect(existingClass.update).toHaveBeenCalledWith({ identifier: "New" });
-      expect(result?.identifier).toBe("New");
-    });
-
-    it("should return null if classroom ID is not found", async () => {
-      vi.mocked(ClassRoom.findByPk).mockResolvedValue(null);
-
-      const result = await ClassroomQuery.update("999", {
-        identifier: "Test",
-      });
-
+  describe("findById", () => {
+    it("doit retourner null si aucun ID n'est fourni", async () => {
+      const result = await ClassroomQuery.findById("");
       expect(result).toBeNull();
     });
+
+    it("doit récupérer une classe spécifique avec ses relations", async () => {
+      const mockClass = { classId: "uuid-123", identifier: "3eme Bio" };
+      (ClassRoom.findByPk as any).mockResolvedValue(mockClass);
+
+      const result = await ClassroomQuery.findById("uuid-123");
+
+      expect(ClassRoom.findByPk).toHaveBeenCalledWith(
+        "uuid-123",
+        expect.objectContaining({ raw: true }),
+      );
+      expect(result).toEqual(mockClass);
+    });
   });
 
-  describe("deleteClassroom", () => {
-    it("should return true if deletion was successful (row count > 0)", async () => {
-      vi.mocked(ClassRoom.destroy).mockResolvedValue(1); // 1 row affected
-      const result = await ClassroomQuery.delete(MOCK_CLASS_ID);
+  describe("findWithEnrollments", () => {
+    it("doit inclure les élèves et leurs informations de base", async () => {
+      const mockDataWithUsers = [
+        {
+          classId: "C1",
+          enrollements: [{ user: { firstName: "Arsène" } }],
+        },
+      ];
+      (ClassRoom.findAll as any).mockResolvedValue(mockDataWithUsers);
 
-      expect(ClassRoom.destroy).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { classId: MOCK_CLASS_ID } })
+      const result = await ClassroomQuery.findWithEnrollments({});
+
+      expect(ClassRoom.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: expect.arrayContaining([
+            expect.objectContaining({ as: "enrollements" }),
+          ]),
+        }),
       );
+      expect(result).toEqual(mockDataWithUsers);
+    });
+  });
+
+  describe("create", () => {
+    it("doit créer une classe et retourner l'objet créé", async () => {
+      const input = { identifier: "1ere A", schoolId: "S1", yearId: "Y1" };
+      (ClassRoom.create as any).mockResolvedValue({
+        ...input,
+        classId: "new-uuid",
+      });
+
+      const result = await ClassroomQuery.create(input as any);
+
+      expect(ClassRoom.create).toHaveBeenCalledWith(input, { raw: true });
+      expect(result.classId).toBe("new-uuid");
+    });
+  });
+
+  describe("update", () => {
+    it("doit retourner null si la classe à mettre à jour n'existe pas", async () => {
+      (ClassRoom.findByPk as any).mockResolvedValue(null);
+
+      const result = await ClassroomQuery.update("ID-INEXISTANT", {
+        identifier: "Test",
+      });
+      expect(result).toBeNull();
+    });
+
+    it("doit mettre à jour les champs et retourner la classe modifiée", async () => {
+      const mockInstance = {
+        update: vi
+          .fn()
+          .mockResolvedValue({ classId: "1", identifier: "Nouveau Nom" }),
+      };
+      (ClassRoom.findByPk as any).mockResolvedValue(mockInstance);
+
+      const result = await ClassroomQuery.update("1", {
+        identifier: "Nouveau Nom",
+      });
+
+      expect(mockInstance.update).toHaveBeenCalledWith(
+        { identifier: "Nouveau Nom" },
+        { raw: true },
+      );
+      expect(result?.identifier).toBe("Nouveau Nom");
+    });
+  });
+
+  describe("delete", () => {
+    it("doit retourner true si la classe est supprimée", async () => {
+      (ClassRoom.destroy as any).mockResolvedValue(1); // 1 ligne affectée
+
+      const result = await ClassroomQuery.delete("uuid-to-delete");
       expect(result).toBe(true);
     });
 
-    it("should throw service error on DB constraint failure", async () => {
-      vi.mocked(ClassRoom.destroy).mockRejectedValue(
-        new Error("FK Constraint Error")
+    it("doit retourner false si la classe n'existait pas", async () => {
+      (ClassRoom.destroy as any).mockResolvedValue(0);
+
+      const result = await ClassroomQuery.delete("uuid-inconnu");
+      expect(result).toBe(false);
+    });
+
+    it("doit throw une erreur spécifique si la suppression échoue (ex: contrainte d'intégrité)", async () => {
+      (ClassRoom.destroy as any).mockRejectedValue(
+        new Error("ForeignKeyConstraintError"),
       );
-      await expect(ClassroomQuery.delete(MOCK_CLASS_ID)).rejects.toThrow(
-        "Delete operation failed, check related constraints."
+
+      await expect(ClassroomQuery.delete("C1")).rejects.toThrow(
+        "Impossible de supprimer la classe (vérifiez qu'elle est vide).",
       );
     });
   });

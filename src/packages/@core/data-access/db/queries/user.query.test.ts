@@ -1,204 +1,164 @@
-// user.service.test.ts
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { UserService } from "./user.query";
-import { ClassroomEnrolement, User } from "../models/model";
-import { UserAttributes } from "@/commons/types/models";
-import { USER_ROLE } from "@/commons/constants/enum";
-import { getDefaultUsername } from "../models/utils";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { UserQuery } from "./user.query";
+import {
+  User,
+  ClassroomEnrolement,
+  getDefaultUsername,
+} from "@/packages/@core/data-access/db";
 
-// Mocker les dépendances (Sequelize Models)
-vi.mock("../models/model", () => ({
+vi.mock("@/packages/@core/data-access/db", () => ({
   User: {
     findAll: vi.fn(),
     findByPk: vi.fn(),
     create: vi.fn(),
-    update: vi.fn(),
     destroy: vi.fn(),
   },
-  ClassroomEnrolement: {}, // N'a pas besoin de méthodes directes pour ce service, seulement d'être inclus
+  ClassroomEnrolement: {},
+  buildFindOptions: vi.fn(() => ({ where: {} })),
+  getDefaultUsername: vi.fn(() => "user.test"),
+  Sequelize: {
+    fn: vi.fn(),
+    col: vi.fn(),
+  },
 }));
 
-// Mocker les utilitaires pour des valeurs prévisibles
-vi.mock("@/main/db/models/utils", () => ({
-  getDefaultUsername: vi.fn().mockReturnValue("GENERATED_USERNAME"),
-  pruneUndefined: vi.fn((obj) => obj), // Simplifie la clause where pour les tests
+vi.mock("@/packages/logger", () => ({
+  getLogger: () => ({
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+  }),
 }));
 
-// Mock Helper: Crée une fausse instance Sequelize avec .toJSON() et .update()
-const mockModelInstance = (data: any) => ({
-  ...data,
-  toJSON: () => data,
-  update: vi.fn().mockResolvedValue({ ...data, toJSON: () => ({ ...data }) }),
-});
-
-const MOCK_USER_ID = "user-123";
-const MOCK_SCHOOL_ID = "school-a";
-const MOCK_YEAR_ID = "year-2024";
-
-describe("UserService", () => {
-  afterEach(() => {
+describe("UserQuery", () => {
+  beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  // --- FIND USERS ---
-  describe("findUsers", () => {
-    it("should throw validation error if schoolId or yearId is missing", async () => {
-      // @ts-ignore : Test de la validation au runtime
-      await expect(
-        UserService.findUsers({ schoolId: MOCK_SCHOOL_ID })
-      ).rejects.toThrow("Validation Error");
+  describe("findMany", () => {
+    it("doit lever une erreur si schoolId est manquant", async () => {
+      await expect(UserQuery.findMany({} as any)).rejects.toThrow(
+        "Validation Error: schoolId are required",
+      );
     });
 
-    it("should call findAll with correct includes and where clauses for filtering by classroom", async () => {
-      // Arrange
-      const mockEnrolement = { enrolementId: "e1", classroomId: "class-1" };
-      const mockUser = mockModelInstance({
-        userId: MOCK_USER_ID,
-        enrolments: [mockEnrolement],
-      });
-      vi.mocked(User.findAll).mockResolvedValue([mockUser] as any);
+    it("doit inclure ClassroomEnrolement si yearId et classroomId sont fournis", async () => {
+      (User.findAll as any).mockResolvedValue([]);
 
-      // Act
-      await UserService.findUsers({
-        schoolId: MOCK_SCHOOL_ID,
-        yearId: MOCK_YEAR_ID,
-        params: { role: USER_ROLE.STUDENT, classroomId: "class-1" },
+      await UserQuery.findMany({
+        schoolId: "S1",
+        yearId: "Y1",
+        classroomId: "C1",
       });
 
-      // Assert
       expect(User.findAll).toHaveBeenCalledWith(
         expect.objectContaining({
-          // Vérifie la clause WHERE sur la table User
-          where: { schoolId: MOCK_SCHOOL_ID, role: "STUDENT" },
-          // Vérifie l'inclusion de l'association
           include: expect.arrayContaining([
             expect.objectContaining({
               model: ClassroomEnrolement,
               required: true,
-              // Vérifie la clause WHERE sur l'association (enrôlement)
-              where: { yearId: MOCK_YEAR_ID, classroomId: "class-1" },
             }),
           ]),
-        })
+        }),
       );
     });
 
-    it("should throw service error on DB failure", async () => {
-      vi.mocked(User.findAll).mockRejectedValue(
-        new Error("DB connection failure")
-      );
+    it("ne doit pas inclure de jointure si les IDs de scope sont manquants", async () => {
+      (User.findAll as any).mockResolvedValue([]);
 
-      await expect(
-        UserService.findUsers({
-          schoolId: MOCK_SCHOOL_ID,
-          yearId: MOCK_YEAR_ID,
-        })
-      ).rejects.toThrow("Service unavailable: Unable to retrieve users.");
+      await UserQuery.findMany({ schoolId: "S1" });
+
+      expect(User.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({ include: [] }),
+      );
     });
   });
 
-  // --- GET USER BY ID ---
-  describe("getUserById", () => {
-    it("should return the user with enrolments if found", async () => {
-      const mockUser = mockModelInstance({
-        userId: MOCK_USER_ID,
-        enrolments: [{}],
-      });
-      vi.mocked(User.findByPk).mockResolvedValue(mockUser as any);
-
-      const result = await UserService.getUserById(MOCK_USER_ID);
-
-      expect(User.findByPk).toHaveBeenCalledWith(
-        MOCK_USER_ID,
-        expect.objectContaining({
-          include: [ClassroomEnrolement],
-        })
-      );
-      expect(result?.userId).toBe(MOCK_USER_ID);
-    });
-
-    it("should return null if user ID is empty", async () => {
-      const result = await UserService.getUserById("");
+  describe("findById", () => {
+    it("doit retourner null si l'ID est vide", async () => {
+      const result = await UserQuery.findById("");
       expect(result).toBeNull();
     });
+
+    it("doit appeler findByPk avec raw: true", async () => {
+      const mockUser = { userId: "1", firstName: "Jean" };
+      (User.findByPk as any).mockResolvedValue(mockUser);
+
+      const result = await UserQuery.findById("1");
+      expect(result).toEqual(mockUser);
+      expect(User.findByPk).toHaveBeenCalledWith("1", { raw: true });
+    });
   });
 
-  // --- CREATE USER ---
-  describe("createUser", () => {
-    it("should generate username, use default password, and return created user", async () => {
-      const payload = {
-        lastName: "Test",
-        role: "STUDENT",
-        schoolId: MOCK_SCHOOL_ID,
-      } as UserAttributes;
-
-      const expectedData = {
+  describe("create", () => {
+    it("doit générer un nom d'utilisateur et un mot de passe par défaut", async () => {
+      const payload = { firstName: "Test", lastName: "Dev", schoolId: "S1" };
+      const mockCreated = {
         ...payload,
-        password: "000000",
-        username: "GENERATED_USERNAME",
+        userId: "new-id",
+        toJSON: () => ({ ...payload, userId: "new-id" }),
       };
+      (User.create as any).mockResolvedValue(mockCreated);
 
-      const createdMock = mockModelInstance({
-        ...expectedData,
-        userId: MOCK_USER_ID,
-      });
-      vi.mocked(User.create).mockResolvedValue(createdMock as any);
-
-      const result = await UserService.createUser(payload);
+      const result = await UserQuery.create(payload as any);
 
       expect(getDefaultUsername).toHaveBeenCalled();
-      expect(User.create).toHaveBeenCalledWith(expectedData);
-      expect(result.userId).toBe(MOCK_USER_ID);
-    });
-  });
-
-  // --- UPDATE USER ---
-  describe("updateUser", () => {
-    it("should find, update, and return the updated user", async () => {
-      const existingUser = mockModelInstance({
-        userId: MOCK_USER_ID,
-        firstName: "Old",
-      });
-      existingUser.update = vi
-        .fn()
-        .mockResolvedValue(
-          mockModelInstance({ userId: MOCK_USER_ID, firstName: "New" })
-        );
-
-      vi.mocked(User.findByPk).mockResolvedValue(existingUser as any);
-
-      const result = await UserService.updateUser(MOCK_USER_ID, {
-        firstName: "New",
-      });
-
-      expect(existingUser.update).toHaveBeenCalledWith({ firstName: "New" });
-      expect(result?.firstName).toBe("New");
-    });
-  });
-
-  // --- DELETE USER ---
-  describe("deleteUser", () => {
-    it("should return true if deletion was successful", async () => {
-      vi.mocked(User.destroy).mockResolvedValue(1); // 1 row affected
-      const result = await UserService.deleteUser(MOCK_USER_ID);
-      expect(User.destroy).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { userId: MOCK_USER_ID } })
+      expect(User.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          password: "000000",
+          username: "user.test",
+        }),
+        undefined,
       );
+      expect(result.userId).toBe("new-id");
+    });
+
+    it("doit passer les options de transaction si fournies", async () => {
+      const transaction = { id: "txn-1" } as any;
+      (User.create as any).mockResolvedValue({ toJSON: () => ({}) });
+
+      await UserQuery.create({ schoolId: "S1" } as any, { transaction });
+
+      expect(User.create).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({ transaction }),
+      );
+    });
+  });
+
+  describe("update", () => {
+    it("doit retourner null si l'utilisateur n'existe pas", async () => {
+      (User.findByPk as any).mockResolvedValue(null);
+      const result = await UserQuery.update("id-err", { firstName: "Bob" });
+      expect(result).toBeNull();
+    });
+
+    it("doit mettre à jour l'utilisateur trouvé", async () => {
+      const mockInstance = {
+        update: vi.fn().mockResolvedValue({ userId: "1", firstName: "Bob" }),
+      };
+      (User.findByPk as any).mockResolvedValue(mockInstance);
+
+      const result = await UserQuery.update("1", { firstName: "Bob" });
+      expect(mockInstance.update).toHaveBeenCalledWith({ firstName: "Bob" });
+      expect(result?.firstName).toBe("Bob");
+    });
+  });
+
+  describe("delete", () => {
+    it("doit retourner true en cas de suppression réussie", async () => {
+      (User.destroy as any).mockResolvedValue(1);
+      const result = await UserQuery.delete("user-1");
       expect(result).toBe(true);
     });
 
-    it("should return false if deletion fails (user not found)", async () => {
-      vi.mocked(User.destroy).mockResolvedValue(0); // 0 rows affected
-      const result = await UserService.deleteUser(MOCK_USER_ID);
-      expect(result).toBe(false);
-    });
-
-    it("should throw service error on DB constraint failure", async () => {
-      vi.mocked(User.destroy).mockRejectedValue(
-        new Error("FK Constraint Error")
+    it("doit throw une erreur liée aux contraintes de données si la suppression échoue", async () => {
+      (User.destroy as any).mockRejectedValue(
+        new Error("ForeignKeyConstraintError"),
       );
-      await expect(UserService.deleteUser(MOCK_USER_ID)).rejects.toThrow(
-        "Delete operation failed, check related data constraints."
+
+      await expect(UserQuery.delete("user-1")).rejects.toThrow(
+        /check related data constraints/,
       );
     });
   });

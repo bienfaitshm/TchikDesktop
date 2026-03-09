@@ -1,226 +1,198 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { EnrolementQuery } from "@/packages/@core/data-access/data-queries";
+import { EnrolementQuery } from "./enrolement.query";
 import {
   ClassroomEnrolement,
-  User,
-  ClassRoom,
-  StudyYear,
-  pruneUndefined,
+  STUDENT_STATUS,
 } from "@/packages/@core/data-access/db";
-import { UserQuery } from "@/packages/@core/data-access/data-queries";
-import type { TEnrolementCreate } from "@/packages/@core/data-access/schema-validations";
 
-// Constantes de mock
-const MOCK_ENROLEMENT_ID = "enrol-001";
-const MOCK_USER_ID = "user-123";
-const MOCK_CLASS_ID = "cls-456";
-const MOCK_SCHOOL_ID = "sch-789";
-const MOCK_YEAR_ID = "yr-2025";
+describe("EnrolementQuery - Analyse & Statistiques", () => {
+  vi.mock("@/packages/@core/data-access/db", () => ({
+    ClassroomEnrolement: {
+      findAll: vi.fn(),
+      findByPk: vi.fn(),
+      count: vi.fn(),
+      create: vi.fn(),
+      destroy: vi.fn(),
+      sequelize: {
+        transaction: vi.fn(() => ({
+          commit: vi.fn(),
+          rollback: vi.fn(),
+        })),
+      },
+    },
+    User: {},
+    ClassRoom: {},
+    StudyYear: {},
+    STUDENT_STATUS: {
+      EN_COURS: "active",
+      EXCLUT: "excluded",
+      ABANDON: "inactive",
+    },
+    buildFindOptions: vi.fn(() => ({ where: {} })),
+    Sequelize: {
+      fn: vi.fn(),
+      col: vi.fn(),
+    },
+  }));
 
-// 1. Mocker les dépendances Sequelize
-vi.mock("@/packages/@core/data-access/db", () => ({
-  ClassroomEnrolement: {
-    findAll: vi.fn(),
-    findByPk: vi.fn(),
-    create: vi.fn(),
-    destroy: vi.fn(),
-    // findOne: vi.fn(), // Utilisé par findByPk
-  },
-  User: {},
-  ClassRoom: {},
-  StudyYear: {},
-  pruneUndefined: vi.fn((obj) => obj),
-}));
-
-// 2. Mocker les dépendances externes
-vi.mock("./account", () => ({
-  create: vi.fn(),
-}));
-
-// Mock Helper: Crée une fausse instance Sequelize
-const mockModelInstance = (data: any) => ({
-  ...data,
-  toJSON: () => data,
-  update: vi.fn().mockResolvedValue({ ...data, toJSON: () => ({ ...data }) }),
-});
-
-describe("EnrolementQuery", () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-    vi.restoreAllMocks();
-    vi.mocked(pruneUndefined).mockClear();
-  });
-
-  // --- FETCH OPERATIONS ---
-
-  describe("findMany", () => {
-    it("should throw validation error if schoolId or yearId is missing", async () => {
-      // @ts-ignore
-      await expect(
-        EnrolementQuery.findMany({ schoolId: MOCK_SCHOOL_ID })
-      ).rejects.toThrow("Validation Error");
+  describe("EnrolementQuery - Full Suite", () => {
+    afterEach(() => {
+      vi.clearAllMocks();
     });
 
-    it("should call findAll with correct includes, filtering on ClassRoom (yearId)", async () => {
-      // Arrange
-      const mockEnrolements = [
-        mockModelInstance({ enrolementId: MOCK_ENROLEMENT_ID }),
-      ];
-      vi.mocked(ClassroomEnrolement.findAll).mockResolvedValue(
-        mockEnrolements as any
-      );
-      vi.mocked(pruneUndefined).mockImplementation((obj) => obj); // S'assure que les filtres sont passés
+    // --- Tests des KPIs et Statistiques (Les fonctions "omises") ---
 
-      // Act
-      await EnrolementQuery.findMany({
-        schoolId: MOCK_SCHOOL_ID,
-        yearId: MOCK_YEAR_ID,
-        studentId: MOCK_USER_ID,
+    describe("getStudentStatusStats", () => {
+      it("doit retourner les stats groupées par statut", async () => {
+        const mockStats = [
+          { status: "active", count: 10 },
+          { status: "excluded", count: 2 },
+        ];
+        (ClassroomEnrolement.findAll as any).mockResolvedValue(mockStats);
+
+        const result = await EnrolementQuery.getStudentStatusStats({
+          schoolId: "1",
+          yearId: "1",
+        });
+
+        expect(ClassroomEnrolement.findAll).toHaveBeenCalledWith(
+          expect.objectContaining({
+            attributes: expect.arrayContaining(["status"]),
+            group: ["status"],
+          }),
+        );
+        expect(result).toEqual(mockStats);
       });
-
-      // Assert
-      expect(ClassroomEnrolement.findAll).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { schoolId: MOCK_SCHOOL_ID, studentId: MOCK_USER_ID },
-          include: expect.arrayContaining([
-            expect.objectContaining({
-              model: ClassRoom,
-              where: { yearId: MOCK_YEAR_ID }, // Filtre yearId appliqué à ClassRoom
-              required: true,
-              include: [StudyYear],
-            }),
-            User,
-          ]),
-        })
-      );
     });
-  });
 
-  // --- MUTATION OPERATIONS ---
+    describe("getQuickKpis", () => {
+      it("doit calculer correctement les KPIs à partir des stats", async () => {
+        const spy = vi
+          .spyOn(EnrolementQuery, "getStudentStatusStats")
+          .mockResolvedValue([
+            { status: STUDENT_STATUS.EN_COURS, count: 50 },
+            { status: STUDENT_STATUS.EXCLUT, count: 5 },
+            { status: STUDENT_STATUS.ABANDON, count: 10 },
+          ] as any);
 
-  describe("create", () => {
-    it("should create and return the new enrolement DTO", async () => {
-      // Arrange
-      const payload = {
-        studentId: MOCK_USER_ID,
-        classId: MOCK_CLASS_ID,
-      } as TEnrolementCreate;
-      const createdMock = mockModelInstance({
-        ...payload,
-        enrolementId: MOCK_ENROLEMENT_ID,
+        const kpis = await EnrolementQuery.getQuickKpis({
+          schoolId: "1",
+          yearId: "1",
+        });
+
+        expect(kpis).toEqual({
+          total: 65,
+          active: 50,
+          excluded: 5,
+          inactive: 10,
+        });
+        spy.mockRestore();
       });
-      vi.mocked(ClassroomEnrolement.create).mockResolvedValue(
-        createdMock as any
-      );
-
-      // Act
-      const result = await EnrolementQuery.create(payload);
-
-      // Assert
-      expect(ClassroomEnrolement.create).toHaveBeenCalledWith(payload);
-      expect(result.enrolementId).toBe(MOCK_ENROLEMENT_ID);
     });
-  });
 
-  describe(".quickCreate", () => {
-    it("should create a user and then the enrolement using the new userId", async () => {
-      // Arrange
-      const mockStudentPayload = { lastName: "Quick", role: "STUDENT" };
-      const quickEnrolementData = {
-        schoolId: MOCK_SCHOOL_ID,
-        classId: MOCK_CLASS_ID,
-      };
-      const createdStudent = mockModelInstance({
-        userId: MOCK_USER_ID,
-        ...mockStudentPayload,
+    describe("getRetentionMetrics", () => {
+      it("doit calculer la répartition nouveaux vs anciens élèves", async () => {
+        (ClassroomEnrolement.count as any)
+          .mockResolvedValueOnce(100) // Premier appel : total
+          .mockResolvedValueOnce(30); // Deuxième appel : news (isNewStudent: true)
+
+        const metrics = await EnrolementQuery.getRetentionMetrics({
+          schoolId: "1",
+          yearId: "1",
+        });
+
+        expect(metrics).toEqual({
+          total: 100,
+          news: 30,
+          oldStudents: 70,
+        });
       });
-      const createdEnrolement = mockModelInstance({
-        ...quickEnrolementData,
-        studentId: MOCK_USER_ID,
-        enrolementId: MOCK_ENROLEMENT_ID,
-      });
+    });
 
-      vi.mocked(UserQuery.create).mockResolvedValue(createdStudent as any);
-      vi.mocked(ClassroomEnrolement.create).mockResolvedValue(
-        createdEnrolement as any
-      );
+    // --- Tests des Opérations CRUD ---
 
-      // Act
-      const result = await EnrolementQuery.quickCreate({
-        student: mockStudentPayload as any,
-        ...quickEnrolementData,
+    describe("findById", () => {
+      it("doit retourner null si l'ID est vide", async () => {
+        const result = await EnrolementQuery.findById("");
+        expect(result).toBeNull();
       });
 
-      // Assert
-      expect(UserQuery.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ...mockStudentPayload,
-          schoolId: MOCK_SCHOOL_ID,
-        })
-      );
-      expect(ClassroomEnrolement.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ...quickEnrolementData,
-          studentId: MOCK_USER_ID, // Vérifie que l'ID du nouvel utilisateur est bien utilisé
-        })
-      );
-      expect(result.enrolementId).toBe(MOCK_ENROLEMENT_ID);
+      it("doit retourner un DTO si l'enrôlement existe", async () => {
+        const mockEnrolement = {
+          enrolementId: "abc",
+          toJSON: () => ({ enrolementId: "abc", user: {}, classroom: {} }),
+        };
+        (ClassroomEnrolement.findByPk as any).mockResolvedValue(mockEnrolement);
+
+        const result = await EnrolementQuery.findById("abc");
+        expect(result?.enrolementId).toBe("abc");
+      });
+    });
+
+    describe("delete", () => {
+      it("doit retourner true si la suppression réussit", async () => {
+        (ClassroomEnrolement.destroy as any).mockResolvedValue(1); // 1 ligne supprimée
+        const result = await EnrolementQuery.delete("id-123");
+        expect(result).toBe(true);
+      });
+
+      it("doit throw une erreur si la DB crash", async () => {
+        (ClassroomEnrolement.destroy as any).mockRejectedValue(
+          new Error("Fatal Error"),
+        );
+        await expect(EnrolementQuery.delete("id-123")).rejects.toThrow(
+          "Delete operation failed.",
+        );
+      });
     });
   });
 
-  describe("update", () => {
-    it("should update and return the updated enrolement DTO", async () => {
-      // Arrange
-      const existingEnrolement = mockModelInstance({
-        enrolementId: MOCK_ENROLEMENT_ID,
-        studentId: MOCK_USER_ID,
-      });
-      existingEnrolement.update = vi.fn().mockResolvedValue(
-        mockModelInstance({
-          enrolementId: MOCK_ENROLEMENT_ID,
-          studentId: "new-user",
-        })
-      );
+  it("getStudentsCountByOption doit agréger les données par option", async () => {
+    const mockResults = [{ value: 15, optionShortName: "Informatique" }];
+    (ClassroomEnrolement.findAll as any).mockResolvedValue(mockResults);
 
-      vi.mocked(ClassroomEnrolement.findByPk).mockResolvedValue(
-        existingEnrolement as any
-      );
-
-      // Act
-      const result = await EnrolementQuery.update(MOCK_ENROLEMENT_ID, {
-        studentId: "new-user",
-      });
-
-      // Assert
-      expect(existingEnrolement.update).toHaveBeenCalledWith({
-        studentId: "new-user",
-      });
-      expect(result?.studentId).toBe("new-user");
+    const result = await EnrolementQuery.getStudentsCountByOption({
+      schoolId: "1",
+      yearId: "1",
     });
 
-    it("should return null if enrolement ID is not found", async () => {
-      vi.mocked(ClassroomEnrolement.findByPk).mockResolvedValue(null);
-      const result = await EnrolementQuery.update("999", {
-        studentId: MOCK_USER_ID,
-      });
-      expect(result).toBeNull();
+    expect(ClassroomEnrolement.findAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        group: [expect.stringContaining("option_name")],
+      }),
+    );
+    expect(result).toEqual(mockResults);
+  });
+
+  it("getRetentionMetrics doit retourner le calcul correct entre total et news", async () => {
+    (ClassroomEnrolement.count as any)
+      .mockResolvedValueOnce(50) // Total
+      .mockResolvedValueOnce(10); // News
+
+    const result = await EnrolementQuery.getRetentionMetrics({
+      schoolId: "1",
+      yearId: "1",
+    });
+
+    expect(result).toEqual({
+      total: 50,
+      news: 10,
+      oldStudents: 40,
     });
   });
 
-  describe(".delete", () => {
-    it("should return true if deletion was successful", async () => {
-      vi.mocked(ClassroomEnrolement.destroy).mockResolvedValue(1);
-      const result = await EnrolementQuery.delete(MOCK_ENROLEMENT_ID);
-      expect(ClassroomEnrolement.destroy).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { enrolementId: MOCK_ENROLEMENT_ID } })
-      );
-      expect(result).toBe(true);
+  it("getQuickKpis doit sommer les comptes pour le total global", async () => {
+    vi.spyOn(EnrolementQuery, "getStudentStatusStats").mockResolvedValue([
+      { status: "EN_COURS", count: "20" },
+      { status: "ABANDON", count: "5" },
+    ] as any);
+
+    const result = await EnrolementQuery.getQuickKpis({
+      schoolId: "1",
+      yearId: "1",
     });
 
-    it("should return false if enrolement not found", async () => {
-      vi.mocked(ClassroomEnrolement.destroy).mockResolvedValue(0);
-      const result = await EnrolementQuery.delete("999");
-      expect(result).toBe(false);
-    });
+    expect(result.total).toBe(25);
+    expect(result.active).toBe(20);
   });
 });

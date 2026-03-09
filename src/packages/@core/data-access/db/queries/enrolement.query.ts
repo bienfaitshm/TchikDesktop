@@ -3,11 +3,13 @@ import {
   User,
   ClassRoom,
   StudyYear,
+  Option,
   buildFindOptions,
   type TEnrolement,
   type TUser,
   type TClassroom,
   type TStudyYear,
+  STUDENT_STATUS,
 } from "@/packages/@core/data-access/db";
 import { getLogger } from "@/packages/logger";
 import type {
@@ -143,6 +145,89 @@ export class EnrolementQuery {
       );
       return null;
     }
+  }
+
+  static async getStudentsCountByOption(filters: TEnrolementFilter) {
+    try {
+      const options = this.getFilterOptions(filters);
+      return await ClassroomEnrolement.findAll({
+        attributes: [
+          [Sequelize.fn("COUNT", Sequelize.col("student_id")), "value"],
+        ],
+        ...options,
+        include: [
+          {
+            model: ClassRoom,
+            as: "classroom",
+            attributes: [],
+            required: true,
+            include: [
+              {
+                model: Option,
+                as: "option",
+                attributes: ["optionShortName"],
+                required: true,
+              },
+            ],
+          },
+        ],
+        group: [Sequelize.col("classroom->option.option_name")],
+        order: [[Sequelize.col("classroom->option.option_short_name"), "ASC"]],
+        raw: true,
+      });
+    } catch (error) {
+      logger.error("EnrolementQuery.getStudentsCountByOption failed", error);
+      return [];
+    }
+  }
+
+  static async getRetentionMetrics(filters: TEnrolementFilter) {
+    const options = this.getFilterOptions(filters);
+    const include = [{ model: ClassRoom, as: "classroom", required: true }];
+
+    const [total, news] = await Promise.all([
+      ClassroomEnrolement.count({ ...options, include }),
+      ClassroomEnrolement.count({
+        where: { ...options.where, isNewStudent: true },
+        include,
+      }),
+    ]);
+
+    return { total, oldStudents: total - news, news };
+  }
+
+  static async getStudentStatusStats(filters: TEnrolementFilter) {
+    try {
+      const options = this.getFilterOptions(filters);
+      return await ClassroomEnrolement.findAll({
+        ...options,
+        attributes: [
+          "status",
+          [Sequelize.fn("COUNT", Sequelize.col("enrolement_id")), "count"],
+        ],
+        group: ["status"],
+        raw: true,
+      });
+    } catch (error) {
+      logger.error("EnrolementQuery.getStudentStatusStats failed", error);
+      return [];
+    }
+  }
+
+  static async getQuickKpis(filters: TEnrolementFilter) {
+    const stats: any[] = await this.getStudentStatusStats(filters);
+    const getCount = (status: string) =>
+      Number(stats.find((s: any) => s.status === status)?.count || 0);
+
+    return {
+      total: stats.reduce(
+        (acc: number, curr: any) => acc + Number(curr.count),
+        0,
+      ),
+      active: getCount(STUDENT_STATUS.EN_COURS),
+      excluded: getCount(STUDENT_STATUS.EXCLUT),
+      inactive: getCount(STUDENT_STATUS.ABANDON),
+    };
   }
 
   static async create(data: TEnrolementCreate): Promise<TEnrolement> {
