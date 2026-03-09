@@ -1,11 +1,5 @@
-/**
- * @file classroom.query-handler.ts
- * @description Handler concret pour récupérer les salles de classe et leurs inscriptions.
- * Implémente le pipeline standard de validation, exécution DB, et transformation finale.
- */
-
 import { AbstractQueryHandler } from "@/packages/data-system";
-import { ClassroomQuery } from "@/packages/@core/data-access/data-queries";
+import { ClassroomQuery } from "@/packages/@core/data-access/db/queries";
 import {
   ClassroomFilterSchema,
   ClassroomAttributesSchema,

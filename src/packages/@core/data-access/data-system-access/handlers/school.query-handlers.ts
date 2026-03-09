@@ -10,7 +10,10 @@ import {
   type TStudyYearAttributes,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractQueryHandler } from "@/packages/data-system";
-import { SchoolQuery } from "@/packages/@core/data-access/data-queries";
+import {
+  SchoolQuery,
+  StudyYearQuery,
+} from "@/packages/@core/data-access/db/queries";
 
 import { ShoolRouteIds } from "./route-ids";
 
@@ -23,7 +26,7 @@ export class FindSchoolsQueryHandler extends AbstractQueryHandler<TSchoolFilter>
   public readonly schema = SchoolFilterSchema;
 
   public async execute(validatedParams: TSchoolFilter) {
-    return SchoolQuery.getSchools(validatedParams) as any;
+    return SchoolQuery.findMany(validatedParams) as any;
   }
 }
 
@@ -42,7 +45,7 @@ export class FindSchoolByIdQueryHandler extends AbstractQueryHandler<
   public readonly schema = SchoolAttributesSchema.pick({ schoolId: true });
 
   public async execute(validatedParams: Pick<TSchoolAttributes, "schoolId">) {
-    return SchoolQuery.getSchoolById(validatedParams.schoolId) as any;
+    return SchoolQuery.findById(validatedParams.schoolId) as any;
   }
 }
 
@@ -59,7 +62,7 @@ export class FindStudyYearsQueryHandler extends AbstractQueryHandler<TStudyYearF
   public readonly schema = StudyYearFilterSchema;
 
   public async execute(validatedParams: TStudyYearFilter) {
-    return SchoolQuery.getStudyYears(validatedParams) as any;
+    return StudyYearQuery.findMany(validatedParams) as any;
   }
 }
 
@@ -78,6 +81,6 @@ export class FindStudyYearByIdQueryHandler extends AbstractQueryHandler<
   public readonly schema = StudyYearAttributesSchema.pick({ yearId: true });
 
   public async execute(validatedParams: Pick<TStudyYearAttributes, "yearId">) {
-    return SchoolQuery.getStudyYearById(validatedParams.yearId) as any;
+    return StudyYearQuery.findById(validatedParams.yearId) as any;
   }
 }
