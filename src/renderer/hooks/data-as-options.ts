@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
-import { GetClassroomParams } from "@/commons/types/services";
+import { TClassroomFilter } from "@/packages/@core/data-access/schema-validations";
 import { useGetOptions } from "@/renderer/libs/queries/option";
 import { useGetAvailableExports } from "@/renderer/libs/queries/document-export";
 
@@ -92,13 +92,13 @@ export function useDataToOptions<T extends DataItem>({
 /**
  * Hook pour récupérer les classes et les convertir en un tableau d'options de sélection.
  *
- * @param {GetClassroomParams} params Les paramètres pour filtrer les classes.
+ * @param {TClassroomFilter} params Les paramètres pour filtrer les classes.
  * @param {DataToOptionConverterOptions} [options] Options de formatage du libellé.
  * @returns {Option[]} Un tableau d'options de classe.
  */
 export function useGetClassroomAsOptions(
-  params: GetClassroomParams,
-  options?: DataToOptionConverterOptions
+  params: TClassroomFilter,
+  options?: DataToOptionConverterOptions,
 ): Option[] {
   const { data: classrooms = [] } = useGetClassrooms(params);
 
@@ -119,7 +119,7 @@ export function useGetClassroomAsOptions(
  */
 export function useGetOptionAsOptions(
   schoolId: string,
-  options?: DataToOptionConverterOptions
+  options?: DataToOptionConverterOptions,
 ) {
   const { data: dataOptions = [] } = useGetOptions({ schoolId });
   const _options = useDataToOptions({
