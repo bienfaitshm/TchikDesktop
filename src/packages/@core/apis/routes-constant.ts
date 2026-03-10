@@ -5,6 +5,11 @@
  * Ces constantes sont utilisées par IpcClient et IpcServer pour la communication.
  */
 
+export const UserRoutes = {
+  ALL: "users",
+  DETAIL: "users/:userId",
+} as const;
+
 /**
  * Routes IPC pour la gestion des OPTIONS.
  * Utilisées pour les choix et configurations simples.
@@ -88,4 +93,5 @@ export const IpcRoutes = {
   DOCUMENT_EXPORT: DocumentExportRoutes,
   STATS: StatsRoutes,
   APP_INFOS: AppInfosRoutes,
+  USERS: UserRoutes,
 } as const;

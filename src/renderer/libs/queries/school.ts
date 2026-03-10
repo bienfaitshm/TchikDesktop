@@ -10,10 +10,6 @@ import {
 import { school } from "@/renderer/libs/apis";
 import { TQueryUpdate } from "./type";
 
-// =======================================================================
-// 📚 School Hooks
-// =======================================================================
-
 /**
  * @function useGetSchools
  * @description Hook pour récupérer toutes les écoles, avec filtres optionnels.
@@ -43,11 +39,9 @@ export function useGetSchoolById(schoolId: string) {
  * @description Hook pour créer une nouvelle école.
  */
 export function useCreateSchool() {
-  // Le type de retour est TSchoolAttributes (l'objet créé avec son ID)
   return useMutation({
     mutationKey: ["CREATE_SCHOOL"],
     mutationFn: (data: TSchoolCreate) => school.createSchool(data),
-    // Le code Big Tech ajouterait ici onMutate/onSuccess pour invalider le cache GET_SCHOOLS
   });
 }
 
@@ -56,7 +50,6 @@ export function useCreateSchool() {
  * @description Hook pour mettre à jour une école existante.
  */
 export function useUpdateSchool() {
-  // Le type de retour est TSchoolAttributes (l'objet mis à jour)
   return useMutation({
     mutationKey: ["UPDATE_SCHOOL"],
     mutationFn: ({ data, id }: TQueryUpdate<TSchoolUpdate>) =>
@@ -69,16 +62,11 @@ export function useUpdateSchool() {
  * @description Hook pour supprimer une école.
  */
 export function useDeleteSchool() {
-  // Le type de retour est généralement 'void' ou 'undefined' en cas de succès
   return useMutation({
     mutationKey: ["DELETE_SCHOOL"],
     mutationFn: (schoolId: string) => school.deleteSchool(schoolId),
   });
 }
-
-// =======================================================================
-// 🗓️ Study Year Hooks
-// =======================================================================
 
 /**
  * @function useGetStudyYears

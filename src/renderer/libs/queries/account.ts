@@ -1,23 +1,13 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  createUser,
-  deleteUser,
-  getUsers,
-  updateUser,
-} from "@/renderer/libs/apis/account";
-import {
-  QueryParams,
-  TUser,
-  TUserInsert,
-  WithSchoolAndYearId,
-} from "@/commons/types/services";
+import { api } from "@/renderer/libs/apis";
+
 import { TQueryUpdate } from "./type";
 
 export function useGetUsers(
   params?: QueryParams<
     WithSchoolAndYearId,
     Partial<TUserInsert & { classroomId: string }>
-  >
+  >,
 ) {
   return useQuery({
     queryKey: ["GET_USERS", params],

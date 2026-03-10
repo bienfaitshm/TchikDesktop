@@ -5,6 +5,7 @@ import {
 } from "@/packages/handler-factory";
 import { AbstractEndpoint } from "./abstract";
 
+import * as user from "./user";
 import * as schools from "./schools";
 import * as options from "./options";
 import * as classrooms from "./classrooms";
@@ -15,6 +16,13 @@ import * as appInfos from "./apps-infos";
 
 const initializerLogger = getLogger("IPC Server");
 const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
+  //users
+  user.GetUsers,
+  user.GetUser,
+  user.PostUser,
+  user.UpdateUser,
+  user.DeleteUser,
+
   // schools
   schools.GetSchools,
   schools.PostSchool,
