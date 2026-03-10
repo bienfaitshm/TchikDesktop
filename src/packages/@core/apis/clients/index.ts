@@ -4,3 +4,4 @@ export * from "./options";
 export * from "./schools";
 export * from "./export-documents";
 export * from "./stats";
+export * from "./app-infos";
