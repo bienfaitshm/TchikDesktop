@@ -3,6 +3,7 @@ import * as apis from "@/packages/@core/apis/clients";
 import type { IpcRenderer } from "@electron-toolkit/preload";
 
 const API_REGISTRY = {
+  users: apis.createUserApis,
   classroom: apis.createClassroomApis,
   enrollement: apis.createEnrollementApis,
   option: apis.createOptionApis,
@@ -57,4 +58,5 @@ export const {
   exportDocuments,
   stats,
   appInfos,
+  users,
 } = api;
