@@ -1,3 +1,4 @@
+export * from "./user";
 export * from "./classrooms";
 export * from "./enrollments";
 export * from "./options";
