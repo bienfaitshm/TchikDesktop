@@ -11,6 +11,7 @@ import * as classrooms from "./classrooms";
 import * as enrollments from "./enrollments";
 import * as stats from "./statistics";
 import * as exportDocument from "./document-exports";
+import * as appInfos from "./apps-infos";
 
 const initializerLogger = getLogger("IPC Server");
 const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
@@ -63,6 +64,9 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   // export data
   exportDocument.ExportDocuments,
   exportDocument.GetInfosDocumentExports,
+
+  // app and system information
+  appInfos.GetSystemInfos,
 ];
 
 export const instantiatedHandlers = instantiateClasses(

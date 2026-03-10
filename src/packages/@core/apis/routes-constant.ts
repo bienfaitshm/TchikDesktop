@@ -11,7 +11,6 @@
  */
 export const OptionRoutes = {
   ALL: "options",
-  // Supposant que l'ID est nécessaire pour cibler une option spécifique
   DETAIL: "options/:optionId",
 } as const;
 
@@ -20,7 +19,6 @@ export const OptionRoutes = {
  */
 export const SchoolRoutes = {
   ALL: "schools",
-  // Utilise schoolId pour cibler une école spécifique
   DETAIL: "schools/:schoolId",
 } as const;
 
@@ -29,7 +27,6 @@ export const SchoolRoutes = {
  */
 export const StudyYearRoutes = {
   ALL: "studyYear",
-  // Utilise schoolId pour cibler une école spécifique
   DETAIL: "studyYear/:yearId",
 } as const;
 
@@ -39,7 +36,6 @@ export const StudyYearRoutes = {
 export const ClassroomRoutes = {
   ALL: "classrooms",
   ALL_ENROLLMENT: "classrooms/enrollments",
-  // Utilise classroomId pour cibler une salle spécifique
   DETAIL: "classrooms/:classroomId",
 } as const;
 
@@ -50,7 +46,6 @@ export const ClassroomRoutes = {
  */
 export const EnrollementRoutes = {
   ALL: "enrollements",
-  // Utilise enrolmentId pour cibler un enregistrement d'inscription spécifique
   DETAIL: "enrollements/:enrollementId",
   ALL_HISTORIES: "enrollements/histories",
   QUICK_ENROLLEMENT: "enrollements/quick",
@@ -69,15 +64,17 @@ export const StatsRoutes = {
   // Global & KPI (Total étudiants, ratio, etc.)
   SUMMARY: "stats/summary",
 
-  // Répartitions (Pie/Bar Charts)
   STUDENTS_BY_STATUS: "stats/students/status",
   STUDENTS_BY_GENDER: "stats/students/gender",
   STUDENTS_BY_CLASS: "stats/students/class",
   STUDENTS_BY_OPTION: "stats/students/option",
 
-  // Performance & Rétention
   RETENTION: "stats/retention",
 } as const;
+
+export const AppInfosRoutes = {
+  SYS_INFOS: "app-infos/sys-infos",
+};
 
 /**
  * Export global mis à jour
@@ -90,4 +87,5 @@ export const IpcRoutes = {
   STUDY_YEAR: StudyYearRoutes,
   DOCUMENT_EXPORT: DocumentExportRoutes,
   STATS: StatsRoutes,
+  APP_INFOS: AppInfosRoutes,
 } as const;
