@@ -1,4 +1,4 @@
-import { IpcClient } from "@/packages/electron-ipc-rest";
+import { IpcClient, createLazyIpcClient } from "@/packages/electron-ipc-rest";
 import * as apis from "@/packages/@core/apis/clients";
 import type { IpcRenderer } from "@electron-toolkit/preload";
 

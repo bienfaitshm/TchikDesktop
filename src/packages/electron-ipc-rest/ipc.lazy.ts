@@ -2,7 +2,7 @@
  * @file ipc.lazy.ts
  */
 
-import { IpcClient, IpcServer } from "./ipc";
+import { IpcClient, IpcServer, ServerConfig } from "./ipc";
 import type { IpcRenderer } from "@electron-toolkit/preload";
 
 export function createLazyIpcClient(ipcRenderer: IpcRenderer): IpcClient {
@@ -25,13 +25,16 @@ export function createLazyIpcClient(ipcRenderer: IpcRenderer): IpcClient {
   });
 }
 
-export function createLazyIpcServer(ipcMain: Electron.IpcMain): IpcServer {
+export function createLazyIpcServer(
+  ipcMain: Electron.IpcMain,
+  config?: ServerConfig,
+): IpcServer {
   let instance: IpcServer | null = null;
 
   return new Proxy({} as IpcServer, {
     get(_, prop: string) {
       if (!instance) {
-        instance = new IpcServer(ipcMain);
+        instance = new IpcServer(ipcMain, config);
       }
       return Reflect.get(instance, prop);
     },
