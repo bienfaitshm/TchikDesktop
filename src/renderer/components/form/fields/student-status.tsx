@@ -1,5 +1,5 @@
-import { STUDENT_STATUS, STUDENT_STATUS_TRANSLATIONS } from "@/commons/constants/enum";
-import { getEnumKeyValueList } from "@/commons/utils";
+import { STUDENT_STATUS, STUDENT_STATUS_TRANSLATIONS } from "@/packages/@core/data-access/db";
+import { getEnumKeyValueList } from "@/renderer/utils";
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/renderer/components/ui/select";
 import { FormControl } from "@/renderer/components/ui/form";

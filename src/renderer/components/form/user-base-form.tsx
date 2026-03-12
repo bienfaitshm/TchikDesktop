@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from "react";
-import { useControlledForm } from "@/commons/libs/forms";
+import { useZodForm } from "@/packages/use-zod-form";
 import { BaseUserSchema, type BaseUserSchemaAttributes } from "@/renderer/libs/schemas";
 import {
     Form,
@@ -9,7 +9,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/renderer/components/ui/form";
-import { USER_GENDER, USER_ROLE } from "@/commons/constants/enum";
+import { USER_GENDER, USER_ROLE } from "@/packages/@core/data-access/db";
 import { Input } from "@/renderer/components/ui/input";
 import { Label } from "@/renderer/components/ui/label";
 import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
@@ -47,7 +47,7 @@ export const BaseUserSchemaForm = React.forwardRef<
     BaseUserSchemaFormHandle,
     PropsWithChildren<BaseUserSchemaFormProps>
 >(({ children, onSubmit, initialValues = {} }, ref) => {
-    const [form, handleSubmit] = useControlledForm({
+    const form = useZodForm({
         schema: BaseUserSchema,
         defaultValues: { ...DEFAULT_QUICK_ENROLLMENT_VALUES, ...initialValues },
         onSubmit: (values) => {
@@ -59,7 +59,7 @@ export const BaseUserSchemaForm = React.forwardRef<
 
     return (
         <Form {...form}>
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={form.submit}>
                 <div className="space-y-5">
                     <Label>Informations sur l'élève</Label>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

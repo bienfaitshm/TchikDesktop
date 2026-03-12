@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from "react";
-import { useControlledForm } from "@/commons/libs/forms";
+import { useZodForm } from "@/packages/use-zod-form";
 import { QuickEnrollmentSchema, type QuickEnrollmentSchemaAttributes } from "@/renderer/libs/schemas";
 import {
     Form,
@@ -11,7 +11,7 @@ import {
     FormMessage,
 } from "@/renderer/components/ui/form";
 import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
-import { USER_GENDER, USER_ROLE } from "@/commons/constants/enum";
+import { USER_GENDER, USER_ROLE } from "@/packages/@core/data-access/db";
 import { Input } from "@/renderer/components/ui/input";
 import { GenderInput } from "./fields/gender";
 import { Label } from "@/renderer/components/ui/label";
@@ -168,7 +168,7 @@ export const QuickEnrollmentForm = React.forwardRef<
     QuickEnrollmentFormHandle,
     PropsWithChildren<QuickEnrollmentFormProps>
 >(({ children, onSubmit, initialValues = {}, classrooms = [] }, ref) => {
-    const [form, handleSubmit] = useControlledForm({
+    const form = useZodForm({
         schema: QuickEnrollmentSchema,
         defaultValues: { ...DEFAULT_QUICK_ENROLLMENT_VALUES, ...initialValues },
         onSubmit: (values) => {
@@ -180,7 +180,7 @@ export const QuickEnrollmentForm = React.forwardRef<
 
     return (
         <Form {...form}>
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={form.submit}>
                 <FormField
                     control={form.control}
                     name="classroomId"

@@ -4,12 +4,7 @@ import {
   STUDENT_STATUS,
   USER_GENDER,
   USER_ROLE,
-} from "@/commons/constants/enum";
-import { DOCUMENT_TYPE } from "@/commons/libs/document";
-
-// =====================
-// SCHÉMAS ZOD ET LEURS TYPES INFÉRÉS
-// =====================
+} from "@/packages/@core/data-access/db";
 
 /**
  * Schéma Zod pour SchoolAttributes.
@@ -68,7 +63,7 @@ export const UserSchema = z.object({
     .string()
     .regex(
       /^\d{4}-\d{2}-\d{2}$/,
-      "La date de naissance doit être au format AAAA-MM-JJ."
+      "La date de naissance doit être au format AAAA-MM-JJ.",
     )
     .nullable()
     .optional(),
@@ -191,7 +186,7 @@ export const DocumentExportSchema = z.object({
     .array(
       z.nativeEnum(SECTION, {
         errorMap: () => ({ message: "section invalide." }),
-      })
+      }),
     )
     .min(1),
   documentType: z.string().nonempty(),
@@ -199,7 +194,7 @@ export const DocumentExportSchema = z.object({
     .array(
       z.nativeEnum(STUDENT_STATUS, {
         errorMap: () => ({ message: "statut invalide." }),
-      })
+      }),
     )
     .min(1),
   classrooms: z.array(z.string()).min(1),

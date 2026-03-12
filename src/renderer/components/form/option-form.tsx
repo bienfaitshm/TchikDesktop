@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from "react";
-import { useControlledForm } from "@/commons/libs/forms";
-import { SECTION, SECTION_TRANSLATIONS } from "@/commons/constants/enum";
+import { useZodForm } from "@/packages/use-zod-form";
+import { SECTION, SECTION_TRANSLATIONS } from "@/packages/@core/data-access/db";
 import { OptionSchema, type OptionAttributes } from "@/renderer/libs/schemas";
 import {
     Form,
@@ -20,7 +20,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/renderer/components/ui/select";
-import { getEnumKeyValueList } from "@/commons/utils";
+import { getEnumKeyValueList } from "@/renderer/utils"
 
 export * from "./utils"
 
@@ -182,7 +182,7 @@ export const OptionForm = React.forwardRef<
     OptionFormHandle,
     PropsWithChildren<OptionFormProps>
 >(({ children, onSubmit, initialValues = {} }, ref) => {
-    const [form, handleSubmit] = useControlledForm({
+    const form = useZodForm({
         schema: OptionSchema, // Use the Zod schema for validation
         defaultValues: { ...DEFAULT_OPTION_VALUES, ...initialValues }, // Merge defaults with any provided initial values
         onSubmit: (value) => {
@@ -194,8 +194,8 @@ export const OptionForm = React.forwardRef<
 
     return (
         <div>
-            <Form {...form}> {/* Pass the form instance from useControlledForm */}
-                <form className="space-y-4" onSubmit={handleSubmit}> {/* Use the handleSubmit from useControlledForm */}
+            <Form {...form}>
+                <form className="space-y-4" onSubmit={form.submit}>
                     {/* Option Name Field */}
                     <FormField
                         control={form.control}

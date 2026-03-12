@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from "react";
-import { useControlledForm } from "@/commons/libs/forms";
+import { useZodForm } from "@/packages/use-zod-form";
 import { EnrollmentSchemaSchema, type EnrollmentSchemaAttributes } from "@/renderer/libs/schemas";
 import {
     Form,
@@ -12,9 +12,9 @@ import {
 } from "@/renderer/components/ui/form";
 import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { Combobox } from "../ui/combobox";
-import { STUDENT_STATUS } from "@/commons/constants/enum";
 import { StudentStatus } from "./fields/student-status";
 import { StudentSeniorityStatusSelect } from "./fields/student-seriority-statut";
+import { STUDENT_STATUS } from "@/packages/@core/data-access/db";
 
 // Exporte les utilitaires du formulaire pour les composants parents
 export * from "./utils";
@@ -50,7 +50,7 @@ export const EnrollmentForm = React.forwardRef<
     EnrollmentFormHandle,
     PropsWithChildren<EnrollmentFormProps>
 >(({ children, onSubmit, initialValues = {}, classrooms = [] }, ref) => {
-    const [form, handleSubmit] = useControlledForm({
+    const form = useZodForm({
         schema: EnrollmentSchemaSchema,
         defaultValues: { ...DEFAULT_QUICK_ENROLLMENT_VALUES, ...initialValues },
         onSubmit: (values) => {
@@ -62,7 +62,7 @@ export const EnrollmentForm = React.forwardRef<
 
     return (
         <Form {...form}>
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={form.submit}>
                 <div className="grid grid-cols-2 gap-5">
                     <FormField
                         control={form.control}
@@ -113,7 +113,6 @@ export const EnrollmentForm = React.forwardRef<
                         </FormItem>
                     )}
                 />
-
                 {children}
             </form>
         </Form>

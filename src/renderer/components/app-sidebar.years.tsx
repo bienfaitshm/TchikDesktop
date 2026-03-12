@@ -20,7 +20,7 @@ import { cn } from "@/renderer/utils";
 
 import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
 import { useGetStudyYears } from "@/renderer/libs/queries/school";
-import { formatDate } from "@/commons/libs/times";
+import { formatDate } from "@/renderer/utils";
 import { Link } from "react-router";
 
 /**
