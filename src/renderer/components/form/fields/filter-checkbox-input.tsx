@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChevronsUpDown, X } from "lucide-react";
+import { ChevronsUpDown, Check } from "lucide-react";
 import { Button } from "@/renderer/components/ui/button";
 import {
     Popover,
@@ -9,38 +9,25 @@ import {
 import { Checkbox } from "@/renderer/components/ui/checkbox";
 import { Label } from "@/renderer/components/ui/label";
 import { Input } from "@/renderer/components/ui/input";
+import { cn } from "@/renderer/utils";
 
-/**
- * @typedef {object} Option
- * @property {string} label - Le texte affiché pour l'option.
- * @property {string} value - La valeur unique associée à l'option.
- */
-type Option = {
+export type Option = {
     label: string;
     value: string;
 };
 
-/**
- * @typedef {object} FilterCheckboxInputProps
- * @property {string} name - Le nom de la catégorie de filtre (ex: "statut", "type"). Utilisé pour l'affichage.
- * @property {string} [placeholder="Sélectionner..."] - Le texte affiché quand rien n'est sélectionné.
- * @property {Option[]} [options=[]] - Le tableau des options disponibles.
- * @property {string[]} [value=[]] - Le tableau des valeurs des options actuellement sélectionnées.
- * @property {(values: string[]) => void} [onChangeValue] - Fonction de rappel déclenchée lors d'un changement de sélection.
- */
-type FilterCheckboxInputProps = {
+export type FilterCheckboxInputProps = {
     name: string;
     placeholder?: string;
     options?: Option[];
     value?: string[];
     onChangeValue?(values: string[]): void;
+    className?: string;
 };
 
 /**
- * Un composant de filtre multi-sélection réutilisable dans un popover.
- * Il permet aux utilisateurs de rechercher, sélectionner plusieurs options, tout sélectionner et tout désélectionner.
- *
- * @param {FilterCheckboxInputProps} props - Les props du composant.
+ * FilterCheckboxInput
+ * Un composant de filtrage robuste avec recherche intégrée et multi-sélection.
  */
 export const FilterCheckboxInput: React.FC<FilterCheckboxInputProps> = ({
     options = [],
@@ -48,29 +35,21 @@ export const FilterCheckboxInput: React.FC<FilterCheckboxInputProps> = ({
     value = [],
     placeholder = "Sélectionner...",
     onChangeValue,
+    className
 }) => {
     const [open, setOpen] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState("");
 
-
     const filteredOptions = React.useMemo(() => {
-        if (!searchTerm) {
-            return options;
-        }
-        return options.filter((option) =>
-            option.label.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        const lowerTerm = searchTerm.toLowerCase();
+        return options.filter((opt) => opt.label.toLowerCase().includes(lowerTerm));
     }, [options, searchTerm]);
-
 
     const areAllFilteredSelected = React.useMemo(() => {
         if (filteredOptions.length === 0) return false;
         return filteredOptions.every(opt => value.includes(opt.value));
     }, [filteredOptions, value]);
 
-    /**
-     * Gère le changement d'état d'une case à cocher.
-     */
     const handleCheckedChange = React.useCallback(
         (checked: boolean, optionValue: string) => {
             const newValues = checked
@@ -81,36 +60,25 @@ export const FilterCheckboxInput: React.FC<FilterCheckboxInputProps> = ({
         [value, onChangeValue]
     );
 
-    /**
-     * Sélectionne toutes les options actuellement visibles (filtrées).
-     */
     const selectAllFiltered = (e: React.MouseEvent) => {
-        e.stopPropagation();
+        e.preventDefault();
         const filteredValues = filteredOptions.map(opt => opt.value);
-        const newValues = [...new Set([...value, ...filteredValues])];
+        const newValues = Array.from(new Set([...value, ...filteredValues]));
         onChangeValue?.(newValues);
     };
 
-    /**
-     * Réinitialise la sélection.
-     */
     const clearSelection = (e: React.MouseEvent) => {
-        e.stopPropagation();
+        e.preventDefault();
         onChangeValue?.([]);
     };
 
-    /**
-     * Génère le texte pour le bouton de déclenchement en fonction de la sélection.
-     */
     const getButtonText = () => {
-        if (value.length === 0) {
-            return placeholder;
-        }
+        if (value.length === 0) return placeholder;
         if (value.length === 1) {
-            const selectedOption = options.find(opt => opt.value === value[0]);
-            return selectedOption ? selectedOption.label : `1 ${name} sélectionné`;
+            const selected = options.find(opt => opt.value === value[0]);
+            return selected ? selected.label : `1 ${name} sélectionné`;
         }
-        return `${value.length} ${name}s sélectionné(e)s`;
+        return `${value.length} ${name}s sélectionnés`;
     };
 
     return (
@@ -120,75 +88,89 @@ export const FilterCheckboxInput: React.FC<FilterCheckboxInputProps> = ({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between font-normal"
+                    aria-haspopup="listbox"
+                    className={cn("w-full justify-between font-normal h-9 px-3", className)}
                 >
-                    <span className="truncate pr-2 text-xs">{getButtonText()}</span>
-                    <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                    <span className="truncate text-xs font-medium">{getButtonText()}</span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full min-w-[320px] p-0">
-                <div className="p-2">
+            <PopoverContent
+                className="w-[var(--radix-popover-trigger-width)] min-w-[280px] p-0 shadow-lg"
+                align="start"
+            >
+                <div className="flex items-center border-b p-2">
                     <Input
-                        placeholder="Rechercher..."
+                        placeholder={`Filtrer par ${name.toLowerCase()}...`}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full h-7"
+                        className="h-8 text-xs ring-offset-transparent focus-visible:ring-1"
+                        autoFocus
                     />
                 </div>
 
-                <div className="max-h-[200px] overflow-y-auto p-1">
+                <div
+                    role="listbox"
+                    aria-multiselectable="true"
+                    className="max-h-[240px] overflow-y-auto p-1 custom-scrollbar"
+                >
                     {filteredOptions.length > 0 ? (
                         filteredOptions.map((option) => {
+                            const isSelected = value.includes(option.value);
                             const checkboxId = `filter-${name}-${option.value}`;
                             return (
                                 <div
                                     key={option.value}
-                                    className="flex items-center gap-3 px-2 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    className={cn(
+                                        "flex items-center gap-2 px-2 py-1.5 rounded-sm transition-colors cursor-pointer",
+                                        isSelected ? "bg-accent/50 text-accent-foreground" : "hover:bg-muted"
+                                    )}
+                                    onClick={() => handleCheckedChange(!isSelected, option.value)}
                                 >
                                     <Checkbox
                                         id={checkboxId}
-                                        checked={value.includes(option.value)}
-                                        onCheckedChange={(checked) => {
-                                            handleCheckedChange(!!checked, option.value);
-                                        }}
+                                        checked={isSelected}
+                                        onCheckedChange={(checked) => handleCheckedChange(!!checked, option.value)}
+                                        onClick={(e) => e.stopPropagation()} // Évite le double toggle
                                     />
-                                    <Label htmlFor={checkboxId} className="w-full font-normal cursor-pointer text-xs">
+                                    <Label
+                                        htmlFor={checkboxId}
+                                        className="flex-1 font-normal cursor-pointer text-xs"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
                                         {option.label}
                                     </Label>
+                                    {isSelected && <Check className="h-3 w-3 opacity-70" />}
                                 </div>
                             );
                         })
                     ) : (
-                        <p className="text-center text-sm text-gray-500 py-4">
-                            Aucun résultat trouvé.
-                        </p>
+                        <div className="py-6 text-center text-xs text-muted-foreground italic">
+                            Aucun résultat pour "{searchTerm}"
+                        </div>
                     )}
                 </div>
 
-                {/* Affiche les actions si des options sont sélectionnées OU si toutes les options filtrées ne le sont pas */}
-                {(value.length > 0 || (!areAllFilteredSelected && filteredOptions.length > 0)) && (
-                    <div className="border-t border-gray-200 dark:border-gray-700 p-2 flex items-center gap-2">
-                        {!areAllFilteredSelected && filteredOptions.length > 0 && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-center h-8 text-xs"
-                                onClick={selectAllFiltered}
-                            >
-                                Tout sélectionner
-                            </Button>
-                        )}
-                        {value.length > 0 && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-center h-8 text-red-500 hover:text-red-600 text-xs"
-                                onClick={clearSelection}
-                            >
-                                <X className="mr-1 h-4 w-4" />
-                                Tout désélectionner
-                            </Button>
-                        )}
+                {(value.length > 0 || filteredOptions.length > 0) && (
+                    <div className="border-t bg-muted/20 p-2 grid grid-cols-2 gap-2">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={areAllFilteredSelected || filteredOptions.length === 0}
+                            className="h-7 text-[10px] uppercase tracking-wider font-bold"
+                            onClick={selectAllFiltered}
+                        >
+                            Tout cocher
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={value.length === 0}
+                            className="h-7 text-[10px] uppercase tracking-wider font-bold text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={clearSelection}
+                        >
+                            Effacer ({value.length})
+                        </Button>
                     </div>
                 )}
             </PopoverContent>

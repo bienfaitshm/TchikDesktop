@@ -1,54 +1,57 @@
 "use client"
-// import { formatDate } from "@/commons/libs/times";
 
 import * as React from "react";
 import { forwardRef } from "react";
-import { Calendar as CalendarIcon } from "lucide-react"; // Renommé pour éviter le conflit
-import { format } from "date-fns"; // Utilisé pour formater les dates
-import { fr } from "date-fns/locale"; // Pour le formatage en français
+import { Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 import { Button } from "@/renderer/components/ui/button";
-import { Calendar } from "@/renderer/components/ui/calendar"; // Votre composant Calendar
+import { Calendar } from "@/renderer/components/ui/calendar";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@/renderer/components/ui/popover";
-import { cn } from "@/renderer/utils"; // Assurez-vous d'avoir une fonction `cn` pour fusionner les classes Tailwind
+import { cn } from "@/renderer/utils";
 
-/**
- * @typedef {Object} DateInputProps
- * @property {Date} [value] - La date sélectionnée.
- * @property {string} [name] - Le nom de l'input HTML.
- * @property {(date?: Date) => void} [onChange] - Fonction de rappel appelée lorsque la date change.
- * @property {string} [className] - Classes CSS additionnelles pour le bouton du sélecteur de date.
- * @property {string} [placeholder] - Texte affiché lorsque aucune date n'est sélectionnée.
- */
-interface DateInputProps {
+export interface DateInputProps {
     value?: Date;
     name?: string;
     onChange?: (date?: Date) => void;
-    className?: string; // Ajouté pour permettre des styles personnalisés sur le bouton
-    placeholder?: string; // Ajouté pour un texte de remplacement personnalisable
+    className?: string;
+    placeholder?: string;
+    disabled?: boolean;
+    /** Année minimale affichée dans le sélecteur (ex: 1950 pour les naissances) */
+    fromYear?: number;
+    /** Année maximale affichée (ex: 2050) */
+    toYear?: number;
 }
 
 /**
- * Composant de sélection de date basé sur un Popover et un Calendar.
- * Permet aux utilisateurs de choisir une date via une interface conviviale.
- *
- * @param {DateInputProps} props - Les propriétés du composant.
- * @param {React.ForwardedRef<HTMLButtonElement>} ref - La référence transmise au bouton déclencheur.
- * @returns {JSX.Element} Le composant DateInput.
+ * DateInput Professionnel
+ * Un sélecteur de date optimisé pour la saisie rapide et l'accessibilité.
  */
 export const DateInput = forwardRef<HTMLButtonElement, DateInputProps>(
-    ({ name, value, onChange, className, placeholder = "Sélectionnez une date" }, ref) => {
+    ({
+        name,
+        value,
+        onChange,
+        className,
+        placeholder = "Sélectionnez une date",
+        disabled = false,
+    }, ref) => {
         const [open, setOpen] = React.useState(false);
 
-        // Gère la sélection de la date et ferme le popover
         const handleDateSelect = (date: Date | undefined) => {
             onChange?.(date);
-            setOpen(false); // Ferme le popover après la sélection
+            setOpen(false);
         };
+
+        const displayDate = React.useMemo(() => {
+            if (!value) return placeholder;
+            return format(value, "dd MMMM yyyy", { locale: fr });
+        }, [value, placeholder]);
 
         return (
             <Popover open={open} onOpenChange={setOpen}>
@@ -56,27 +59,40 @@ export const DateInput = forwardRef<HTMLButtonElement, DateInputProps>(
                     <Button
                         ref={ref}
                         name={name}
+                        type="button"
                         variant="outline"
+                        disabled={disabled}
                         className={cn(
-                            "w-full justify-between text-left font-normal", // `w-full` pour une meilleure flexibilité
-                            !value && "text-muted-foreground", // Ajoute une couleur de texte si aucune date n'est sélectionnée
-                            className // Applique les classes personnalisées
+                            "w-full h-10 justify-between text-left font-normal transition-all",
+                            "hover:bg-accent hover:text-accent-foreground focus:ring-2 focus:ring-primary/20",
+                            !value && "text-muted-foreground",
+                            className
                         )}
-                        aria-label={value ? `Date sélectionnée : ${format(value, "PPP", { locale: fr })}` : placeholder}
+                        role="combobox"
+                        aria-expanded={open}
+                        aria-haspopup="dialog"
+                        aria-label={value ? `Changer la date, actuellement : ${displayDate}` : placeholder}
                     >
-                        {value ? format(value, "PPP", { locale: fr }) : placeholder}
-                        <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <span className="truncate">{displayDate}</span>
+                        <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-60" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                <PopoverContent
+                    className="w-auto p-0 shadow-xl border-border"
+                    align="start"
+                    sideOffset={4}
+                >
                     <Calendar
                         mode="single"
                         selected={value}
                         onSelect={handleDateSelect}
                         locale={fr}
-                        className="rounded-md border shadow-sm"
-                        captionLayout="dropdown"
-                        endMonth={new Date(2080, 12)}
+                        className="p-3 pointer-events-auto"
+                        captionLayout="dropdown-years"
+                        classNames={{
+                            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                            day_today: "bg-accent text-accent-foreground font-bold",
+                        }}
                     />
                 </PopoverContent>
             </Popover>

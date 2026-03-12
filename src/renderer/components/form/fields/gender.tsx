@@ -1,33 +1,53 @@
-import { USER_GENDER, USER_GENDER_TRANSLATIONS } from "@/packages/@core/data-access/db";
-import { getEnumKeyValueList } from "@/renderer/utils";
+import { GENDER_OPTIONS, USER_GENDER } from "@/packages/@core/data-access/db";
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/renderer/components/ui/select";
 import { FormControl } from "@/renderer/components/ui/form";
 
-const GENDER_OPTIONS = getEnumKeyValueList(USER_GENDER, USER_GENDER_TRANSLATIONS);
-
-
+/**
+ * @interface GenderInputProps
+ * @property {USER_GENDER} [value] - La valeur actuelle du genre.
+ * @property {(gender: USER_GENDER) => void} [onChange] - Callback déclenché lors du changement.
+ */
 type GenderInputProps = {
-    value?: USER_GENDER,
-    onChange?(gender: USER_GENDER): void
-}
-export const GenderInput = React.forwardRef<any, GenderInputProps>(({ onChange, value = USER_GENDER.MALE }, ref) => {
-    return (
-        <Select onValueChange={onChange} defaultValue={value} value={value}>
-            <FormControl>
-                <SelectTrigger>
-                    <SelectValue ref={ref} placeholder="Sélectionner le sexe ici..." />
-                </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-                {GENDER_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                    </SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
-    )
-})
+    value?: USER_GENDER;
+    onChange?(gender: USER_GENDER): void;
+};
 
-GenderInput.displayName = "GenderInput"
+/**
+ * Composant GenderInput
+ * Utilise Radix UI Select pour une accessibilité native complète.
+ */
+export const GenderInput = React.forwardRef<HTMLButtonElement, GenderInputProps>(
+    ({ onChange, value }, ref) => {
+        return (
+            <Select
+                onValueChange={onChange}
+                value={value}
+                defaultValue={USER_GENDER.MALE}
+            >
+                <FormControl>
+                    <SelectTrigger
+                        ref={ref}
+                        aria-label="Sélectionner le sexe"
+                        className="w-full h-11"
+                    >
+                        <SelectValue placeholder="Sélectionner le sexe..." />
+                    </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                    {GENDER_OPTIONS.map((option) => (
+                        <SelectItem
+                            key={option.value}
+                            value={option.value}
+                            className="cursor-pointer"
+                        >
+                            {option.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        );
+    }
+);
+
+GenderInput.displayName = "GenderInput";
