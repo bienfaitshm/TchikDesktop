@@ -1,6 +1,7 @@
 import React, { PropsWithChildren } from "react";
 import { useZodForm } from "@/packages/use-zod-form";
-import { EnrollmentSchemaSchema, type EnrollmentSchemaAttributes } from "@/renderer/libs/schemas";
+import { STUDENT_STATUS } from "@/packages/@core/data-access/db";
+import { EnrolementQuickCreateSchema, type TEnrolementQuickCreate } from "@/packages/@core/data-access/schema-validations";
 import {
     Form,
     FormControl,
@@ -14,13 +15,10 @@ import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { Combobox } from "../ui/combobox";
 import { StudentStatus } from "./fields/student-status";
 import { StudentSeniorityStatusSelect } from "./fields/student-seriority-statut";
-import { STUDENT_STATUS } from "@/packages/@core/data-access/db";
 
-// Exporte les utilitaires du formulaire pour les composants parents
 export * from "./utils";
 
-// Définition du type pour les données du formulaire
-export type EnrollmentFormData = EnrollmentSchemaAttributes;
+export type EnrollmentFormData = TEnrolementQuickCreate;
 
 const DEFAULT_QUICK_ENROLLMENT_VALUES: EnrollmentFormData = {
     classroomId: "",
@@ -31,12 +29,10 @@ const DEFAULT_QUICK_ENROLLMENT_VALUES: EnrollmentFormData = {
     status: STUDENT_STATUS.EN_COURS
 };
 
-// Interface pour les options de classe
 interface ClassroomOption {
     label: string;
     value: string;
 }
-
 
 export interface EnrollmentFormProps {
     classrooms?: ClassroomOption[];
@@ -44,41 +40,47 @@ export interface EnrollmentFormProps {
     initialValues?: Partial<EnrollmentFormData>;
 }
 
-export interface EnrollmentFormHandle extends ImperativeFormHandle<EnrollmentFormData> { }
-
 export const EnrollmentForm = React.forwardRef<
-    EnrollmentFormHandle,
+    ImperativeFormHandle<EnrollmentFormData>,
     PropsWithChildren<EnrollmentFormProps>
 >(({ children, onSubmit, initialValues = {}, classrooms = [] }, ref) => {
     const form = useZodForm({
-        schema: EnrollmentSchemaSchema,
+        schema: EnrolementQuickCreateSchema,
         defaultValues: { ...DEFAULT_QUICK_ENROLLMENT_VALUES, ...initialValues },
-        onSubmit: (values) => {
-            onSubmit?.(values);
-        },
+        onSubmit: (values) => onSubmit?.(values),
     });
 
     useFormImperativeHandle(ref, form);
 
     return (
         <Form {...form}>
-            <form className="space-y-6" onSubmit={form.submit}>
-                <div className="grid grid-cols-2 gap-5">
+            <form
+                className="space-y-8"
+                onSubmit={form.submit}
+                aria-label="Formulaire d'inscription rapide de l'élève"
+            >
+                {/* Section 1: Informations d'affectation */}
+                <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-6 border-none p-0 m-0">
+                    <legend className="sr-only">Détails de l'affectation</legend>
                     <FormField
                         control={form.control}
                         name="classroomId"
                         render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-sm">Classe</FormLabel>
-                                <Combobox {...field}
-                                    options={classrooms}
-                                    placeholder="Choisir  une salle classe"
-                                    searchPlaceholder="Chercher une salle de classe"
-                                />
-                                <FormDescription className="text-xs">
-                                    Sélectionnez la classe (promotion) à laquelle cet élève sera affecté. Si vous effectuez un transfert, choisissez la nouvelle classe de l'élève.
+                            <FormItem className="flex flex-col">
+                                <FormLabel className="font-semibold text-base">Salle de classe cible</FormLabel>
+                                <FormControl>
+                                    <Combobox
+                                        {...field}
+                                        options={classrooms}
+                                        placeholder="Sélectionner une classe..."
+                                        searchPlaceholder="Rechercher (ex: 3ème...)"
+                                        aria-required="true"
+                                    />
+                                </FormControl>
+                                <FormDescription className="text-[0.8rem] leading-relaxed">
+                                    Classe à laquelle l'élève sera rattaché pour l'année en cours.
                                 </FormDescription>
-                                <FormMessage />
+                                <FormMessage className="font-medium" />
                             </FormItem>
                         )}
                     />
@@ -87,33 +89,49 @@ export const EnrollmentForm = React.forwardRef<
                         control={form.control}
                         name="status"
                         render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-sm">Status de l'inscription</FormLabel>
-                                <StudentStatus {...field} />
-                                <FormDescription className="text-xs">
-                                    Sélectionnez le statut actuel de l'élève. Vous pouvez mettre à jour cette information si l'élève change de statut (par exemple, en cas d'abandon ou d'exclusion).
+                            <FormItem className="flex flex-col">
+                                <FormLabel className="font-semibold text-base">État de l'inscription</FormLabel>
+                                <FormControl>
+                                    <StudentStatus {...field} />
+                                </FormControl>
+                                <FormDescription className="text-[0.8rem] leading-relaxed">
+                                    Définit si l'élève est actif, en attente ou régularisé.
                                 </FormDescription>
-                                <FormMessage />
+                                <FormMessage className="font-medium" />
                             </FormItem>
                         )}
                     />
+                </fieldset>
 
+                {/* Section 2: Profil de l'élève */}
+                <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
+                    <FormField
+                        control={form.control}
+                        name="isNewStudent"
+                        render={({ field }) => (
+                            <FormItem className="space-y-4">
+                                <div className="space-y-1">
+                                    <FormLabel className="font-semibold text-base">Provenance de l'élève</FormLabel>
+                                    <FormDescription className="text-[0.8rem]">
+                                        Est-ce la première fois que cet élève s'inscrit dans cet établissement ?
+                                    </FormDescription>
+                                </div>
+                                <FormControl>
+                                    <StudentSeniorityStatusSelect
+                                        value={field.value}
+                                        onChangeValue={field.onChange}
+                                    />
+                                </FormControl>
+                                <FormMessage className="font-medium" />
+                            </FormItem>
+                        )}
+                    />
                 </div>
 
-                <FormField
-                    control={form.control}
-                    name="isNewStudent"
-                    render={({ field }) => (
-                        <FormItem className="space-y-3">
-                            <FormLabel className="text-sm">Status de l'élève</FormLabel>
-                            <FormControl>
-                                <StudentSeniorityStatusSelect value={field.value} onChangeValue={field.onChange} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                {children}
+                {/* Slot pour les boutons d'action */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                    {children}
+                </div>
             </form>
         </Form>
     );

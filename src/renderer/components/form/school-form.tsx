@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from "react";
 import { useZodForm } from "@/packages/use-zod-form";
-import { SchoolSchema, type SchoolAttributes } from "@/renderer/libs/schemas";
+import { SchoolCreateSchema, type TSchoolCreate } from "@/packages/@core/data-access/schema-validations";
 import {
     Form,
     FormControl,
@@ -13,19 +13,10 @@ import {
 import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { Input } from "@/renderer/components/ui/input";
 
-export * from "./utils"
+export * from "./utils";
 
-/**
- * @typedef {SchoolAttributes} SchoolFormData
- * @description Type alias for the data structure representing a school's attributes.
- * This is derived from the `SchoolAttributes` type in your schema.
- */
-export type SchoolFormData = SchoolAttributes;
+export type SchoolFormData = TSchoolCreate;
 
-/**
- * @constant DEFAULT_SCHOOL_VALUES
- * @description Default initial values for the school form fields.
- */
 const DEFAULT_SCHOOL_VALUES: SchoolFormData = {
     name: "",
     adress: "",
@@ -33,29 +24,23 @@ const DEFAULT_SCHOOL_VALUES: SchoolFormData = {
     logo: undefined
 };
 
-
 export interface SchoolFormProps {
     onSubmit?: (value: SchoolFormData) => void;
     initialValues?: Partial<SchoolFormData>;
 }
 
-
 export interface SchoolFormHandle extends ImperativeFormHandle<SchoolFormData> { }
 
-
-export interface SectionSelectProps {
-    options: { label: string; value: string }[];
-    value?: string;
-    onChangeValue(value: string): void;
-}
-
-
+/**
+ * Formulaire de configuration de l'établissement scolaire.
+ * Optimisé pour l'accessibilité (WCAG) et l'expérience utilisateur.
+ */
 export const SchoolForm = React.forwardRef<
     SchoolFormHandle,
     PropsWithChildren<SchoolFormProps>
 >(({ children, onSubmit, initialValues = {} }, ref) => {
     const form = useZodForm({
-        schema: SchoolSchema,
+        schema: SchoolCreateSchema,
         defaultValues: { ...DEFAULT_SCHOOL_VALUES, ...initialValues },
         onSubmit: (value) => {
             onSubmit?.(value);
@@ -65,66 +50,86 @@ export const SchoolForm = React.forwardRef<
     useFormImperativeHandle(ref, form);
 
     return (
-        <div>
-            <Form {...form}>
-                <form className="space-y-4" onSubmit={form.submit}>
-                    {/* School Name Field */}
-                    <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Nom complet</FormLabel>
-                                <FormControl>
-                                    <Input {...field} />
-                                </FormControl>
-                                <FormDescription>
-                                    Saisissez le nom complet de l’école.
-                                </FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+        <Form {...form}>
+            <form
+                className="space-y-6"
+                onSubmit={form.submit}
+                aria-label="Formulaire de configuration de l'établissement"
+            >
+                {/* Section : Identité de l'établissement */}
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="font-semibold text-base">Nom officiel de l'école</FormLabel>
+                            <FormControl>
+                                <Input
+                                    {...field}
+                                    placeholder="Ex: Complexe Scolaire Belle Vue"
+                                    autoComplete="organization"
+                                    className="h-11"
+                                />
+                            </FormControl>
+                            <FormDescription>
+                                Saisissez le nom complet tel qu'il doit apparaître sur les entêtes officiels.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
-                    {/* School Town Field */}
+                {/* Section : Localisation Géographique */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                         control={form.control}
                         name="town"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Ville</FormLabel>
+                                <FormLabel className="font-semibold">Ville</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input
+                                        {...field}
+                                        placeholder="Ex: Lubumbashi"
+                                        autoComplete="address-level2"
+                                    />
                                 </FormControl>
                                 <FormDescription>
-                                    Saisissez la ville où se trouve l'école.
+                                    La ville ou la commune de résidence.
                                 </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
 
-                    {/* School Adress Field */}
                     <FormField
                         control={form.control}
                         name="adress"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Adresse</FormLabel>
+                                <FormLabel className="font-semibold">Adresse physique</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input
+                                        {...field}
+                                        placeholder="Ex: 12, Avenue des Écoles, Q/Golf"
+                                        autoComplete="street-address"
+                                    />
                                 </FormControl>
                                 <FormDescription>
-                                    Saisissez l'adresse physique de l'école.
+                                    Numéro, avenue, quartier et commune.
                                 </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
+                </div>
+
+                {/* Slot pour les actions (Boutons de sauvegarde, etc.) */}
+                <div className="pt-4 border-t flex justify-end">
                     {children}
-                </form>
-            </Form>
-        </div>
+                </div>
+            </form>
+        </Form>
     );
 });
 

@@ -94,7 +94,6 @@
     "winston": "^3.18.3",
     "xlsx": "^0.18.5",
     "zod": "^3.25.76",
-
     "zustand": "^5.0.9"
   },
   "devDependencies": {
@@ -102,6 +101,7 @@
     "@electron-toolkit/eslint-config-ts": "^1.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@tailwindcss/vite": "^4.1.12",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^18.17.5",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",

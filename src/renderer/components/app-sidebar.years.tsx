@@ -20,8 +20,8 @@ import { cn } from "@/renderer/utils";
 
 import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
 import { useGetStudyYears } from "@/renderer/libs/queries/school";
-import { formatDate } from "@/renderer/utils";
 import { Link } from "react-router";
+import { formatDate } from "@/packages/times";
 
 /**
  * Composant de menu latéral pour la sélection de l'année scolaire.

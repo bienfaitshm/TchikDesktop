@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from "react";
 import { useZodForm } from "@/packages/use-zod-form";
-import { StudyYearSchema, type StudyYearAttributes } from "@/renderer/libs/schemas";
+import { StudyYearCreateSchema, type TStudyYearCreate } from "@/packages/@core/data-access/schema-validations";
 import {
     Form,
     FormControl,
@@ -16,13 +16,8 @@ import { DateInput } from "@/renderer/components/form/fields/date";
 
 export * from "./utils"
 
-export type StudyYearFormData = StudyYearAttributes
+export type StudyYearFormData = TStudyYearCreate
 
-/**
- * @constant DEFAULT_STUDY_YEAR_FORM_VALUES
- * @description Default initial values for the study year form fields.
- * Ensures that form fields have a starting state, especially for date inputs.
- */
 const DEFAULT_STUDY_YEAR_FORM_VALUES: StudyYearFormData = {
     yearName: "",
     schoolId: "",
@@ -35,16 +30,18 @@ export interface StudyYearFormProps {
     initialValues?: Partial<StudyYearFormData>;
 }
 
-
 export interface StudyYearFormHandle extends ImperativeFormHandle<StudyYearFormData> { }
 
-
+/**
+ * Formulaire de configuration de l'année académique.
+ * Optimisé pour la précision des données temporelles et l'accessibilité.
+ */
 export const StudyYearForm = React.forwardRef<
     StudyYearFormHandle,
     PropsWithChildren<StudyYearFormProps>
 >(({ children, onSubmit, initialValues = {} }, ref) => {
     const form = useZodForm({
-        schema: StudyYearSchema,
+        schema: StudyYearCreateSchema,
         defaultValues: { ...DEFAULT_STUDY_YEAR_FORM_VALUES, ...initialValues },
         onSubmit: (values) => {
             onSubmit?.(values);
@@ -53,78 +50,86 @@ export const StudyYearForm = React.forwardRef<
 
     useFormImperativeHandle(ref, form);
 
-
     return (
         <Form {...form}>
-            <form className="space-y-4" onSubmit={form.submit}>
-                {/* Field for Year Name */}
+            <form
+                className="space-y-6"
+                onSubmit={form.submit}
+                aria-label="Configuration de l'année scolaire"
+            >
+                {/* Libellé de l'année */}
                 <FormField
                     control={form.control}
                     name="yearName"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Nom de l'année scolaire</FormLabel>
+                            <FormLabel className="font-semibold text-base">Désignation de l'année</FormLabel>
                             <FormControl>
-                                <Input placeholder="Ex: Année scolaire 2025-2026" {...field} />
+                                <Input
+                                    placeholder="Ex: 2025-2026"
+                                    className="h-11"
+                                    {...field}
+                                    aria-required="true"
+                                />
                             </FormControl>
-                            <FormDescription>
-                                Saisissez un nom unique pour cette année scolaire (par exemple, "Année scolaire 2025-2026").
+                            <FormDescription className="text-xs">
+                                Utilisez un nom distinctif pour identifier cette période académique.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
 
-                <div className="grid grid-cols-2 gap-5">
-                    <div>
-                        {/* Field for Start Date */}
-                        <FormField
-                            control={form.control}
-                            name="startDate"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel>Date de début</FormLabel>
-                                    <FormControl>
-                                        <DateInput
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Sélectionner la date de début"
-                                        />
-                                    </FormControl>
-                                    <FormDescription>
-                                        Sélectionnez la date de début de l'année scolaire.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                {/* Groupe Temporel : Début et Fin */}
+                <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-6 border-none p-0 m-0">
+                    <legend className="sr-only">Période scolaire</legend>
 
-                    </div>
-                    <div>
-                        {/* Field for End Date */}
-                        <FormField
-                            control={form.control}
-                            name="endDate"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel>Date de fin</FormLabel>
-                                    <FormControl>
-                                        <DateInput
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Sélectionner la date de fin"
-                                        />
-                                    </FormControl>
-                                    <FormDescription>
-                                        Sélectionnez la date de fin de l'année scolaire.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
+                    <FormField
+                        control={form.control}
+                        name="startDate"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel className="font-semibold">Date d'ouverture</FormLabel>
+                                <FormControl>
+                                    <DateInput
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Début des cours"
+                                    />
+                                </FormControl>
+                                <FormDescription className="text-xs">
+                                    Date officielle de la rentrée.
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="endDate"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel className="font-semibold">Date de clôture</FormLabel>
+                                <FormControl>
+                                    <DateInput
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Fin de l'année"
+                                    />
+                                </FormControl>
+                                <FormDescription className="text-xs">
+                                    Date de fin des activités scolaires.
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </fieldset>
+
+                <div className="pt-4 border-t flex justify-end">
+                    {children}
                 </div>
-                {children}
             </form>
         </Form>
     );

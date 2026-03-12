@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from "react";
 import { useZodForm } from "@/packages/use-zod-form";
-import { BaseUserSchema, type BaseUserSchemaAttributes } from "@/renderer/libs/schemas";
+import { UserCreateSchema, type TUserCreate } from "@/packages/@core/data-access/schema-validations";
 import {
     Form,
     FormControl,
@@ -8,21 +8,19 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
+    FormDescription,
 } from "@/renderer/components/ui/form";
 import { USER_GENDER, USER_ROLE } from "@/packages/@core/data-access/db";
 import { Input } from "@/renderer/components/ui/input";
-import { Label } from "@/renderer/components/ui/label";
 import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { GenderInput } from "./fields/gender";
 import { DateInput } from "./fields/date";
 
-
-// Exporte les utilitaires du formulaire pour les composants parents
 export * from "./utils";
 
-export type BaseUserSchemaFormData = BaseUserSchemaAttributes;
+export type UserCreateSchemaFormData = TUserCreate;
 
-const DEFAULT_QUICK_ENROLLMENT_VALUES: BaseUserSchemaFormData = {
+const DEFAULT_QUICK_ENROLLMENT_VALUES: UserCreateSchemaFormData = {
     lastName: "",
     middleName: "",
     firstName: "",
@@ -32,23 +30,23 @@ const DEFAULT_QUICK_ENROLLMENT_VALUES: BaseUserSchemaFormData = {
     birthPlace: "",
 };
 
-
-
-
-
-export interface BaseUserSchemaFormProps {
-    onSubmit?: (values: BaseUserSchemaFormData) => void;
-    initialValues?: Partial<BaseUserSchemaFormData>;
+export interface UserCreateSchemaFormProps {
+    onSubmit?: (values: UserCreateSchemaFormData) => void;
+    initialValues?: Partial<UserCreateSchemaFormData>;
 }
 
-export interface BaseUserSchemaFormHandle extends ImperativeFormHandle<BaseUserSchemaFormData> { }
+export interface BaseUserFormHandle extends ImperativeFormHandle<UserCreateSchemaFormData> { }
 
-export const BaseUserSchemaForm = React.forwardRef<
-    BaseUserSchemaFormHandle,
-    PropsWithChildren<BaseUserSchemaFormProps>
+/**
+ * Formulaire de base pour les informations d'un utilisateur (Élève/Personnel).
+ * Optimisé pour la saisie administrative rapide.
+ */
+export const BaseUserForm = React.forwardRef<
+    BaseUserFormHandle,
+    PropsWithChildren<UserCreateSchemaFormProps>
 >(({ children, onSubmit, initialValues = {} }, ref) => {
     const form = useZodForm({
-        schema: BaseUserSchema,
+        schema: UserCreateSchema,
         defaultValues: { ...DEFAULT_QUICK_ENROLLMENT_VALUES, ...initialValues },
         onSubmit: (values) => {
             onSubmit?.(values);
@@ -59,18 +57,31 @@ export const BaseUserSchemaForm = React.forwardRef<
 
     return (
         <Form {...form}>
-            <form className="space-y-6" onSubmit={form.submit}>
-                <div className="space-y-5">
-                    <Label>Informations sur l'élève</Label>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <form
+                className="space-y-8"
+                onSubmit={form.submit}
+                aria-label="Informations d'identité"
+            >
+                <fieldset className="space-y-6">
+                    <legend className="text-lg font-bold text-foreground mb-4">
+                        Identité et État Civil
+                    </legend>
+
+                    {/* Ligne 1 : Les Noms */}
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                         <FormField
                             control={form.control}
                             name="lastName"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Nom</FormLabel>
+                                    <FormLabel className="font-semibold">Nom</FormLabel>
                                     <FormControl>
-                                        <Input {...field} />
+                                        <Input
+                                            {...field}
+                                            placeholder="Ex: KABANGE"
+                                            autoComplete="family-name"
+                                            className="h-11 uppercase"
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -81,9 +92,13 @@ export const BaseUserSchemaForm = React.forwardRef<
                             name="middleName"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Postnom</FormLabel>
+                                    <FormLabel className="font-semibold">Postnom</FormLabel>
                                     <FormControl>
-                                        <Input {...field} />
+                                        <Input
+                                            {...field}
+                                            placeholder="Ex: MUKALA"
+                                            className="h-11"
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -94,23 +109,33 @@ export const BaseUserSchemaForm = React.forwardRef<
                             name="firstName"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Prénom</FormLabel>
+                                    <FormLabel className="font-semibold">Prénom</FormLabel>
                                     <FormControl>
-                                        <Input {...field} value={field.value ?? ""} />
+                                        <Input
+                                            {...field}
+                                            value={field.value ?? ""}
+                                            placeholder="Ex: Jean"
+                                            autoComplete="given-name"
+                                            className="h-11"
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
                     </div>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+                    {/* Ligne 2 : Sexe et Date de naissance */}
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <FormField
                             control={form.control}
                             name="gender"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Sexe</FormLabel>
-                                    <GenderInput {...field} />
+                                    <FormLabel className="font-semibold">Sexe / Genre</FormLabel>
+                                    <FormControl>
+                                        <GenderInput {...field} />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -120,40 +145,51 @@ export const BaseUserSchemaForm = React.forwardRef<
                             name="birthDate"
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
-                                    <FormLabel className="mt-1 mb-1">Date de naissance</FormLabel>
+                                    <FormLabel className="mb-2 font-semibold">Date de naissance</FormLabel>
                                     <FormControl>
-                                        <div className="w-full">
-                                            <DateInput
-                                                value={field.value ?? new Date()}
-                                                onChange={field.onChange}
-                                                placeholder="Sélectionner la date de naissance"
-                                            />
-                                        </div>
+                                        <DateInput
+                                            value={field.value ?? new Date()}
+                                            onChange={field.onChange}
+                                            placeholder="JJ/MM/AAAA"
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
                     </div>
+
+                    {/* Ligne 3 : Lieu de naissance */}
                     <FormField
                         control={form.control}
                         name="birthPlace"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Lieu de naissance</FormLabel>
+                                <FormLabel className="font-semibold">Lieu de naissance</FormLabel>
                                 <FormControl>
-                                    <Input {...field} value={field.value ?? ""} />
+                                    <Input
+                                        {...field}
+                                        value={field.value ?? ""}
+                                        placeholder="Ex: Lubumbashi, Haut-Katanga"
+                                        autoComplete="address-level2"
+                                        className="h-11"
+                                    />
                                 </FormControl>
+                                <FormDescription className="text-xs">
+                                    Précisez la ville et/ou la province.
+                                </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
-                </div>
+                </fieldset>
 
-                {children}
+                <div className="pt-6 border-t">
+                    {children}
+                </div>
             </form>
         </Form>
     );
 });
 
-BaseUserSchemaForm.displayName = "BaseUserSchemaForm";
+BaseUserForm.displayName = "BaseUserFormHandle";

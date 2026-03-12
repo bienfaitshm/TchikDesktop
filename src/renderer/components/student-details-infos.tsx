@@ -1,28 +1,25 @@
 import React, { useCallback, useMemo } from "react";
 import { useParams } from "react-router";
 import { PencilIcon, CheckCircle2Icon } from 'lucide-react';
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/renderer/components/ui/card";
 import { Button } from '@/renderer/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/renderer/components/ui/alert";
 import { GenderBadge } from "./user-gender";
 import { StudentStatusBadge } from "./student-status";
-import { BaseUserSchemaForm, type BaseUserSchemaFormData } from "./form/user-base-form";
+import { BaseUserForm, type UserCreateSchemaFormData } from "./form/user-base-form";
 import { EnrollmentForm, type EnrollmentFormData } from "./form/enrollment-form";
 import { FormSubmitter } from "./form/form-submiter";
 import { ButtonLoader } from "./form/button-loader";
 import { AnimatedFrame, AnimatedFrameSwitcherProvider, useChangeAnimatedFrame } from "@/renderer/components/animated-frame-switcher";
 
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
-import { SECTION_TRANSLATIONS } from '@/commons/constants/enum';
-import { formatDate } from "@/commons/libs/times";
+import { SECTION_TRANSLATIONS } from '@/packages/@core/data-access/db';
 import { useGetEnrollmentById, useUpdateEnrollment } from "@/renderer/libs/queries/enrolement";
 import { useUserManagement } from "@/renderer/hooks/query.mangements";
 import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-import type { TEnrolement, TWithUser, TWithClassroom } from "@/commons/types/models";
+import { formatDate } from "@/packages/times";
 
-// Types
 export type StudentDetails = TWithClassroom<TWithUser<TEnrolement>>;
 export interface StudentDetailsCardProps {
     data: StudentDetails;
@@ -31,7 +28,6 @@ export interface StudentDetailsCardProps {
     onRefresh?(): void;
 }
 
-// Composant pour afficher une ligne d'information
 const TextInfo = ({ title, value }: { title: string; value: string | number | null }) => (
     <div className="space-y-1">
         <p className="text-xs text-muted-foreground">{title}</p>
@@ -125,7 +121,7 @@ const EditStudentInfos = ({ user, onRefresh }: { user: StudentDetails['User']; o
     const handleChangeFrame = useChangeAnimatedFrame();
     const { handleUpdate, updateMutation } = useUserManagement();
 
-    const onSubmit = useCallback((data: BaseUserSchemaFormData) => {
+    const onSubmit = useCallback((data: UserCreateSchemaFormData) => {
         handleUpdate(user.userId, data, data.lastName, () => {
             handleChangeFrame("personal-infos");
             onRefresh?.();
@@ -134,7 +130,7 @@ const EditStudentInfos = ({ user, onRefresh }: { user: StudentDetails['User']; o
 
     return (
         <InfoEdit value="personal-infos" isLoading={updateMutation.isPending}>
-            <BaseUserSchemaForm initialValues={user} onSubmit={onSubmit} />
+            <BaseUserForm initialValues={user} onSubmit={onSubmit} />
         </InfoEdit>
     )
 };

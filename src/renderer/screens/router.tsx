@@ -38,8 +38,8 @@ export default function RouterProvider(): JSX.Element {
       <Routes>
         <Route element={<Layout />} errorElement={<Launcher />}>
           <Route index element={<HomePage />} />
-          <Route path="inscriptions" element={<QuickEnrollmentPage />} />
-          <Route path="mise-en-places" element={<MiseEnPlaceScreen />} />
+          {/* <Route path="inscriptions" element={<QuickEnrollmentPage />} />
+          <Route path="mise-en-places" element={<MiseEnPlaceScreen />} /> */}
           {/* schools */}
           {/* <Route path="students" element={<StudentScreen />} />
           <Route path="options" element={<OptionPage />} /> */}
@@ -57,9 +57,9 @@ export default function RouterProvider(): JSX.Element {
         </Route>
         <Route path="configuration" element={<ConfigurationLayoutScreen />}>
           <Route index element={<SchoolConfigurationScreen />} />
-          <Route path="school/new" element={<SchoolConfigurationNewSchoolScreen />} />
+          {/* <Route path="school/new" element={<SchoolConfigurationNewSchoolScreen />} />
           <Route path="school-year" element={<StudyYearConfigurationScreen />} />
-          <Route path="school-year/new" element={<NewStudyYearConfigurationPage />} />
+          <Route path="school-year/new" element={<NewStudyYearConfigurationPage />} /> */}
         </Route>
         <Route path="*" element={<h2>404 Not Found</h2>} />
       </Routes>
