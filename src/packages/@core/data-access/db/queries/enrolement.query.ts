@@ -57,8 +57,8 @@ export class EnrolementQuery {
   }
 
   static async findMany(filters: TEnrolementFilter): Promise<TEnrolementDTO[]> {
+    const options = this.getFilterOptions(filters, DEFAULT_SORT_ORDER);
     try {
-      const options = this.getFilterOptions(filters, DEFAULT_SORT_ORDER);
       const enrolements = await ClassroomEnrolement.findAll({
         ...options,
         include: [
@@ -75,6 +75,7 @@ export class EnrolementQuery {
       });
       return enrolements as unknown as TEnrolementDTO[];
     } catch (error) {
+      console.log("error......", error);
       logger.error("EnrolementQuery.findMany: DB query failed.", error);
       throw new Error("Database error while fetching enrolements.");
     }

@@ -183,8 +183,8 @@ describe("EnrolementQuery - Analyse & Statistiques", () => {
 
   it("getQuickKpis doit sommer les comptes pour le total global", async () => {
     vi.spyOn(EnrolementQuery, "getStudentStatusStats").mockResolvedValue([
-      { status: "EN_COURS", count: "20" },
-      { status: "ABANDON", count: "5" },
+      { status: "EN_COURS", count: 20 },
+      { status: "ABANDON", count: 5 },
     ] as any);
 
     const result = await EnrolementQuery.getQuickKpis({

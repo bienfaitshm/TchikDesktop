@@ -12,7 +12,7 @@ describe("Lazy IpcClient Proxy", () => {
 
   it("ne doit pas instancier IpcClient immédiatement", () => {
     // On peut créer le proxy sans déclencher d'initialisation
-    const proxy = createLazyIpcClient(mockIpcRenderer);
+    createLazyIpcClient(mockIpcRenderer);
     expect(mockIpcRenderer.invoke).not.toHaveBeenCalled();
   });
 
@@ -27,6 +27,7 @@ describe("Lazy IpcClient Proxy", () => {
     });
 
     const result = await proxy.get("/test");
+    console.log("#########################Data.....", result);
 
     expect(mockIpcRenderer.invoke).toHaveBeenCalledWith(
       "GET:/test",
