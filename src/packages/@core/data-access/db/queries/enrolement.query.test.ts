@@ -24,9 +24,9 @@ describe("EnrolementQuery - Analyse & Statistiques", () => {
     ClassRoom: {},
     StudyYear: {},
     STUDENT_STATUS: {
-      EN_COURS: "active",
-      EXCLUT: "excluded",
-      ABANDON: "inactive",
+      EN_COURS: "EN_COURS",
+      EXCLUT: "EXCLUT",
+      ABANDON: "ABANDON",
     },
     buildFindOptions: vi.fn(() => ({ where: {} })),
     Sequelize: {

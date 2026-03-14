@@ -1,4 +1,20 @@
-import { describe, it, expect } from "vitest";
+/**
+ * @vitest-environment jsdom
+ */
+import { describe, it, expect, vi } from "vitest";
+
+// Cette commande est "hoisted" par Vitest pour s'exécuter avant les imports
+vi.stubGlobal("electron", {
+  ipcRenderer: {
+    invoke: vi.fn(),
+    on: vi.fn(),
+    removeAllListeners: vi.fn(),
+  },
+});
+
+// Pour que window.electron soit accessible si votre code utilise le préfixe window
+global.window.electron = (global as any).electron;
+
 import { api } from "./index";
 
 describe("AppClients Factory", () => {

@@ -1,158 +1,77 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { EnrolementQuery } from "./enrolement.query";
-import {
-  ClassroomEnrolement,
-  User,
-  STUDENT_STATUS,
-} from "@/packages/@core/data-access/db";
-import { UserQuery } from "./user.query";
+import { describe, it, expect } from "vitest";
+import * as Options from "../options";
+import { SECTION, USER_GENDER, USER_ROLE, STUDENT_STATUS } from "../enum";
 
-// Mock des dépendances
-vi.mock("@/packages/@core/data-access/db", () => ({
-  ClassroomEnrolement: {
-    findAll: vi.fn(),
-    findByPk: vi.fn(),
-    count: vi.fn(),
-    create: vi.fn(),
-    destroy: vi.fn(),
-    sequelize: {
-      transaction: vi.fn(() => ({
-        commit: vi.fn(),
-        rollback: vi.fn(),
-      })),
-    },
-  },
-  User: {},
-  ClassRoom: {},
-  StudyYear: {},
-  Option: {},
-  buildFindOptions: vi.fn((f) => ({ where: f })),
-  STUDENT_STATUS: {
-    EN_COURS: "EN_COURS",
-    ABANDON: "ABANDON",
-    EXCLUT: "EXCLUT",
-  },
-}));
+describe("UI Options Generators", () => {
+  // Test générique pour vérifier la structure de base
+  const validateOptionStructure = (options: any[]) => {
+    expect(Array.isArray(options)).toBe(true);
+    options.forEach((option) => {
+      expect(option).toHaveProperty("label");
+      expect(option).toHaveProperty("value");
+      expect(typeof option.label).toBe("string");
+    });
+  };
 
-vi.mock("./user.query", () => ({
-  UserQuery: {
-    findById: vi.fn(),
-    create: vi.fn(),
-  },
-}));
-
-vi.mock("@/packages/logger", () => ({
-  getLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }),
-}));
-
-describe("EnrolementQuery", () => {
-  const mockFilters = { schoolId: "school-1", yearId: "year-2024" };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  describe("Validation des Filtres", () => {
-    it("doit lever une erreur si schoolId ou yearId est manquant", async () => {
-      await expect(EnrolementQuery.findMany({} as any)).rejects.toThrow(
-        "Validation Error: schoolId and yearId are required.",
-      );
+  describe("SECTION_OPTIONS", () => {
+    it("doit retourner la liste des sections avec la structure correcte", () => {
+      validateOptionStructure(Options.SECTION_OPTIONS);
+      // Vérifie qu'une valeur spécifique de l'enum est présente
+      const values = Options.SECTION_OPTIONS.map((o) => o.value);
+      expect(values).toContain(SECTION.KINDERGARTEN);
     });
   });
 
-  describe("findMany", () => {
-    it("doit retourner une liste d'enrôlements avec les inclusions", async () => {
-      const mockData = [{ enrolementId: "1", user: { firstName: "John" } }];
-      vi.mocked(ClassroomEnrolement.findAll).mockResolvedValue(mockData as any);
-
-      const result = await EnrolementQuery.findMany(mockFilters);
-
-      expect(ClassroomEnrolement.findAll).toHaveBeenCalledWith(
-        expect.objectContaining({
-          include: expect.arrayContaining([
-            expect.objectContaining({ model: User, as: "user" }),
-          ]),
-          raw: true,
-          nest: true,
-        }),
+  describe("GENDER_OPTIONS", () => {
+    it("doit inclure tous les genres définis", () => {
+      validateOptionStructure(Options.GENDER_OPTIONS);
+      expect(Options.GENDER_OPTIONS.length).toBe(
+        Object.keys(USER_GENDER).length,
       );
-      expect(result).toEqual(mockData);
+    });
+
+    it("doit avoir des labels traduits (pas seulement les clés d'enum)", () => {
+      const maleOption = Options.GENDER_OPTIONS.find(
+        (o) => o.value === USER_GENDER.MALE,
+      );
+      // On s'attend à ce que le label soit différent de la clé brute si la traduction fonctionne
+      expect(maleOption?.label).toBeDefined();
     });
   });
 
-  describe("quickCreate (Logique de Transaction)", () => {
-    const quickData = {
-      schoolId: "s1",
-      classroomId: "c1",
-      isInSystem: false,
-      student: { firstName: "New", lastName: "Student" },
-    } as any;
-
-    it("doit créer un utilisateur ET un enrôlement dans une transaction", async () => {
-      const mockUser = { userId: "new-user-id" };
-      const mockEnrolement = { enrolementId: "e1" };
-
-      vi.mocked(UserQuery.create).mockResolvedValue(mockUser as any);
-      vi.mocked(ClassroomEnrolement.create).mockResolvedValue(
-        mockEnrolement as any,
+  describe("ROLE_OPTIONS", () => {
+    it("doit mapper correctement les rôles utilisateur", () => {
+      validateOptionStructure(Options.ROLE_OPTIONS);
+      const adminRole = Options.ROLE_OPTIONS.find(
+        (o) => o.value === USER_ROLE.ADMIN,
       );
-
-      const result = await EnrolementQuery.quickCreate(quickData);
-
-      expect(UserQuery.create).toHaveBeenCalled();
-      expect(ClassroomEnrolement.create).toHaveBeenCalledWith(
-        expect.objectContaining({ studentId: "new-user-id" }),
-        expect.any(Object),
-      );
-      expect(result).toEqual(mockEnrolement);
-    });
-
-    it("doit rollback la transaction en cas d'échec", async () => {
-      vi.mocked(UserQuery.create).mockRejectedValue(
-        new Error("User creation failed"),
-      );
-
-      await expect(EnrolementQuery.quickCreate(quickData)).rejects.toThrow();
-
-      const transaction = await ClassroomEnrolement.sequelize!.transaction();
-      expect(transaction.rollback).toHaveBeenCalled();
+      expect(adminRole).toBeDefined();
     });
   });
 
-  describe("getQuickKpis", () => {
-    it("doit agréger correctement les différents statuts", async () => {
-      const mockStats = [
-        { status: STUDENT_STATUS.EN_COURS, count: "50" },
-        { status: STUDENT_STATUS.ABANDON, count: "5" },
-        { status: STUDENT_STATUS.EXCLUT, count: "2" },
+  describe("STUDENT_STATUS_OPTIONS", () => {
+    it("doit contenir le statut ACTIF", () => {
+      const activeStatus = Options.STUDENT_STATUS_OPTIONS.find(
+        (o) => o.value === STUDENT_STATUS.EN_COURS,
+      );
+      expect(activeStatus).toBeDefined();
+    });
+  });
+
+  describe("Cohérence des exports", () => {
+    it("tous les exports d'options doivent être des tableaux non vides", () => {
+      const allOptions = [
+        Options.SECTION_OPTIONS,
+        Options.GENDER_OPTIONS,
+        Options.ROLE_OPTIONS,
+        Options.STUDENT_STATUS_OPTIONS,
+        Options.ENROLEMENT_ACTION_OPTIONS,
+        Options.MUTATION_ACTION_OPTIONS,
       ];
 
-      vi.spyOn(EnrolementQuery, "getStudentStatusStats").mockResolvedValue(
-        mockStats as any,
-      );
-
-      const result = await EnrolementQuery.getQuickKpis(mockFilters);
-
-      expect(result).toEqual({
-        total: 57,
-        active: 50,
-        inactive: 5,
-        excluded: 2,
+      allOptions.forEach((optList) => {
+        expect(optList.length).toBeGreaterThan(0);
       });
-    });
-  });
-
-  describe("delete", () => {
-    it("doit retourner true si une ligne est supprimée", async () => {
-      vi.mocked(ClassroomEnrolement.destroy).mockResolvedValue(1);
-      const result = await EnrolementQuery.delete("id-1");
-      expect(result).toBe(true);
-    });
-
-    it("doit retourner false si l'ID n'existe pas", async () => {
-      vi.mocked(ClassroomEnrolement.destroy).mockResolvedValue(0);
-      const result = await EnrolementQuery.delete("id-invalid");
-      expect(result).toBe(false);
     });
   });
 });

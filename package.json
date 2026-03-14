@@ -116,6 +116,7 @@
     "electron-vite": "^4.0.0",
     "eslint": "^8.47.0",
     "eslint-plugin-react": "^7.33.2",
+    "jsdom": "^28.1.0",
     "postcss": "^8.4.31",
     "postcss-import": "^16.1.1",
     "postcss-loader": "^7.3.3",
