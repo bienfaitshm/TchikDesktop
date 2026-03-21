@@ -4,7 +4,7 @@ import { HashRouter as Router, Route, Routes } from "react-router"
 
 import Launcher from "@/renderer/screens/launcher";
 // 
-import { HomePage } from "@/renderer/screens/home";
+// import { HomePage } from "@/renderer/screens/home";
 
 // Schools
 // import { StudyYearsPage } from "@/renderer/screens/study-years";
@@ -13,7 +13,7 @@ import { HomePage } from "@/renderer/screens/home";
 // import { OptionPage } from "@/renderer/screens/options";
 // import StudentScreen from "@/renderer/screens/students";
 // import LocalScreen from "@/renderer/screens/locals";
-import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
+// import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
 import Layout from "@/renderer/screens/layout";
 import {
   ConfigurationLayoutScreen,
@@ -23,7 +23,8 @@ import {
   NewStudyYearConfigurationPage
 } from "@/renderer/screens/config";
 
-import { QuickEnrollmentPage } from "@/renderer/screens/enrollments";
+// import { QuickEnrollmentPage } from "@/renderer/screens/enrollments";
+import type { JSX } from "react";
 // // classroom
 // import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms"
 
@@ -32,12 +33,14 @@ import { QuickEnrollmentPage } from "@/renderer/screens/enrollments";
 // import { StudentsLayout } from "@/renderer/screens/classrooms/students.layout"
 
 
+
+
 export default function RouterProvider(): JSX.Element {
   return (
     <Router>
       <Routes>
         <Route element={<Layout />} errorElement={<Launcher />}>
-          <Route index element={<HomePage />} />
+          <Route index element={<div><h1>Titre</h1></div>} />
           {/* <Route path="inscriptions" element={<QuickEnrollmentPage />} />
           <Route path="mise-en-places" element={<MiseEnPlaceScreen />} /> */}
           {/* schools */}
@@ -57,9 +60,9 @@ export default function RouterProvider(): JSX.Element {
         </Route>
         <Route path="configuration" element={<ConfigurationLayoutScreen />}>
           <Route index element={<SchoolConfigurationScreen />} />
-          {/* <Route path="school/new" element={<SchoolConfigurationNewSchoolScreen />} />
+          <Route path="school/new" element={<SchoolConfigurationNewSchoolScreen />} />
           <Route path="school-year" element={<StudyYearConfigurationScreen />} />
-          <Route path="school-year/new" element={<NewStudyYearConfigurationPage />} /> */}
+          <Route path="school-year/new" element={<NewStudyYearConfigurationPage />} />
         </Route>
         <Route path="*" element={<h2>404 Not Found</h2>} />
       </Routes>

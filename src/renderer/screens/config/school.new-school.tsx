@@ -4,9 +4,9 @@ import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-sto
 import { SchoolForm, type SchoolFormData } from "@/renderer/components/form/school-form";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import React from "react";
-import type { SchoolAttributes } from "@/commons/types/models";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { ConfigHeader } from "./config.header";
+import type { TSchoolAttributes } from "@/packages/@core/data-access/schema-validations";
 
 
 
@@ -14,7 +14,7 @@ import { ConfigHeader } from "./config.header";
  * @function useSchoolNavigationAndSelection
  * @description A custom hook that encapsulates the logic for navigating to the school year configuration
  * page and setting the currently selected school in the global application store.
- * @returns {(school: SchoolAttributes) => void} A function that takes `SchoolAttributes` and
+ * @returns {(school: TSchoolAttributes) => void} A function that takes `TSchoolAttributes` and
  * performs the necessary navigation and state update.
  */
 export const useSchoolNavigationAndSelection = () => {
@@ -24,7 +24,7 @@ export const useSchoolNavigationAndSelection = () => {
     );
 
     return React.useCallback(
-        (school: SchoolAttributes) => {
+        (school: TSchoolAttributes) => {
             setCurrentSchool(school);
             navigate(`/configuration/school-year`);
         },
@@ -52,7 +52,7 @@ export const SchoolCreationForm: React.FC = () => {
                     successMessageDescription: `L'établissement '${values.name}' a été ajouté avec succès.`,
                     errorMessageTitle: "Échec de la création de l'établissement.",
                     onSuccess(data) {
-                        setCurrentSchoolAndNavigate(data as SchoolAttributes);
+                        setCurrentSchoolAndNavigate(data as TSchoolAttributes);
                     },
                 })
             );

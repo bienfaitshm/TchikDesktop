@@ -1,3 +1,4 @@
+import React from "react";
 import { TypographyH4 } from "@/renderer/components/ui/typography";
 import {
     Table,
@@ -11,12 +12,11 @@ import {
 import { Link } from "react-router";
 import { useGetStudyYears } from "@/renderer/libs/queries/school";
 import { Suspense as DataSuspense } from "@/renderer/libs/queries/suspense";
-import React from "react";
+import { Button } from "@/renderer/components/ui/button";
 import { format } from "date-fns";
 
 import { StudyYearCreationForm, useStudyYearNavigationAndSelection } from "./study-year.new-study-year";
 import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
-import { Button } from "@/renderer/components/ui/button";
 import { ConfigHeader } from "./config.header";
 
 /**
@@ -45,7 +45,7 @@ interface StudyYearDataDisplay {
  * @returns {JSX.Element} The table of study years or the creation form.
  */
 const StudyYearListDisplayTable: React.FC = () => {
-    const setCurrentStudyYearAndNavigate = useStudyYearNavigationAndSelection();
+    // const setCurrentStudyYearAndNavigate = useStudyYearNavigationAndSelection();
     const currentSchool = useApplicationConfigurationStore((store) => store.currentSchool);
 
     if (!currentSchool?.schoolId) {
@@ -89,7 +89,7 @@ const StudyYearListDisplayTable: React.FC = () => {
             <ConfigHeader showBackButton title=" Veuillez choisir l'année scolaire sur laquelle vous souhaitez travailler." />
             <Table>
                 <TableCaption>
-                    <span>Liste des années scolaires enregistrées pour <b>{currentSchool.name}</b>.</span> {" "}
+                    {/* <span>Liste des années scolaires enregistrées pour <b>{currentSchool.name}</b>.</span> {" "} */}
                     <Link to={`/configuration/school-year/new`} className="text-blue-600 hover:underline text-sm">
                         Ajouter une nouvelle année scolaire
                     </Link>

@@ -188,9 +188,82 @@ export function createMutationCallbacksWithNotifications<
             description:
               successMessageDescription ||
               DEFAULT_MUTATION_MESSAGES.successDescription,
-          }
+          },
         );
       }
+    },
+  };
+}
+
+/**
+ * Messages par défaut et immuables pour les notifications.
+ */
+const DEFAULT_MESSAGES = {
+  successTitle: "Opération réussie !",
+  successDescription: "L'opération a été effectuée avec succès.",
+  errorTitle: "Une erreur est survenue.",
+  errorDescription:
+    "Veuillez réessayer ultérieurement. Si le problème persiste, contactez le support.",
+} as const;
+
+export interface NotificationOptions {
+  showErrorNotification?: boolean;
+  showSuccessNotification?: boolean;
+  successMessageTitle?: string;
+  successMessageDescription?: string;
+  errorMessageTitle?: string;
+  errorMessageDescription?: string;
+}
+
+export type MutationOptionsWithNotifications<
+  TData,
+  TError,
+  TVariables,
+  TContext,
+> = Partial<MutateOptions<TData, TError, TVariables, TContext>> &
+  NotificationOptions;
+
+export function withNotifications<TData, TError, TVariables, TContext>({
+  showErrorNotification = true,
+  showSuccessNotification = true,
+  successMessageTitle,
+  successMessageDescription,
+  errorMessageTitle,
+  errorMessageDescription,
+  onSuccess,
+  onError,
+  ...restOptions
+}: MutationOptionsWithNotifications<
+  TData,
+  TError,
+  TVariables,
+  TContext
+> = {}): Partial<MutateOptions<TData, TError, TVariables, TContext>> {
+  return {
+    ...restOptions,
+    onSuccess: (data, variables, onMutateResult, context) => {
+      if (showSuccessNotification) {
+        toast.success(successMessageTitle ?? DEFAULT_MESSAGES.successTitle, {
+          description:
+            successMessageDescription ?? DEFAULT_MESSAGES.successDescription,
+        });
+      }
+      onSuccess?.(data, variables, onMutateResult, context);
+    },
+
+    onError: (error, variables, onMutateResult, context) => {
+      if (showErrorNotification) {
+        const extractedErrorMsg = error instanceof Error ? error.message : null;
+        const finalErrorDescription =
+          errorMessageDescription ??
+          extractedErrorMsg ??
+          DEFAULT_MESSAGES.errorDescription;
+
+        toast.error(errorMessageTitle ?? DEFAULT_MESSAGES.errorTitle, {
+          description: finalErrorDescription,
+        });
+      }
+      onError?.(error, variables, onMutateResult, context);
     },
   };
 }

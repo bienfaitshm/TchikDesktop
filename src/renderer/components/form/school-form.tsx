@@ -13,8 +13,6 @@ import {
 import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { Input } from "@/renderer/components/ui/input";
 
-export * from "./utils";
-
 export type SchoolFormData = TSchoolCreate;
 
 const DEFAULT_SCHOOL_VALUES: SchoolFormData = {
@@ -65,10 +63,10 @@ export const SchoolForm = React.forwardRef<
                             <FormLabel className="font-semibold text-base">Nom officiel de l'école</FormLabel>
                             <FormControl>
                                 <Input
-                                    {...field}
-                                    placeholder="Ex: Complexe Scolaire Belle Vue"
+                                    placeholder="Ex: Complexe Scolaire MASOMO"
                                     autoComplete="organization"
                                     className="h-11"
+                                    {...field}
                                 />
                             </FormControl>
                             <FormDescription>
@@ -134,3 +132,4 @@ export const SchoolForm = React.forwardRef<
 });
 
 SchoolForm.displayName = "SchoolForm";
+export * from "./utils";

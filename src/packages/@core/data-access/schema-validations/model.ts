@@ -5,7 +5,7 @@ import {
   USER_ROLE,
   STUDENT_STATUS,
   ENROLEMENT_ACTION,
-} from "@/packages/@core/data-access/db";
+} from "@/packages/@core/data-access/db/enum";
 import { createZodEnum } from "./utils";
 
 // =============================================================================
@@ -55,7 +55,7 @@ export const UserAttributesSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Identifiant unique de l'utilisateur (optionnel pour l'insertion)"
+      "Identifiant unique de l'utilisateur (optionnel pour l'insertion)",
     ),
   lastName: z.string().min(2).max(100).describe("Nom de famille (requis)"),
   middleName: z.string().min(2).max(100).describe("Post-nom (requis)"),
@@ -73,7 +73,7 @@ export const UserAttributesSchema = z.object({
     .describe("Nom complet (Champ virtuel, non géré par le client)"),
   gender: ZUSER_GENDER.optional().describe("Sexe de l'utilisateur"),
   role: ZUSER_ROLE.optional().describe(
-    "Rôle de l'utilisateur (Admin, Teacher, Student)"
+    "Rôle de l'utilisateur (Admin, Teacher, Student)",
   ),
   birthDate: z.coerce
     .date()
@@ -119,7 +119,7 @@ export const OptionAttributesSchema = z.object({
     .describe("Nom abrégé (sigle) de l'option"),
   schoolId: z.string().describe("Clé étrangère vers l'École"),
   section: ZSECTION.optional().describe(
-    "Section à laquelle appartient l'option"
+    "Section à laquelle appartient l'option",
   ),
 });
 
@@ -198,7 +198,7 @@ export const EnrolementAttributesSchema = z.object({
   schoolId: z.string().describe("Clé étrangère vers l'École"),
   yearId: z.string().describe("Clé étrangère vers l'Année d'Étude"),
   status: ZSTUDENT_STATUS.optional().describe(
-    "Statut de l'étudiant dans cette classe"
+    "Statut de l'étudiant dans cette classe",
   ),
   code: z
     .string()
@@ -227,7 +227,7 @@ export const EnrolementActionAttributesSchema = z.object({
     .optional()
     .describe("Raison du changement de statut ou de l'action"),
   action: ZENROLEMENT_ACTION.describe(
-    "Type d'action effectuée (Create, ChangeStatus, Transfer)"
+    "Type d'action effectuée (Create, ChangeStatus, Transfer)",
   ),
 });
 
@@ -335,7 +335,7 @@ export const EnrolementQuickCreateSchema = EnrolementCreateSchema.merge(
 
     // Données du nouvel étudiant (requis si isInSystem est FAUX).
     student: BaseStudentSchema.optional(),
-  })
+  }),
 )
   // -------------------------------------------------------------------------
   // Logique de validation conditionnelle appliquée via superRefine
@@ -428,7 +428,7 @@ export const PaginationAndSortSchema = z
       .default(0)
       .optional(),
     orderBy: ZodQueryFilter.describe(
-      "Nom du champ sur lequel trier les résultats."
+      "Nom du champ sur lequel trier les résultats.",
     ),
     order: z
       .enum(["ASC", "DESC"])
@@ -443,7 +443,7 @@ export const PaginationAndSortSchema = z
  * @template TData Le schéma de base pour les filtres spécifiques à une ressource.
  */
 export const WithPaginationAndSortSchema = <TData extends z.ZodRawShape>(
-  dataSchema: z.ZodObject<TData>
+  dataSchema: z.ZodObject<TData>,
 ) =>
   dataSchema
     .partial()

@@ -1,5 +1,5 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import {
+import type {
   TSchoolCreate,
   TSchoolUpdate,
   TSchoolFilter,
