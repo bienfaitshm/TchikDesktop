@@ -11,7 +11,7 @@ import {
 import { Button } from "@/renderer/components/ui/button";
 // Assurez-vous que ces imports sont corrects dans votre projet
 import { ButtonLoader } from "../form/button-loader";
-import { MUTATION_ACTION } from "@/commons/constants/enum";
+import { MUTATION_ACTION } from "@/packages/@core/data-access/db/enum";
 import { FormSubmitter } from "../form/form-submiter"; // Supposons que FormSubmitter est un client-side wrapper pour un formulaire
 
 // --- Helpers pour les textes des dialogues ---

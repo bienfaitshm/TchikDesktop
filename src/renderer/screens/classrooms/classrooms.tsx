@@ -1,7 +1,6 @@
-import { ClassroomForm, getSuffixe, type ClassroomFormData as FormValueType } from "@/renderer/components/form/classroom-form";
-import type { TClassroom } from "@/commons/types/models";
-
-import { MUTATION_ACTION } from "@/commons/constants/enum";
+import { ClassroomForm, type ClassroomFormData as FormValueType } from "@/renderer/components/form/classroom-form";
+import { MUTATION_ACTION } from "@/packages/@core/data-access/db/enum";
+import type { TClassroom } from "@/packages/@core/data-access/db/model.type"
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
 import { useClassroomManagement } from "@/renderer/hooks/query.mangements";
 import React, { useCallback, useMemo, useState } from "react";
@@ -20,7 +19,6 @@ import type { DataTableMenu } from "@/renderer/components/button-menus";
 import { LayoutGrid, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
-import { WithSchoolAndYearId } from "@/commons/types/services";
 import { createMenuActionManager } from "@/renderer/utils/handle-action";
 import {
     TableActionManager,
@@ -30,7 +28,7 @@ import { useGetOptionAsOptions } from "@/renderer/hooks/data-as-options";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/renderer/components/ui/tabs";
 import { ClassroomListOrGroup } from "./classrooms.view";
 
-
+type TWithSchoolAndYear = Pick<TClassroom, "schoolId" | "yearId">
 
 const tableMenus: DataTableMenu[] = [
     { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
@@ -38,7 +36,7 @@ const tableMenus: DataTableMenu[] = [
 ];
 
 
-const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
+const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearId }) => {
     // Gère l'état du mode d'affichage : 'list' pour la vue normale, 'edit' pour le mode édition.
     const [viewMode, setViewMode] = useState<"list" | "edit">("list");
     const {
@@ -182,7 +180,7 @@ const ClassroomManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId, year
     );
 };
 
-const Classroom: React.FC<WithSchoolAndYearId> = (props) => {
+const Classroom: React.FC<TWithSchoolAndYear> = (props) => {
     return (
         <Suspense>
             <ClassroomManagementPage {...props} />

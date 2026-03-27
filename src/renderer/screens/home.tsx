@@ -19,7 +19,6 @@ import { ChartPie } from "../components/charts/pie";
 import { BarChart } from "../components/charts/bars";
 import { withSchoolConfig } from "../hooks/with-application-config";
 import { useDashboardStatistics } from "../libs/queries/stats";
-import { WithSchoolAndYearId } from "@/commons/types/services";
 
 // --- CONFIGURATIONS DES GRAPHIQUES ---
 
@@ -46,7 +45,7 @@ const RETENTION_CONFIG = {
   nouveaux: { label: "Nouveaux", color: "hsl(var(--chart-5))" },
 };
 
-const Home: React.FC<WithSchoolAndYearId> = (props) => {
+const Home: React.FC<any> = (props) => {
   const {
     genderDistribution,
     statusDistribution,

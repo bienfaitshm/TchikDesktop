@@ -45,7 +45,7 @@ interface StudyYearDataDisplay {
  * @returns {JSX.Element} The table of study years or the creation form.
  */
 const StudyYearListDisplayTable: React.FC = () => {
-    // const setCurrentStudyYearAndNavigate = useStudyYearNavigationAndSelection();
+    const setCurrentStudyYearAndNavigate = useStudyYearNavigationAndSelection();
     const currentSchool = useApplicationConfigurationStore((store) => store.currentSchool);
 
     if (!currentSchool?.schoolId) {
@@ -89,14 +89,14 @@ const StudyYearListDisplayTable: React.FC = () => {
             <ConfigHeader showBackButton title=" Veuillez choisir l'année scolaire sur laquelle vous souhaitez travailler." />
             <Table>
                 <TableCaption>
-                    {/* <span>Liste des années scolaires enregistrées pour <b>{currentSchool.name}</b>.</span> {" "} */}
+                    <span>Liste des années scolaires enregistrées pour <b>{currentSchool.name}</b>.</span> {" "}
                     <Link to={`/configuration/school-year/new`} className="text-blue-600 hover:underline text-sm">
                         Ajouter une nouvelle année scolaire
                     </Link>
                 </TableCaption>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[100px]">ID Année</TableHead> {/* Changed to Year ID */}
+                        <TableHead className="w-[100px]">ID Année</TableHead>
                         <TableHead className="w-[250px]">Nom de l'année scolaire</TableHead>
                         <TableHead>Date de début</TableHead>
                         <TableHead className="text-right">Date de fin</TableHead>

@@ -1,6 +1,5 @@
-import { forwardRef, useCallback, useState, type PropsWithChildren } from "react";
-import { SECTION, SECTION_OPTIONS } from "@/packages/@core/data-access/db";
-import { ClassroomCreateSchema, type TClassroomCreate } from "@/packages/@core/data-access/schema-validations"
+import { forwardRef, type PropsWithChildren } from "react";
+import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 import {
     Form,
     FormControl,
@@ -19,20 +18,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/renderer/components/ui/select";
-import { useZodForm } from "@/packages/use-zod-form"
+import { ButtonAi } from "@/renderer/components/buttons/button-ai";
 import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
-import { ButtonAi } from "../buttons/button-ai";
 
-export type ClassroomFormData = TClassroomCreate;
+import { useClassroomForm, type ClassroomFormData, type TSuggestion } from "./classroom-form.utils"
 
-const DEFAULT_CLASSROOM_VALUES: ClassroomFormData = {
-    identifier: "",
-    shortIdentifier: "",
-    schoolId: "",
-    optionId: null,
-    yearId: "",
-    section: SECTION.SECONDARY,
-};
+
 
 /**
  * OptionsSelect optimisé avec support ARIA
@@ -62,41 +53,11 @@ export const ClassroomForm = forwardRef<
         onSubmit?: (value: ClassroomFormData) => void;
         initialValues?: Partial<ClassroomFormData>;
         options?: { label: string; value: string }[];
-        onGenerateSuggestion?(optionId: string, name: string): { name: string, shortName: string }
+        onGenerateSuggestion?(optionId: string, name: string): TSuggestion | null
     }>
 >(({ children, onSubmit, onGenerateSuggestion, initialValues = {}, options = [] }, ref) => {
-    const [isGenerating, setIsGenerating] = useState(false);
-
-    const form = useZodForm({
-        schema: ClassroomCreateSchema,
-        defaultValues: { ...DEFAULT_CLASSROOM_VALUES, ...initialValues },
-        onSubmit,
-    });
-
-    useFormImperativeHandle(ref, form);
-
-    const handleGenerate = useCallback(async (e: React.MouseEvent) => {
-        e.preventDefault();
-
-        const { identifier, optionId } = form.getValues();
-        const isValid = await form.trigger(["identifier", "optionId"]);
-
-        if (!isValid) return;
-
-        try {
-            setIsGenerating(true);
-            const suggestion = await onGenerateSuggestion?.(optionId as string, identifier);
-            if (suggestion) {
-                form.setValue("identifier", suggestion.name, { shouldValidate: true });
-                form.setValue("shortIdentifier", suggestion.shortName, { shouldDirty: true, shouldValidate: true });
-            }
-        } catch (error) {
-            console.error("[Suggestion Error]:", error);
-        } finally {
-            setIsGenerating(false);
-        }
-    }, [form, onGenerateSuggestion]);
-
+    const { form, handleGenerate, isGenerating } = useClassroomForm({ initialValues, onGenerateSuggestion, onSubmit })
+    useFormImperativeHandle(ref, form)
     return (
         <Form {...form}>
             <form
@@ -113,7 +74,7 @@ export const ClassroomForm = forwardRef<
                             <div className="flex items-center justify-between mb-1">
                                 <FormLabel className="font-semibold">Nom complet de la classe</FormLabel>
                                 <ButtonAi
-                                    type="button" // Sécurité A11y
+                                    type="button"
                                     disabled={isGenerating}
                                     onClick={handleGenerate}
                                     aria-busy={isGenerating}
@@ -181,7 +142,7 @@ export const ClassroomForm = forwardRef<
                         name="section"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="font-semibold">Niveau d'enseignement</FormLabel>
+                                <FormLabel className="font-semibold">Niveau d'enseignement / Sections</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value}>
                                     <OptionsSelect
                                         options={SECTION_OPTIONS}
@@ -203,3 +164,4 @@ export const ClassroomForm = forwardRef<
 });
 
 ClassroomForm.displayName = "ClassroomForm";
+export { createSuggestion, type ClassroomFormData } from "./classroom-form.utils"
