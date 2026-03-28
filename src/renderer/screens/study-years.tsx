@@ -17,17 +17,16 @@ import {
 } from "@/renderer/components/tables/data-table";
 import { TypographyH3 } from "@/renderer/components/ui/typography";
 import { StudyYearColumns } from "@/renderer/components/tables/columns.study-years";
-import type { TStudyYear } from "@/commons/types/models";
 import { useStudyYearManagement } from "@/renderer/hooks/query.mangements";
 import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
-import { WithSchoolAndYearId } from "@/commons/types/services";
 import { createMenuActionManager } from "@/renderer/utils/handle-action";
 import { useGetStudyYears } from "@/renderer/libs/queries/school";
 import {
     TableActionManager,
     useTableAction,
 } from "@/renderer/components/dialog/dialog.table-action";
-import { MUTATION_ACTION } from "@/commons/constants/enum";
+import type { TStudyYear } from "@/packages/@core/data-access/db/models/types";
+import { MUTATION_ACTION } from "@/packages/@core/data-access/db/enum";
 
 
 
@@ -38,7 +37,7 @@ const tableMenus: DataTableMenu[] = [
 
 
 
-const StudyYearManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId }) => {
+const StudyYearManagementPage: React.FC<any> = ({ schoolId }) => {
 
     const {
         createMutation,
@@ -142,7 +141,7 @@ const StudyYearManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId }) =>
     );
 };
 
-const SttudyYear: React.FC<WithSchoolAndYearId> = (props) => {
+const SttudyYear: React.FC<any> = (props) => {
     return (
         <Suspense>
             <StudyYearManagementPage {...props} />

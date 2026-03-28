@@ -1,5 +1,4 @@
-import { SECTION, SECTION_TRANSLATIONS } from "@/commons/constants/enum";
-import { TClassroom, TWithOption } from "@/commons/types/services";
+import { SECTION, SECTION_TRANSLATIONS } from "@/packages/@core/data-access/db/enum";
 import {
     Card,
     CardDescription,
@@ -16,6 +15,7 @@ import { useGetClassroomGroupedBySection } from "@/renderer/hooks/other";
 import { CircleFadingPlus, Shapes } from "lucide-react";
 import { Link } from "react-router";
 import { Alert, AlertDescription, AlertTitle } from "@/renderer/components/ui/alert";
+import type { TClassroom, TWithOption } from "@/packages/@core/data-access/db/model.type";
 
 
 

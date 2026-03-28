@@ -12,20 +12,19 @@ import { OptionForm, type OptionFormData as FormValueType } from "@/renderer/com
 import { Button } from "@/renderer/components/ui/button";
 import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
 import { OptionColumns } from "@/renderer/components/tables/columns.options";
-import type { TOption } from "@/commons/types/models";
 import type { DataTableMenu } from "@/renderer/components/button-menus";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { useOptionManagement } from "@/renderer/hooks/query.mangements";
 import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
-import { WithSchoolAndYearId } from "@/commons/types/services";
 import { createMenuActionManager } from "@/renderer/utils/handle-action";
 import { useGetOptions } from "@/renderer/libs/queries/option";
 import {
     TableActionManager,
     useTableAction,
 } from "@/renderer/components/dialog/dialog.table-action";
-import { MUTATION_ACTION } from "@/commons/constants/enum";
+import { MUTATION_ACTION } from "@/packages/@core/data-access/db/enum";
+import { TOption } from "@/packages/@core/data-access/db/models/types";
 
 
 
@@ -44,7 +43,7 @@ const renderForm = ({ initialData, onSubmit }: { initialData?: FormValueType, on
     )
 }
 
-const OptionManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId }) => {
+const OptionManagementPage: React.FC<any> = ({ schoolId }) => {
 
     const {
         createMutation,
@@ -150,7 +149,7 @@ const OptionManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId }) => {
     );
 };
 
-const Option: React.FC<WithSchoolAndYearId> = (props) => {
+const Option: React.FC<any> = (props) => {
     return (
         <Suspense>
             <OptionManagementPage {...props} />

@@ -11,7 +11,7 @@ import {
     FormMessage,
 } from "@/renderer/components/ui/form";
 import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
-import { USER_GENDER, USER_ROLE } from "@/packages/@core/data-access/db";
+import { USER_GENDER, USER_ROLE } from "@/packages/@core/data-access/db/enum";
 import { Input } from "@/renderer/components/ui/input";
 import { GenderInput } from "./fields/gender";
 import { UseFormReturn } from "react-hook-form";

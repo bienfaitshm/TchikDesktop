@@ -1,5 +1,3 @@
-import type { TWithOption, TClassroom } from "@/commons/types/services";
-import { SECTION_TRANSLATIONS } from "@/commons/constants/enum";
 import { NavLink } from "react-router";
 import { cn } from "@/renderer/utils";
 
@@ -7,6 +5,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { buttonVariants } from "@/renderer/components/ui/button";
 import { Frown } from "lucide-react";
 import { useGetClassroomGroupedBySection } from "../hooks/other";
+import { TClassroom, TWithOption } from "@/packages/@core/data-access/db/models/types";
+import { SECTION_TRANSLATIONS } from "@/packages/@core/data-access/db/enum"
 
 
 

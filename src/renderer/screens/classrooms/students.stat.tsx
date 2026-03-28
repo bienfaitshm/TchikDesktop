@@ -1,4 +1,4 @@
-import type { TEnrolement, TWithUser } from "@/commons/types/models";
+import type { TEnrolement, TWithUser } from "@/packages/@core/data-access/db/model.type";
 import { Button } from "@/renderer/components/ui/button";
 import {
     Sheet,

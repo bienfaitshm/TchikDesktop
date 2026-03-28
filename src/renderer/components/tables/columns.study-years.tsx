@@ -1,4 +1,3 @@
-import type { StudyYearAttributes } from "@/commons/types/models";
 import type { ColumnDef } from "@tanstack/react-table";
 import { TypographySmall } from "@/renderer/components/ui/typography";
 import React from "react";
@@ -6,7 +5,8 @@ import { Badge } from "@/renderer/components/ui/badge";
 import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
 import { Checkbox } from "@/renderer/components/ui/checkbox";
 import { CheckCircle, MinusCircle } from "lucide-react";
-import { formatDate } from "@/commons/libs/times";
+import { formatDate } from "@/packages/times";
+import type { StudyYearAttributes } from "@/packages/@core/data-access/db/models/types";
 
 
 /**

@@ -6,7 +6,7 @@ import { cn } from '@/renderer/utils';
 import {
     USER_GENDER,
     USER_GENDER_TRANSLATIONS,
-} from "@/commons/constants/enum";
+} from "@/packages/@core/data-access/db/enum";
 
 
 const GenderIcon = React.memo(({ gender }: { gender: USER_GENDER }) => {

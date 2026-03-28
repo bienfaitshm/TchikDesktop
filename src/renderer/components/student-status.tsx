@@ -1,5 +1,5 @@
 import { Badge } from '@/renderer/components/ui/badge';
-import { STUDENT_STATUS, STUDENT_STATUS_TRANSLATIONS } from '@/commons/constants/enum';
+import { STUDENT_STATUS, STUDENT_STATUS_TRANSLATIONS } from '@/packages/@core/data-access/db/enum';
 
 interface StudentStatusBadgeProps {
     status: STUDENT_STATUS;

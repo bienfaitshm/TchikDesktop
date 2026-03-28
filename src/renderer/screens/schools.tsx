@@ -15,7 +15,6 @@ import {
     DataTableToolbar,
 } from "@/renderer/components/tables/data-table";
 import { TypographyH3 } from "@/renderer/components/ui/typography";
-import type { TSchool } from "@/commons/types/models";
 import { useSchoolManagement } from "@/renderer/hooks/query.mangements";
 import { createMenuActionManager } from "@/renderer/utils/handle-action";
 import { useGetSchools } from "@/renderer/libs/queries/school";
@@ -23,7 +22,8 @@ import {
     TableActionManager,
     useTableAction,
 } from "@/renderer/components/dialog/dialog.table-action";
-import { MUTATION_ACTION } from "@/commons/constants/enum";
+import { TSchool } from "@/packages/@core/data-access/db/models/types";
+import { MUTATION_ACTION } from "@/packages/@core/data-access/db/enum";
 
 
 

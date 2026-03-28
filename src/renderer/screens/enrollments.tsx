@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { WithSchoolAndYearId } from '@/commons/types/services';
 
 // --- UI Component Imports ---
 import { Button } from '@/renderer/components/ui/button';
@@ -22,7 +21,7 @@ import { EnrollmentDialog } from '../components/dialog/quick-enrollment-dialog-f
  * @description Renders the data table for enrollment history.
  * It is responsible for fetching and displaying its own data.
  */
-const EnrollmentHistoryTable: React.FC<WithSchoolAndYearId> = ({ }) => {
+const EnrollmentHistoryTable: React.FC<any> = ({ }) => {
     // This hook fetches the data for the table, handling loading and error states.
     // const { data: enrollments, isLoading } = useGetEnrollmentHistory({ schoolId, yearId });
 
@@ -48,7 +47,7 @@ const EnrollmentHistoryTable: React.FC<WithSchoolAndYearId> = ({ }) => {
  * @description The main page for managing enrollments.
  * It composes the header, action buttons (dialog), and the data table.
  */
-const EnrollmentPage: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
+const EnrollmentPage: React.FC<any> = ({ schoolId, yearId }) => {
     return (
         <div className="container mx-auto max-w-screen-lg py-10">
             <header className="flex items-center justify-between mb-8">

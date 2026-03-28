@@ -1,9 +1,9 @@
 import { forwardRef, useMemo, useState, type PropsWithChildren } from "react";
-import { useControlledForm } from "@/commons/libs/forms";
-import { SECTION, SECTION_TRANSLATIONS, STUDENT_STATUS, STUDENT_STATUS_TRANSLATIONS } from "@/commons/constants/enum";
+import { SECTION, STUDENT_STATUS } from "@/packages/@core/data-access/db/enum";
+import { SECTION_OPTIONS, STUDENT_STATUS_OPTIONS } from "@/packages/@core/data-access/db/options"
 import { type DocumentExportSchemaAttributes, DocumentExportSchema } from "@/renderer/libs/schemas";
-import { getEnumKeyValueList } from "@/commons/utils";
 import { Check, ChevronDown } from "lucide-react";
+import { useZodForm } from "@/packages/use-zod-form"
 
 // Components from Shadcn/ui
 import {
@@ -30,7 +30,6 @@ import { Button } from "@/renderer/components/ui/button";
 import { useFormImperativeHandle, type ImperativeFormHandle } from "../utils";
 import { FilterCheckboxInput } from "../fields/filter-checkbox-input";
 import { cn } from "@/renderer/utils";
-import type { GroupedDocumentOption } from "@/commons/types/services.documents";
 
 
 export type DocumentFormData = DocumentExportSchemaAttributes;
@@ -46,13 +45,8 @@ const DEFAULT_VALUES: DocumentFormData = {
 };
 
 
-const SECTIONS_OPTIONS = getEnumKeyValueList(SECTION, SECTION_TRANSLATIONS);
-const STATUS_OPTIONS = getEnumKeyValueList(STUDENT_STATUS, STUDENT_STATUS_TRANSLATIONS);
-
-
-
 type DocumentTypeComboBoxProps = {
-    options: GroupedDocumentOption[];
+    options: any[];
     value: string;
     onChangeValue: (value: string) => void;
 };
@@ -140,7 +134,7 @@ export interface DocumentEnrollmentFormProps {
     onSubmit?: (value: DocumentFormData) => void;
     initialValues?: Partial<DocumentFormData>;
     classrooms?: { label: string; value: string }[];
-    documentOptions?: GroupedDocumentOption[];
+    documentOptions?: any[];
 }
 
 
@@ -154,7 +148,7 @@ export const DocumentEnrollmentForm = forwardRef<
     PropsWithChildren<DocumentEnrollmentFormProps>
 >(({ children, onSubmit, initialValues = {}, classrooms = [], documentOptions = [] }, ref) => {
 
-    const [form, handleSubmit] = useControlledForm({
+    const form = useZodForm({
         schema: DocumentExportSchema,
         defaultValues: { ...DEFAULT_VALUES, ...initialValues },
         onSubmit,
@@ -164,7 +158,7 @@ export const DocumentEnrollmentForm = forwardRef<
 
     return (
         <Form {...form}>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={form.submit} className="space-y-6">
                 <div className="mx-1 space-y-6">
                     <FormField
                         control={form.control}
@@ -204,7 +198,7 @@ export const DocumentEnrollmentForm = forwardRef<
                                     <FilterCheckboxInput
                                         name="section"
                                         placeholder="Rechercher une section..."
-                                        options={SECTIONS_OPTIONS}
+                                        options={SECTION_OPTIONS}
                                         value={field.value}
                                         onChangeValue={field.onChange}
                                     />
@@ -255,7 +249,7 @@ export const DocumentEnrollmentForm = forwardRef<
                                         <FilterCheckboxInput
                                             name="statut"
                                             placeholder="Rechercher un statut..."
-                                            options={STATUS_OPTIONS}
+                                            options={STUDENT_STATUS_OPTIONS}
                                             value={field.value}
                                             onChangeValue={field.onChange}
                                         />

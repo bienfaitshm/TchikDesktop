@@ -15,7 +15,6 @@ import {
     QuickEnrollmentForm,
     QuickEnrollmentFormData,
     useFormHandleRef,
-    getDefaultValues
 } from '@/renderer/components/form/quick-enrolement-form';
 import { ButtonLoader } from '@/renderer/components/form/button-loader';
 import { FormSubmitter } from '@/renderer/components/form/form-submiter';
@@ -51,8 +50,6 @@ export const EnrollmentDialog: React.FC<EnrollmentDialogProps> = ({
 
     const { onSubmit, quickEnrolementMutation } = useQuickEnrollement({
         onSuccess: (enrolement) => {
-            const value = getDefaultValues(initialValues);
-            console.log({ value })
             formRef.current?.reset();
             onSuccess?.()
             setPrevEnrollement(enrolement)

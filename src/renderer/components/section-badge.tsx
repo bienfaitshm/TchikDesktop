@@ -1,5 +1,5 @@
 import { Badge } from '@/renderer/components/ui/badge';
-import { SECTION, SECTION_TRANSLATIONS } from '@/commons/constants/enum';
+import { SECTION, SECTION_TRANSLATIONS } from '@/packages/@core/data-access/db/enum';
 import { School, GraduationCap, Building } from 'lucide-react';
 
 /**

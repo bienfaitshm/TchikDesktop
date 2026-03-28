@@ -1,4 +1,3 @@
-import { WithSchoolAndYearId } from "@/commons/types/services";
 import { ClassroomSideList } from "@/renderer/components/classroom-side-list";
 import { Button } from "@/renderer/components/ui/button";
 import { TypographyH2 } from "@/renderer/components/ui/typography";
@@ -21,7 +20,7 @@ import { ScrollArea } from "@/renderer/components/ui/scroll-area";
  * Récupère la liste des classes et les passe à ClassroomSideList.
  * @param {WithSchoolAndYearId} props - schoolId et yearId pour récupérer les classes.
  */
-const ClassroomSideNav: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
+const ClassroomSideNav: React.FC<any> = ({ schoolId, yearId }) => {
     const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId });
     return <ClassroomSideList classrooms={classrooms} />;
 };
@@ -29,9 +28,9 @@ const ClassroomSideNav: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) =
 /**
  * Layout principal pour les sections liées aux étudiants et aux classes.
  * Utilise un layout redimensionnable avec une barre latérale et une zone de contenu principale.
- * @param {WithSchoolAndYearId} props - schoolId et yearId passés par le HOC withSchoolConfig.
+ * @param {any} props - schoolId et yearId passés par le HOC withSchoolConfig.
  */
-const Layout: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
+const Layout: React.FC<any> = ({ schoolId, yearId }) => {
     const navigate = useNavigate();
 
     const handleGoBack = () => {
