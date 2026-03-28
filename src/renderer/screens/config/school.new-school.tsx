@@ -1,22 +1,14 @@
-import { useNavigate } from "react-router";
-import { useCreateSchool } from "@/renderer/libs/queries/school";
-import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
-import { SchoolForm, type SchoolFormData } from "@/renderer/components/form/school-form";
-import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import React from "react";
-import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
-import { ConfigHeader } from "./config.header";
+import { useNavigate } from "react-router";
+import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
+import { SchoolForm } from "@/renderer/components/form/school-form";
+import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import type { TSchoolAttributes } from "@/packages/@core/data-access/schema-validations";
+import { useCreateSchoolForm } from "@/renderer/components/form/school-form.actions";
+import { ConfigHeader } from "./config.header";
 
 
 
-/**
- * @function useSchoolNavigationAndSelection
- * @description A custom hook that encapsulates the logic for navigating to the school year configuration
- * page and setting the currently selected school in the global application store.
- * @returns {(school: TSchoolAttributes) => void} A function that takes `TSchoolAttributes` and
- * performs the necessary navigation and state update.
- */
 export const useSchoolNavigationAndSelection = () => {
     const navigate = useNavigate();
     const setCurrentSchool = useApplicationConfigurationStore(
@@ -41,37 +33,25 @@ export const useSchoolNavigationAndSelection = () => {
  */
 export const SchoolCreationForm: React.FC = () => {
     const setCurrentSchoolAndNavigate = useSchoolNavigationAndSelection();
-    const mutation = useCreateSchool();
-
-    const onSubmit = React.useCallback(
-        (values: SchoolFormData) => {
-            mutation.mutate(
-                values,
-                createMutationCallbacksWithNotifications({
-                    successMessageTitle: "Établissement créé !",
-                    successMessageDescription: `L'établissement '${values.name}' a été ajouté avec succès.`,
-                    errorMessageTitle: "Échec de la création de l'établissement.",
-                    onSuccess(data) {
-                        setCurrentSchoolAndNavigate(data as TSchoolAttributes);
-                    },
-                })
-            );
+    const { mutation, formId, onSubmit } = useCreateSchoolForm({
+        onSuccess(data) {
+            setCurrentSchoolAndNavigate(data as TSchoolAttributes)
         },
-        [mutation, setCurrentSchoolAndNavigate]
-    );
+    })
 
     return (
         <div>
-            <SchoolForm onSubmit={onSubmit}>
-                <div className="flex justify-end pt-4">
-                    <ButtonLoader
-                        isLoading={mutation.isPending}
-                        disabled={mutation.isPending}
-                    >
-                        Enregistrer l'établissement
-                    </ButtonLoader>
-                </div>
-            </SchoolForm>
+            <SchoolForm formId={formId} onSubmit={onSubmit} />
+            <div className="flex justify-end pt-4">
+                <ButtonLoader
+                    type="submit"
+                    form={formId}
+                    isLoading={mutation.isPending}
+                    disabled={mutation.isPending}
+                >
+                    Enregistrer l'établissement
+                </ButtonLoader>
+            </div>
         </div>
     );
 };

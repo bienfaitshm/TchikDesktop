@@ -1,31 +1,20 @@
 import { TypographyH4 } from "@/renderer/components/ui/typography";
 import { useNavigate } from "react-router";
-import { useCreateStudyYear } from "@/renderer/libs/queries/school";
 
 import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
-import { StudyYearForm, type StudyYearFormData } from "@/renderer/components/form/study-year-form";
+import { StudyYearForm } from "@/renderer/components/form/study-year-form";
+import { useCreateStudyYearForm } from "@/renderer/components/form/study-year-form.actions"
+
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import React from "react";
-import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { Button } from "@/renderer/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { TStudyYearAttributes } from "@/packages/@core/data-access/schema-validations";
 
-/**
- * @function useStudyYearNavigationAndSelection
- * @description A custom hook that encapsulates the logic for navigating to a relevant page
- * after a study year operation and setting the newly selected/created study year
- * in the global application configuration store.
- * @returns {(studyYear: StudyYearAttributes) => void} A function that takes `StudyYearAttributes` and
- * performs the necessary state update and navigation.
- */
 export const useStudyYearNavigationAndSelection = () => {
     const navigate = useNavigate();
     const setCurrentStudyYear = useApplicationConfigurationStore(
         (store) => store.setCurrentStudyYear
-    );
-    const currentSchoolId = useApplicationConfigurationStore(
-        (store) => store.currentSchool?.schoolId
     );
 
     return React.useCallback(
@@ -51,7 +40,12 @@ export const StudyYearCreationForm: React.FC = () => {
         (store) => store.currentSchool?.schoolId
     );
     const setCurrentStudyYearAndNavigate = useStudyYearNavigationAndSelection();
-    const mutation = useCreateStudyYear();
+    const { formId, mutation, onSubmit } = useCreateStudyYearForm({
+        onSuccess(data) {
+            setCurrentStudyYearAndNavigate(data as TStudyYearAttributes)
+        },
+    })
+
 
     if (!currentSchoolId) {
         return (
@@ -67,34 +61,21 @@ export const StudyYearCreationForm: React.FC = () => {
         );
     }
 
-    const onSubmit = React.useCallback(
-        (values: StudyYearFormData) => {
-            mutation.mutate(values,
-                createMutationCallbacksWithNotifications({
-                    successMessageTitle: "Année scolaire créée !",
-                    successMessageDescription: `L'année scolaire '${values.yearName}' a été ajoutée avec succès.`,
-                    errorMessageTitle: "Échec de la création de l'année scolaire.",
-                    onSuccess(data) {
-                        setCurrentStudyYearAndNavigate(data as TStudyYearAttributes);
-                    },
-                })
-            );
-        },
-        [,]
-    );
+
 
     return (
         <div>
-            <StudyYearForm initialValues={{ schoolId: currentSchoolId }} onSubmit={onSubmit}>
-                <div className="flex justify-end pt-4">
-                    <ButtonLoader
-                        isLoading={mutation.isPending}
-                        disabled={mutation.isPending}
-                    >
-                        Enregistrer l'année scolaire
-                    </ButtonLoader>
-                </div>
-            </StudyYearForm>
+            <StudyYearForm formId={formId} initialValues={{ schoolId: currentSchoolId }} onSubmit={onSubmit} />
+            <div className="flex justify-end pt-4">
+                <ButtonLoader
+                    type="submit"
+                    form={formId}
+                    isLoading={mutation.isPending}
+                    disabled={mutation.isPending}
+                >
+                    Enregistrer l'année scolaire
+                </ButtonLoader>
+            </div>
         </div>
     );
 };
