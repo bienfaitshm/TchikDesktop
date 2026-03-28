@@ -26,7 +26,7 @@ import {
 // import { QuickEnrollmentPage } from "@/renderer/screens/enrollments";
 import type { JSX } from "react";
 // // // classroom
-// import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms"
+import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms"
 
 // // // classroom/:classId
 // import { StudentsOfClassrrom } from "@/renderer/screens/classrooms/students"
@@ -47,7 +47,7 @@ export default function RouterProvider(): JSX.Element {
           {/* <Route path="students" element={<StudentScreen />} /> */}
           {/* <Route path="options" element={<OptionPage />} /> */}
           {/* classrooms */}
-          {/* <Route path="classrooms" element={<ClassroomPage />} /> */}
+          <Route path="classrooms" element={<ClassroomPage />} />
 
           {/* Classroom-details */}
           {/* <Route path="classrooms/:classroomId" element={<StudentsLayout />}>

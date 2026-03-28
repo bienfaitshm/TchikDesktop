@@ -1,4 +1,4 @@
-import type { TClassroom } from "@/commons/types/models"
+import type { TClassroomAttributes as TClassroom } from "@/packages/@core/data-access/schema-validations"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
 import { SectionBadge } from "@/renderer/components/section-badge"
@@ -32,22 +32,22 @@ export const ClassroomColumns: ColumnDef<TClassroom>[] = [
         enableSorting: false,
         enableHiding: false,
     },
-    {
+    // {
 
-        accessorKey: "classId",
-        header: "ID",
-        cell: ({ row }) => {
+    //     accessorKey: "classId",
+    //     header: "ID",
+    //     cell: ({ row }) => {
 
-            return (
-                <TypographySmall className="font-mono text-muted-foreground">
-                    {row.original.classId.substring(0, 8)}...
-                </TypographySmall>
-            );
-        },
-        enableSorting: true,
-        enableHiding: false,
-        enableColumnFilter: false,
-    },
+    //         return (
+    //             <TypographySmall className="font-mono text-muted-foreground">
+    //                 {row.original.classId.substring(0, 8)}...
+    //             </TypographySmall>
+    //         );
+    //     },
+    //     enableSorting: true,
+    //     enableHiding: false,
+    //     enableColumnFilter: false,
+    // },
     {
 
         accessorKey: "identifier",

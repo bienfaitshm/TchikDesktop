@@ -1,4 +1,4 @@
-import { forwardRef, type PropsWithChildren } from "react";
+import React from "react";
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 import {
     Form,
@@ -19,9 +19,8 @@ import {
     SelectValue,
 } from "@/renderer/components/ui/select";
 import { ButtonAi } from "@/renderer/components/buttons/button-ai";
-import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
-
 import { useClassroomForm, type ClassroomFormData, type TSuggestion } from "./classroom-form.utils"
+import type { BaseFormProps } from "./base-form"
 
 
 
@@ -47,20 +46,16 @@ function OptionsSelect({ options, placeholder }: { options: { label: string; val
     );
 }
 
-export const ClassroomForm = forwardRef<
-    ImperativeFormHandle<ClassroomFormData>,
-    PropsWithChildren<{
-        onSubmit?: (value: ClassroomFormData) => void;
-        initialValues?: Partial<ClassroomFormData>;
-        options?: { label: string; value: string }[];
-        onGenerateSuggestion?(optionId: string, name: string): TSuggestion | null
-    }>
->(({ children, onSubmit, onGenerateSuggestion, initialValues = {}, options = [] }, ref) => {
+type ClassroomProps = {
+    options?: { label: string; value: string }[];
+    onGenerateSuggestion?(optionId: string, name: string): TSuggestion | null
+}
+export const ClassroomForm: React.FC<BaseFormProps<ClassroomFormData> & ClassroomProps> = ({ formId, onSubmit, onGenerateSuggestion, initialValues = {}, options = [] }) => {
     const { form, handleGenerate, isGenerating } = useClassroomForm({ initialValues, onGenerateSuggestion, onSubmit })
-    useFormImperativeHandle(ref, form)
     return (
         <Form {...form}>
             <form
+                id={formId}
                 onSubmit={form.submit}
                 className="space-y-6"
                 aria-label="Formulaire de création de classe"
@@ -154,14 +149,10 @@ export const ClassroomForm = forwardRef<
                         )}
                     />
                 </div>
-
-                <div className="pt-4 border-t">
-                    {children}
-                </div>
             </form>
         </Form>
     );
-});
+};
 
 ClassroomForm.displayName = "ClassroomForm";
 export { createSuggestion, type ClassroomFormData } from "./classroom-form.utils"

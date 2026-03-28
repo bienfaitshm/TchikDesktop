@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useMemo } from "react";
 import {
     Table as TanstackTable,
     ColumnDef,
@@ -90,9 +90,6 @@ export function DataTable<T>({
     children,
 }: DataTableProps<T> & { children?: React.ReactNode }) {
     const contextValue = useDataTable({ initialData: data, keyExtractor, columns });
-    // React.useEffect(() => {
-    //     contextValue.setData(data)
-    // }, [data])
     return (
         <DataTableContext.Provider value={contextValue}>
             {children}
@@ -117,7 +114,7 @@ export function DataTableContent({ children }: { children?: React.ReactNode }) {
     );
 }
 
-export function DataContentHead() {
+export function DataContentHead(props?: { isCollapsible?: boolean }) {
     const ctx = useDataTableContext();
     const headerGroups = ctx?.tableInstance?.getHeaderGroups() ?? [];
     return (
@@ -131,37 +128,56 @@ export function DataContentHead() {
                                 : flexRender(header.column.columnDef.header, header.getContext())}
                         </TableHead>
                     ))}
+                    {props?.isCollapsible && <TableHead />}
                 </TableRow>
             ))}
         </TableHeader>
     );
 }
 
-interface DataContentBodyProps<T> {
-    onClick?(row: Row<T>): void
+
+interface RowComponentProps<T> {
+    row: Row<T>;
+    rowOriginalId: string | number;
+    onRowClick?: (row: Row<T>) => void;
 }
-export function DataContentBody<T>(props?: DataContentBodyProps<T>) {
+
+interface DataContentBodyProps<T> {
+    onRowClick?: (row: Row<T>) => void;
+    children?: (props: RowComponentProps<T>) => React.ReactNode
+}
+
+export function DataContentBody<T>({
+    onRowClick,
+    children = (props) => <DraggableRow {...props} />
+}: DataContentBodyProps<T>) {
     const ctx = useDataTableContext();
-    const rows = ctx?.tableInstance?.getRowModel().rows ?? [];
+
+    const rows = useMemo(() =>
+        ctx?.tableInstance?.getRowModel().rows ?? [],
+        [ctx?.tableInstance]
+    );
+
+    const rowIds = ctx?.rowIds ?? [];
+
     return (
         <TableBody className="[&_[data-slot=table-cell]:first-child]:w-8">
-            {rows.length ? (
+            {rows.length > 0 ? (
                 <SortableContext
-                    items={ctx!.rowIds}
+                    items={rowIds}
                     strategy={verticalListSortingStrategy}
                 >
-                    {rows.map((row) => (
-                        <DraggableRow
-                            onClick={props?.onClick}
-                            key={row.id}
-                            rowOriginalId={ctx!.keyExtractor(row.original)}
-                            row={row}
-                        />
-                    ))}
+                    {rows.map((row) => {
+                        const rowOriginalId = ctx!.keyExtractor(row.original);
+                        return children({ row, onRowClick, rowOriginalId })
+                    })}
                 </SortableContext>
             ) : (
                 <TableRow>
-                    <TableCell colSpan={ctx?.columns.length} className="h-24 text-center">
+                    <TableCell
+                        colSpan={ctx?.columns.length}
+                        className="h-24 text-center text-muted-foreground"
+                    >
                         No results.
                     </TableCell>
                 </TableRow>
@@ -169,6 +185,7 @@ export function DataContentBody<T>(props?: DataContentBodyProps<T>) {
         </TableBody>
     );
 }
+
 
 export function DataTablePagination() {
     const ctx = useDataTableContext();

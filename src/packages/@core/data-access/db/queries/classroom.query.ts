@@ -63,8 +63,8 @@ export class ClassroomQuery {
       const classRooms = await ClassRoom.findAll({
         ...options,
         include: [
-          { model: Option, as: "option", required: false },
-          { model: StudyYear, as: "studyYear", required: true },
+          { model: Option, required: false },
+          { model: StudyYear, required: true },
         ],
         raw: true,
       });
