@@ -1,4 +1,13 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useMemo } from "react";
+import { Plus } from "lucide-react";
+
+import type { TOptionAttributes as TOption } from "@/packages/@core/data-access/schema-validations";
+import { useGetOptions } from "@/renderer/libs/queries/option";
+
+import { Button } from "@/renderer/components/ui/button";
+import { Suspense } from "@/renderer/libs/queries/suspense";
+import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
+
 import {
     DataTable,
     DataContentBody,
@@ -7,149 +16,106 @@ import {
     DataTablePagination,
     DataTableToolbar,
 } from "@/renderer/components/tables/data-table";
-import { TypographyH3 } from "@/renderer/components/ui/typography";
-import { OptionForm, type OptionFormData as FormValueType } from "@/renderer/components/form/option-form";
-import { Button } from "@/renderer/components/ui/button";
-import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
 import { OptionColumns } from "@/renderer/components/tables/columns.options";
-import type { DataTableMenu } from "@/renderer/components/button-menus";
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import { Suspense } from "@/renderer/libs/queries/suspense";
-import { useOptionManagement } from "@/renderer/hooks/query.mangements";
-import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
-import { createMenuActionManager } from "@/renderer/utils/handle-action";
-import { useGetOptions } from "@/renderer/libs/queries/option";
+import { ExpandableRow } from "@/renderer/components/tables/data-table.components";
 import {
-    TableActionManager,
-    useTableAction,
-} from "@/renderer/components/dialog/dialog.table-action";
-import { MUTATION_ACTION } from "@/packages/@core/data-access/db/enum";
-import { TOption } from "@/packages/@core/data-access/db/models/types";
+    ActionContainer,
+    ActionTileCopy,
+    ActionTileDelete,
+    ActionTileEdit,
+} from "@/renderer/components/tables/data-table.action-tiles";
 
+import {
+    CreateOptionDialog,
+    DeleteOptionDialog,
+    UpdateOptionDialog
+} from "@/renderer/dialog-actions/option.dialog-actions";
 
+type TWithSchool = Pick<TOption, "schoolId">;
 
-const tableMenus: DataTableMenu[] = [
-    { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
-    { key: "delete", label: "Supprimer", separator: true, icon: <Trash2 className="size-3" /> },
-];
-
-
-const renderForm = ({ initialData, onSubmit }: { initialData?: FormValueType, onSubmit?(value: FormValueType): void }) => {
-    return (
-        <OptionForm
-            onSubmit={onSubmit}
-            initialValues={initialData}
-        />
-    )
-}
-
-const OptionManagementPage: React.FC<any> = ({ schoolId }) => {
-
-    const {
-        createMutation,
-        updateMutation,
-        deleteMutation,
-        handleCreate,
-        handleUpdate,
-        handleDelete,
-    } = useOptionManagement();
-
-
-    const { data: options = [] } = useGetOptions({ schoolId });
-    const tableAction = useTableAction<TOption>();
-    const onConfirmDelete = useCallback(
-        (item: TOption) => {
-            handleDelete(item.optionId, item.optionName, () => {
-                tableAction.onClose();
-            });
-        },
-        [handleDelete, tableAction]
-    );
-
-
-    const handleFormSubmit = useCallback(
-        ({ data, type, initialData }: { data: FormValueType, type: MUTATION_ACTION, initialData?: TOption }) => {
-            if (type === MUTATION_ACTION.CREATE) {
-
-                handleCreate({ schoolId, ...data }, data.optionName, () => {
-
-                    tableAction.onClose();
-                });
-            } else if (type === MUTATION_ACTION.EDIT && initialData) {
-
-                handleUpdate(initialData.optionId, data, data.optionName, () => {
-
-                    tableAction.onClose();
-                });
-            }
-        },
-        [handleCreate, handleUpdate, schoolId, tableAction]
-    );
-
-
-
-
-
-    const { menus, handleMenusAction: onPressMenu } = useMemo(
-        () =>
-            createMenuActionManager(tableMenus, {
-                edit: tableAction.onUpdate,
-                delete: tableAction.onDelete,
-            }),
-        [tableAction.onUpdate, tableAction.onDelete]
-    );
-
-
-
-    const enhancedColumns = useMemo(
-        () =>
-            enhanceColumnsWithMenu<TOption>({
-                menus,
-                onPressMenu,
-                columns: OptionColumns,
-            }),
-        [menus, onPressMenu]
-    );
-
-
-    const isActionLoading =
-        updateMutation.isPending || createMutation.isPending || deleteMutation.isPending;
+/**
+ * Actions disponibles pour chaque ligne de la table.
+ */
+const OptionRowActions: React.FC<{
+    option: TOption;
+}> = ({ option }) => {
+    const initialData = useMemo(() => ({ ...option }), [option]);
 
     return (
-        <div className="my-10 mx-auto h-full container max-w-screen-lg">
-            <DataTable<TOption>
-                data={options}
-                columns={enhancedColumns}
-                keyExtractor={(item) => item.optionId}
-            >
-                <DataTableToolbar className="justify-between">
-                    <TypographyH3>Gestion des options de l'établissement</TypographyH3>
-                    <Button size="sm" className="rounded-full" onClick={tableAction.onCreate}>
-                        <Plus className="size-4" />
-                        <span>Ajouter une option</span>
-                    </Button>
-                </DataTableToolbar>
-                <DataTableContent>
-                    <DataContentHead />
-                    <DataContentBody />
-                </DataTableContent>
-                <DataTablePagination />
-            </DataTable>
+        <ActionContainer className="md:grid-cols-3">
+            {/* Modification */}
+            <UpdateOptionDialog optionId={option.optionId} initialData={initialData}>
+                <ActionTileEdit />
+            </UpdateOptionDialog>
 
-            {/* Les dialogues sont rendus au niveau racine pour une meilleure accessibilité et superposition */}
-            <TableActionManager
-                ref={tableAction.tableActionRef}
-                itemName="option"
-                isLoading={isActionLoading}
-                onConfirmDelete={onConfirmDelete as any}
-                onFormSubmit={handleFormSubmit as any}
-                renderForm={renderForm as any}
+            {/* Duplication / Création basée sur existant */}
+            <CreateOptionDialog defaultValues={initialData}>
+                <ActionTileCopy />
+            </CreateOptionDialog>
+
+            {/* Suppression */}
+            <DeleteOptionDialog
+                optionId={option.optionId}
+                optionName={option.optionName}
+                renderTrigger={({ open }) => <ActionTileDelete onClick={open} />}
             />
-        </div>
+        </ActionContainer>
     );
 };
 
-const Option: React.FC<any> = (props) => {
+const OptionManagementPage: React.FC<TWithSchool> = ({ schoolId }) => {
+    const { data: options = [] } = useGetOptions({ schoolId });
+
+    return (
+        <main className="my-10 mx-auto h-full container max-w-screen-2xl">
+            <DataTable<TOption>
+                data={options}
+                columns={OptionColumns}
+                keyExtractor={(item) => item.optionId}
+            >
+                <DataTableToolbar className="justify-between">
+                    <div className="flex flex-col gap-1">
+                        <h1 className="text-xl font-semibold tracking-tight">Gestion des filières</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Administrez les options.
+                        </p>
+                    </div>
+
+                    <CreateOptionDialog>
+                        <Button size="sm" className="rounded-full">
+                            <Plus className="size-4 mr-2" />
+                            <span>Ajouter une filière</span>
+                        </Button>
+                    </CreateOptionDialog>
+                </DataTableToolbar>
+
+                <Suspense fallback={<div className="h-64 w-full animate-pulse bg-muted/20 rounded-lg" />}>
+                    <DataTableContent>
+                        <DataContentHead isCollapsible />
+                        <DataContentBody<TOption>>
+                            {(props) => (
+                                <ExpandableRow
+                                    {...props}
+                                    detailContent={
+                                        <OptionRowActions
+                                            option={props.row.original}
+                                        />
+                                    }
+                                />
+                            )}
+                        </DataContentBody>
+                    </DataTableContent>
+                    <DataTablePagination />
+                </Suspense>
+            </DataTable>
+        </main>
+    );
+};
+
+/**
+ * Point d'entrée de la page avec protection Suspense.
+ */
+const OptionEntry: React.FC<TWithSchool> = (props) => {
     return (
         <Suspense>
             <OptionManagementPage {...props} />
@@ -157,4 +123,4 @@ const Option: React.FC<any> = (props) => {
     );
 };
 
-export const OptionPage = withSchoolConfig(Option);
+export const OptionPage = withSchoolConfig(OptionEntry);

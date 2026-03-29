@@ -22,7 +22,7 @@ import {
 
 import { ExpandableRow } from "@/renderer/components/tables/data-table.components";
 import {
-    ActionGrid,
+    ActionContainer,
     ActionTileCopy,
     ActionTileDelete,
     ActionTileEdit,
@@ -41,7 +41,7 @@ const ClassroomRowActions: React.FC<{
     const defaultValues = useMemo(() => ({ ...classroom, yearId }), [classroom, yearId]);
 
     return (
-        <ActionGrid>
+        <ActionContainer>
             {/* Navigation vers le détail */}
             <Link to={`/classrooms/${classroom.classId}/students`} className="contents">
                 <ActionTileDetail />
@@ -64,7 +64,7 @@ const ClassroomRowActions: React.FC<{
             >
                 {({ onOpen }) => <ActionTileDelete onClick={onOpen} />}
             </ClassroomDialogDeleteForm>
-        </ActionGrid>
+        </ActionContainer>
     );
 };
 
@@ -81,7 +81,7 @@ const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearI
                 <DataTableToolbar className="justify-between">
                     <div className="flex flex-col gap-1">
                         <h1 className="text-xl font-semibold tracking-tight">Gestion des classes</h1>
-                        <p className="text-sm text-muted-foreground">Administrez les salles et les effectifs de votre établissement.</p>
+                        <p className="text-sm text-muted-foreground">Administrez les salles.</p>
                     </div>
 
                     <ClassroomDialogCreateForm schoolId={schoolId} defaultValues={{ yearId }}>

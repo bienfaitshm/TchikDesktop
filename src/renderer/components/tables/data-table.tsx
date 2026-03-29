@@ -165,7 +165,11 @@ export function DataContentBody<T>({
                 >
                     {rows.map((row) => {
                         const rowOriginalId = ctx!.keyExtractor(row.original);
-                        return children({ row, onRowClick, rowOriginalId })
+                        return (
+                            <React.Fragment key={row.id}>
+                                {children({ row, onRowClick, rowOriginalId })}
+                            </React.Fragment>
+                        )
                     })}
                 </SortableContext>
             ) : (

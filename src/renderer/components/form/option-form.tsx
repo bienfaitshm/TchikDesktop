@@ -1,6 +1,7 @@
-import React, { PropsWithChildren } from "react";
+import React, { useMemo } from "react";
 import { useZodForm } from "@/packages/use-zod-form";
-import { SECTION_OPTIONS, SECTION } from "@/packages/@core/data-access/db";
+import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
+import { SECTION } from "@/packages/@core/data-access/db/enum";
 import { OptionCreateSchema, type TOptionCreate } from "@/packages/@core/data-access/schema-validations";
 import {
     Form,
@@ -19,22 +20,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/renderer/components/ui/select";
-import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
-
-export * from "./utils";
-
-export interface OptionFormProps {
-    onSubmit?: (value: OptionFormData) => void;
-    initialValues?: Partial<OptionFormData>;
-}
-
-export interface OptionFormHandle extends ImperativeFormHandle<OptionFormData> { }
-
-export interface SectionSelectProps {
-    options: { label: string; value: string }[];
-    value?: string;
-    onChangeValue(value: string): void;
-}
+import { Layers, Hash, GraduationCap } from "lucide-react";
+import { BaseFormProps } from "./base-form";
 
 export type OptionFormData = TOptionCreate;
 
@@ -46,120 +33,162 @@ const DEFAULT_OPTION_VALUES: OptionFormData = {
 };
 
 /**
- * SectionSelect optimisé pour l'accessibilité
+ * SectionSelect : Composant atomique optimisé pour l'accessibilité.
+ * Utilise les patterns de Radix UI pour la gestion du focus.
  */
+interface SectionSelectProps {
+    options: { label: string; value: string }[];
+    value?: string;
+    onChangeValue(value: string): void;
+    disabled?: boolean;
+}
+
 export const SectionSelect: React.FC<SectionSelectProps> = ({
     onChangeValue,
     options,
     value,
-}) => {
-    return (
-        <Select onValueChange={onChangeValue} value={value}>
-            <FormControl>
-                <SelectTrigger className="w-full" aria-label="Choisir une section">
-                    <SelectValue placeholder="Choisir le niveau..." />
-                </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-                {options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                    </SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
-    );
-};
+    disabled
+}) => (
+    <Select onValueChange={onChangeValue} value={value} disabled={disabled}>
+        <FormControl>
+            <SelectTrigger
+                className="w-full h-11"
+                aria-label="Sélectionner le niveau d'enseignement"
+            >
+                <SelectValue placeholder="Choisir le niveau..." />
+            </SelectTrigger>
+        </FormControl>
+        <SelectContent>
+            {options.map((option) => (
+                <SelectItem key={option.value} value={option.value} className="cursor-pointer">
+                    {option.label}
+                </SelectItem>
+            ))}
+        </SelectContent>
+    </Select>
+);
 
-export const OptionForm = React.forwardRef<
-    ImperativeFormHandle<OptionFormData>,
-    PropsWithChildren<OptionFormProps>
->(({ children, onSubmit, initialValues = {} }, ref) => {
+export const OptionForm: React.FC<BaseFormProps<OptionFormData>> = ({
+    formId,
+    initialValues,
+    onSubmit
+}) => {
+
+    const mergedValues = useMemo(() => ({
+        ...DEFAULT_OPTION_VALUES,
+        ...initialValues
+    }), [initialValues]);
+
     const form = useZodForm({
         schema: OptionCreateSchema,
-        defaultValues: { ...DEFAULT_OPTION_VALUES, ...initialValues },
-        onSubmit: (value) => onSubmit?.(value),
+        defaultValues: mergedValues,
+        onSubmit: async (values) => {
+            await onSubmit?.(values);
+        },
     });
 
-    useFormImperativeHandle(ref, form);
+    const isSubmitting = form.formState.isSubmitting;
 
     return (
         <Form {...form}>
             <form
-                className="space-y-6"
+                id={formId}
+                className="space-y-8"
                 onSubmit={form.submit}
                 aria-label="Configuration de la filière d'étude"
+                noValidate
             >
-                {/* Champ Nom complet - Focus UX principal */}
-                <FormField
-                    control={form.control}
-                    name="optionName"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="font-semibold text-base">Nom complet de l'option</FormLabel>
-                            <FormControl>
-                                <Input
-                                    {...field}
-                                    placeholder="Ex: Pédagogie Générale"
-                                    className="h-11" // Plus facile à cliquer/taper
-                                />
-                            </FormControl>
-                            <FormDescription className="text-xs leading-relaxed">
-                                Utilisez le nom officiel de la filière tel qu'il doit apparaître sur les documents.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {/* Nom abrégé */}
+                {/* Section : Identification de l'Option */}
+                <div className="space-y-6">
                     <FormField
                         control={form.control}
-                        name="optionShortName"
+                        name="optionName"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="font-semibold">Code / Abréviation</FormLabel>
+                                <FormLabel className="flex items-center gap-2 font-bold text-base">
+                                    Nom de l'option / filière
+                                    <span className="text-destructive" aria-hidden="true">*</span>
+                                </FormLabel>
                                 <FormControl>
-                                    <Input {...field} placeholder="Ex: PEDA" maxLength={10} />
-                                </FormControl>
-                                <FormDescription className="text-xs">
-                                    Format court (max 10 car.).
-                                </FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Section */}
-                    <FormField
-                        control={form.control}
-                        name="section"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="font-semibold">Niveau d'enseignement</FormLabel>
-                                <FormControl>
-                                    <SectionSelect
-                                        options={SECTION_OPTIONS}
-                                        value={field.value}
-                                        onChangeValue={field.onChange}
+                                    <Input
+                                        {...field}
+                                        disabled={isSubmitting}
+                                        placeholder="Ex: Pédagogie Générale ou Commerciale & Gestion"
+                                        className="h-11 focus-visible:ring-primary/50"
+                                        aria-required="true"
                                     />
                                 </FormControl>
                                 <FormDescription className="text-xs">
-                                    Primaire, Secondaire, etc.
+                                    Le libellé complet tel qu'il apparaîtra sur les titres scolaires.
                                 </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {/* Nom abrégé / Code */}
+                        <FormField
+                            control={form.control}
+                            name="optionShortName"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2 font-semibold">
+                                        Code (Abréviation)
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            {...field}
+                                            disabled={isSubmitting}
+                                            placeholder="Ex: HSC"
+                                            maxLength={10}
+                                            className="uppercase font-mono"
+                                        />
+                                    </FormControl>
+                                    <FormDescription className="text-[11px] leading-tight">
+                                        Utilisé pour les tableaux compacts (Max 10 car.).
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Section / Niveau */}
+                        <FormField
+                            control={form.control}
+                            name="section"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2 font-semibold">
+                                        Section
+                                    </FormLabel>
+                                    <FormControl>
+                                        <SectionSelect
+                                            options={SECTION_OPTIONS}
+                                            value={field.value}
+                                            onChangeValue={field.onChange}
+                                            disabled={isSubmitting}
+                                        />
+                                    </FormControl>
+                                    <FormDescription className="text-[11px] leading-tight">
+                                        Niveau d'enseignement attaché.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                 </div>
 
-                <div className="pt-4 flex flex-col gap-3">
-                    {children}
-                </div>
+                {/* Feedback d'erreur globale */}
+                {form.formState.errors.root && (
+                    <div role="alert" className="p-3 text-red-600 border rounded-md text-sm font-medium animate-in fade-in zoom-in duration-200">
+                        {form.formState.errors.root.message}
+                    </div>
+                )}
             </form>
         </Form>
     );
-});
+}
 
 OptionForm.displayName = "OptionForm";

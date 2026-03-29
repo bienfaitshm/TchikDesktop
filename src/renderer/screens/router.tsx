@@ -10,9 +10,9 @@ import { HomePage } from "@/renderer/screens/home";
 import { StudyYearsPage } from "@/renderer/screens/study-years";
 import { SchoolsPage } from "@/renderer/screens/schools";
 // // 
-// import { OptionPage } from "@/renderer/screens/options";
+import { OptionPage } from "@/renderer/screens/options";
 // import StudentScreen from "@/renderer/screens/students";
-// import LocalScreen from "@/renderer/screens/locals";
+import LocalScreen from "@/renderer/screens/locals";
 // import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
 import Layout from "@/renderer/screens/layout";
 import {
@@ -45,7 +45,7 @@ export default function RouterProvider(): JSX.Element {
           {/* <Route path="mise-en-places" element={<MiseEnPlaceScreen />} /> */}
           {/* schools */}
           {/* <Route path="students" element={<StudentScreen />} /> */}
-          {/* <Route path="options" element={<OptionPage />} /> */}
+          <Route path="options" element={<OptionPage />} />
           {/* classrooms */}
           <Route path="classrooms" element={<ClassroomPage />} />
 
@@ -53,7 +53,7 @@ export default function RouterProvider(): JSX.Element {
           {/* <Route path="classrooms/:classroomId" element={<StudentsLayout />}>
             <Route path="students" element={<StudentsOfClassrrom />} />
           </Route> */}
-          {/* <Route path="locals" element={<LocalScreen />} /> */}
+          <Route path="locals" element={<LocalScreen />} />
           {/* other */}
           <Route path="school-years" element={<StudyYearsPage />} />
           <Route path="schools" element={<SchoolsPage />} />

@@ -1,4 +1,4 @@
-import type { TOption } from "@/commons/types/models"
+import type { TOptionAttributes as TOption } from "@/packages/@core/data-access/schema-validations"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
 import { SectionBadge } from "@/renderer/components/section-badge"
@@ -31,22 +31,6 @@ export const OptionColumns: ColumnDef<TOption>[] = [
         ),
         enableSorting: false,
         enableHiding: false,
-    },
-    {
-
-        accessorKey: "optionId",
-        header: "ID",
-        cell: ({ row }) => {
-
-            return (
-                <TypographySmall className="font-mono text-muted-foreground">
-                    {row.original.optionId.substring(0, 8)}...
-                </TypographySmall>
-            );
-        },
-        enableSorting: true,
-        enableHiding: false,
-        enableColumnFilter: false,
     },
     {
 
