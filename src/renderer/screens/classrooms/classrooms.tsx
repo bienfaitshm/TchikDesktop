@@ -1,6 +1,6 @@
 import type { TClassroomAttributes as TClassroom } from "@/packages/@core/data-access/schema-validations"
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
-import React from "react";
+import React, { useMemo } from "react";
 import {
     DataTable,
     DataContentBody,
@@ -14,72 +14,112 @@ import { ClassroomColumns } from "@/renderer/components/tables/columns.classroom
 import { Plus } from "lucide-react";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
-import { ClassroomDialogCreateForm, ClassroomDialogDeleteForm, ClassroomDialogUpdateForm } from "@/renderer/dialog-actions/classroom.dialog-actions"
+import {
+    ClassroomDialogCreateForm,
+    ClassroomDialogDeleteForm,
+    ClassroomDialogUpdateForm
+} from "@/renderer/dialog-actions/classroom.dialog-actions"
 
 import { ExpandableRow } from "@/renderer/components/tables/data-table.components";
-import { ActionGrid, ActionTileCopy, ActionTileDelete, ActionTileEdit, ActionTileDetail } from "@/renderer/components/tables/data-table.action-tiles";
+import {
+    ActionGrid,
+    ActionTileCopy,
+    ActionTileDelete,
+    ActionTileEdit,
+    ActionTileDetail
+} from "@/renderer/components/tables/data-table.action-tiles";
 import { Link } from "react-router";
 
 type TWithSchoolAndYear = Pick<TClassroom, "schoolId" | "yearId">
 
 
-const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearId }) => {
-    const { data: classrooms = [], } = useGetClassrooms({ schoolId, yearId });
+const ClassroomRowActions: React.FC<{
+    classroom: TClassroom;
+    schoolId: string;
+    yearId: string
+}> = ({ classroom, schoolId, yearId }) => {
+    const defaultValues = useMemo(() => ({ ...classroom, yearId }), [classroom, yearId]);
+
     return (
-        <div className="my-10 mx-auto h-full container max-w-screen-2xl">
+        <ActionGrid>
+            {/* Navigation vers le détail */}
+            <Link to={`/classrooms/${classroom.classId}/students`} className="contents">
+                <ActionTileDetail />
+            </Link>
+
+            {/* Modification */}
+            <ClassroomDialogUpdateForm schoolId={schoolId} defaultValues={defaultValues}>
+                <ActionTileEdit />
+            </ClassroomDialogUpdateForm>
+
+            {/* Duplication (Create avec valeurs existantes) */}
+            <ClassroomDialogCreateForm schoolId={schoolId} defaultValues={defaultValues}>
+                <ActionTileCopy />
+            </ClassroomDialogCreateForm>
+
+            {/* Suppression avec confirmation */}
+            <ClassroomDialogDeleteForm
+                classId={classroom.classId}
+                identifier={classroom.identifier}
+            >
+                {({ onOpen }) => <ActionTileDelete onClick={onOpen} />}
+            </ClassroomDialogDeleteForm>
+        </ActionGrid>
+    );
+};
+
+const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearId }) => {
+    const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId });
+
+    return (
+        <main className="my-10 mx-auto h-full container max-w-screen-2xl">
             <DataTable<TClassroom>
                 data={classrooms}
                 columns={ClassroomColumns}
                 keyExtractor={(item) => item.classId}
             >
                 <DataTableToolbar className="justify-between">
-                    <ClassroomDialogCreateForm schooldId={schoolId} defaultValues={{ yearId }}>
+                    <div className="flex flex-col gap-1">
+                        <h1 className="text-xl font-semibold tracking-tight">Gestion des classes</h1>
+                        <p className="text-sm text-muted-foreground">Administrez les salles et les effectifs de votre établissement.</p>
+                    </div>
+
+                    <ClassroomDialogCreateForm schoolId={schoolId} defaultValues={{ yearId }}>
                         <Button size="sm" className="rounded-full">
-                            <Plus className="size-4" />
+                            <Plus className="size-4 mr-2" />
                             <span>Ajouter une classe</span>
                         </Button>
                     </ClassroomDialogCreateForm>
                 </DataTableToolbar>
-                <Suspense>
+
+                <Suspense fallback={<div className="h-64 w-full animate-pulse bg-muted/20 rounded-lg" />}>
                     <DataTableContent>
                         <DataContentHead isCollapsible />
                         <DataContentBody<TClassroom>>
-                            {(props) => <ExpandableRow {...props} detailContent={
-                                <>
-                                    <ActionGrid>
-                                        <Link to={`/classrooms/${props.row.original.classId}/students`} className="w-full contents">
-                                            <ActionTileDetail />
-                                        </Link>
-                                        <ClassroomDialogUpdateForm schoolId={schoolId} defaultValues={{ ...props.row.original, yearId, }}>
-                                            <ActionTileEdit />
-                                        </ClassroomDialogUpdateForm>
-                                        <ClassroomDialogCreateForm
-                                            schooldId={schoolId}
-                                            defaultValues={{
-                                                ...props.row.original,
-                                                yearId,
-                                            }}
-                                        >
-                                            <ActionTileCopy />
-                                        </ClassroomDialogCreateForm>
-                                        <ClassroomDialogDeleteForm
-                                            classId={props.row.original.classId}
-                                            identifier={props.row.original.identifier}
-                                        >{({ onOpen }) => (
-                                            <ActionTileDelete onClick={onOpen} />
-                                        )}</ClassroomDialogDeleteForm>
-                                    </ActionGrid>
-                                </>
-                            } />}
+                            {(props) => (
+                                <ExpandableRow
+                                    {...props}
+                                    detailContent={
+                                        <ClassroomRowActions
+                                            classroom={props.row.original}
+                                            schoolId={schoolId}
+                                            yearId={yearId}
+                                        />
+                                    }
+                                />
+                            )}
                         </DataContentBody>
                     </DataTableContent>
                     <DataTablePagination />
                 </Suspense>
             </DataTable>
-        </div>
+        </main>
     );
 };
 
+/**
+ * Wrapper avec Suspense pour gérer le chargement initial de la page.
+ */
 const Classroom: React.FC<TWithSchoolAndYear> = (props) => {
     return (
         <Suspense>
@@ -87,6 +127,5 @@ const Classroom: React.FC<TWithSchoolAndYear> = (props) => {
         </Suspense>
     );
 };
-
 
 export const ClassroomPage = withSchoolConfig(Classroom);

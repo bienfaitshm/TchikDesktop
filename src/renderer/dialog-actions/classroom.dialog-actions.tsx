@@ -8,12 +8,12 @@ import { ConfirmDeleteDialog } from "@/renderer/components/dialog/dialog-delete"
 import { PropsWithChildren } from "react"
 
 type DialogCreateFormProps = {
-    schooldId: string,
+    schoolId: string,
     defaultValues?: Partial<ClassroomFormData>
 }
 
-export const ClassroomDialogCreateForm: React.FC<PropsWithChildren<DialogCreateFormProps>> = ({ schooldId, children, defaultValues }) => {
-    const { formId, generateSuggestion, isLoading, onSubmit, selectItems } = useCreateClassroomForm(schooldId)
+export const ClassroomDialogCreateForm: React.FC<PropsWithChildren<DialogCreateFormProps>> = ({ schoolId, children, defaultValues }) => {
+    const { formId, generateSuggestion, isLoading, onSubmit, selectItems } = useCreateClassroomForm(schoolId)
 
     return (
         <Dialog>
