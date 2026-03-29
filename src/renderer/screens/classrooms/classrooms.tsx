@@ -14,7 +14,7 @@ import { ClassroomColumns } from "@/renderer/components/tables/columns.classroom
 import { Plus } from "lucide-react";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
-import { ClassroomDialogCreateForm, ClassroomDialogUpdateForm } from "@/renderer/dialog-actions/classroom.dialog-actions"
+import { ClassroomDialogCreateForm, ClassroomDialogDeleteForm, ClassroomDialogUpdateForm } from "@/renderer/dialog-actions/classroom.dialog-actions"
 
 import { ExpandableRow } from "@/renderer/components/tables/data-table.components";
 import { ActionGrid, ActionTileCopy, ActionTileDelete, ActionTileEdit, ActionTileDetail } from "@/renderer/components/tables/data-table.action-tiles";
@@ -62,6 +62,12 @@ const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearI
                                         >
                                             <ActionTileCopy />
                                         </ClassroomDialogCreateForm>
+                                        <ClassroomDialogDeleteForm
+                                            classId={props.row.original.classId}
+                                            identifier={props.row.original.identifier}
+                                        >{({ onOpen }) => (
+                                            <ActionTileDelete onClick={onOpen} />
+                                        )}</ClassroomDialogDeleteForm>
                                     </ActionGrid>
                                 </>
                             } />}

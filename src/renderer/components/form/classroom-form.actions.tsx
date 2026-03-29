@@ -2,7 +2,7 @@ import { useCallback, useId } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetOptionAsOptions } from "@/renderer/hooks/data-as-options";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
-import { useCreateClassroom, useUpdateClassroom } from "@/renderer/libs/queries/classroom";
+import { useCreateClassroom, useUpdateClassroom, useDeleteClassroom } from "@/renderer/libs/queries/classroom";
 import { createSuggestion, type ClassroomFormData } from "./classroom-form.utils";
 import { TQueryUpdate } from "@/renderer/libs/queries/type";
 
@@ -11,7 +11,7 @@ import { TQueryUpdate } from "@/renderer/libs/queries/type";
  */
 interface UseClassroomFormOptions {
     mutationKeys?: unknown[];
-    onSuccess?: (data: ClassroomFormData) => void;
+    onSuccess?: (data?: ClassroomFormData) => void;
 }
 
 /**
@@ -98,4 +98,34 @@ export function useUpdateClassroomForm(schoolId: string, options?: UseClassroomF
     );
 
     return { ...base, onSubmit, isLoading: mutation.isPending };
+}
+
+/**
+ * Hook pour la SUPPRESSION d'une salle de classe.
+ */
+export function useDeleteClassroomForm(options?: UseClassroomFormOptions) {
+    const mutation = useDeleteClassroom();
+
+    const onSubmit = useCallback(
+        (classId: string, identifier?: string) => {
+            mutation.mutate(
+                classId,
+                createMutationCallbacksWithNotifications({
+                    successMessageTitle: "Salle de classe supprimée",
+                    successMessageDescription: identifier
+                        ? `La salle '${identifier}' a été définitivement retirée.`
+                        : "La salle de classe a été supprimée avec succès.",
+                    errorMessageTitle: "Erreur de suppression",
+                    errorMessageDescription: "Impossible de supprimer la salle. Elle est peut-être liée à d'autres données.",
+                    onSuccess: () => options?.onSuccess?.()
+                })
+            );
+        },
+        [mutation, options?.onSuccess]
+    );
+
+    return {
+        isLoading: mutation.isPending,
+        onSubmit
+    };
 }

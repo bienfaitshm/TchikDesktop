@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext } from "react";
 import {
     Table as TanstackTable,
     ColumnDef,
@@ -153,11 +153,7 @@ export function DataContentBody<T>({
 }: DataContentBodyProps<T>) {
     const ctx = useDataTableContext();
 
-    const rows = useMemo(() =>
-        ctx?.tableInstance?.getRowModel().rows ?? [],
-        [ctx?.tableInstance]
-    );
-
+    const rows = ctx?.tableInstance?.getRowModel().rows ?? []
     const rowIds = ctx?.rowIds ?? [];
 
     return (
