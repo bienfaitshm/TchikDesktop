@@ -57,11 +57,11 @@ export class EndpointRegistrar {
       this.ipcServer.register(
         definition.route,
         definition.method,
-        definition.handler
-      );
-      this.logger.info(
-        `Route registered: [${definition.method}] ${definition.route}`
+        definition.handler,
       );
     });
+    this.logger.info(
+      `Routes registered: ${JSON.stringify(this.endpoints.filter((i) => i.route))}`,
+    );
   }
 }

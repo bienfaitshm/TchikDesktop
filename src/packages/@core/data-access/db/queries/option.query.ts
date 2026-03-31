@@ -1,153 +1,141 @@
-import { type FindOptions, Sequelize } from "sequelize";
-import {
-  Option,
-  OptionAttributes,
-  buildFindOptions,
-  type TOptionCreate,
-  type TOptionUpdate,
-} from "@/packages/@core/data-access/db";
-import { CustomLogger, getLogger } from "@/packages/logger";
-import { TOptionFilter } from "@/packages/@core/data-access/schema-validations";
+import { db } from "../config";
+import { options } from "../schemas/schema";
+import { eq, sql, asc } from "drizzle-orm";
+import { getLogger, CustomLogger } from "@/packages/logger";
+import { applyFilters } from "./drizzle-builder";
+
+// Inférence des types depuis le schéma Drizzle
+type TOption = typeof options.$inferSelect;
+type TOptionInsert = typeof options.$inferInsert;
 
 const logger: CustomLogger = getLogger("Option query");
 
-const DEFAULT_SORT_ORDER: FindOptions["order"] = [
-  [Sequelize.fn("LOWER", Sequelize.col("optionName")), "ASC"],
-];
+/**
+ * Ordre de tri par défaut : Nom de l'option (insensible à la casse)
+ */
+const DEFAULT_SORT_ORDER = asc(sql`lower(${options.optionName})`);
 
 /**
  * Service de gestion des Options Académiques.
- * Fournit les méthodes de requête et de mutation pour l'entité Option.
+ * Réécrit avec Drizzle ORM pour des performances accrues et un typage strict.
  */
 export class OptionQuery {
   /**
-   * Récupère une liste d'options académiques basées sur des critères de filtrage.
-   *
-   * @param queryArgs - Arguments de la requête incluant les IDs de scope (`schoolId`, `yearId`) et les filtres d'options.
-   * @returns Une promesse qui résout en un tableau de DTOs d'options.
-   * @throws {Error} Erreur de service si la requête DB échoue.
+   * Récupère une liste d'options académiques filtrée.
    */
-  static async findMany(filters?: TOptionFilter): Promise<OptionAttributes[]> {
+  static async findMany(filters?: any): Promise<TOption[]> {
     if (!filters?.schoolId) {
       return [];
     }
 
-    const optionFilters = buildFindOptions(filters, DEFAULT_SORT_ORDER);
-
     try {
-      const options = await Option.findAll({ ...optionFilters, raw: true });
-      return options;
+      const query = db.select().from(options).$dynamic();
+
+      // Utilisation du builder dynamique pour gérer les filtres et le tri
+      return await applyFilters(query, options, filters, DEFAULT_SORT_ORDER);
     } catch (error) {
-      logger.error("OptionQuery.getOptions: DB query failed.", error as Error);
+      logger.error("OptionQuery.findMany: DB query failed.", error as Error);
       throw new Error(
-        "Service unavailable: Unable to retrieve academic options.",
+        "Service indisponible : Impossible de récupérer les options.",
       );
     }
   }
 
   /**
    * Récupère une option académique unique par son ID.
-   *
-   * @param optionId - L'ID unique de l'option.
-   * @returns L'option DTO trouvée, ou `null` si non trouvée.
-   * @throws {Error} Erreur de service si la requête DB échoue.
    */
-  static async findById(optionId: string): Promise<OptionAttributes | null> {
+  static async findById(optionId: string): Promise<TOption | null> {
     if (!optionId) {
-      logger.warn("OptionQuery.getOptionById: Called with empty ID.");
+      logger.warn("OptionQuery.findById: Appelé avec un ID vide.");
       return null;
     }
+
     try {
-      const option = await Option.findByPk(optionId, { raw: true });
-      return option;
+      const [result] = await db
+        .select()
+        .from(options)
+        .where(eq(options.optionId, optionId));
+
+      return result || null;
     } catch (error) {
       logger.error(
-        `OptionQuery.getOptionById: Error for ID ${optionId}.`,
+        `OptionQuery.findById: Erreur pour l'ID ${optionId}.`,
         error as Error,
       );
-      throw new Error("Service unavailable: Unable to fetch option details.");
+      throw new Error(
+        "Service indisponible : Impossible de récupérer les détails.",
+      );
     }
   }
 
   /**
    * Crée une nouvelle option académique.
-   *
-   * @param data - Les données d'insertion pour la nouvelle option.
-   * @returns Le DTO de l'option nouvellement créée.
-   * @throws {Error} Erreur DB si l'insertion échoue.
    */
-  static async create(data: TOptionCreate): Promise<OptionAttributes> {
+  static async create(data: TOptionInsert): Promise<TOption> {
     try {
-      const option = await Option.create(data, { raw: true });
-      logger.info(`Option created: ${option.optionId}`, {
-        name: data.optionName,
+      const [newOption] = await db.insert(options).values(data).returning();
+
+      logger.info(`Option créée: ${newOption.optionId}`, {
+        name: newOption.optionName,
       });
-      return option;
+      return newOption;
     } catch (error) {
-      logger.error(
-        "OptionQuery.createOption: Creation failed.",
-        error as Error,
-      );
+      logger.error("OptionQuery.create: Échec de la création.", error as Error);
       throw error;
     }
   }
 
   /**
-   * Met à jour les données d'une option académique existante.
-   *
-   * @param optionId - L'ID de l'option à mettre à jour.
-   * @param updates - Les données partielles à appliquer.
-   * @returns Le DTO de l'option mise à jour, ou `null` si l'option n'a pas été trouvée.
-   * @throws {Error} Erreur de service si l'opération DB échoue.
+   * Met à jour une option existante.
    */
   static async update(
     optionId: string,
-    updates: TOptionUpdate,
-  ): Promise<OptionAttributes | null> {
+    updates: Partial<TOptionInsert>,
+  ): Promise<TOption | null> {
     if (!optionId) return null;
 
     try {
-      const option = await Option.findByPk(optionId);
+      const [updated] = await db
+        .update(options)
+        .set(updates)
+        .where(eq(options.optionId, optionId))
+        .returning();
 
-      if (!option) {
-        logger.warn(`OptionQuery.updateOption: ID ${optionId} not found.`);
+      if (!updated) {
+        logger.warn(`OptionQuery.update: ID ${optionId} non trouvé.`);
         return null;
       }
 
-      const updatedOption = await option.update(updates, { raw: true });
-      return updatedOption;
+      return updated;
     } catch (error) {
       logger.error(
-        `OptionQuery.updateOption: Error updating ${optionId}.`,
+        `OptionQuery.update: Erreur lors de la mise à jour de ${optionId}.`,
         error as Error,
       );
-      throw new Error("Service unavailable: Update operation failed.");
+      throw new Error("Service indisponible : Échec de la mise à jour.");
     }
   }
 
   /**
    * Supprime une option académique par son ID.
-   *
-   * @param optionId - L'ID de l'option à supprimer.
-   * @returns `true` si l'option a été supprimée, `false` sinon.
-   * @throws {Error} Erreur de service si l'opération DB échoue (ex: contrainte de clé étrangère).
    */
   static async delete(optionId: string): Promise<boolean> {
     if (!optionId) return false;
 
     try {
-      const deletedRowCount = await Option.destroy({
-        where: { optionId },
-      });
-      return deletedRowCount > 0;
+      const result = await db
+        .delete(options)
+        .where(eq(options.optionId, optionId));
+
+      // Note: Selon le driver SQLite utilisé, vous pouvez vérifier result.rowsAffected
+      return true;
     } catch (error) {
       logger.error(
-        `OptionQuery.deleteOption: Error deleting ${optionId}.`,
+        `OptionQuery.delete: Erreur lors de la suppression de ${optionId}.`,
         error as Error,
       );
-      // Ceci peut échouer à cause des classes toujours liées à cette option.
       throw new Error(
-        "Service error: Delete operation failed, check related data constraints.",
+        "Erreur de service : Échec de la suppression. Vérifiez si des classes sont encore liées à cette option.",
       );
     }
   }

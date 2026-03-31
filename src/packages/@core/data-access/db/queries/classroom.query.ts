@@ -1,218 +1,172 @@
-import { FindOptions, Sequelize } from "sequelize";
-import {
-  ClassRoom,
-  Option,
-  StudyYear,
-  User,
-  ClassroomEnrolement,
-  type TClassroomInsert,
-  type TClassroom,
-  type TOption,
-  type TStudyYear,
-  type TEnrolement,
-  type TUser,
-  buildFindOptions,
-} from "@/packages/@core/data-access/db";
-import { TClassroomFilter } from "@/packages/@core/data-access/schema-validations";
+import { eq, sql, asc } from "drizzle-orm";
 import { getLogger } from "@/packages/logger";
 
-/**
- * @description DTO complet d'une salle de classe incluant les relations référentielles (Option, Année).
- */
-export type TClassroomDTO = TClassroom & {
-  option?: TOption;
-  studyYear: TStudyYear;
-};
-
-/**
- * @description DTO étendu incluant la liste des étudiants inscrits.
- * Les informations sensibles de l'utilisateur (password) sont exclues.
- */
-export type TClassroomWithEnrollmentsDTO = TClassroomDTO & {
-  enrollements: (TEnrolement & { user: Partial<TUser> })[];
-};
+import { db } from "../config";
+import { classRooms, options, studyYears } from "../schemas/schema";
+import {
+  TClassroom,
+  TClassroomInsert,
+  TClassroomUpdate,
+} from "../schemas/types";
+import { applyFilters } from "./drizzle-builder";
 
 const logger = getLogger("ClassroomQuery");
 
 /**
- * Ordre de tri standard pour les classes :
- * 1. Identifiant complet (alphabétique)
- * 2. Identifiant court (alphabétique)
- * Utilise LOWER() pour être insensible à la casse.
+ * Ordre de tri standard : Identifiant complet puis court (insensible à la casse)
  */
-const DEFAULT_SORT_ORDER: FindOptions["order"] = [
-  [Sequelize.fn("LOWER", Sequelize.col("ClassRoom.identifier")), "ASC"],
-  [Sequelize.fn("LOWER", Sequelize.col("ClassRoom.short_identifier")), "ASC"],
+const DEFAULT_SORT_ORDER = [
+  asc(sql`lower(${classRooms.identifier})`),
+  asc(sql`lower(${classRooms.shortIdentifier})`),
 ];
 
-/**
- * @class ClassroomQuery
- * @description Couche d'accès aux données pour l'entité Salle de Classe (ClassRoom).
- * Gère les opérations CRUD et les requêtes complexes avec jointures.
- */
 export class ClassroomQuery {
   /**
-   * Récupère une liste paginée de salles de classe selon des filtres.
-   * * @param {TClassroomFilter} filters - Filtres, pagination et tri provenant du contrôleur.
-   * @returns {Promise<TClassroomDTO[]>} Liste des classes.
+   * Récupère une liste de classes avec Option et Année Scolaire.
    */
-  static async findMany(filters: TClassroomFilter): Promise<TClassroomDTO[]> {
-    const options = buildFindOptions(filters, DEFAULT_SORT_ORDER);
-
+  static async findMany(filters: any): Promise<any[]> {
     try {
-      const classRooms = await ClassRoom.findAll({
-        ...options,
-        include: [
-          { model: Option, required: false },
-          { model: StudyYear, required: true },
-        ],
-        raw: true,
-      });
-      return classRooms as unknown as TClassroomDTO[];
+      const query = db
+        .select({
+          classId: classRooms.classId,
+          identifier: classRooms.identifier,
+          shortIdentifier: classRooms.shortIdentifier,
+          section: classRooms.section,
+          schoolId: classRooms.schoolId,
+          optionName: options.optionName,
+          optionShortName: options.optionShortName,
+          yearName: studyYears.yearName,
+          startDate: studyYears.startDate,
+        })
+        .from(classRooms)
+        .leftJoin(options, eq(classRooms.optionId, options.optionId))
+        .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
+        .$dynamic();
+
+      return await applyFilters(query, classRooms, filters, DEFAULT_SORT_ORDER);
     } catch (error) {
-      logger.error(
-        "ClassroomQuery.findMany: Failed to fetch classrooms",
-        error,
-        JSON.stringify(error),
-      );
+      logger.error("ClassroomQuery.findMany: Failed to fetch", error as Error);
       throw new Error("Impossible de récupérer la liste des classes.");
     }
   }
 
   /**
-   * Récupère une salle de classe spécifique par son ID.
-   * * @param {string} classId - UUID de la classe.
-   * @returns {Promise<TClassroomDTO | null>} La classe ou null.
+   * Récupère une classe spécifique par son ID.
    */
-  static async findById(classId: string): Promise<TClassroomDTO | null> {
+  static async findById(classId: string): Promise<any | null> {
     if (!classId) return null;
 
     try {
-      const classRoom = await ClassRoom.findByPk(classId, {
-        include: [
-          { model: Option, as: "option", required: false },
-          { model: StudyYear, as: "studyYear", required: true },
-        ],
-        raw: true,
-      });
+      const [result] = await db
+        .select()
+        .from(classRooms)
+        .leftJoin(options, eq(classRooms.optionId, options.optionId))
+        .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
+        .where(eq(classRooms.classId, classId));
 
-      return classRoom as unknown as null | TClassroomDTO;
+      return result || null;
     } catch (error) {
-      logger.error(`ClassroomQuery.findById: Failed for ID ${classId}`, error);
+      logger.error(
+        `ClassroomQuery.findById: Failed for ID ${classId}`,
+        error as Error,
+      );
       throw new Error("Impossible de récupérer les détails de la classe.");
     }
   }
 
   /**
-   * Récupère les classes avec la liste complète des élèves inscrits.
-   * Optimisé pour l'affichage des tableaux de bord ou listes de présences.
-   * * @param {TClassroomFilter} filters - Filtres optionnels (ex: schoolId).
-   * @returns {Promise<TClassroomWithEnrollmentsDTO[]>} Classes peuplées.
+   * Récupère les classes avec la liste des élèves inscrits (Jointure triple).
    */
-  static async findWithEnrollments(
-    filters: TClassroomFilter,
-  ): Promise<TClassroomWithEnrollmentsDTO[]> {
-    const options = buildFindOptions(filters, DEFAULT_SORT_ORDER);
-
+  static async findWithEnrollments(filters: any): Promise<any[]> {
     try {
-      const classRooms = await ClassRoom.findAll({
-        ...options,
-        include: [
-          {
-            model: ClassroomEnrolement,
-            as: "enrollements",
-            include: [
-              {
-                model: User,
-                as: "user",
-                attributes: [
-                  "userId",
-                  "firstName",
-                  "lastName",
-                  "middleName",
-                  "gender",
-                  "email",
-                ],
+      const results = await db.query.classRooms.findMany({
+        where: filters.schoolId
+          ? eq(classRooms.schoolId, filters.schoolId)
+          : undefined,
+        with: {
+          option: true,
+          studyYear: true,
+          enrolements: {
+            with: {
+              user: {
+                columns: {
+                  userId: true,
+                  firstName: true,
+                  lastName: true,
+                  middleName: true,
+                  gender: true,
+                },
               },
-            ],
+            },
           },
-          { model: Option },
-          { model: StudyYear },
-        ],
-        raw: true,
+        },
+        orderBy: DEFAULT_SORT_ORDER,
       });
 
-      return classRooms as unknown as TClassroomWithEnrollmentsDTO[];
+      return results;
     } catch (error) {
-      logger.error("ClassroomQuery.findWithEnrollments: Failed", error);
+      logger.error(
+        "ClassroomQuery.findWithEnrollments: Failed",
+        error as Error,
+      );
       throw new Error("Impossible de récupérer les inscriptions des classes.");
     }
   }
 
   /**
-   * Crée une nouvelle salle de classe.
-   * * @param {TClassroomInsert} data - Données validées.
-   * @returns {Promise<TClassroom>} La classe créée.
+   * Crée une nouvelle classe.
    */
   static async create(data: TClassroomInsert): Promise<TClassroom> {
     try {
-      const newClass = await ClassRoom.create(data, { raw: true });
-      logger.info(`Classroom created with ID: ${newClass.classId}`);
+      const [newClass] = await db.insert(classRooms).values(data).returning();
+
+      logger.info(`Classroom created: ${newClass.classId}`);
       return newClass;
     } catch (error) {
-      logger.error("ClassroomQuery.create: Failed", error);
+      logger.error("ClassroomQuery.create: Failed", error as Error);
       throw error;
     }
   }
 
   /**
-   * Met à jour une classe existante.
-   * * @param {string} classId - UUID cible.
-   * @param {Partial<TClassroomInsert>} updates - Champs à modifier.
-   * @returns {Promise<TClassroom | null>} La classe mise à jour ou null.
+   * Met à jour une classe.
    */
   static async update(
     classId: string,
-    updates: Partial<TClassroomInsert>,
+    updates: TClassroomUpdate,
   ): Promise<TClassroom | null> {
     try {
-      const classRoom = await ClassRoom.findByPk(classId);
+      const [updated] = await db
+        .update(classRooms)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(classRooms.classId, classId))
+        .returning();
 
-      if (!classRoom) {
-        logger.warn(`ClassroomQuery.update: Not found ${classId}`);
-        return null;
-      }
-
-      const updatedClass = await classRoom.update(updates, { raw: true });
-      return updatedClass;
+      return updated || null;
     } catch (error) {
-      logger.error(`ClassroomQuery.update: Failed for ID ${classId}`, error);
+      logger.error(
+        `ClassroomQuery.update: Failed for ${classId}`,
+        error as Error,
+      );
       throw new Error("Échec de la mise à jour de la classe.");
     }
   }
 
   /**
-   * Supprime une classe (Soft delete ou Hard delete selon la config du modèle).
-   * * @param {string} classId - UUID cible.
-   * @returns {Promise<boolean>} True si supprimé, False si introuvable.
+   * Supprime une classe.
    */
   static async delete(classId: string): Promise<boolean> {
     try {
-      const count = await ClassRoom.destroy({ where: { classId } });
-
-      if (count === 0) {
-        logger.warn(
-          `ClassroomQuery.delete: ID ${classId} not found or already deleted.`,
-        );
-        return false;
-      }
+      await db.delete(classRooms).where(eq(classRooms.classId, classId));
 
       return true;
     } catch (error) {
-      // Gestion spécifique des erreurs de clé étrangère (ex: la classe a des élèves)
-      logger.error(`ClassroomQuery.delete: Failed for ID ${classId}`, error);
+      logger.error(
+        `ClassroomQuery.delete: Failed for ${classId}`,
+        error as Error,
+      );
       throw new Error(
-        "Impossible de supprimer la classe (vérifiez qu'elle est vide).",
+        "Impossible de supprimer la classe (vérifiez les contraintes).",
       );
     }
   }

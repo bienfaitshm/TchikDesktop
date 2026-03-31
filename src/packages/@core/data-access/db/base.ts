@@ -44,7 +44,7 @@ export type ModelStatic<
 > = typeof Model & {
   new (
     values?: object,
-    options?: BuildOptions
+    options?: BuildOptions,
   ): Model<Attributes, CreationAttributes> & Attributes;
 };
 
@@ -74,7 +74,30 @@ export const BASE_ATTRIBUTES: ModelAttributes<Model<BaseEntity>> = {
  * @returns La définition finale de la colonne clé primaire.
  */
 export function primaryKeyColumn<M extends Model = Model<any, any>>(
-  overrides: Partial<ModelAttributeColumnOptions<M>> = {}
+  overrides: Partial<ModelAttributeColumnOptions<M>> = {},
 ): ModelAttributeColumnOptions<M> {
   return { ...PRIMARY_KEY_CONFIG, ...overrides };
+}
+
+/**
+ * Génère une configuration de champ VIRTUAL pour traduire une valeur brute en libellé.
+ * @param sourceKey Le nom de la colonne réelle en base de données (ex: 'status')
+ * @param mapping Un objet de correspondance { ValeurBrute: "Libellé en clair" }
+ */
+export function virtualLabelField<T extends string | number>(
+  sourceKey: string,
+  mapping: Record<T, string>,
+) {
+  return {
+    type: DataTypes.VIRTUAL,
+    get(this: Model) {
+      const rawValue = this.getDataValue(sourceKey) as T;
+      return mapping[rawValue] ?? rawValue;
+    },
+    set() {
+      throw new Error(
+        `Le champ virtuel basé sur '${sourceKey}' est en lecture seule.`,
+      );
+    },
+  };
 }

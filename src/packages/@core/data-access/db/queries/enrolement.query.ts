@@ -1,328 +1,229 @@
+import { db } from "../config";
 import {
-  ClassroomEnrolement,
-  User,
-  ClassRoom,
-  StudyYear,
-  Option,
-  buildFindOptions,
-  type TEnrolement,
-  type TUser,
-  type TClassroom,
-  type TStudyYear,
-  STUDENT_STATUS,
-} from "@/packages/@core/data-access/db";
+  classroomEnrolements,
+  users,
+  classRooms,
+  studyYears,
+} from "../schemas/schema";
+import { eq, and, sql, count, asc } from "drizzle-orm";
 import { getLogger } from "@/packages/logger";
-import type {
-  TEnrolementFilter,
-  TEnrolementQuickCreate,
-  TEnrolementCreate,
-  TEnrolementUpdate,
-} from "@/packages/@core/data-access/schema-validations";
-import { Sequelize, FindOptions } from "sequelize";
-
-import { UserQuery } from "./user.query";
-
-export interface IClassCountResult {
-  classroomId: string;
-  value: number;
-}
-
-export interface IOptionCountResult {
-  value: number;
-  optionShortName?: string;
-}
-
-export type TEnrolementDTO = TEnrolement & {
-  user: TUser;
-  classroom: TClassroom & { studyYear: TStudyYear };
-};
+import { applyFilters } from "./drizzle-builder";
 
 const logger = getLogger("Enrolement Query");
 
-const DEFAULT_SORT_ORDER: FindOptions["order"] = [
-  [Sequelize.fn("LOWER", Sequelize.col("user.last_name")), "ASC"],
-  [Sequelize.fn("LOWER", Sequelize.col("user.middle_name")), "ASC"],
-  [Sequelize.fn("LOWER", Sequelize.col("user.first_name")), "ASC"],
+// Tri par nom d'utilisateur (insensible à la casse)
+const DEFAULT_SORT_ORDER = [
+  asc(sql`lower(${users.lastName})`),
+  asc(sql`lower(${users.middleName})`),
+  asc(sql`lower(${users.firstName})`),
 ];
 
 export class EnrolementQuery {
-  private static getFilterOptions(
-    filters: TEnrolementFilter,
-    orders?: FindOptions["order"],
-  ) {
+  /**
+   * Helper pour valider les filtres obligatoires
+   */
+  private static validateContext(filters: any) {
     if (!filters.schoolId || !filters.yearId) {
       throw new Error("Validation Error: schoolId and yearId are required.");
     }
-    return buildFindOptions(filters, orders);
   }
 
-  static async findMany(filters: TEnrolementFilter): Promise<TEnrolementDTO[]> {
-    const options = this.getFilterOptions(filters, DEFAULT_SORT_ORDER);
+  /**
+   * Récupère les inscriptions avec jointures (User, Classroom, StudyYear)
+   */
+  static async findMany(filters: any): Promise<any[]> {
+    this.validateContext(filters);
     try {
-      const enrolements = await ClassroomEnrolement.findAll({
-        ...options,
-        include: [
-          { model: User, as: "user" },
-          {
-            model: ClassRoom,
-            as: "classroom",
-            include: [{ model: StudyYear, as: "studyYear" }],
-            required: true,
-          },
-        ],
-        raw: true,
-        nest: true,
-      });
-      return enrolements as unknown as TEnrolementDTO[];
-    } catch (error) {
-      console.log("error......", error);
-      logger.error("EnrolementQuery.findMany: DB query failed.", error);
-      throw new Error("Database error while fetching enrolements.");
-    }
-  }
+      const query = db
+        .select()
+        .from(classroomEnrolements)
+        .innerJoin(users, eq(classroomEnrolements.studentId, users.userId))
+        .innerJoin(
+          classRooms,
+          eq(classroomEnrolements.classroomId, classRooms.classId),
+        )
+        .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
+        .$dynamic();
 
-  static async getTotalStudents(filters: TEnrolementFilter): Promise<number> {
-    try {
-      const options = this.getFilterOptions(filters, DEFAULT_SORT_ORDER);
-      return await ClassroomEnrolement.count(options);
-    } catch (err) {
-      logger.error("Failed to get total students", err);
-      return 0;
-    }
-  }
-
-  static async getStudentsCountByClass(
-    filters: TEnrolementFilter,
-  ): Promise<IClassCountResult[]> {
-    try {
-      const options = this.getFilterOptions(filters, [
-        [Sequelize.col("classroom.short_identifier"), "ASC"],
-      ]);
-
-      const results = await ClassroomEnrolement.findAll({
-        attributes: [
-          "classroomId",
-          [Sequelize.fn("COUNT", Sequelize.col("student_id")), "value"],
-        ],
-        ...options,
-        include: [
-          {
-            model: ClassRoom,
-            as: "classroom",
-            attributes: ["identifier", "shortIdentifier"],
-            required: true,
-          },
-        ],
-        group: [
-          Sequelize.col("ClassroomEnrolement.classroom_id"),
-          Sequelize.col("classroom.class_id"),
-        ],
-        raw: true,
-      });
-
-      return results as unknown as IClassCountResult[];
-    } catch (error) {
-      logger.error("EnrolementQuery.getStudentsCountByClass failed", error);
-      return [];
-    }
-  }
-
-  static async findById(enrolementId: string): Promise<TEnrolementDTO | null> {
-    if (!enrolementId) return null;
-    try {
-      const enrolement = await ClassroomEnrolement.findByPk(enrolementId, {
-        include: [
-          { model: User, as: "user" },
-          { model: ClassRoom, as: "classroom" },
-        ],
-        raw: true,
-        nest: true,
-      });
-      return enrolement as TEnrolementDTO | null;
+      return await applyFilters(
+        query,
+        classroomEnrolements,
+        filters,
+        DEFAULT_SORT_ORDER,
+      );
     } catch (error) {
       logger.error(
-        `EnrolementQuery.findById: Error for ID ${enrolementId}.`,
-        error,
+        "EnrolementQuery.findMany: DB query failed.",
+        error as Error,
+      );
+      throw new Error("Erreur lors de la récupération des inscriptions.");
+    }
+  }
+
+  /**
+   * Récupère une inscription spécifique par son ID
+   */
+  static async findById(enrolementId: string): Promise<any | null> {
+    if (!enrolementId) return null;
+    try {
+      const [result] = await db
+        .select()
+        .from(classroomEnrolements)
+        .innerJoin(users, eq(classroomEnrolements.studentId, users.userId))
+        .innerJoin(
+          classRooms,
+          eq(classroomEnrolements.classroomId, classRooms.classId),
+        )
+        .where(eq(classroomEnrolements.enrolementId, enrolementId));
+
+      return result || null;
+    } catch (error) {
+      logger.error(
+        `EnrolementQuery.findById: Error for ${enrolementId}`,
+        error as Error,
       );
       return null;
     }
   }
 
-  static async getStudentsCountByOption(filters: TEnrolementFilter) {
-    try {
-      const options = this.getFilterOptions(filters);
-      return await ClassroomEnrolement.findAll({
-        attributes: [
-          [Sequelize.fn("COUNT", Sequelize.col("student_id")), "value"],
-        ],
-        ...options,
-        include: [
-          {
-            model: ClassRoom,
-            as: "classroom",
-            attributes: [],
-            required: true,
-            include: [
-              {
-                model: Option,
-                as: "option",
-                attributes: ["optionShortName"],
-                required: true,
-              },
-            ],
-          },
-        ],
-        group: [Sequelize.col("classroom->option.option_name")],
-        order: [[Sequelize.col("classroom->option.option_short_name"), "ASC"]],
-        raw: true,
-      });
-    } catch (error) {
-      logger.error("EnrolementQuery.getStudentsCountByOption failed", error);
-      return [];
-    }
+  // =============================================================================
+  //  STATISTIQUES & ANALYTICS
+  // =============================================================================
+
+  static async getTotalStudents(filters: any): Promise<number> {
+    this.validateContext(filters);
+    const [result] = await db
+      .select({ value: count() })
+      .from(classroomEnrolements)
+      .where(
+        and(
+          eq(classroomEnrolements.schoolId, filters.schoolId),
+          eq(classroomEnrolements.yearId, filters.yearId),
+        ),
+      );
+    return result?.value ?? 0;
   }
 
-  static async getRetentionMetrics(filters: TEnrolementFilter) {
-    const options = this.getFilterOptions(filters);
-    const include = [{ model: ClassRoom, as: "classroom", required: true }];
-
-    const [total, news] = await Promise.all([
-      ClassroomEnrolement.count({ ...options, include }),
-      ClassroomEnrolement.count({
-        where: { ...options.where, isNewStudent: true },
-        include,
-      }),
-    ]);
-
-    return { total, oldStudents: total - news, news };
+  /**
+   * Agrégation par classe (Optimisé)
+   */
+  static async getStudentsCountByClass(filters: any) {
+    this.validateContext(filters);
+    return db
+      .select({
+        classroomId: classroomEnrolements.classroomId,
+        label: classRooms.identifier,
+        shortName: classRooms.shortIdentifier,
+        value: count(classroomEnrolements.studentId),
+      })
+      .from(classroomEnrolements)
+      .innerJoin(
+        classRooms,
+        eq(classroomEnrolements.classroomId, classRooms.classId),
+      )
+      .where(
+        and(
+          eq(classroomEnrolements.schoolId, filters.schoolId),
+          eq(classroomEnrolements.yearId, filters.yearId),
+        ),
+      )
+      .groupBy(
+        classroomEnrolements.classroomId,
+        classRooms.identifier,
+        classRooms.shortIdentifier,
+      )
+      .orderBy(classRooms.shortIdentifier);
   }
 
-  static async getStudentStatusStats(filters: TEnrolementFilter) {
-    try {
-      const options = this.getFilterOptions(filters);
-      return await ClassroomEnrolement.findAll({
-        ...options,
-        attributes: [
-          "status",
-          [Sequelize.fn("COUNT", Sequelize.col("enrolement_id")), "count"],
-        ],
-        group: ["status"],
-        raw: true,
-      });
-    } catch (error) {
-      logger.error("EnrolementQuery.getStudentStatusStats failed", error);
-      return [];
-    }
+  /**
+   * Métriques de rétention en UNE SEULE requête SQL
+   */
+  static async getRetentionMetrics(filters: any) {
+    this.validateContext(filters);
+    const [results] = await db
+      .select({
+        total: count(),
+        news: sql<number>`count(case when ${classroomEnrolements.isNewStudent} = 1 then 1 end)`,
+      })
+      .from(classroomEnrolements)
+      .where(
+        and(
+          eq(classroomEnrolements.schoolId, filters.schoolId),
+          eq(classroomEnrolements.yearId, filters.yearId),
+        ),
+      );
+
+    const total = results?.total ?? 0;
+    const news = results?.news ?? 0;
+    return { total, news, oldStudents: total - news };
   }
 
-  static async getQuickKpis(filters: TEnrolementFilter) {
-    const stats: any[] = await this.getStudentStatusStats(filters);
-    const getCount = (status: string) =>
-      Number(stats.find((s: any) => s.status === status)?.count || 0);
-
-    return {
-      total: stats.reduce(
-        (acc: number, curr: any) => acc + Number(curr.count),
-        0,
-      ),
-      active: getCount(STUDENT_STATUS.EN_COURS),
-      excluded: getCount(STUDENT_STATUS.EXCLUT),
-      inactive: getCount(STUDENT_STATUS.ABANDON),
-    };
+  static async getStudentStatusStats(filters: any) {
+    this.validateContext(filters);
+    return db
+      .select({
+        status: classroomEnrolements.status,
+        count: count(),
+      })
+      .from(classroomEnrolements)
+      .where(
+        and(
+          eq(classroomEnrolements.schoolId, filters.schoolId),
+          eq(classroomEnrolements.yearId, filters.yearId),
+        ),
+      )
+      .groupBy(classroomEnrolements.status);
   }
 
-  static async create(data: TEnrolementCreate): Promise<TEnrolement> {
-    try {
-      const enrolement = await ClassroomEnrolement.create(data, { raw: true });
-      logger.info(`Enrolement created: ${enrolement.enrolementId}`, {
-        studentId: data.studentId,
-        classId: enrolement.classroomId,
-      });
-      return enrolement;
-    } catch (error) {
-      logger.error("EnrolementQuery.create: Creation failed.", error);
-      throw error;
-    }
-  }
+  // =============================================================================
+  //  MUTATIONS & TRANSACTIONS
+  // =============================================================================
 
+  /**
+   * Création rapide avec transaction atomique
+   */
   static async quickCreate({
     student,
     isInSystem,
     studentId,
     ...enrolementData
-  }: TEnrolementQuickCreate): Promise<TEnrolement> {
-    const transaction = await ClassroomEnrolement.sequelize!.transaction();
-
-    try {
+  }: any) {
+    return await db.transaction(async (tx) => {
       let finalStudentId = studentId;
 
-      if (isInSystem && studentId) {
-        const existingStudent = await UserQuery.findById(studentId);
-        if (!existingStudent)
-          throw new Error("Validation Error: L'élève n'existe pas.");
-      } else if (!isInSystem && student) {
-        const newStudent = await UserQuery.create(
-          { ...student, schoolId: enrolementData.schoolId },
-          { transaction },
-        );
-        finalStudentId = newStudent.userId;
-      } else {
-        throw new Error("Validation Error: Données de l'élève manquantes.");
+      if (!isInSystem && student) {
+        // Création de l'utilisateur dans la transaction
+        const [newUser] = await tx
+          .insert(users)
+          .values({ ...student, schoolId: enrolementData.schoolId })
+          .returning();
+        finalStudentId = newUser.userId;
       }
 
-      const enrolement = await ClassroomEnrolement.create(
-        { ...enrolementData, studentId: finalStudentId! },
-        { transaction, raw: true },
-      );
-
-      await transaction.commit();
-      logger.info(`Quick Create Success for student: ${finalStudentId}`);
+      const [enrolement] = await tx
+        .insert(classroomEnrolements)
+        .values({ ...enrolementData, studentId: finalStudentId })
+        .returning();
 
       return enrolement;
-    } catch (error) {
-      await transaction.rollback();
-      logger.error("quickCreate transaction failed and rolled back.", error);
-      throw error;
-    }
+    });
   }
 
-  static async update(
-    enrolementId: string,
-    data: TEnrolementUpdate,
-  ): Promise<TEnrolement | null> {
+  static async update(enrolementId: string, data: any) {
     if (!enrolementId) return null;
-
-    try {
-      const enrolement = await ClassroomEnrolement.findByPk(enrolementId);
-      if (!enrolement) {
-        logger.warn(`EnrolementQuery.update: ID ${enrolementId} not found.`);
-        return null;
-      }
-      const updatedEnrolement = await enrolement.update(data, { raw: true });
-      return updatedEnrolement;
-    } catch (error) {
-      logger.error(
-        `EnrolementQuery.update: Error updating ${enrolementId}.`,
-        error,
-      );
-      throw new Error("Update operation failed.");
-    }
+    const [updated] = await db
+      .update(classroomEnrolements)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(classroomEnrolements.enrolementId, enrolementId))
+      .returning();
+    return updated || null;
   }
 
   static async delete(enrolementId: string): Promise<boolean> {
     if (!enrolementId) return false;
-
-    try {
-      const deletedRowCount = await ClassroomEnrolement.destroy({
-        where: { enrolementId },
-      });
-      return deletedRowCount > 0;
-    } catch (error) {
-      logger.error(
-        `EnrolementQuery.delete: Error deleting ${enrolementId}.`,
-        error,
-      );
-      throw new Error("Delete operation failed.");
-    }
+    await db
+      .delete(classroomEnrolements)
+      .where(eq(classroomEnrolements.enrolementId, enrolementId));
+    return true;
   }
 }

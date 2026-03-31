@@ -34,6 +34,7 @@ const createMainWindow = (): void => {
   });
   mainLogger.info("Fenêtre principale créée avec les options par défaut.");
 
+  // S
   // Synchronisation de la base de données
   dbLogger.info(
     `Tentative de synchronisation de la base de données (ALTER_DB: ${ALTER_DB}).`,

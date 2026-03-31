@@ -70,7 +70,7 @@ const ClassroomRowActions: React.FC<{
 
 const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearId }) => {
     const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId });
-
+    console.log("classrooms", classrooms)
     return (
         <main className="my-10 mx-auto h-full container max-w-screen-2xl">
             <DataTable<TClassroom>

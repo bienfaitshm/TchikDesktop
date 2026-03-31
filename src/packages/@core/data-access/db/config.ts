@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { type Options, Sequelize } from "sequelize";
+import { drizzle } from "drizzle-orm/libsql";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { getLogger } from "@/packages/logger";
@@ -8,17 +8,9 @@ const dbLogger = getLogger("DataBase");
 export const DEFAULT_DB_FILENAME = "./database.sqlite";
 const BACKUP_DIR = "./backups";
 
-const MAX_BACKUPS = 5;
+const MAX_BACKUPS = 10;
 
-const config: Options = {
-  dialect: "sqlite",
-  storage: DEFAULT_DB_FILENAME,
-  logging(sql, timing) {
-    dbLogger.info(sql, timing);
-  },
-};
-
-export const sequelize = new Sequelize(config);
+export const db = drizzle(DEFAULT_DB_FILENAME);
 
 // -----------------------------------------------------
 //  Système de Sauvegarde (Backup)

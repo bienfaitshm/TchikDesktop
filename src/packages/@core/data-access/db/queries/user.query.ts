@@ -1,151 +1,122 @@
-import {
-  ClassroomEnrolement,
-  User,
-  buildFindOptions,
-  TUser,
-  TUserCreate,
-  getDefaultUsername,
-  TUserUpdate,
-} from "@/packages/@core/data-access/db";
-import { TUserFilter } from "@/packages/@core/data-access/schema-validations";
-import {
-  Sequelize,
-  type Includeable,
-  FindOptions,
-  CreateOptions,
-} from "sequelize";
-
+import { db } from "../config";
+import { users, classroomEnrolements } from "../schemas/schema";
+import { TUser, TUserInsert, TUserUpdate } from "../schemas/types";
+import { eq, sql, asc, and, inArray } from "drizzle-orm";
 import { getLogger } from "@/packages/logger";
-
-const DEFAULT_STUDENT_PASSWORD = "000000";
-
-const DEFAULT_SORT_ORDER: FindOptions["order"] = [
-  [Sequelize.fn("LOWER", Sequelize.col("last_name")), "ASC"],
-  [Sequelize.fn("LOWER", Sequelize.col("middle_name")), "ASC"],
-  [Sequelize.fn("LOWER", Sequelize.col("first_name")), "ASC"],
-];
+import { applyFilters } from "./drizzle-builder";
 
 const logger = getLogger("User Query");
 
-/**
- * Service de gestion des Utilisateurs (étudiants, professeurs, administrateurs).
- * Ce service gère l'accès à la base de données pour l'entité User.
- */
+// Tri standard par nom (insensible à la casse)
+const DEFAULT_SORT_ORDER = [
+  asc(sql`lower(${users.lastName})`),
+  asc(sql`lower(${users.middleName})`),
+  asc(sql`lower(${users.firstName})`),
+];
+
 export class UserQuery {
   /**
-   * Récupère une liste d'utilisateurs basée sur l'école, l'année scolaire, et optionnellement la classe.
-   *
-   * Utilise une clause `JOIN` requise (`required: true`) sur `ClassroomEnrolement` pour
-   * filtrer les utilisateurs actifs dans la période spécifiée.
-   *
-   * @param {QueryParams<WithSchoolAndYearId, Partial<TUserInsert & { classroomId?: string }>>} queryArgs
-   * Arguments de la requête incluant les IDs de scope (`schoolId`, `yearId`) et les filtres utilisateur/classe.
-   * @returns {Promise<TWithEnrolements<TUser>[]>} Liste des instances `User` avec leurs `ClassroomEnrolements`.
-   * @throws {Error} Erreur de service si la requête DB échoue.
+   * Récupère une liste d'utilisateurs avec filtres et jointures optionnelles.
+   * Optimisé pour ne faire qu'une seule requête SQL performante.
    */
   static async findMany({
     yearId,
     classroomId,
     ...filters
-  }: TUserFilter & {
-    yearId?: string | string[];
-    classroomId?: string | string[];
-  }): Promise<TUser[]> {
+  }: any): Promise<TUser[]> {
     if (!filters.schoolId) {
       throw new Error(
-        "Validation Error: schoolId are required for listing users.",
+        "Validation Error: schoolId is required for listing users.",
       );
     }
 
-    const userOptions = buildFindOptions(filters, DEFAULT_SORT_ORDER);
-    const enrollmentOptions = buildFindOptions({
-      yearId,
-      classroomId,
-      schoolId: filters.schoolId,
-    });
-
-    const includeOptions: Includeable[] = [];
-    if (yearId && classroomId) {
-      includeOptions.push({
-        model: ClassroomEnrolement,
-        required: true,
-        ...enrollmentOptions,
-      } as unknown as Includeable);
-    }
-
     try {
-      const users = await User.findAll({
-        include: includeOptions,
-        ...userOptions,
-        raw: true,
-      });
+      // On commence par une requête de base sur la table Users
+      const query = db.select().from(users).$dynamic();
 
-      return users as TUser[];
+      // Gestion de la jointure "Required" si yearId ou classroomId sont fournis
+      // Équivalent à "include: [{ model: ClassroomEnrolement, required: true }]"
+      if (yearId || classroomId) {
+        query.innerJoin(
+          classroomEnrolements,
+          eq(users.userId, classroomEnrolements.studentId),
+        );
+
+        // Application des filtres de la table de jointure
+        const enrollmentFilters = [];
+        if (yearId) {
+          enrollmentFilters.push(
+            Array.isArray(yearId)
+              ? inArray(classroomEnrolements.yearId, yearId)
+              : eq(classroomEnrolements.yearId, yearId),
+          );
+        }
+        if (classroomId) {
+          enrollmentFilters.push(
+            Array.isArray(classroomId)
+              ? inArray(classroomEnrolements.classroomId, classroomId)
+              : eq(classroomEnrolements.classroomId, classroomId),
+          );
+        }
+        query.where(and(...enrollmentFilters));
+      }
+
+      // Appliquer les filtres de base (lastName, role, etc.) via notre helper pro
+      // et appliquer le tri par défaut
+      return await applyFilters(
+        query,
+        users,
+        filters,
+        sql`${DEFAULT_SORT_ORDER}, ${DEFAULT_SORT_ORDER}`,
+      );
     } catch (error) {
-      logger.error("UserService.findUsers: DB query failed.", error);
-      throw new Error("Service unavailable: Unable to retrieve users.");
+      logger.error("UserQuery.findMany: DB query failed.", error as Error);
+      throw new Error("Impossible de récupérer les utilisateurs.");
     }
   }
 
   /**
-   * Récupère un utilisateur unique par son ID, y compris tous ses enrôlements historiques.
-   *
-   * @param userId - L'ID unique de l'utilisateur.
-   * @returns L'utilisateur trouvé avec ses enrôlements, ou `null`.
-   * @throws {Error} Erreur de service si la requête DB échoue.
+   * Récupère un utilisateur par son ID.
    */
   static async findById(userId: string): Promise<TUser | null> {
-    if (!userId) {
-      logger.warn("UserService.getUserById: Called with empty ID.");
-      return null;
-    }
+    if (!userId) return null;
 
     try {
-      const user = await User.findByPk(userId, { raw: true });
-      return user as TUser | null;
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.userId, userId));
+
+      return user || null;
     } catch (error) {
-      logger.error(`UserService.getUserById: Error for ID ${userId}.`, error);
-      throw new Error("Service unavailable: Unable to fetch user details.");
+      logger.error(
+        `UserQuery.findById: Error for ID ${userId}`,
+        error as Error,
+      );
+      throw new Error(
+        "Erreur lors de la récupération des détails de l'utilisateur.",
+      );
     }
   }
 
   /**
-   * Crée un nouvel utilisateur.
-   *
-   * Le nom d'utilisateur est généré de manière provisoire et un mot de passe par défaut est attribué.
-   * NOTE: Dans un système professionnel, le mot de passe devrait être HASHÉ ici avant l'insertion.
-   *
-   * @param payload - Les données de création de l'utilisateur (doit inclure le rôle et schoolId).
-   * @returns L'utilisateur créé (DTO).
-   * @throws {Error} Si la validation ou l'insertion DB échoue.
+   * Crée un utilisateur.
+   * Les valeurs par défaut (password, username) sont gérées par le schéma Drizzle.
    */
-  static async create(
-    payload: TUserCreate,
-    options?: CreateOptions<Required<TUser>>,
-  ): Promise<TUser> {
-    const password = DEFAULT_STUDENT_PASSWORD;
-    const username = getDefaultUsername();
-
+  static async create(payload: TUserInsert): Promise<TUser> {
     try {
-      const user = await User.create(
-        { password, ...payload, username },
-        options,
-      );
-      logger.info(`User created: ${user.userId}`, { role: user.role });
-      return user.toJSON();
+      const [newUser] = await db.insert(users).values(payload).returning();
+
+      logger.info(`User created: ${newUser.userId}`, { role: newUser.role });
+      return newUser;
     } catch (error) {
-      logger.error("UserService.createUser: Creation failed.", error);
+      logger.error("UserQuery.create: Insertion failed", error as Error);
       throw error;
     }
   }
 
   /**
-   * Met à jour les données d'un utilisateur existant.
-   *
-   * @param userId - ID de l'utilisateur cible.
-   * @param updates - Champs à modifier.
-   * @returns L'utilisateur mis à jour (DTO) ou `null` si introuvable.
-   * @throws {Error} Erreur de service si l'opération DB échoue.
+   * Met à jour les données.
    */
   static async update(
     userId: string,
@@ -154,39 +125,33 @@ export class UserQuery {
     if (!userId) return null;
 
     try {
-      const user = await User.findByPk(userId, { raw: true });
-      if (!user) {
-        logger.warn(`UserService.updateUser: ID ${userId} not found.`);
-        return null;
-      }
+      const [updatedUser] = await db
+        .update(users)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(users.userId, userId))
+        .returning();
 
-      const updatedUser = await user.update(updates);
-      return updatedUser as TUser | null;
+      return updatedUser || null;
     } catch (error) {
-      logger.error(`UserService.updateUser: Error updating ${userId}.`, error);
-      throw new Error("Service unavailable: Update operation failed.");
+      logger.error(`UserQuery.update: Error for ${userId}`, error as Error);
+      throw new Error("La mise à jour de l'utilisateur a échoué.");
     }
   }
 
   /**
-   * Supprime un utilisateur par son ID.
-   *
-   * @param userId - L'ID de l'utilisateur à supprimer.
-   * @returns `true` si l'utilisateur a été supprimé, `false` sinon.
-   * @throws {Error} Erreur de service si l'opération DB échoue.
+   * Supprime un utilisateur.
    */
   static async delete(userId: string): Promise<boolean> {
     if (!userId) return false;
 
     try {
-      const deletedRowCount = await User.destroy({
-        where: { userId },
-      });
-      return deletedRowCount > 0;
+      await db.delete(users).where(eq(users.userId, userId));
+
+      return true;
     } catch (error) {
-      logger.error(`UserService.deleteUser: Error deleting ${userId}.`, error);
+      logger.error(`UserQuery.delete: Error for ${userId}`, error as Error);
       throw new Error(
-        "Service error: Delete operation failed, check related data constraints.",
+        "Échec de la suppression (vérifiez les contraintes de données liées).",
       );
     }
   }
