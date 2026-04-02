@@ -62,7 +62,7 @@ const StudyYearListDisplayTable: React.FC = () => {
         );
     }
 
-    const { data: studyYears, isError } = useGetStudyYears({ schoolId: currentSchool.schoolId });
+    const { data: studyYears, isError } = useGetStudyYears({ where: { schoolId: currentSchool.schoolId } });
 
     if (isError) {
         return (

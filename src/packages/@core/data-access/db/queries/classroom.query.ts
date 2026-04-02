@@ -1,30 +1,40 @@
 import { eq, sql, asc } from "drizzle-orm";
-import { getLogger } from "@/packages/logger";
-
 import { db } from "../config";
 import { classRooms, options, studyYears } from "../schemas/schema";
-import {
+import { BaseRepository } from "./base-repository";
+import { applyQueryOptions } from "./drizzle-builder";
+import type {
   TClassroom,
   TClassroomInsert,
   TClassroomUpdate,
+  FindManyOptions,
 } from "../schemas/types";
-import { applyFilters } from "./drizzle-builder";
-
-const logger = getLogger("ClassroomQuery");
 
 /**
- * Ordre de tri standard : Identifiant complet puis court (insensible à la casse)
+ * Configuration des tris par défaut (Encapsulé pour la réutilisation)
  */
-const DEFAULT_SORT_ORDER = [
-  asc(sql`lower(${classRooms.identifier})`),
-  asc(sql`lower(${classRooms.shortIdentifier})`),
-];
+const CLASSROOM_DEFAULT_SORT = {
+  orderBy: [
+    { column: sql`lower(${classRooms.identifier})`, order: "asc" },
+    { column: sql`lower(${classRooms.shortIdentifier})`, order: "asc" },
+  ],
+} as unknown as FindManyOptions<typeof classRooms>;
 
-export class ClassroomQuery {
+export class ClassroomQuery extends BaseRepository<
+  typeof classRooms,
+  TClassroom,
+  TClassroomInsert,
+  TClassroomUpdate
+> {
+  constructor() {
+    super(classRooms, classRooms.classId, "Classroom", CLASSROOM_DEFAULT_SORT);
+  }
+
   /**
-   * Récupère une liste de classes avec Option et Année Scolaire.
+   * Overriding findMany: Utilisation de Joins SQL pour la performance et les colonnes spécifiques.
+   * On garde la compatibilité avec applyQueryOptions.
    */
-  static async findMany(filters: any): Promise<any[]> {
+  async findManyExtended(filters?: any): Promise<any[]> {
     try {
       const query = db
         .select({
@@ -43,19 +53,20 @@ export class ClassroomQuery {
         .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
         .$dynamic();
 
-      return await applyFilters(query, classRooms, filters, DEFAULT_SORT_ORDER);
+      // Note: On passe null pour defaultSort ici car les tris sont déjà gérés
+      // ou injectés via filters pour éviter les conflits SQL
+      return await applyQueryOptions(query, classRooms, filters);
     } catch (error) {
-      logger.error("ClassroomQuery.findMany: Failed to fetch", error as Error);
-      throw new Error("Impossible de récupérer la liste des classes.");
+      this.logError("findManyExtended", error, { filters });
+      throw new Error("Impossible de récupérer la liste enrichie des classes.");
     }
   }
 
   /**
-   * Récupère une classe spécifique par son ID.
+   * Récupère une classe spécifique avec ses relations via Joins SQL.
    */
-  static async findById(classId: string): Promise<any | null> {
+  override async findById(classId: string): Promise<any | null> {
     if (!classId) return null;
-
     try {
       const [result] = await db
         .select()
@@ -66,23 +77,19 @@ export class ClassroomQuery {
 
       return result || null;
     } catch (error) {
-      logger.error(
-        `ClassroomQuery.findById: Failed for ID ${classId}`,
-        error as Error,
-      );
-      throw new Error("Impossible de récupérer les détails de la classe.");
+      this.logError("findById", error, { classId });
+      throw new Error("Détails de la classe introuvables.");
     }
   }
 
   /**
-   * Récupère les classes avec la liste des élèves inscrits (Jointure triple).
+   * Utilisation de l'API Relational de Drizzle pour les structures imbriquées complexes (Inscriptions).
+   * Plus lisible pour le frontend que des jointures plates.
    */
-  static async findWithEnrollments(filters: any): Promise<any[]> {
+  async findWithEnrollments(schoolId?: string): Promise<any[]> {
     try {
-      const results = await db.query.classRooms.findMany({
-        where: filters.schoolId
-          ? eq(classRooms.schoolId, filters.schoolId)
-          : undefined,
+      return await db.query.classRooms.findMany({
+        where: schoolId ? eq(classRooms.schoolId, schoolId) : undefined,
         with: {
           option: true,
           studyYear: true,
@@ -100,74 +107,19 @@ export class ClassroomQuery {
             },
           },
         },
-        orderBy: DEFAULT_SORT_ORDER,
+        // On réutilise sql`lower(...)` pour la cohérence
+        orderBy: [
+          asc(sql`lower(${classRooms.identifier})`),
+          asc(sql`lower(${classRooms.shortIdentifier})`),
+        ],
       });
-
-      return results;
     } catch (error) {
-      logger.error(
-        "ClassroomQuery.findWithEnrollments: Failed",
-        error as Error,
-      );
-      throw new Error("Impossible de récupérer les inscriptions des classes.");
+      this.logError("findWithEnrollments", error, { schoolId });
+      throw new Error("Échec de la récupération des inscriptions.");
     }
   }
 
-  /**
-   * Crée une nouvelle classe.
-   */
-  static async create(data: TClassroomInsert): Promise<TClassroom> {
-    try {
-      const [newClass] = await db.insert(classRooms).values(data).returning();
-
-      logger.info(`Classroom created: ${newClass.classId}`);
-      return newClass;
-    } catch (error) {
-      logger.error("ClassroomQuery.create: Failed", error as Error);
-      throw error;
-    }
-  }
-
-  /**
-   * Met à jour une classe.
-   */
-  static async update(
-    classId: string,
-    updates: TClassroomUpdate,
-  ): Promise<TClassroom | null> {
-    try {
-      const [updated] = await db
-        .update(classRooms)
-        .set({ ...updates, updatedAt: new Date() })
-        .where(eq(classRooms.classId, classId))
-        .returning();
-
-      return updated || null;
-    } catch (error) {
-      logger.error(
-        `ClassroomQuery.update: Failed for ${classId}`,
-        error as Error,
-      );
-      throw new Error("Échec de la mise à jour de la classe.");
-    }
-  }
-
-  /**
-   * Supprime une classe.
-   */
-  static async delete(classId: string): Promise<boolean> {
-    try {
-      await db.delete(classRooms).where(eq(classRooms.classId, classId));
-
-      return true;
-    } catch (error) {
-      logger.error(
-        `ClassroomQuery.delete: Failed for ${classId}`,
-        error as Error,
-      );
-      throw new Error(
-        "Impossible de supprimer la classe (vérifiez les contraintes).",
-      );
-    }
-  }
+  static instance = new ClassroomQuery();
 }
+
+export const classroomService = ClassroomQuery.instance;

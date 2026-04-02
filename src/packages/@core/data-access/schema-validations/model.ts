@@ -404,44 +404,64 @@ export const EnrolementActionCreateSchema =
 // IV. SCHÉMAS UTILITAIRES (Filtres, Pagination)
 // =============================================================================
 
-export const ZodQueryFilter = z.string().optional();
+/**
+ * Extrait les clés d'un schéma Zod pour garantir que
+ * les tris et recherches ne se font que sur des colonnes existantes.
+ */
+const getKeys = <T extends z.ZodRawShape>(shape: T) => {
+  return Object.keys(shape) as [keyof T & string, ...(keyof T & string)[]];
+};
 
 /**
- * Schéma pour le tri multiple (Array d'objets)
+ * REECRITURE PRO & GÉNÉRIQUE
  */
-export const SortStepSchema = z.object({
-  column: z.string().describe("Nom de la colonne"),
-  order: z.enum(["asc", "desc"]).default("asc"),
-});
-
-/**
- * Schéma de base pour la recherche et les filtres avancés
- */
-export const QueryOptionsSchema = z.object({
-  limit: z.coerce.number().int().positive().max(500).default(100).optional(),
-  offset: z.coerce.number().int().nonnegative().default(0).optional(),
-  orderBy: z
-    .array(SortStepSchema)
-    .optional()
-    .describe("Liste de tris à appliquer (tri multiple)"),
-  // Support pour WHERE IN : Record<string, any[]>
-  whereIn: z.record(z.array(z.any())).optional(),
-  // Support pour SEARCH : Record<string, string>
-  search: z.record(z.string()).optional(),
-  // Support pour OR : Tableau d'objets de filtres
-  or: z.array(z.record(z.any())).optional(),
-});
-
-/**
- * Utilitaire pour fusionner les filtres spécifiques d'une ressource
- * avec les options globales de requête.
- */
-export const withQueryOptions = <TData extends z.ZodRawShape>(
-  dataSchema: z.ZodObject<TData>,
+export const withQueryOptions = <T extends z.ZodRawShape>(
+  dataSchema: z.ZodObject<T>,
 ) => {
+  const keys = getKeys(dataSchema.shape);
+
+  // 1. Schéma pour le tri (Strict sur les colonnes)
+  const SortStepSchema = z.object({
+    column: z.enum(keys).describe("Nom de la colonne existante"),
+    order: z.enum(["asc", "desc"]).default("asc"),
+  });
+
+  // 2. Construction du schéma global
   return z
-    .intersection(dataSchema.partial(), QueryOptionsSchema)
-    .describe(
-      "Schéma complet de requête : filtres, recherche, tri et pagination.",
-    );
+    .object({
+      /**
+       * WHERE : Filtres d'égalité simples
+       * On utilise partial() pour que chaque champ soit optionnel
+       */
+      where: dataSchema.partial().optional(),
+
+      /**
+       * WHERE IN : Record<colonne, tableau_de_valeurs>
+       */
+      whereIn: z.record(z.enum(keys), z.array(z.any())).optional(),
+
+      /**
+       * SEARCH : Record<colonne, chaine_recherche>
+       */
+      search: z.record(z.enum(keys), z.string()).optional(),
+
+      /**
+       * OR : Tableau de filtres partiels (chaque objet est un bloc OR)
+       */
+      or: z.array(dataSchema.partial()).optional(),
+
+      /**
+       * PAGINATION & TRI
+       */
+      limit: z.coerce
+        .number()
+        .int()
+        .positive()
+        .max(500)
+        .default(100)
+        .optional(),
+      offset: z.coerce.number().int().nonnegative().default(0).optional(),
+      orderBy: z.array(SortStepSchema).optional(),
+    })
+    .describe("Options de requête génériques typées sur la ressource.");
 };

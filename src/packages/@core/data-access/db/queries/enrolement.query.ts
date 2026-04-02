@@ -1,3 +1,4 @@
+import { eq, and, sql, count } from "drizzle-orm";
 import { db } from "../config";
 import {
   classroomEnrolements,
@@ -5,33 +6,55 @@ import {
   classRooms,
   studyYears,
 } from "../schemas/schema";
-import { eq, and, sql, count, asc } from "drizzle-orm";
-import { getLogger } from "@/packages/logger";
-import { applyFilters } from "./drizzle-builder";
+import { BaseRepository } from "./base-repository";
+import { applyQueryOptions } from "./drizzle-builder";
+import type {
+  TEnrolement,
+  TEnrolementInsert,
+  TEnrolementUpdate,
+  FindManyOptions,
+} from "../schemas/types";
 
-const logger = getLogger("Enrolement Query");
+/**
+ * Configuration du tri par défaut (Nom complet de l'étudiant)
+ */
+const ENROLEMENT_DEFAULT_SORT = {
+  orderBy: [
+    { column: sql`lower(${users.lastName})`, order: "asc" },
+    { column: sql`lower(${users.middleName})`, order: "asc" },
+    { column: sql`lower(${users.firstName})`, order: "asc" },
+  ],
+} as unknown as FindManyOptions<typeof classroomEnrolements>;
 
-// Tri par nom d'utilisateur (insensible à la casse)
-const DEFAULT_SORT_ORDER = [
-  asc(sql`lower(${users.lastName})`),
-  asc(sql`lower(${users.middleName})`),
-  asc(sql`lower(${users.firstName})`),
-];
-
-export class EnrolementQuery {
-  /**
-   * Helper pour valider les filtres obligatoires
-   */
-  private static validateContext(filters: any) {
-    if (!filters.schoolId || !filters.yearId) {
-      throw new Error("Validation Error: schoolId and yearId are required.");
-    }
+export class EnrolementQuery extends BaseRepository<
+  typeof classroomEnrolements,
+  TEnrolement,
+  TEnrolementInsert,
+  TEnrolementUpdate
+> {
+  constructor() {
+    super(
+      classroomEnrolements,
+      classroomEnrolements.enrolementId,
+      "Enrolement",
+      ENROLEMENT_DEFAULT_SORT,
+    );
   }
 
   /**
-   * Récupère les inscriptions avec jointures (User, Classroom, StudyYear)
+   * Validation du contexte obligatoire (Multitenancy & Cohérence temporelle)
    */
-  static async findMany(filters: any): Promise<any[]> {
+  private validateContext(filters: { schoolId?: string; yearId?: string }) {
+    if (!filters.schoolId || !filters.yearId) {
+      throw new Error("Missing Context: schoolId and yearId are required.");
+    }
+  }
+
+  // =============================================================================
+  //  LECTURE (OVERRIDE & EXTENSIONS)
+  // =============================================================================
+
+  async findManyExtended(filters: any): Promise<any[]> {
     this.validateContext(filters);
     try {
       const query = db
@@ -45,25 +68,14 @@ export class EnrolementQuery {
         .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
         .$dynamic();
 
-      return await applyFilters(
-        query,
-        classroomEnrolements,
-        filters,
-        DEFAULT_SORT_ORDER,
-      );
+      return await applyQueryOptions(query, classroomEnrolements, filters);
     } catch (error) {
-      logger.error(
-        "EnrolementQuery.findMany: DB query failed.",
-        error as Error,
-      );
-      throw new Error("Erreur lors de la récupération des inscriptions.");
+      this.logError("findManyExtended", error, { filters });
+      throw new Error("Impossible de lister les inscriptions.");
     }
   }
 
-  /**
-   * Récupère une inscription spécifique par son ID
-   */
-  static async findById(enrolementId: string): Promise<any | null> {
+  override async findById(enrolementId: string): Promise<any | null> {
     if (!enrolementId) return null;
     try {
       const [result] = await db
@@ -75,39 +87,43 @@ export class EnrolementQuery {
           eq(classroomEnrolements.classroomId, classRooms.classId),
         )
         .where(eq(classroomEnrolements.enrolementId, enrolementId));
-
       return result || null;
     } catch (error) {
-      logger.error(
-        `EnrolementQuery.findById: Error for ${enrolementId}`,
-        error as Error,
-      );
+      this.logError("findById", error, { enrolementId });
       return null;
     }
   }
 
   // =============================================================================
-  //  STATISTIQUES & ANALYTICS
+  //  ANALYTICS (REPORTING)
   // =============================================================================
 
-  static async getTotalStudents(filters: any): Promise<number> {
+  async getDashboardMetrics(filters: { schoolId: string; yearId: string }) {
     this.validateContext(filters);
-    const [result] = await db
-      .select({ value: count() })
-      .from(classroomEnrolements)
-      .where(
-        and(
-          eq(classroomEnrolements.schoolId, filters.schoolId),
-          eq(classroomEnrolements.yearId, filters.yearId),
-        ),
-      );
-    return result?.value ?? 0;
+    try {
+      const [results] = await db
+        .select({
+          total: count(),
+          news: sql<number>`count(case when ${classroomEnrolements.isNewStudent} = true then 1 end)`,
+        })
+        .from(classroomEnrolements)
+        .where(
+          and(
+            eq(classroomEnrolements.schoolId, filters.schoolId),
+            eq(classroomEnrolements.yearId, filters.yearId),
+          ),
+        );
+
+      const total = Number(results?.total ?? 0);
+      const news = Number(results?.news ?? 0);
+      return { total, news, oldStudents: total - news };
+    } catch (error) {
+      this.logError("getDashboardMetrics", error, filters);
+      throw error;
+    }
   }
 
-  /**
-   * Agrégation par classe (Optimisé)
-   */
-  static async getStudentsCountByClass(filters: any) {
+  async getCountByClass(filters: { schoolId: string; yearId: string }) {
     this.validateContext(filters);
     return db
       .select({
@@ -135,95 +151,53 @@ export class EnrolementQuery {
       .orderBy(classRooms.shortIdentifier);
   }
 
-  /**
-   * Métriques de rétention en UNE SEULE requête SQL
-   */
-  static async getRetentionMetrics(filters: any) {
-    this.validateContext(filters);
-    const [results] = await db
-      .select({
-        total: count(),
-        news: sql<number>`count(case when ${classroomEnrolements.isNewStudent} = 1 then 1 end)`,
-      })
-      .from(classroomEnrolements)
-      .where(
-        and(
-          eq(classroomEnrolements.schoolId, filters.schoolId),
-          eq(classroomEnrolements.yearId, filters.yearId),
-        ),
-      );
-
-    const total = results?.total ?? 0;
-    const news = results?.news ?? 0;
-    return { total, news, oldStudents: total - news };
-  }
-
-  static async getStudentStatusStats(filters: any) {
-    this.validateContext(filters);
-    return db
-      .select({
-        status: classroomEnrolements.status,
-        count: count(),
-      })
-      .from(classroomEnrolements)
-      .where(
-        and(
-          eq(classroomEnrolements.schoolId, filters.schoolId),
-          eq(classroomEnrolements.yearId, filters.yearId),
-        ),
-      )
-      .groupBy(classroomEnrolements.status);
-  }
-
   // =============================================================================
-  //  MUTATIONS & TRANSACTIONS
+  //  OPERATIONS ATOMIQUES (TRANSACTIONS)
   // =============================================================================
 
   /**
-   * Création rapide avec transaction atomique
+   * Création d'un étudiant + Inscription en une seule transaction.
+   * On évite d'avoir un utilisateur créé sans inscription en cas de crash.
    */
-  static async quickCreate({
-    student,
-    isInSystem,
-    studentId,
-    ...enrolementData
-  }: any) {
+  async quickCreate(payload: {
+    student?: any;
+    studentId?: string;
+    isInSystem: boolean;
+    enrolement: TEnrolementInsert;
+  }) {
     return await db.transaction(async (tx) => {
-      let finalStudentId = studentId;
+      try {
+        let targetStudentId = payload.studentId;
 
-      if (!isInSystem && student) {
-        // Création de l'utilisateur dans la transaction
-        const [newUser] = await tx
-          .insert(users)
-          .values({ ...student, schoolId: enrolementData.schoolId })
+        if (!payload.isInSystem && payload.student) {
+          const [newUser] = await tx
+            .insert(users)
+            .values({
+              ...payload.student,
+              schoolId: payload.enrolement.schoolId,
+            })
+            .returning();
+          targetStudentId = newUser.userId;
+        }
+
+        if (!targetStudentId)
+          throw new Error("Student ID is required for enrolement.");
+
+        const [enrolement] = await tx
+          .insert(classroomEnrolements)
+          .values({ ...payload.enrolement, studentId: targetStudentId })
           .returning();
-        finalStudentId = newUser.userId;
+
+        return enrolement;
+      } catch (error) {
+        this.logError("quickCreate", error, payload);
+        tx.rollback();
+        throw error;
       }
-
-      const [enrolement] = await tx
-        .insert(classroomEnrolements)
-        .values({ ...enrolementData, studentId: finalStudentId })
-        .returning();
-
-      return enrolement;
     });
   }
 
-  static async update(enrolementId: string, data: any) {
-    if (!enrolementId) return null;
-    const [updated] = await db
-      .update(classroomEnrolements)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(classroomEnrolements.enrolementId, enrolementId))
-      .returning();
-    return updated || null;
-  }
-
-  static async delete(enrolementId: string): Promise<boolean> {
-    if (!enrolementId) return false;
-    await db
-      .delete(classroomEnrolements)
-      .where(eq(classroomEnrolements.enrolementId, enrolementId));
-    return true;
-  }
+  static instance = new EnrolementQuery();
 }
+
+export const enrolementService = EnrolementQuery.instance;
