@@ -1,5 +1,5 @@
 import z from "zod";
-import { EnrolementQuery } from "@/packages/@core/data-access/db/queries";
+import { enrolementService } from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcRequest,
@@ -33,7 +33,7 @@ export class GetEnrollements extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<unknown, TEnrolementFilter>): Promise<unknown> {
-    return EnrolementQuery.findMany(params);
+    return enrolementService.findMany(params);
   }
 }
 
@@ -48,7 +48,7 @@ export class PostEnrollement extends AbstractEndpoint<any> {
   protected handle({
     body,
   }: IpcRequest<TEnrolementCreate, unknown>): Promise<unknown> {
-    return EnrolementQuery.create(body);
+    return enrolementService.create(body);
   }
 }
 
@@ -63,7 +63,7 @@ export class PostQuickEnrollement extends AbstractEndpoint<any> {
   protected handle({
     body,
   }: IpcRequest<TEnrolementQuickCreate, unknown>): Promise<unknown> {
-    return EnrolementQuery.quickCreate(body);
+    return enrolementService.quickCreate(body);
   }
 }
 
@@ -78,7 +78,7 @@ export class GetEnrollement extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<unknown, EnrollementId>): Promise<unknown> {
-    return EnrolementQuery.findById(params.enrolementId);
+    return enrolementService.findById(params.enrolementId);
   }
 }
 
@@ -95,7 +95,7 @@ export class UpdateEnrollement extends AbstractEndpoint<any> {
     params,
     body,
   }: IpcRequest<TEnrolementUpdate, EnrollementId>): Promise<unknown> {
-    return EnrolementQuery.update(params.enrolementId, body);
+    return enrolementService.update(params.enrolementId, body);
   }
 }
 
@@ -110,6 +110,6 @@ export class DeleteEnrollement extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<unknown, EnrollementId>): Promise<unknown> {
-    return EnrolementQuery.delete(params.enrolementId);
+    return enrolementService.delete(params.enrolementId);
   }
 }

@@ -29,6 +29,7 @@ import {
     ActionTileDetail
 } from "@/renderer/components/tables/data-table.action-tiles";
 import { Link } from "react-router";
+import { UseClassroomFormOptions } from "@/renderer/components/form/classroom-form.actions";
 
 type TWithSchoolAndYear = Pick<TClassroom, "schoolId" | "yearId">
 
@@ -36,8 +37,9 @@ type TWithSchoolAndYear = Pick<TClassroom, "schoolId" | "yearId">
 const ClassroomRowActions: React.FC<{
     classroom: TClassroom;
     schoolId: string;
-    yearId: string
-}> = ({ classroom, schoolId, yearId }) => {
+    yearId: string;
+    options?: UseClassroomFormOptions
+}> = ({ classroom, schoolId, yearId, options }) => {
     const defaultValues = useMemo(() => ({ ...classroom, yearId }), [classroom, yearId]);
 
     return (
@@ -48,12 +50,21 @@ const ClassroomRowActions: React.FC<{
             </Link>
 
             {/* Modification */}
-            <ClassroomDialogUpdateForm schoolId={schoolId} defaultValues={defaultValues}>
+            <ClassroomDialogUpdateForm
+                classId={classroom.classId}
+                schoolId={schoolId}
+                defaultValues={defaultValues}
+                options={options}
+            >
                 <ActionTileEdit />
             </ClassroomDialogUpdateForm>
 
             {/* Duplication (Create avec valeurs existantes) */}
-            <ClassroomDialogCreateForm schoolId={schoolId} defaultValues={defaultValues}>
+            <ClassroomDialogCreateForm
+                schoolId={schoolId}
+                defaultValues={defaultValues}
+                options={options}
+            >
                 <ActionTileCopy />
             </ClassroomDialogCreateForm>
 
@@ -69,7 +80,7 @@ const ClassroomRowActions: React.FC<{
 };
 
 const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearId }) => {
-    const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId });
+    const { data: classrooms = [], queryKey } = useGetClassrooms({ where: { schoolId, yearId } });
     console.log("classrooms", classrooms)
     return (
         <main className="my-10 mx-auto h-full container max-w-screen-2xl">
@@ -84,7 +95,11 @@ const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearI
                         <p className="text-sm text-muted-foreground">Administrez les salles.</p>
                     </div>
 
-                    <ClassroomDialogCreateForm schoolId={schoolId} defaultValues={{ yearId }}>
+                    <ClassroomDialogCreateForm
+                        schoolId={schoolId}
+                        defaultValues={{ yearId, schoolId }}
+                        options={{ mutationKeys: queryKey }}
+                    >
                         <Button size="sm" className="rounded-full">
                             <Plus className="size-4 mr-2" />
                             <span>Ajouter une classe</span>
@@ -104,6 +119,7 @@ const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearI
                                             classroom={props.row.original}
                                             schoolId={schoolId}
                                             yearId={yearId}
+                                            options={{ mutationKeys: queryKey }}
                                         />
                                     }
                                 />

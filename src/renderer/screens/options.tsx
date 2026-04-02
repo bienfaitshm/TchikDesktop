@@ -64,7 +64,7 @@ const OptionRowActions: React.FC<{
 };
 
 const OptionManagementPage: React.FC<TWithSchool> = ({ schoolId }) => {
-    const { data: options = [] } = useGetOptions({ schoolId });
+    const { data: options = [] } = useGetOptions({ where: { schoolId } });
 
     return (
         <main className="my-10 mx-auto h-full container max-w-screen-2xl">
@@ -81,7 +81,7 @@ const OptionManagementPage: React.FC<TWithSchool> = ({ schoolId }) => {
                         </p>
                     </div>
 
-                    <CreateOptionDialog>
+                    <CreateOptionDialog defaultValues={{ schoolId }}>
                         <Button size="sm" className="rounded-full">
                             <Plus className="size-4 mr-2" />
                             <span>Ajouter une filière</span>

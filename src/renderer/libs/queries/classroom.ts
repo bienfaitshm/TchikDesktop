@@ -14,10 +14,12 @@ export const GET_CLASSROOMS_KEY = "GET_CLASSROOMS";
  * @description Hook to fetch all classrooms for a given school, optionally filtered by year.
  */
 export function useGetClassrooms(params?: TClassroomFilter) {
-  return useSuspenseQuery({
-    queryKey: [GET_CLASSROOMS_KEY, params],
+  const queryKey = [GET_CLASSROOMS_KEY, params];
+  const query = useSuspenseQuery({
+    queryKey,
     queryFn: () => classroom.fetchClassrooms(params),
   });
+  return { ...query, queryKey };
 }
 
 export function useGetClassroomById(classroomId: string) {

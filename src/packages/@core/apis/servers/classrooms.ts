@@ -1,5 +1,5 @@
 import z from "zod";
-import { ClassroomQuery } from "@/packages/@core/data-access/db/queries";
+import { classroomService } from "@/packages/@core/data-access/db/queries";
 import {
   ClassroomAttributesSchema,
   ClassroomCreateSchema,
@@ -32,7 +32,7 @@ export class GetClassrooms extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, TClassroomFilter>): Promise<unknown> {
-    return ClassroomQuery.findMany(params);
+    return classroomService.findMany(params);
   }
 }
 
@@ -47,7 +47,7 @@ export class GetClassroomsWithEnrollments extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, TClassroomFilter>): Promise<unknown> {
-    return ClassroomQuery.findMany(params);
+    return classroomService.findMany(params);
   }
 }
 
@@ -62,7 +62,7 @@ export class PostClassroom extends AbstractEndpoint<any> {
   protected handle({
     body,
   }: IpcRequest<TClassroomCreate, any>): Promise<unknown> {
-    return ClassroomQuery.create(body);
+    return classroomService.create(body);
   }
 }
 
@@ -74,7 +74,7 @@ export class GetClassroom extends AbstractEndpoint<any> {
     params: ClassIdSchema,
   };
   protected handle({ params }: IpcRequest<any, ClassId>): Promise<unknown> {
-    return ClassroomQuery.findById(params.classId);
+    return classroomService.findById(params.classId);
   }
 }
 
@@ -91,7 +91,7 @@ export class UpdateClassroom extends AbstractEndpoint<any> {
     params,
     body,
   }: IpcRequest<TClassroomUpdate, ClassId>): Promise<unknown> {
-    return ClassroomQuery.update(params.classId, body);
+    return classroomService.update(params.classId, body);
   }
 }
 
@@ -104,6 +104,6 @@ export class DeleteClassroom extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, ClassId>): Promise<unknown> {
-    return ClassroomQuery.delete(params.classId);
+    return classroomService.delete(params.classId);
   }
 }

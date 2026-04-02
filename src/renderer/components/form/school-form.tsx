@@ -1,5 +1,4 @@
-import React, { useMemo } from "react";
-import { useZodForm } from "@/packages/use-zod-form";
+import React from "react";
 import {
     Form,
     FormControl,
@@ -11,7 +10,7 @@ import {
 } from "@/renderer/components/ui/form";
 import { Input } from "@/renderer/components/ui/input";
 import { SchoolCreateSchema, type TSchoolCreate } from "@/packages/@core/data-access/schema-validations";
-import { BaseFormProps } from "./base-form";
+import { BaseFormProps, useZodForm } from "./base-form";
 import { Loader2 } from "lucide-react";
 
 export type SchoolFormData = TSchoolCreate;
@@ -32,24 +31,16 @@ export const SchoolForm: React.FC<BaseFormProps<SchoolFormData>> = ({
     initialValues = {}
 }) => {
 
-    const mergedDefaultValues = useMemo(() => ({
-        ...DEFAULT_SCHOOL_VALUES,
-        ...initialValues
-    }), [initialValues]);
+
 
     const form = useZodForm({
         schema: SchoolCreateSchema,
-        defaultValues: mergedDefaultValues,
-        onSubmit: async (values) => {
-            try {
-                await onSubmit?.(values);
-            } catch (error) {
-                form.setError("root", { message: "Une erreur est survenue lors de l'enregistrement." });
-            }
-        },
+        defaultValues: DEFAULT_SCHOOL_VALUES,
+        initialValues,
+        onSubmit: onSubmit
     });
 
-    const isSubmitting = form.formState.isSubmitting;
+    const isSubmitting = form.isSubmitting;
 
     return (
         <Form {...form}>

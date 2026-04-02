@@ -1,5 +1,5 @@
 import z from "zod";
-import { OptionQuery } from "@/packages/@core/data-access/db/queries";
+import { optionService } from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcRequest,
@@ -32,7 +32,7 @@ export class GetOptions extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, TOptionFilter>): Promise<unknown> {
-    return OptionQuery.findMany(params);
+    return optionService.findMany(params);
   }
 }
 
@@ -45,7 +45,7 @@ export class PostOption extends AbstractEndpoint<any> {
   };
 
   protected handle({ body }: IpcRequest<TOptionCreate, any>): Promise<unknown> {
-    return OptionQuery.findMany(body);
+    return optionService.create(body);
   }
 }
 
@@ -58,7 +58,7 @@ export class GetOption extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, OptionId>): Promise<unknown> {
-    return OptionQuery.findById(params.optionId);
+    return optionService.findById(params.optionId);
   }
 }
 
@@ -75,7 +75,7 @@ export class UpdateOption extends AbstractEndpoint<any> {
     params,
     body,
   }: IpcRequest<TOptionUpdate, OptionId>): Promise<unknown> {
-    return OptionQuery.update(params.optionId, body);
+    return optionService.update(params.optionId, body);
   }
 }
 
@@ -88,6 +88,6 @@ export class DeleteOption extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, OptionId>): Promise<unknown> {
-    return OptionQuery.delete(params.optionId);
+    return optionService.delete(params.optionId);
   }
 }

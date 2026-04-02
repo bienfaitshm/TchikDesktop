@@ -50,7 +50,7 @@ export const SectionBadge = ({ section }: SectionBadgeProps) => {
     return (
         <Badge variant={variant} className="flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-medium rounded-full w-fit">
             {IconComponent && <IconComponent className="size-3.5" />}
-            {getSectionLabel[section]}
+            {getSectionLabel(section)}
         </Badge>
     );
 };

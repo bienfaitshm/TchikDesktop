@@ -1,5 +1,5 @@
 import z from "zod";
-import { UserQuery } from "@/packages/@core/data-access/db/queries";
+import { userService } from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcRequest,
@@ -29,7 +29,7 @@ export class GetUsers extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, TUserFilter>): Promise<unknown> {
-    return UserQuery.findMany(params);
+    return userService.findMany(params);
   }
 }
 
@@ -42,7 +42,7 @@ export class PostUser extends AbstractEndpoint<any> {
   };
 
   protected handle({ body }: IpcRequest<TUserCreate, any>): Promise<unknown> {
-    return UserQuery.create(body);
+    return userService.create(body);
   }
 }
 
@@ -55,7 +55,7 @@ export class GetUser extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, UserId>): Promise<unknown> {
-    return UserQuery.findById(params.userId);
+    return userService.findById(params.userId);
   }
 }
 
@@ -72,7 +72,7 @@ export class UpdateUser extends AbstractEndpoint<any> {
     params,
     body,
   }: IpcRequest<TUserUpdate, UserId>): Promise<unknown> {
-    return UserQuery.update(params.userId, body);
+    return userService.update(params.userId, body);
   }
 }
 
@@ -85,6 +85,6 @@ export class DeleteUser extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, UserId>): Promise<unknown> {
-    return UserQuery.delete(params.userId);
+    return userService.delete(params.userId);
   }
 }

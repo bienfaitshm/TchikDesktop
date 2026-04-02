@@ -1,5 +1,4 @@
-import React, { useMemo } from "react";
-import { useZodForm } from "@/packages/use-zod-form";
+import React from "react";
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
 import { OptionCreateSchema, type TOptionCreate } from "@/packages/@core/data-access/schema-validations";
@@ -20,7 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/renderer/components/ui/select";
-import { BaseFormProps } from "./base-form";
+import { BaseFormProps, useZodForm } from "./base-form";
 
 export type OptionFormData = TOptionCreate;
 
@@ -73,17 +72,13 @@ export const OptionForm: React.FC<BaseFormProps<OptionFormData>> = ({
     onSubmit
 }) => {
 
-    const mergedValues = useMemo(() => ({
-        ...DEFAULT_OPTION_VALUES,
-        ...initialValues
-    }), [initialValues]);
+
 
     const form = useZodForm({
         schema: OptionCreateSchema,
-        defaultValues: mergedValues,
-        onSubmit: async (values) => {
-            await onSubmit?.(values);
-        },
+        initialValues,
+        defaultValues: DEFAULT_OPTION_VALUES,
+        onSubmit
     });
 
     const isSubmitting = form.formState.isSubmitting;

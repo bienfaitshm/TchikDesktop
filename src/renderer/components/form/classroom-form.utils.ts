@@ -5,7 +5,7 @@ import {
   type TClassroomCreate,
   type TOptionAttributes,
 } from "@/packages/@core/data-access/schema-validations";
-import { useZodForm } from "@/packages/use-zod-form";
+import { useZodForm, BaseFormProps } from "./base-form";
 
 export type ClassroomFormData = TClassroomCreate;
 export type TSuggestion = { name: string; shortName: string };
@@ -50,8 +50,6 @@ const ORDINAL_TEXT_MAP: Record<string, number> = {
 } as const;
 
 type UseClassroomFormParams = {
-  initialValues: Partial<ClassroomFormData>;
-  onSubmit?: (value: ClassroomFormData) => void;
   onGenerateSuggestion?: (
     optionId: string,
     identifier: string,
@@ -87,12 +85,13 @@ export function useClassroomForm({
   initialValues,
   onSubmit,
   onGenerateSuggestion,
-}: UseClassroomFormParams) {
+}: UseClassroomFormParams & BaseFormProps<ClassroomFormData>) {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const form = useZodForm({
     schema: ClassroomCreateSchema,
-    defaultValues: { ...DEFAULT_CLASSROOM_VALUES, ...initialValues },
+    initialValues,
+    defaultValues: DEFAULT_CLASSROOM_VALUES,
     onSubmit,
   });
 

@@ -74,7 +74,7 @@ export const UpdateOptionDialog: React.FC<UpdateOptionDialogProps> = ({ initialD
 
                 <OptionForm
                     formId={formId}
-                    onSubmit={(data) => updateOption({ id: optionId, data })}
+                    onSubmit={(data, helpers) => updateOption({ id: optionId, data }, helpers)}
                     initialValues={initialData}
                 />
 
@@ -117,7 +117,7 @@ export const DeleteOptionDialog: React.FC<DeleteOptionDialogProps> = ({
                 onConfirm={handleConfirm}
                 isLoading={isDeleting}
                 title="Supprimer la filière"
-                description="Tous les documents et emplois du temps associés seront définitivement retirés."
+                description="Tous les documents associés seront définitivement retirés."
                 itemName={optionName}
             />
 

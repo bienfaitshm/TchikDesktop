@@ -3,17 +3,18 @@ import { Dialog, DialogClose, DialogContent, DialogFooter, DialogDescription, Di
 import { Button } from "@/renderer/components/ui/button"
 import { ButtonLoader } from "@/renderer/components/form/button-loader"
 import { ClassroomForm, type ClassroomFormData } from "@/renderer/components/form/classroom-form"
-import { useCreateClassroomForm, useUpdateClassroomForm, useDeleteClassroomForm } from "@/renderer/components/form/classroom-form.actions"
+import { useCreateClassroomForm, useUpdateClassroomForm, useDeleteClassroomForm, type UseClassroomFormOptions } from "@/renderer/components/form/classroom-form.actions"
 import { ConfirmDeleteDialog } from "@/renderer/components/dialog/dialog-delete"
 import { PropsWithChildren } from "react"
 
 type DialogCreateFormProps = {
     schoolId: string,
-    defaultValues?: Partial<ClassroomFormData>
+    defaultValues?: Partial<ClassroomFormData>,
+    options?: Partial<UseClassroomFormOptions>
 }
 
-export const ClassroomDialogCreateForm: React.FC<PropsWithChildren<DialogCreateFormProps>> = ({ schoolId, children, defaultValues }) => {
-    const { formId, generateSuggestion, isLoading, onSubmit, selectItems } = useCreateClassroomForm(schoolId)
+export const ClassroomDialogCreateForm: React.FC<PropsWithChildren<DialogCreateFormProps>> = ({ schoolId, children, defaultValues, options }) => {
+    const { formId, generateSuggestion, isLoading, onSubmit, selectItems } = useCreateClassroomForm(schoolId, options)
 
     return (
         <Dialog>
@@ -52,11 +53,13 @@ export const ClassroomDialogCreateForm: React.FC<PropsWithChildren<DialogCreateF
 
 type DialogUpdateFormProps = {
     schoolId: string;
+    classId: string;
     defaultValues?: Partial<ClassroomFormData>;
+    options?: Partial<UseClassroomFormOptions>
 }
 
-export const ClassroomDialogUpdateForm: React.FC<PropsWithChildren<DialogUpdateFormProps>> = ({ defaultValues, schoolId, children }) => {
-    const { formId, isLoading, onSubmit, selectItems, generateSuggestion } = useUpdateClassroomForm(schoolId)
+export const ClassroomDialogUpdateForm: React.FC<PropsWithChildren<DialogUpdateFormProps>> = ({ defaultValues, classId, schoolId, children, options }) => {
+    const { formId, isLoading, onSubmit, selectItems, generateSuggestion } = useUpdateClassroomForm(schoolId, options)
 
     return (
         <Dialog>
@@ -73,7 +76,7 @@ export const ClassroomDialogUpdateForm: React.FC<PropsWithChildren<DialogUpdateF
 
                 <ClassroomForm
                     formId={formId}
-                    onSubmit={() => onSubmit}
+                    onSubmit={(values, helpers) => onSubmit({ data: values, id: classId }, helpers)}
                     onGenerateSuggestion={generateSuggestion}
                     options={selectItems}
                     initialValues={defaultValues}

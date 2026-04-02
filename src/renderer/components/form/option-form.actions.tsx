@@ -4,7 +4,7 @@ import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutat
 import { useCreateOption, useDeleteOption, useUpdateOption } from "@/renderer/libs/queries/option";
 import { TQueryUpdate } from "@/renderer/libs/queries/type";
 import type { TOptionCreate as OptionFormData } from "@/packages/@core/data-access/schema-validations";
-
+import type { BaseFormProps } from "./base-form"
 interface UseOptionFormConfig {
     mutationKeys?: unknown[];
     onSuccess?: (data?: OptionFormData) => void;
@@ -40,15 +40,18 @@ export function useCreateOptionForm(config?: UseOptionFormConfig) {
     const { formId, notifyAndInvalidate } = useOptionFormBase(config);
     const mutation = useCreateOption();
 
-    const createOption = useCallback(
-        (data: OptionFormData) => {
+    const createOption: BaseFormProps<OptionFormData>["onSubmit"] = useCallback(
+        (data, helpers) => {
             mutation.mutate(
                 data,
                 createMutationCallbacksWithNotifications({
                     successMessageTitle: "Filière créée !",
                     successMessageDescription: `La filière '${data.optionName}' a été ajoutée.`,
                     errorMessageTitle: "Échec de la création.",
-                    onSuccess: notifyAndInvalidate,
+                    onSuccess: (data) => {
+                        notifyAndInvalidate?.(data)
+                        helpers?.reset?.()
+                    },
                 })
             );
         },
@@ -65,15 +68,18 @@ export function useUpdateOptionForm(config?: UseOptionFormConfig) {
     const { formId, notifyAndInvalidate } = useOptionFormBase(config);
     const mutation = useUpdateOption();
 
-    const updateOption = useCallback(
-        ({ data, id }: TQueryUpdate<OptionFormData>) => {
+    const updateOption: BaseFormProps<TQueryUpdate<OptionFormData>>["onSubmit"] = useCallback(
+        ({ data, id }, helpers) => {
             mutation.mutate(
                 { data, id },
                 createMutationCallbacksWithNotifications({
                     successMessageTitle: "Filière mise à jour !",
                     successMessageDescription: `Les modifications de '${data.optionName}' ont été enregistrées.`,
                     errorMessageTitle: "Échec de la mise à jour.",
-                    onSuccess: notifyAndInvalidate,
+                    onSuccess: (data) => {
+                        notifyAndInvalidate(data)
+                        helpers?.reset?.()
+                    },
                 })
             );
         },

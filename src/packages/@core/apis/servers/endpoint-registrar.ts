@@ -60,8 +60,7 @@ export class EndpointRegistrar {
         definition.handler,
       );
     });
-    this.logger.info(
-      `Routes registered: ${JSON.stringify(this.endpoints.filter((i) => i.route))}`,
-    );
+    this.logger.info(`Routes registered`);
+    this.logger.info(this.endpoints.filter((i) => i.route).toLocaleString());
   }
 }

@@ -4,12 +4,12 @@ import { useGetOptionAsOptions } from "@/renderer/hooks/data-as-options";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { useCreateClassroom, useUpdateClassroom, useDeleteClassroom } from "@/renderer/libs/queries/classroom";
 import { createSuggestion, type ClassroomFormData } from "./classroom-form.utils";
-import { TQueryUpdate } from "@/renderer/libs/queries/type";
-
+import type { TQueryUpdate } from "@/renderer/libs/queries/type";
+import type { BaseFormProps } from "./base-form"
 /**
  * Options de configuration pour les hooks de formulaire de salle de classe.
  */
-interface UseClassroomFormOptions {
+export interface UseClassroomFormOptions {
     mutationKeys?: unknown[];
     onSuccess?: (data?: ClassroomFormData) => void;
 }
@@ -57,15 +57,18 @@ export function useCreateClassroomForm(schoolId: string, options?: UseClassroomF
     const base = useBaseClassroomForm(schoolId, options);
     const mutation = useCreateClassroom();
 
-    const onSubmit = useCallback(
-        (data: ClassroomFormData) => {
+    const onSubmit: BaseFormProps<ClassroomFormData>["onSubmit"] = useCallback(
+        (data, helpers) => {
             mutation.mutate(
                 data,
                 createMutationCallbacksWithNotifications({
                     successMessageTitle: "Salle de classe créée !",
                     successMessageDescription: `La salle '${data.identifier}' a été ajoutée avec succès.`,
                     errorMessageTitle: "Échec de la création.",
-                    onSuccess: base.handleMutationSuccess,
+                    onSuccess: (data) => {
+                        base.handleMutationSuccess(data)
+                        helpers.reset?.()
+                    },
                 })
             );
         },
@@ -82,15 +85,18 @@ export function useUpdateClassroomForm(schoolId: string, options?: UseClassroomF
     const base = useBaseClassroomForm(schoolId, options);
     const mutation = useUpdateClassroom();
 
-    const onSubmit = useCallback(
-        ({ data, id }: TQueryUpdate<ClassroomFormData>) => {
+    const onSubmit: BaseFormProps<TQueryUpdate<ClassroomFormData>>["onSubmit"] = useCallback(
+        ({ data, id }, helpers) => {
             mutation.mutate(
                 { data, id },
                 createMutationCallbacksWithNotifications({
                     successMessageTitle: "Salle de classe mise à jour !",
                     successMessageDescription: `Les modifications de '${data.identifier}' ont été enregistrées.`,
                     errorMessageTitle: "Échec de la mise à jour.",
-                    onSuccess: base.handleMutationSuccess,
+                    onSuccess: (data) => {
+                        base.handleMutationSuccess(data);
+                        helpers.reset?.()
+                    },
                 })
             );
         },
