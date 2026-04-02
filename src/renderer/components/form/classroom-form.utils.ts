@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { SECTION } from "@/packages/@core/data-access/db/enum";
+import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
 import {
   ClassroomCreateSchema,
   type TClassroomCreate,
@@ -16,7 +16,7 @@ const DEFAULT_CLASSROOM_VALUES: ClassroomFormData = {
   schoolId: "",
   optionId: null,
   yearId: "",
-  section: SECTION.SECONDARY,
+  section: SECTION_ENUM.SECONDARY,
 };
 
 const ORDINAL_TEXT_MAP: Record<string, number> = {

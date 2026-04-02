@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useZodForm } from "@/packages/use-zod-form";
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
-import { SECTION } from "@/packages/@core/data-access/db/enum";
+import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
 import { OptionCreateSchema, type TOptionCreate } from "@/packages/@core/data-access/schema-validations";
 import {
     Form,
@@ -20,7 +20,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/renderer/components/ui/select";
-import { Layers, Hash, GraduationCap } from "lucide-react";
 import { BaseFormProps } from "./base-form";
 
 export type OptionFormData = TOptionCreate;
@@ -28,7 +27,7 @@ export type OptionFormData = TOptionCreate;
 const DEFAULT_OPTION_VALUES: OptionFormData = {
     optionName: "",
     optionShortName: "",
-    section: SECTION.SECONDARY,
+    section: SECTION_ENUM.SECONDARY,
     schoolId: ""
 };
 

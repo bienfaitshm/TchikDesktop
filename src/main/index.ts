@@ -4,7 +4,7 @@ import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { autoUpdater } from "electron-updater";
 
 import icon from "../../resources/icon.png?asset";
-import { sequelize, performBackup } from "@/packages/@core/data-access/db";
+import { performBackup } from "@/packages/@core/data-access/db";
 import { getLogger } from "@/packages/logger";
 
 import { apiGateway, ipcServer } from "@/main/apps";
@@ -39,29 +39,31 @@ const createMainWindow = (): void => {
   dbLogger.info(
     `Tentative de synchronisation de la base de données (ALTER_DB: ${ALTER_DB}).`,
   );
-  sequelize
-    .sync({ alter: ALTER_DB, logging: false })
-    .then(() => {
-      dbLogger.info("Base de données synchronisée avec succès.");
 
-      // Démarrage du serveur API interne
-      mainLogger.info("Démarrage du serveur API Electron...");
-      apiGateway.registerEndpoints();
-      ipcServer.listen();
-    })
-    .catch((error) => {
-      // Log professionnel en cas d'échec de la DB
-      console.log("error", error);
-      dbLogger.error(
-        "Échec de la synchronisation de la base de données!",
-        error,
-      );
-      // Optionnel: Afficher une boîte de dialogue critique à l'utilisateur
-      dialog.showErrorBox(
-        "Erreur Critique de Démarrage",
-        "La base de données n'a pas pu être initialisée. L'application pourrait ne pas fonctionner correctement.",
-      );
-    });
+  dbLogger.info("Base de données synchronisée avec succès.");
+
+  // Démarrage du serveur API interne
+  mainLogger.info("Démarrage du serveur API Electron...");
+  apiGateway.registerEndpoints();
+  ipcServer.listen();
+  // sequelize
+  //   .sync({ alter: ALTER_DB, logging: false })
+  //   .then(() => {
+
+  //   })
+  //   .catch((error) => {
+  //     // Log professionnel en cas d'échec de la DB
+  //     console.log("error", error);
+  //     dbLogger.error(
+  //       "Échec de la synchronisation de la base de données!",
+  //       error,
+  //     );
+  //     // Optionnel: Afficher une boîte de dialogue critique à l'utilisateur
+  //     dialog.showErrorBox(
+  //       "Erreur Critique de Démarrage",
+  //       "La base de données n'a pas pu être initialisée. L'application pourrait ne pas fonctionner correctement.",
+  //     );
+  //   });
 
   mainWindow.once("ready-to-show", () => {
     mainLogger.info("Fenêtre prête à être affichée.");

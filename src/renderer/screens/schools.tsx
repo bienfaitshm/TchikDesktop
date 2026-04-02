@@ -22,8 +22,8 @@ import {
     TableActionManager,
     useTableAction,
 } from "@/renderer/components/dialog/dialog.table-action";
-import { TSchool } from "@/packages/@core/data-access/db/models/types";
-import { MUTATION_ACTION } from "@/packages/@core/data-access/db/enum";
+import { TSchool } from "@/packages/@core/data-access/db/schemas/types";
+import { MUTATION_ACTION_ENUM } from "@/packages/@core/data-access/db/enum";
 
 
 
@@ -59,12 +59,12 @@ export const SchoolsPage: React.FC = ({ }) => {
 
 
     const handleFormSubmit = useCallback(
-        ({ data, type, initialData }: { data: FormValueType, type: MUTATION_ACTION, initialData?: TSchool }) => {
-            if (type === MUTATION_ACTION.CREATE) {
+        ({ data, type, initialData }: { data: FormValueType, type: MUTATION_ACTION_ENUM, initialData?: TSchool }) => {
+            if (type === MUTATION_ACTION_ENUM.CREATE) {
                 handleCreate(data, data.name, () => {
                     tableAction.onClose();
                 });
-            } else if (type === MUTATION_ACTION.EDIT && initialData) {
+            } else if (type === MUTATION_ACTION_ENUM.EDIT && initialData) {
                 handleUpdate(initialData.schoolId, data, data.name, () => {
                     tableAction.onClose();
                 });

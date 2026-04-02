@@ -11,7 +11,7 @@ import {
 import { Button } from "@/renderer/components/ui/button";
 // Assurez-vous que ces imports sont corrects dans votre projet
 import { ButtonLoader } from "../form/button-loader";
-import { MUTATION_ACTION } from "@/packages/@core/data-access/db/enum";
+import { MUTATION_ACTION_ENUM } from "@/packages/@core/data-access/db/enum";
 import { FormSubmitter } from "../form/form-submiter"; // Supposons que FormSubmitter est un client-side wrapper pour un formulaire
 
 // --- Helpers pour les textes des dialogues ---
@@ -22,18 +22,18 @@ type DialogTextDescription = {
 };
 
 // Mappage des informations textuelles pour les dialogues
-const DIALOG_TEXT_INFOS: Record<MUTATION_ACTION, (itemName: string) => DialogTextDescription> = {
-    [MUTATION_ACTION.CREATE]: (itemName: string) => ({
+const DIALOG_TEXT_INFOS: Record<MUTATION_ACTION_ENUM, (itemName: string) => DialogTextDescription> = {
+    [MUTATION_ACTION_ENUM.CREATE]: (itemName: string) => ({
         title: `Création du/de la ${itemName}`,
         description: `Remplissez les informations ci-dessous pour créer un nouveau/une nouvelle ${itemName}.`,
         submitText: "Enregistrer",
     }),
-    [MUTATION_ACTION.EDIT]: (itemName: string) => ({
+    [MUTATION_ACTION_ENUM.EDIT]: (itemName: string) => ({
         title: `Modification du/de la ${itemName}`,
         description: `Modifiez les informations du/de la ${itemName} sélectionné(e).`,
         submitText: "Modifier",
     }),
-    [MUTATION_ACTION.DELETE]: (itemName: string) => ({
+    [MUTATION_ACTION_ENUM.DELETE]: (itemName: string) => ({
         title: `Suppression du/de la ${itemName}`,
         description: `Êtes-vous sûr(e) de vouloir supprimer cet(te) ${itemName}? Cette action est irréversible.`,
         submitText: "Confirmer", // Bien que non utilisé directement, c'est pour la cohérence
@@ -41,14 +41,14 @@ const DIALOG_TEXT_INFOS: Record<MUTATION_ACTION, (itemName: string) => DialogTex
 };
 
 // Fonction utilitaire pour obtenir les infos du dialogue
-function getDialogTextInfos(itemName: string, key: MUTATION_ACTION): DialogTextDescription {
+function getDialogTextInfos(itemName: string, key: MUTATION_ACTION_ENUM): DialogTextDescription {
     return DIALOG_TEXT_INFOS[key](itemName);
 }
 
 // --- Types de base pour l'état du dialogue et les props ---
 type DialogActionState<TItem> = {
     isOpen: boolean;
-    type: MUTATION_ACTION;
+    type: MUTATION_ACTION_ENUM;
     initialData?: TItem; // Typage générique pour les données initiales
 };
 
@@ -56,23 +56,23 @@ type DialogActionState<TItem> = {
 function useActionDialog<TItem>() {
     const [dialogState, setDialogState] = useState<DialogActionState<TItem>>({
         isOpen: false,
-        type: MUTATION_ACTION.CREATE, // Valeur par défaut
+        type: MUTATION_ACTION_ENUM.CREATE, // Valeur par défaut
     });
 
     const openCreate = useCallback(() => {
-        setDialogState({ isOpen: true, type: MUTATION_ACTION.CREATE, initialData: undefined });
+        setDialogState({ isOpen: true, type: MUTATION_ACTION_ENUM.CREATE, initialData: undefined });
     }, []);
 
     const openUpdate = useCallback((item: TItem) => {
-        setDialogState({ isOpen: true, type: MUTATION_ACTION.EDIT, initialData: item });
+        setDialogState({ isOpen: true, type: MUTATION_ACTION_ENUM.EDIT, initialData: item });
     }, []);
 
     const openDelete = useCallback((item: TItem) => {
-        setDialogState({ isOpen: true, type: MUTATION_ACTION.DELETE, initialData: item });
+        setDialogState({ isOpen: true, type: MUTATION_ACTION_ENUM.DELETE, initialData: item });
     }, []);
 
     const closeDialog = useCallback(() => {
-        setDialogState({ isOpen: false, type: MUTATION_ACTION.CREATE, initialData: undefined });
+        setDialogState({ isOpen: false, type: MUTATION_ACTION_ENUM.CREATE, initialData: undefined });
     }, []);
 
     return {
@@ -102,7 +102,7 @@ function DeleteConfirmationDialog<TItem>({
     isOpen,
     onOpenChange,
 }: DeleteConfirmationDialogProps<TItem>) {
-    const dialogInfos = getDialogTextInfos(itemName, MUTATION_ACTION.DELETE);
+    const dialogInfos = getDialogTextInfos(itemName, MUTATION_ACTION_ENUM.DELETE);
 
     const handleConfirm = useCallback(() => {
         if (itemToDelete) {
@@ -144,7 +144,7 @@ function DeleteConfirmationDialog<TItem>({
 interface FormActionDialogProps {
     itemName: string;
     isLoading?: boolean;
-    type: MUTATION_ACTION.CREATE | MUTATION_ACTION.EDIT;
+    type: MUTATION_ACTION_ENUM.CREATE | MUTATION_ACTION_ENUM.EDIT;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     children: React.ReactNode; // Contenu du formulaire passé en enfants
@@ -211,7 +211,7 @@ interface TableActionManagerProps<TItem> {
     itemName: string;
     isLoading?: boolean; // Pour l'état global de chargement
     onConfirmDelete: (item: TItem) => void;
-    onFormSubmit: (params: { data: any, type: MUTATION_ACTION, initialData?: TItem }) => void;
+    onFormSubmit: (params: { data: any, type: MUTATION_ACTION_ENUM, initialData?: TItem }) => void;
     renderForm: (value: { onSubmit?(value: any): void, initialData?: TItem }) => React.ReactNode; // Pour rendre le formulaire spécifique
 }
 
@@ -246,7 +246,7 @@ export const TableActionManager = forwardRef(function TableActionManager<TItem =
 
 
     // Rendu conditionnel des dialogues
-    if (dialogState.type === MUTATION_ACTION.DELETE) {
+    if (dialogState.type === MUTATION_ACTION_ENUM.DELETE) {
         return (
             <DeleteConfirmationDialog
                 itemName={itemName}
@@ -260,7 +260,7 @@ export const TableActionManager = forwardRef(function TableActionManager<TItem =
     }
 
     // Pour CREATE et EDIT
-    if (dialogState.type === MUTATION_ACTION.CREATE || dialogState.type === MUTATION_ACTION.EDIT) {
+    if (dialogState.type === MUTATION_ACTION_ENUM.CREATE || dialogState.type === MUTATION_ACTION_ENUM.EDIT) {
         return (
             <FormActionDialog
                 itemName={itemName}
@@ -309,7 +309,7 @@ export function useTableAction<TItem = unknown>() {
 // --- EXEMPLE D'UTILISATION (non inclus dans le code final du composant) ---
 /*
 // Dans un composant parent:
-import { TableActionManager, useTableAction, MUTATION_ACTION } from './TableActionManager'; // Ajustez le chemin
+import { TableActionManager, useTableAction, MUTATION_ACTION_ENUM } from './TableActionManager'; // Ajustez le chemin
 
 type MyData = {
     id: string;
@@ -331,10 +331,10 @@ function MyParentComponent() {
         tableActionRef.current?.create(); // Pour fermer et réinitialiser après suppression (peut être fait dans le hook)
     };
 
-    const handleFormSubmit = async (formData: any, type: MUTATION_ACTION, initialData?: MyData) => {
+    const handleFormSubmit = async (formData: any, type: MUTATION_ACTION_ENUM, initialData?: MyData) => {
         setIsLoading(true);
         console.log(`Soumission du formulaire (${type}) avec les données:`, formData);
-        if (type === MUTATION_ACTION.EDIT && initialData) {
+        if (type === MUTATION_ACTION_ENUM.EDIT && initialData) {
             console.log("Données initiales pour l'édition:", initialData);
         }
         // Simuler une API call
@@ -345,7 +345,7 @@ function MyParentComponent() {
     };
 
     // Le formulaire réel sera rendu ici
-    const renderMyForm = useCallback((type: MUTATION_ACTION, initialData?: MyData) => {
+    const renderMyForm = useCallback((type: MUTATION_ACTION_ENUM, initialData?: MyData) => {
         // Ici, vous auriez un composant de formulaire dédié (ex: <MyItemForm />)
         // Vous pouvez utiliser 'initialData' pour pré-remplir le formulaire en mode édition
         return (

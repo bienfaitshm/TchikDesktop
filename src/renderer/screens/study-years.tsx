@@ -25,8 +25,8 @@ import {
     TableActionManager,
     useTableAction,
 } from "@/renderer/components/dialog/dialog.table-action";
-import type { TStudyYear } from "@/packages/@core/data-access/db/models/types";
-import { MUTATION_ACTION } from "@/packages/@core/data-access/db/enum";
+import type { TStudyYear } from "@/packages/@core/data-access/db/schemas/types";
+import { MUTATION_ACTION_ENUM } from "@/packages/@core/data-access/db/enum";
 
 
 
@@ -62,12 +62,12 @@ const StudyYearManagementPage: React.FC<any> = ({ schoolId }) => {
 
 
     const handleFormSubmit = useCallback(
-        ({ data, type, initialData }: { data: FormValueType, type: MUTATION_ACTION, initialData?: TStudyYear }) => {
-            if (type === MUTATION_ACTION.CREATE) {
+        ({ data, type, initialData }: { data: FormValueType, type: MUTATION_ACTION_ENUM, initialData?: TStudyYear }) => {
+            if (type === MUTATION_ACTION_ENUM.CREATE) {
                 handleCreate(data, data.yearName, () => {
                     tableAction.onClose();
                 });
-            } else if (type === MUTATION_ACTION.EDIT && initialData) {
+            } else if (type === MUTATION_ACTION_ENUM.EDIT && initialData) {
                 handleUpdate(initialData.yearId, data, data.yearName, () => {
                     tableAction.onClose();
                 });

@@ -1,10 +1,10 @@
 import { z } from "zod";
 import {
-  SECTION,
-  USER_GENDER,
-  USER_ROLE,
-  STUDENT_STATUS,
-  ENROLEMENT_ACTION,
+  SECTION_ENUM,
+  USER_GENDER_ENUM,
+  USER_ROLE_ENUM,
+  STUDENT_STATUS_ENUM,
+  ENROLEMENT_ACTION_ENUM,
 } from "@/packages/@core/data-access/db/enum";
 import { createZodEnum } from "./utils";
 
@@ -12,11 +12,11 @@ import { createZodEnum } from "./utils";
 // I. ENUMS ZOD (Définitions Simples)
 // =============================================================================
 
-const ZSECTION = createZodEnum(SECTION);
-const ZUSER_GENDER = createZodEnum(USER_GENDER);
-const ZUSER_ROLE = createZodEnum(USER_ROLE);
-const ZSTUDENT_STATUS = createZodEnum(STUDENT_STATUS);
-const ZENROLEMENT_ACTION = createZodEnum(ENROLEMENT_ACTION);
+const ZSECTION_ENUM = createZodEnum(SECTION_ENUM);
+const ZUSER_GENDER_ENUM = createZodEnum(USER_GENDER_ENUM);
+const ZUSER_ROLE_ENUM = createZodEnum(USER_ROLE_ENUM);
+const ZSTUDENT_STATUS_ENUM = createZodEnum(STUDENT_STATUS_ENUM);
+const ZENROLEMENT_ACTION_ENUM = createZodEnum(ENROLEMENT_ACTION_ENUM);
 
 // =============================================================================
 // II. SCHÉMAS DE BASE (Attributs LECTURE - Équivalent aux Interfaces)
@@ -71,8 +71,8 @@ export const UserAttributesSchema = z.object({
     .string()
     .optional()
     .describe("Nom complet (Champ virtuel, non géré par le client)"),
-  gender: ZUSER_GENDER.optional().describe("Sexe de l'utilisateur"),
-  role: ZUSER_ROLE.optional().describe(
+  gender: ZUSER_GENDER_ENUM.optional().describe("Sexe de l'utilisateur"),
+  role: ZUSER_ROLE_ENUM.optional().describe(
     "Rôle de l'utilisateur (Admin, Teacher, Student)",
   ),
   birthDate: z.coerce
@@ -118,7 +118,7 @@ export const OptionAttributesSchema = z.object({
     .max(10)
     .describe("Nom abrégé (sigle) de l'option"),
   schoolId: z.string().describe("Clé étrangère vers l'École"),
-  section: ZSECTION.optional().describe(
+  section: ZSECTION_ENUM.optional().describe(
     "Section à laquelle appartient l'option",
   ),
 });
@@ -165,7 +165,7 @@ export const ClassroomAttributesSchema = z.object({
     .describe("Identifiant court (ex: 7ème S)"),
   yearId: z.string().describe("Clé étrangère vers l'Année d'Étude"),
   schoolId: z.string().describe("Clé étrangère vers l'École"),
-  section: ZSECTION.optional().describe("Section de la classe"),
+  section: ZSECTION_ENUM.optional().describe("Section de la classe"),
   optionId: z
     .string()
 
@@ -197,7 +197,7 @@ export const EnrolementAttributesSchema = z.object({
     .describe("Indique si c'est un nouvel étudiant dans l'école"),
   schoolId: z.string().describe("Clé étrangère vers l'École"),
   yearId: z.string().describe("Clé étrangère vers l'Année d'Étude"),
-  status: ZSTUDENT_STATUS.optional().describe(
+  status: ZSTUDENT_STATUS_ENUM.optional().describe(
     "Statut de l'étudiant dans cette classe",
   ),
   code: z
@@ -226,7 +226,7 @@ export const EnrolementActionAttributesSchema = z.object({
     .max(500)
     .optional()
     .describe("Raison du changement de statut ou de l'action"),
-  action: ZENROLEMENT_ACTION.describe(
+  action: ZENROLEMENT_ACTION_ENUM.describe(
     "Type d'action effectuée (Create, ChangeStatus, Transfer)",
   ),
 });

@@ -1,5 +1,6 @@
 import { Badge } from '@/renderer/components/ui/badge';
-import { SECTION, SECTION_TRANSLATIONS } from '@/packages/@core/data-access/db/enum';
+import { SECTION_ENUM } from '@/packages/@core/data-access/db/enum';
+import { getSectionLabel } from "@/packages/@core/data-access/db/options"
 import { School, GraduationCap, Building } from 'lucide-react';
 
 /**
@@ -7,9 +8,9 @@ import { School, GraduationCap, Building } from 'lucide-react';
  * Cela permet de définir facilement la couleur et le style de chaque badge.
  */
 const SECTION_VARIANT_MAP = {
-    [SECTION.KINDERGARTEN]: 'default',
-    [SECTION.PRIMARY]: 'secondary',
-    [SECTION.SECONDARY]: 'outline',
+    [SECTION_ENUM.KINDERGARTEN]: 'default',
+    [SECTION_ENUM.PRIMARY]: 'secondary',
+    [SECTION_ENUM.SECONDARY]: 'outline',
 };
 
 /**
@@ -17,9 +18,9 @@ const SECTION_VARIANT_MAP = {
  * Cela ajoute une représentation visuelle à chaque type de section.
  */
 const SECTION_ICON_MAP = {
-    [SECTION.KINDERGARTEN]: School,
-    [SECTION.PRIMARY]: GraduationCap,
-    [SECTION.SECONDARY]: Building,
+    [SECTION_ENUM.KINDERGARTEN]: School,
+    [SECTION_ENUM.PRIMARY]: GraduationCap,
+    [SECTION_ENUM.SECONDARY]: Building,
 };
 
 /**
@@ -29,7 +30,7 @@ interface SectionBadgeProps {
     /**
      * Le type de section (ex: MATERNELLE, PRIMAIRE, SECONDAIRE).
      */
-    section: SECTION;
+    section: SECTION_ENUM;
 }
 
 /**
@@ -49,7 +50,7 @@ export const SectionBadge = ({ section }: SectionBadgeProps) => {
     return (
         <Badge variant={variant} className="flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-medium rounded-full w-fit">
             {IconComponent && <IconComponent className="size-3.5" />}
-            {SECTION_TRANSLATIONS[section]}
+            {getSectionLabel[section]}
         </Badge>
     );
 };

@@ -12,8 +12,7 @@ import {
 import { Link } from "react-router";
 import { useGetSchools } from "@/renderer/libs/queries/school";
 import { Suspense as DataSuspense } from "@/renderer/libs/queries/suspense";
-
-import { useSchoolNavigationAndSelection } from "./school.new-school";
+import { SchoolCreationForm, useSchoolNavigationAndSelection } from "./school.new-school";
 import { ConfigHeader } from "./config.header";
 
 
@@ -35,7 +34,7 @@ const SchoolListDisplayTable: React.FC = () => {
                 <TypographyH4 className="mb-6 text-center md:text-left">
                     Aucun établissement trouvé. Veuillez en créer un pour commencer.
                 </TypographyH4>
-                {/* <SchoolCreationForm /> */}
+                <SchoolCreationForm />
             </div>
         );
     }

@@ -1,64 +1,80 @@
-import { SQL, and, eq, asc, desc, sql } from "drizzle-orm";
-import { SQLiteSelect, sqliteTable } from "drizzle-orm/sqlite-core";
+import { SQL, and, asc, desc, eq, like } from "drizzle-orm";
+import { AnySQLiteSelect, SQLiteTable } from "drizzle-orm/sqlite-core";
 
-/**
- * Type utilitaire pour capturer n'importe quel constructeur de requête Drizzle Select
- */
-type AnySQLiteSelect = SQLiteSelect<any, any, any, any>;
-
-export interface BaseFilter {
-  limit?: number;
-  offset?: number;
+// Typage strict pour les filtres de base provenant de la requête HTTP
+export interface BaseFilters {
+  limit?: number | string;
+  offset?: number | string;
   orderBy?: string;
-  order?: "ASC" | "DESC";
-  [key: string]: any;
+  order?: "asc" | "desc" | "ASC" | "DESC";
+  [key: string]: unknown; // Accepte n'importe quel autre filtre dynamique
 }
 
 /**
- * Adapte une requête Drizzle avec la pagination, le tri et les filtres.
- * * @param query - La requête Drizzle (ex: db.select().from(users))
- * @param table - La table concernée pour le mapping des colonnes
- * @param filters - Les filtres provenant de req.query
- * @param defaultOrder - Tri par défaut (facultatif)
+ * Adapte une requête Drizzle avec la pagination, le tri et les filtres dynamiques.
+ * * @param query - L'instance de la requête Drizzle (ex: db.select().from(users).$dynamic())
+ * @param table - L'objet table Drizzle (ex: users)
+ * @param filters - Les paramètres de requête (ex: req.query)
+ * @param defaultOrder - Tri par défaut, accepte un ou plusieurs critères
  */
 export function applyFilters<
-  T extends AnySQLiteSelect,
-  TTable extends ReturnType<typeof sqliteTable>,
->(query: T, table: TTable, filters: BaseFilter, defaultOrder?: SQL): T {
+  TQuery extends AnySQLiteSelect,
+  TTable extends SQLiteTable,
+>(
+  query: TQuery,
+  table: TTable,
+  filters: BaseFilters,
+  defaultOrder?: SQL | SQL[],
+): TQuery {
   const { limit, offset, orderBy, order, ...criteria } = filters;
 
   // 1. Gestion des critères (WHERE)
   const whereClauses: SQL[] = [];
 
-  Object.entries(criteria).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && key in table) {
-      const column = (table as any)[key];
+  for (const [key, value] of Object.entries(criteria)) {
+    // Ignorer les valeurs nulles ou non définies
+    if (value === undefined || value === null || value === "") continue;
 
-      // Logique intelligente : si c'est une string, on peut faire un LIKE, sinon un EQ
-      if (typeof value === "string" && value.includes("%")) {
-        whereClauses.push(sql`lower(${column}) LIKE lower(${value})`);
-      } else {
-        whereClauses.push(eq(column, value));
-      }
+    // Vérifier de manière sécurisée si la colonne existe dans le schéma
+    const column = (table as any)[key];
+    if (!column) continue;
+
+    // Utilisation native de like() au lieu de sql`...`
+    if (typeof value === "string" && value.includes("%")) {
+      whereClauses.push(like(column, value));
+    } else {
+      whereClauses.push(eq(column, value));
     }
-  });
+  }
 
   if (whereClauses.length > 0) {
     query.where(and(...whereClauses));
   }
 
   // 2. Gestion du Tri (ORDER BY)
-  if (orderBy && orderBy in table) {
+  if (orderBy && (table as any)[orderBy]) {
     const column = (table as any)[orderBy];
     const orderFn = order?.toUpperCase() === "DESC" ? desc : asc;
     query.orderBy(orderFn(column));
   } else if (defaultOrder) {
-    query.orderBy(defaultOrder);
+    // Le spread operator décompose correctement le tableau pour Drizzle
+    if (Array.isArray(defaultOrder)) {
+      query.orderBy(...defaultOrder);
+    } else {
+      query.orderBy(defaultOrder);
+    }
   }
 
-  // 3. Pagination (LIMIT / OFFSET)
-  if (limit !== undefined) query.limit(limit);
-  if (offset !== undefined) query.offset(offset);
+  // 3. Pagination sécurisée
+  const parsedLimit = Number(limit);
+  if (!Number.isNaN(parsedLimit) && parsedLimit > 0) {
+    query.limit(parsedLimit);
+  }
+
+  const parsedOffset = Number(offset);
+  if (!Number.isNaN(parsedOffset) && parsedOffset >= 0) {
+    query.offset(parsedOffset);
+  }
 
   return query;
 }

@@ -1,16 +1,18 @@
 import "dotenv/config";
 import { drizzle } from "drizzle-orm/libsql";
+import { createClient } from "@libsql/client";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { getLogger } from "@/packages/logger";
 
 const dbLogger = getLogger("DataBase");
-export const DEFAULT_DB_FILENAME = "./database.sqlite";
+export const DEFAULT_DB_FILENAME = "file:sqlite.db";
 const BACKUP_DIR = "./backups";
 
 const MAX_BACKUPS = 10;
 
-export const db = drizzle(DEFAULT_DB_FILENAME);
+const client = createClient({ url: DEFAULT_DB_FILENAME! });
+export const db = drizzle(client);
 
 // -----------------------------------------------------
 //  Système de Sauvegarde (Backup)
