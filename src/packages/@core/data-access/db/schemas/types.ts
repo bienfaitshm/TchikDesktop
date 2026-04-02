@@ -11,6 +11,7 @@ import {
   seatingSessions,
   seatingAssignments,
 } from "./schema";
+import { SQLiteTableWithColumns } from "drizzle-orm/sqlite-core";
 
 export type TSchool = InferSelectModel<typeof schools>;
 export type TSchoolInsert = InferInsertModel<typeof schools>;
@@ -56,11 +57,43 @@ export type TSeatingAssignmentInsert = InferInsertModel<
   typeof seatingAssignments
 >;
 
-export type PaginationAndSort = {
+/**
+ * Extrait les noms des colonnes d'une table pour le typage du tri et des filtres
+ */
+export type ColumnKeys<T extends SQLiteTableWithColumns<any>> =
+  keyof InferSelectModel<T>;
+
+/**
+ * Structure de tri multiple conforme à la fonction applyQueryOptions
+ */
+export interface SortStep<T extends SQLiteTableWithColumns<any>> {
+  column: ColumnKeys<T>;
+  order: "asc" | "desc";
+}
+
+/**
+ * Le nouveau standard pour tes options de requête
+ */
+export interface FindManyOptions<T extends SQLiteTableWithColumns<any>> {
+  where?: Partial<InferSelectModel<T>>;
+  whereIn?: Partial<Record<ColumnKeys<T>, any[]>>;
+  search?: Partial<Record<ColumnKeys<T>, string>>;
+  or?: Array<Partial<InferSelectModel<T>>>;
   limit?: number;
   offset?: number;
-  orderBy?: string;
-  order?: "ASC" | "DESC";
-};
+  orderBy?: SortStep<T>[];
+}
 
-export type WithPaginationAndSort<TData> = PaginationAndSort & TData;
+export type PaginationAndSort<T extends SQLiteTableWithColumns<any>> = Pick<
+  FindManyOptions<T>,
+  "limit" | "offset" | "orderBy"
+>;
+
+/**
+ * Type utilitaire pour combiner des données (ex: filtres personnalisés)
+ * avec la logique de pagination/tri
+ */
+export type WithQueryOptions<
+  TData,
+  TTable extends SQLiteTableWithColumns<any>,
+> = TData & FindManyOptions<TTable>;

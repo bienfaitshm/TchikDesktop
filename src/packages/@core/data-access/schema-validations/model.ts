@@ -404,48 +404,44 @@ export const EnrolementActionCreateSchema =
 // IV. SCHÉMAS UTILITAIRES (Filtres, Pagination)
 // =============================================================================
 
-// Supposons une dépendance (comme dans votre exemple précédent)
-const ZodQueryFilter = z.string().optional();
+export const ZodQueryFilter = z.string().optional();
 
 /**
- * Schéma Zod pour les paramètres de pagination et de tri standard.
- * Tous les champs sont optionnels car les valeurs par défaut sont appliquées côté serveur.
+ * Schéma pour le tri multiple (Array d'objets)
  */
-export const PaginationAndSortSchema = z
-  .object({
-    limit: z.coerce
-      .number()
-      .int()
-      .positive()
-      .describe("Nombre maximal d'éléments à retourner.")
-      .default(10)
-      .optional(),
-    offset: z.coerce
-      .number()
-      .int()
-      .nonnegative()
-      .describe("Décalage (offset) pour la pagination.")
-      .default(0)
-      .optional(),
-    orderBy: ZodQueryFilter.describe(
-      "Nom du champ sur lequel trier les résultats.",
-    ),
-    order: z
-      .enum(["ASC", "DESC"])
-      .optional()
-      .describe("Direction du tri (ASCendant ou DESCendant)."),
-  })
-  .partial(); // Rendre l'objet complet optionnel pour la validation des requêtes.
+export const SortStepSchema = z.object({
+  column: z.string().describe("Nom de la colonne"),
+  order: z.enum(["asc", "desc"]).default("asc"),
+});
 
 /**
- * Schéma Zod utilitaire pour envelopper n'importe quel type de filtre de données
- * avec les paramètres de pagination et de tri.
- * @template TData Le schéma de base pour les filtres spécifiques à une ressource.
+ * Schéma de base pour la recherche et les filtres avancés
  */
-export const WithPaginationAndSortSchema = <TData extends z.ZodRawShape>(
+export const QueryOptionsSchema = z.object({
+  limit: z.coerce.number().int().positive().max(500).default(100).optional(),
+  offset: z.coerce.number().int().nonnegative().default(0).optional(),
+  orderBy: z
+    .array(SortStepSchema)
+    .optional()
+    .describe("Liste de tris à appliquer (tri multiple)"),
+  // Support pour WHERE IN : Record<string, any[]>
+  whereIn: z.record(z.array(z.any())).optional(),
+  // Support pour SEARCH : Record<string, string>
+  search: z.record(z.string()).optional(),
+  // Support pour OR : Tableau d'objets de filtres
+  or: z.array(z.record(z.any())).optional(),
+});
+
+/**
+ * Utilitaire pour fusionner les filtres spécifiques d'une ressource
+ * avec les options globales de requête.
+ */
+export const withQueryOptions = <TData extends z.ZodRawShape>(
   dataSchema: z.ZodObject<TData>,
-) =>
-  dataSchema
-    .partial()
-    .and(PaginationAndSortSchema)
-    .describe("Schéma combinant les filtres de données et la pagination.");
+) => {
+  return z
+    .intersection(dataSchema.partial(), QueryOptionsSchema)
+    .describe(
+      "Schéma complet de requête : filtres, recherche, tri et pagination.",
+    );
+};

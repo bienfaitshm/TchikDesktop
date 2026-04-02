@@ -1,6 +1,4 @@
 import {
-  AnySQLiteSelect,
-  SQLiteTable,
   SQLiteTableWithColumns,
   SQLiteSelectDynamic,
 } from "drizzle-orm/sqlite-core";
@@ -14,86 +12,7 @@ import {
   asc,
   desc,
   getTableColumns,
-  like,
 } from "drizzle-orm";
-
-// Typage strict pour les filtres de base provenant de la requête HTTP
-export interface BaseFilters {
-  limit?: number | string;
-  offset?: number | string;
-  orderBy?: string;
-  order?: "asc" | "desc" | "ASC" | "DESC";
-  [key: string]: unknown; // Accepte n'importe quel autre filtre dynamique
-}
-
-/**
- * Adapte une requête Drizzle avec la pagination, le tri et les filtres dynamiques.
- * * @param query - L'instance de la requête Drizzle (ex: db.select().from(users).$dynamic())
- * @param table - L'objet table Drizzle (ex: users)
- * @param filters - Les paramètres de requête (ex: req.query)
- * @param defaultOrder - Tri par défaut, accepte un ou plusieurs critères
- */
-export function applyFilters<
-  TQuery extends AnySQLiteSelect,
-  TTable extends SQLiteTable,
->(
-  query: TQuery,
-  table: TTable,
-  filters: BaseFilters,
-  defaultOrder?: SQL | SQL[],
-): TQuery {
-  const { limit, offset, orderBy, order, ...criteria } = filters;
-
-  // 1. Gestion des critères (WHERE)
-  const whereClauses: SQL[] = [];
-
-  for (const [key, value] of Object.entries(criteria)) {
-    // Ignorer les valeurs nulles ou non définies
-    if (value === undefined || value === null || value === "") continue;
-
-    // Vérifier de manière sécurisée si la colonne existe dans le schéma
-    const column = (table as any)[key];
-    if (!column) continue;
-
-    // Utilisation native de like() au lieu de sql`...`
-    if (typeof value === "string" && value.includes("%")) {
-      whereClauses.push(like(column, value));
-    } else {
-      whereClauses.push(eq(column, value));
-    }
-  }
-
-  if (whereClauses.length > 0) {
-    query.where(and(...whereClauses));
-  }
-
-  // 2. Gestion du Tri (ORDER BY)
-  if (orderBy && (table as any)[orderBy]) {
-    const column = (table as any)[orderBy];
-    const orderFn = order?.toUpperCase() === "DESC" ? desc : asc;
-    query.orderBy(orderFn(column));
-  } else if (defaultOrder) {
-    // Le spread operator décompose correctement le tableau pour Drizzle
-    if (Array.isArray(defaultOrder)) {
-      query.orderBy(...defaultOrder);
-    } else {
-      query.orderBy(defaultOrder);
-    }
-  }
-
-  // 3. Pagination sécurisée
-  const parsedLimit = Number(limit);
-  if (!Number.isNaN(parsedLimit) && parsedLimit > 0) {
-    query.limit(parsedLimit);
-  }
-
-  const parsedOffset = Number(offset);
-  if (!Number.isNaN(parsedOffset) && parsedOffset >= 0) {
-    query.offset(parsedOffset);
-  }
-
-  return query;
-}
 
 export const DEFAULT_MAX_LIMIT = 500;
 
@@ -204,4 +123,48 @@ export async function applyQueryOptions<T extends SQLiteTableWithColumns<any>>(
   }
 
   return await query;
+}
+
+/**
+ * Fusionne les options de requête utilisateur avec des valeurs par défaut.
+ * Priorité : User Options > Default Options > Hardcoded Constants
+ */
+export function mergeQueryOptions<T extends SQLiteTableWithColumns<any>>(
+  options: FindManyOptions<T> = {},
+  defaultOptions: FindManyOptions<T> = {},
+): FindManyOptions<T> {
+  return {
+    // 1. Pagination : Priorité utilisateur, sinon défaut, avec un cap de sécurité
+    limit: Math.min(
+      options.limit ?? defaultOptions.limit ?? DEFAULT_MAX_LIMIT,
+      DEFAULT_MAX_LIMIT,
+    ),
+    offset: options.offset ?? defaultOptions.offset ?? 0,
+
+    // 2. Filtrage exact (where) : Fusion des objets
+    where: {
+      ...defaultOptions.where,
+      ...options.where,
+    },
+
+    // 3. Filtrage par liste (whereIn) : Fusion des objets
+    whereIn: {
+      ...defaultOptions.whereIn,
+      ...options.whereIn,
+    },
+
+    // 4. Recherche (search) : Fusion des objets
+    search: {
+      ...defaultOptions.search,
+      ...options.search,
+    },
+
+    // 5. Blocs OR : On concatène les tableaux pour additionner les conditions alternatives
+    or: [...(defaultOptions.or ?? []), ...(options.or ?? [])],
+
+    // 6. Tri (orderBy) : L'utilisateur remplace totalement le tri par défaut s'il en fournit un
+    orderBy: options.orderBy?.length
+      ? options.orderBy
+      : (defaultOptions.orderBy ?? []),
+  };
 }
