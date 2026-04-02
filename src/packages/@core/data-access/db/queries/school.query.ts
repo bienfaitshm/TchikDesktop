@@ -2,7 +2,7 @@ import { eq, sql, asc } from "drizzle-orm";
 import { getLogger } from "@/packages/logger";
 import { db } from "../config";
 import { schools, studyYears } from "../schemas/schema";
-import { applyFilters } from "./drizzle-builder";
+import { applyFilters, applyQueryOptions } from "./drizzle-builder";
 import {
   TSchool,
   TSchoolInsert,
@@ -122,13 +122,9 @@ export class StudyYearQuery {
     try {
       const query = db.select().from(studyYears).$dynamic();
 
-      // On force le filtre sur schoolId et on applique le reste
-      return await applyFilters(
-        query,
-        studyYears,
-        filters,
-        sql`${YEAR_DEFAULT_SORT}, ${YEAR_DEFAULT_SORT}`,
-      );
+      return await applyQueryOptions(query, studyYears, {
+        where: { schoolId: filters.schoolId },
+      });
     } catch (error) {
       logger.error(`StudyYearQuery.findMany: Error`, error as Error);
       throw new Error("Impossible de récupérer les années scolaires.");
