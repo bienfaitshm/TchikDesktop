@@ -48,14 +48,17 @@ export type TEnrolementActionInsert = InferInsertModel<
 
 export type TLocalRoom = InferSelectModel<typeof localRooms>;
 export type TLocalRoomInsert = InferInsertModel<typeof localRooms>;
+export type TLocalRoomUpdate = Partial<TLocalRoomInsert>;
 
 export type TSeatingSession = InferSelectModel<typeof seatingSessions>;
 export type TSeatingSessionInsert = InferInsertModel<typeof seatingSessions>;
+export type TSeatingSessionUpdate = Partial<TSeatingSessionInsert>;
 
 export type TSeatingAssignment = InferSelectModel<typeof seatingAssignments>;
 export type TSeatingAssignmentInsert = InferInsertModel<
   typeof seatingAssignments
 >;
+export type TSeatingAssignmentUpdate = Partial<TSeatingAssignmentInsert>;
 
 /**
  * Extrait les noms des colonnes d'une table pour le typage du tri et des filtres

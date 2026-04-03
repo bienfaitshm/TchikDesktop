@@ -82,7 +82,42 @@ export const AppInfosRoutes = {
 };
 
 /**
- * Export global mis à jour
+ * Routes IPC pour la gestion des LOCAUX (Salles physiques).
+ */
+export const LocalRoomRoutes = {
+  ALL: "seating/rooms",
+  DETAIL: "seating/rooms/:id",
+  CREATE: "seating/rooms/create",
+  UPDATE: "seating/rooms/update/:id",
+  DELETE: "seating/rooms/delete/:id",
+} as const;
+
+/**
+ * Routes IPC pour la gestion des SESSIONS de placement.
+ */
+export const SeatingSessionRoutes = {
+  ALL: "seating/sessions",
+  BY_YEAR: "seating/sessions/year/:yearId",
+  DETAIL: "seating/sessions/:id",
+  STATUS: "seating/sessions/:id/status", // Pour GetSessionRoomsStatus
+  FULL_DETAILS: "seating/sessions/:id/full", // Pour GetFullSessionDetails
+  CREATE: "seating/sessions/create",
+  DELETE: "seating/sessions/delete/:id",
+} as const;
+
+/**
+ * Routes IPC pour les ASSIGNATIONS (Le placement réel).
+ */
+export const SeatingAssignmentRoutes = {
+  LAYOUT: "seating/assignments/layout/:sessionId/:localRoomId",
+  BULK: "seating/assignments/bulk",
+  UNASSIGNED: "seating/assignments/unassigned/:sessionId/:yearId",
+  FIND_STUDENT: "seating/assignments/find/:sessionId/:enrolementId",
+  CLEAR_ROOM: "seating/assignments/clear",
+} as const;
+
+/**
+ * Export global mis à jour avec les nouveaux modules
  */
 export const IpcRoutes = {
   OPTIONS: OptionRoutes,
@@ -94,4 +129,8 @@ export const IpcRoutes = {
   STATS: StatsRoutes,
   APP_INFOS: AppInfosRoutes,
   USERS: UserRoutes,
+  // --- Nouveaux modules Seating ---
+  LOCAL_ROOMS: LocalRoomRoutes,
+  SEATING_SESSIONS: SeatingSessionRoutes,
+  SEATING_ASSIGNMENTS: SeatingAssignmentRoutes,
 } as const;
