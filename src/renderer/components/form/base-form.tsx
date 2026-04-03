@@ -49,7 +49,10 @@ export function useZodForm<T extends FieldValues>({
     const submit = form.handleSubmit(async (values) => {
         if (onSubmit) {
             await onSubmit(values, {
-                reset: (nextValues) => form.reset(nextValues ?? values)
+                reset: (nextValues) => {
+                    console.log("Reset form....")
+                    form.reset(nextValues ?? mergedDefaultValues)
+                }
             });
         }
     });

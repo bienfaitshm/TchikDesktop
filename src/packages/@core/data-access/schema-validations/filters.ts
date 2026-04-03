@@ -9,9 +9,7 @@ import {
   EnrolementActionAttributesSchema,
   withQueryOptions,
 } from "./model";
-
-const orArray = <T extends z.ZodTypeAny>(schema: T) =>
-  z.union([schema, z.array(schema)]);
+import { orArray } from "./filters.base";
 
 // =============================================================================
 // I. SCHÉMAS DE FILTRE (Supportant Valeurs Simples ou Tableaux)

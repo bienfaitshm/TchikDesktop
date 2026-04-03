@@ -29,6 +29,19 @@ import {
 } from "./model";
 
 import {
+  BulkSeatingAssignmentSchema,
+  LocalRoomAttributesSchema,
+  LocalRoomCreateSchema,
+  LocalRoomUpdateSchema,
+  SeatingAssignmentAttributesSchema,
+  SeatingAssignmentCreateSchema,
+  SeatingAssignmentUpdateSchema,
+  SeatingSessionAttributesSchema,
+  SeatingSessionCreateSchema,
+  SeatingSessionUpdateSchema,
+} from "./model.seatings";
+
+import {
   // Schémas de Filtre (Query Params)
   SchoolFilterSchema,
   UserFilterSchema,
@@ -39,6 +52,13 @@ import {
   EnrolementActionFilterSchema,
   StatsFilterSchema,
 } from "./filters";
+
+import {
+  LocalRoomFilterSchema,
+  SeatingAssignmentFilterSchema,
+  SeatingSessionFilterSchema,
+  SeatingStatsFilterSchema,
+} from "./filters.seatings";
 
 // =============================================================================
 // I. TYPES DE DONNÉES COMPLETS (Lecture DB)
@@ -149,3 +169,75 @@ export type TEnrolementActionFilter = z.infer<
 >;
 
 export type TStatsFilter = z.infer<typeof StatsFilterSchema>;
+
+// ... (tes imports et types précédents)
+
+// =============================================================================
+// V. TYPES SEATING - DONNÉES COMPLETS (Lecture DB)
+// =============================================================================
+
+/** Type des attributs complets d'un Local (Salle) */
+export type TLocalRoomAttributes = z.infer<typeof LocalRoomAttributesSchema>;
+
+/** Type des attributs complets d'une Session de placement */
+export type TSeatingSessionAttributes = z.infer<
+  typeof SeatingSessionAttributesSchema
+>;
+
+/** Type des attributs complets d'une Assignation de place */
+export type TSeatingAssignmentAttributes = z.infer<
+  typeof SeatingAssignmentAttributesSchema
+>;
+
+// =============================================================================
+// VI. TYPES SEATING - CRÉATION (Body POST)
+// =============================================================================
+
+/** Type pour créer un Local */
+export type TLocalRoomCreate = z.infer<typeof LocalRoomCreateSchema>;
+
+/** Type pour créer une Session de placement */
+export type TSeatingSessionCreate = z.infer<typeof SeatingSessionCreateSchema>;
+
+/** Type pour créer une assignation individuelle */
+export type TSeatingAssignmentCreate = z.infer<
+  typeof SeatingAssignmentCreateSchema
+>;
+
+/** Type pour le placement en masse (Bulk) d'une salle entière */
+export type TBulkSeatingAssignment = z.infer<
+  typeof BulkSeatingAssignmentSchema
+>;
+
+// =============================================================================
+// VII. TYPES SEATING - MISE À JOUR (Body PUT/PATCH)
+// =============================================================================
+
+/** Type pour mettre à jour un Local (partiel) */
+export type TLocalRoomUpdate = z.infer<typeof LocalRoomUpdateSchema>;
+
+/** Type pour mettre à jour une Session (partiel) */
+export type TSeatingSessionUpdate = z.infer<typeof SeatingSessionUpdateSchema>;
+
+/** Type pour mettre à jour une assignation (ex: changer de place) */
+export type TSeatingAssignmentUpdate = z.infer<
+  typeof SeatingAssignmentUpdateSchema
+>;
+
+// =============================================================================
+// VIII. TYPES SEATING - FILTRE (Query Params)
+// =============================================================================
+
+/** Filtres pour les Locaux (avec pagination/tri) */
+export type TLocalRoomFilter = z.infer<typeof LocalRoomFilterSchema>;
+
+/** Filtres pour les Sessions de placement (avec pagination/tri) */
+export type TSeatingSessionFilter = z.infer<typeof SeatingSessionFilterSchema>;
+
+/** Filtres pour les Assignations (ex: voir tout un local ou toute une session) */
+export type TSeatingAssignmentFilter = z.infer<
+  typeof SeatingAssignmentFilterSchema
+>;
+
+/** Filtres pour les statistiques de placement */
+export type TSeatingStatsFilter = z.infer<typeof SeatingStatsFilterSchema>;
