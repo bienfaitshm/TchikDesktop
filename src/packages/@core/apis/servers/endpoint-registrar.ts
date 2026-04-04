@@ -61,6 +61,8 @@ export class EndpointRegistrar {
       );
     });
     this.logger.info(`Routes registered`);
-    this.logger.info(this.endpoints.filter((i) => i.route).toLocaleString());
+    this.logger.info(
+      JSON.stringify(this.endpoints.map((i) => `${i.method}_${i.route}`)),
+    );
   }
 }

@@ -88,8 +88,6 @@ export const LocalRoomRoutes = {
   ALL: "seating/rooms",
   DETAIL: "seating/rooms/:id",
   CREATE: "seating/rooms/create",
-  UPDATE: "seating/rooms/update/:id",
-  DELETE: "seating/rooms/delete/:id",
 } as const;
 
 /**
@@ -102,7 +100,6 @@ export const SeatingSessionRoutes = {
   STATUS: "seating/sessions/:id/status", // Pour GetSessionRoomsStatus
   FULL_DETAILS: "seating/sessions/:id/full", // Pour GetFullSessionDetails
   CREATE: "seating/sessions/create",
-  DELETE: "seating/sessions/delete/:id",
 } as const;
 
 /**

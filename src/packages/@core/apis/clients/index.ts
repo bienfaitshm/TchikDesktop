@@ -6,3 +6,4 @@ export * from "./schools";
 export * from "./export-documents";
 export * from "./stats";
 export * from "./app-infos";
+export * from "./seatings";

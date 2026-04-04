@@ -11,6 +11,7 @@ const API_REGISTRY = {
   stats: apis.createStatsApis,
   exportDocuments: apis.createDocumentExportApis,
   appInfos: apis.createAppInfosApis,
+  seating: apis.createSeatingApis,
 } as const;
 
 export type AppClients = {
@@ -59,4 +60,5 @@ export const {
   stats,
   appInfos,
   users,
+  seating,
 } = api;

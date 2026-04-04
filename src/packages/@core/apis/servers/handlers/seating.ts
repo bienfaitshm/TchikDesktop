@@ -90,7 +90,7 @@ export class UpdateLocalRoom extends AbstractEndpoint<any> {
 
 /** Supprime un local de la base de données. */
 export class DeleteLocalRoom extends AbstractEndpoint<any> {
-  route = LocalRoomRoutes.DELETE;
+  route = LocalRoomRoutes.DETAIL;
   method = HttpMethod.DELETE;
   schemas: ValidationSchemas = { params: LocalRoomIdSchema };
   protected handle({
@@ -130,7 +130,7 @@ export class CreateSeatingSession extends AbstractEndpoint<any> {
 
 /** Supprime une session et potentiellement les assignations liées. */
 export class DeleteSeatingSession extends AbstractEndpoint<any> {
-  route = SeatingSessionRoutes.DELETE;
+  route = SeatingSessionRoutes.DETAIL;
   method = HttpMethod.DELETE;
   schemas: ValidationSchemas = { params: SeatingSessionIdSchema };
   protected handle({

@@ -12,10 +12,12 @@ import { TQueryUpdate } from "./type";
  * @description Hook to fetch all options
  */
 export function useGetOptions(params?: TOptionFilter) {
-  return useSuspenseQuery({
+  const queryKey = ["GET_OPTIONS", params];
+  const query = useSuspenseQuery({
     queryKey: ["GET_OPTIONS", params],
     queryFn: () => option.fetchOptions(params),
   });
+  return { ...query, queryKey };
 }
 
 /**
