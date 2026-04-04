@@ -5,18 +5,20 @@ import {
 } from "@/packages/handler-factory";
 import { AbstractEndpoint } from "./abstract";
 
-import * as user from "./user";
-import * as schools from "./schools";
-import * as options from "./options";
-import * as classrooms from "./classrooms";
-import * as enrollments from "./enrollments";
-import * as stats from "./statistics";
-import * as exportDocument from "./document-exports";
+import * as user from "./handlers/user";
+import * as schools from "./handlers/schools";
+import * as options from "./handlers/options";
+import * as classrooms from "./handlers/classrooms";
+import * as enrollments from "./handlers/enrollments";
+import * as stats from "./handlers/statistics";
+import * as exportDocument from "./handlers/document-exports";
+import * as seatings from "./handlers/seating";
 import * as appInfos from "./apps-infos";
 
 const initializerLogger = getLogger("IPC Server");
+
 const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
-  //users
+  // users
   user.GetUsers,
   user.GetUser,
   user.PostUser,
@@ -53,7 +55,6 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   classrooms.DeleteClassroom,
 
   // enrollments
-
   enrollments.GetEnrollements,
   enrollments.PostEnrollement,
   enrollments.PostQuickEnrollement,
@@ -75,6 +76,26 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
 
   // app and system information
   appInfos.GetSystemInfos,
+
+  // --- SEATING : Local Rooms ---
+  seatings.GetLocalRooms,
+  seatings.CreateLocalRoom,
+  seatings.UpdateLocalRoom,
+  seatings.DeleteLocalRoom,
+
+  // --- SEATING : Sessions ---
+  seatings.GetSeatingSessionsByYear,
+  seatings.CreateSeatingSession,
+  seatings.DeleteSeatingSession,
+  seatings.GetSessionRoomsStatus,
+  seatings.GetFullSessionDetails,
+
+  // --- SEATING : Assignments ---
+  seatings.GetRoomLayout,
+  seatings.BulkAssignStudents,
+  seatings.GetUnassignedStudents,
+  seatings.ClearRoomAssignments,
+  seatings.FindStudentSeat,
 ];
 
 export const instantiatedHandlers = instantiateClasses(

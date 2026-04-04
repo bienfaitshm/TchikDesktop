@@ -24,8 +24,8 @@ import {
   type TStudyYearUpdate,
   type TStudyYearFilter,
 } from "@/packages/@core/data-access/schema-validations";
-import { AbstractEndpoint } from "./abstract";
-import { SchoolRoutes, StudyYearRoutes } from "../routes-constant";
+import { AbstractEndpoint } from "../abstract";
+import { SchoolRoutes, StudyYearRoutes } from "../../routes-constant";
 
 const SchoolIdSchema = SchoolAttributesSchema.pick({ schoolId: true });
 

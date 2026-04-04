@@ -16,8 +16,8 @@ import {
   type TEnrolementFilter,
   type TEnrolementQuickCreate,
 } from "@/packages/@core/data-access/schema-validations";
-import { AbstractEndpoint } from "./abstract";
-import { EnrollementRoutes } from "../routes-constant";
+import { AbstractEndpoint } from "../abstract";
+import { EnrollementRoutes } from "../../routes-constant";
 
 const EnrollementIdSchema = EnrolementAttributesSchema.pick({
   enrolementId: true,

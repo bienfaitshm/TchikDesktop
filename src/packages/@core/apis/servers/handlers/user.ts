@@ -14,8 +14,8 @@ import {
   UserCreateSchema,
   UserUpdateSchema,
 } from "@/packages/@core/data-access/schema-validations";
-import { AbstractEndpoint } from "./abstract";
-import { UserRoutes } from "../routes-constant";
+import { AbstractEndpoint } from "../abstract";
+import { UserRoutes } from "../../routes-constant";
 
 const UserIdSchema = UserAttributesSchema.pick({ userId: true }).required();
 type UserId = z.infer<typeof UserIdSchema>;

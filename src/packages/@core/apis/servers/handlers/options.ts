@@ -14,8 +14,8 @@ import {
   type TOptionUpdate,
   type TOptionFilter,
 } from "@/packages/@core/data-access/schema-validations";
-import { AbstractEndpoint } from "./abstract";
-import { OptionRoutes } from "../routes-constant";
+import { AbstractEndpoint } from "../abstract";
+import { OptionRoutes } from "../../routes-constant";
 
 const OptionIdSchema = OptionAttributesSchema.pick({ optionId: true });
 

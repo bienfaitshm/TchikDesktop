@@ -9,12 +9,12 @@ import {
   IpcRequest,
   ValidationSchemas,
 } from "@/packages/electron-ipc-rest";
-import { AbstractEndpoint } from "./abstract";
+import { AbstractEndpoint } from "../abstract";
 import {
   LocalRoomRoutes,
   SeatingAssignmentRoutes,
   SeatingSessionRoutes,
-} from "../routes-constant";
+} from "../../routes-constant";
 import {
   LocalRoomUpdateSchema,
   LocalRoomFilterSchema,

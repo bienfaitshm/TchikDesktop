@@ -10,9 +10,9 @@ import {
   OptionCreateSchema,
   type TOptionCreate,
 } from "@/packages/@core/data-access/schema-validations";
-import { AbstractEndpoint } from "./abstract";
+import { AbstractEndpoint } from "../abstract";
 import { documentExport } from "@/packages/@core/documents-exports";
-import { DocumentExportRoutes } from "../routes-constant";
+import { DocumentExportRoutes } from "../../routes-constant";
 
 export class GetInfosDocumentExports extends AbstractEndpoint<any> {
   route = DocumentExportRoutes.INFOS;
@@ -41,7 +41,7 @@ export class ExportDocuments extends AbstractEndpoint<any> {
       throw new HttpException(
         response.error.message,
         HttpStatus.BAD_REQUEST,
-        response.error.details
+        response.error.details,
       );
     }
     return response;

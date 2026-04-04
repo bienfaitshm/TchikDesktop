@@ -14,8 +14,8 @@ import {
   IpcRequest,
   ValidationSchemas,
 } from "@/packages/electron-ipc-rest";
-import { AbstractEndpoint } from "./abstract";
-import { ClassroomRoutes } from "../routes-constant";
+import { AbstractEndpoint } from "../abstract";
+import { ClassroomRoutes } from "../../routes-constant";
 
 const ClassIdSchema = ClassroomAttributesSchema.pick({ classId: true });
 
