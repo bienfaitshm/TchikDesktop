@@ -20,7 +20,7 @@ import {
     ClassroomDialogUpdateForm
 } from "@/renderer/dialog-actions/classroom.dialog-actions"
 
-import { ExpandableRow } from "@/renderer/components/tables/data-table.components";
+import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import {
     ActionContainer,
     ActionTileCopy,
@@ -79,6 +79,7 @@ const ClassroomRowActions: React.FC<{
     );
 };
 
+
 const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearId }) => {
     const { data: classrooms = [], queryKey } = useGetClassrooms({ where: { schoolId, yearId } });
     console.log("classrooms", classrooms)
@@ -109,12 +110,12 @@ const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearI
 
                 <Suspense fallback={<div className="h-64 w-full animate-pulse bg-muted/20 rounded-lg" />}>
                     <DataTableContent>
-                        <DataContentHead isCollapsible />
+                        <DataContentHead />
                         <DataContentBody<TClassroom>>
                             {(props) => (
                                 <ExpandableRow
-                                    {...props}
-                                    detailContent={
+                                    row={props.row as any}
+                                    renderDetail={
                                         <ClassroomRowActions
                                             classroom={props.row.original}
                                             schoolId={schoolId}

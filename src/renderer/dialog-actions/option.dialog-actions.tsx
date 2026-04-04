@@ -1,10 +1,10 @@
-import React, { useCallback, useState } from "react"
+import React from "react"
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/renderer/components/ui/dialog"
 import { Button } from "@/renderer/components/ui/button"
 import { ButtonLoader } from "@/renderer/components/form/button-loader"
 import { OptionForm, type OptionFormData } from "@/renderer/components/form/option-form"
 import { useCreateOptionForm, useUpdateOptionForm, useDeleteOptionForm } from "@/renderer/components/form/option-form.actions"
-import { ConfirmDeleteDialog } from "@/renderer/components/dialog/dialog-delete"
+import { ConfirmDeleteDialog, useConfirm } from "@/renderer/components/dialog/dialog-delete"
 
 
 type CreateOptionDialogProps = {
@@ -16,12 +16,6 @@ type UpdateOptionDialogProps = {
     children: React.ReactNode
     optionId: string
     initialData?: Partial<OptionFormData>
-}
-
-interface DeleteOptionDialogProps {
-    optionId: string
-    optionName: string
-    renderTrigger: (params: { open: () => void }) => React.ReactNode
 }
 
 
@@ -91,37 +85,47 @@ export const UpdateOptionDialog: React.FC<UpdateOptionDialogProps> = ({ initialD
     )
 }
 
-export const DeleteOptionDialog: React.FC<DeleteOptionDialogProps> = ({
-    renderTrigger,
-    optionId,
-    optionName
-}) => {
-    const [isOpen, setIsOpen] = useState(false)
+interface DeleteOptionDialogProps {
+    children: (props: { onOpen: () => void; isLoading: boolean }) => React.ReactNode
+    optionId: string
+    optionName: string
+}
 
-    const open = useCallback(() => setIsOpen(true), [])
-    const close = useCallback(() => setIsOpen(false), [])
+export const DeleteOptionDialog: React.FC<DeleteOptionDialogProps> = ({
+    children,
+    optionId,
+    optionName,
+}) => {
+    const { isOpen, onOpen, onClose } = useConfirm<string>()
 
     const { deleteOption, isDeleting } = useDeleteOptionForm({
-        onSuccess: close
+        onSuccess: onClose,
     })
 
-    const handleConfirm = useCallback(() => {
-        deleteOption(optionId, optionName)
+    const handleConfirm = React.useCallback(async () => {
+        await deleteOption(optionId, optionName)
     }, [optionId, optionName, deleteOption])
 
     return (
         <>
             <ConfirmDeleteDialog
+                item={optionId}
                 isOpen={isOpen}
-                onClose={close}
+                onClose={onClose}
                 onConfirm={handleConfirm}
                 isLoading={isDeleting}
                 title="Supprimer la filière"
-                description="Tous les documents associés seront définitivement retirés."
+                description="Attention : tous les documents et données associés à cette filière seront définitivement supprimés."
                 itemName={optionName}
             />
 
-            {renderTrigger({ open })}
+            {/* Exécution du render trigger avec les états nécessaires */}
+            {children({
+                onOpen: () => onOpen(optionId),
+                isLoading: isDeleting
+            })}
         </>
     )
 }
+
+DeleteOptionDialog.displayName = "DeleteOptionDialog"

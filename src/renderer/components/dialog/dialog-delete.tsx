@@ -1,163 +1,167 @@
-import { useCallback, useEffect, useState } from "react";
+"use client"
+
+import * as React from "react"
+import { AlertTriangle, Loader2 } from "lucide-react"
+
 import {
     Dialog,
-    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/renderer/components/ui/dialog";
+} from "@/renderer/components/ui/dialog"
+import { Button } from "@/renderer/components/ui/button"
+import { cn } from "@/renderer/utils"
 
-import { AlertTriangle } from "lucide-react"
-import { Button } from "@/renderer/components/ui/button";
-import { TypographyP, TypographySmall } from "../ui/typography";
+/**
+ * Hook générique pour piloter n'importe quel dialogue de confirmation
+ */
+export function useConfirm<T = unknown>() {
+    const [state, setState] = React.useState<{
+        isOpen: boolean
+        data: T | null
+    }>({
+        isOpen: false,
+        data: null,
+    })
 
+    const onOpen = React.useCallback((data: T) => {
+        setState({ isOpen: true, data })
+    }, [])
 
-export const useConfirmDeleteDialog = <T extends object>() => {
-    const [item, setItem] = useState<T | undefined>(undefined);
-    const [open, setOpen] = useState(false);
+    const onClose = React.useCallback(() => {
+        setState((prev) => ({ ...prev, isOpen: false }))
+    }, [])
 
-    const onOpen = useCallback((data?: T) => {
-        setItem(data);
-        setOpen(true);
-    }, []);
-
-    const onClose = useCallback(() => {
-        setOpen(false);
-        setItem(undefined);
-    }, []);
-
-    return { item, open, onOpen, onClose };
-};
-
-
-export const DialogConfirmDelete = <T extends object>({
-    item,
-    open,
-    onClose,
-    onConfirm,
-    isLoading = false,
-}: {
-    item: T | undefined;
-    open: boolean;
-    onClose: () => void;
-    onConfirm: (item: T) => void;
-    isLoading?: boolean;
-}) => {
-    useEffect(() => {
-        if (!open) {
-            document.body.style.pointerEvents = "auto";
-        }
-        return () => {
-            document.body.style.pointerEvents = "auto";
-        };
-    }, [open]);
-
-    const handleConfirm = useCallback(() => {
-        if (item) {
-            onConfirm(item);
-        }
-    }, [item, onConfirm]);
-
-    return (
-        <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle className="text-center">
-                        Voulez-vous vraiment supprimer ?
-                    </DialogTitle>
-                    <DialogDescription className="text-center">
-                        Cette action est irréversible.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="sm:justify-center gap-4">
-                    <DialogClose asChild>
-                        <Button type="button" variant="secondary" disabled={isLoading}>
-                            Annuler
-                        </Button>
-                    </DialogClose>
-                    <Button
-                        onClick={handleConfirm}
-                        variant="destructive"
-                        disabled={isLoading}
-                    >
-                        {isLoading ? "Suppression..." : "Confirmer"}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-};
+    return {
+        ...state,
+        onOpen,
+        onClose,
+    }
+}
 
 
-interface ConfirmDeleteDialogProps {
+interface ConfirmDialogProps {
     isOpen: boolean
     onClose: () => void
-    onConfirm: () => void
+    onConfirm: () => void | Promise<void>
     isLoading?: boolean
-    title?: string
-    description?: string
+    title?: React.ReactNode
+    description?: React.ReactNode
+    confirmText?: string
+    cancelText?: string
+    variant?: "destructive" | "default" | "warning"
+}
+
+export const ConfirmDialog = React.forwardRef<HTMLDivElement, ConfirmDialogProps>(
+    (
+        {
+            isOpen,
+            onClose,
+            onConfirm,
+            isLoading = false,
+            title = "Êtes-vous sûr ?",
+            description = "Cette action est irréversible et supprimera définitivement les données.",
+            confirmText = "Supprimer",
+            cancelText = "Annuler",
+            variant = "destructive",
+        },
+        ref
+    ) => {
+        const handleConfirm = async (e: React.MouseEvent) => {
+            e.preventDefault()
+            await onConfirm()
+        }
+
+        return (
+            <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+                <DialogContent
+                    ref={ref}
+                    className="sm:max-w-[425px] overflow-hidden gap-0 p-0"
+                >
+                    <div className="p-6">
+                        <DialogHeader className="flex flex-col items-center gap-4 text-center sm:text-center">
+                            {/* Icon Container */}
+                            <div className={cn(
+                                "flex h-12 w-12 items-center justify-center rounded-full ring-8",
+                                variant === "destructive" ? "bg-destructive/10 ring-destructive/5" : "bg-primary/10 ring-primary/5"
+                            )}>
+                                <AlertTriangle
+                                    className={cn("h-6 w-6", variant === "destructive" ? "text-destructive" : "text-primary")}
+                                    aria-hidden="true"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <DialogTitle className="text-xl font-semibold tracking-tight">
+                                    {title}
+                                </DialogTitle>
+                                <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
+                                    {description}
+                                </DialogDescription>
+                            </div>
+                        </DialogHeader>
+                    </div>
+
+                    <DialogFooter className="bg-muted/50 p-4 gap-2 sm:gap-0 sm:justify-center border-t">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={onClose}
+                            disabled={isLoading}
+                            className="flex-1 sm:flex-none min-w-[100px]"
+                        >
+                            {cancelText}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant={variant}
+                            onClick={handleConfirm}
+                            disabled={isLoading}
+                            className="flex-1 sm:flex-none min-w-[100px]"
+                        >
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isLoading ? "Traitement..." : confirmText}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        )
+    }
+)
+
+ConfirmDialog.displayName = "ConfirmDialog"
+
+
+interface DeleteConfirmProps<T> extends Omit<ConfirmDialogProps, "onConfirm" | "onClose" | "isOpen"> {
+    item: T | null
+    isOpen: boolean
+    onClose: () => void
+    onConfirm: (item: T) => void | Promise<void>
     itemName?: string
 }
 
-export const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
-    isOpen,
-    onClose,
+export const ConfirmDeleteDialog = <T,>({
+    item,
     onConfirm,
-    isLoading = false,
-    title = "Confirmation de suppression",
-    description = "Cette action est irréversible et supprimera définitivement les données.",
     itemName,
-}) => {
+    ...props
+}: DeleteConfirmProps<T>) => {
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
-                <DialogHeader className="flex flex-col items-center gap-2">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-                        <AlertTriangle className="h-6 w-6 text-destructive" aria-hidden="true" />
-                    </div>
-
-                    <DialogTitle className="text-center text-xl">
-                        {title}
-                    </DialogTitle>
-
-                    <DialogDescription className="text-center">
-                        {itemName ? (
-                            <>
-                                <TypographyP>
-                                    Voulez-vous vraiment supprimer <strong>{itemName}</strong> ?
-                                </TypographyP>
-                                <TypographySmall>
-                                    {description}
-                                </TypographySmall>
-                            </>
-                        ) : (
-                            description
-                        )}
-                    </DialogDescription>
-                </DialogHeader>
-
-                <DialogFooter className="mt-4 flex flex-col-reverse sm:flex-row sm:justify-center gap-3">
-                    <DialogClose asChild>
-                        <Button
-                            variant="outline"
-                            disabled={isLoading}
-                            className="w-full sm:w-auto"
-                        >
-                            Annuler
-                        </Button>
-                    </DialogClose>
-                    <Button
-                        variant="destructive"
-                        onClick={onConfirm}
-                        disabled={isLoading}
-                        className="w-full sm:w-auto min-w-[100px]"
-                    >
-                        {isLoading ? "Suppression..." : "Supprimer"}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <ConfirmDialog
+            {...props}
+            variant="destructive"
+            title="Confirmation de suppression"
+            description={
+                itemName ? (
+                    <span>
+                        Voulez-vous vraiment supprimer <strong>{itemName}</strong> ? <br />
+                        Cette action est irréversible.
+                    </span>
+                ) : undefined
+            }
+            onConfirm={() => item && onConfirm(item)}
+        />
     )
 }

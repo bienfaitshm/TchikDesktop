@@ -30,7 +30,7 @@ interface SectionBadgeProps {
     /**
      * Le type de section (ex: MATERNELLE, PRIMAIRE, SECONDAIRE).
      */
-    section: SECTION_ENUM;
+    section?: SECTION_ENUM;
 }
 
 /**
@@ -42,7 +42,7 @@ interface SectionBadgeProps {
  * @param {SectionBadgeProps} props Les propriétés du composant.
  * @returns {JSX.Element} Le composant Badge avec l'icône et le texte de la section.
  */
-export const SectionBadge = ({ section }: SectionBadgeProps) => {
+export const SectionBadge = ({ section = SECTION_ENUM.SECONDARY }: SectionBadgeProps) => {
     const variant = (SECTION_VARIANT_MAP[section] || 'default') as 'default' | 'secondary' | 'outline' | 'destructive';
 
     const IconComponent = SECTION_ICON_MAP[section];

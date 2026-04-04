@@ -114,7 +114,7 @@ export function DataTableContent({ children }: { children?: React.ReactNode }) {
     );
 }
 
-export function DataContentHead(props?: { isCollapsible?: boolean }) {
+export function DataContentHead() {
     const ctx = useDataTableContext();
     const headerGroups = ctx?.tableInstance?.getHeaderGroups() ?? [];
     return (
@@ -128,7 +128,6 @@ export function DataContentHead(props?: { isCollapsible?: boolean }) {
                                 : flexRender(header.column.columnDef.header, header.getContext())}
                         </TableHead>
                     ))}
-                    {props?.isCollapsible && <TableHead />}
                 </TableRow>
             ))}
         </TableHeader>

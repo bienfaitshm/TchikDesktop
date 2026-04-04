@@ -17,7 +17,7 @@ import {
     DataTableToolbar,
 } from "@/renderer/components/tables/data-table";
 import { OptionColumns } from "@/renderer/components/tables/columns.options";
-import { ExpandableRow } from "@/renderer/components/tables/data-table.components";
+import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import {
     ActionContainer,
     ActionTileCopy,
@@ -57,8 +57,9 @@ const OptionRowActions: React.FC<{
             <DeleteOptionDialog
                 optionId={option.optionId}
                 optionName={option.optionName}
-                renderTrigger={({ open }) => <ActionTileDelete onClick={open} />}
-            />
+            >
+                {({ onOpen }) => <ActionTileDelete onClick={onOpen} />}
+            </DeleteOptionDialog>
         </ActionContainer>
     );
 };
@@ -91,12 +92,12 @@ const OptionManagementPage: React.FC<TWithSchool> = ({ schoolId }) => {
 
                 <Suspense fallback={<div className="h-64 w-full animate-pulse bg-muted/20 rounded-lg" />}>
                     <DataTableContent>
-                        <DataContentHead isCollapsible />
+                        <DataContentHead />
                         <DataContentBody<TOption>>
                             {(props) => (
                                 <ExpandableRow
-                                    {...props}
-                                    detailContent={
+                                    row={props.row as any}
+                                    renderDetail={
                                         <OptionRowActions
                                             option={props.row.original}
                                         />

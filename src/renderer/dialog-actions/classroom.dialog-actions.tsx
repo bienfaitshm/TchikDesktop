@@ -1,10 +1,10 @@
-import React, { useCallback } from "react"
+import React from "react"
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/renderer/components/ui/dialog"
 import { Button } from "@/renderer/components/ui/button"
 import { ButtonLoader } from "@/renderer/components/form/button-loader"
 import { ClassroomForm, type ClassroomFormData } from "@/renderer/components/form/classroom-form"
 import { useCreateClassroomForm, useUpdateClassroomForm, useDeleteClassroomForm, type UseClassroomFormOptions } from "@/renderer/components/form/classroom-form.actions"
-import { ConfirmDeleteDialog } from "@/renderer/components/dialog/dialog-delete"
+import { ConfirmDeleteDialog, useConfirm } from "@/renderer/components/dialog/dialog-delete"
 import { PropsWithChildren } from "react"
 
 type DialogCreateFormProps = {
@@ -95,45 +95,47 @@ export const ClassroomDialogUpdateForm: React.FC<PropsWithChildren<DialogUpdateF
     )
 }
 
-
 interface ClassroomDialogDeleteProps {
     classId: string
     identifier: string
-    children: (params: { onOpen: () => void }) => React.ReactNode
+    children: (props: { onOpen: () => void; isLoading: boolean }) => React.ReactNode
 }
 
 export const ClassroomDialogDeleteForm: React.FC<ClassroomDialogDeleteProps> = ({
     children,
     classId,
-    identifier
+    identifier,
 }) => {
-    const [isOpen, setIsOpen] = React.useState(false)
-
-    const onOpen = useCallback(() => setIsOpen(true), [])
-    const onClose = useCallback(() => setIsOpen(false), [])
+    const { isOpen, onClose, onOpen } = useConfirm<string>()
 
     const { isLoading, onSubmit } = useDeleteClassroomForm({
-        onSuccess: onClose
+        onSuccess: () => {
+            onClose()
+        },
     })
 
-    const handleConfirm = useCallback(() => {
-        onSubmit(classId, identifier)
+    const handleConfirm = React.useCallback(async () => {
+        await onSubmit(classId, identifier)
     }, [classId, identifier, onSubmit])
 
     return (
         <>
             <ConfirmDeleteDialog
+                item={classId}
                 isOpen={isOpen}
                 onClose={onClose}
                 onConfirm={handleConfirm}
                 isLoading={isLoading}
                 title="Supprimer la salle de classe"
-                description={`Tous les documents et emplois du temps associés seront définitivement retirés.`}
+                description="Tous les documents, membres et emplois du temps associés seront définitivement retirés de la base de données."
                 itemName={identifier}
             />
-
-            {/* Pattern Render Props pour le déclencheur (Trigger) */}
-            {children({ onOpen })}
+            {children({
+                onOpen: () => onOpen(classId),
+                isLoading
+            })}
         </>
     )
 }
+
+ClassroomDialogDeleteForm.displayName = "ClassroomDialogDeleteForm"

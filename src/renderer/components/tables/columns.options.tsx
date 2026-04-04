@@ -3,6 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
 import { SectionBadge } from "@/renderer/components/section-badge"
 import { Checkbox } from "@/renderer/components/ui/checkbox"
+import { ExpandableTrigger } from "./data-table.expandable"
 
 
 export const OptionColumns: ColumnDef<TOption>[] = [
@@ -71,5 +72,9 @@ export const OptionColumns: ColumnDef<TOption>[] = [
         enableSorting: true,
         enableHiding: true,
         enableColumnFilter: true,
+    },
+    {
+        id: "actions",
+        cell: () => <ExpandableTrigger />
     },
 ]

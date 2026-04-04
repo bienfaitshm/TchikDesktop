@@ -3,6 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
 import { SectionBadge } from "@/renderer/components/section-badge"
 import { Checkbox } from "@/renderer/components/ui/checkbox"
+import { ExpandableTrigger } from "./data-table.expandable"
 
 
 export const ClassroomColumns: ColumnDef<TClassroom>[] = [
@@ -32,22 +33,6 @@ export const ClassroomColumns: ColumnDef<TClassroom>[] = [
         enableSorting: false,
         enableHiding: false,
     },
-    // {
-
-    //     accessorKey: "classId",
-    //     header: "ID",
-    //     cell: ({ row }) => {
-
-    //         return (
-    //             <TypographySmall className="font-mono text-muted-foreground">
-    //                 {row.original.classId.substring(0, 8)}...
-    //             </TypographySmall>
-    //         );
-    //     },
-    //     enableSorting: true,
-    //     enableHiding: false,
-    //     enableColumnFilter: false,
-    // },
     {
 
         accessorKey: "identifier",
@@ -86,5 +71,9 @@ export const ClassroomColumns: ColumnDef<TClassroom>[] = [
         enableSorting: true,
         enableHiding: true,
         enableColumnFilter: true,
+    },
+    {
+        id: "actions",
+        cell: () => <ExpandableTrigger />
     },
 ]
