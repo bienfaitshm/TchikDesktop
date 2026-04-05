@@ -12,7 +12,7 @@ import { SchoolsPage } from "@/renderer/screens/schools";
 // // 
 import { OptionPage } from "@/renderer/screens/options";
 // import StudentScreen from "@/renderer/screens/students";
-import LocalScreen from "@/renderer/screens/locals";
+import { LocalRoomSreen } from "@/renderer/screens/locals";
 // import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
 import Layout from "@/renderer/screens/layout";
 import {
@@ -53,7 +53,7 @@ export default function RouterProvider(): JSX.Element {
           {/* <Route path="classrooms/:classroomId" element={<StudentsLayout />}>
             <Route path="students" element={<StudentsOfClassrrom />} />
           </Route> */}
-          <Route path="locals" element={<LocalScreen />} />
+          <Route path="locals" element={<LocalRoomSreen />} />
           {/* other */}
           <Route path="school-years" element={<StudyYearsPage />} />
           <Route path="schools" element={<SchoolsPage />} />
