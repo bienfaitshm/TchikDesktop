@@ -57,6 +57,11 @@ export type SeatingApi = Readonly<{
   fetchFullSessionDetails(sessionId: string): Promise<any>;
 
   // --- Seating Assignments ---
+  generateSeating(params: {
+    schoolId: string;
+    yearId: string;
+    confortRatio?: number;
+  }): Promise<any>;
   fetchRoomLayout(
     sessionId: string,
     localRoomId: string,
@@ -124,6 +129,9 @@ export function createSeatingApis(ipcClient: IpcClient): SeatingApi {
     },
 
     // --- Seating Assignments ---
+    generateSeating(data) {
+      return ipcClient.post(SeatingAssignmentRoutes.GENERATING, data);
+    },
     fetchRoomLayout(sessionId, localRoomId) {
       return ipcClient.get(SeatingAssignmentRoutes.LAYOUT, {
         params: { sessionId, localRoomId },

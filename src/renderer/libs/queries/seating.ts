@@ -84,6 +84,17 @@ export function useCreateSeatingSession() {
 // HOOKS : SEATING ASSIGNMENTS (Assignations)
 // =============================================================================
 
+export function useGenerateSeating() {
+  return useMutation({
+    mutationKey: ["SEATING_GENERATION"],
+    mutationFn: (data: {
+      schoolId: string;
+      yearId: string;
+      confortRatio?: number;
+    }) => seating.generateSeating(data),
+  });
+}
+
 /** @description Hook pour récupérer la disposition (layout) d'une salle précise */
 export function useGetRoomLayout(sessionId: string, localRoomId: string) {
   return useSuspenseQuery({

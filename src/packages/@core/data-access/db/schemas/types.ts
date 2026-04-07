@@ -39,6 +39,13 @@ export type TEnrolementUpdate = Partial<
   Omit<TEnrolementInsert, "enrolementId" | "studentId" | "classroomId">
 >;
 
+export type TEnrolementDetails = TEnrolement & {
+  student: Omit<TUser, "password" | "createdAt" | "updatedAt">;
+  classroom: Pick<TClassroom, "identifier" | "shortIdentifier"> & {
+    yearName: TStudyYear["yearName"];
+  };
+};
+
 export type TEnrolementAction = InferSelectModel<
   typeof classroomEnrolementActions
 >;

@@ -13,7 +13,7 @@ import { SchoolsPage } from "@/renderer/screens/schools";
 import { OptionPage } from "@/renderer/screens/options";
 // import StudentScreen from "@/renderer/screens/students";
 import { LocalRoomSreen } from "@/renderer/screens/locals";
-// import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
+import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
 import Layout from "@/renderer/screens/layout";
 import {
   ConfigurationLayoutScreen,
@@ -42,7 +42,7 @@ export default function RouterProvider(): JSX.Element {
         <Route element={<Layout />} errorElement={<Launcher />}>
           <Route index element={<HomePage />} />
           {/* <Route path="inscriptions" element={<QuickEnrollmentPage />} /> */}
-          {/* <Route path="mise-en-places" element={<MiseEnPlaceScreen />} /> */}
+          <Route path="mise-en-places" element={<MiseEnPlaceScreen />} />
           {/* schools */}
           {/* <Route path="students" element={<StudentScreen />} /> */}
           <Route path="options" element={<OptionPage />} />

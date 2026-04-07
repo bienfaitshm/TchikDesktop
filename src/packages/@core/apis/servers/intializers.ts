@@ -96,6 +96,8 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   seatings.GetUnassignedStudents,
   seatings.ClearRoomAssignments,
   seatings.FindStudentSeat,
+
+  seatings.GenerateSeating,
 ];
 
 export const instantiatedHandlers = instantiateClasses(

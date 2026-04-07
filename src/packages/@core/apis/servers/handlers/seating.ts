@@ -4,6 +4,7 @@ import {
   seatingAssignmentService,
   seatingSessionService,
 } from "@/packages/@core/data-access/db/queries/seating.query";
+import { enrolementService } from "@/packages/@core/data-access/db/queries/enrolement.query";
 import {
   HttpMethod,
   IpcRequest,
@@ -31,6 +32,7 @@ import {
   type TSeatingSessionUpdate,
   type TSeatingSessionFilter,
 } from "@/packages/@core/data-access/schema-validations";
+import { seatingGenerator } from "./seating-generator";
 
 const SchoolIdYearIdSchemas = SeatingSessionAttributesSchema.pick({
   schoolId: true,
@@ -167,6 +169,29 @@ export class GetFullSessionDetails extends AbstractEndpoint<any> {
 // =============================================================================
 // ENDPOINTS : SEATING ASSIGNMENTS (Placements)
 // =============================================================================
+
+/** Genere le mise en place */
+
+export class GenerateSeating extends AbstractEndpoint<any> {
+  route = SeatingAssignmentRoutes.GENERATING;
+  method = HttpMethod.POST;
+  schemas: ValidationSchemas = {
+    body: z.object({
+      schoolId: z.string(),
+      sessionId: z.string().optional(),
+      yearId: z.string(),
+    }),
+  };
+  protected handle({
+    body: { schoolId, sessionId, yearId },
+  }: IpcRequest<{
+    sessionId: string;
+    schoolId: string;
+    yearId: string;
+  }>): Promise<unknown> {
+    return seatingGenerator({ schoolId, yearId });
+  }
+}
 
 /** Récupère la disposition visuelle d'une salle avec les élèves à leurs places. */
 export class GetRoomLayout extends AbstractEndpoint<any> {

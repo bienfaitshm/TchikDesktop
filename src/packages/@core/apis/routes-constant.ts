@@ -106,6 +106,7 @@ export const SeatingSessionRoutes = {
  * Routes IPC pour les ASSIGNATIONS (Le placement réel).
  */
 export const SeatingAssignmentRoutes = {
+  GENERATING: "seating/generating",
   LAYOUT: "seating/assignments/layout/:sessionId/:localRoomId",
   BULK: "seating/assignments/bulk",
   UNASSIGNED: "seating/assignments/unassigned/:sessionId/:yearId",

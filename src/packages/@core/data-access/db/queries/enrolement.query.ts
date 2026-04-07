@@ -1,4 +1,4 @@
-import { eq, and, sql, count } from "drizzle-orm";
+import { eq, and, sql, count, getTableColumns } from "drizzle-orm";
 import { db } from "../config";
 import {
   classroomEnrolements,
@@ -12,6 +12,7 @@ import type {
   TEnrolement,
   TEnrolementInsert,
   TEnrolementUpdate,
+  TEnrolementDetails,
   FindManyOptions,
 } from "../schemas/types";
 
@@ -54,11 +55,21 @@ export class EnrolementQuery extends BaseRepository<
   //  LECTURE (OVERRIDE & EXTENSIONS)
   // =============================================================================
 
-  async findManyExtended(filters: any): Promise<any[]> {
-    this.validateContext(filters);
+  async findManyExtended(
+    filters: FindManyOptions<typeof classroomEnrolements>,
+  ): Promise<TEnrolementDetails[]> {
+    // this.validateContext(filters);
+    const { password, updatedAt, createdAt, ...userFields } =
+      getTableColumns(users);
+    const { classId, schoolId, ...classFields } = getTableColumns(classRooms);
     try {
       const query = db
-        .select()
+        .select({
+          ...getTableColumns(classroomEnrolements),
+          student: userFields,
+          classroom: classFields,
+          yearName: studyYears.yearName,
+        })
         .from(classroomEnrolements)
         .innerJoin(users, eq(classroomEnrolements.studentId, users.userId))
         .innerJoin(
