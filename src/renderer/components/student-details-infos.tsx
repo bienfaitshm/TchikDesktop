@@ -13,7 +13,7 @@ import { ButtonLoader } from "./form/button-loader";
 import { AnimatedFrame, AnimatedFrameSwitcherProvider, useChangeAnimatedFrame } from "@/renderer/components/animated-frame-switcher";
 
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
-import { SECTION_TRANSLATIONS } from '@/packages/@core/data-access/db';
+import { getSectionLabel } from '@/packages/@core/data-access/db/options';
 import { useGetEnrollmentById, useUpdateEnrollment } from "@/renderer/libs/queries/enrolement";
 import { useUserManagement } from "@/renderer/hooks/query.mangements";
 import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
@@ -73,7 +73,7 @@ const StudentPersonalInfos = ({ user }: { user: StudentDetails['User'] }) => {
 
 // Composant pour afficher les informations d'inscription
 const StudentEnrollmentInfos = ({ enrollment }: { enrollment: StudentDetails }) => {
-    const sectionTranslation = useMemo(() => SECTION_TRANSLATIONS[enrollment.ClassRoom.section], [enrollment]);
+    const sectionTranslation = useMemo(() => getSectionLabel(enrollment.ClassRoom.section), [enrollment]);
     return (
         <InfoView value="edit-enrollment-infos">
             <TextInfo title="Classe" value={enrollment.ClassRoom.identifier} />
@@ -149,7 +149,7 @@ const EditEnrollmentInfos = ({
 }) => {
     const handleChangeFrame = useChangeAnimatedFrame();
     const updateMutation = useUpdateEnrollment();
-    const classroomsOptions = useGetClassroomAsOptions({ schoolId, yearId, params: {} }, { labelFormat: "short" });
+    const classroomsOptions = useGetClassroomAsOptions({ where: { schoolId, yearId } }, { labelFormat: "short" });
 
     const onSubmit = useCallback((data: EnrollmentFormData) => {
         updateMutation.mutate({ id: enrollment.enrolementId, data }, createMutationCallbacksWithNotifications({
@@ -195,19 +195,19 @@ export const StudentDetailsCard = ({ schoolId, yearId, data, onRefresh: globalRe
             <Card className="relative h-full">
                 <CardHeader>
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm">{enrollment.User.fullname}</CardTitle>
-                        <GenderBadge withIcon gender={enrollment.User.gender} />
+                        <CardTitle className="text-sm">{enrollment?.User?.fullname}</CardTitle>
+                        <GenderBadge withIcon gender={enrollment?.User.gender} />
                     </div>
                     <CardDescription className="text-xs">Détails personnels de l'élève.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <AnimatedFrameSwitcherProvider defaultActiveFrame="personal-infos">
                         <AnimatedFrame name="personal-infos">
-                            <StudentPersonalInfos user={enrollment.User} />
+                            <StudentPersonalInfos user={enrollment?.User} />
                         </AnimatedFrame>
                         <AnimatedFrame name="edit-personal-infos">
                             <Suspense>
-                                <EditStudentInfos user={enrollment.User} onRefresh={onRefresh} />
+                                <EditStudentInfos user={enrollment?.User} onRefresh={onRefresh} />
                             </Suspense>
                         </AnimatedFrame>
                     </AnimatedFrameSwitcherProvider>

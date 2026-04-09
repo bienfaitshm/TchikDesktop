@@ -11,7 +11,7 @@ import { StudyYearsPage } from "@/renderer/screens/study-years";
 import { SchoolsPage } from "@/renderer/screens/schools";
 // // 
 import { OptionPage } from "@/renderer/screens/options";
-// import StudentScreen from "@/renderer/screens/students";
+import StudentScreen from "@/renderer/screens/students";
 import { LocalRoomSreen } from "@/renderer/screens/locals";
 import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
 import Layout from "@/renderer/screens/layout";
@@ -23,14 +23,14 @@ import {
   NewStudyYearConfigurationPage
 } from "@/renderer/screens/config";
 
-// import { QuickEnrollmentPage } from "@/renderer/screens/enrollments";
+import { QuickEnrollmentPage } from "@/renderer/screens/enrollments";
 import type { JSX } from "react";
 // // // classroom
 import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms"
 
 // // // classroom/:classId
 // import { StudentsOfClassrrom } from "@/renderer/screens/classrooms/students"
-// import { StudentsLayout } from "@/renderer/screens/classrooms/students.layout"
+import { StudentsLayout } from "@/renderer/screens/classrooms/students.layout"
 
 
 
@@ -41,18 +41,18 @@ export default function RouterProvider(): JSX.Element {
       <Routes>
         <Route element={<Layout />} errorElement={<Launcher />}>
           <Route index element={<HomePage />} />
-          {/* <Route path="inscriptions" element={<QuickEnrollmentPage />} /> */}
+          <Route path="inscriptions" element={<QuickEnrollmentPage />} />
           <Route path="mise-en-places" element={<MiseEnPlaceScreen />} />
           {/* schools */}
-          {/* <Route path="students" element={<StudentScreen />} /> */}
+          <Route path="students" element={<StudentScreen />} />
           <Route path="options" element={<OptionPage />} />
           {/* classrooms */}
           <Route path="classrooms" element={<ClassroomPage />} />
 
           {/* Classroom-details */}
-          {/* <Route path="classrooms/:classroomId" element={<StudentsLayout />}>
-            <Route path="students" element={<StudentsOfClassrrom />} />
-          </Route> */}
+          <Route path="classrooms/:classroomId" element={<StudentsLayout />}>
+            {/* <Route path="students" element={<StudentsOfClassrrom />} /> */}
+          </Route>
           <Route path="locals" element={<LocalRoomSreen />} />
           {/* other */}
           <Route path="school-years" element={<StudyYearsPage />} />

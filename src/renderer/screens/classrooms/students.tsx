@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 
 import {
     DataTable,
-    DataTableColumnFilter,
+    TableFacetedFilterItem,
     DataTableContent,
     DataContentHead,
     DataContentBody,
@@ -17,7 +17,6 @@ import { Button } from "@/renderer/components/ui/button";
 import { StudentColumns } from "@/renderer/components/tables/columns.students";
 import { TypographyH2, TypographySmall } from "@/renderer/components/ui/typography";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
-import { WithSchoolAndYearId } from "@/commons/types/services";
 import { useGetClassroomById } from "@/renderer/libs/queries/classroom";
 import { ButtonDataExport } from "@/renderer/components/sheets/export-button";
 import { ButtonSheetStudentStat } from "./students.stat";
@@ -62,15 +61,17 @@ const ClassroomHeader: React.FC<{ classId: string }> = ({ classId }) => {
  * Il récupère les données des élèves et gère les interactions (détails, ajout, export, stats).
  * Ce composant est enveloppé par `withSchoolConfig` pour obtenir `schoolId` et `yearId`.
  */
-const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
+const StudentListContent: React.FC<any> = ({ schoolId, yearId }) => {
     const { classroomId } = useParams<{ classroomId: string }>();
     const currentClassroomId = classroomId as string;
 
     const { sheetRef, showDetails } = useDataSheetViewer<any>();
     const { data: students = [], refetch } = useGetEnrollments({
-        schoolId,
-        yearId,
-        classroomId: currentClassroomId
+        where: {
+            schoolId,
+            yearId,
+            classroomId: currentClassroomId
+        }
     });
 
     return (
@@ -91,7 +92,7 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
 
                         >
                             <DataTableToolbar>
-                                <DataTableColumnFilter />
+                                {/* <TableFacetedFilterItem /> */}
                                 <div className="flex items-center gap-3 ml-auto">
                                     {/* Le bouton d'exportation des données */}
                                     <ButtonDataExport currentClassroom={classroomId} />
@@ -100,9 +101,7 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
                                     {/* Formulaire d'inscription rapide d'un nouvel élève */}
                                     <Suspense fallback={<Button size="sm" disabled>Chargement...</Button>}>
                                         <EnrollmentDialog
-                                            schoolId={schoolId}
-                                            yearId={yearId}
-                                            initialValues={{ classroomId: currentClassroomId }}
+                                            initialValues={{ classroomId: currentClassroomId, schoolId, yearId }}
                                             dialogDescription="Inscription et ajout de l'élève dans la salle ouverte"
                                             onSuccess={refetch}
                                         >
@@ -118,7 +117,7 @@ const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId })
                                 <DataContentHead />
                                 {/* Le clic sur une ligne ouvre la feuille de détails de l'élève */}
                                 <DataContentBody
-                                    onClick={(row) => {
+                                    onRowClick={(row) => {
                                         showDetails(row.original)
                                     }}
                                 />

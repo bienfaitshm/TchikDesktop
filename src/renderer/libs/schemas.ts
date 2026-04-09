@@ -1,10 +1,10 @@
 import { z } from "zod";
 import {
-  SECTION,
-  STUDENT_STATUS,
-  USER_GENDER,
-  USER_ROLE,
-} from "@/packages/@core/data-access/db";
+  SECTION_ENUM as SECTION,
+  STUDENT_STATUS_ENUM,
+  USER_GENDER_ENUM,
+  USER_ROLE_ENUM,
+} from "@/packages/@core/data-access/db/enum";
 
 /**
  * Schéma Zod pour SchoolAttributes.
@@ -25,12 +25,12 @@ export const BaseUserSchema = z.object({
   lastName: z.string().nonempty("Le nom de famille ne peut pas être vide."),
   middleName: z.string().nonempty("Le deuxième prénom ne peut pas être vide."),
   firstName: z.string().nullable().optional(),
-  gender: z.nativeEnum(USER_GENDER, {
+  gender: z.nativeEnum(USER_GENDER_ENUM, {
     errorMap: () => ({ message: "Genre d'utilisateur invalide." }),
   }),
   birthDate: z.coerce.date().nullable().optional(),
   birthPlace: z.string().nullable().optional(),
-  role: z.nativeEnum(USER_ROLE, {
+  role: z.nativeEnum(USER_ROLE_ENUM, {
     errorMap: () => ({ message: "Rôle d'utilisateur invalide." }),
   }),
 });
@@ -53,10 +53,10 @@ export const UserSchema = z.object({
   password: z
     .string()
     .min(6, "Le mot de passe doit contenir au moins 6 caractères."),
-  gender: z.nativeEnum(USER_GENDER, {
+  gender: z.nativeEnum(USER_GENDER_ENUM, {
     errorMap: () => ({ message: "Genre d'utilisateur invalide." }),
   }),
-  role: z.nativeEnum(USER_ROLE, {
+  role: z.nativeEnum(USER_ROLE_ENUM, {
     errorMap: () => ({ message: "Rôle d'utilisateur invalide." }),
   }),
   birthDate: z
@@ -150,7 +150,7 @@ export const EnrollmentSchemaSchema = z.object({
   schoolId: z.string().nonempty("L'ID de l'école ne peut pas être vide."),
   yearId: z.string().nonempty("L'ID de l'annee scolaire ne doit pas etre vide"),
   status: z
-    .nativeEnum(STUDENT_STATUS, {
+    .nativeEnum(STUDENT_STATUS_ENUM, {
       errorMap: () => ({ message: "Statut invalide." }),
     })
     .optional(),
@@ -192,7 +192,7 @@ export const DocumentExportSchema = z.object({
   documentType: z.string().nonempty(),
   status: z
     .array(
-      z.nativeEnum(STUDENT_STATUS, {
+      z.nativeEnum(STUDENT_STATUS_ENUM, {
         errorMap: () => ({ message: "statut invalide." }),
       }),
     )

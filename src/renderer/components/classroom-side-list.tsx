@@ -5,8 +5,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { buttonVariants } from "@/renderer/components/ui/button";
 import { Frown } from "lucide-react";
 import { useGetClassroomGroupedBySection } from "../hooks/other";
-import { TClassroom, TWithOption } from "@/packages/@core/data-access/db/models/types";
-import { SECTION_TRANSLATIONS } from "@/packages/@core/data-access/db/enum"
+import type { TClassroom, TWithOption } from "@/packages/@core/data-access/schema-validations";
+import { getSectionLabel } from "@/packages/@core/data-access/db/options"
 
 
 
@@ -40,7 +40,7 @@ export const ClassroomSideList = ({ classrooms = [] }: ClassroomSideListProps) =
                     {classGrouped.map((group) => (
                         <AccordionItem key={group.section} value={group.section} className="border-b-0">
                             <AccordionTrigger className="text-xs font-semibold text-muted-foreground/70 hover:no-underline px-3 py-2 data-[state=open]:text-muted-foreground">
-                                {SECTION_TRANSLATIONS[group.section]}
+                                {getSectionLabel(group.section)}
                             </AccordionTrigger>
                             <AccordionContent className="pb-0">
                                 <div className="flex flex-col space-y-1 pl-2">

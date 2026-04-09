@@ -10,7 +10,7 @@ import {
     FormMessage,
     FormDescription,
 } from "@/renderer/components/ui/form";
-import { USER_GENDER, USER_ROLE } from "@/packages/@core/data-access/db";
+import { USER_GENDER_ENUM as USER_GENDER, USER_ROLE_ENUM as USER_ROLE } from "@/packages/@core/data-access/db/enum";
 import { Input } from "@/renderer/components/ui/input";
 import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { GenderInput } from "./fields/gender";

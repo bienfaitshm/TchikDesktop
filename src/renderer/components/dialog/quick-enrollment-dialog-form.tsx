@@ -22,7 +22,7 @@ import { FormSubmitter } from '@/renderer/components/form/form-submiter';
 import { useGetClassroomAsOptions } from '@/renderer/hooks/data-as-options';
 import { useQuickEnrollement } from '@/renderer/hooks/query.actions';
 import { TypographySmall } from '../ui/typography';
-import { TEnrolement } from '@/packages/@core/data-access/db';
+import { TEnrolementAttributes } from '@/packages/@core/data-access/schema-validations';
 
 
 export type EnrollmentDialogProps = React.PropsWithChildren<{
@@ -44,9 +44,9 @@ export const EnrollmentDialog: React.FC<EnrollmentDialogProps> = ({
     onSuccess,
 }) => {
     const formRef = useFormHandleRef<QuickEnrollmentFormData>();
-    const classroomsOptions = useGetClassroomAsOptions({ schoolId: initialValues?.schoolId, yearId: initialValues?.yearId }, { labelFormat: "short" });
+    const classroomsOptions = useGetClassroomAsOptions({ where: { schoolId: initialValues?.schoolId, yearId: initialValues?.yearId } }, { labelFormat: "short" });
 
-    const [prevEnrollement, setPrevEnrollement] = React.useState<TEnrolement | undefined>(undefined)
+    const [prevEnrollement, setPrevEnrollement] = React.useState<TEnrolementAttributes | undefined>(undefined)
 
     const { onSubmit, quickEnrolementMutation } = useQuickEnrollement({
         onSuccess: (enrolement) => {

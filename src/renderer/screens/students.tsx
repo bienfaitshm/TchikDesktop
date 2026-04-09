@@ -11,7 +11,7 @@ import { useGetClassrooms } from "@/renderer/libs/queries/classroom"
 
 import { Badge } from "@/renderer/components/ui/badge"
 import { Link } from "react-router"
-import { SECTION } from "@/packages/@core/data-access/db/enum"
+import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum"
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options"
 
 
@@ -19,8 +19,8 @@ type CurrentYearSchoolProps<T extends {} = {}> = Required<any>
 
 
 
-const ClassroomSection: React.FC<CurrentYearSchoolProps<{ section: SECTION }>> = ({ schoolId, section, yearId }) => {
-    const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId, params: { section } })
+const ClassroomSection: React.FC<CurrentYearSchoolProps<{ section: SECTION_ENUM }>> = ({ schoolId, section, yearId }) => {
+    const { data: classrooms = [] } = useGetClassrooms({ where: { section, schoolId, yearId } })
     console.log({ classrooms })
     return (
         <div className="grid grid-cols-3 gap-5 mt-5">
@@ -48,7 +48,7 @@ const ClassroomGrid: React.FC<CurrentYearSchoolProps> = ({ schoolId, yearId }) =
                 </TypographySmall>
             </div>
             <div>
-                <Tabs defaultValue={SECTION.SECONDARY}>
+                <Tabs defaultValue={SECTION_ENUM.SECONDARY}>
                     <TabsList className="rounded-full mb-4">
                         {SECTION_OPTIONS.map(section => (
                             <TabsTrigger className="rounded-full" key={section.key} value={section.value}>{section.label}</TabsTrigger>

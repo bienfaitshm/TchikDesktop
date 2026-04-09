@@ -1,14 +1,17 @@
 import { Badge } from '@/renderer/components/ui/badge';
-import { STUDENT_STATUS, STUDENT_STATUS_TRANSLATIONS } from '@/packages/@core/data-access/db/enum';
+import {
+    getStudentStatusLabel
+} from "@/packages/@core/data-access/db/options";
+import { STUDENT_STATUS_ENUM } from '@/packages/@core/data-access/db/enum';
 
 interface StudentStatusBadgeProps {
-    status: STUDENT_STATUS;
+    status: STUDENT_STATUS_ENUM;
 }
 
 const statusVariantMap = {
-    [STUDENT_STATUS.EN_COURS]: 'default',
-    [STUDENT_STATUS.ABANDON]: 'destructive',
-    [STUDENT_STATUS.EXCLUT]: 'destructive',
+    [STUDENT_STATUS_ENUM.EN_COURS]: 'default',
+    [STUDENT_STATUS_ENUM.ABANDON]: 'destructive',
+    [STUDENT_STATUS_ENUM.EXCLUT]: 'destructive',
 };
 
 export const StudentStatusBadge = ({ status }: StudentStatusBadgeProps) => {
@@ -16,7 +19,7 @@ export const StudentStatusBadge = ({ status }: StudentStatusBadgeProps) => {
 
     return (
         <Badge variant={variant}>
-            {STUDENT_STATUS_TRANSLATIONS[status]}
+            {getStudentStatusLabel(status)}
         </Badge>
     );
 };

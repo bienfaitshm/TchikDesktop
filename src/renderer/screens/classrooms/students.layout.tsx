@@ -21,7 +21,7 @@ import { ScrollArea } from "@/renderer/components/ui/scroll-area";
  * @param {WithSchoolAndYearId} props - schoolId et yearId pour récupérer les classes.
  */
 const ClassroomSideNav: React.FC<any> = ({ schoolId, yearId }) => {
-    const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId });
+    const { data: classrooms = [] } = useGetClassrooms({ where: { schoolId, yearId } });
     return <ClassroomSideList classrooms={classrooms} />;
 };
 

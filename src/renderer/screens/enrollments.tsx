@@ -1,7 +1,4 @@
 import React from 'react';
-
-
-// --- UI Component Imports ---
 import { Button } from '@/renderer/components/ui/button';
 import { TypographyH1 } from '@/renderer/components/ui/typography';
 import { DataTable, DataContentHead, DataTableContent, DataContentBody } from '@/renderer/components/tables';
@@ -10,17 +7,8 @@ import { EnrollmentHistoricsColumns } from '@/renderer/components/tables/columns
 
 import { Suspense } from '@/renderer/libs/queries/suspense';
 import { withSchoolConfig } from '@/renderer/hooks/with-application-config';
-import { EnrollmentDialog } from '../components/dialog/quick-enrollment-dialog-form';
-// Assuming you have a hook to fetch the enrollment history
+import { EnrollmentDialog } from '@/renderer/components/dialog/quick-enrollment-dialog-form';
 
-// ============================================================================
-// 1. CHILD COMPONENT: Enrollment History Table
-// ============================================================================
-
-/**
- * @description Renders the data table for enrollment history.
- * It is responsible for fetching and displaying its own data.
- */
 const EnrollmentHistoryTable: React.FC<any> = ({ }) => {
     // This hook fetches the data for the table, handling loading and error states.
     // const { data: enrollments, isLoading } = useGetEnrollmentHistory({ schoolId, yearId });
@@ -39,9 +27,6 @@ const EnrollmentHistoryTable: React.FC<any> = ({ }) => {
     );
 };
 
-// ============================================================================
-// 3. PARENT COMPONENT: Enrollment Page
-// ============================================================================
 
 /**
  * @description The main page for managing enrollments.

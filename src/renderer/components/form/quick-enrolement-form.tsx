@@ -11,7 +11,7 @@ import {
     FormMessage,
 } from "@/renderer/components/ui/form";
 import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
-import { USER_GENDER, USER_ROLE } from "@/packages/@core/data-access/db/enum";
+import { USER_GENDER_ENUM, USER_ROLE_ENUM } from "@/packages/@core/data-access/db/enum";
 import { Input } from "@/renderer/components/ui/input";
 import { GenderInput } from "./fields/gender";
 import { UseFormReturn } from "react-hook-form";
@@ -34,9 +34,9 @@ export const DEFAULT_QUICK_ENROLLMENT_VALUES: QuickEnrollmentFormData = {
         lastName: "",
         middleName: "",
         firstName: "",
-        role: USER_ROLE.STUDENT,
+        role: USER_ROLE_ENUM.STUDENT,
         birthDate: new Date(),
-        gender: USER_GENDER.MALE,
+        gender: USER_GENDER_ENUM.MALE,
         birthPlace: "Lubumbashi",
     },
 };

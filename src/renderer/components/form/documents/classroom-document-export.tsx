@@ -1,5 +1,5 @@
 import { forwardRef, useMemo, useState, type PropsWithChildren } from "react";
-import { SECTION, STUDENT_STATUS } from "@/packages/@core/data-access/db/enum";
+import { SECTION_ENUM as SECTION, STUDENT_STATUS_ENUM as STUDENT_STATUS } from "@/packages/@core/data-access/db/enum";
 import { SECTION_OPTIONS, STUDENT_STATUS_OPTIONS } from "@/packages/@core/data-access/db/options"
 import { type DocumentExportSchemaAttributes, DocumentExportSchema } from "@/renderer/libs/schemas";
 import { Check, ChevronDown } from "lucide-react";

@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from "react";
 import { useZodForm } from "@/packages/use-zod-form";
-import { STUDENT_STATUS } from "@/packages/@core/data-access/db";
+import { STUDENT_STATUS_ENUM as STUDENT_STATUS } from "@/packages/@core/data-access/db/enum";
 import { EnrolementQuickCreateSchema, type TEnrolementQuickCreate } from "@/packages/@core/data-access/schema-validations";
 import {
     Form,
