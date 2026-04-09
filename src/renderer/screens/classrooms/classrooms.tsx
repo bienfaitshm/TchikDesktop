@@ -8,6 +8,7 @@ import {
     DataTableContent,
     DataTablePagination,
     DataTableToolbar,
+    TableFacetedFilterItem,
 } from "@/renderer/components/tables/data-table";
 import { Button } from "@/renderer/components/ui/button";
 import { ClassroomColumns } from "@/renderer/components/tables/columns.classroom";
@@ -30,6 +31,8 @@ import {
 } from "@/renderer/components/tables/data-table.action-tiles";
 import { Link } from "react-router";
 import { UseClassroomFormOptions } from "@/renderer/components/form/classroom-form.actions";
+import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options"
+import { useGetOptionAsOptions } from "@/renderer/hooks/data-as-options";
 
 type TWithSchoolAndYear = Pick<TClassroom, "schoolId" | "yearId">
 
@@ -81,31 +84,47 @@ const ClassroomRowActions: React.FC<{
 
 
 const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearId }) => {
+    const { options } = useGetOptionAsOptions(schoolId)
     const { data: classrooms = [], queryKey } = useGetClassrooms({ where: { schoolId, yearId } });
-    console.log("classrooms", classrooms)
+    console.log(classrooms)
     return (
-        <main className="my-10 mx-auto h-full container max-w-screen-2xl">
+        <main className="my-10 mx-auto h-full container max-w-screen-2xl space-y-6 py-10">
+            <section className="flex items-center justify-between">
+                <header className="space-y-1">
+                    <h1 className="text-2xl font-bold tracking-tight">Gestion des classes</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Administrez les salles.
+                    </p>
+                </header>
+
+                <ClassroomDialogCreateForm
+                    schoolId={schoolId}
+                    defaultValues={{ yearId, schoolId }}
+                    options={{ mutationKeys: queryKey }}
+                >
+                    <Button size="sm" className="rounded-full">
+                        <Plus className="size-4 mr-2" />
+                        <span>Ajouter une classe</span>
+                    </Button>
+                </ClassroomDialogCreateForm>
+            </section>
             <DataTable<TClassroom>
                 data={classrooms}
                 columns={ClassroomColumns}
                 keyExtractor={(item) => item.classId}
             >
-                <DataTableToolbar className="justify-between">
-                    <div className="flex flex-col gap-1">
-                        <h1 className="text-xl font-semibold tracking-tight">Gestion des classes</h1>
-                        <p className="text-sm text-muted-foreground">Administrez les salles.</p>
-                    </div>
+                <DataTableToolbar searchColumn="identifier">
+                    <TableFacetedFilterItem
+                        title="Section"
+                        columnId="section"
+                        options={SECTION_OPTIONS}
+                    />
+                    <TableFacetedFilterItem
+                        title="Option"
+                        columnId="optionId"
+                        options={options}
+                    />
 
-                    <ClassroomDialogCreateForm
-                        schoolId={schoolId}
-                        defaultValues={{ yearId, schoolId }}
-                        options={{ mutationKeys: queryKey }}
-                    >
-                        <Button size="sm" className="rounded-full">
-                            <Plus className="size-4 mr-2" />
-                            <span>Ajouter une classe</span>
-                        </Button>
-                    </ClassroomDialogCreateForm>
                 </DataTableToolbar>
 
                 <Suspense fallback={<div className="h-64 w-full animate-pulse bg-muted/20 rounded-lg" />}>
@@ -138,6 +157,8 @@ const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearI
  * Wrapper avec Suspense pour gérer le chargement initial de la page.
  */
 const Classroom: React.FC<TWithSchoolAndYear> = (props) => {
+    console.log("classrooms", props)
+
     return (
         <Suspense>
             <ClassroomManagementPage {...props} />

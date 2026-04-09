@@ -73,6 +73,16 @@ export const ClassroomColumns: ColumnDef<TClassroom>[] = [
         enableColumnFilter: true,
     },
     {
+        accessorKey: 'optionId',
+        header: 'Option',
+        enableHiding: true,
+        cell: ({ row }) => (
+            <TypographySmall className="text-muted-foreground">
+                {row.original.optionName}
+            </TypographySmall>
+        ),
+    },
+    {
         id: "actions",
         cell: () => <ExpandableTrigger />
     },

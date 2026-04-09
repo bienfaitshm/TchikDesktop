@@ -1,6 +1,12 @@
-import { eq, sql, asc } from "drizzle-orm";
+import { eq, sql, getTableColumns } from "drizzle-orm";
 import { db } from "../config";
-import { classRooms, options, studyYears } from "../schemas/schema";
+import {
+  classRooms,
+  options,
+  studyYears,
+  classroomEnrolements,
+  users,
+} from "../schemas/schema";
 import { BaseRepository } from "./base-repository";
 import { applyQueryOptions } from "./drizzle-builder";
 import type {
@@ -11,11 +17,20 @@ import type {
 } from "../schemas/types";
 
 /**
- * Configuration des tris par défaut (Encapsulé pour la réutilisation)
+ * DTO enrichi pour le Frontend
  */
+export type TClassroomDTO = TClassroom & {
+  optionName: string | null;
+  optionShortName: string | null;
+  yearName: string;
+  startDate: Date;
+  endDate: Date;
+};
+
 const CLASSROOM_DEFAULT_SORT = {
   orderBy: [
     { column: sql`lower(${classRooms.identifier})`, order: "asc" },
+
     { column: sql`lower(${classRooms.shortIdentifier})`, order: "asc" },
   ],
 } as unknown as FindManyOptions<typeof classRooms>;
@@ -26,96 +41,107 @@ export class ClassroomQuery extends BaseRepository<
   TClassroomInsert,
   TClassroomUpdate
 > {
+  // Définition statique des colonnes pour éviter les problèmes de contexte
+  private readonly selection = {
+    ...getTableColumns(classRooms),
+    optionName: options.optionName,
+    optionShortName: options.optionShortName,
+    yearName: studyYears.yearName,
+    startDate: studyYears.startDate,
+    endDate: studyYears.endDate,
+  };
+
   constructor() {
     super(classRooms, classRooms.classId, "Classroom", CLASSROOM_DEFAULT_SORT);
   }
 
   /**
-   * Overriding findMany: Utilisation de Joins SQL pour la performance et les colonnes spécifiques.
-   * On garde la compatibilité avec applyQueryOptions.
+   * Version étendue avec Jointures SQL (Performance brute)
    */
-  async findManyExtended(filters?: any): Promise<any[]> {
+  async findManyExtended(
+    filters?: FindManyOptions<typeof classRooms>,
+  ): Promise<TClassroomDTO[]> {
     try {
       const query = db
-        .select({
-          classId: classRooms.classId,
-          identifier: classRooms.identifier,
-          shortIdentifier: classRooms.shortIdentifier,
-          section: classRooms.section,
-          schoolId: classRooms.schoolId,
-          optionName: options.optionName,
-          optionShortName: options.optionShortName,
-          yearName: studyYears.yearName,
-          startDate: studyYears.startDate,
-        })
+        .select(this.selection)
         .from(classRooms)
         .leftJoin(options, eq(classRooms.optionId, options.optionId))
         .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
         .$dynamic();
 
-      // Note: On passe null pour defaultSort ici car les tris sont déjà gérés
-      // ou injectés via filters pour éviter les conflits SQL
-      return await applyQueryOptions(query, classRooms, filters);
+      return (await applyQueryOptions(
+        query,
+        classRooms,
+        filters as any,
+      )) as TClassroomDTO[];
     } catch (error) {
       this.logError("findManyExtended", error, { filters });
-      throw new Error("Impossible de récupérer la liste enrichie des classes.");
+      throw new Error("Erreur lors de la récupération des classes enrichies.");
     }
   }
 
   /**
-   * Récupère une classe spécifique avec ses relations via Joins SQL.
+   * Recherche par ID avec relations à plat
    */
-  override async findById(classId: string): Promise<any | null> {
+  override async findById(classId: string): Promise<TClassroomDTO | null> {
     if (!classId) return null;
     try {
       const [result] = await db
-        .select()
+        .select(this.selection)
         .from(classRooms)
         .leftJoin(options, eq(classRooms.optionId, options.optionId))
         .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
-        .where(eq(classRooms.classId, classId));
+        .where(eq(classRooms.classId, classId))
+        .limit(1);
 
-      return result || null;
+      return (result as TClassroomDTO) || null;
     } catch (error) {
       this.logError("findById", error, { classId });
-      throw new Error("Détails de la classe introuvables.");
+      throw new Error("Impossible de trouver la classe spécifiée.");
     }
   }
 
   /**
-   * Utilisation de l'API Relational de Drizzle pour les structures imbriquées complexes (Inscriptions).
-   * Plus lisible pour le frontend que des jointures plates.
+   * API Relationnelle (Nested objects)
+   * Idéal pour les vues de détails complexes avec listes d'élèves.
    */
-  async findWithEnrollments(schoolId?: string): Promise<any[]> {
+  async findWithEnrollments(
+    filters?: FindManyOptions<typeof classRooms>,
+  ): Promise<any[]> {
     try {
-      return await db.query.classRooms.findMany({
-        where: schoolId ? eq(classRooms.schoolId, schoolId) : undefined,
-        with: {
-          option: true,
-          studyYear: true,
-          enrolements: {
-            with: {
-              user: {
-                columns: {
-                  userId: true,
-                  firstName: true,
-                  lastName: true,
-                  middleName: true,
-                  gender: true,
-                },
-              },
-            },
+      const query = db
+        .select({
+          classRoom: classRooms,
+          option: options,
+          studyYear: studyYears,
+          enrolement: classroomEnrolements,
+          user: {
+            userId: users.userId,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            middleName: users.middleName,
+            gender: users.gender,
           },
-        },
-        // On réutilise sql`lower(...)` pour la cohérence
-        orderBy: [
-          asc(sql`lower(${classRooms.identifier})`),
-          asc(sql`lower(${classRooms.shortIdentifier})`),
-        ],
-      });
+        })
+        .from(classRooms)
+        // Utilisation de leftJoin pour ne pas perdre les classes sans élèves/options
+        .leftJoin(options, eq(classRooms.optionId, options.optionId))
+        .leftJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
+        .leftJoin(
+          classroomEnrolements,
+          eq(classRooms.classId, classroomEnrolements.classroomId),
+        )
+        .leftJoin(users, eq(classroomEnrolements.studentId, users.userId))
+        .$dynamic();
+
+      return (await applyQueryOptions(
+        query,
+        classRooms,
+        filters as any,
+      )) as TClassroomDTO[];
     } catch (error) {
-      this.logError("findWithEnrollments", error, { schoolId });
-      throw new Error("Échec de la récupération des inscriptions.");
+      this.logError("findWithEnrollments", error, { ...filters });
+      throw new Error("Erreur lors de la récupération des inscriptions.");
     }
   }
 

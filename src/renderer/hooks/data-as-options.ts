@@ -121,7 +121,7 @@ export function useGetOptionAsOptions(
   schoolId: string,
   options?: DataToOptionConverterOptions,
 ) {
-  const { data: dataOptions = [] } = useGetOptions({ schoolId });
+  const { data: dataOptions = [] } = useGetOptions({ where: { schoolId } });
   const _options = useDataToOptions({
     data: dataOptions,
     valueKey: "optionId",

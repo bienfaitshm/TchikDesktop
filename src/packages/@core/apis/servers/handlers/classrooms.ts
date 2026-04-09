@@ -32,7 +32,7 @@ export class GetClassrooms extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, TClassroomFilter>): Promise<unknown> {
-    return classroomService.findMany(params);
+    return classroomService.findManyExtended(params);
   }
 }
 
@@ -47,7 +47,7 @@ export class GetClassroomsWithEnrollments extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, TClassroomFilter>): Promise<unknown> {
-    return classroomService.findMany(params);
+    return classroomService.findWithEnrollments(params);
   }
 }
 

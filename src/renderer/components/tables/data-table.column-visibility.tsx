@@ -29,7 +29,7 @@ export function TableColumnVisibility<TData>({
                 .getAllColumns()
                 .filter(
                     (column) =>
-                        typeof column.accessorFn !== "undefined" && column.getCanHide()
+                        typeof column.accessorFn !== "undefined" && column.getCanHide() && !column.columnDef.meta?.isInternal
                 ),
         [table]
     )
