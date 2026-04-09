@@ -92,14 +92,16 @@ interface ActionContainerProps extends React.HTMLAttributes<HTMLDivElement> {
 const ActionContainer = React.forwardRef<HTMLDivElement, ActionContainerProps>(
     ({ children, className, title, ...props }, ref) => {
         return (
-            <div ref={ref} className={cn("w-full space-y-4 p-1", className)} {...props}>
+            <div ref={ref} className={cn("w-full space-y-4 p-1",)} {...props}>
                 {title && (
                     <h3 className="px-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
                         {title}
                     </h3>
                 )}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                    {children}
+                <div className="flex items-center justify-center">
+                    <div className={cn("grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4", className)}>
+                        {children}
+                    </div>
                 </div>
             </div>
         )

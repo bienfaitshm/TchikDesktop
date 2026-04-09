@@ -1,22 +1,25 @@
+"use client";
 import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type {
-  SchoolAttributes,
-  StudyYearAttributes,
-} from "@/packages/@core/data-access/db";
+  TSchoolAttributes as TSchool,
+  TStudyYearAttributes as TStudyYear,
+} from "@/packages/@core/data-access/schema-validations";
+import { useEffect, useState } from "react";
 
 const APP_STORE_NAME = "app-global-configuration";
 
 // Définit l'état du store
 interface ConfigurationState {
-  currentSchool?: SchoolAttributes;
-  currentStudyYear?: StudyYearAttributes;
+  currentSchool?: TSchool;
+  currentStudyYear?: TStudyYear;
 }
 
 // Définit les actions pour modifier l'état
 interface ConfigurationActions {
-  setCurrentSchool(school?: SchoolAttributes): void;
-  setCurrentStudyYear(studyYear?: StudyYearAttributes): void;
+  setCurrentSchool(school?: TSchool): void;
+  setCurrentStudyYear(studyYear?: TStudyYear): void;
   isSetCurrentSchool(): boolean;
   isSetCurrentStudyYear(): boolean;
   getCurrentStudyYearSchool():
@@ -60,13 +63,39 @@ export const useApplicationConfigurationStore = create<ConfigurationStore>()(
   ),
 );
 
-// Hook pour obtenir les IDs de l'école et de l'année d'étude
-export const useGetCurrentYearSchool = () => {
-  const schoolId = useApplicationConfigurationStore(
-    (s) => s.currentSchool?.schoolId as string,
+/**
+ * Interface normalisée pour la consommation UI
+ */
+export interface CurrentSchoolConfig {
+  schoolId: string | undefined;
+  yearId: string | undefined;
+  isConfigured: boolean;
+}
+
+/**
+ * Hook optimisé pour récupérer la configuration scolaire actuelle.
+ * * Pourquoi useShallow ici ?
+ * Parce que sans lui, Zustand verrait un nouvel objet {schoolId, yearId}
+ * à chaque changement d'une autre propriété du store (ex: si tu ajoutes
+ * plus tard un champ 'theme' dans ce même store).
+ */
+export const useGetCurrentYearSchool = (): CurrentSchoolConfig => {
+  return useApplicationConfigurationStore(
+    useShallow((s) => ({
+      schoolId: s.currentSchool?.schoolId,
+      yearId: s.currentStudyYear?.yearId,
+      isConfigured: !!(s.currentSchool?.schoolId && s.currentStudyYear?.yearId),
+    })),
   );
-  const yearId = useApplicationConfigurationStore(
-    (s) => s.currentStudyYear?.yearId as string,
-  );
-  return { schoolId, yearId } as const;
+};
+
+// Ajoute ce petit helper dans ton fichier store ou hooks
+export const useIsStoreHydrated = () => {
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  return hydrated;
 };

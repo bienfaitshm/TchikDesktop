@@ -20,15 +20,6 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
-    SlidersHorizontal,
-    ChevronDown,
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
-} from "lucide-react";
-import { Label } from "@/renderer/components/ui/label";
-import {
     Table as TableView,
     TableBody,
     TableCell,
@@ -36,24 +27,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/renderer/components/ui/table";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/renderer/components/ui/select";
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/renderer/components/ui/dropdown-menu";
-import { Button } from "@/renderer/components/ui/button";
 import { useDataTable } from "./hooks";
 import { DraggableRow } from "./data-table.components";
 import { cn } from "@/renderer/utils";
+import { TableFacetedFilter } from "./data-table.faceted-filter";
+import { TableToolbar } from "./data-table.toolbar";
+import { TablePagination, type TablePaginationProps } from "./data-table.pagination";
+import { TableColumnVisibility } from "./data-table.column-visibility";
 
 type ContextTable<T> = {
     dndId: string;
@@ -186,158 +166,157 @@ export function DataContentBody<T>({
 }
 
 
-export function DataTablePagination() {
-    const ctx = useDataTableContext();
-    const table = ctx?.tableInstance;
-    if (!table) return null;
-
-    const { pageIndex, pageSize } = table.getState().pagination;
-    const pageCount = table.getPageCount();
-
-    return (
-        <div className="mt-5 flex items-center justify-between">
-            <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-                {table.getFilteredSelectedRowModel().rows.length} sur{" "}
-                {table.getFilteredRowModel().rows.length} ligne(s) sélectionné(s).{" "}
-            </div>
-            <div className="flex w-full items-center gap-8 lg:w-fit">
-                <div className="hidden items-center gap-2 lg:flex">
-                    <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                        Lignes par page
-                    </Label>
-                    <Select
-                        value={`${pageSize}`}
-                        onValueChange={(value) => table.setPageSize(Number(value))}
-                    >
-                        <SelectTrigger className="h-8 w-20" id="rows-per-page">
-                            <SelectValue placeholder={pageSize} />
-                        </SelectTrigger>
-                        <SelectContent side="top">
-                            {[10, 20, 30, 40, 50, 80].map((size) => (
-                                <SelectItem key={size} value={`${size}`}>
-                                    {size}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="flex w-fit items-center justify-center text-sm font-medium">
-                    Page {pageIndex + 1} sur {pageCount}
-                </div>
-                <div className="ml-auto flex items-center gap-2 lg:ml-0">
-                    <Button
-                        variant="outline"
-                        className="hidden h-8 w-8 p-0 lg:flex"
-                        onClick={() => table.setPageIndex(0)}
-                        disabled={!table.getCanPreviousPage()}
-                    >
-                        <span className="sr-only">Go to first page</span>
-                        <ChevronsLeft />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="size-8"
-                        size="icon"
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                    >
-                        <span className="sr-only">Go to previous page</span>
-                        <ChevronLeft />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="size-8"
-                        size="icon"
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                    >
-                        <span className="sr-only">Go to next page</span>
-                        <ChevronRight />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="hidden size-8 lg:flex"
-                        size="icon"
-                        onClick={() => table.setPageIndex(pageCount - 1)}
-                        disabled={!table.getCanNextPage()}
-                    >
-                        <span className="sr-only">Go to last page</span>
-                        <ChevronsRight />
-                    </Button>
-                </div>
-            </div>
-        </div>
-    );
+interface DataTablePaginationProps {
 }
 
-export function DataTableColumnFilter() {
-    const ctx = useDataTableContext();
-    const table = ctx?.tableInstance;
-    if (!table) return null;
+/**
+ * DataTablePagination
+ * Composant "Smart" connecté au DataTableContext.
+ * Il injecte automatiquement l'instance de la table dans le composant de pagination UI.
+ */
+export function DataTablePagination({
+    pageSizeOptions,
+    className,
+    ...props
+}: DataTablePaginationProps & Omit<TablePaginationProps<any>, "table">) {
+    const ctx = useDataTableContext()
+    const table = ctx?.tableInstance
+
+    if (!table) {
+        if (process.env.NODE_ENV === "development") {
+            console.warn(
+                "DataTablePagination must be used within a DataTableProvider. Rendering null."
+            )
+        }
+        return null
+    }
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                    <SlidersHorizontal className="mr-2" />
-                    <span className="hidden lg:inline">Personnaliser les colonnes</span>
-                    <span className="lg:hidden">Colonnes</span>
-                    <ChevronDown className="ml-2" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                    Sélectionnez les colonnes à afficher
-                </div>
-                <DropdownMenuSeparator />
-                {table
-                    .getAllColumns()
-                    .filter(
-                        (column) =>
-                            typeof column.accessorFn !== "undefined" && column.getCanHide()
-                    )
-                    .map((column) => (
-                        <DropdownMenuCheckboxItem
-                            key={column.id}
-                            className="capitalize"
-                            checked={column.getIsVisible()}
-                            onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                        >
-                            {column.id}
-                        </DropdownMenuCheckboxItem>
-                    ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
+        <TablePagination
+            {...props}
+            table={table}
+            pageSizeOptions={pageSizeOptions}
+            className={className}
+        />
+    )
 }
+
+DataTablePagination.displayName = "DataTablePagination"
+
+
+interface DataTableColumnToggleProps extends React.ComponentPropsWithoutRef<typeof TableColumnVisibility> {
+}
+
+/**
+ * DataTableColumnToggle
+ * Composant "Smart" connecté au contexte pour gérer la visibilité des colonnes.
+ */
+export function DataTableColumnToggle({
+    className,
+    ...props
+}: DataTableColumnToggleProps) {
+    const ctx = useDataTableContext()
+    const table = ctx?.tableInstance
+
+    if (!table) {
+        if (process.env.NODE_ENV === "development") {
+            console.warn("DataTableColumnToggle: table instance not found in context.")
+        }
+        return null
+    }
+
+    return (
+        <TableColumnVisibility
+            {...props}
+            table={table}
+            className={className}
+        />
+    )
+}
+
+DataTableColumnToggle.displayName = "DataTableColumnToggle"
 
 
 interface DataTableToolbarProps extends React.HTMLAttributes<HTMLDivElement> {
-    children?: React.ReactNode;
+    /** La colonne sur laquelle appliquer la recherche textuelle (optionnel) */
+    searchColumn?: string
+    /** Le texte d'aide pour le champ de recherche */
+    searchPlaceholder?: string
+    /** Contenu supplémentaire (Faceted Filters, Actions, etc.) */
+    children?: React.ReactNode
 }
+
 /**
- * `DataTableToolbar` est un composant de barre d'outils pour les tableaux de données.
- * Il fournit un conteneur stylisé pour les filtres, les actions et d'autres contrôles
- * associés à un `DataTable`.
- *
- * @param {DataTableToolbarProps} props Les propriétés du composant.
- * @param {React.ReactNode} props.children Le contenu à rendre à l'intérieur de la barre d'outils.
- * @param {string} [props.className] Des classes CSS supplémentaires à appliquer au conteneur.
+ * DataTableToolbar
  */
 export const DataTableToolbar = ({
     children,
     className,
+    searchColumn,
+    searchPlaceholder = "Rechercher...",
     ...props
 }: DataTableToolbarProps) => {
+    const ctx = useDataTableContext()
+    const table = ctx?.tableInstance
+
+    if (!table) {
+        return null
+    }
+
     return (
-        <div
-            className={cn(
-                "flex items-center justify-between py-4",
-                className // Applique les classes supplémentaires passées via les props
-            )}
-            {...props} // Passe toutes les autres props HTML au div racine
+        <TableToolbar
+            table={table}
+            searchColumn={searchColumn}
+            searchPlaceholder={searchPlaceholder}
+            className={cn("mb-4", className)}
+            {...props}
         >
             {children}
-        </div>
-    );
-};
+        </TableToolbar>
+    )
+}
+
+DataTableToolbar.displayName = "DataTableToolbar"
+
+interface TableFacetedFilterItemProps {
+    /** L'ID de la colonne dans TanStack Table (ex: "category", "status") */
+    columnId: string
+    /** Le titre affiché dans le bouton du filtre */
+    title: string
+    /** Les options de filtrage */
+    options: {
+        label: string
+        value: string
+        icon?: React.ComponentType<{ className?: string }>
+    }[]
+}
+
+/**
+ * TableFacetedFilterItem
+ */
+export function TableFacetedFilterItem({
+    columnId,
+    title,
+    options,
+}: TableFacetedFilterItemProps) {
+    const ctx = useDataTableContext()
+    const table = ctx?.tableInstance
+
+    if (!table) return null
+
+    const column = table.getColumn(columnId)
+    if (!column) {
+        console.warn(`TableFacetedFilterItem: Column "${columnId}" not found in table instance.`)
+        return null
+    }
+
+    return (
+        <TableFacetedFilter
+            column={column}
+            title={title}
+            options={options}
+        />
+    )
+}
+
+TableFacetedFilterItem.displayName = "TableFacetedFilterItem"

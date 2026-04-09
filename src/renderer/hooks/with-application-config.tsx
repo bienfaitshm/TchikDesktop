@@ -1,66 +1,82 @@
-import React, { ComponentType } from "react";
-import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/renderer/components/ui/card";
-import { WithSchoolAndYearId } from "@/commons/types/services";
+"use client"
+
+import * as React from "react"
+import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store"
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle
+} from "@/renderer/components/ui/card"
+import { AlertCircle } from "lucide-react"
 
 /**
- * Composant de repli (Fallback) affiché lorsque la configuration requise est manquante.
- * @returns {JSX.Element} L'interface invitant l'utilisateur à configurer l'application.
+ * Types des propriétés injectées par le HOC
  */
-export const MissingConfigFallback: React.FC = () => {
-    return (
-        <div className="flex flex-col items-center justify-center h-full w-full p-4">
-            <Card className="w-full max-w-md text-center shadow-lg">
-                <CardHeader className="pb-3">
-                    <CardTitle className="text-2xl font-bold text-destructive">
-                        Configuration manquante !
-                    </CardTitle>
-                    <CardDescription className="text-base text-muted-foreground">
-                        L'application a besoin d'une configuration de base pour fonctionner.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground">
-                        Veuillez vous rendre dans les <span className="font-semibold text-primary">paramètres de l'application</span> pour sélectionner l'école et l'année scolaire en cours.
-                    </p>
-                </CardContent>
-            </Card>
-        </div>
-    );
-};
+export type WithSchoolAndYearId = {
+    schoolId: string
+    yearId: string
+}
 
 /**
- * Higher-Order Component (HOC) qui injecte `schoolId` et `yearId` dans le composant enveloppé.
- * Si ces informations sont absentes du store, il bloque le rendu et affiche un message d'erreur.
- *
- * @template TProps - Les props originelles (hors schoolId et yearId) attendues par le composant.
- * @param {ComponentType<WithSchoolAndYearId<TProps>>} WrappedComponent - Le composant à envelopper.
- * @returns {React.FC<TProps>} Un nouveau composant sécurisé avec la configuration injectée.
+ * Fallback Component - Optimisé pour être léger
  */
-export function withSchoolConfig<TProps extends object>(
-    WrappedComponent: ComponentType<WithSchoolAndYearId<TProps>>
+export const MissingConfigFallback = React.memo(() => (
+    <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] w-full p-4 animate-in fade-in duration-500">
+        <Card className="w-full max-w-md border-destructive/20 shadow-xl overflow-hidden">
+            <div className="h-1.5 bg-destructive" />
+            <CardHeader className="text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                    <AlertCircle className="h-6 w-6" />
+                </div>
+                <CardTitle className="text-xl font-bold tracking-tight text-destructive">
+                    Configuration requise
+                </CardTitle>
+                <CardDescription className="text-balance">
+                    L'accès à ces données nécessite qu'une école et une année scolaire soient actives.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center pt-0">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                    Veuillez vous rendre dans les <span className="font-semibold text-primary">paramètres</span> pour sélectionner la configuration actuelle.
+                </p>
+            </CardContent>
+        </Card>
+    </div>
+))
+MissingConfigFallback.displayName = "MissingConfigFallback"
+
+/**
+ * withSchoolConfig - Higher-Order Component
+ * * @description Sécurise et injecte la configuration scolaire.
+ * Utilise React.memo pour éviter les re-renders inutiles.
+ */
+export function withSchoolConfig<TProps extends WithSchoolAndYearId>(
+    WrappedComponent: React.ComponentType<TProps>
 ) {
-    const ComponentWithConfig: React.FC<TProps> = (props) => {
-        const { schoolId, yearId } = useGetCurrentYearSchool();
+    const ComponentWithConfig = (props: Omit<TProps, keyof WithSchoolAndYearId>) => {
+        // 1. Récupération optimisée (Shallow)
+        const { schoolId, yearId, isConfigured } = useGetCurrentYearSchool()
 
-        // Vérification de la configuration
-        if (!schoolId || !yearId) {
-            return <MissingConfigFallback />;
+        // // 2. Gestion de l'hydratation (optionnel selon ton setup)
+        // const isHydrated = useIsStoreHydrated()
+        // if (!isHydrated) return <LoadingSpinner />
+
+        // 3. Garde-fou
+        if (!isConfigured) {
+            return <MissingConfigFallback />
         }
 
-        // Rendu du composant avec les props d'origine + les props injectées
+        // Ici, TS sait que schoolId et yearId ne sont plus undefined grâce au check isConfigured
         return (
             <WrappedComponent
-                {...(props as TProps)}
-                schoolId={schoolId}
-                yearId={yearId}
+                {...(props as any)}
+                schoolId={schoolId!}
+                yearId={yearId!}
             />
-        );
-    };
+        )
+    }
 
-    // Configuration du nom d'affichage pour les React DevTools
-    const displayName = WrappedComponent.displayName || WrappedComponent.name || "Component";
-    ComponentWithConfig.displayName = `withSchoolConfig(${displayName})`;
-    console.log("withShoolConfig", ComponentWithConfig.displayName)
-    return ComponentWithConfig;
+    return React.memo(ComponentWithConfig)
 }
