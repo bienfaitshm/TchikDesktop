@@ -4,7 +4,7 @@ import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { autoUpdater } from "electron-updater";
 
-import { performBackup } from "@/packages/@core/data-access/db";
+import { dbManager } from "@/packages/@core/data-access/db";
 import { getLogger } from "@/packages/logger";
 
 import { apiGateway, ipcServer } from "@/main/apps";
@@ -12,14 +12,12 @@ import { registerContextMenuListener } from "@/main/context-menus";
 
 // Logger principal pour le process Electron
 const mainLogger = getLogger("MainProcess");
-const dbLogger = getLogger("Database");
 const updaterLogger = getLogger("Updater");
 
 // Configure electron-log (nécessaire pour autoUpdater)
 autoUpdater.logger = updaterLogger;
-const ALTER_DB: boolean = false;
 
-const createMainWindow = (): void => {
+const createMainWindow = async () => {
   mainLogger.info("Création de la fenêtre principale...");
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -36,14 +34,7 @@ const createMainWindow = (): void => {
   });
   mainLogger.info("Fenêtre principale créée avec les options par défaut.");
 
-  // S
-  // Synchronisation de la base de données
-  dbLogger.info(
-    `Tentative de synchronisation de la base de données (ALTER_DB: ${ALTER_DB}).`,
-  );
-
-  dbLogger.info("Base de données synchronisée avec succès.");
-
+  await dbManager.initialize();
   // Démarrage du serveur API interne
   mainLogger.info("Démarrage du serveur API Electron...");
   apiGateway.registerEndpoints();
@@ -82,7 +73,7 @@ app.whenReady().then(async () => {
   electronApp.setAppUserModelId("com.electron.tchik");
   mainLogger.info("AppUserModelId défini.");
 
-  await performBackup();
+  await dbManager.performBackup();
 
   app.on("browser-window-created", (_, window) => {
     mainLogger.info(
@@ -108,7 +99,7 @@ app.on("window-all-closed", async () => {
     mainLogger.info(
       'Événement "window-all-closed": Fermeture de l\'application.',
     );
-    await performBackup();
+    await dbManager.performBackup();
     app.quit();
   }
 });

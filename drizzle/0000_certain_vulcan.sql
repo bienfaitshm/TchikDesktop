@@ -1,4 +1,4 @@
-CREATE TABLE `ClassRooms` (
+CREATE TABLE IF NOT EXISTS `ClassRooms` (
 	`class_id` text PRIMARY KEY NOT NULL,
 	`identifier` text NOT NULL,
 	`short_identifier` text NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE `ClassRooms` (
 	FOREIGN KEY (`school_id`) REFERENCES `Schools`(`school_id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE TABLE `ClassroomEnrolementActions` (
+CREATE TABLE IF NOT EXISTS `ClassroomEnrolementActions` (
 	`action_id` text PRIMARY KEY NOT NULL,
 	`enrolement_id` text NOT NULL,
 	`reason` text,
@@ -23,7 +23,7 @@ CREATE TABLE `ClassroomEnrolementActions` (
 	FOREIGN KEY (`enrolement_id`) REFERENCES `ClassroomEnrolements`(`enrolement_id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE TABLE `ClassroomEnrolements` (
+CREATE TABLE IF NOT EXISTS `ClassroomEnrolements` (
 	`enrolement_id` text PRIMARY KEY NOT NULL,
 	`classroom_id` text NOT NULL,
 	`status` text DEFAULT 'EN_COURS' NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE `ClassroomEnrolements` (
 	FOREIGN KEY (`year_id`) REFERENCES `StudyYears`(`year_id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE TABLE `LocalRooms` (
+CREATE TABLE IF NOT EXISTS `LocalRooms` (
 	`local_room_id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
 	`max_capacity` integer DEFAULT 0 NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE `LocalRooms` (
 	FOREIGN KEY (`school_id`) REFERENCES `Schools`(`school_id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE TABLE `Options` (
+CREATE TABLE IF NOT EXISTS `Options` (
 	`option_id` text PRIMARY KEY NOT NULL,
 	`option_name` text NOT NULL,
 	`option_short_name` text NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE `Options` (
 	FOREIGN KEY (`school_id`) REFERENCES `Schools`(`school_id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE TABLE `Schools` (
+CREATE TABLE IF NOT EXISTS `Schools` (
 	`school_id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
 	`adress` text NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE `Schools` (
 	`updated_at` integer NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE `SeatingAssignments` (
+CREATE TABLE IF NOT EXISTS `SeatingAssignments` (
 	`assignment_id` text PRIMARY KEY NOT NULL,
 	`session_id` text NOT NULL,
 	`local_room_id` text NOT NULL,
@@ -81,9 +81,9 @@ CREATE TABLE `SeatingAssignments` (
 	FOREIGN KEY (`enrolement_id`) REFERENCES `ClassroomEnrolements`(`enrolement_id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `session_enrolement_idx` ON `SeatingAssignments` (`session_id`,`enrolement_id`);--> statement-breakpoint
-CREATE UNIQUE INDEX `seat_position_idx` ON `SeatingAssignments` (`session_id`,`local_room_id`,`row_position`,`column_position`);--> statement-breakpoint
-CREATE TABLE `SeatingSessions` (
+CREATE UNIQUE INDEX IF NOT EXISTS `session_enrolement_idx` ON `SeatingAssignments` (`session_id`,`enrolement_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS `seat_position_idx` ON `SeatingAssignments` (`session_id`,`local_room_id`,`row_position`,`column_position`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `SeatingSessions` (
 	`session_id` text PRIMARY KEY NOT NULL,
 	`session_name` text NOT NULL,
 	`school_id` text NOT NULL,
@@ -92,7 +92,7 @@ CREATE TABLE `SeatingSessions` (
 	FOREIGN KEY (`year_id`) REFERENCES `StudyYears`(`year_id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE TABLE `StudyYears` (
+CREATE TABLE IF NOT EXISTS `StudyYears` (
 	`year_id` text PRIMARY KEY NOT NULL,
 	`year_name` text NOT NULL,
 	`start_date` integer NOT NULL,
@@ -103,8 +103,8 @@ CREATE TABLE `StudyYears` (
 	FOREIGN KEY (`school_id`) REFERENCES `Schools`(`school_id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `StudyYears_year_name_unique` ON `StudyYears` (`year_name`);--> statement-breakpoint
-CREATE TABLE `Users` (
+CREATE UNIQUE INDEX IF NOT EXISTS `StudyYears_year_name_unique` ON `StudyYears` (`year_name`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `Users` (
 	`user_id` text PRIMARY KEY NOT NULL,
 	`last_name` text NOT NULL,
 	`middle_name` text NOT NULL,
@@ -121,4 +121,4 @@ CREATE TABLE `Users` (
 	FOREIGN KEY (`school_id`) REFERENCES `Schools`(`school_id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `Users_username_unique` ON `Users` (`username`);
+CREATE UNIQUE INDEX IF NOT EXISTS `Users_username_unique` ON `Users` (`username`);

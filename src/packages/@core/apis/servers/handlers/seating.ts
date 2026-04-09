@@ -23,14 +23,10 @@ import {
   LocalRoomAttributesSchema,
   SeatingSessionAttributesSchema,
   SeatingSessionCreateSchema,
-  SeatingSessionUpdateSchema,
-  SeatingSessionFilterSchema,
   type TLocalRoomCreate,
   type TLocalRoomUpdate,
   type TLocalRoomFilter,
   type TSeatingSessionCreate,
-  type TSeatingSessionUpdate,
-  type TSeatingSessionFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { SeatingService } from "../services/seating.service";
 
