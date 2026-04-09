@@ -32,7 +32,7 @@ import {
   type TSeatingSessionUpdate,
   type TSeatingSessionFilter,
 } from "@/packages/@core/data-access/schema-validations";
-import { seatingGenerator } from "./seating-generator";
+import { SeatingService } from "../services/seating.service";
 
 const SchoolIdYearIdSchemas = SeatingSessionAttributesSchema.pick({
   schoolId: true,
@@ -189,7 +189,8 @@ export class GenerateSeating extends AbstractEndpoint<any> {
     schoolId: string;
     yearId: string;
   }>): Promise<unknown> {
-    return seatingGenerator({ schoolId, yearId });
+    const seating = new SeatingService(localRoomService, enrolementService);
+    return seating.generate(schoolId, yearId, { sessionId });
   }
 }
 

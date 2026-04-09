@@ -5382,10 +5382,10 @@ evp_bytestokey@^1.0.0, evp_bytestokey@^1.0.3:
     md5.js "^1.3.4"
     safe-buffer "^5.1.1"
 
-exam-seating-engine@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/exam-seating-engine/-/exam-seating-engine-1.0.3.tgz#89d447a1cbb075730e9c49dfed59493ea4c05c6c"
-  integrity sha512-gGMwuCi1goj78s2A5b5NrgHlFsBTx7Psz9BRYkjTkn828Vck/2IOSabooEHam6u+Y6CFmT6Kw3kL5pQB1ayPsg==
+exam-seating-engine@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/exam-seating-engine/-/exam-seating-engine-1.0.4.tgz#227fcf773b0ddf26de349519493e784d242169ff"
+  integrity sha512-v25X+7n0g2JgW56mHyf+c/262ZjEk1+XCQgXN8dYs9j1CkhNSQyXg4w++xCv0e07rLVeRGk1torl80v1gRrHRg==
 
 exceljs@^4.4.0:
   version "4.4.0"
