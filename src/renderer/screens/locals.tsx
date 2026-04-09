@@ -71,29 +71,34 @@ const LocalRoomManagementPage: React.FC<TWithSchool> = ({ schoolId }) => {
     const { data: localRooms = [] } = useGetLocalRooms({ where: { schoolId } });
 
     return (
-        <main className="my-10 mx-auto h-full container max-w-screen-2xl">
+        <main className="my-10 mx-auto h-full container max-w-screen-2xl space-y-4 py-10">
+            {/* Header de la page */}
+            <section className="flex items-center justify-between">
+                <header className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                        <School className="size-5 text-primary" />
+                        <h1 className="text-xl font-semibold tracking-tight">Gestion des locaux</h1>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                        Administrez les salles physiques, laboratoires et amphithéâtres.
+                    </p>
+                </header>
+
+                <CreateLocalRoomDialog defaultValues={{ schoolId }}>
+                    <Button size="sm" className="rounded-full shadow-sm">
+                        <Plus className="size-4 mr-2" />
+                        <span>Ajouter un local</span>
+                    </Button>
+                </CreateLocalRoomDialog>
+            </section>
             <DataTable<TLocalRoom>
                 data={localRooms}
                 columns={LocalRoomColumns}
                 keyExtractor={(item) => item.localRoomId}
             >
-                <DataTableToolbar className="justify-between">
-                    <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                            <School className="size-5 text-primary" />
-                            <h1 className="text-xl font-semibold tracking-tight">Gestion des locaux</h1>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                            Administrez les salles physiques, laboratoires et amphithéâtres.
-                        </p>
-                    </div>
+                <DataTableToolbar searchColumn="name">
 
-                    <CreateLocalRoomDialog defaultValues={{ schoolId }}>
-                        <Button size="sm" className="rounded-full shadow-sm">
-                            <Plus className="size-4 mr-2" />
-                            <span>Ajouter un local</span>
-                        </Button>
-                    </CreateLocalRoomDialog>
+
                 </DataTableToolbar>
 
                 <Suspense fallback={<div className="h-64 w-full animate-pulse bg-muted/10 rounded-xl border border-dashed" />}>
