@@ -26,10 +26,11 @@ interface ComboboxProps {
     searchPlaceholder?: string;
     value?: string
     onChange?(value: string): void
-    options?: { value: string, label: string }[]
+    options?: { value: string, label: string }[];
+    disable?: boolean;
 }
 
-export const Combobox: React.FC<ComboboxProps> = React.forwardRef<any, ComboboxProps>(({ value, onChange, placeholder, searchPlaceholder, options = [], classname }, ref) => {
+export const Combobox: React.FC<ComboboxProps> = React.forwardRef<any, ComboboxProps>(({ value, onChange, placeholder, searchPlaceholder, options = [], classname, disable }, ref) => {
     const [open, setOpen] = React.useState(false)
     const selectedValue = React.useMemo(() => options.find((framework) => framework.value === value)?.label, [options, value])
     const onSelect = React.useCallback((value: string) => {
@@ -46,6 +47,7 @@ export const Combobox: React.FC<ComboboxProps> = React.forwardRef<any, ComboboxP
                     role="combobox"
                     aria-expanded={open}
                     className="w-full justify-between"
+                    disabled={disable}
                 >
                     {value
                         ? selectedValue

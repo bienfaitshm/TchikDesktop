@@ -1,6 +1,10 @@
+import type {
+  TClassroomFilter,
+  TUserFilter,
+} from "@/packages/@core/data-access/schema-validations";
 import { useMemo } from "react";
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
-import { TClassroomFilter } from "@/packages/@core/data-access/schema-validations";
+import { useGetUsers } from "@/renderer/libs/queries/account";
 import { useGetOptions } from "@/renderer/libs/queries/option";
 import { useGetAvailableExports } from "@/renderer/libs/queries/document-export";
 
@@ -133,6 +137,21 @@ export function useGetOptionAsOptions(
     options: _options,
     data: dataOptions,
   };
+}
+
+export function useGetUsersAsOptions(
+  params: TUserFilter,
+  options?: DataToOptionConverterOptions,
+): Option[] {
+  const { data: users = [] } = useGetUsers(params);
+
+  return useDataToOptions({
+    data: users,
+    valueKey: "userId",
+    labelKeyLong: "fullname",
+    labelKeyShort: "lastName",
+    options,
+  });
 }
 
 export function useGetAvailableExportsAsOptions() {

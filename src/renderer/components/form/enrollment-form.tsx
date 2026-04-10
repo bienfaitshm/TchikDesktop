@@ -35,6 +35,7 @@ interface Option {
 export interface EnrollmentFormProps {
     classrooms?: Option[];
     students?: Option[];
+    type?: "update" | "create"
 }
 
 export const EnrollmentForm: React.FC<BaseFormProps<EnrollmentFormData> & EnrollmentFormProps> = ({
@@ -42,7 +43,8 @@ export const EnrollmentForm: React.FC<BaseFormProps<EnrollmentFormData> & Enroll
     onSubmit,
     initialValues,
     classrooms = [],
-    students = []
+    students = [],
+    type = "create"
 }) => {
     const form = useZodForm({
         schema: EnrolementCreateSchema,
@@ -80,6 +82,7 @@ export const EnrollmentForm: React.FC<BaseFormProps<EnrollmentFormData> & Enroll
                                         searchPlaceholder="Saisissez le nom ou matricule..."
                                         aria-required="true"
                                         classname="lg:w-[850px] md:w-[600px]"
+                                        disable={type === "update"}
                                     />
                                 </FormControl>
                                 <FormMessage />

@@ -20,7 +20,8 @@ import {
     useCreateQuickEnrolementForm
 } from "@/renderer/components/form/enrolement-form.actions"
 import { ConfirmDeleteDialog, useConfirm } from "@/renderer/components/dialog/dialog-delete"
-import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options"
+import { useGetClassroomAsOptions, useGetUsersAsOptions } from "@/renderer/hooks/data-as-options"
+import { USER_ROLE_ENUM as ROLE } from "@/packages/@core/data-access/db/enum"
 
 type SchoolYearId = { schoolId: string; yearId: string };
 
@@ -91,6 +92,7 @@ export const QuickCreateEnrollmentDialog: React.FC<QuickCreateEnrollmentDialogPr
 export const CreateEnrollmentDialog: React.FC<CreateEnrollmentDialogProps & SchoolYearId> = ({ children, defaultValues, schoolId, yearId }) => {
     const { formId, onSubmit, isSubmitting } = useCreateEnrolementForm()
     const classrooms = useGetClassroomAsOptions({ where: { schoolId, yearId } })
+    const students = useGetUsersAsOptions({ where: { schoolId, role: ROLE.STUDENT } }, { labelFormat: "short" })
     return (
         <Dialog modal>
             <DialogTrigger asChild>{children}</DialogTrigger>
@@ -107,7 +109,7 @@ export const CreateEnrollmentDialog: React.FC<CreateEnrollmentDialogProps & Scho
                 </DialogHeader>
 
                 <div className="py-4">
-                    <EnrollmentForm formId={formId} onSubmit={onSubmit} initialValues={defaultValues} classrooms={classrooms} />
+                    <EnrollmentForm formId={formId} onSubmit={onSubmit} initialValues={defaultValues} classrooms={classrooms} students={students} />
                 </div>
 
                 <DialogFooter>
@@ -126,8 +128,10 @@ export const CreateEnrollmentDialog: React.FC<CreateEnrollmentDialogProps & Scho
 /**
  * Dialogue : Modification (Update)
  */
-export const UpdateEnrollmentDialog: React.FC<UpdateEnrollmentDialogProps> = ({ initialData, enrollmentId, children }) => {
+export const UpdateEnrollmentDialog: React.FC<UpdateEnrollmentDialogProps & SchoolYearId> = ({ initialData, enrollmentId, children, schoolId, yearId }) => {
     const { formId, isSubmitting, onSubmit } = useUpdateEnrolementForm()
+    const students = useGetUsersAsOptions({ where: { schoolId, role: ROLE.STUDENT } }, { labelFormat: "short" })
+    const classrooms = useGetClassroomAsOptions({ where: { schoolId, yearId } })
 
     return (
         <Dialog modal>
@@ -146,9 +150,12 @@ export const UpdateEnrollmentDialog: React.FC<UpdateEnrollmentDialogProps> = ({ 
 
                 <div className="py-4">
                     <EnrollmentForm
+                        type="update"
                         formId={formId}
                         onSubmit={(data, helpers) => onSubmit({ id: enrollmentId, data }, helpers)}
                         initialValues={initialData}
+                        students={students}
+                        classrooms={classrooms}
                     />
                 </div>
 
