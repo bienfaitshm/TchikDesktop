@@ -1,5 +1,6 @@
-import { sql } from "drizzle-orm";
+import { getTableColumns, sql } from "drizzle-orm";
 import { users } from "../schemas/schema";
+import { db } from "../config";
 import { BaseRepository } from "./base-repository";
 import type {
   TUser,
@@ -9,12 +10,30 @@ import type {
 } from "../schemas/types";
 
 /**
+ * Fragment SQL réutilisable pour le nom complet.
+ * Gère le cas où middleName est NULL pour éviter les doubles espaces ou les valeurs NULL.
+ */
+const fullNameSql = sql<string>`
+  trim(${users.firstName} || ' ' || COALESCE(${users.middleName} || ' ', '') || ${users.lastName})
+`.as("fullName");
+
+/**
  * Tri standard : Nom, Post-nom, Prénom (Case-Insensitive)
  */
+// const USER_DEFAULT_SORT: FindManyOptions<typeof users> = {
+//   orderBy: [
+//     { column: sql`lower(${users.lastName})`, order: "asc" },
+//     { column: sql`lower(${users.middleName})`, order: "asc" },
+//     { column: sql`lower(${users.firstName})`, order: "asc" },
+//   ],
+// };
+
 const USER_DEFAULT_SORT = {
   orderBy: [
     { column: sql`lower(${users.lastName})`, order: "asc" },
+
     { column: sql`lower(${users.middleName})`, order: "asc" },
+
     { column: sql`lower(${users.firstName})`, order: "asc" },
   ],
 } as unknown as FindManyOptions<typeof users>;
@@ -26,60 +45,25 @@ export class UserQuery extends BaseRepository<
   TUserUpdate
 > {
   constructor() {
+    // On passe l'entité "User" pour les logs et les erreurs
     super(users, users.userId, "User", USER_DEFAULT_SORT);
   }
 
-  // /**
-  //  * findMany avec logique de filtrage par "Inscriptions"
-  //  * On surcharge pour gérer la jointure conditionnelle.
-  //  */
-  // async findManyExtended({
-  //   yearId,
-  //   classroomId,
-  //   ...filters
-  // }: any): Promise<TUser[]> {
-  //   // Sécurité : Isolation par école (Tenant Isolation)
-  //   if (!filters.schoolId) {
-  //     throw new Error("Validation Error: schoolId is required.");
-  //   }
+  protected override getQuerySet(): any {
+    return db
+      .select({
+        ...getTableColumns(this.table),
+        fullName: fullNameSql,
+      })
+      .from(this.table)
+      .$dynamic();
+  }
 
-  //   try {
-  //     const query = db.select().from(users).$dynamic();
+  protected override getDetailQuerySet() {
+    return this.getQuerySet();
+  }
 
-  //     // Logique de jointure si filtrage par contexte scolaire
-  //     if (yearId || classroomId) {
-  //       query.innerJoin(
-  //         classroomEnrolements,
-  //         eq(users.userId, classroomEnrolements.studentId),
-  //       );
-
-  //       const conditions = [];
-  //       if (yearId) {
-  //         conditions.push(
-  //           Array.isArray(yearId)
-  //             ? inArray(classroomEnrolements.yearId, yearId)
-  //             : eq(classroomEnrolements.yearId, yearId)
-  //         );
-  //       }
-  //       if (classroomId) {
-  //         conditions.push(
-  //           Array.isArray(classroomId)
-  //             ? inArray(classroomEnrolements.classroomId, classroomId)
-  //             : eq(classroomEnrolements.classroomId, classroomId)
-  //         );
-  //       }
-  //       query.where(and(...conditions));
-  //     }
-
-  //     // Utilisation du helper centralisé pour les filtres restants (role, name, etc.)
-  //     return await applyQueryOptions(query, users, filters);
-  //   } catch (error) {
-  //     this.logError("findManyExtended", error, { yearId, classroomId, ...filters });
-  //     throw new Error("Impossible de récupérer la liste des utilisateurs.");
-  //   }
-  // }
-
-  static instance = new UserQuery();
+  static readonly instance = new UserQuery();
 }
 
 export const userService = UserQuery.instance;

@@ -144,11 +144,11 @@ export function useGetUsersAsOptions(
   options?: DataToOptionConverterOptions,
 ): Option[] {
   const { data: users = [] } = useGetUsers(params);
-
+  console.log("users", users);
   return useDataToOptions({
     data: users,
     valueKey: "userId",
-    labelKeyLong: "fullname",
+    labelKeyLong: "fullName",
     labelKeyShort: "lastName",
     options,
   });

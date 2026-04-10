@@ -92,7 +92,7 @@ export const QuickCreateEnrollmentDialog: React.FC<QuickCreateEnrollmentDialogPr
 export const CreateEnrollmentDialog: React.FC<CreateEnrollmentDialogProps & SchoolYearId> = ({ children, defaultValues, schoolId, yearId }) => {
     const { formId, onSubmit, isSubmitting } = useCreateEnrolementForm()
     const classrooms = useGetClassroomAsOptions({ where: { schoolId, yearId } })
-    const students = useGetUsersAsOptions({ where: { schoolId, role: ROLE.STUDENT } }, { labelFormat: "short" })
+    const students = useGetUsersAsOptions({ where: { schoolId, role: ROLE.STUDENT } }, { labelFormat: "long" })
     return (
         <Dialog modal>
             <DialogTrigger asChild>{children}</DialogTrigger>
@@ -130,7 +130,7 @@ export const CreateEnrollmentDialog: React.FC<CreateEnrollmentDialogProps & Scho
  */
 export const UpdateEnrollmentDialog: React.FC<UpdateEnrollmentDialogProps & SchoolYearId> = ({ initialData, enrollmentId, children, schoolId, yearId }) => {
     const { formId, isSubmitting, onSubmit } = useUpdateEnrolementForm()
-    const students = useGetUsersAsOptions({ where: { schoolId, role: ROLE.STUDENT } }, { labelFormat: "short" })
+    const students = useGetUsersAsOptions({ where: { schoolId, role: ROLE.STUDENT } }, { labelFormat: "long" })
     const classrooms = useGetClassroomAsOptions({ where: { schoolId, yearId } })
 
     return (

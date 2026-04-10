@@ -67,7 +67,7 @@ export const UserAttributesSchema = z.object({
     .optional()
     .describe("Prénom (optionnel)"),
   // Le champ 'fullname' est virtuel, on utilise .optional() car il n'est pas envoyé par le client.
-  fullname: z
+  fullName: z
     .string()
     .optional()
     .describe("Nom complet (Champ virtuel, non géré par le client)"),

@@ -66,7 +66,7 @@ export const Combobox: React.FC<ComboboxProps> = React.forwardRef<any, ComboboxP
                                     key={framework.value}
                                     value={framework.value}
                                     onSelect={onSelect}
-                                    accessKey={framework.value}
+                                    accessKey={framework.label}
                                 >
                                     <CheckIcon
                                         className={cn(
