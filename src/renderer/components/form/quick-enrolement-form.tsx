@@ -1,6 +1,7 @@
-import React, { PropsWithChildren } from "react";
-import { useZodForm } from "@/packages/use-zod-form";
-import { EnrolementQuickCreateSchema, type TEnrolementQuickCreate } from "@/packages/@core/data-access/schema-validations";
+"use client"
+
+import * as React from "react"
+import { useFormContext } from "react-hook-form"
 import {
     Form,
     FormControl,
@@ -9,27 +10,25 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/renderer/components/ui/form";
-import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
-import { USER_GENDER_ENUM, USER_ROLE_ENUM } from "@/packages/@core/data-access/db/enum";
-import { Input } from "@/renderer/components/ui/input";
-import { GenderInput } from "./fields/gender";
-import { UseFormReturn } from "react-hook-form";
-import { Combobox } from "../ui/combobox";
-import { DateInput } from "@/renderer/components/form/fields/date";
-import { StudentSeniorityStatusSelect } from "./fields/student-seriority-statut";
+} from "@/renderer/components/ui/form"
+import { USER_GENDER_ENUM, USER_ROLE_ENUM } from "@/packages/@core/data-access/db/enum"
+import { EnrolementQuickCreateSchema, type TEnrolementQuickCreate } from "@/packages/@core/data-access/schema-validations"
+import { Input } from "@/renderer/components/ui/input"
+import { Combobox } from "@/renderer/components/ui/combobox"
+import { DateInput } from "@/renderer/components/form/fields/date"
+import { GenderInput } from "./fields/gender"
+import { StudentSeniorityStatusSelect } from "./fields/student-seriority-statut"
+import { BaseFormProps, useZodForm } from "./base-form"
 
-export * from "./utils";
+export type QuickEnrollmentFormData = TEnrolementQuickCreate
 
-export type QuickEnrollmentFormData = TEnrolementQuickCreate;
-
-export const DEFAULT_QUICK_ENROLLMENT_VALUES: QuickEnrollmentFormData = {
+/**
+ * Valeurs par défaut stables
+ */
+export const DEFAULT_QUICK_ENROLLMENT_VALUES: Partial<QuickEnrollmentFormData> = {
     classroomId: "",
     isNewStudent: false,
-    schoolId: "",
-    yearId: "",
     isInSystem: false,
-    studentId: undefined,
     student: {
         lastName: "",
         middleName: "",
@@ -39,56 +38,56 @@ export const DEFAULT_QUICK_ENROLLMENT_VALUES: QuickEnrollmentFormData = {
         gender: USER_GENDER_ENUM.MALE,
         birthPlace: "Lubumbashi",
     },
-};
+}
 
 /**
- * Informations sur l'élève (Sous-section)
- * Optimisée pour la navigation au clavier et la lecture d'écran.
+ * StudentFields - Sous-section du formulaire
+ * Utilise useFormContext pour réduire le couplage.
  */
-const StudentFields: React.FC<{
-    form: UseFormReturn<QuickEnrollmentFormData, any, QuickEnrollmentFormData>;
-}> = ({ form }) => {
+const StudentFields = () => {
+    const { control, formState: { isSubmitting } } = useFormContext<QuickEnrollmentFormData>()
+
     return (
-        <fieldset className="space-y-6 border-t pt-6">
-            <legend className="text-lg font-bold text-foreground px-1 mb-4">
-                Informations sur l'élève
+        <fieldset className="space-y-4 border-t pt-1" disabled={isSubmitting}>
+            <legend className="px-1 text-md font-bold tracking-tight text-foreground">
+                Identité de l'élève
             </legend>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <FormField
-                    control={form.control}
+                    control={control}
                     name="student.lastName"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="font-medium">Nom</FormLabel>
+                            <FormLabel>Nom</FormLabel>
                             <FormControl>
-                                <Input {...field} placeholder="Nom de famille" autoComplete="family-name" />
+                                <Input {...field} placeholder="Ex: KABILA" autoComplete="family-name" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
                 <FormField
-                    control={form.control}
+                    control={control}
                     name="student.middleName"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="font-medium">Postnom</FormLabel>
+                            <FormLabel>Postnom</FormLabel>
                             <FormControl>
-                                <Input {...field} placeholder="Deuxième nom" />
+                                <Input {...field} placeholder="Ex: MUKALA" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
                 <FormField
-                    control={form.control}
+                    control={control}
                     name="student.firstName"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="font-medium">Prénom</FormLabel>
+                            <FormLabel>Prénom</FormLabel>
                             <FormControl>
-                                <Input {...field} value={field.value ?? ""} placeholder="Prénom de l'élève" autoComplete="given-name" />
+                                <Input {...field} value={field.value!} placeholder="Ex: Jean" autoComplete="given-name" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -98,13 +97,20 @@ const StudentFields: React.FC<{
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <FormField
-                    control={form.control}
+                    control={control}
                     name="student.gender"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="font-medium">Sexe</FormLabel>
+                            <FormLabel>Sexe</FormLabel>
                             <FormControl>
-                                <GenderInput {...field} />
+                                <GenderInput
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    options={[
+                                        { label: "Masculin", value: USER_GENDER_ENUM.MALE },
+                                        { label: "Féminin", value: USER_GENDER_ENUM.FEMALE }
+                                    ]}
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -112,13 +118,13 @@ const StudentFields: React.FC<{
                 />
 
                 <FormField
-                    control={form.control}
+                    control={control}
                     name="student.birthPlace"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="font-medium">Lieu de naissance</FormLabel>
+                            <FormLabel>Lieu de naissance</FormLabel>
                             <FormControl>
-                                <Input {...field} value={field.value ?? ""} placeholder="Ex: Lubumbashi" />
+                                <Input {...field} value={field.value!} placeholder="Ville ou Territoire" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -126,16 +132,15 @@ const StudentFields: React.FC<{
                 />
 
                 <FormField
-                    control={form.control}
+                    control={control}
                     name="student.birthDate"
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
-                            <FormLabel className="mb-2 font-medium">Date de naissance</FormLabel>
+                            <FormLabel className="mb-2">Date de naissance</FormLabel>
                             <FormControl>
                                 <DateInput
-                                    value={field.value ?? new Date()}
+                                    value={field.value!}
                                     onChange={field.onChange}
-                                    placeholder="Sélectionner la date"
                                 />
                             </FormControl>
                             <FormMessage />
@@ -144,88 +149,85 @@ const StudentFields: React.FC<{
                 />
             </div>
         </fieldset>
-    );
-};
-
-export interface QuickEnrollmentFormProps {
-    classrooms?: { value: string, label: string }[]
-    onSubmit?: (values: QuickEnrollmentFormData) => void;
-    initialValues?: Partial<QuickEnrollmentFormData>;
+    )
 }
 
-export interface QuickEnrollmentFormHandle extends ImperativeFormHandle<QuickEnrollmentFormData> { }
+interface QuickEnrollmentFormProps {
+    classrooms?: { value: string; label: string }[]
+}
 
-export const QuickEnrollmentForm = React.forwardRef<
-    QuickEnrollmentFormHandle,
-    PropsWithChildren<QuickEnrollmentFormProps>
->(({ children, onSubmit, initialValues = {}, classrooms = [] }, ref) => {
+/**
+ * QuickEnrollmentForm
+ * Formulaire d'inscription rapide.
+ */
+export const QuickEnrollmentForm: React.FC<
+    BaseFormProps<QuickEnrollmentFormData> & QuickEnrollmentFormProps
+> = ({ formId, onSubmit, initialValues = DEFAULT_QUICK_ENROLLMENT_VALUES, classrooms = [] }) => {
+
     const form = useZodForm({
         schema: EnrolementQuickCreateSchema,
-        defaultValues: { ...DEFAULT_QUICK_ENROLLMENT_VALUES, ...initialValues },
-        onSubmit: (values) => onSubmit?.(values),
-    });
+        initialValues: (initialValues || DEFAULT_QUICK_ENROLLMENT_VALUES) as QuickEnrollmentFormData,
+        defaultValues: DEFAULT_QUICK_ENROLLMENT_VALUES,
+        onSubmit,
+    })
 
-    useFormImperativeHandle(ref, form);
+    const { isSubmitting } = form.formState
 
     return (
         <Form {...form}>
             <form
-                className="space-y-8"
+                id={formId}
+                className="space-y-10"
                 onSubmit={form.submit}
-                aria-label="Formulaire d'inscription complète de l'élève"
+                aria-label="Inscription rapide"
             >
-                {/* Section Affectation */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                    <FormField
-                        control={form.control}
-                        name="classroomId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="font-bold text-base">Affectation en classe</FormLabel>
-                                <FormControl>
-                                    <Combobox
-                                        {...field}
-                                        options={classrooms}
-                                        placeholder="Choisir une salle de classe"
-                                        searchPlaceholder="Ex: 1ère Primaire..."
-                                    />
-                                </FormControl>
-                                <FormDescription className="text-xs">
-                                    L'élève sera automatiquement inscrit dans cette promotion.
-                                </FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
+                {/* Section Affectation Académique */}
+                <FormField
+                    control={form.control}
+                    name="classroomId"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Classe de destination</FormLabel>
+                            <FormControl>
+                                <Combobox
+                                    {...field}
+                                    options={classrooms}
+                                    placeholder="Sélectionner la classe"
+                                    classname="lg:w-[850px] md:w-[600px]"
+                                />
+                            </FormControl>
+                            <FormDescription>
+                                L'élève sera assigné à cette classe pour l'année en cours.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <section className="w-full">
                     <FormField
                         control={form.control}
                         name="isNewStudent"
                         render={({ field }) => (
                             <FormItem className="space-y-3">
-                                <FormLabel className="font-bold text-base">Provenance</FormLabel>
+                                <FormLabel>Statut d'inscription</FormLabel>
                                 <FormControl>
                                     <StudentSeniorityStatusSelect
                                         value={field.value}
                                         onChangeValue={field.onChange}
+                                        disabled={isSubmitting}
                                     />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
-                </div>
+                </section>
 
-                {/* Section Identité */}
-                <StudentFields form={form} />
-
-                {/* Actions (Slots) */}
-                <div className="pt-6 border-t flex items-center justify-end gap-4">
-                    {children}
-                </div>
+                {/* Champs d'identité (fieldset interne) */}
+                <StudentFields />
             </form>
         </Form>
-    );
-});
+    )
+}
 
-QuickEnrollmentForm.displayName = "QuickEnrollmentForm";
+QuickEnrollmentForm.displayName = "QuickEnrollmentForm"

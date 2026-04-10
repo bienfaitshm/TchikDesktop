@@ -33,35 +33,21 @@ const SENIORITY_OPTIONS = [
     },
 ] as const
 
-/**
- * StudentSeniorityStatusSelect
- * Composant de sélection sous forme de cartes interactives (Radio Group Custom).
- */
 export const StudentSeniorityStatusSelect: React.FC<StudentSeniorityStatusSelectProps> = ({
     onChangeValue,
     value,
     disabled = false,
     className,
 }) => {
-    const stringValue = React.useMemo(() => {
-        if (value === true) return "true"
-        if (value === false) return "false"
-        return undefined
-    }, [value])
-
-    const handleValueChange = React.useCallback(
-        (val: string) => {
-            onChangeValue?.(val === "true")
-        },
-        [onChangeValue]
-    )
+    const stringValue = value === true ? "true" : value === false ? "false" : undefined
 
     return (
         <RadioGroup
-            onValueChange={handleValueChange}
+            onValueChange={(val) => onChangeValue?.(val === "true")}
             value={stringValue}
             disabled={disabled}
             className={cn("grid grid-cols-1 gap-4 sm:grid-cols-2", className)}
+            aria-label="Provenance de l'élève"
         >
             {SENIORITY_OPTIONS.map((option) => {
                 const isSelected = stringValue === option.value
@@ -69,62 +55,66 @@ export const StudentSeniorityStatusSelect: React.FC<StudentSeniorityStatusSelect
 
                 return (
                     <FormItem key={option.value} className="space-y-0">
-                        {/* Le label sert de conteneur cliquable pour le RadioGroupItem caché */}
-                        <FormLabel
-                            className={cn(
-                                "relative flex cursor-pointer flex-row items-start space-x-3 space-y-0 rounded-xl border p-4 transition-all duration-200",
-                                "hover:bg-muted/50 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2",
-                                isSelected
-                                    ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary"
-                                    : "border-input bg-background",
-                                disabled && "pointer-events-none opacity-50 grayscale"
-                            )}
-                        >
+                        <div className="relative flex">
                             <FormControl>
-                                {/* sr-only cache l'input radio natif mais le laisse accessible */}
                                 <RadioGroupItem
                                     value={option.value}
-                                    id={option.value}
-                                    className="sr-only"
+                                    id={`seniority-${option.value}`}
+                                    className="peer sr-only"
                                 />
                             </FormControl>
 
-                            {/* Conteneur d'icône */}
-                            <div
+                            <FormLabel
+                                htmlFor={`seniority-${option.value}`}
                                 className={cn(
-                                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-colors",
+                                    "flex flex-1 cursor-pointer flex-row items-start gap-4 rounded-xl border-2 p-4 transition-all duration-200 outline-none",
+                                    "hover:bg-muted/50",
+                                    "peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2",
                                     isSelected
-                                        ? "border-primary bg-primary text-primary-foreground"
-                                        : "border-border bg-muted text-muted-foreground"
+                                        ? "border-primary bg-primary/5 shadow-md"
+                                        : "border-muted bg-background hover:border-muted-foreground/30",
+                                    disabled && "cursor-not-allowed opacity-50 grayscale"
                                 )}
                             >
-                                <Icon className="h-5 w-5" />
-                            </div>
-
-                            {/* Textes */}
-                            <div className="flex flex-col space-y-1 pr-4">
-                                <span
+                                {/* Icône décorative (aria-hidden car le texte suffit) */}
+                                <div
                                     className={cn(
-                                        "text-sm font-bold leading-none tracking-tight",
-                                        isSelected ? "text-primary" : "text-foreground"
+                                        "flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border-2 transition-colors",
+                                        isSelected
+                                            ? "border-primary bg-primary text-primary-foreground shadow-inner"
+                                            : "border-muted bg-muted/30 text-muted-foreground"
                                     )}
+                                    aria-hidden="true"
                                 >
-                                    {option.label}
-                                </span>
-                                <FormDescription className="text-[11px] leading-snug">
-                                    {option.description}
-                                </FormDescription>
-                            </div>
-
-                            {/* Indicateur visuel "Check" */}
-                            {isSelected && (
-                                <div className="absolute right-3 top-3 animate-in zoom-in duration-200">
-                                    <div className="rounded-full bg-primary p-0.5 text-white">
-                                        <Check className="h-3 w-3 stroke-" />
-                                    </div>
+                                    <Icon className="h-6 w-6" />
                                 </div>
-                            )}
-                        </FormLabel>
+
+                                <div className="flex flex-col gap-1 pr-6">
+                                    <span className={cn(
+                                        "text-sm font-bold leading-tight tracking-tight",
+                                        isSelected ? "text-primary" : "text-foreground"
+                                    )}>
+                                        {option.label}
+                                    </span>
+                                    <FormDescription className="text-xs leading-normal opacity-90">
+                                        {option.description}
+                                    </FormDescription>
+                                </div>
+
+                                {/* Indicateur visuel "Check" (Optionnel mais recommandé pour l'UX) */}
+                                <div
+                                    className={cn(
+                                        "absolute right-4 top-4 flex h-5 w-5 items-center justify-center rounded-full border transition-all duration-300",
+                                        isSelected
+                                            ? "scale-110 border-primary bg-primary text-primary-foreground opacity-100"
+                                            : "scale-75 border-muted bg-transparent opacity-0"
+                                    )}
+                                    aria-hidden="true"
+                                >
+                                    <Check className="h-3 w-3" strokeWidth={3} />
+                                </div>
+                            </FormLabel>
+                        </div>
                     </FormItem>
                 )
             })}

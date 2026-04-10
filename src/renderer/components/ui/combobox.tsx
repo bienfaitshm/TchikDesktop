@@ -21,6 +21,7 @@ import {
 
 
 interface ComboboxProps {
+    classname?: string;
     placeholder?: string;
     searchPlaceholder?: string;
     value?: string
@@ -28,7 +29,7 @@ interface ComboboxProps {
     options?: { value: string, label: string }[]
 }
 
-export const Combobox: React.FC<ComboboxProps> = React.forwardRef<any, ComboboxProps>(({ value, onChange, placeholder, searchPlaceholder, options = [] }, ref) => {
+export const Combobox: React.FC<ComboboxProps> = React.forwardRef<any, ComboboxProps>(({ value, onChange, placeholder, searchPlaceholder, options = [], classname }, ref) => {
     const [open, setOpen] = React.useState(false)
     const selectedValue = React.useMemo(() => options.find((framework) => framework.value === value)?.label, [options, value])
     const onSelect = React.useCallback((value: string) => {
@@ -37,7 +38,7 @@ export const Combobox: React.FC<ComboboxProps> = React.forwardRef<any, ComboboxP
     }, [onChange])
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={setOpen} modal>
             <PopoverTrigger asChild>
                 <Button
                     ref={ref}
@@ -52,7 +53,7 @@ export const Combobox: React.FC<ComboboxProps> = React.forwardRef<any, ComboboxP
                     <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[400px] p-0">
+            <PopoverContent className={cn("w-[400px] p-0", classname)}>
                 <Command>
                     <CommandInput placeholder={searchPlaceholder} />
                     <CommandList>

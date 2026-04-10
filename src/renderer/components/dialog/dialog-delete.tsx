@@ -75,7 +75,7 @@ export const ConfirmDialog = React.forwardRef<HTMLDivElement, ConfirmDialogProps
         }
 
         return (
-            <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <Dialog modal open={isOpen} onOpenChange={(open) => !open && onClose()}>
                 <DialogContent
                     ref={ref}
                     className="sm:max-w-[425px] overflow-hidden gap-0 p-0"

@@ -1,7 +1,7 @@
-import React, { PropsWithChildren } from "react";
-import { useZodForm } from "@/packages/use-zod-form";
+import React, { useId } from "react";
 import { STUDENT_STATUS_ENUM as STUDENT_STATUS } from "@/packages/@core/data-access/db/enum";
-import { EnrolementQuickCreateSchema, type TEnrolementQuickCreate } from "@/packages/@core/data-access/schema-validations";
+import { STUDENT_STATUS_OPTIONS } from "@/packages/@core/data-access/db/options"
+import { EnrolementCreateSchema, type TEnrolementCreate } from "@/packages/@core/data-access/schema-validations";
 import {
     Form,
     FormControl,
@@ -11,76 +11,106 @@ import {
     FormLabel,
     FormMessage,
 } from "@/renderer/components/ui/form";
-import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
-import { Combobox } from "../ui/combobox";
+import { Combobox } from "@/renderer/components/ui/combobox";
 import { StudentStatus } from "./fields/student-status";
 import { StudentSeniorityStatusSelect } from "./fields/student-seriority-statut";
+import { BaseFormProps, useZodForm } from "./base-form";
 
-export * from "./utils";
+export type EnrollmentFormData = TEnrolementCreate;
 
-export type EnrollmentFormData = TEnrolementQuickCreate;
-
-const DEFAULT_QUICK_ENROLLMENT_VALUES: EnrollmentFormData = {
+const DEFAULT_VALUES: EnrollmentFormData = {
     classroomId: "",
-    isNewStudent: false,
+    studentId: "",
     schoolId: "",
     yearId: "",
-    studentId: undefined,
+    isNewStudent: false,
     status: STUDENT_STATUS.EN_COURS
 };
 
-interface ClassroomOption {
+interface Option {
     label: string;
     value: string;
 }
 
 export interface EnrollmentFormProps {
-    classrooms?: ClassroomOption[];
-    onSubmit?: (values: EnrollmentFormData) => void;
-    initialValues?: Partial<EnrollmentFormData>;
+    classrooms?: Option[];
+    students?: Option[];
 }
 
-export const EnrollmentForm = React.forwardRef<
-    ImperativeFormHandle<EnrollmentFormData>,
-    PropsWithChildren<EnrollmentFormProps>
->(({ children, onSubmit, initialValues = {}, classrooms = [] }, ref) => {
+export const EnrollmentForm: React.FC<BaseFormProps<EnrollmentFormData> & EnrollmentFormProps> = ({
+    formId,
+    onSubmit,
+    initialValues,
+    classrooms = [],
+    students = []
+}) => {
     const form = useZodForm({
-        schema: EnrolementQuickCreateSchema,
-        defaultValues: { ...DEFAULT_QUICK_ENROLLMENT_VALUES, ...initialValues },
-        onSubmit: (values) => onSubmit?.(values),
+        schema: EnrolementCreateSchema,
+        defaultValues: DEFAULT_VALUES,
+        initialValues,
+        onSubmit
     });
 
-    useFormImperativeHandle(ref, form);
+
+    const classDescId = useId();
+    const statusDescId = useId();
+    const seniorityDescId = useId();
 
     return (
         <Form {...form}>
             <form
+                id={formId}
                 className="space-y-8"
                 onSubmit={form.submit}
                 aria-label="Formulaire d'inscription rapide de l'élève"
             >
-                {/* Section 1: Informations d'affectation */}
+                {/* Section : Identification */}
+                <fieldset className="space-y-6 border-none p-0 m-0">
+                    <FormField
+                        control={form.control}
+                        name="studentId"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel>Élève à inscrire</FormLabel>
+                                <FormControl>
+                                    <Combobox
+                                        {...field}
+                                        options={students}
+                                        placeholder="Rechercher un élève..."
+                                        searchPlaceholder="Saisissez le nom ou matricule..."
+                                        aria-required="true"
+                                        classname="lg:w-[850px] md:w-[600px]"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </fieldset>
+
+                {/* Section : Paramètres de l'inscription */}
                 <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-6 border-none p-0 m-0">
-                    <legend className="sr-only">Détails de l'affectation</legend>
+                    <legend className="sr-only">Détails de la classe et du statut</legend>
+
                     <FormField
                         control={form.control}
                         name="classroomId"
                         render={({ field }) => (
                             <FormItem className="flex flex-col">
-                                <FormLabel className="font-semibold text-base">Salle de classe cible</FormLabel>
+                                <FormLabel>Classe de destination</FormLabel>
                                 <FormControl>
                                     <Combobox
                                         {...field}
                                         options={classrooms}
-                                        placeholder="Sélectionner une classe..."
-                                        searchPlaceholder="Rechercher (ex: 3ème...)"
+                                        placeholder="Choisir une classe..."
+                                        aria-describedby={classDescId}
                                         aria-required="true"
                                     />
                                 </FormControl>
-                                <FormDescription className="text-[0.8rem] leading-relaxed">
-                                    Classe à laquelle l'élève sera rattaché pour l'année en cours.
+                                <FormDescription id={classDescId} className="text-xs">
+                                    Affectation pour l'année scolaire en cours.
                                 </FormDescription>
-                                <FormMessage className="font-medium" />
+                                <FormMessage />
                             </FormItem>
                         )}
                     />
@@ -90,51 +120,52 @@ export const EnrollmentForm = React.forwardRef<
                         name="status"
                         render={({ field }) => (
                             <FormItem className="flex flex-col">
-                                <FormLabel className="font-semibold text-base">État de l'inscription</FormLabel>
+                                <FormLabel>Statut du dossier</FormLabel>
                                 <FormControl>
-                                    <StudentStatus {...field} />
+                                    <StudentStatus
+                                        {...field}
+                                        aria-describedby={statusDescId}
+                                        options={STUDENT_STATUS_OPTIONS}
+                                    />
                                 </FormControl>
-                                <FormDescription className="text-[0.8rem] leading-relaxed">
-                                    Définit si l'élève est actif, en attente ou régularisé.
+                                <FormDescription id={statusDescId} className="text-xs">
+                                    Niveau de validation administrative.
                                 </FormDescription>
-                                <FormMessage className="font-medium" />
+                                <FormMessage />
                             </FormItem>
                         )}
                     />
                 </fieldset>
 
-                {/* Section 2: Profil de l'élève */}
-                <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
+                {/* Section : Historique / Provenance */}
+                <fieldset>
+                    <legend className="sr-only">Ancienneté de l'élève</legend>
                     <FormField
                         control={form.control}
                         name="isNewStudent"
                         render={({ field }) => (
-                            <FormItem className="space-y-4">
+                            <FormItem className="space-y-3">
                                 <div className="space-y-1">
-                                    <FormLabel className="font-semibold text-base">Provenance de l'élève</FormLabel>
-                                    <FormDescription className="text-[0.8rem]">
-                                        Est-ce la première fois que cet élève s'inscrit dans cet établissement ?
+                                    <FormLabel>Profil d'admission</FormLabel>
+                                    <FormDescription id={seniorityDescId} className="text-xs">
+                                        Indiquez si l'élève est un nouveau venu dans l'établissement.
                                     </FormDescription>
                                 </div>
                                 <FormControl>
                                     <StudentSeniorityStatusSelect
                                         value={field.value}
                                         onChangeValue={field.onChange}
+                                        aria-describedby={seniorityDescId}
                                     />
                                 </FormControl>
-                                <FormMessage className="font-medium" />
+                                <FormMessage />
                             </FormItem>
                         )}
                     />
-                </div>
-
-                {/* Slot pour les boutons d'action */}
-                <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                    {children}
-                </div>
+                </fieldset>
             </form>
         </Form>
     );
-});
+};
 
 EnrollmentForm.displayName = "EnrollmentForm";

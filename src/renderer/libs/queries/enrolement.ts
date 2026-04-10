@@ -1,8 +1,4 @@
-import {
-  useMutation,
-  useSuspenseQuery,
-  UseSuspenseQueryOptions,
-} from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "./base-query";
 import {
   TEnrolementAttributes,
   TEnrolementCreate,
@@ -12,6 +8,7 @@ import {
 } from "@/packages/@core/data-access/schema-validations";
 import { enrollement } from "@/renderer/libs/apis";
 import { TQueryUpdate } from "./type";
+import type { UseSuspenseQueryOptions } from "@tanstack/react-query";
 
 export function useGetEnrollments(params?: TEnrolementFilter) {
   return useSuspenseQuery({
@@ -22,7 +19,7 @@ export function useGetEnrollments(params?: TEnrolementFilter) {
 
 export function useGetEnrollmentById(
   enrolementId: string,
-  options?: Partial<UseSuspenseQueryOptions<TEnrolementAttributes>>
+  options?: Partial<UseSuspenseQueryOptions<TEnrolementAttributes>>,
 ) {
   return useSuspenseQuery({
     queryKey: ["GET_ENROLLMENT", enrolementId],
@@ -54,5 +51,12 @@ export function useUpdateEnrollment() {
     mutationKey: ["UPDATE_ENROLEMENT"],
     mutationFn: ({ data, id }: TQueryUpdate<TEnrolementUpdate>) =>
       enrollement.updateEnrollement(id, data),
+  });
+}
+
+export function useDeleteEnrollment() {
+  return useMutation({
+    mutationKey: ["DELETE_ENROLEMENT"],
+    mutationFn: (id: string) => enrollement.deleteEnrollement(id),
   });
 }
