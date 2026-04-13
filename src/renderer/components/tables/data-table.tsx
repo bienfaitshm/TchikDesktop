@@ -28,7 +28,7 @@ import {
     TableRow,
 } from "@/renderer/components/ui/table";
 import { useDataTable } from "./hooks";
-import { DraggableRow } from "./data-table.components";
+import { DraggableRow } from "./data-table.fraggablr-row";
 import { cn } from "@/renderer/utils";
 import { TableFacetedFilter } from "./data-table.faceted-filter";
 import { TableToolbar } from "./data-table.toolbar";

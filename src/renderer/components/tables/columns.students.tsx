@@ -1,4 +1,3 @@
-import type { TEnrolement, TWithUser } from "@/commons/types/models";
 import type { ColumnDef } from "@tanstack/react-table";
 import { TypographySmall } from "@/renderer/components/ui/typography";
 import { Avatar, AvatarFallback } from "@/renderer/components/ui/avatar";
@@ -6,7 +5,9 @@ import { Checkbox } from "@/renderer/components/ui/checkbox";
 import { GenderBadge } from "../user-gender";
 import { StudentStatusBadge } from "../student-status";
 
-export const StudentColumns: ColumnDef<TWithUser<TEnrolement>>[] = [
+type TEnrolement = any
+
+export const StudentColumns: ColumnDef<TEnrolement>[] = [
     {
         id: "select",
         header: ({ table }) => (
@@ -37,7 +38,7 @@ export const StudentColumns: ColumnDef<TWithUser<TEnrolement>>[] = [
         accessorKey: "fullname",
         header: "Nom, postnom et prénom",
         cell: ({ row }) => {
-            const fullname = row.original.User.fullname;
+            const fullname = row.original?.User?.fullname ?? "name"
             return (
                 <div className="flex flex-row gap-2">
                     <Avatar>
@@ -57,17 +58,17 @@ export const StudentColumns: ColumnDef<TWithUser<TEnrolement>>[] = [
         enableHiding: false,
     },
     {
-        accessorKey: "sexe",
+        accessorKey: "gender",
         header: "Sexe",
-        cell: ({ row }) => <GenderBadge withIcon gender={row.original.User.gender} />
+        cell: ({ row }) => <GenderBadge withIcon gender={row.original?.User?.gender} />
     },
     {
         accessorKey: "code",
         header: "Code",
-        cell: ({ row }) => <TypographySmall>{row.original.code}</TypographySmall>,
+        cell: ({ row }) => <TypographySmall>{row.original.studentCode}</TypographySmall>,
     },
     {
-        accessorKey: "section",
+        accessorKey: "status",
         header: "Status",
         cell: ({ row }) => <StudentStatusBadge status={row.original.status} />
     },

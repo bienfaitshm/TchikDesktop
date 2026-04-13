@@ -29,7 +29,7 @@ import type { JSX } from "react";
 import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms"
 
 // // // classroom/:classId
-// import { StudentsOfClassrrom } from "@/renderer/screens/classrooms/students"
+import { StudentsOfClassrrom } from "@/renderer/screens/classrooms/students"
 import { StudentsLayout } from "@/renderer/screens/classrooms/students.layout"
 
 
@@ -51,7 +51,7 @@ export default function RouterProvider(): JSX.Element {
 
           {/* Classroom-details */}
           <Route path="classrooms/:classroomId" element={<StudentsLayout />}>
-            {/* <Route path="students" element={<StudentsOfClassrrom />} /> */}
+            <Route path="students" element={<StudentsOfClassrrom />} />
           </Route>
           <Route path="locals" element={<LocalRoomSreen />} />
           {/* other */}

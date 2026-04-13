@@ -4,6 +4,8 @@ import React from "react";
 import { useParams } from "react-router";
 import { Plus } from "lucide-react";
 
+import { GENDER_OPTIONS, STUDENT_STATUS_OPTIONS } from "@/packages/@core/data-access/db/options"
+
 import {
     DataTable,
     TableFacetedFilterItem,
@@ -13,7 +15,7 @@ import {
     DataTablePagination,
     DataTableToolbar,
 } from "@/renderer/components/tables";
-import { Button } from "@/renderer/components/ui/button";
+// import { Button } from "@/renderer/components/ui/button";
 import { StudentColumns } from "@/renderer/components/tables/columns.students";
 import { TypographyH2, TypographySmall } from "@/renderer/components/ui/typography";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
@@ -23,9 +25,9 @@ import { ButtonSheetStudentStat } from "./students.stat";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
-import { EnrollmentDialog } from "@/renderer/components/dialog/quick-enrollment-dialog-form";
-import { StudentDetailsCard } from "@/renderer/components/student-details-infos";
-import { DataSheetViewer, useDataSheetViewer } from "@/renderer/components/sheets/sheet-viewer"
+// import { EnrollmentDialog } from "@/renderer/components/dialog/quick-enrollment-dialog-form";
+// import { StudentDetailsCard } from "@/renderer/components/student-details-infos";
+// import { DataSheetViewer, useDataSheetViewer } from "@/renderer/components/sheets/sheet-viewer"
 
 /**
  * Composant d'en-tête de la page de la classe.
@@ -65,7 +67,7 @@ const StudentListContent: React.FC<any> = ({ schoolId, yearId }) => {
     const { classroomId } = useParams<{ classroomId: string }>();
     const currentClassroomId = classroomId as string;
 
-    const { sheetRef, showDetails } = useDataSheetViewer<any>();
+    // const { sheetRef, showDetails } = useDataSheetViewer<any>();
     const { data: students = [], refetch } = useGetEnrollments({
         where: {
             schoolId,
@@ -74,6 +76,7 @@ const StudentListContent: React.FC<any> = ({ schoolId, yearId }) => {
         }
     });
 
+    console.log("enrolements", students)
     return (
         <>
             <div className="overflow-hidden bg-background">
@@ -91,15 +94,16 @@ const StudentListContent: React.FC<any> = ({ schoolId, yearId }) => {
                             keyExtractor={(student: any) => `${student.enrolementId}`}
 
                         >
-                            <DataTableToolbar>
-                                {/* <TableFacetedFilterItem /> */}
+                            <DataTableToolbar searchColumn="fullname">
+                                <TableFacetedFilterItem columnId="gender" title="Sexe" options={GENDER_OPTIONS} />
+                                <TableFacetedFilterItem columnId="status" title="Status" options={STUDENT_STATUS_OPTIONS} />
                                 <div className="flex items-center gap-3 ml-auto">
                                     {/* Le bouton d'exportation des données */}
                                     <ButtonDataExport currentClassroom={classroomId} />
                                     {/* Le bouton pour les statistiques des élèves */}
                                     <ButtonSheetStudentStat students={students} />
                                     {/* Formulaire d'inscription rapide d'un nouvel élève */}
-                                    <Suspense fallback={<Button size="sm" disabled>Chargement...</Button>}>
+                                    {/* <Suspense fallback={<Button size="sm" disabled>Chargement...</Button>}>
                                         <EnrollmentDialog
                                             initialValues={{ classroomId: currentClassroomId, schoolId, yearId }}
                                             dialogDescription="Inscription et ajout de l'élève dans la salle ouverte"
@@ -110,7 +114,7 @@ const StudentListContent: React.FC<any> = ({ schoolId, yearId }) => {
                                                 <span>Nouvel élève</span>
                                             </Button>
                                         </EnrollmentDialog>
-                                    </Suspense>
+                                    </Suspense> */}
                                 </div>
                             </DataTableToolbar>
                             <DataTableContent>
@@ -118,7 +122,8 @@ const StudentListContent: React.FC<any> = ({ schoolId, yearId }) => {
                                 {/* Le clic sur une ligne ouvre la feuille de détails de l'élève */}
                                 <DataContentBody
                                     onRowClick={(row) => {
-                                        showDetails(row.original)
+                                        console.log(row.original)
+                                        // showDetails(row.original)
                                     }}
                                 />
                             </DataTableContent>
@@ -129,9 +134,9 @@ const StudentListContent: React.FC<any> = ({ schoolId, yearId }) => {
             </div>
 
             {/* La feuille de détails de l'élève, toujours présente mais cachée jusqu'à l'ouverture */}
-            <DataSheetViewer ref={sheetRef}>
+            {/* <DataSheetViewer ref={sheetRef}>
                 {student => <StudentDetailsCard data={student} schoolId={schoolId} yearId={yearId as string} onRefresh={refetch} />}
-            </DataSheetViewer>
+            </DataSheetViewer> */}
         </>
     );
 };

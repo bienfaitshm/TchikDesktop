@@ -70,7 +70,7 @@ const Layout: React.FC<any> = ({ schoolId, yearId }) => {
                 {/* Panneau du contenu principal */}
                 <ResizablePanel defaultSize={75}>
                     <ScrollArea className="h-full bg-background">
-                        <div className="mx-auto max-w-screen-lg mt-10">
+                        <div className="mx-auto max-w-screen-xl mt-5">
                             <Outlet />
                         </div>
                     </ScrollArea>
