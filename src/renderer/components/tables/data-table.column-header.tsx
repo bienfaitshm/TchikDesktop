@@ -14,22 +14,22 @@ import {
     DropdownMenuTrigger,
 } from "@/renderer/components/ui/dropdown-menu"
 
-interface TableColumnHeaderProps<TData, TValue>
+interface DataTableColumnHeaderProps<TData, TValue>
     extends React.HTMLAttributes<HTMLDivElement> {
     column: Column<TData, TValue>
     title: string
 }
 
-export function TableColumnHeader<TData, TValue>({
+export function DataTableColumnHeader<TData, TValue>({
     column,
     title,
     className,
-}: TableColumnHeaderProps<TData, TValue>) {
+}: DataTableColumnHeaderProps<TData, TValue>) {
     if (!column.getCanSort()) {
         return <div className={cn("text-xs font-semibold", className)}>{title}</div>
     }
 
-    const sortedState = column.getIsSorted()
+    const isSorted = column.getIsSorted()
 
     return (
         <div className={cn("flex items-center space-x-2", className)}>
@@ -39,34 +39,39 @@ export function TableColumnHeader<TData, TValue>({
                         variant="ghost"
                         size="sm"
                         className={cn(
-                            "-ml-3 h-8 data-[state=open]:bg-accent hover:bg-accent/50 text-xs font-semibold",
-                            sortedState && "text-foreground"
+                            "-ml-3 h-8 data-[state=open]:bg-accent text-xs font-semibold hover:text-foreground",
+                            isSorted && "text-foreground font-bold"
                         )}
                     >
                         <span>{title}</span>
-                        {sortedState === "desc" ? (
+                        {isSorted === "desc" ? (
                             <ArrowDown className="ml-2 h-3.5 w-3.5" />
-                        ) : sortedState === "asc" ? (
+                        ) : isSorted === "asc" ? (
                             <ArrowUp className="ml-2 h-3.5 w-3.5" />
                         ) : (
-                            <ChevronsUpDown className="ml-2 h-3.5 w-3.5 text-muted-foreground/50" />
+                            <ChevronsUpDown className="ml-2 h-3.5 w-3.5 opacity-50" />
                         )}
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-[160px]">
+                <DropdownMenuContent align="start" className="w-[180px]">
                     <DropdownMenuItem
                         onClick={() => column.toggleSorting(false)}
-                        className={cn(sortedState === "asc" && "bg-accent font-medium")}
+                        className={cn(isSorted === "asc" && "bg-accent/50")}
                     >
                         <ArrowUp className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
                         Croissant
                     </DropdownMenuItem>
                     <DropdownMenuItem
                         onClick={() => column.toggleSorting(true)}
-                        className={cn(sortedState === "desc" && "bg-accent font-medium")}
+                        className={cn(isSorted === "desc" && "bg-accent/50")}
                     >
                         <ArrowDown className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
                         Décroissant
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem onClick={() => column.clearSorting()}>
+                        <ChevronsUpDown className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
+                        Réinitialiser
                     </DropdownMenuItem>
 
                     {column.getCanHide() && (
@@ -74,7 +79,7 @@ export function TableColumnHeader<TData, TValue>({
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
                                 <EyeOff className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
-                                Masquer
+                                Masquer la colonne
                             </DropdownMenuItem>
                         </>
                     )}
@@ -83,5 +88,3 @@ export function TableColumnHeader<TData, TValue>({
         </div>
     )
 }
-
-TableColumnHeader.displayName = "TableColumnHeader"

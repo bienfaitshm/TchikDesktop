@@ -94,8 +94,8 @@ const StudentListContent: React.FC<any> = ({ schoolId, yearId }) => {
                             keyExtractor={(student: any) => `${student.enrolementId}`}
 
                         >
-                            <DataTableToolbar searchColumn="fullname">
-                                <TableFacetedFilterItem columnId="gender" title="Sexe" options={GENDER_OPTIONS} />
+                            <DataTableToolbar searchColumn="student_fullName">
+                                <TableFacetedFilterItem columnId="student_gender" title="Sexe" options={GENDER_OPTIONS} />
                                 <TableFacetedFilterItem columnId="status" title="Status" options={STUDENT_STATUS_OPTIONS} />
                                 <div className="flex items-center gap-3 ml-auto">
                                     {/* Le bouton d'exportation des données */}

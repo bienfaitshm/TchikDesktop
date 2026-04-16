@@ -6,13 +6,12 @@ import {
   classRooms,
   studyYears,
 } from "../schemas/schema";
+import { getVisibleUserColumns } from "./user.query";
 import { BaseRepository } from "./base-repository";
-import { applyQueryOptions } from "./drizzle-builder";
 import type {
   TEnrolement,
   TEnrolementInsert,
   TEnrolementUpdate,
-  TEnrolementDetails,
   FindManyOptions,
 } from "../schemas/types";
 
@@ -55,54 +54,23 @@ export class EnrolementQuery extends BaseRepository<
   //  LECTURE (OVERRIDE & EXTENSIONS)
   // =============================================================================
 
-  async findManyExtended(
-    filters: FindManyOptions<typeof classroomEnrolements>,
-  ): Promise<TEnrolementDetails[]> {
-    // this.validateContext(filters);
-    const { password, updatedAt, createdAt, ...userFields } =
-      getTableColumns(users);
+  protected override getQuerySet(): any {
     const { classId, schoolId, ...classFields } = getTableColumns(classRooms);
-    try {
-      const query = db
-        .select({
-          ...getTableColumns(classroomEnrolements),
-          student: userFields,
-          classroom: classFields,
-          yearName: studyYears.yearName,
-        })
-        .from(classroomEnrolements)
-        .innerJoin(users, eq(classroomEnrolements.studentId, users.userId))
-        .innerJoin(
-          classRooms,
-          eq(classroomEnrolements.classroomId, classRooms.classId),
-        )
-        .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
-        .$dynamic();
-
-      return await applyQueryOptions(query, classroomEnrolements, filters);
-    } catch (error) {
-      this.logError("findManyExtended", error, { filters });
-      throw new Error("Impossible de lister les inscriptions.");
-    }
-  }
-
-  override async findById(enrolementId: string): Promise<any | null> {
-    if (!enrolementId) return null;
-    try {
-      const [result] = await db
-        .select()
-        .from(classroomEnrolements)
-        .innerJoin(users, eq(classroomEnrolements.studentId, users.userId))
-        .innerJoin(
-          classRooms,
-          eq(classroomEnrolements.classroomId, classRooms.classId),
-        )
-        .where(eq(classroomEnrolements.enrolementId, enrolementId));
-      return result || null;
-    } catch (error) {
-      this.logError("findById", error, { enrolementId });
-      return null;
-    }
+    return db
+      .select({
+        ...getTableColumns(classroomEnrolements),
+        student: getVisibleUserColumns(),
+        classroom: classFields,
+        yearName: studyYears.yearName,
+      })
+      .from(classroomEnrolements)
+      .innerJoin(users, eq(classroomEnrolements.studentId, users.userId))
+      .innerJoin(
+        classRooms,
+        eq(classroomEnrolements.classroomId, classRooms.classId),
+      )
+      .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
+      .$dynamic();
   }
 
   // =============================================================================

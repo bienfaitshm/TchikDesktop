@@ -303,7 +303,6 @@ export function TableFacetedFilterItem({
     const table = ctx?.tableInstance
 
     if (!table) return null
-
     const column = table.getColumn(columnId)
     if (!column) {
         console.warn(`TableFacetedFilterItem: Column "${columnId}" not found in table instance.`)

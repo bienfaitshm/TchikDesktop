@@ -13,9 +13,14 @@ import type {
  * Fragment SQL réutilisable pour le nom complet.
  * Gère le cas où middleName est NULL pour éviter les doubles espaces ou les valeurs NULL.
  */
-const fullNameSql = sql<string>`
-  trim(${users.firstName} || ' ' || COALESCE(${users.middleName} || ' ', '') || ${users.lastName})
+export const fullNameSql = sql<string>`
+  trim(${users.lastName} || ' ' || COALESCE(${users.middleName} || ' ', '') || ${users.firstName})
 `.as("fullName");
+
+export const getVisibleUserColumns = () => {
+  const { password, ...userFields } = getTableColumns(users);
+  return { ...userFields, fullName: fullNameSql };
+};
 
 /**
  * Tri standard : Nom, Post-nom, Prénom (Case-Insensitive)
@@ -50,13 +55,7 @@ export class UserQuery extends BaseRepository<
   }
 
   protected override getQuerySet(): any {
-    return db
-      .select({
-        ...getTableColumns(this.table),
-        fullName: fullNameSql,
-      })
-      .from(this.table)
-      .$dynamic();
+    return db.select(getVisibleUserColumns()).from(this.table).$dynamic();
   }
 
   protected override getDetailQuerySet() {
