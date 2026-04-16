@@ -94,11 +94,11 @@ export function DataTableContent({ children }: { children?: React.ReactNode }) {
     );
 }
 
-export function DataContentHead() {
+export function DataContentHead(props?: { className?: string }) {
     const ctx = useDataTableContext();
     const headerGroups = ctx?.tableInstance?.getHeaderGroups() ?? [];
     return (
-        <TableHeader className="sticky top-0 z-10 bg-muted">
+        <TableHeader className={cn("sticky top-0 z-10 bg-muted", props?.className)}>
             {headerGroups.map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (

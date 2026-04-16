@@ -7,7 +7,7 @@ import type { TUserCreate as UserFormData } from "@/packages/@core/data-access/s
 import type { BaseFormProps } from "./base-form";
 
 interface UseUserFormConfig {
-    mutationKeys?: unknown[];
+    mutationKeys?: readonly unknown[];
     onSuccess?: (data?: any) => void;
 }
 

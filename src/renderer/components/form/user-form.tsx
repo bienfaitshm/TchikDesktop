@@ -15,6 +15,7 @@ import { Input } from "@/renderer/components/ui/input";
 import { GenderInput } from "./fields/gender";
 import { DateInput } from "./fields/date";
 import { BaseFormProps, useZodForm } from "./base-form"
+import { GENDER_OPTIONS } from "@/packages/@core/data-access/db/options";
 
 
 export type UserCreateFormData = TUserCreate;
@@ -57,10 +58,6 @@ export const BaseUserForm: React.FC<BaseFormProps<UserCreateFormData> & UserCrea
                 aria-label="Informations d'identité"
             >
                 <fieldset className="space-y-6">
-                    <legend className="text-lg font-bold text-foreground mb-4">
-                        Identité et État Civil
-                    </legend>
-
                     {/* Ligne 1 : Les Noms */}
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                         <FormField
@@ -128,7 +125,7 @@ export const BaseUserForm: React.FC<BaseFormProps<UserCreateFormData> & UserCrea
                                 <FormItem>
                                     <FormLabel className="font-semibold">Sexe / Genre</FormLabel>
                                     <FormControl>
-                                        <GenderInput {...field} />
+                                        <GenderInput {...field} options={GENDER_OPTIONS} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -142,7 +139,7 @@ export const BaseUserForm: React.FC<BaseFormProps<UserCreateFormData> & UserCrea
                                     <FormLabel className="mb-2 font-semibold">Date de naissance</FormLabel>
                                     <FormControl>
                                         <DateInput
-                                            value={field.value ?? new Date()}
+                                            value={new Date()}
                                             onChange={field.onChange}
                                             placeholder="JJ/MM/AAAA"
                                         />

@@ -6,6 +6,7 @@ import { BaseUserForm, type UserCreateFormData } from "@/renderer/components/for
 import { useCreateUserForm, useDeleteUserForm, useUpdateUserForm } from "@/renderer/components/form/user-form.actions"
 import { ConfirmDeleteDialog, useConfirm } from "@/renderer/components/dialog/dialog-delete"
 import { UserPlus, UserCog } from "lucide-react"
+import { BaseFormConfig } from "./base.dialog-actions"
 
 type CreateStudentDialogProps = {
     children: React.ReactNode
@@ -19,8 +20,8 @@ type UpdateStudentDialogProps = {
 }
 
 // --- Création d'un élève ---
-export const CreateStudentDialog: React.FC<CreateStudentDialogProps> = ({ children, defaultValues }) => {
-    const { formId, createUser, isCreating } = useCreateUserForm()
+export const CreateStudentDialog: React.FC<CreateStudentDialogProps & BaseFormConfig> = ({ children, defaultValues, ...config }) => {
+    const { formId, createUser, isCreating } = useCreateUserForm(config)
 
     return (
         <Dialog>
@@ -56,8 +57,8 @@ export const CreateStudentDialog: React.FC<CreateStudentDialogProps> = ({ childr
 }
 
 // --- Modification d'un élève ---
-export const UpdateStudentDialog: React.FC<UpdateStudentDialogProps> = ({ initialData, studentId, children }) => {
-    const { formId, isUpdating, updateUser } = useUpdateUserForm()
+export const UpdateStudentDialog: React.FC<UpdateStudentDialogProps & BaseFormConfig> = ({ initialData, studentId, children, ...config }) => {
+    const { formId, isUpdating, updateUser } = useUpdateUserForm(config)
 
     const studentFullName = `${initialData?.lastName} ${initialData?.firstName}`
 
@@ -101,15 +102,20 @@ interface DeleteStudentDialogProps {
     studentName: string
 }
 
-export const DeleteStudentDialog: React.FC<DeleteStudentDialogProps> = ({
+export const DeleteStudentDialog: React.FC<DeleteStudentDialogProps & BaseFormConfig> = ({
     children,
     studentId,
     studentName,
+    ...config
 }) => {
     const { isOpen, onOpen, onClose } = useConfirm<string>()
 
     const { deleteUser, isDeleting } = useDeleteUserForm({
-        onSuccess: onClose,
+        ...config,
+        onSuccess: (data) => {
+            config?.onSuccess?.(data)
+            onClose()
+        },
     })
 
     const handleConfirm = React.useCallback(async () => {

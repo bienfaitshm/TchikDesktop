@@ -28,10 +28,10 @@ export type UserApi = Readonly<{
 
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
-   * @param UserId L'identifiant unique de la salle de classe.
+   * @param userId L'identifiant unique de la salle de classe.
    * @returns Une promesse résolue avec l'objet UserData.
    */
-  fetchUserById(UserId: string): Promise<UserData>;
+  fetchUserById(userId: string): Promise<UserData>;
 
   /**
    * Crée une nouvelle salle de classe.
@@ -42,18 +42,18 @@ export type UserApi = Readonly<{
 
   /**
    * Met à jour une salle de classe existante.
-   * @param UserId L'identifiant unique de la salle de classe à mettre à jour.
+   * @param userId L'identifiant unique de la salle de classe à mettre à jour.
    * @param data Les champs partiels de UserData à modifier.
    * @returns Une promesse résolue avec l'objet UserData mis à jour.
    */
-  updateUser(UserId: string, data: TUserUpdate): Promise<UserData>;
+  updateUser(userId: string, data: TUserUpdate): Promise<UserData>;
 
   /**
    * Supprime une salle de classe par son ID.
-   * @param UserId L'identifiant unique de la salle de classe à supprimer.
+   * @param userId L'identifiant unique de la salle de classe à supprimer.
    * @returns Une promesse résolue une fois la suppression terminée (souvent avec un objet vide ou un statut de succès).
    */
-  deleteUser(UserId: string): Promise<void>;
+  deleteUser(userId: string): Promise<void>;
 }>;
 
 /**
@@ -71,8 +71,8 @@ export function createUserApis(ipcClient: IpcClient): UserApi {
       return ipcClient.get(UserRoutes.ALL, { params });
     },
 
-    fetchUserById(UserId) {
-      return ipcClient.get(UserRoutes.DETAIL, { params: { UserId } });
+    fetchUserById(userId) {
+      return ipcClient.get(UserRoutes.DETAIL, { params: { userId } });
     },
 
     createUser(data) {
@@ -80,17 +80,17 @@ export function createUserApis(ipcClient: IpcClient): UserApi {
       return ipcClient.post(UserRoutes.ALL, data);
     },
 
-    updateUser(UserId, data) {
+    updateUser(userId, data) {
       // Envoi du corps pour la mise à jour (PATCH ou PUT, ici PUT est utilisé)
       return ipcClient.put(UserRoutes.DETAIL, data, {
-        params: { UserId },
+        params: { userId },
       });
     },
 
-    deleteUser(UserId) {
+    deleteUser(userId) {
       // La suppression ne nécessite pas de corps de requête
       return ipcClient.delete(UserRoutes.DETAIL, {
-        params: { UserId },
+        params: { userId },
       });
     },
   } as const;

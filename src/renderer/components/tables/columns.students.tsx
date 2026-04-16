@@ -10,6 +10,7 @@ export type TEnrolement = {
     status: any
     isNewStudent: boolean;
     studentCode: string;
+    studentId: string;
     student: {
         gender: any;
         fullName: string;

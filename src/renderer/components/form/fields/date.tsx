@@ -50,7 +50,7 @@ export const DateInput = forwardRef<HTMLButtonElement, DateInputProps>(
 
         const displayDate = React.useMemo(() => {
             if (!value) return placeholder;
-            return format(value, "dd MMMM yyyy", { locale: fr });
+            return format(value, "dd/MM/yyyy", { locale: fr });
         }, [value, placeholder]);
 
         return (

@@ -6,7 +6,7 @@ import { Button } from '@/renderer/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/renderer/components/ui/alert";
 import { GenderBadge } from "./user-gender";
 import { StudentStatusBadge } from "./student-status";
-import { BaseUserForm, type UserCreateSchemaFormData } from "./form/user-base-form";
+import { BaseUserForm, type UserCreateSchemaFormData } from "./form/user-form";
 import { EnrollmentForm, type EnrollmentFormData } from "./form/enrollment-form";
 import { FormSubmitter } from "./form/form-submiter";
 import { ButtonLoader } from "./form/button-loader";

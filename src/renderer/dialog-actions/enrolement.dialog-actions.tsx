@@ -22,6 +22,7 @@ import {
 import { ConfirmDeleteDialog, useConfirm } from "@/renderer/components/dialog/dialog-delete"
 import { useGetClassroomAsOptions, useGetUsersAsOptions } from "@/renderer/hooks/data-as-options"
 import { USER_ROLE_ENUM as ROLE } from "@/packages/@core/data-access/db/enum"
+import { BaseFormConfig } from "./base.dialog-actions"
 
 type SchoolYearId = { schoolId: string; yearId: string };
 
@@ -52,8 +53,8 @@ interface DeleteEnrollmentDialogProps {
 /**
  * Dialogue : Inscription Rapide (Quick Create)
  */
-export const QuickCreateEnrollmentDialog: React.FC<QuickCreateEnrollmentDialogProps & SchoolYearId> = ({ children, defaultValues, schoolId, yearId }) => {
-    const { formId, onSubmit, isSubmitting } = useCreateQuickEnrolementForm()
+export const QuickCreateEnrollmentDialog: React.FC<QuickCreateEnrollmentDialogProps & SchoolYearId & BaseFormConfig> = ({ children, defaultValues, schoolId, yearId, ...config }) => {
+    const { formId, onSubmit, isSubmitting } = useCreateQuickEnrolementForm(config)
     const classrooms = useGetClassroomAsOptions({ where: { schoolId, yearId } })
     return (
         <Dialog modal>
@@ -90,8 +91,8 @@ export const QuickCreateEnrollmentDialog: React.FC<QuickCreateEnrollmentDialogPr
 /**
  * Dialogue : Inscription Complète (Create)
  */
-export const CreateEnrollmentDialog: React.FC<CreateEnrollmentDialogProps & SchoolYearId> = ({ children, defaultValues, schoolId, yearId }) => {
-    const { formId, onSubmit, isSubmitting } = useCreateEnrolementForm()
+export const CreateEnrollmentDialog: React.FC<CreateEnrollmentDialogProps & SchoolYearId & BaseFormConfig> = ({ children, defaultValues, schoolId, yearId, ...config }) => {
+    const { formId, onSubmit, isSubmitting } = useCreateEnrolementForm(config)
     const classrooms = useGetClassroomAsOptions({ where: { schoolId, yearId } })
     const students = useGetUsersAsOptions({ where: { schoolId, role: ROLE.STUDENT } }, { labelFormat: "long" })
     return (
@@ -129,8 +130,8 @@ export const CreateEnrollmentDialog: React.FC<CreateEnrollmentDialogProps & Scho
 /**
  * Dialogue : Modification (Update)
  */
-export const UpdateEnrollmentDialog: React.FC<UpdateEnrollmentDialogProps & SchoolYearId> = ({ initialData, enrollmentId, children, schoolId, yearId, fullName }) => {
-    const { formId, isSubmitting, onSubmit } = useUpdateEnrolementForm()
+export const UpdateEnrollmentDialog: React.FC<UpdateEnrollmentDialogProps & SchoolYearId & BaseFormConfig> = ({ initialData, enrollmentId, children, schoolId, yearId, fullName, ...config }) => {
+    const { formId, isSubmitting, onSubmit } = useUpdateEnrolementForm(config)
     const students = useGetUsersAsOptions({ where: { schoolId, role: ROLE.STUDENT } }, { labelFormat: "long" })
     const classrooms = useGetClassroomAsOptions({ where: { schoolId, yearId } })
 
@@ -176,13 +177,20 @@ export const UpdateEnrollmentDialog: React.FC<UpdateEnrollmentDialogProps & Scho
 /**
  * Dialogue : Suppression (Delete)
  */
-export const DeleteEnrollmentDialog: React.FC<DeleteEnrollmentDialogProps> = ({
+export const DeleteEnrollmentDialog: React.FC<DeleteEnrollmentDialogProps & BaseFormConfig> = ({
     children,
     enrollmentId,
     studentName,
+    ...config
 }) => {
     const { isOpen, onOpen, onClose } = useConfirm<string>()
-    const { deleteEnrolement, isDeleting } = useDeleteEnrolementForm({ onSuccess: onClose })
+    const { deleteEnrolement, isDeleting } = useDeleteEnrolementForm({
+        ...config,
+        onSuccess: (data) => {
+            config?.onSuccess?.(data)
+            onClose()
+        },
+    })
 
     const handleConfirm = React.useCallback(async () => {
         await deleteEnrolement(enrollmentId, studentName)
