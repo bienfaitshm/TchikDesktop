@@ -39,6 +39,7 @@ type UpdateEnrollmentDialogProps = {
     children: React.ReactNode
     enrollmentId: string
     initialData?: Partial<EnrollmentFormData>
+    fullName?: string
 }
 
 interface DeleteEnrollmentDialogProps {
@@ -128,7 +129,7 @@ export const CreateEnrollmentDialog: React.FC<CreateEnrollmentDialogProps & Scho
 /**
  * Dialogue : Modification (Update)
  */
-export const UpdateEnrollmentDialog: React.FC<UpdateEnrollmentDialogProps & SchoolYearId> = ({ initialData, enrollmentId, children, schoolId, yearId }) => {
+export const UpdateEnrollmentDialog: React.FC<UpdateEnrollmentDialogProps & SchoolYearId> = ({ initialData, enrollmentId, children, schoolId, yearId, fullName }) => {
     const { formId, isSubmitting, onSubmit } = useUpdateEnrolementForm()
     const students = useGetUsersAsOptions({ where: { schoolId, role: ROLE.STUDENT } }, { labelFormat: "long" })
     const classrooms = useGetClassroomAsOptions({ where: { schoolId, yearId } })
@@ -142,7 +143,7 @@ export const UpdateEnrollmentDialog: React.FC<UpdateEnrollmentDialogProps & Scho
                 onEscapeKeyDown={(e) => isSubmitting && e.preventDefault()}
             >
                 <DialogHeader>
-                    <DialogTitle>Modifier l'Inscription</DialogTitle>
+                    <DialogTitle>Modifier l'Inscription {fullName && `de ${fullName}`}</DialogTitle>
                     <DialogDescription>
                         Mettez à jour les informations de l'élève pour l'année scolaire en cours.
                     </DialogDescription>

@@ -67,29 +67,30 @@ export const EnrollmentForm: React.FC<BaseFormProps<EnrollmentFormData> & Enroll
                 aria-label="Formulaire d'inscription rapide de l'élève"
             >
                 {/* Section : Identification */}
-                <fieldset className="space-y-6 border-none p-0 m-0">
-                    <FormField
-                        control={form.control}
-                        name="studentId"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <FormLabel>Élève à inscrire</FormLabel>
-                                <FormControl>
-                                    <Combobox
-                                        {...field}
-                                        options={students}
-                                        placeholder="Rechercher un élève..."
-                                        searchPlaceholder="Saisissez le nom ou matricule..."
-                                        aria-required="true"
-                                        classname="lg:w-[850px] md:w-[600px]"
-                                        disable={type === "update"}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </fieldset>
+                {type !== "update" && (
+                    <fieldset className="space-y-6 border-none p-0 m-0">
+                        <FormField
+                            control={form.control}
+                            name="studentId"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>Élève à inscrire</FormLabel>
+                                    <FormControl>
+                                        <Combobox
+                                            {...field}
+                                            options={students}
+                                            placeholder="Rechercher un élève..."
+                                            searchPlaceholder="Saisissez le nom ou matricule..."
+                                            aria-required="true"
+                                            classname="lg:w-[850px] md:w-[600px]"
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </fieldset>
+                )}
 
                 {/* Section : Paramètres de l'inscription */}
                 <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-6 border-none p-0 m-0">
