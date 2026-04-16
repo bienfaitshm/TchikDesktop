@@ -255,7 +255,7 @@ export const SchoolUpdateSchema = SchoolCreateSchema.partial();
 /** Schéma pour la création d'un Utilisateur (exclut 'userId', 'fullname'). */
 export const UserCreateSchema = UserAttributesSchema.omit({
   userId: true,
-  fullname: true,
+  fullName: true,
 });
 /** Schéma pour la mise à jour d'un Utilisateur (rend tous les champs de création optionnels, sauf clés potentiellement invariantes). */
 export const UserUpdateSchema = UserCreateSchema.partial();

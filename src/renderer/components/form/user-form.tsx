@@ -1,5 +1,4 @@
-import React, { PropsWithChildren } from "react";
-import { useZodForm } from "@/packages/use-zod-form";
+import React from "react";
 import { UserCreateSchema, type TUserCreate } from "@/packages/@core/data-access/schema-validations";
 import {
     Form,
@@ -11,16 +10,16 @@ import {
     FormDescription,
 } from "@/renderer/components/ui/form";
 import { USER_GENDER_ENUM as USER_GENDER, USER_ROLE_ENUM as USER_ROLE } from "@/packages/@core/data-access/db/enum";
+
 import { Input } from "@/renderer/components/ui/input";
-import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { GenderInput } from "./fields/gender";
 import { DateInput } from "./fields/date";
+import { BaseFormProps, useZodForm } from "./base-form"
 
-export * from "./utils";
 
-export type UserCreateSchemaFormData = TUserCreate;
+export type UserCreateFormData = TUserCreate;
 
-const DEFAULT_QUICK_ENROLLMENT_VALUES: UserCreateSchemaFormData = {
+const DEFAULT_VALUES: UserCreateFormData = {
     lastName: "",
     middleName: "",
     firstName: "",
@@ -31,33 +30,28 @@ const DEFAULT_QUICK_ENROLLMENT_VALUES: UserCreateSchemaFormData = {
 };
 
 export interface UserCreateSchemaFormProps {
-    onSubmit?: (values: UserCreateSchemaFormData) => void;
-    initialValues?: Partial<UserCreateSchemaFormData>;
+
 }
 
-export interface BaseUserFormHandle extends ImperativeFormHandle<UserCreateSchemaFormData> { }
+export interface BaseUserFormHandle { }
 
 /**
  * Formulaire de base pour les informations d'un utilisateur (Élève/Personnel).
  * Optimisé pour la saisie administrative rapide.
  */
-export const BaseUserForm = React.forwardRef<
-    BaseUserFormHandle,
-    PropsWithChildren<UserCreateSchemaFormProps>
->(({ children, onSubmit, initialValues = {} }, ref) => {
-    const form = useZodForm({
+export const BaseUserForm: React.FC<BaseFormProps<UserCreateFormData> & UserCreateSchemaFormProps> = ({ onSubmit, formId, initialValues = {} }) => {
+    const form = useZodForm<TUserCreate>({
         schema: UserCreateSchema,
-        defaultValues: { ...DEFAULT_QUICK_ENROLLMENT_VALUES, ...initialValues },
-        onSubmit: (values) => {
-            onSubmit?.(values);
-        },
+        initialValues,
+        defaultValues: DEFAULT_VALUES,
+        onSubmit
     });
 
-    useFormImperativeHandle(ref, form);
 
     return (
         <Form {...form}>
             <form
+                id={formId}
                 className="space-y-8"
                 onSubmit={form.submit}
                 aria-label="Informations d'identité"
@@ -183,13 +177,10 @@ export const BaseUserForm = React.forwardRef<
                         )}
                     />
                 </fieldset>
-
-                <div className="pt-6 border-t">
-                    {children}
-                </div>
             </form>
         </Form>
     );
-});
+};
+
 
 BaseUserForm.displayName = "BaseUserFormHandle";

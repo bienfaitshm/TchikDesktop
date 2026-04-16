@@ -25,7 +25,7 @@ import { ButtonSheetStudentStat } from "./students.stat";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
-import { ActionContainer, ActionTileDelete, ActionTileDetail, ActionTileEdit, ActionTile } from "@/renderer/components/tables/data-table.action-tiles";
+import { ActionContainer, ActionTileDelete, ActionTileDetail, ActionTile } from "@/renderer/components/tables/data-table.action-tiles";
 import { CreateEnrollmentDialog, QuickCreateEnrollmentDialog, DeleteEnrollmentDialog, UpdateEnrollmentDialog } from "@/renderer/dialog-actions/enrolement.dialog-actions";
 // import { } from "@/renderer/dialog-actions/"
 
@@ -47,8 +47,8 @@ const EnrollementActions: React.FC<{
     return (
         <ActionContainer>
             <ActionTileDetail />
-            <ActionTile icon={User2} label="Modifier" description="Modifier les informations sur l'eleve" />
             {/* Modification */}
+            <ActionTile icon={User2} label="Modifier" description="Modifier les informations sur l'eleve" />
             <UpdateEnrollmentDialog
                 initialData={initialData}
                 fullName={fullName}
