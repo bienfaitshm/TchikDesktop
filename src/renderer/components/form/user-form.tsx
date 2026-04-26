@@ -1,4 +1,5 @@
 import React from "react";
+import { parse, isDate } from "date-fns"
 import { UserCreateSchema, type TUserCreate } from "@/packages/@core/data-access/schema-validations";
 import {
     Form,
@@ -139,7 +140,7 @@ export const BaseUserForm: React.FC<BaseFormProps<UserCreateFormData> & UserCrea
                                     <FormLabel className="mb-2 font-semibold">Date de naissance</FormLabel>
                                     <FormControl>
                                         <DateInput
-                                            value={new Date()}
+                                            value={isDate(field.value) ? field.value : parse(`${field.value}`, "T", new Date())}
                                             onChange={field.onChange}
                                             placeholder="JJ/MM/AAAA"
                                         />
