@@ -16,10 +16,12 @@ import {
   ServiceResult,
 } from "./types";
 
-// ==========================================
-// A. EXTENSION LAYER (Format Logic)
-// ==========================================
-
+export type TMeta = {
+  title: string;
+  description: string;
+  extensions: FileFilter[];
+  fields?: object[];
+};
 /**
  * Interface pour un moteur de rendu de format spécifique.
  */
@@ -47,27 +49,19 @@ export abstract class AbstractExportExtension<TData = any>
   public abstract process(data: TData): RawFileContent;
 }
 
-// ==========================================
-// B. STRATEGY LAYER (Business Logic)
-// ==========================================
-
 /**
  * Contrat définissant une stratégie d'exportation de document.
  */
 export interface IExportStrategy {
   readonly id: string;
-  readonly meta: {
-    title: string;
-    description: string;
-    extensions: FileFilter[];
-  };
+  readonly meta: TMeta;
 
   validateContext(params: unknown): ServiceResult<void>;
   getDataSourceDefinition(): DataSourceQueryDefinition;
   getSaveOptions(targetExtension?: DOCUMENT_EXTENSION): SaveDialogOptions;
   buildArtifact(
     targetExtension: DOCUMENT_EXTENSION,
-    data: unknown
+    data: unknown,
   ): Promise<ServiceResult<RawFileContent>>;
 }
 
@@ -85,26 +79,37 @@ export abstract class AbstractExportStrategy<TParams = any, TData = any>
   protected abstract readonly validationSchema: ZodSchema<TParams>;
   public abstract readonly dataSourceDefinition: DataSourceQueryDefinition;
 
+  protected abstract readonly formFields: object[];
   /** Registre interne des moteurs de rendu supportés par cette stratégie. */
   private readonly extensionsRegistry = new Map<
     DOCUMENT_EXTENSION,
     IExportExtension<TData>
   >();
 
-  constructor(extensions: IExportExtension<TData>[]) {
+  getSchemasCreator: ((fields: object[]) => ZodSchema<TParams>) | undefined;
+
+  constructor({
+    extensions,
+    getSchemasCreator,
+  }: {
+    extensions: IExportExtension<TData>[];
+    getSchemasCreator?(fields: object[]): ZodSchema<TParams>;
+  }) {
+    this.getSchemasCreator = getSchemasCreator;
     extensions.forEach((ext) =>
-      this.extensionsRegistry.set(ext.extension, ext)
+      this.extensionsRegistry.set(ext.extension, ext),
     );
   }
 
   /**
    * Métadonnées exposées pour la consommation côté UI.
    */
-  public get meta() {
+  public get meta(): TMeta {
     return {
       title: this.displayName,
       description: this.description,
       extensions: this.extensionFilters,
+      fields: this.formFields ?? [],
     };
   }
 
@@ -113,7 +118,7 @@ export abstract class AbstractExportStrategy<TParams = any, TData = any>
    */
   public get extensionFilters(): FileFilter[] {
     return Array.from(this.extensionsRegistry.values()).map((engine) =>
-      engine.getExtensionFilter()
+      engine.getExtensionFilter(),
     );
   }
 
@@ -126,7 +131,7 @@ export abstract class AbstractExportStrategy<TParams = any, TData = any>
    * @param targetExtension - Extension suggérée par défaut.
    */
   public getSaveOptions(
-    targetExtension?: DOCUMENT_EXTENSION
+    targetExtension?: DOCUMENT_EXTENSION,
   ): SaveDialogOptions {
     return {
       title: `Exporter - ${this.displayName}`,
@@ -137,11 +142,18 @@ export abstract class AbstractExportStrategy<TParams = any, TData = any>
     };
   }
 
+  public getSchemas() {
+    if (this.formFields && this.getSchemasCreator) {
+      return this.getSchemasCreator(this.formFields);
+    }
+    return this.validationSchema;
+  }
+
   /**
    * Valide les paramètres d'entrée contre le schéma Zod.
    */
   public validateContext(params: unknown): ServiceResult<void> {
-    const result = this.validationSchema.safeParse(params);
+    const result = this.getSchemas().safeParse(params);
     if (!result.success) {
       return {
         success: false,
@@ -160,7 +172,7 @@ export abstract class AbstractExportStrategy<TParams = any, TData = any>
    */
   public async buildArtifact(
     targetExtension: DOCUMENT_EXTENSION,
-    data: unknown
+    data: unknown,
   ): Promise<ServiceResult<RawFileContent>> {
     const engine = this.extensionsRegistry.get(targetExtension);
 

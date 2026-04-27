@@ -1,31 +1,39 @@
 import { z } from "zod";
 import type { FormFieldDef } from "./type";
 
-export function generateValidationSchema(fields: FormFieldDef[]) {
-  const schemaObj = {};
+export const generateValidationSchema = (fields: FormFieldDef[]) => {
+  const schemaObj: Record<string, z.ZodTypeAny> = {};
 
   fields.forEach((field) => {
-    let fieldValidation;
-    switch (field.type) {
-      case "email":
-        fieldValidation = z.string().email("Format d'email invalide");
-        break;
-      case "number":
-        fieldValidation = z.coerce.number();
-        break;
-      case "text":
-      case "select":
-      default:
-        fieldValidation = z.string();
+    let baseSchema;
+
+    if (field.type === "number") {
+      baseSchema = z.coerce.number({ invalid_type_error: "Nombre requis" });
+    } else {
+      baseSchema = z.string();
     }
 
-    if (!field.required) {
-      fieldValidation = fieldValidation.optional().or(z.literal(""));
-    } else if (fieldValidation instanceof z.ZodString) {
-      fieldValidation = fieldValidation.min(1, "Ce champ est requis");
+    let finalSchema = field.multiple
+      ? z
+          .array(baseSchema)
+          .min(field.required ? 1 : 0, "Sélectionnez au moins une option")
+      : baseSchema;
+
+    if (field.required && !field.multiple) {
+      if (baseSchema instanceof z.ZodString) {
+        finalSchema = (finalSchema as z.ZodString).min(
+          1,
+          "Ce champ est requis",
+        );
+      }
+    } else if (!field.required) {
+      finalSchema = field.multiple
+        ? finalSchema.optional().or(z.array(z.any()).length(0))
+        : finalSchema.optional().or(z.literal(""));
     }
-    schemaObj[field.id] = fieldValidation;
+
+    schemaObj[field.id] = finalSchema;
   });
 
   return z.object(schemaObj);
-}
+};

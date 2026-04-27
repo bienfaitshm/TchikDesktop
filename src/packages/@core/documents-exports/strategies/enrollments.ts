@@ -1,5 +1,4 @@
 /**
- * @file enrollments.ts
  * @description Stratégie unique pour l'export des inscriptions supportant plusieurs formats.
  */
 
@@ -9,7 +8,63 @@ import {
   ShoolRouteIds,
 } from "@/packages/@core/data-access/data-system-access";
 import { EnrolementFilterSchema } from "@/packages/@core/data-access/schema-validations";
+import {
+  type FormFieldDef,
+  generateValidationSchema,
+} from "@/packages/dynamic-form";
 import { CsvExportExtension, JsonExportExtension } from "./enrollments.engins";
+
+const formFields: FormFieldDef[] = [
+  {
+    id: "firstName",
+    type: "text",
+    label: "Prénom",
+    placeholder: "ex: Jean",
+    required: true,
+    colSpan: 6,
+  },
+  {
+    id: "lastName",
+    type: "text",
+    label: "Nom",
+    placeholder: "ex: Dupont",
+    required: true,
+    colSpan: 6,
+  },
+  {
+    id: "userEmail",
+    type: "email",
+    label: "Adresse Email",
+    required: true,
+    colSpan: 12,
+  },
+  {
+    id: "department",
+    type: "select",
+    label: "Département",
+    required: true,
+    colSpan: 8,
+    defaultValue: "eng",
+    options: [
+      { label: "Engineering", value: "eng" },
+      { label: "Design", value: "dsgn" },
+      { label: "Product", value: "prod" },
+    ],
+  },
+  {
+    id: "tech_stack",
+    type: "select",
+    multiple: true,
+    label: "Technologies maîtrisées",
+    defaultValue: ["react", "typescript"],
+    options: [
+      { label: "React", value: "react" },
+      { label: "TypeScript", value: "typescript" },
+      { label: "Node.js", value: "node" },
+    ],
+    colSpan: 12,
+  },
+];
 
 export class EnrollmentExportStrategy extends AbstractExportStrategy {
   public readonly id = "ENROLLMENT_EXPORT";
@@ -17,6 +72,7 @@ export class EnrollmentExportStrategy extends AbstractExportStrategy {
   public readonly description =
     "Export complet des données d'inscription (élèves, classes, dates).";
   public readonly validationSchema = EnrolementFilterSchema;
+  protected readonly formFields = formFields;
 
   public readonly dataSourceDefinition = {
     classrooms: ClassroomIds.findAllClassroomsWithEnrollment,
@@ -24,7 +80,9 @@ export class EnrollmentExportStrategy extends AbstractExportStrategy {
   };
 
   constructor() {
-    // On injecte les formats supportés pour cette donnée spécifique
-    super([new CsvExportExtension(), new JsonExportExtension()]);
+    super({
+      extensions: [new CsvExportExtension(), new JsonExportExtension()],
+      getSchemasCreator: generateValidationSchema,
+    });
   }
 }

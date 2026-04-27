@@ -3,7 +3,6 @@
  * @description Définitions centralisées des types pour le sous-système d'export.
  */
 import { SaveDialogOptions } from "electron";
-import { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 
 // --- Result Pattern (Monad-like) ---
 export type ServiceResult<T> =
@@ -39,11 +38,12 @@ export interface ExportArtifact {
 }
 
 /** Métadonnées pour l'UI (Menu de choix). */
-export interface DocumentMetadata {
+export interface DocumentMetadata<FieldType = any> {
   key: string;
   extensions: Electron.FileFilter[];
   title: string;
   description: string;
+  fields?: FieldType[];
 }
 
 // --- External Services Contracts ---
@@ -52,6 +52,6 @@ export interface IDataFetchingService {
   /** Récupère les données depuis la couche d'accès aux données. */
   fetch(
     queryKey: string,
-    contextParams: unknown
+    contextParams: unknown,
   ): Promise<ServiceResult<unknown>>;
 }

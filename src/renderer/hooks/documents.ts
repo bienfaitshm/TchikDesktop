@@ -1,10 +1,13 @@
 import { useExportDocuments } from "@/renderer/libs/queries/document-export";
-import { DocumentFormData } from "../components/form/documents/classroom-document-export";
 import { useCallback } from "react";
 
-export const useExport = () => {
+export type DocumentFormData<TData = any> = {
+  documentType: string;
+  data: TData;
+};
+export const useExport = <TData = any>() => {
   const mutation = useExportDocuments();
-  const onSubmit = useCallback((value: DocumentFormData) => {
+  const onSubmit = useCallback((value: DocumentFormData<TData>) => {
     mutation.mutate(value, {
       onSuccess(data) {
         console.log(value, data);

@@ -2,7 +2,7 @@ export type FieldType = "text" | "email" | "number" | "select";
 
 export interface SelectOption {
   label: string;
-  value: string;
+  value: string | number;
 }
 
 export interface FormFieldDef {
@@ -13,13 +13,9 @@ export interface FormFieldDef {
   helperText?: string;
   required?: boolean;
   hidden?: boolean;
-  defaultValue?: string | number;
+  defaultValue?: string | number | string[] | number[];
   options?: SelectOption[];
+  multiple?: boolean;
   colSpan?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
   customClass?: string;
-}
-
-export interface FormSchemaConfig {
-  title: string;
-  fields: FormFieldDef[];
 }

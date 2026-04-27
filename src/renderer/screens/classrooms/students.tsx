@@ -18,7 +18,6 @@ import { Button } from "@/renderer/components/ui/button";
 import { StudentColumns, TEnrolement } from "@/renderer/components/tables/columns.students";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
 import { useGetClassroomById } from "@/renderer/libs/queries/classroom";
-import { ButtonDataExport } from "@/renderer/components/sheets/export-button";
 import { ButtonSheetStudentStat } from "./students.stat";
 import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
@@ -36,6 +35,7 @@ import { enhanceColumnsExpandable } from "@/renderer/components/tables/columns";
 import { Separator } from "@/renderer/components/ui/separator";
 import { Badge } from "@/renderer/components/ui/badge";
 import type { BaseFormConfig } from "@/renderer/dialog-actions/base.dialog-actions";
+import { ButtonDialogDocumentExport } from "@/renderer/components/dialog/dialog-document-expoter";
 
 const enrolementStudentColumns = enhanceColumnsExpandable(StudentColumns);
 
@@ -143,7 +143,7 @@ const StudentListContent = ({ schoolId, yearId }: any) => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-2 flex items-center gap-4">
                         <ButtonSheetStudentStat students={students} />
-                        <ButtonDataExport currentClassroom={classroomId!} />
+                        <ButtonDialogDocumentExport />
                     </div>
                 </div>
                 <Separator />
