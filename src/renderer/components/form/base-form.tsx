@@ -7,7 +7,7 @@ import { useZodForm as useForm } from "@/packages/use-zod-form";
 export type BaseFormProps<T extends FieldValues> = {
     formId?: string;
     initialValues?: DefaultValues<T>;
-    onSubmit?: (data: T, helpers: { reset: () => void }) => void | Promise<void>;
+    onSubmit?: (data: T, helpers?: { reset: () => void }) => void | Promise<void>;
 };
 
 

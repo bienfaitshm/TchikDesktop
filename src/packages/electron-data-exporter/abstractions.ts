@@ -5,7 +5,7 @@
  */
 
 import { FileFilter, SaveDialogOptions } from "electron";
-import { ZodSchema, ZodError } from "zod";
+import { AnyZodObject, ZodError } from "zod";
 import {
   DOCUMENT_EXTENSION,
   getFileDescription,
@@ -69,31 +69,31 @@ export interface IExportStrategy {
  * Orchestrateur abstrait pour les exports.
  * Gère la validation des paramètres, les métadonnées et délègue au format approprié.
  */
-export abstract class AbstractExportStrategy<TParams = any, TData = any>
+export abstract class AbstractExportStrategy<TData = any>
   implements IExportStrategy
 {
   public abstract readonly id: string;
   public abstract readonly displayName: string;
   public abstract readonly description: string;
 
-  protected abstract readonly validationSchema: ZodSchema<TParams>;
+  protected abstract readonly validationSchema: AnyZodObject;
   public abstract readonly dataSourceDefinition: DataSourceQueryDefinition;
 
-  protected abstract readonly formFields: object[];
+  protected formFields: object[] = [];
   /** Registre interne des moteurs de rendu supportés par cette stratégie. */
   private readonly extensionsRegistry = new Map<
     DOCUMENT_EXTENSION,
     IExportExtension<TData>
   >();
 
-  getSchemasCreator: ((fields: object[]) => ZodSchema<TParams>) | undefined;
+  getSchemasCreator: ((fields: object[]) => AnyZodObject) | undefined;
 
   constructor({
     extensions,
     getSchemasCreator,
   }: {
     extensions: IExportExtension<TData>[];
-    getSchemasCreator?(fields: object[]): ZodSchema<TParams>;
+    getSchemasCreator?(fields: object[]): AnyZodObject;
   }) {
     this.getSchemasCreator = getSchemasCreator;
     extensions.forEach((ext) =>
@@ -109,7 +109,7 @@ export abstract class AbstractExportStrategy<TParams = any, TData = any>
       title: this.displayName,
       description: this.description,
       extensions: this.extensionFilters,
-      fields: this.formFields ?? [],
+      fields: this.getFormFields(),
     };
   }
 
@@ -142,11 +142,19 @@ export abstract class AbstractExportStrategy<TParams = any, TData = any>
     };
   }
 
+  /**
+   * getFormFields
+   */
+  public getFormFields() {
+    return this.formFields;
+  }
+
   public getSchemas() {
-    if (this.formFields && this.getSchemasCreator) {
-      return this.getSchemasCreator(this.formFields);
-    }
-    return this.validationSchema;
+    const extraSchemas = this.getSchemasCreator?.(this.formFields ?? {});
+
+    return extraSchemas
+      ? this.validationSchema.merge(extraSchemas)
+      : this.validationSchema;
   }
 
   /**

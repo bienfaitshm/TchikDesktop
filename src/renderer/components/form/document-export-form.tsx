@@ -9,10 +9,6 @@ import type { FormFieldDef } from "@/packages/dynamic-form";
 import type { DocumentMetadata } from "@/packages/electron-data-exporter";
 import type { DocumentExportFormData } from "./document-export-form.actions";
 
-/**
- * Props du formulaire d'exportation.
- * Tout est injecté pour permettre un contrôle total depuis le parent (ou le manager).
- */
 export interface ExportFormContentProps {
     formId: string;
     docOptions: ComboBoxOption<DocumentMetadata<unknown>>[];
@@ -23,6 +19,7 @@ export interface ExportFormContentProps {
     onSubmit: (data: DocumentExportFormData) => void;
 }
 
+const MAX_CHART = 130
 export function ExportFormContent({
     formId,
     docOptions,
@@ -33,7 +30,6 @@ export function ExportFormContent({
     onSubmit,
 }: ExportFormContentProps) {
 
-    // Handlers internes pour l'UX
     const selectedDoc = docOptions.find((opt) => opt.value === selectedDocKey);
 
     const handleFormSubmit = useCallback(
@@ -45,7 +41,7 @@ export function ExportFormContent({
     );
 
     return (
-        <div className="flex flex-col gap-8 py-4">
+        <div className="space-y-4">
             {/* 1. Sélection du type de document */}
             <section className="flex flex-col gap-3">
                 <div className="flex flex-col gap-1.5">
@@ -62,24 +58,26 @@ export function ExportFormContent({
                     options={docOptions}
                     value={selectedDocKey}
                     onChangeValue={onDocumentChange}
+                    className="h-12"
                     contentClassName="w-full sm:w-[850px]"
                     renderTrigger={(selected) => (
-                        <div className="flex flex-col items-start gap-0.5 overflow-hidden text-left">
-                            <span className="font-medium text-sm">
-                                {selected ? selected.data.title : "Choisir un modèle..."}
+                        // L'ajout clé est ici : w-full et min-w-0
+                        <div className="flex flex-col items-start gap-0.5 overflow-hidden text-left w-full min-w-0">
+                            <span className="font-medium text-sm text-wrap">
+                                {selected ? selected.data?.title : "Choisir un modèle..."}
                             </span>
-                            {selected?.data.description && (
-                                <span className="text-[11px] text-muted-foreground truncate w-full text-wrap">
-                                    {selected.data.description}
+                            {selected?.data?.description && (
+                                <span className="text-xs text-muted-foreground text-wrap">
+                                    {selected.data.description.length >= MAX_CHART ? `${selected.data.description.substring(0, MAX_CHART)}...` : selected.data.description}
                                 </span>
                             )}
                         </div>
                     )}
                     renderItem={(item) => (
-                        <div className="flex flex-col py-1">
-                            <p className="font-semibold text-sm">{item.data.title}</p>
-                            <p className="text-xs text-muted-foreground line-clamp-2 text-wrap truncate">
-                                {item.data.description}
+                        <div className="flex flex-col py-1 w-full min-w-0">
+                            <p className="font-semibold text-sm truncate">{item.data?.title}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 text-wrap">
+                                {item.data?.description}
                             </p>
                         </div>
                     )}
@@ -102,8 +100,8 @@ export function ExportFormContent({
                         className={isPending ? "opacity-50 pointer-events-none grayscale-[0.5]" : "opacity-100"}
                     >
                         <div className="mb-4">
-                            <h3 className="text-sm font-semibold uppercase tracking-wider text-primary">
-                                Configuration de l'export : {selectedDoc?.data.title}
+                            <h3 className="text-sm font-semibold uppercase tracking-wider text-primary truncate">
+                                Configuration de l'export : {selectedDoc?.data?.title}
                             </h3>
                         </div>
 

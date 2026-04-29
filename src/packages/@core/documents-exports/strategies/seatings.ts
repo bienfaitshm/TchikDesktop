@@ -7,21 +7,21 @@ import {
   ClassroomIds,
   ShoolRouteIds,
 } from "@/packages/@core/data-access/data-system-access";
-import { EnrolementFilterSchema } from "@/packages/@core/data-access/schema-validations";
 import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
 import { CsvExportExtension, JsonExportExtension } from "./enrollments.engins";
+import z from "zod";
 
 const SEATING_FORM_FIELDS: FormFieldDef[] = [
   {
-    id: "department",
+    id: "seating",
     type: "select",
-    label: "Département",
+    label: "Mise en place",
     required: true,
-    colSpan: 8,
     defaultValue: "eng",
+    colSpan: 4,
     options: [
       { label: "Engineering", value: "eng" },
       { label: "Design", value: "dsgn" },
@@ -29,17 +29,32 @@ const SEATING_FORM_FIELDS: FormFieldDef[] = [
     ],
   },
   {
-    id: "tech_stack",
+    id: "localRooms",
     type: "select",
     multiple: true,
-    label: "Technologies maîtrisées",
+    label: "Locaux",
+    placeholder: "Locaux",
     defaultValue: ["react", "typescript"],
     options: [
       { label: "React", value: "react" },
       { label: "TypeScript", value: "typescript" },
       { label: "Node.js", value: "node" },
     ],
-    colSpan: 12,
+    colSpan: 4,
+  },
+  {
+    id: "classRooms",
+    type: "select",
+    multiple: true,
+    label: "Salles de classes",
+    placeholder: "Classes",
+    defaultValue: ["react", "typescript"],
+    options: [
+      { label: "React", value: "react" },
+      { label: "TypeScript", value: "typescript" },
+      { label: "Node.js", value: "node" },
+    ],
+    colSpan: 4,
   },
 ];
 
@@ -49,9 +64,7 @@ export class SeatingExportStrategy extends AbstractExportStrategy {
   public readonly description =
     "Génère un état détaillé de la répartition des élèves par salle. Cet export inclut les listes d'émargement, l'affectation aux pupitres et les métadonnées de l'établissement pour faciliter l'organisation physique des épreuves ou des cours.";
 
-  public readonly validationSchema = EnrolementFilterSchema;
-
-  protected readonly formFields = SEATING_FORM_FIELDS;
+  public readonly validationSchema = z.object({});
 
   public readonly dataSourceDefinition = {
     classrooms: ClassroomIds.findAllClassroomsWithEnrollment,
@@ -63,5 +76,9 @@ export class SeatingExportStrategy extends AbstractExportStrategy {
       extensions: [new CsvExportExtension(), new JsonExportExtension()],
       getSchemasCreator: generateValidationSchema,
     });
+  }
+
+  public override getFormFields() {
+    return SEATING_FORM_FIELDS;
   }
 }

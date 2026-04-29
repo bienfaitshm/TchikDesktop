@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Check } from "lucide-react"
+import { ChevronsUpDown, Check, Search } from "lucide-react"
 import { Button } from "@/renderer/components/ui/button"
 import {
     Popover,
@@ -69,13 +69,14 @@ export const FilterCheckboxInput: React.FC<FilterCheckboxInputProps> = ({
                 align="start"
             >
                 {/* Barre de recherche */}
-                <div className="flex items-center border-b p-2">
+                <div className="flex items-center px-3 border-b">
+                    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                     <Input
-                        placeholder={`Filtrer par ${name.toLowerCase()}...`}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="h-8 text-xs focus-visible:ring-1 border-none shadow-none"
-                        autoFocus
+                        placeholder={placeholder}
+                        className={cn(
+                            "flex w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+                            "h-8 text-xs border-0 border-none shadow-none focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                        )}
                     />
                 </div>
 
