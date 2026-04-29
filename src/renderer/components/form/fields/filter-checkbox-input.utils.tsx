@@ -11,7 +11,7 @@ export type FilterOption = {
 export interface FilterCheckBoxInputParams {
     options: FilterOption[]
     value?: string[]
-    onChangeValue?: (values: string[]) => void
+    onChange?: (values: string[]) => void
     placeholder?: string
     labelPlural?: string
 }
@@ -19,7 +19,7 @@ export interface FilterCheckBoxInputParams {
 export function useFilterCheckBoxInput({
     options,
     value = [],
-    onChangeValue,
+    onChange,
     placeholder = "Sélectionner...",
     labelPlural = "éléments",
 }: FilterCheckBoxInputParams) {
@@ -46,9 +46,9 @@ export function useFilterCheckBoxInput({
             const newValues = checked
                 ? [...value, optionValue]
                 : value.filter((val) => val !== optionValue)
-            onChangeValue?.(newValues)
+            onChange?.(newValues)
         },
-        [value, onChangeValue]
+        [value, onChange]
     )
 
     const toggleAllFiltered = React.useCallback(() => {
@@ -59,17 +59,17 @@ export function useFilterCheckBoxInput({
             const newValues = value.filter(
                 (v) => !filteredValues.includes(v)
             )
-            onChangeValue?.(newValues)
+            onChange?.(newValues)
         } else {
             // Ajouter les éléments filtrés manquants
             const merged = Array.from(new Set([...value, ...filteredValues]))
-            onChangeValue?.(merged)
+            onChange?.(merged)
         }
-    }, [filteredOptions, areAllFilteredSelected, value, onChangeValue])
+    }, [filteredOptions, areAllFilteredSelected, value, onChange])
 
     const clearSelection = React.useCallback(() => {
-        onChangeValue?.([])
-    }, [onChangeValue])
+        onChange?.([])
+    }, [onChange])
 
     const getButtonText = React.useCallback(() => {
         const count = value.length

@@ -15,6 +15,7 @@ import { cn } from "./utils";
 export interface InputComponents {
     TextField: React.ComponentType<any>;
     SelectField?: React.ComponentType<any>;
+    SelectArrayField?: React.ComponentType<any>;
 }
 
 interface DynamicFormProps<TFieldValues extends FieldValues = FieldValues> {
@@ -75,7 +76,7 @@ export function DynamicForm<TFieldValues extends FieldValues = FieldValues>({
 
     const renderInput = useCallback(
         (field: FormFieldDef, rhfProps: any, errorId: string, descriptionId: string, hasError: boolean) => {
-            const { TextField, SelectField } = components;
+            const { TextField, SelectField, SelectArrayField } = components;
 
             const a11yProps = {
                 id: field.id,
@@ -85,6 +86,10 @@ export function DynamicForm<TFieldValues extends FieldValues = FieldValues>({
                     hasError ? errorId : null,
                 ].filter(Boolean).join(" ") || undefined,
             };
+
+            if (field.type === "select" && field.multiple && SelectArrayField) {
+                return <SelectArrayField {...rhfProps} {...a11yProps} options={field.options} />;
+            }
 
             if (field.type === "select" && SelectField) {
                 return <SelectField {...rhfProps} {...a11yProps} options={field.options} />;

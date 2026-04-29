@@ -33,9 +33,9 @@ export function useDocumentExportAction(config?: UseExportConfig) {
   const { mutate, isPending } = useExportMutation();
 
   const handleExport = useCallback(
-    (payload: DocumentExportFormData) => {
+    (payload: DocumentExportFormData, params?: Record<string, unknown>) => {
       mutate(
-        payload,
+        { data: payload, params },
         createMutationCallbacksWithNotifications({
           successMessageTitle: "Exportation réussie",
           successMessageDescription: `Le document "${payload.documentType}" a été généré avec succès.`,
@@ -106,13 +106,16 @@ export function useDocumentExportManager(config?: UseExportConfig) {
   const { handleExport, isExporting, formId } = useDocumentExportAction(config);
 
   const onSubmit = useCallback(
-    (formData: Record<string, unknown>) => {
+    (formData: Record<string, unknown>, params?: Record<string, unknown>) => {
       if (!selectedDocKey) return;
 
-      handleExport({
-        documentType: selectedDocKey,
-        data: formData,
-      });
+      handleExport(
+        {
+          documentType: selectedDocKey,
+          data: formData,
+        },
+        params,
+      );
     },
     [selectedDocKey, handleExport],
   );

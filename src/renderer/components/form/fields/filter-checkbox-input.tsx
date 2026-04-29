@@ -19,7 +19,7 @@ export type FilterCheckboxInputProps = {
     placeholder?: string
     options?: FilterOption[]
     value?: string[]
-    onChangeValue?(values: string[]): void
+    onChange?(values: string[]): void
     className?: string
 }
 
@@ -28,7 +28,7 @@ export const FilterCheckboxInput: React.FC<FilterCheckboxInputProps> = ({
     name,
     value = [],
     placeholder = "Sélectionner...",
-    onChangeValue,
+    onChange,
     className
 }) => {
     const {
@@ -45,7 +45,7 @@ export const FilterCheckboxInput: React.FC<FilterCheckboxInputProps> = ({
         selectedSet
     } = useFilterCheckBoxInput({
         options,
-        onChangeValue,
+        onChange,
         placeholder,
         value,
         labelPlural: name

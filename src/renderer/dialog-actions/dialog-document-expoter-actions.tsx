@@ -44,7 +44,7 @@ const ExportLoadingOverlay: React.FC<{ message?: string }> = ({
 );
 
 
-export const DialogDataExport: React.FC<WithSchoolAndYearId<DialogDataExportProps>> = () => {
+export const DialogDataExport: React.FC<WithSchoolAndYearId<DialogDataExportProps>> = ({ schoolId, yearId }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     const formManager = useDocumentExportManager({
@@ -92,7 +92,7 @@ export const DialogDataExport: React.FC<WithSchoolAndYearId<DialogDataExportProp
                         selectedDocKey={formManager.selectedDocKey}
                         dynamicFields={formManager.dynamicFields}
                         onDocumentChange={formManager.handleDocumentChange}
-                        onSubmit={(data) => formManager.onSubmit(data)}
+                        onSubmit={({ data }) => formManager.onSubmit(data, { schoolId, yearId })}
                     />
 
                     {/* Feedback visuel lors de l'exportation */}
