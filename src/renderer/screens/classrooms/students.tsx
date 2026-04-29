@@ -35,7 +35,7 @@ import { enhanceColumnsExpandable } from "@/renderer/components/tables/columns";
 import { Separator } from "@/renderer/components/ui/separator";
 import { Badge } from "@/renderer/components/ui/badge";
 import type { BaseFormConfig } from "@/renderer/dialog-actions/base.dialog-actions";
-import { ButtonDialogDocumentExport } from "@/renderer/components/dialog/dialog-document-expoter";
+import { ButtonDialogDocumentExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
 
 const enrolementStudentColumns = enhanceColumnsExpandable(StudentColumns);
 

@@ -7,6 +7,7 @@
 import { instantiateClasses } from "@/packages/handler-factory";
 import { IExportStrategy } from "@/packages/electron-data-exporter";
 import { EnrollmentExportStrategy } from "./enrollments";
+import { SeatingExportStrategy } from "./seatings";
 
 /**
  * Liste des classes de stratégies à instancier.
@@ -15,6 +16,7 @@ import { EnrollmentExportStrategy } from "./enrollments";
  */
 const STRATEGY_CLASSES = [
   EnrollmentExportStrategy,
+  SeatingExportStrategy,
   // AttendanceExportStrategy,
   // FinanceExportStrategy,
   // Ajoutez les futures stratégies ici :

@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
 import { useGetUsers } from "@/renderer/libs/queries/account";
 import { useGetOptions } from "@/renderer/libs/queries/option";
-import { useGetAvailableExports } from "@/renderer/libs/queries/document-export";
+import { useAvailableExports } from "@/renderer/libs/queries/document-export";
 
 /**
  * Définit les options de formatage pour la conversion de données en options de sélection.
@@ -155,7 +155,7 @@ export function useGetUsersAsOptions(
 }
 
 export function useGetAvailableExportsAsOptions() {
-  const { data } = useGetAvailableExports();
+  const { data } = useAvailableExports();
   return {
     options: data,
     defaultValue: undefined,

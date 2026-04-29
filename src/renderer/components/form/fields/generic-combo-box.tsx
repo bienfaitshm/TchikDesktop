@@ -20,6 +20,7 @@ export type ComboBoxOption<T = any> = {
 
 
 type GenericComboBoxProps<T> = {
+    id?: string;
     options: ComboBoxOption<T>[];
     value: string;
     onChangeValue: (value: string) => void;
@@ -43,6 +44,7 @@ export function GenericComboBox<T>({
     contentClassName = "w-[26rem]",
     renderTrigger,
     renderItem,
+    id
 }: GenericComboBoxProps<T>) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -56,6 +58,7 @@ export function GenericComboBox<T>({
         <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger asChild>
                 <Button
+                    id={id}
                     variant="outline"
                     role="combobox"
                     aria-expanded={isOpen}
