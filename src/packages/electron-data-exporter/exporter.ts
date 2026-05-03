@@ -15,7 +15,6 @@ import {
   ServiceError,
   DataSourceQueryDefinition,
 } from "./types";
-import { ValueSetter } from "date-fns/parse/_lib/Setter";
 
 export class DataExport {
   private readonly logger = getLogger("DataExport");
@@ -41,15 +40,16 @@ export class DataExport {
     );
   }
 
-  public getAvailableExports<TParams extends Record<string, unknown>>(
+  public async getAvailableExports<TParams extends Record<string, unknown>>(
     params?: TParams,
-  ): ReadonlyArray<DocumentMetadata> {
+  ): Promise<ReadonlyArray<DocumentMetadata>> {
     const metadata: DocumentMetadata[] = [];
 
     for (const strategy of this.strategyRegistry.values()) {
+      const data = await strategy.getMeta(params);
       metadata.push({
         key: strategy.id,
-        ...strategy.getMeta(params),
+        ...data,
       });
     }
     return Object.freeze(metadata);

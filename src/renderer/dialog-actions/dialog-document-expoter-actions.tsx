@@ -48,9 +48,11 @@ export const DialogDataExport: React.FC<WithSchoolAndYearId<DialogDataExportProp
     const [isOpen, setIsOpen] = useState(false);
 
     const formManager = useDocumentExportManager({
-        onSuccess: () => {
-            setTimeout(() => setIsOpen(false), 1500);
-        }
+        schoolId,
+        yearId,
+        // onSuccess: () => {
+        //     setTimeout(() => setIsOpen(false), 1500);
+        // }
     });
 
     const { isExporting, formId, handleDocumentChange } = formManager;

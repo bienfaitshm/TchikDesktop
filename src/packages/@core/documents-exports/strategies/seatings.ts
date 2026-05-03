@@ -2,6 +2,7 @@
  * @description Stratégie d'export pour la mise en place (seating).
  */
 
+import z from "zod";
 import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
 import {
   ClassroomIds,
@@ -12,51 +13,11 @@ import {
   generateValidationSchema,
 } from "@/packages/dynamic-form";
 import { CsvExportExtension, JsonExportExtension } from "./enrollments.engins";
-import z from "zod";
 
-const SEATING_FORM_FIELDS: FormFieldDef[] = [
-  {
-    id: "seating",
-    type: "select",
-    label: "Mise en place",
-    required: true,
-    defaultValue: "eng",
-    colSpan: 4,
-    options: [
-      { label: "Engineering", value: "eng" },
-      { label: "Design", value: "dsgn" },
-      { label: "Product", value: "prod" },
-    ],
-  },
-  {
-    id: "localRooms",
-    type: "select",
-    multiple: true,
-    label: "Locaux",
-    placeholder: "Locaux",
-    defaultValue: ["react", "typescript"],
-    options: [
-      { label: "React", value: "react" },
-      { label: "TypeScript", value: "typescript" },
-      { label: "Node.js", value: "node" },
-    ],
-    colSpan: 4,
-  },
-  {
-    id: "classRooms",
-    type: "select",
-    multiple: true,
-    label: "Salles de classes",
-    placeholder: "Classes",
-    defaultValue: ["react", "typescript"],
-    options: [
-      { label: "React", value: "react" },
-      { label: "TypeScript", value: "typescript" },
-      { label: "Node.js", value: "node" },
-    ],
-    colSpan: 4,
-  },
-];
+import {
+  createSeatingFieldForm,
+  type TCreateSeatingFormParams,
+} from "./seatings.form-fields";
 
 export class SeatingExportStrategy extends AbstractExportStrategy {
   public readonly id = "SEATING_EXPORT" as const;
@@ -78,8 +39,14 @@ export class SeatingExportStrategy extends AbstractExportStrategy {
     });
   }
 
-  public override getFormFields(params) {
-    console.log("getFormFields ", this.id, params);
-    return SEATING_FORM_FIELDS;
+  public override async getFormFields(
+    params: TCreateSeatingFormParams,
+  ): Promise<FormFieldDef[]> {
+    try {
+      return await createSeatingFieldForm(params);
+    } catch (error) {
+      console.error("[SeatingExportStrategy] Error loading fields:", error);
+      return [];
+    }
   }
 }
