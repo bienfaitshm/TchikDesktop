@@ -20,6 +20,7 @@ export class EnrollmentFormFactory {
     options: any[],
     defaultValue: string[] = [],
   ): FormFieldDef {
+    console.log("DEFAULT", defaultValue);
     return {
       id: "classRooms",
       type: "select",

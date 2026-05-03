@@ -25,7 +25,8 @@ export type DocumentExportFormData<TData = Record<string, unknown>> = {
   data: TData;
 };
 
-export type UseExportConfig = TSchoolYear & {
+export type UseExportParams = TSchoolYear & Record<string, unknown>;
+export type UseExportConfig = {
   onSuccess?: (data?: any) => void;
   invalidateKeys?: unknown[][];
 };
@@ -70,7 +71,7 @@ export function useDocumentExportAction(config?: UseExportConfig) {
  * Hook de gestion d'état pour le formulaire de sélection de document.
  * Gère la liste des documents disponibles et les champs dynamiques associés.
  */
-export function useDocumentExportForm(params?: TSchoolYear) {
+export function useDocumentExportForm(params?: UseExportParams) {
   const { data: availableDocs } = useAvailableExports(params);
   const [selectedDocKey, setSelectedDocKey] = useState<string>("");
 
@@ -105,9 +106,12 @@ export function useDocumentExportForm(params?: TSchoolYear) {
 /**
  * Hook complet pour le manager d'export (UI + Action).
  */
-export function useDocumentExportManager(config?: UseExportConfig) {
+export function useDocumentExportManager(
+  params?: UseExportParams,
+  config?: UseExportConfig,
+) {
   const { docOptions, dynamicFields, selectedDocKey, handleDocumentChange } =
-    useDocumentExportForm(config);
+    useDocumentExportForm(params);
 
   const { handleExport, isExporting, formId } = useDocumentExportAction(config);
 

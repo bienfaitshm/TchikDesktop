@@ -29,11 +29,8 @@ export async function createEnrollmentsgFieldForm({
   const classrooms = await classroomService.findMany({
     where: { schoolId, yearId },
   });
-
   return [
-    EnrollmentFormFactory.buildSectionField(
-      EnrollmentsgMappers.toSelectOption(SECTION_OPTIONS),
-    ),
+    EnrollmentFormFactory.buildSectionField(SECTION_OPTIONS),
     EnrollmentFormFactory.buildClassRoomsField(
       EnrollmentsgMappers.toSelectOption(classrooms),
       classId ? [classId] : [],

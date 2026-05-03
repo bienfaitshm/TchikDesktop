@@ -143,7 +143,7 @@ const StudentListContent = ({ schoolId, yearId }: any) => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-2 flex items-center gap-4">
                         <ButtonSheetStudentStat students={students} />
-                        <ButtonDialogDocumentExport />
+                        <ButtonDialogDocumentExport schoolId={schoolId} yearId={yearId} classId={classroomId} />
                     </div>
                 </div>
                 <Separator />

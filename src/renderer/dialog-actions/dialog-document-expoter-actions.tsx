@@ -14,8 +14,6 @@ import {
     DialogTrigger,
     DialogClose,
 } from "@/renderer/components/ui/dialog";
-
-import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import { useDocumentExportManager } from "@/renderer/components/form/document-export-form.actions";
 import { ExportFormContent } from "@/renderer/components/form/document-export-form";
@@ -24,7 +22,7 @@ import { ExportFormContent } from "@/renderer/components/form/document-export-fo
 type WithSchoolAndYearId<T> = T & { schoolId: string; yearId?: string };
 
 interface DialogDataExportProps {
-    currentClassroom?: string;
+    classId?: string;
 }
 
 
@@ -44,15 +42,17 @@ const ExportLoadingOverlay: React.FC<{ message?: string }> = ({
 );
 
 
-export const DialogDataExport: React.FC<WithSchoolAndYearId<DialogDataExportProps>> = ({ schoolId, yearId }) => {
+export const DialogDataExport: React.FC<WithSchoolAndYearId<DialogDataExportProps>> = ({ schoolId, yearId, classId }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     const formManager = useDocumentExportManager({
         schoolId,
         yearId,
-        // onSuccess: () => {
-        //     setTimeout(() => setIsOpen(false), 1500);
-        // }
+        classId
+    }, {
+        onSuccess: () => {
+            setTimeout(() => setIsOpen(false), 1500);
+        }
     });
 
     const { isExporting, formId, handleDocumentChange } = formManager;
@@ -127,4 +127,4 @@ export const DialogDataExport: React.FC<WithSchoolAndYearId<DialogDataExportProp
     );
 };
 
-export const ButtonDialogDocumentExport = withSchoolConfig(DialogDataExport);
+export const ButtonDialogDocumentExport = DialogDataExport;
