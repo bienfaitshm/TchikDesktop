@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   HttpMethod,
   IpcRequest,
@@ -9,9 +10,18 @@ import {
   SchoolYearSchema,
   type TSchoolYearSchemaAttibutes,
 } from "@/packages/@core/data-access/schema-validations";
-import { AbstractEndpoint } from "../abstract";
 import { documentExport } from "@/packages/@core/documents-exports";
+import { AbstractEndpoint } from "../abstract";
 import { DocumentExportRoutes } from "../../routes-constant";
+
+export const defaultDocumentExportSchema = z.object({
+  documentType: z.string().min(1),
+  data: z.record(z.unknown()),
+});
+
+export type DocumentExportFormData = z.infer<
+  typeof defaultDocumentExportSchema
+>;
 
 export class GetInfosDocumentExports extends AbstractEndpoint<any> {
   route = DocumentExportRoutes.INFOS;
@@ -35,10 +45,17 @@ export class ExportDocuments extends AbstractEndpoint<any> {
   };
 
   protected async handle({
-    body,
+    body: { documentType, data },
     params,
-  }: IpcRequest<unknown, TSchoolYearSchemaAttibutes>): Promise<unknown> {
-    const response = await documentExport.executeExport("", body);
+  }: IpcRequest<
+    DocumentExportFormData,
+    TSchoolYearSchemaAttibutes
+  >): Promise<unknown> {
+    const response = await documentExport.executeExport(documentType, {
+      ...data,
+      schoolId: params.schoolId,
+      yearId: params.yearId,
+    });
     if (!response.success) {
       throw new HttpException(
         response.error.message,
