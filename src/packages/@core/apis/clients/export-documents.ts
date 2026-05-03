@@ -4,7 +4,9 @@ import {} from "@/packages/@core/data-access/schema-validations";
 import { DocumentExportRoutes } from "../routes-constant";
 
 export type DocumentExportApi = Readonly<{
-  getAvailableExports(): Promise<DocumentMetadata[]>;
+  getAvailableExports<TParams extends Record<string, unknown>>(
+    params?: TParams,
+  ): Promise<DocumentMetadata[]>;
   executeExport<TData, TParams extends Record<string, unknown> = {}>(
     data: TData,
     params?: TParams,
@@ -26,8 +28,8 @@ export function createDocumentExportApis(
     executeExport(data, params) {
       return ipcClient.post(DocumentExportRoutes.EXPORTS, data, { params });
     },
-    getAvailableExports() {
-      return ipcClient.get(DocumentExportRoutes.INFOS);
+    getAvailableExports(params) {
+      return ipcClient.get(DocumentExportRoutes.INFOS, { params });
     },
   } as const;
 }

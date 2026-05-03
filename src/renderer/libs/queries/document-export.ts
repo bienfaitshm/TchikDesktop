@@ -32,10 +32,12 @@ export function useExportDocuments() {
  * Hook pour récupérer la liste des types d'exports disponibles.
  * @returns Les données sur les exports disponibles et l'état de la requête.
  */
-export function useAvailableExports() {
+export function useAvailableExports<TParams extends Record<string, unknown>>(
+  params?: TParams,
+) {
   return useSuspenseQuery({
     queryKey: ["documents", "available-exports"],
-    queryFn: () => exportDocuments.getAvailableExports(),
+    queryFn: () => exportDocuments.getAvailableExports(params),
     staleTime: 1000 * 60 * 5,
   });
 }

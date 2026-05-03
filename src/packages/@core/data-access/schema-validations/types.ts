@@ -43,6 +43,7 @@ import {
 
 import {
   // Schémas de Filtre (Query Params)
+  SchoolYearSchema,
   SchoolFilterSchema,
   UserFilterSchema,
   OptionFilterSchema,
@@ -63,6 +64,8 @@ import {
 // =============================================================================
 // I. TYPES DE DONNÉES COMPLETS (Lecture DB)
 // =============================================================================
+
+export type TSchoolYearSchemaAttibutes = z.infer<typeof SchoolYearSchema>;
 
 /** Type des attributs complets d'une École (lecture depuis la DB) */
 export type TSchoolAttributes = z.infer<typeof SchoolAttributesSchema>;

@@ -72,7 +72,6 @@ export class EnrollmentExportStrategy extends AbstractExportStrategy {
   public readonly description =
     "Export complet des données d'inscription (élèves, classes, dates).";
   public readonly validationSchema = EnrolementFilterSchema;
-  protected readonly formFields = formFields;
 
   public readonly dataSourceDefinition = {
     classrooms: ClassroomIds.findAllClassroomsWithEnrollment,
@@ -84,5 +83,10 @@ export class EnrollmentExportStrategy extends AbstractExportStrategy {
       extensions: [new CsvExportExtension(), new JsonExportExtension()],
       getSchemasCreator: generateValidationSchema,
     });
+  }
+
+  public override getFormFields(params: any): object[] {
+    console.log("getFormFields ", this.id, params);
+    return formFields;
   }
 }

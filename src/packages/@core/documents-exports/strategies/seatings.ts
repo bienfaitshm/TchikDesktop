@@ -78,7 +78,8 @@ export class SeatingExportStrategy extends AbstractExportStrategy {
     });
   }
 
-  public override getFormFields() {
+  public override getFormFields(params) {
+    console.log("getFormFields ", this.id, params);
     return SEATING_FORM_FIELDS;
   }
 }

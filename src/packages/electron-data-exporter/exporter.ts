@@ -15,15 +15,15 @@ import {
   ServiceError,
   DataSourceQueryDefinition,
 } from "./types";
+import { ValueSetter } from "date-fns/parse/_lib/Setter";
 
 export class DataExport {
   private readonly logger = getLogger("DataExport");
   private readonly strategyRegistry = new Map<string, IExportStrategy>();
-  private readonly metadataCache: DocumentMetadata[] = [];
 
   constructor(
     strategies: IExportStrategy[],
-    private readonly dataFetcher: IDataFetchingService
+    private readonly dataFetcher: IDataFetchingService,
   ) {
     this.registerStrategies(strategies);
   }
@@ -35,18 +35,24 @@ export class DataExport {
         return;
       }
       this.strategyRegistry.set(strategy.id, strategy);
-      this.metadataCache.push({
-        key: strategy.id,
-        ...strategy.meta,
-      });
     });
     this.logger.info(
-      `Ready with ${this.strategyRegistry.size} export strategies.`
+      `Ready with ${this.strategyRegistry.size} export strategies.`,
     );
   }
 
-  public getAvailableExports(): DocumentMetadata[] {
-    return this.metadataCache;
+  public getAvailableExports<TParams extends Record<string, unknown>>(
+    params?: TParams,
+  ): ReadonlyArray<DocumentMetadata> {
+    const metadata: DocumentMetadata[] = [];
+
+    for (const strategy of this.strategyRegistry.values()) {
+      metadata.push({
+        key: strategy.id,
+        ...strategy.getMeta(params),
+      });
+    }
+    return Object.freeze(metadata);
   }
 
   /**
@@ -55,7 +61,7 @@ export class DataExport {
    */
   public async executeExport(
     strategyId: string,
-    contextParams: unknown
+    contextParams: unknown,
   ): Promise<ServiceResult<string>> {
     const strategy = this.strategyRegistry.get(strategyId);
 
@@ -74,7 +80,7 @@ export class DataExport {
       // 2. Sélection du chemin (Interaction utilisateur)
       // On le fait tôt pour ne pas lancer de calculs inutiles si l'utilisateur annule.
       const savedPath = await FileSystem.promptSavePath(
-        strategy.getSaveOptions()
+        strategy.getSaveOptions(),
       );
 
       if (!savedPath) {
@@ -87,7 +93,7 @@ export class DataExport {
       if (!fileExtension) {
         return this.fail(
           "VALIDATION_ERROR",
-          "Extension de fichier non supportée."
+          "Extension de fichier non supportée.",
         );
       }
 
@@ -95,7 +101,7 @@ export class DataExport {
       log.info("Fetching required data...");
       const dataResult = await this.resolveData(
         strategy.getDataSourceDefinition(),
-        contextParams
+        contextParams,
       );
       if (!dataResult.success) return dataResult;
 
@@ -103,7 +109,7 @@ export class DataExport {
       log.info(`Generating ${fileExtension} artifact...`);
       const artifactResult = await strategy.buildArtifact(
         fileExtension,
-        dataResult.data
+        dataResult.data,
       );
       if (!artifactResult.success) return artifactResult;
 
@@ -118,7 +124,7 @@ export class DataExport {
       return this.fail(
         "GENERATION_ERROR",
         "Une erreur système est survenue.",
-        error
+        error,
       );
     }
   }
@@ -128,7 +134,7 @@ export class DataExport {
    */
   private async resolveData(
     definition: DataSourceQueryDefinition,
-    params: unknown
+    params: unknown,
   ): Promise<ServiceResult<unknown>> {
     if (typeof definition === "string") {
       return this.dataFetcher.fetch(definition, params);
@@ -139,8 +145,8 @@ export class DataExport {
       keys.map((key) =>
         this.dataFetcher
           .fetch(definition[key], params)
-          .then((res) => ({ key, res }))
-      )
+          .then((res) => ({ key, res })),
+      ),
     );
 
     const firstFailure = results.find((r) => !r.res.success);
@@ -157,7 +163,7 @@ export class DataExport {
   private fail(
     code: ServiceError["code"],
     message: string,
-    details?: unknown
+    details?: unknown,
   ): ServiceResult<any> {
     return { success: false, error: { code, message, details } };
   }

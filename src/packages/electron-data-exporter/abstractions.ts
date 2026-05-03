@@ -54,8 +54,8 @@ export abstract class AbstractExportExtension<TData = any>
  */
 export interface IExportStrategy {
   readonly id: string;
-  readonly meta: TMeta;
-
+  getFormFields<TParams extends {}>(params?: TParams): object[];
+  getMeta<TParams extends {}>(params?: TParams): TMeta;
   validateContext(params: unknown): ServiceResult<void>;
   getDataSourceDefinition(): DataSourceQueryDefinition;
   getSaveOptions(targetExtension?: DOCUMENT_EXTENSION): SaveDialogOptions;
@@ -104,12 +104,12 @@ export abstract class AbstractExportStrategy<TData = any>
   /**
    * Métadonnées exposées pour la consommation côté UI.
    */
-  public get meta(): TMeta {
+  public getMeta(params): TMeta {
     return {
       title: this.displayName,
       description: this.description,
       extensions: this.extensionFilters,
-      fields: this.getFormFields(),
+      fields: this.getFormFields(params),
     };
   }
 
@@ -145,7 +145,7 @@ export abstract class AbstractExportStrategy<TData = any>
   /**
    * getFormFields
    */
-  public getFormFields() {
+  public getFormFields(params) {
     return this.formFields;
   }
 

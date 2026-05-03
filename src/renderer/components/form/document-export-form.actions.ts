@@ -14,15 +14,21 @@ import type { FormFieldDef } from "@/packages/dynamic-form";
 /**
  * Structure des données soumises par le formulaire d'exportation.
  */
-export interface DocumentExportFormData<TData = Record<string, unknown>> {
+
+export type TSchoolYear = {
+  schoolId?: string;
+  yearId?: string;
+};
+
+export type DocumentExportFormData<TData = Record<string, unknown>> = {
   documentType: string;
   data: TData;
-}
+};
 
-interface UseExportConfig {
+export type UseExportConfig = TSchoolYear & {
   onSuccess?: (data?: any) => void;
   invalidateKeys?: unknown[][];
-}
+};
 
 /**
  * Hook de gestion de l'action d'exportation avec notifications intégrées.
@@ -64,8 +70,8 @@ export function useDocumentExportAction(config?: UseExportConfig) {
  * Hook de gestion d'état pour le formulaire de sélection de document.
  * Gère la liste des documents disponibles et les champs dynamiques associés.
  */
-export function useDocumentExportForm() {
-  const { data: availableDocs } = useAvailableExports();
+export function useDocumentExportForm(params?: TSchoolYear) {
+  const { data: availableDocs } = useAvailableExports(params);
   const [selectedDocKey, setSelectedDocKey] = useState<string>("");
 
   const docOptions: ComboBoxOption<DocumentMetadata<unknown>>[] =
@@ -101,7 +107,7 @@ export function useDocumentExportForm() {
  */
 export function useDocumentExportManager(config?: UseExportConfig) {
   const { docOptions, dynamicFields, selectedDocKey, handleDocumentChange } =
-    useDocumentExportForm();
+    useDocumentExportForm(config);
 
   const { handleExport, isExporting, formId } = useDocumentExportAction(config);
 

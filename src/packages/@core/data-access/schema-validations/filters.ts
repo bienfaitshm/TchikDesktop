@@ -15,6 +15,11 @@ import { orArray } from "./filters.base";
 // I. SCHÉMAS DE FILTRE (Supportant Valeurs Simples ou Tableaux)
 // =============================================================================
 
+export const SchoolYearSchema = z.object({
+  schoolId: z.string().min(1, "L'ID de l'école est requis"),
+  yearId: z.string().min(1, "L'ID de l'année est requis"),
+});
+
 // 1. School Filter
 export const SchoolFilterSchema = withQueryOptions(
   z.object({
@@ -94,7 +99,4 @@ export const EnrolementActionFilterSchema = withQueryOptions(
 
 // 8. Stats
 
-export const StatsFilterSchema = z.object({
-  schoolId: z.string().min(1, "L'ID de l'école est requis"),
-  yearId: z.string().min(1, "L'ID de l'année est requis"),
-});
+export const StatsFilterSchema = SchoolYearSchema;

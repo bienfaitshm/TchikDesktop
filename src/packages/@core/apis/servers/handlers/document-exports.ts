@@ -6,9 +6,8 @@ import {
   HttpStatus,
 } from "@/packages/electron-ipc-rest";
 import {
-  OptionFilterSchema,
-  OptionCreateSchema,
-  type TOptionCreate,
+  SchoolYearSchema,
+  type TSchoolYearSchemaAttibutes,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
 import { documentExport } from "@/packages/@core/documents-exports";
@@ -18,11 +17,13 @@ export class GetInfosDocumentExports extends AbstractEndpoint<any> {
   route = DocumentExportRoutes.INFOS;
   method = HttpMethod.GET;
   schemas: ValidationSchemas = {
-    params: OptionFilterSchema,
+    params: SchoolYearSchema,
   };
 
-  protected async handle(): Promise<unknown> {
-    return documentExport.getAvailableExports();
+  protected async handle({
+    params,
+  }: IpcRequest<unknown, TSchoolYearSchemaAttibutes>): Promise<unknown> {
+    return documentExport.getAvailableExports(params);
   }
 }
 
@@ -30,12 +31,13 @@ export class ExportDocuments extends AbstractEndpoint<any> {
   route = DocumentExportRoutes.EXPORTS;
   method = HttpMethod.POST;
   schemas: ValidationSchemas = {
-    body: OptionCreateSchema,
+    params: SchoolYearSchema,
   };
 
   protected async handle({
     body,
-  }: IpcRequest<TOptionCreate, any>): Promise<unknown> {
+    params,
+  }: IpcRequest<unknown, TSchoolYearSchemaAttibutes>): Promise<unknown> {
     const response = await documentExport.executeExport("", body);
     if (!response.success) {
       throw new HttpException(
