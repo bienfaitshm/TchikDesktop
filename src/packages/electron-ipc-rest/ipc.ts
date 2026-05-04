@@ -19,8 +19,6 @@ import {
   type IResponse,
 } from "./utils";
 
-// --- CORE INTERFACES ---
-
 /** Interface abstraite pour le Logger (permet d'injecter Winston, Pino, etc.) */
 export interface ILogger {
   info(message: string, meta?: unknown): void;
@@ -51,7 +49,7 @@ export interface ServerConfig {
 
 /** Définition d'un Handler de route. */
 export type RequestHandler<TRes, TBody, TParams> = (
-  req: IpcRequest<TBody, TParams>
+  req: IpcRequest<TBody, TParams>,
 ) => Promise<TRes> | TRes;
 
 // --- IPC SERVER (MAIN PROCESS) ---
@@ -76,7 +74,7 @@ export class IpcServer {
 
   constructor(
     private readonly ipcMain: Electron.IpcMain,
-    private readonly config: ServerConfig = {}
+    private readonly config: ServerConfig = {},
   ) {
     this.logger = config.logger ?? {
       info: console.log,
@@ -88,7 +86,7 @@ export class IpcServer {
   /** Enregistre une route GET */
   public get<TRes, TParams = Record<string, unknown>>(
     path: string,
-    handler: RequestHandler<TRes, undefined, TParams>
+    handler: RequestHandler<TRes, undefined, TParams>,
   ): this {
     return this.register(path, HttpMethod.GET, handler);
   }
@@ -96,7 +94,7 @@ export class IpcServer {
   /** Enregistre une route POST */
   public post<TRes, TBody, TParams = Record<string, unknown>>(
     path: string,
-    handler: RequestHandler<TRes, TBody, TParams>
+    handler: RequestHandler<TRes, TBody, TParams>,
   ): this {
     return this.register(path, HttpMethod.POST, handler);
   }
@@ -104,7 +102,7 @@ export class IpcServer {
   /** Enregistre une route PUT */
   public put<TRes, TBody, TParams = Record<string, unknown>>(
     path: string,
-    handler: RequestHandler<TRes, TBody, TParams>
+    handler: RequestHandler<TRes, TBody, TParams>,
   ): this {
     return this.register(path, HttpMethod.PUT, handler);
   }
@@ -112,7 +110,7 @@ export class IpcServer {
   /** Enregistre une route PATCH */
   public patch<TRes, TBody, TParams = Record<string, unknown>>(
     path: string,
-    handler: RequestHandler<TRes, TBody, TParams>
+    handler: RequestHandler<TRes, TBody, TParams>,
   ): this {
     return this.register(path, HttpMethod.PATCH, handler);
   }
@@ -120,7 +118,7 @@ export class IpcServer {
   /** Enregistre une route DELETE */
   public delete<TRes, TParams = Record<string, unknown>>(
     path: string,
-    handler: RequestHandler<TRes, undefined, TParams>
+    handler: RequestHandler<TRes, undefined, TParams>,
   ): this {
     return this.register(path, HttpMethod.DELETE, handler);
   }
@@ -128,7 +126,7 @@ export class IpcServer {
   public register(
     path: string,
     method: HttpMethod,
-    handler: RequestHandler<any, any, any>
+    handler: RequestHandler<any, any, any>,
   ): this {
     const channel = formatChannelName(path, method);
     if (this.routes.has(channel)) {
@@ -176,7 +174,7 @@ export class IpcServer {
 
     this.isListening = true;
     this.logger.info(
-      `[IpcServer] Initialized with ${activeChannels.length} routes.`
+      `[IpcServer] Initialized with ${activeChannels.length} routes.`,
     );
 
     return () => {
@@ -189,23 +187,23 @@ export class IpcServer {
     if (error instanceof HttpException) {
       this.logger.warn(
         `[IpcServer] HTTP ${error.statusCode} on ${req.id}: ${error.message}`,
-        { error }
+        { error },
       );
       return createErrorResponse(
         error.message,
         error.statusCode,
-        error.details
+        error.details,
       );
     }
 
     this.logger.error(
       `[IpcServer] Critical Error on ${req.id}: Message: ${error?.message}`,
-      error
+      error,
     );
     // En production, ne jamais renvoyer la stack trace complète au client
     return createErrorResponse(
       "Internal Server Error",
-      HttpStatus.INTERNAL_SERVER_ERROR
+      HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
 }
@@ -259,7 +257,7 @@ export class IpcClient {
 
   constructor(
     private readonly ipcRenderer: IpcRenderer,
-    private readonly baseHeaders: Record<string, string> = {}
+    private readonly baseHeaders: Record<string, string> = {},
   ) {}
 
   public get<T>(url: string, config?: ClientRequestConfig): Promise<T> {
@@ -269,7 +267,7 @@ export class IpcClient {
   public post<T, B = unknown>(
     url: string,
     data?: B,
-    config?: ClientRequestConfig
+    config?: ClientRequestConfig,
   ): Promise<T> {
     return this.request<T>(url, HttpMethod.POST, data, config);
   }
@@ -277,7 +275,7 @@ export class IpcClient {
   public put<T, B = unknown>(
     url: string,
     data?: B,
-    config?: ClientRequestConfig
+    config?: ClientRequestConfig,
   ): Promise<T> {
     return this.request<T>(url, HttpMethod.PUT, data, config);
   }
@@ -285,7 +283,7 @@ export class IpcClient {
   public patch<T, B = unknown>(
     url: string,
     data?: B,
-    config?: ClientRequestConfig
+    config?: ClientRequestConfig,
   ): Promise<T> {
     return this.request<T>(url, HttpMethod.PATCH, data, config);
   }
@@ -298,7 +296,7 @@ export class IpcClient {
     route: string,
     method: HttpMethod,
     data: unknown,
-    config: ClientRequestConfig = {}
+    config: ClientRequestConfig = {},
   ): Promise<TRes> {
     let payload: IpcPayload<unknown> = {
       route,
@@ -307,6 +305,8 @@ export class IpcClient {
       params: config.params ?? {},
       headers: { ...this.baseHeaders, ...config.headers },
     };
+    console.log("Request....", payload);
+    console.log("Request2....", { config, data });
 
     // 1. Pipeline Intercepteurs Requête
     for (const handler of this.interceptors.request.handlers) {
@@ -324,7 +324,7 @@ export class IpcClient {
       throw new HttpException(
         "IPC Communication Failed",
         HttpStatus.SERVICE_UNAVAILABLE,
-        err
+        err,
       );
     }
 

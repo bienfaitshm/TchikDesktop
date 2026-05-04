@@ -58,11 +58,12 @@ export const DialogDataExport: React.FC<WithSchoolAndYearId<DialogDataExportProp
     const { isExporting, formId, handleDocumentChange } = formManager;
 
     const handleOpenChange = useCallback((open: boolean) => {
+        if (isExporting) return
         setIsOpen(open);
         if (!open) {
             handleDocumentChange("");
         }
-    }, [handleDocumentChange]);
+    }, [handleDocumentChange, isExporting]);
 
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange} modal={false}>

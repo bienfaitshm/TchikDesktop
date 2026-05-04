@@ -16,7 +16,8 @@ interface ExpandableContextValue {
 
 interface ExpandableRowProps<TData> extends React.HTMLAttributes<HTMLTableRowElement> {
     row: Row<TData>
-    renderDetail?: React.ReactNode
+    renderDetail?: React.ReactNode;
+    showDetailOnClick?: boolean
 }
 
 
@@ -108,6 +109,7 @@ export const ExpandableRow = React.memo(<TData,>({
     children,
     className,
     onClick,
+    showDetailOnClick = true,
     ...props
 }: ExpandableRowProps<TData>) => {
     const [isExpanded, setIsExpanded] = React.useState(false)
@@ -129,7 +131,7 @@ export const ExpandableRow = React.memo(<TData,>({
                     className
                 )}
                 onClick={(e) => {
-                    toggle()
+                    showDetailOnClick && toggle()
                     onClick?.(e)
                 }}
                 {...props}

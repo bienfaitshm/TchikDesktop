@@ -72,7 +72,7 @@ export const StudentLayout = () => {
                 <ResizablePanel defaultSize={75}>
                     <ScrollArea className="h-full bg-background">
                         <div className="mx-auto max-w-screen-xl mt-5">
-                            <Outlet />
+                            <Outlet context={{ schoolId, yearId }} />
                         </div>
                     </ScrollArea>
                 </ResizablePanel>

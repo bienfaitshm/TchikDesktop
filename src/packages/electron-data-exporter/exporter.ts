@@ -8,22 +8,13 @@ import { getLogger } from "@/packages/logger";
 import { FileSystem } from "@/packages/electron-file-system";
 import { getFileExtension } from "@/packages/file-extension";
 import { IExportStrategy } from "./abstractions";
-import {
-  IDataFetchingService,
-  ServiceResult,
-  DocumentMetadata,
-  ServiceError,
-  DataSourceQueryDefinition,
-} from "./types";
+import { ServiceResult, DocumentMetadata, ServiceError } from "./types";
 
 export class DataExport {
   private readonly logger = getLogger("DataExport");
   private readonly strategyRegistry = new Map<string, IExportStrategy>();
 
-  constructor(
-    strategies: IExportStrategy[],
-    private readonly dataFetcher: IDataFetchingService,
-  ) {
+  constructor(strategies: IExportStrategy[]) {
     this.registerStrategies(strategies);
   }
 
@@ -90,6 +81,7 @@ export class DataExport {
 
       // 3. Identification de l'extension choisie
       const fileExtension = getFileExtension(savedPath);
+      console.log("getFileExtension", savedPath, fileExtension);
       if (!fileExtension) {
         return this.fail(
           "VALIDATION_ERROR",
@@ -99,10 +91,7 @@ export class DataExport {
 
       // 4. Récupération des données (Peut être lent)
       log.info("Fetching required data...");
-      const dataResult = await this.resolveData(
-        strategy.getDataSourceDefinition(),
-        contextParams,
-      );
+      const dataResult = await strategy.resolveData(contextParams);
       if (!dataResult.success) return dataResult;
 
       // 5. Génération de l'artefact (Transformation CPU-intensive)
@@ -129,36 +118,33 @@ export class DataExport {
     }
   }
 
-  /**
-   * Résout les dépendances de données de manière atomique ou groupée.
-   */
-  private async resolveData(
-    definition: DataSourceQueryDefinition,
-    params: unknown,
-  ): Promise<ServiceResult<unknown>> {
-    if (typeof definition === "string") {
-      return this.dataFetcher.fetch(definition, params);
-    }
+  // private async resolveData(
+  //   definition: DataSourceQueryDefinition,
+  //   params: unknown,
+  // ): Promise<ServiceResult<unknown>> {
+  //   if (typeof definition === "string") {
+  //     return this.dataFetcher.fetch(definition, params);
+  //   }
 
-    const keys = Object.keys(definition);
-    const results = await Promise.all(
-      keys.map((key) =>
-        this.dataFetcher
-          .fetch(definition[key], params)
-          .then((res) => ({ key, res })),
-      ),
-    );
+  //   const keys = Object.keys(definition);
+  //   const results = await Promise.all(
+  //     keys.map((key) =>
+  //       this.dataFetcher
+  //         .fetch(definition[key], params)
+  //         .then((res) => ({ key, res })),
+  //     ),
+  //   );
 
-    const firstFailure = results.find((r) => !r.res.success);
-    if (firstFailure) return firstFailure.res as ServiceResult<unknown>;
+  //   const firstFailure = results.find((r) => !r.res.success);
+  //   if (firstFailure) return firstFailure.res as ServiceResult<unknown>;
 
-    const aggregatedData: Record<string, unknown> = {};
-    results.forEach(({ key, res }) => {
-      if (res.success) aggregatedData[key] = res.data;
-    });
+  //   const aggregatedData: Record<string, unknown> = {};
+  //   results.forEach(({ key, res }) => {
+  //     if (res.success) aggregatedData[key] = res.data;
+  //   });
 
-    return { success: true, data: aggregatedData };
-  }
+  //   return { success: true, data: aggregatedData };
+  // }
 
   private fail(
     code: ServiceError["code"],

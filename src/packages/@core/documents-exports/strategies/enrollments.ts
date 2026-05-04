@@ -2,11 +2,10 @@
  * @description Stratégie unique pour l'export des inscriptions supportant plusieurs formats.
  */
 
-import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
 import {
-  ClassroomIds,
-  ShoolRouteIds,
-} from "@/packages/@core/data-access/data-system-access";
+  AbstractExportStrategy,
+  ServiceResult,
+} from "@/packages/electron-data-exporter";
 import { EnrolementFilterSchema } from "@/packages/@core/data-access/schema-validations";
 import {
   type FormFieldDef,
@@ -25,11 +24,6 @@ export class EnrollmentExportStrategy extends AbstractExportStrategy {
     "Export complet des données d'inscription (élèves, classes, dates).";
   public readonly validationSchema = EnrolementFilterSchema;
 
-  public readonly dataSourceDefinition = {
-    classrooms: ClassroomIds.findAllClassroomsWithEnrollment,
-    school: ShoolRouteIds.findSchoolById,
-  };
-
   constructor() {
     super({
       extensions: [new CsvExportExtension(), new JsonExportExtension()],
@@ -46,5 +40,14 @@ export class EnrollmentExportStrategy extends AbstractExportStrategy {
       console.error("[EnrollmentExportStrategy] Error loading fields:", error);
       return [];
     }
+  }
+
+  public override async resolveData(
+    contextParams,
+  ): Promise<ServiceResult<unknown>> {
+    return {
+      success: true,
+      data: contextParams,
+    };
   }
 }

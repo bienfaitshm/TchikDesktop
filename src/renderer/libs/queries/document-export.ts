@@ -23,8 +23,8 @@ interface ExportPayload<TBody, TParams extends ExportParams = ExportParams> {
 export function useExportDocuments() {
   return useMutation<string, unknown, ExportPayload<unknown, ExportParams>>({
     mutationKey: ["documents", "export"],
-    mutationFn: (payload: ExportPayload<unknown, ExportParams>) =>
-      exportDocuments.executeExport(payload),
+    mutationFn: ({ data, params }: ExportPayload<unknown, ExportParams>) =>
+      exportDocuments.executeExport(data, params),
   });
 }
 

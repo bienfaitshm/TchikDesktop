@@ -54,7 +54,7 @@ export type InferParams<S extends ValidationSchemas> =
     ? z.infer<S["params"]>
     : Record<string, unknown>;
 
-const logger = getLogger("Validation");
+const logger = getLogger("IPCValidation");
 /**
  * Valide une section spécifique de la requête (Body, Params ou Headers).
  */
@@ -72,7 +72,7 @@ function validateSection(
     result.error.issues.forEach((issue) => {
       errors.push({
         location,
-        path: issue.path.join("."), // Format "user.address.street"
+        path: issue.path.join("."),
         message: issue.message,
       });
     });

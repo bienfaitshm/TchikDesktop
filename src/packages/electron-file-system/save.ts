@@ -1,6 +1,7 @@
 import { dialog, SaveDialogOptions } from "electron";
 import { writeFile } from "fs/promises";
 import { getLogger } from "@/packages/logger";
+import * as path from "path";
 
 const logger = getLogger("FileSystem");
 
@@ -25,7 +26,7 @@ export class FileSystem {
    */
   static async saveDataWithDialog(
     data: string | NodeJS.ArrayBufferView,
-    options: FileSaveOptions = {}
+    options: FileSaveOptions = {},
   ): Promise<string | null> {
     try {
       const filePath = await this.promptSavePath(options);
@@ -46,26 +47,55 @@ export class FileSystem {
    * @returns Le chemin sélectionné par l'utilisateur ou null.
    */
   static async promptSavePath(
-    options: SaveDialogOptions
+    options: SaveDialogOptions,
   ): Promise<string | null> {
-    const { title = "Exporter le document", ...rest } = options;
+    // 1. Extraction et préparation de l'extension par défaut
+    const {
+      title = "Exporter le document",
+      filters,
+      defaultPath,
+      ...rest
+    } = options;
+
+    // On détermine l'extension de secours (ex: 'pdf')
+    const fallbackExt =
+      filters && filters.length > 0 ? filters[0].extensions[0] : "";
+
+    let adjustedDefaultPath = defaultPath;
+
+    // Astuce Linux : Si le defaultPath n'a pas d'extension, on lui en ajoute une
+    // pour forcer le sélecteur de fichier à se positionner correctement.
+    if (
+      adjustedDefaultPath &&
+      fallbackExt &&
+      !path.extname(adjustedDefaultPath)
+    ) {
+      adjustedDefaultPath = `${adjustedDefaultPath}.${fallbackExt}`;
+    }
 
     try {
       const { canceled, filePath } = await dialog.showSaveDialog({
         title,
+        filters,
+        defaultPath: adjustedDefaultPath,
         ...rest,
       });
 
       if (canceled || !filePath) {
-        logger.info("File save operation was cancelled by the user.");
         return null;
+      }
+
+      const currentExt = path.extname(filePath);
+
+      if (!currentExt && fallbackExt) {
+        return `${filePath}.${fallbackExt}`;
       }
 
       return filePath;
     } catch (error) {
       logger.error(
         "An error occurred while showing the save dialog",
-        error as Error
+        error as Error,
       );
       return null;
     }
@@ -79,7 +109,7 @@ export class FileSystem {
    */
   static async persistToDisk(
     path: string,
-    data: string | NodeJS.ArrayBufferView
+    data: string | NodeJS.ArrayBufferView,
   ): Promise<void> {
     try {
       logger.info(`Persisting file to: ${path}...`);

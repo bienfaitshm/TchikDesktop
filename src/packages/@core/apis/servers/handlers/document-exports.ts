@@ -33,7 +33,6 @@ export class GetInfosDocumentExports extends AbstractEndpoint<any> {
   protected async handle({
     params,
   }: IpcRequest<unknown, TSchoolYearSchemaAttibutes>): Promise<unknown> {
-    console.log("GetInfosDocumentExports", params);
     return documentExport.getAvailableExports(params);
   }
 }
@@ -42,7 +41,7 @@ export class ExportDocuments extends AbstractEndpoint<any> {
   route = DocumentExportRoutes.EXPORTS;
   method = HttpMethod.POST;
   schemas: ValidationSchemas = {
-    params: SchoolYearSchema,
+    params: SchoolYearSchema.passthrough(),
   };
 
   protected async handle({

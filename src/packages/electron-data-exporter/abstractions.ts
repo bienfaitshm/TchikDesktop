@@ -10,11 +10,7 @@ import {
   DOCUMENT_EXTENSION,
   getFileDescription,
 } from "@/packages/file-extension";
-import {
-  DataSourceQueryDefinition,
-  RawFileContent,
-  ServiceResult,
-} from "./types";
+import { RawFileContent, ServiceResult } from "./types";
 
 export type TMeta = {
   title: string;
@@ -57,8 +53,8 @@ export interface IExportStrategy {
   getFormFields<TParams extends {}>(params?: TParams): Promise<object[]>;
   getMeta<TParams extends {}>(params?: TParams): Promise<TMeta>;
   validateContext(params: unknown): ServiceResult<void>;
-  getDataSourceDefinition(): DataSourceQueryDefinition;
   getSaveOptions(targetExtension?: DOCUMENT_EXTENSION): SaveDialogOptions;
+  resolveData(dataContext: unknown): Promise<ServiceResult<unknown>>;
   buildArtifact(
     targetExtension: DOCUMENT_EXTENSION,
     data: unknown,
@@ -77,7 +73,6 @@ export abstract class AbstractExportStrategy<TData = any>
   public abstract readonly description: string;
 
   protected abstract readonly validationSchema: AnyZodObject;
-  public abstract readonly dataSourceDefinition: DataSourceQueryDefinition;
 
   protected formFields: object[] = [];
   /** Registre interne des moteurs de rendu supportés par cette stratégie. */
@@ -122,8 +117,15 @@ export abstract class AbstractExportStrategy<TData = any>
     );
   }
 
-  public getDataSourceDefinition(): DataSourceQueryDefinition {
-    return this.dataSourceDefinition;
+  public async resolveData(_): Promise<ServiceResult<unknown>> {
+    return {
+      success: false,
+      error: {
+        code: "DATA_FETCH_ERROR",
+        message:
+          "Impossible de charger les données. Service temporairement indisponible.",
+      },
+    };
   }
 
   /**
@@ -145,7 +147,7 @@ export abstract class AbstractExportStrategy<TData = any>
   /**
    * getFormFields
    */
-  public async getFormFields(params) {
+  public async getFormFields(_) {
     return this.formFields;
   }
 
