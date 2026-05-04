@@ -4,9 +4,8 @@ import { Button } from "@/renderer/components/ui/button";
 import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
 import type { DataTableMenu } from "@/renderer/components/button-menus";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { Suspense } from "@/renderer/libs/queries/suspense";
 
-import React, { useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import {
     DataTable,
     DataContentBody,
@@ -18,7 +17,6 @@ import {
 import { TypographyH3 } from "@/renderer/components/ui/typography";
 import { StudyYearColumns } from "@/renderer/components/tables/columns.study-years";
 import { useStudyYearManagement } from "@/renderer/hooks/query.mangements";
-import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import { createMenuActionManager } from "@/renderer/utils/handle-action";
 import { useGetStudyYears } from "@/renderer/libs/queries/school";
 import {
@@ -27,6 +25,7 @@ import {
 } from "@/renderer/components/dialog/dialog.table-action";
 import type { TStudyYear } from "@/packages/@core/data-access/db/schemas/types";
 import { MUTATION_ACTION_ENUM } from "@/packages/@core/data-access/db/enum";
+import { useSchoolContext } from "../hooks/app-config-router";
 
 
 
@@ -37,7 +36,8 @@ const tableMenus: DataTableMenu[] = [
 
 
 
-const StudyYearManagementPage: React.FC<any> = ({ schoolId }) => {
+export const StudyYearPage = () => {
+    const { schoolId } = useSchoolContext();
 
     const {
         createMutation,
@@ -49,7 +49,7 @@ const StudyYearManagementPage: React.FC<any> = ({ schoolId }) => {
     } = useStudyYearManagement();
 
 
-    const { data: studyYears = [] } = useGetStudyYears(schoolId);
+    const { data: studyYears = [] } = useGetStudyYears({ where: { schoolId } });
     const tableAction = useTableAction<TStudyYear>();
     const onConfirmDelete = useCallback(
         (item: TStudyYear) => {
@@ -140,13 +140,3 @@ const StudyYearManagementPage: React.FC<any> = ({ schoolId }) => {
         </div>
     );
 };
-
-const SttudyYear: React.FC<any> = (props) => {
-    return (
-        <Suspense>
-            <StudyYearManagementPage {...props} />
-        </Suspense>
-    );
-};
-
-export const StudyYearsPage = withSchoolConfig(SttudyYear);

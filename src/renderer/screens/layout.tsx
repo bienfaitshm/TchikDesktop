@@ -4,8 +4,11 @@ import { ApplicationSidebar } from "@/renderer/components/app-sidebar"
 import { Outlet } from "react-router"
 import { Separator } from "@/renderer/components/ui/separator"
 import { Suspense } from "@/renderer/libs/queries/suspense"
+import { useCurrentConfig } from "@/renderer/libs/stores/app-store"
+import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner"
 
 export default function MainLayout() {
+    const { schoolId, yearId } = useCurrentConfig();
     return (
         <SidebarProvider>
             <ApplicationSidebar />
@@ -18,8 +21,8 @@ export default function MainLayout() {
                     />
                 </header>
                 <main className="w-full h-full flex-1 bg-background">
-                    <Suspense>
-                        <Outlet />
+                    <Suspense fallback={<LoadingSpinner />}>
+                        <Outlet context={{ schoolId, yearId }} />
                     </Suspense>
                 </main>
             </SidebarInset>

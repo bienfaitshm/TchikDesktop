@@ -6,16 +6,16 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/renderer/components/ui/tabs"
-import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store"
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom"
 
 import { Badge } from "@/renderer/components/ui/badge"
 import { Link } from "react-router"
 import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum"
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options"
+import { useSchoolContext } from "../hooks/app-config-router"
 
 
-type CurrentYearSchoolProps<T extends {} = {}> = Required<any>
+type CurrentYearSchoolProps<T = any> = Required<any>
 
 
 
@@ -67,7 +67,7 @@ const ClassroomGrid: React.FC<CurrentYearSchoolProps> = ({ schoolId, yearId }) =
 
 
 const StudentScreen = () => {
-    const { schoolId, yearId } = useGetCurrentYearSchool()
+    const { schoolId, yearId } = useSchoolContext();
     if (!schoolId && !yearId) {
         return null;
     }

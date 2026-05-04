@@ -1,7 +1,6 @@
 import { ClassroomSideList } from "@/renderer/components/classroom-side-list";
 import { Button } from "@/renderer/components/ui/button";
 import { TypographyH2 } from "@/renderer/components/ui/typography";
-import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { ArrowLeft } from "lucide-react";
@@ -13,6 +12,7 @@ import {
 } from "@/renderer/components/ui/resizable";
 import { Separator } from "@/renderer/components/ui/separator";
 import { ScrollArea } from "@/renderer/components/ui/scroll-area";
+import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 
 
 /**
@@ -30,7 +30,8 @@ const ClassroomSideNav: React.FC<any> = ({ schoolId, yearId }) => {
  * Utilise un layout redimensionnable avec une barre latérale et une zone de contenu principale.
  * @param {any} props - schoolId et yearId passés par le HOC withSchoolConfig.
  */
-const Layout: React.FC<any> = ({ schoolId, yearId }) => {
+export const StudentLayout = () => {
+    const { schoolId, yearId } = useSchoolContext();
     const navigate = useNavigate();
 
     const handleGoBack = () => {
@@ -79,5 +80,3 @@ const Layout: React.FC<any> = ({ schoolId, yearId }) => {
         </div>
     );
 };
-
-export const StudentsLayout = withSchoolConfig(Layout);

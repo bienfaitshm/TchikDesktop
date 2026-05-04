@@ -8,7 +8,6 @@ import { useGetOptions } from "@/renderer/libs/queries/option"
 
 import { Button } from "@/renderer/components/ui/button"
 import { Suspense } from "@/renderer/libs/queries/suspense"
-import { withSchoolConfig } from "@/renderer/hooks/with-application-config"
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner"
 
 import {
@@ -37,6 +36,7 @@ import {
 
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options"
 import type { Row } from "@tanstack/react-table"
+import { useSchoolContext } from "../hooks/app-config-router"
 
 /**
  * Actions de ligne mémoïsées pour la performance.
@@ -69,8 +69,8 @@ const OptionRowActions = React.memo(({ option }: { option: TOption }) => {
 })
 OptionRowActions.displayName = "OptionRowActions"
 
-const OptionManagementPage: React.FC<{ schoolId: string }> = ({ schoolId }) => {
-    // On récupère les data. Si undefined, on stabilise avec un tableau vide.
+const OptionManagementPage = ({ }) => {
+    const { schoolId } = useSchoolContext();
     const { data: rawOptions } = useGetOptions({ where: { schoolId } })
     const options = React.useMemo(() => rawOptions ?? [], [rawOptions])
 
@@ -137,13 +137,11 @@ const OptionManagementPage: React.FC<{ schoolId: string }> = ({ schoolId }) => {
 /**
  * OptionEntry - Gère la barrière de protection Suspense au niveau de la route.
  */
-const OptionEntry: React.FC<{ schoolId: string }> = (props) => {
-    console.log("OptionEntry")
+export const OptionPage = () => {
     return (
         <Suspense fallback={<div className="p-10 text-center"><LoadingSpinner /></div>}>
-            <OptionManagementPage {...props} />
+            <OptionManagementPage />
         </Suspense>
     )
 }
 
-export const OptionPage = withSchoolConfig(OptionEntry)

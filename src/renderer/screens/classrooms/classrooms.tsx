@@ -14,7 +14,6 @@ import { Button } from "@/renderer/components/ui/button";
 import { ClassroomColumns } from "@/renderer/components/tables/columns.classroom";
 import { Plus } from "lucide-react";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import {
     ClassroomDialogCreateForm,
     ClassroomDialogDeleteForm,
@@ -33,8 +32,8 @@ import { Link } from "react-router";
 import { UseClassroomFormOptions } from "@/renderer/components/form/classroom-form.actions";
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options"
 import { useGetOptionAsOptions } from "@/renderer/hooks/data-as-options";
+import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 
-type TWithSchoolAndYear = Pick<TClassroom, "schoolId" | "yearId">
 
 
 const ClassroomRowActions: React.FC<{
@@ -83,7 +82,8 @@ const ClassroomRowActions: React.FC<{
 };
 
 
-const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearId }) => {
+export const ClassroomPage = () => {
+    const { schoolId, yearId } = useSchoolContext();
     const { options } = useGetOptionAsOptions(schoolId)
     const { data: classrooms = [], queryKey } = useGetClassrooms({ where: { schoolId, yearId } });
     console.log(classrooms)
@@ -152,18 +152,3 @@ const ClassroomManagementPage: React.FC<TWithSchoolAndYear> = ({ schoolId, yearI
         </main>
     );
 };
-
-/**
- * Wrapper avec Suspense pour gérer le chargement initial de la page.
- */
-const Classroom: React.FC<TWithSchoolAndYear> = (props) => {
-    console.log("classrooms", props)
-
-    return (
-        <Suspense>
-            <ClassroomManagementPage {...props} />
-        </Suspense>
-    );
-};
-
-export const ClassroomPage = withSchoolConfig(Classroom);

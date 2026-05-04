@@ -2,14 +2,16 @@ import { useCallback, useState } from "react";
 import { Button } from "../components/ui/button"
 import { TypographyH1 } from "../components/ui/typography"
 import { useGenerateSeating } from "../libs/queries/seating"
-import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import GlobalRoomManager from "../components/layouts/seatings/room-manager";
+import { useSchoolContext } from "../hooks/app-config-router";
 
-const MiseEnPlaceScreen = withSchoolConfig((params: { schoolId: string, yearId: string }) => {
+const MiseEnPlaceScreen = () => {
+    const { schoolId, yearId } = useSchoolContext();
     const [data, setData] = useState([])
     const mutation = useGenerateSeating()
+
     const onGenerate = useCallback(() => {
-        mutation.mutateAsync({ ...params }).then(value => {
+        mutation.mutateAsync({ schoolId, yearId }).then(value => {
             console.log("Genration", value)
             setData(value)
         })
@@ -27,7 +29,6 @@ const MiseEnPlaceScreen = withSchoolConfig((params: { schoolId: string, yearId: 
             </div>
         </div>
     )
-})
-
+}
 
 export default MiseEnPlaceScreen

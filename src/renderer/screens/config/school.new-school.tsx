@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router";
-import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
+import { useConfigActions } from "@/renderer/libs/stores/app-store";
 import { SchoolForm } from "@/renderer/components/form/school-form";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import type { TSchoolAttributes } from "@/packages/@core/data-access/schema-validations";
@@ -11,16 +11,14 @@ import { ConfigHeader } from "./config.header";
 
 export const useSchoolNavigationAndSelection = () => {
     const navigate = useNavigate();
-    const setCurrentSchool = useApplicationConfigurationStore(
-        (store) => store.setCurrentSchool
-    );
+    const configActions = useConfigActions()
 
     return React.useCallback(
         (school: TSchoolAttributes) => {
-            setCurrentSchool(school);
+            configActions.setCurrentSchool(school);
             navigate(`/configuration/school-year`);
         },
-        [setCurrentSchool, navigate]
+        [configActions, navigate]
     );
 };
 
@@ -56,7 +54,7 @@ export const SchoolCreationForm: React.FC = () => {
     );
 };
 
-export const SchoolConfigurationNewSchoolScreen: React.FC = () => {
+export const ConfigCreateSchoolPage: React.FC = () => {
     return (
         <div className="space-y-5">
             <ConfigHeader showBackButton title="Creer l'établissement sur lequel vous souhaitez travailler." />

@@ -6,7 +6,6 @@ import { useGetLocalRooms } from "@/renderer/libs/queries/seating";
 
 import { Button } from "@/renderer/components/ui/button";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 
 import {
     DataTable,
@@ -16,7 +15,6 @@ import {
     DataTablePagination,
     DataTableToolbar,
 } from "@/renderer/components/tables/data-table";
-// Pense à renommer ou adapter ton fichier de colonnes pour les locaux
 import { LocalRoomColumns } from "@/renderer/components/tables/columns.local-rooms";
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import {
@@ -31,8 +29,8 @@ import {
     DeleteLocalRoomDialog,
     UpdateLocalRoomDialog
 } from "@/renderer/dialog-actions/localroom.dialog-action";
+import { useSchoolContext } from "../hooks/app-config-router";
 
-type TWithSchool = Pick<TLocalRoom, "schoolId">;
 
 /**
  * Actions disponibles pour chaque ligne de local (salle).
@@ -67,7 +65,8 @@ const LocalRoomRowActions: React.FC<{
     );
 };
 
-const LocalRoomManagementPage: React.FC<TWithSchool> = ({ schoolId }) => {
+export const LocalRoomPage = () => {
+    const { schoolId } = useSchoolContext();
     const { data: localRooms = [] } = useGetLocalRooms({ where: { schoolId } });
 
     return (
@@ -123,16 +122,3 @@ const LocalRoomManagementPage: React.FC<TWithSchool> = ({ schoolId }) => {
         </main>
     );
 };
-
-/**
- * Point d'entrée avec protection Suspense globale pour la page.
- */
-const LocalRoomEntry: React.FC<TWithSchool> = (props) => {
-    return (
-        <Suspense>
-            <LocalRoomManagementPage {...props} />
-        </Suspense>
-    );
-};
-
-export const LocalRoomSreen = withSchoolConfig(LocalRoomEntry);

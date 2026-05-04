@@ -15,8 +15,8 @@ import { Suspense as DataSuspense } from "@/renderer/libs/queries/suspense";
 import { Button } from "@/renderer/components/ui/button";
 import { format } from "date-fns";
 
-import { StudyYearCreationForm, useStudyYearNavigationAndSelection } from "./study-year.new-study-year";
-import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
+import { StudyYearCreationForm } from "./study-year.new-study-year";
+import { useConfigActions, useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { ConfigHeader } from "./config.header";
 
 /**
@@ -45,10 +45,10 @@ interface StudyYearDataDisplay {
  * @returns {JSX.Element} The table of study years or the creation form.
  */
 const StudyYearListDisplayTable: React.FC = () => {
-    const setCurrentStudyYearAndNavigate = useStudyYearNavigationAndSelection();
-    const currentSchool = useApplicationConfigurationStore((store) => store.currentSchool);
+    const { school } = useCurrentConfig()
+    const configActions = useConfigActions();
 
-    if (!currentSchool?.schoolId) {
+    if (!school?.schoolId) {
         return (
             <div className="p-6 text-center text-red-600">
                 <TypographyH4>Aucun établissement sélectionné.</TypographyH4>
@@ -62,7 +62,7 @@ const StudyYearListDisplayTable: React.FC = () => {
         );
     }
 
-    const { data: studyYears, isError } = useGetStudyYears({ where: { schoolId: currentSchool.schoolId } });
+    const { data: studyYears, isError } = useGetStudyYears({ where: { schoolId: school.schoolId } });
 
     if (isError) {
         return (
@@ -89,7 +89,7 @@ const StudyYearListDisplayTable: React.FC = () => {
             <ConfigHeader showBackButton title=" Veuillez choisir l'année scolaire sur laquelle vous souhaitez travailler." />
             <Table>
                 <TableCaption>
-                    <span>Liste des années scolaires enregistrées pour <b>{currentSchool.name}</b>.</span> {" "}
+                    <span>Liste des années scolaires enregistrées pour <b>{school.name}</b>.</span> {" "}
                     <Link to={`/configuration/school-year/new`} className="text-blue-600 hover:underline text-sm">
                         Ajouter une nouvelle année scolaire
                     </Link>
@@ -107,7 +107,7 @@ const StudyYearListDisplayTable: React.FC = () => {
                         <TableRow
                             key={studyYear.yearId}
                             className="cursor-pointer hover:bg-muted/50 transition-colors"
-                            onClick={() => setCurrentStudyYearAndNavigate(studyYear)}
+                            onClick={() => configActions.setCurrentStudyYear(studyYear)}
                         >
                             <TableCell className="font-medium">{studyYear.yearId}</TableCell>
                             <TableCell>{studyYear.yearName}</TableCell>
@@ -124,7 +124,7 @@ const StudyYearListDisplayTable: React.FC = () => {
 
 
 /**
- * @component StudyYearConfigurationScreen
+ * @component StudyYearConfigPage
  * @description This main page component orchestrates the display of either a list of existing
  * study years for the current school or a form to create a new one.
  * It uses React Suspense to manage loading states for the study year data.
@@ -133,10 +133,10 @@ const StudyYearListDisplayTable: React.FC = () => {
  * @example
  * ```tsx
  * // This component would typically be mounted at a route like /configuration/school/:schoolId/study-years
- * <Route path="/configuration/school/:schoolId/study-years" element={<StudyYearConfigurationScreen />} />
+ * <Route path="/configuration/school/:schoolId/study-years" element={<StudyYearConfigPage />} />
  * ```
  */
-export const StudyYearConfigurationScreen: React.FC = () => {
+export const StudyYearConfigPage: React.FC = () => {
     return (
         <div>
             <DataSuspense fallback={<div className="text-center py-8">Chargement des données des années scolaires...</div>}>

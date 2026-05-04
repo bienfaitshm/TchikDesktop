@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store"
+import { useCurrentConfig } from "@/renderer/libs/stores/app-store"
 import {
     Card,
     CardContent,
@@ -56,19 +56,13 @@ export function withSchoolConfig<TProps extends WithSchoolAndYearId>(
     WrappedComponent: React.ComponentType<TProps>
 ) {
     const ComponentWithConfig = (props: Omit<TProps, keyof WithSchoolAndYearId>) => {
-        // 1. Récupération optimisée (Shallow)
-        const { schoolId, yearId, isConfigured } = useGetCurrentYearSchool()
+        const { schoolId, yearId, isConfigured } = useCurrentConfig()
 
-        // // 2. Gestion de l'hydratation (optionnel selon ton setup)
-        // const isHydrated = useIsStoreHydrated()
-        // if (!isHydrated) return <LoadingSpinner />
 
-        // 3. Garde-fou
         if (!isConfigured) {
             return <MissingConfigFallback />
         }
 
-        // Ici, TS sait que schoolId et yearId ne sont plus undefined grâce au check isConfigured
         return (
             <WrappedComponent
                 {...(props as any)}

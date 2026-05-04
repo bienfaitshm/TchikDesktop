@@ -17,17 +17,17 @@ import { ConfigHeader } from "./config.header";
 
 
 /**
- * @component SchoolListDisplayTable
+ * @component SchoolConfigPage
  * @description Displays a table of available schools. If no schools are found, it prompts
  * the user to create a new one by rendering the `SchoolCreationForm`.
  * Each table row is clickable, allowing users to select a school and navigate to its
  * dedicated configuration page.
  * @returns {JSX.Element} The table of schools or the creation form.
  */
-const SchoolListDisplayTable: React.FC = () => {
+
+export const SchoolConfigPage: React.FC = () => {
     const onSetSchool = useSchoolNavigationAndSelection();
-    const { data: schools, error } = useGetSchools();
-    console.log({ error }, schools)
+    const { data: schools } = useGetSchools();
     if (schools.length === 0) {
         return (
             <div className="p-4">
@@ -70,16 +70,5 @@ const SchoolListDisplayTable: React.FC = () => {
                 </TableBody>
             </Table>
         </div>
-    );
-};
-
-
-
-
-export const SchoolConfigurationScreen: React.FC = () => {
-    return (
-        <DataSuspense fallback={<div className="text-center py-8">Chargement des données...</div>}>
-            <SchoolListDisplayTable />
-        </DataSuspense>
     );
 };

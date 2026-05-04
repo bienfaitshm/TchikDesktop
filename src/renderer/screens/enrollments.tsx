@@ -12,13 +12,13 @@ import {
 } from '@/renderer/components/tables';
 import { EnrollmentHistoricsColumns } from '@/renderer/components/tables/columns.enrollment-history';
 import { Suspense } from '@/renderer/libs/queries/suspense';
-import { withSchoolConfig } from '@/renderer/hooks/with-application-config';
 import {
     QuickCreateEnrollmentDialog,
     CreateEnrollmentDialog
 } from '@/renderer/dialog-actions/enrolement.dialog-actions';
 import { useGetEnrollments } from '@/renderer/libs/queries/enrolement';
 import { Skeleton } from '@/renderer/components/ui/skeleton';
+import { useSchoolContext } from '../hooks/app-config-router';
 
 
 type SchoolYearId = { schoolId: string; yearId: string };
@@ -75,7 +75,8 @@ const TableSkeleton = () => (
     </div>
 );
 
-const EnrollmentPage: React.FC<SchoolYearId> = ({ schoolId, yearId }) => {
+export const EnrollmentPage = () => {
+    const { schoolId, yearId } = useSchoolContext();
     const defaultValues = { schoolId, yearId };
 
     return (
@@ -116,5 +117,3 @@ const EnrollmentPage: React.FC<SchoolYearId> = ({ schoolId, yearId }) => {
         </div>
     );
 };
-
-export const QuickEnrollmentPage = withSchoolConfig(EnrollmentPage);

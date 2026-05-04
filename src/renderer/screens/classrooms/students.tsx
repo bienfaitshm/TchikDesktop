@@ -19,7 +19,6 @@ import { StudentColumns, TEnrolement } from "@/renderer/components/tables/column
 import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
 import { useGetClassroomById } from "@/renderer/libs/queries/classroom";
 import { ButtonSheetStudentStat } from "./students.stat";
-import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
 import { ActionContainer, ActionTileDelete, ActionTileDetail, ActionTile } from "@/renderer/components/tables/data-table.action-tiles";
 import {
@@ -36,6 +35,7 @@ import { Separator } from "@/renderer/components/ui/separator";
 import { Badge } from "@/renderer/components/ui/badge";
 import type { BaseFormConfig } from "@/renderer/dialog-actions/base.dialog-actions";
 import { ButtonDialogDocumentExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
+import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 
 const enrolementStudentColumns = enhanceColumnsExpandable(StudentColumns);
 
@@ -119,10 +119,9 @@ const ClassroomHeader = ({ classId, schoolId, yearId, studentsCount = 0 }: { cla
     );
 };
 
-/**
- * MAIN PAGE : Utilisation de l'espace optimisée
- */
-const StudentListContent = ({ schoolId, yearId }: any) => {
+
+export const StudentPage = () => {
+    const { schoolId, yearId } = useSchoolContext();
     const { classroomId } = useParams();
     const { data: students = [], queryKey } = useGetEnrollments({
         where: { schoolId, yearId, classroomId: classroomId! }
@@ -196,5 +195,3 @@ const HeaderSkeleton = () => (
         </div>
     </div>
 );
-
-export const StudentsOfClassrrom = withSchoolConfig(StudentListContent);

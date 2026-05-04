@@ -1,5 +1,5 @@
-export { SchoolConfigurationScreen } from "./school";
-export { StudyYearConfigurationScreen } from "./study-year";
+export { SchoolConfigPage } from "./school";
+export { StudyYearConfigPage } from "./study-year";
 export { ConfigurationLayoutScreen } from "./layout";
 export { NewStudyYearConfigurationPage } from "./study-year.new-study-year";
-export { SchoolConfigurationNewSchoolScreen } from "./school.new-school";
+export { ConfigCreateSchoolPage } from "./school.new-school";
