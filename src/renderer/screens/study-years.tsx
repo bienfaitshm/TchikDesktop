@@ -1,11 +1,9 @@
 
 import { StudyYearForm, type StudyYearFormData as FormValueType } from "@/renderer/components/form/study-year-form";
 import { Button } from "@/renderer/components/ui/button";
-import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
-import type { DataTableMenu } from "@/renderer/components/button-menus";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, } from "react";
 import {
     DataTable,
     DataContentBody,
@@ -17,7 +15,6 @@ import {
 import { TypographyH3 } from "@/renderer/components/ui/typography";
 import { StudyYearColumns } from "@/renderer/components/tables/columns.study-years";
 import { useStudyYearManagement } from "@/renderer/hooks/query.mangements";
-import { createMenuActionManager } from "@/renderer/utils/handle-action";
 import { useGetStudyYears } from "@/renderer/libs/queries/school";
 import {
     TableActionManager,
@@ -27,12 +24,6 @@ import type { TStudyYear } from "@/packages/@core/data-access/db/schemas/types";
 import { MUTATION_ACTION_ENUM } from "@/packages/@core/data-access/db/enum";
 import { useSchoolContext } from "../hooks/app-config-router";
 
-
-
-const tableMenus: DataTableMenu[] = [
-    { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
-    { key: "delete", label: "Supprimer", separator: true, icon: <Trash2 className="size-3" /> },
-];
 
 
 
@@ -79,29 +70,6 @@ export const StudyYearPage = () => {
 
 
 
-
-    const { menus, handleMenusAction: onPressMenu } = useMemo(
-        () =>
-            createMenuActionManager(tableMenus, {
-                edit: tableAction.onUpdate,
-                delete: tableAction.onDelete,
-            }),
-        [tableAction.onUpdate, tableAction.onDelete]
-    );
-
-
-
-    const enhancedColumns = useMemo(
-        () =>
-            enhanceColumnsWithMenu<TStudyYear>({
-                menus,
-                onPressMenu,
-                columns: StudyYearColumns,
-            }),
-        [menus, onPressMenu]
-    );
-
-
     const isActionLoading =
         updateMutation.isPending || createMutation.isPending || deleteMutation.isPending;
 
@@ -109,7 +77,7 @@ export const StudyYearPage = () => {
         <div className="my-10 mx-auto h-full container max-w-screen-lg">
             <DataTable<TStudyYear>
                 data={studyYears}
-                columns={enhancedColumns}
+                columns={StudyYearColumns}
                 keyExtractor={(item) => item.yearId}
             >
                 <DataTableToolbar className="justify-between">

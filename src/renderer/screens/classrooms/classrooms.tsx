@@ -11,7 +11,7 @@ import {
     TableFacetedFilterItem,
 } from "@/renderer/components/tables/data-table";
 import { Button } from "@/renderer/components/ui/button";
-import { ClassroomColumns } from "@/renderer/components/tables/columns.classroom";
+import { ClassroomColumns, enhanceColumnsExpandable } from "@/renderer/components/tables/columns";
 import { Plus } from "lucide-react";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import {
@@ -110,7 +110,7 @@ export const ClassroomPage = () => {
             </section>
             <DataTable<TClassroom>
                 data={classrooms}
-                columns={ClassroomColumns}
+                columns={enhanceColumnsExpandable(ClassroomColumns)}
                 keyExtractor={(item) => item.classId}
             >
                 <DataTableToolbar searchColumn="identifier">

@@ -2,37 +2,9 @@ import type { TClassroomAttributes as TClassroom } from "@/packages/@core/data-a
 import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
 import { SectionBadge } from "@/renderer/components/section-badge"
-import { Checkbox } from "@/renderer/components/ui/checkbox"
-import { ExpandableTrigger } from "./data-table.expandable"
 
 
-export const ClassroomColumns: ColumnDef<TClassroom>[] = [
-    {
-        id: "select",
-        header: ({ table }) => (
-            <div className="flex items-center justify-center">
-                <Checkbox
-                    checked={
-                        table.getIsAllPageRowsSelected() ||
-                        (table.getIsSomePageRowsSelected() && "indeterminate")
-                    }
-                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                    aria-label="Select all"
-                />
-            </div>
-        ),
-        cell: ({ row }) => (
-            <div className="flex items-center justify-center">
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label="Select row"
-                />
-            </div>
-        ),
-        enableSorting: false,
-        enableHiding: false,
-    },
+export const ClassroomColumns: ColumnDef<TClassroom & { optionName?: string }>[] = [
     {
 
         accessorKey: "identifier",
@@ -78,12 +50,8 @@ export const ClassroomColumns: ColumnDef<TClassroom>[] = [
         enableHiding: true,
         cell: ({ row }) => (
             <TypographySmall className="text-muted-foreground">
-                {row.original.optionName}
+                {row.original?.optionName}
             </TypographySmall>
         ),
-    },
-    {
-        id: "actions",
-        cell: () => <ExpandableTrigger />
     },
 ]

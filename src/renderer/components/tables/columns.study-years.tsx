@@ -2,19 +2,18 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { TypographySmall } from "@/renderer/components/ui/typography";
 import React from "react";
 import { Badge } from "@/renderer/components/ui/badge";
-import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
+import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { Checkbox } from "@/renderer/components/ui/checkbox";
 import { CheckCircle, MinusCircle } from "lucide-react";
 import { formatDate } from "@/packages/times";
-import type { StudyYearAttributes } from "@/packages/@core/data-access/db/models/types";
-
+import type { TStudyYearAttributes as TStudyYear } from "@/packages/@core/data-access/schema-validations/types"
 
 /**
  * Composant de badge affichant le statut d'activation d'une année d'étude.
  * Indique si l'année passée est l'année d'étude active configurée.
  */
 const StudyYearStatusBadge: React.FC<{ yearId: string }> = ({ yearId }) => {
-    const currentActiveYearId = useApplicationConfigurationStore(store => store.currentStudyYear?.yearId);
+    const { yearId: currentActiveYearId } = useCurrentConfig()
     const isActive = currentActiveYearId === yearId;
 
     return (
@@ -32,7 +31,7 @@ const StudyYearStatusBadge: React.FC<{ yearId: string }> = ({ yearId }) => {
     );
 };
 
-export const StudyYearColumns: ColumnDef<StudyYearAttributes>[] = [
+export const StudyYearColumns: ColumnDef<TStudyYear>[] = [
     {
         id: "select",
         header: ({ table }) => (

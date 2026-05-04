@@ -11,7 +11,6 @@ import {
 } from "@/renderer/components/ui/table";
 import { Link } from "react-router";
 import { useGetSchools } from "@/renderer/libs/queries/school";
-import { Suspense as DataSuspense } from "@/renderer/libs/queries/suspense";
 import { SchoolCreationForm, useSchoolNavigationAndSelection } from "./school.new-school";
 import { ConfigHeader } from "./config.header";
 

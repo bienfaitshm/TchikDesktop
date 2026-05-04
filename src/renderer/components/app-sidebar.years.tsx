@@ -18,7 +18,7 @@ import {
 import { ChevronsUpDown, Check, PlusCircle, CalendarDays } from "lucide-react";
 import { cn } from "@/renderer/utils";
 
-import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
+import { useConfigActions, useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { useGetStudyYears } from "@/renderer/libs/queries/school";
 import { Link } from "react-router";
 import { formatDate } from "@/packages/times";
@@ -30,18 +30,13 @@ import { formatDate } from "@/packages/times";
  */
 export const SidebarMenuItemSchoolYear = () => {
     const { isMobile } = useSidebar();
+    const { schoolId: currentSchoolId, year: currentStudyYear } = useCurrentConfig()
+    const configActions = useConfigActions()
 
-    const currentSchoolId = useApplicationConfigurationStore(
-        (store) => store.currentSchool?.schoolId as string
-    );
-    const currentStudyYear =
-        useApplicationConfigurationStore((store) => store.currentStudyYear);
-    const setCurrentStudyYear =
-        useApplicationConfigurationStore((store) => store.setCurrentStudyYear);
+    if (currentSchoolId) return null
 
 
-
-    const { data: studyYears = [], isLoading } = useGetStudyYears({ schoolId: currentSchoolId });
+    const { data: studyYears = [], isLoading } = useGetStudyYears({ where: { schoolId: currentSchoolId } });
 
     const isDisabled = !currentSchoolId || isLoading;
 
@@ -131,7 +126,7 @@ export const SidebarMenuItemSchoolYear = () => {
                             studyYears.map((year) => (
                                 <DropdownMenuItem
                                     key={year.yearId}
-                                    onSelect={() => setCurrentStudyYear(year)}
+                                    onSelect={() => configActions.setCurrentStudyYear(year)}
                                     className="flex items-center justify-between"
                                     disabled={currentStudyYear?.yearId === year.yearId}
                                 >

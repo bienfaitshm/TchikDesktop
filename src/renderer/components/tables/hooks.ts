@@ -185,7 +185,6 @@ export function useDataTable<TData>({
   columns,
   keyExtractor,
 }: UseTableOptions<TData>) {
-  // const [data, setData] = React.useState(initialData);
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -198,24 +197,22 @@ export function useDataTable<TData>({
     pageSize: 10,
   });
 
-  // Use a stable ID for DndContext
+  const data = React.useMemo(() => initialData || [], [initialData]);
+
   const dndId = React.useId();
-  // Configure Dnd-kit sensors
   const dndSensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {}),
+    useSensor(MouseSensor),
+    useSensor(TouchSensor),
+    useSensor(KeyboardSensor),
   );
 
-  // Memoize row IDs for DND-kit SortableContext
-  const rowIds = React.useMemo<UniqueIdentifier[]>(
-    () => initialData?.map(keyExtractor) || [],
-    [initialData, keyExtractor],
+  const rowIds = React.useMemo(
+    () => data.map(keyExtractor),
+    [data, keyExtractor],
   );
 
-  // Initialize @tanstack/react-table
   const tableInstance = useReactTable({
-    data: initialData,
+    data,
     columns,
     state: {
       sorting,
@@ -224,13 +221,13 @@ export function useDataTable<TData>({
       columnFilters,
       pagination,
     },
-    getRowId: (row) => keyExtractor(row), // Ensure row IDs are derived consistently
-    enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPagination,
+
+    getRowId: (row) => keyExtractor(row),
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),

@@ -38,19 +38,23 @@ type GenericComboBoxProps<T> = {
     renderItem?: (item: ComboBoxOption<T>, isSelected: boolean) => React.ReactNode
 }
 
-export function GenericComboBox<T>({
-    options = [],
-    value,
-    onChangeValue,
-    placeholder = "Sélectionner...",
-    searchPlaceholder = "Rechercher...",
-    emptyMessage = "Aucun résultat.",
-    className,
-    contentClassName,
-    renderTrigger,
-    renderItem,
-    id
-}: GenericComboBoxProps<T>) {
+
+function GenericComboBoxInner<T>(
+    {
+        options = [],
+        value,
+        onChangeValue,
+        placeholder = "Sélectionner...",
+        searchPlaceholder = "Rechercher...",
+        emptyMessage = "Aucun résultat.",
+        className,
+        contentClassName,
+        renderTrigger,
+        renderItem,
+        id
+    }: GenericComboBoxProps<T>,
+    ref: React.ForwardedRef<HTMLButtonElement>
+) {
     const [open, setOpen] = React.useState(false)
 
     const selectedOption = React.useMemo(() =>
@@ -61,6 +65,7 @@ export function GenericComboBox<T>({
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button
+                    ref={ref}
                     id={id}
                     variant="outline"
                     role="combobox"
@@ -93,7 +98,7 @@ export function GenericComboBox<T>({
                         <CommandEmpty className="py-6 text-center text-xs text-muted-foreground italic">
                             {emptyMessage}
                         </CommandEmpty>
-                        <CommandGroup p-1>
+                        <CommandGroup className="p-1">
                             {options.map((item) => {
                                 const isSelected = value === item.value
                                 return (
@@ -116,7 +121,7 @@ export function GenericComboBox<T>({
                                                 item.label
                                             )}
                                         </div>
-                                        {isSelected && <Check className="h-3 w3 text-primary" />}
+                                        {isSelected && <Check className="h-3 w-3 text-primary" />}
                                     </CommandItem>
                                 )
                             })}
@@ -128,4 +133,8 @@ export function GenericComboBox<T>({
     )
 }
 
-GenericComboBox.displayName = "GenericComboBox"
+export const GenericComboBox = React.forwardRef(GenericComboBoxInner) as <T>(
+    props: GenericComboBoxProps<T> & { ref?: React.ForwardedRef<HTMLButtonElement> }
+) => React.ReactElement
+
+(GenericComboBox as any).displayName = "GenericComboBox"

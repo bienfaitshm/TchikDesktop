@@ -1,10 +1,8 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback } from "react";
 import { SchoolForm, type SchoolFormData as FormValueType } from "@/renderer/components/form/school-form";
 import { SchoolColumns } from "@/renderer/components/tables/columns.school";
 import { Button } from "@/renderer/components/ui/button";
-import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
-import type { DataTableMenu } from "@/renderer/components/button-menus";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import {
     DataTable,
@@ -16,7 +14,6 @@ import {
 } from "@/renderer/components/tables/data-table";
 import { TypographyH3 } from "@/renderer/components/ui/typography";
 import { useSchoolManagement } from "@/renderer/hooks/query.mangements";
-import { createMenuActionManager } from "@/renderer/utils/handle-action";
 import { useGetSchools } from "@/renderer/libs/queries/school";
 import {
     TableActionManager,
@@ -24,13 +21,6 @@ import {
 } from "@/renderer/components/dialog/dialog.table-action";
 import { TSchool } from "@/packages/@core/data-access/db/schemas/types";
 import { MUTATION_ACTION_ENUM } from "@/packages/@core/data-access/db/enum";
-
-
-
-const tableMenus: DataTableMenu[] = [
-    { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
-    { key: "delete", label: "Supprimer", separator: true, icon: <Trash2 className="size-3" /> },
-];
 
 
 
@@ -74,31 +64,6 @@ export const SchoolsPage: React.FC = ({ }) => {
     );
 
 
-
-
-
-    const { menus, handleMenusAction: onPressMenu } = useMemo(
-        () =>
-            createMenuActionManager(tableMenus, {
-                edit: tableAction.onUpdate,
-                delete: tableAction.onDelete,
-            }),
-        [tableAction.onUpdate, tableAction.onDelete]
-    );
-
-
-
-    const enhancedColumns = useMemo(
-        () =>
-            enhanceColumnsWithMenu<TSchool>({
-                menus,
-                onPressMenu,
-                columns: SchoolColumns,
-            }),
-        [menus, onPressMenu]
-    );
-
-
     const isActionLoading =
         updateMutation.isPending || createMutation.isPending || deleteMutation.isPending;
 
@@ -106,7 +71,7 @@ export const SchoolsPage: React.FC = ({ }) => {
         <div className="my-10 mx-auto h-full container max-w-screen-lg">
             <DataTable<TSchool>
                 data={schools}
-                columns={enhancedColumns}
+                columns={SchoolColumns}
                 keyExtractor={(item) => item.schoolId}
             >
                 <DataTableToolbar className="justify-between">

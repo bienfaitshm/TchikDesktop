@@ -15,9 +15,10 @@ const SelectFieldAdapter = React.forwardRef<any, any>(({
     value,
     options = [],
     placeholder,
-}) => {
+}, ref) => {
     return (
         <GenericComboBox
+            ref={ref}
             value={value}
             onChangeValue={onChange}
             options={options}

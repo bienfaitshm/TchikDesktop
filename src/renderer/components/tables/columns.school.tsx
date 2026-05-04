@@ -1,15 +1,15 @@
-import type { TSchool } from "@/commons/types/models"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
 import React from "react";
 import { Badge } from "@/renderer/components/ui/badge";
-import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
+import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { Checkbox } from "@/renderer/components/ui/checkbox";
 import { CheckCircle, MinusCircle } from "lucide-react";
+import { TSchool } from "@/packages/@core/data-access/db/schemas/types";
 
 
 const SchoolStatusBadge: React.FC<{ schoolId: string }> = ({ schoolId }) => {
-    const currentActiveSchoolId = useApplicationConfigurationStore(store => store.currentSchool?.schoolId);
+    const { schoolId: currentActiveSchoolId } = useCurrentConfig();
     const isActive = currentActiveSchoolId === schoolId;
 
     return (
@@ -26,6 +26,7 @@ const SchoolStatusBadge: React.FC<{ schoolId: string }> = ({ schoolId }) => {
         </Badge>
     );
 };
+
 export const SchoolColumns: ColumnDef<TSchool>[] = [
     {
         id: "select",

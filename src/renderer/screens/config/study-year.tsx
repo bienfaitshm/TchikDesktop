@@ -9,7 +9,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/renderer/components/ui/table";
-import { Link } from "react-router";
+import { Link, useNavigate, useNavigation } from "react-router";
 import { useGetStudyYears } from "@/renderer/libs/queries/school";
 import { Suspense as DataSuspense } from "@/renderer/libs/queries/suspense";
 import { Button } from "@/renderer/components/ui/button";
@@ -45,6 +45,7 @@ interface StudyYearDataDisplay {
  * @returns {JSX.Element} The table of study years or the creation form.
  */
 const StudyYearListDisplayTable: React.FC = () => {
+    const navigate = useNavigate()
     const { school } = useCurrentConfig()
     const configActions = useConfigActions();
 
@@ -107,7 +108,10 @@ const StudyYearListDisplayTable: React.FC = () => {
                         <TableRow
                             key={studyYear.yearId}
                             className="cursor-pointer hover:bg-muted/50 transition-colors"
-                            onClick={() => configActions.setCurrentStudyYear(studyYear)}
+                            onClick={() => {
+                                configActions.setCurrentStudyYear(studyYear)
+                                navigate("/", { replace: true })
+                            }}
                         >
                             <TableCell className="font-medium">{studyYear.yearId}</TableCell>
                             <TableCell>{studyYear.yearName}</TableCell>

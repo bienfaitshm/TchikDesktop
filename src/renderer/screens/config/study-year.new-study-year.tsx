@@ -1,7 +1,7 @@
 import { TypographyH4 } from "@/renderer/components/ui/typography";
 import { useNavigate } from "react-router";
 
-import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
+import { useCurrentConfig, useConfigActions } from "@/renderer/libs/stores/app-store";
 import { StudyYearForm } from "@/renderer/components/form/study-year-form";
 import { useCreateStudyYearForm } from "@/renderer/components/form/study-year-form.actions"
 
@@ -13,13 +13,11 @@ import { TStudyYearAttributes } from "@/packages/@core/data-access/schema-valida
 
 export const useStudyYearNavigationAndSelection = () => {
     const navigate = useNavigate();
-    const setCurrentStudyYear = useApplicationConfigurationStore(
-        (store) => store.setCurrentStudyYear
-    );
+    const configActions = useConfigActions()
 
     return React.useCallback(
         (studyYear: TStudyYearAttributes) => {
-            setCurrentStudyYear(studyYear);
+            configActions.setCurrentStudyYear(studyYear);
             navigate(`/`)
         },
         []
@@ -36,9 +34,7 @@ export const useStudyYearNavigationAndSelection = () => {
  */
 export const StudyYearCreationForm: React.FC = () => {
     const navigate = useNavigate();
-    const currentSchoolId = useApplicationConfigurationStore(
-        (store) => store.currentSchool?.schoolId
-    );
+    const { schoolId: currentSchoolId } = useCurrentConfig()
     const setCurrentStudyYearAndNavigate = useStudyYearNavigationAndSelection();
     const { formId, mutation, onSubmit } = useCreateStudyYearForm({
         onSuccess(data) {
@@ -95,7 +91,7 @@ export const StudyYearCreationForm: React.FC = () => {
  */
 export const NewStudyYearConfigurationPage: React.FC = () => {
     const navigate = useNavigate();
-    const currentSchool = useApplicationConfigurationStore(store => store.currentSchool);
+    const { school: currentSchool } = useCurrentConfig()
 
     return (
         <div>
