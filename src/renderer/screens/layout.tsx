@@ -1,16 +1,11 @@
 
 import { SidebarInset, SidebarProvider, SidebarTrigger, } from "@/renderer/components/ui/sidebar"
 import { ApplicationSidebar } from "@/renderer/components/app-sidebar"
-import { Outlet, Navigate } from "react-router"
-import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store"
+import { Outlet } from "react-router"
 import { Separator } from "@/renderer/components/ui/separator"
 import { Suspense } from "@/renderer/libs/queries/suspense"
 
-export default function Layout() {
-    const isConfigured = useApplicationConfigurationStore(store => !!store.currentSchool && !!store.currentStudyYear)
-    if (!isConfigured) {
-        return <Navigate to="configuration" replace />
-    }
+export default function MainLayout() {
     return (
         <SidebarProvider>
             <ApplicationSidebar />

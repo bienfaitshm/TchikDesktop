@@ -1,20 +1,17 @@
+import type { JSX } from "react";
 
 import { HashRouter as Router, Route, Routes } from "react-router"
-// 
 
 import Launcher from "@/renderer/screens/launcher";
-// 
 import { HomePage } from "@/renderer/screens/home";
 
-// Schools
 import { StudyYearsPage } from "@/renderer/screens/study-years";
 import { SchoolsPage } from "@/renderer/screens/schools";
-// // 
 import { OptionPage } from "@/renderer/screens/options";
 import StudentScreen from "@/renderer/screens/students";
 import { LocalRoomSreen } from "@/renderer/screens/locals";
 import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
-import Layout from "@/renderer/screens/layout";
+import MainLayout from "@/renderer/screens/layout";
 import {
   ConfigurationLayoutScreen,
   SchoolConfigurationNewSchoolScreen,
@@ -24,13 +21,13 @@ import {
 } from "@/renderer/screens/config";
 
 import { QuickEnrollmentPage } from "@/renderer/screens/enrollments";
-import type { JSX } from "react";
-// // // classroom
 import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms"
 
-// // // classroom/:classId
 import { StudentsOfClassrrom } from "@/renderer/screens/classrooms/students"
 import { StudentsLayout } from "@/renderer/screens/classrooms/students.layout"
+import { ConfigGuard } from "@/renderer/components/layouts/config-guard";
+
+import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner"
 
 
 
@@ -39,7 +36,14 @@ export default function RouterProvider(): JSX.Element {
   return (
     <Router>
       <Routes>
-        <Route element={<Layout />} errorElement={<Launcher />}>
+        <Route
+          element={
+            <ConfigGuard redirectTo="configuration" loader={<LoadingSpinner />}>
+              <MainLayout />
+            </ConfigGuard>
+          }
+          errorElement={<Launcher />}
+        >
           <Route index element={<HomePage />} />
           <Route path="inscriptions" element={<QuickEnrollmentPage />} />
           <Route path="mise-en-places" element={<MiseEnPlaceScreen />} />
