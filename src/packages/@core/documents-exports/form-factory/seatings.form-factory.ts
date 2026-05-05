@@ -1,7 +1,7 @@
 import type { FormFieldDef } from "@/packages/dynamic-form";
-
+type TFieldConfig = Partial<FormFieldDef>;
 export class SeatingFormFactory {
-  static buildSeatingField(options: any[]): FormFieldDef {
+  static buildSeatingField(config?: TFieldConfig): FormFieldDef {
     return {
       id: "seating",
       type: "select",
@@ -9,11 +9,11 @@ export class SeatingFormFactory {
       required: true,
       defaultValue: "eng",
       colSpan: 4,
-      options,
+      ...config,
     };
   }
 
-  static buildLocalRoomsField(options: any[]): FormFieldDef {
+  static buildLocalRoomsField(config?: TFieldConfig): FormFieldDef {
     return {
       id: "localRooms",
       type: "select",
@@ -21,12 +21,12 @@ export class SeatingFormFactory {
       label: "Locaux",
       placeholder: "Locaux",
       defaultValue: [],
-      options,
       colSpan: 4,
+      ...config,
     };
   }
 
-  static buildClassRoomsField(options: any[]): FormFieldDef {
+  static buildClassRoomsField(config?: TFieldConfig): FormFieldDef {
     return {
       id: "classRooms",
       type: "select",
@@ -34,8 +34,8 @@ export class SeatingFormFactory {
       label: "Salles de classes",
       placeholder: "Classes",
       defaultValue: [],
-      options,
       colSpan: 4,
+      ...config,
     };
   }
 }

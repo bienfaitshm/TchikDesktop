@@ -30,10 +30,14 @@ export async function createEnrollmentsgFieldForm({
     where: { schoolId, yearId },
   });
   return [
-    EnrollmentFormFactory.buildSectionField(SECTION_OPTIONS),
-    EnrollmentFormFactory.buildClassRoomsField(
-      EnrollmentsgMappers.toSelectOption(classrooms),
-      classId ? [classId] : [],
-    ),
+    EnrollmentFormFactory.buildSectionField({
+      options: SECTION_OPTIONS,
+      colSpan: 4,
+    }),
+    EnrollmentFormFactory.buildClassRoomsField({
+      options: EnrollmentsgMappers.toSelectOption(classrooms),
+      defaultValue: classId ? [classId] : [],
+      colSpan: 4,
+    }),
   ];
 }

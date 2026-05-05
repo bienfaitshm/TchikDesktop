@@ -1,35 +1,27 @@
 import type { FormFieldDef } from "@/packages/dynamic-form";
 
+type TFieldConfig = Partial<FormFieldDef>;
 export class EnrollmentFormFactory {
-  static buildSectionField(
-    options: any[],
-    defaultValue: string[] = [],
-  ): FormFieldDef {
+  static buildSectionField(config?: TFieldConfig): FormFieldDef {
     return {
       id: "section",
       type: "select",
       label: "Section",
       required: true,
       colSpan: 6,
-      options,
-      defaultValue,
+      ...config,
     };
   }
 
-  static buildClassRoomsField(
-    options: any[],
-    defaultValue: string[] = [],
-  ): FormFieldDef {
-    console.log("DEFAULT", defaultValue);
+  static buildClassRoomsField(config?: TFieldConfig): FormFieldDef {
     return {
       id: "classRooms",
       type: "select",
       multiple: true,
       label: "Salles de classes",
       placeholder: "Classes",
-      defaultValue,
-      options,
       colSpan: 6,
+      ...config,
     };
   }
 }
