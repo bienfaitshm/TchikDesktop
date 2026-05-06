@@ -28,7 +28,7 @@ import { Button } from "@/renderer/components/ui/button";
 
 
 import { useFormImperativeHandle, type ImperativeFormHandle } from "../utils";
-import { FilterCheckboxInput } from "../fields/filter-checkbox-input";
+import { FilterCheckboxInput } from "../fields/multi-select-input";
 import { cn } from "@/renderer/utils";
 
 

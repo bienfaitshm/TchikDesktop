@@ -79,7 +79,7 @@ export function useDocumentExportForm(params?: UseExportParams) {
     useMemo(() => {
       return (
         availableDocs?.map((doc) => ({
-          value: doc.key,
+          value: doc.id,
           label: doc.title,
           data: doc,
         })) ?? []
@@ -87,10 +87,11 @@ export function useDocumentExportForm(params?: UseExportParams) {
     }, [availableDocs]);
 
   const selectedDoc = useMemo(() => {
-    return availableDocs?.find((doc) => doc.key === selectedDocKey);
+    return availableDocs?.find((doc) => doc.id === selectedDocKey);
   }, [availableDocs, selectedDocKey]);
 
-  const dynamicFields: FormFieldDef[] = selectedDoc?.fields ?? [];
+  const dynamicFields: FormFieldDef[] = (selectedDoc?.fields ??
+    []) as FormFieldDef[];
 
   const handleDocumentChange = useCallback(setSelectedDocKey, []);
 

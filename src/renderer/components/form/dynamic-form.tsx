@@ -2,7 +2,7 @@ import React from "react";
 import { Input } from "@/renderer/components/ui/input";
 import { DynamicForm as DForm, FormFieldDef, InputComponents } from "@/packages/dynamic-form";
 import { FieldValues } from "react-hook-form";
-import { FilterCheckboxInput } from "@/renderer/components/form/fields/filter-checkbox-input";
+import { MultiSelect } from "@/renderer/components/form/fields/multi-select-input";
 import { BaseFormProps } from "./base-form"
 import { GenericComboBox } from "./fields/generic-combo-box";
 
@@ -31,7 +31,7 @@ const SelectFieldAdapter = React.forwardRef<any, any>(({
 const formComponents: InputComponents = {
     TextField: Input,
     SelectField: SelectFieldAdapter,
-    SelectArrayField: FilterCheckboxInput
+    SelectArrayField: MultiSelect
 };
 
 type DynamicFormProps<T extends FieldValues> = BaseFormProps<T> & {

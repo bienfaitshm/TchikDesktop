@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { FilterCheckboxInput } from "../fields/filter-checkbox-input";
+import { FilterCheckboxInput } from "../fields/multi-select-input";
 import { describe, it, expect, vi } from "vitest";
 
 describe("FilterCheckboxInput Logic", () => {
