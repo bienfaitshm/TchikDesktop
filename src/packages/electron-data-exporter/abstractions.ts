@@ -4,24 +4,25 @@
  * Implémente le pattern Strategy pour le métier et le pattern Bridge pour les formats.
  */
 
-import { FileFilter, SaveDialogOptions } from "electron";
-import { AnyZodObject, ZodError } from "zod";
+import type { FileFilter, SaveDialogOptions } from "electron";
+import type { AnyZodObject, ZodError } from "zod";
 import {
   DOCUMENT_EXTENSION,
   getFileDescription,
 } from "@/packages/file-extension";
-import { RawFileContent, ServiceResult } from "./types";
+import type { RawFileContent, ServiceResult, ContextParams } from "./types";
 
-export type TMeta = {
+export interface TMeta {
   title: string;
   description: string;
   extensions: FileFilter[];
-  fields?: object[];
-};
+  fields?: Record<string, unknown>[];
+}
+
 /**
  * Interface pour un moteur de rendu de format spécifique.
  */
-export interface IExportExtension<TData = any> {
+export interface IExportExtension<TData = unknown> {
   readonly extension: DOCUMENT_EXTENSION;
   getExtensionFilter(): FileFilter;
   process(data: TData): RawFileContent;
@@ -30,7 +31,7 @@ export interface IExportExtension<TData = any> {
 /**
  * Base pour l'implémentation de processeurs de formats (ex: PDF, CSV).
  */
-export abstract class AbstractExportExtension<TData = any>
+export abstract class AbstractExportExtension<TData = unknown>
   implements IExportExtension<TData>
 {
   abstract readonly extension: DOCUMENT_EXTENSION;
@@ -50,8 +51,10 @@ export abstract class AbstractExportExtension<TData = any>
  */
 export interface IExportStrategy {
   readonly id: string;
-  getFormFields<TParams extends {}>(params?: TParams): Promise<object[]>;
-  getMeta<TParams extends {}>(params?: TParams): Promise<TMeta>;
+  getFormFields<TParams extends ContextParams>(
+    params?: TParams,
+  ): Promise<Record<string, unknown>[]>;
+  getMeta<TParams extends ContextParams>(params?: TParams): Promise<TMeta>;
   validateContext(params: unknown): ServiceResult<void>;
   getSaveOptions(targetExtension?: DOCUMENT_EXTENSION): SaveDialogOptions;
   resolveData(dataContext: unknown): Promise<ServiceResult<unknown>>;
@@ -65,7 +68,7 @@ export interface IExportStrategy {
  * Orchestrateur abstrait pour les exports.
  * Gère la validation des paramètres, les métadonnées et délègue au format approprié.
  */
-export abstract class AbstractExportStrategy<TData = any>
+export abstract class AbstractExportStrategy<TData = unknown>
   implements IExportStrategy
 {
   public abstract readonly id: string;
@@ -73,22 +76,24 @@ export abstract class AbstractExportStrategy<TData = any>
   public abstract readonly description: string;
 
   protected abstract readonly validationSchema: AnyZodObject;
+  protected formFields: Record<string, unknown>[] = [];
 
-  protected formFields: object[] = [];
   /** Registre interne des moteurs de rendu supportés par cette stratégie. */
   private readonly extensionsRegistry = new Map<
     DOCUMENT_EXTENSION,
     IExportExtension<TData>
   >();
 
-  getSchemasCreator: ((fields: object[]) => AnyZodObject) | undefined;
+  protected getSchemasCreator?: (
+    fields: Record<string, unknown>[],
+  ) => AnyZodObject;
 
   constructor({
     extensions,
     getSchemasCreator,
   }: {
     extensions: IExportExtension<TData>[];
-    getSchemasCreator?(fields: object[]): AnyZodObject;
+    getSchemasCreator?: (fields: Record<string, unknown>[]) => AnyZodObject;
   }) {
     this.getSchemasCreator = getSchemasCreator;
     extensions.forEach((ext) =>
@@ -99,7 +104,9 @@ export abstract class AbstractExportStrategy<TData = any>
   /**
    * Métadonnées exposées pour la consommation côté UI.
    */
-  public async getMeta(params): Promise<TMeta> {
+  public async getMeta<TParams extends ContextParams>(
+    params?: TParams,
+  ): Promise<TMeta> {
     return {
       title: this.displayName,
       description: this.description,
@@ -117,51 +124,52 @@ export abstract class AbstractExportStrategy<TData = any>
     );
   }
 
-  public async resolveData(_): Promise<ServiceResult<unknown>> {
-    return {
-      success: false,
-      error: {
-        code: "DATA_FETCH_ERROR",
-        message:
-          "Impossible de charger les données. Service temporairement indisponible.",
-      },
-    };
-  }
-
   /**
-   * Prépare les options de la boîte de dialogue Electron.
-   * @param targetExtension - Extension suggérée par défaut.
+   * Doit être implémentée par les stratégies concrètes pour fetch les données spécifiques.
+   * On force l'implémentation via `abstract` au lieu de retourner une erreur par défaut.
    */
+  public abstract resolveData(
+    dataContext: unknown,
+  ): Promise<ServiceResult<TData>>;
+
   public getSaveOptions(
     targetExtension?: DOCUMENT_EXTENSION,
   ): SaveDialogOptions {
+    const dateSuffix = this.generateDateSuffix();
+    const fileName = targetExtension
+      ? `${this.displayName}_${dateSuffix}.${targetExtension}`
+      : `${this.displayName}_${dateSuffix}`;
+
     return {
       title: `Exporter - ${this.displayName}`,
-      defaultPath: `${this.id}_${this.generateDateSuffix()}${
-        targetExtension ? `.${targetExtension}` : ""
-      }`,
-      filters: this.extensionFilters,
+      defaultPath: fileName,
+      filters: this.resolveFilters(targetExtension),
     };
   }
 
-  /**
-   * getFormFields
-   */
-  public async getFormFields(_) {
+  private resolveFilters(targetExtension?: DOCUMENT_EXTENSION): FileFilter[] {
+    if (!targetExtension) return this.extensionFilters;
+
+    const relevantFilters = this.extensionFilters.filter((filter) =>
+      filter.extensions.includes(targetExtension),
+    );
+
+    return relevantFilters.length > 0 ? relevantFilters : this.extensionFilters;
+  }
+
+  public async getFormFields<TParams extends ContextParams>(
+    _params?: TParams,
+  ): Promise<Record<string, unknown>[]> {
     return this.formFields;
   }
 
-  public getSchemas() {
-    const extraSchemas = this.getSchemasCreator?.(this.formFields ?? {});
-
+  protected getSchemas(): AnyZodObject {
+    const extraSchemas = this.getSchemasCreator?.(this.formFields ?? []);
     return extraSchemas
       ? this.validationSchema.merge(extraSchemas)
       : this.validationSchema;
   }
 
-  /**
-   * Valide les paramètres d'entrée contre le schéma Zod.
-   */
   public validateContext(params: unknown): ServiceResult<void> {
     const result = this.getSchemas().safeParse(params);
     if (!result.success) {
@@ -177,9 +185,6 @@ export abstract class AbstractExportStrategy<TData = any>
     return { success: true, data: undefined };
   }
 
-  /**
-   * Délègue la génération de l'artefact au moteur d'extension correspondant.
-   */
   public async buildArtifact(
     targetExtension: DOCUMENT_EXTENSION,
     data: unknown,
@@ -200,12 +205,14 @@ export abstract class AbstractExportStrategy<TData = any>
       const content = engine.process(data as TData);
       return { success: true, data: content };
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       return {
         success: false,
         error: {
           code: "GENERATION_ERROR",
           message: "Une erreur est survenue lors du traitement du document.",
-          details: error,
+          details: errorMessage,
         },
       };
     }
@@ -218,6 +225,6 @@ export abstract class AbstractExportStrategy<TData = any>
   }
 
   private generateDateSuffix(): string {
-    return new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    return new Date().toISOString().split("T")[0];
   }
 }
