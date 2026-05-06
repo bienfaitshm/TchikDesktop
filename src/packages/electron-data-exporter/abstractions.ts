@@ -12,11 +12,11 @@ import {
 } from "@/packages/file-extension";
 import type { RawFileContent, ServiceResult, ContextParams } from "./types";
 
-export interface TMeta {
+export interface TMeta<TFormField = unknown> {
   title: string;
   description: string;
   extensions: FileFilter[];
-  fields?: Record<string, unknown>[];
+  fields?: TFormField[];
 }
 
 /**
@@ -49,12 +49,14 @@ export abstract class AbstractExportExtension<TData = unknown>
 /**
  * Contrat définissant une stratégie d'exportation de document.
  */
-export interface IExportStrategy {
+export interface IExportStrategy<TFormField> {
   readonly id: string;
   getFormFields<TParams extends ContextParams>(
     params?: TParams,
-  ): Promise<Record<string, unknown>[]>;
-  getMeta<TParams extends ContextParams>(params?: TParams): Promise<TMeta>;
+  ): Promise<TFormField[]>;
+  getMeta<TParams extends ContextParams>(
+    params?: TParams,
+  ): Promise<TMeta<TFormField>>;
   validateContext(params: unknown): ServiceResult<void>;
   getSaveOptions(targetExtension?: DOCUMENT_EXTENSION): SaveDialogOptions;
   resolveData(dataContext: unknown): Promise<ServiceResult<unknown>>;
@@ -68,15 +70,17 @@ export interface IExportStrategy {
  * Orchestrateur abstrait pour les exports.
  * Gère la validation des paramètres, les métadonnées et délègue au format approprié.
  */
-export abstract class AbstractExportStrategy<TData = unknown>
-  implements IExportStrategy
+export abstract class AbstractExportStrategy<
+  TFormField = unknown,
+  TData = unknown,
+> implements IExportStrategy<TFormField>
 {
   public abstract readonly id: string;
   public abstract readonly displayName: string;
   public abstract readonly description: string;
 
   protected abstract readonly validationSchema: AnyZodObject;
-  protected formFields: Record<string, unknown>[] = [];
+  protected formFields: TFormField[] = [];
 
   /** Registre interne des moteurs de rendu supportés par cette stratégie. */
   private readonly extensionsRegistry = new Map<
@@ -84,16 +88,14 @@ export abstract class AbstractExportStrategy<TData = unknown>
     IExportExtension<TData>
   >();
 
-  protected getSchemasCreator?: (
-    fields: Record<string, unknown>[],
-  ) => AnyZodObject;
+  protected getSchemasCreator?: (fields: TFormField[]) => AnyZodObject;
 
   constructor({
     extensions,
     getSchemasCreator,
   }: {
     extensions: IExportExtension<TData>[];
-    getSchemasCreator?: (fields: Record<string, unknown>[]) => AnyZodObject;
+    getSchemasCreator?: (fields: TFormField[]) => AnyZodObject;
   }) {
     this.getSchemasCreator = getSchemasCreator;
     extensions.forEach((ext) =>
@@ -106,7 +108,7 @@ export abstract class AbstractExportStrategy<TData = unknown>
    */
   public async getMeta<TParams extends ContextParams>(
     params?: TParams,
-  ): Promise<TMeta> {
+  ): Promise<TMeta<TFormField>> {
     return {
       title: this.displayName,
       description: this.description,
@@ -159,7 +161,7 @@ export abstract class AbstractExportStrategy<TData = unknown>
 
   public async getFormFields<TParams extends ContextParams>(
     _params?: TParams,
-  ): Promise<Record<string, unknown>[]> {
+  ): Promise<TFormField[]> {
     return this.formFields;
   }
 

@@ -32,7 +32,7 @@ class DummyUserStrategy extends AbstractExportStrategy<{ name: string }> {
     role: z.string().min(1),
   });
 
-  public async resolveData(context: unknown) {
+  public async resolveData(_: unknown) {
     return { success: true, data: { name: "Alice" } } as const;
   }
 }

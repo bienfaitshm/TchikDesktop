@@ -3,7 +3,11 @@
  */
 
 import z from "zod";
-import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
+import {
+  AbstractExportStrategy,
+  ServiceResult,
+} from "@/packages/electron-data-exporter";
+import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
 import {
   ClassroomIds,
   ShoolRouteIds,
@@ -12,14 +16,20 @@ import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
-import { CsvExportExtension, JsonExportExtension } from "./enrollments.engins";
+import { CsvExportExtension, JsonExportExtension } from "./enrollments.engines";
 
 import {
   createSeatingFieldForm,
   type TCreateSeatingFormParams,
 } from "./seatings.form-fields";
+import { prependFileTypeField } from "./base.form-fields";
 
-export class SeatingExportStrategy extends AbstractExportStrategy {
+type TSeatingExportData = z.infer<typeof SchoolYearSchema>;
+
+export class SeatingExportStrategy extends AbstractExportStrategy<
+  FormFieldDef,
+  TSeatingExportData
+> {
   public readonly id = "SEATING_EXPORT" as const;
   public readonly displayName = "Liste de la mise en place";
   public readonly description =
@@ -39,14 +49,27 @@ export class SeatingExportStrategy extends AbstractExportStrategy {
     });
   }
 
-  public override async getFormFields(
-    params: TCreateSeatingFormParams,
-  ): Promise<FormFieldDef[]> {
+  public override async getFormFields(params): Promise<FormFieldDef[]> {
     try {
-      return await createSeatingFieldForm(params);
+      const fields = await createSeatingFieldForm(params);
+      return prependFileTypeField(fields, this.extensionFilters);
     } catch (error) {
-      console.error("[SeatingExportStrategy] Error loading fields:", error);
-      return [];
+      throw new Error(
+        `[${this.id}] Impossible de charger les options d'export.`,
+      );
     }
+  }
+
+  /**
+   * Résolution des données. Ici, on transmet simplement les filtres validés.
+   * Le processeur (Extension) se chargera de la transformation.
+   */
+  public override async resolveData(
+    contextParams: TCreateSeatingFormParams,
+  ): Promise<ServiceResult<any>> {
+    return {
+      success: true,
+      data: contextParams,
+    };
   }
 }

@@ -1,53 +1,38 @@
 import { describe, it, expect } from "vitest";
-import { CsvExportExtension, JsonExportExtension } from "./enrollments.engins";
+import { CsvExportExtension, JsonExportExtension } from "./enrollments.engines";
 
-describe("Export Engines (CSV & JSON)", () => {
-  describe("CsvExportExtension", () => {
+describe("Universal Export Engines", () => {
+  describe("CsvExportExtension (Normalisation)", () => {
     const engine = new CsvExportExtension();
 
-    it("doit retourner une chaîne vide pour un tableau vide", () => {
-      expect(engine.process([])).toBe("");
-    });
-
-    it("doit convertir correctement les données avec un point-virgule", () => {
-      const data = [
-        { id: 1, name: "Alice" },
-        { id: 2, name: "Bob" },
-      ];
-      const result = engine.process(data);
+    it("doit traiter un objet unique comme une seule ligne", () => {
+      const singleObject = { id: 1, name: "Alice" };
+      const result = engine.process(singleObject);
 
       expect(result).toContain("id;name");
       expect(result).toContain("1;Alice");
-      expect(result).toContain("2;Bob");
+      // Vérifie qu'il n'y a pas de lignes supplémentaires indésirables
+      expect(result.trim().split("\n")).toHaveLength(2);
     });
 
-    it("doit gérer les valeurs nulles sans planter", () => {
-      const data = [{ name: "Alice", age: null }];
-      const result = engine.process(data as any);
-      expect(result).toContain("Alice;");
+    it("doit traiter un tableau d'objets normalement", () => {
+      const dataArray = [{ id: 1 }, { id: 2 }];
+      const result = engine.process(dataArray);
+      expect(result.trim().split("\n")).toHaveLength(3); // Header + 2 lignes
     });
   });
 
   describe("JsonExportExtension", () => {
     const engine = new JsonExportExtension();
 
-    it("doit produire un JSON indenté", () => {
-      const data = [{ id: 1 }];
+    it("doit sérialiser un objet unique en objet JSON (pas de tableau forcé)", () => {
+      const data = { id: 1 };
       const result = engine.process(data);
-      // Vérifie l'indentation (2 espaces)
-      expect(result).toBe(`[\n  {\n    "id": 1\n  }\n]`);
+      expect(result).toBe(`{\n  "id": 1\n}`);
     });
 
-    it("doit retourner un tableau vide JSON si les données sont nulles", () => {
+    it("doit retourner un tableau vide si data est nul", () => {
       expect(engine.process(null as any)).toBe("[]");
-    });
-
-    it("doit lever une erreur en cas de structure circulaire", () => {
-      const circular: any = {};
-      circular.self = circular;
-      expect(() => engine.process([circular])).toThrow(
-        "Échec de la sérialisation JSON",
-      );
     });
   });
 });

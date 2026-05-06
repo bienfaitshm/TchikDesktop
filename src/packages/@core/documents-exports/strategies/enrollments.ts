@@ -1,32 +1,33 @@
 import { z } from "zod";
 import type { ServiceResult } from "@/packages/electron-data-exporter";
 import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
-import { EnrolementFilterSchema } from "@/packages/@core/data-access/schema-validations";
+import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
 import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
-import { CsvExportExtension, JsonExportExtension } from "./enrollments.engins";
+import { CsvExportExtension, JsonExportExtension } from "./enrollments.engines";
 import {
   type TCreateEnrollmentsgFormParams,
   createEnrollmentsgFieldForm,
 } from "./enrollments.form-fields";
 import { prependFileTypeField } from "./base.form-fields";
 
-type TEnrollmentFilters = z.infer<typeof EnrolementFilterSchema>;
+type TEnrollementExportData = z.infer<typeof SchoolYearSchema>;
 
 /**
  * Stratégie concrète pour l'export des inscriptions.
- * @extends AbstractExportStrategy<{ data: TEnrollmentFilters }>
  */
-export class EnrollmentExportStrategy extends AbstractExportStrategy<TEnrollmentFilters> {
+export class EnrollmentExportStrategy extends AbstractExportStrategy<
+  FormFieldDef,
+  TEnrollementExportData
+> {
   public readonly id = "ENROLLMENT_EXPORT";
   public readonly displayName = "Liste des Inscriptions";
   public readonly description =
     "Export complet des données d'inscription (élèves, classes, dates).";
 
-  // On utilise le schéma de domaine comme base de validation
-  protected readonly validationSchema = EnrolementFilterSchema;
+  protected readonly validationSchema = SchoolYearSchema;
 
   constructor() {
     super({
@@ -38,9 +39,7 @@ export class EnrollmentExportStrategy extends AbstractExportStrategy<TEnrollment
   /**
    * Génère les champs du formulaire dynamiquement.
    */
-  public override async getFormFields(
-    params: TCreateEnrollmentsgFormParams,
-  ): Promise<FormFieldDef[]> {
+  public override async getFormFields(params) {
     try {
       const fields = await createEnrollmentsgFieldForm(params);
       return prependFileTypeField(fields, this.extensionFilters);
@@ -56,9 +55,8 @@ export class EnrollmentExportStrategy extends AbstractExportStrategy<TEnrollment
    * Le processeur (Extension) se chargera de la transformation.
    */
   public override async resolveData(
-    contextParams: TEnrollmentFilters,
-  ): Promise<ServiceResult<TEnrollmentFilters>> {
-    // Comme validationSchema est défini, contextParams est déjà typé et validé ici
+    contextParams: TCreateEnrollmentsgFormParams,
+  ): Promise<ServiceResult<any>> {
     return {
       success: true,
       data: contextParams,
