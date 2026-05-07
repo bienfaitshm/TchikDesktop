@@ -33,7 +33,7 @@ export const SidebarMenuItemSchoolYear = () => {
     const { schoolId: currentSchoolId, year: currentStudyYear } = useCurrentConfig()
     const configActions = useConfigActions()
 
-    if (currentSchoolId) return null
+    if (!currentSchoolId) return null
 
 
     const { data: studyYears = [], isLoading } = useGetStudyYears({ where: { schoolId: currentSchoolId } });

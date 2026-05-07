@@ -33,6 +33,7 @@ import { UseClassroomFormOptions } from "@/renderer/components/form/classroom-fo
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options"
 import { useGetOptionAsOptions } from "@/renderer/hooks/data-as-options";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
+import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
 
 
 
@@ -86,10 +87,10 @@ export const ClassroomPage = () => {
     const { schoolId, yearId } = useSchoolContext();
     const { options } = useGetOptionAsOptions(schoolId)
     const { data: classrooms = [], queryKey } = useGetClassrooms({ where: { schoolId, yearId } });
-    console.log(classrooms)
     return (
-        <main className="my-10 mx-auto h-full container max-w-screen-2xl space-y-6 py-10">
-            <section className="flex items-center justify-between">
+        <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
+        <PageShell maxWidth="2xl" header={
+             <section className="container flex items-center justify-between w-full max-w-screen-2xl my-4 ">
                 <header className="space-y-1">
                     <h1 className="text-2xl font-bold tracking-tight">Gestion des classes</h1>
                     <p className="text-sm text-muted-foreground">
@@ -108,6 +109,7 @@ export const ClassroomPage = () => {
                     </Button>
                 </ClassroomDialogCreateForm>
             </section>
+        }>
             <DataTable<TClassroom>
                 data={classrooms}
                 columns={enhanceColumnsExpandable(ClassroomColumns)}
@@ -149,6 +151,7 @@ export const ClassroomPage = () => {
                     <DataTablePagination />
                 </Suspense>
             </DataTable>
-        </main>
-    );
+        </PageShell>
+        </div>
+    )
 };

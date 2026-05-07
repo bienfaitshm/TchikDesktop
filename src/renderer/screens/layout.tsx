@@ -6,11 +6,13 @@ import { Separator } from "@/renderer/components/ui/separator"
 import { Suspense } from "@/renderer/libs/queries/suspense"
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store"
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner"
+// import { TaskBar } from "../components/task-bar";
 
 export default function MainLayout() {
     const { schoolId, yearId } = useCurrentConfig();
     return (
-        <SidebarProvider>
+       <div>
+         <SidebarProvider>
             <ApplicationSidebar />
             <SidebarInset>
                 <header className="bg-background sticky top-0 flex shrink-0 items-center gap-2 border-b p-4 z-30">
@@ -27,5 +29,7 @@ export default function MainLayout() {
                 </main>
             </SidebarInset>
         </SidebarProvider>
+            {/* <TaskBar /> */}
+       </div>
     )
 }

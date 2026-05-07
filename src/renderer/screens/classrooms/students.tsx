@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useParams } from "react-router";
-import { UserPlus, Zap, Edit2, UserPen } from "lucide-react";
+import { Edit2, UserPen } from "lucide-react";
 
 import { GENDER_OPTIONS, STUDENT_STATUS_OPTIONS } from "@/packages/@core/data-access/db/options";
 import {
@@ -14,16 +14,10 @@ import {
     DataTablePagination,
     DataTableToolbar,
 } from "@/renderer/components/tables";
-import { Button } from "@/renderer/components/ui/button";
 import { StudentColumns, TEnrolement } from "@/renderer/components/tables/columns.students";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
-import { useGetClassroomById } from "@/renderer/libs/queries/classroom";
-import { ButtonSheetStudentStat } from "./students.stat";
-import { Skeleton } from "@/renderer/components/ui/skeleton";
 import { ActionContainer, ActionTileDelete, ActionTileDetail, ActionTile } from "@/renderer/components/tables/data-table.action-tiles";
 import {
-    CreateEnrollmentDialog,
-    QuickCreateEnrollmentDialog,
     DeleteEnrollmentDialog,
     UpdateEnrollmentDialog
 } from "@/renderer/dialog-actions/enrolement.dialog-actions";
@@ -31,10 +25,8 @@ import { UpdateStudentDialog } from "@/renderer/dialog-actions/student.dialog-ac
 
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import { enhanceColumnsExpandable } from "@/renderer/components/tables/columns";
-import { Separator } from "@/renderer/components/ui/separator";
-import { Badge } from "@/renderer/components/ui/badge";
 import type { BaseFormConfig } from "@/renderer/dialog-actions/base.dialog-actions";
-import { ButtonDialogDocumentExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
+
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 
 const enrolementStudentColumns = enhanceColumnsExpandable(StudentColumns);
@@ -74,51 +66,6 @@ const EnrollementActions = ({ enrolement, schoolId, yearId, options }: {
     );
 };
 
-/**
- * HEADER : Design "Modern Dashboard"
- */
-const ClassroomHeader = ({ classId, schoolId, yearId, studentsCount = 0 }: { classId: string, schoolId: string, yearId: string, studentsCount?: number }) => {
-    const { data: classroom, isLoading } = useGetClassroomById(classId);
-    const defaultValues = useMemo(() => ({ schoolId, yearId, classroomId: classId }), [schoolId, yearId, classId]);
-
-    if (isLoading) return <HeaderSkeleton />;
-
-    return (
-        <div className="space-y-1">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-xl font-bold tracking-tight">{classroom?.identifier}</h1>
-                        <Badge variant="secondary" className="font-mono">
-                            {studentsCount} Élèves
-                        </Badge>
-                    </div>
-                    <p className="text-muted-foreground text-xs mt-1 uppercase tracking-wider font-medium">
-                        Liste des élèves inscrits dans cette classe.
-                    </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    <QuickCreateEnrollmentDialog schoolId={schoolId} yearId={yearId} defaultValues={defaultValues}>
-                        <Button variant="ghost" size="sm" className="gap-2 hover:bg-background shadow-none">
-                            <Zap className="h-4 w-4 text-amber-500 fill-amber-500" />
-                            <span>Ajout rapide d’élève</span>
-                        </Button>
-                    </QuickCreateEnrollmentDialog>
-
-                    <Separator orientation="vertical" className="h-6 mx-1" />
-
-                    <CreateEnrollmentDialog schoolId={schoolId} yearId={yearId} defaultValues={defaultValues}>
-                        <Button size="sm" className="gap-2 shadow-sm">
-                            <UserPlus className="h-4 w-4" />
-                            <span>Nouvelle Inscription</span>
-                        </Button>
-                    </CreateEnrollmentDialog>
-                </div>
-            </div>
-        </div>
-    );
-};
-
 
 export const StudentPage = () => {
     const { schoolId, yearId } = useSchoolContext();
@@ -126,72 +73,40 @@ export const StudentPage = () => {
     const { data: students = [], queryKey } = useGetEnrollments({
         where: { schoolId, yearId, classroomId: classroomId! }
     });
-
+    // min-h-screen
     return (
-        <div className="min-h-screen">
-            <div className="container space-y-4 mx-auto px-6 max-w-[1600px]">
-                {/* Header Section */}
-                <ClassroomHeader
-                    studentsCount={students.length}
-                    classId={classroomId as string}
-                    yearId={yearId}
-                    schoolId={schoolId}
-                />
 
-                {/* Statistics & Export Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-2 flex items-center gap-4">
-                        <ButtonSheetStudentStat students={students} />
-                        <ButtonDialogDocumentExport schoolId={schoolId} yearId={yearId} classId={classroomId} />
-                    </div>
-                </div>
-                <Separator />
-                {/* Table Section */}
-                <div className="overflow-hidden">
-                    <DataTable
-                        data={students}
-                        columns={enrolementStudentColumns}
-                        keyExtractor={(s: any) => s.enrolementId}
-                    >
-                        <DataTableToolbar searchColumn="student_fullName" className="flex-wrap gap-4">
-                            <TableFacetedFilterItem columnId="student_gender" title="Sexe" options={GENDER_OPTIONS} />
-                            <TableFacetedFilterItem columnId="status" title="Statut" options={STUDENT_STATUS_OPTIONS} />
-                        </DataTableToolbar>
-                        <DataTableContent>
-                            <DataContentHead className="bg-muted/10" />
-                            <DataContentBody>
-                                {({ row }) => (
-                                    <ExpandableRow
-                                        row={row as any}
-                                        className="hover:bg-muted/5 transition-colors cursor-pointer"
-                                        renderDetail={
-                                            <EnrollementActions
-                                                enrolement={row.original as any}
-                                                schoolId={schoolId}
-                                                yearId={yearId}
-                                                options={{ mutationKeys: queryKey }}
-                                            />
-                                        }
+        <div className="overflow-hidden">
+            <DataTable
+                data={students}
+                columns={enrolementStudentColumns}
+                keyExtractor={(s: any) => s.enrolementId}
+            >
+                <DataTableToolbar searchColumn="student_fullName" className="flex-wrap gap-4">
+                    <TableFacetedFilterItem columnId="student_gender" title="Sexe" options={GENDER_OPTIONS} />
+                    <TableFacetedFilterItem columnId="status" title="Statut" options={STUDENT_STATUS_OPTIONS} />
+                </DataTableToolbar>
+                <DataTableContent>
+                    <DataContentHead className="bg-muted/10" />
+                    <DataContentBody>
+                        {({ row }) => (
+                            <ExpandableRow
+                                row={row as any}
+                                className="hover:bg-muted/5 transition-colors cursor-pointer"
+                                renderDetail={
+                                    <EnrollementActions
+                                        enrolement={row.original as any}
+                                        schoolId={schoolId}
+                                        yearId={yearId}
+                                        options={{ mutationKeys: queryKey }}
                                     />
-                                )}
-                            </DataContentBody>
-                        </DataTableContent>
-                        <DataTablePagination />
-                    </DataTable>
-                </div>
-            </div>
+                                }
+                            />
+                        )}
+                    </DataContentBody>
+                </DataTableContent>
+                <DataTablePagination />
+            </DataTable>
         </div>
     );
 };
-
-const HeaderSkeleton = () => (
-    <div className="space-y-4 py-4">
-        <div className="flex items-center gap-4">
-            <Skeleton className="h-12 w-12 rounded-xl" />
-            <div className="space-y-2">
-                <Skeleton className="h-8 w-64" />
-                <Skeleton className="h-4 w-40" />
-            </div>
-        </div>
-    </div>
-);

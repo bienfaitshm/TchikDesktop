@@ -37,6 +37,7 @@ import {
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options"
 import type { Row } from "@tanstack/react-table"
 import { useSchoolContext } from "../hooks/app-config-router"
+import { PageShell } from "../components/layouts/page-shell.layout";
 
 /**
  * Actions de ligne mémoïsées pour la performance.
@@ -69,15 +70,15 @@ const OptionRowActions = React.memo(({ option }: { option: TOption }) => {
 })
 OptionRowActions.displayName = "OptionRowActions"
 
-const OptionManagementPage = ({ }) => {
+export const OptionPage = () => {
     const { schoolId } = useSchoolContext();
     const { data: rawOptions } = useGetOptions({ where: { schoolId } })
     const options = React.useMemo(() => rawOptions ?? [], [rawOptions])
 
     return (
-        <main className="container max-w-screen-2xl space-y-6 py-10">
-            {/* Header de la page */}
-            <section className="flex items-center justify-between">
+        <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
+        <PageShell maxWidth="2xl" header={
+             <section className="container flex items-center justify-between w-full max-w-screen-2xl my-4 ">
                 <header className="space-y-1">
                     <h1 className="text-2xl font-bold tracking-tight">Gestion des filières</h1>
                     <p className="text-sm text-muted-foreground">
@@ -92,7 +93,7 @@ const OptionManagementPage = ({ }) => {
                     </Button>
                 </CreateOptionDialog>
             </section>
-
+        }>
             {/* Table de données avec architecture Compound Components */}
             <DataTable<TOption>
                 data={options}
@@ -130,18 +131,9 @@ const OptionManagementPage = ({ }) => {
                     <DataTablePagination />
                 </Suspense>
             </DataTable>
-        </main>
+        </PageShell>
+        </div>
     )
-}
 
-/**
- * OptionEntry - Gère la barrière de protection Suspense au niveau de la route.
- */
-export const OptionPage = () => {
-    return (
-        <Suspense fallback={<div className="p-10 text-center"><LoadingSpinner /></div>}>
-            <OptionManagementPage />
-        </Suspense>
-    )
+    
 }
-

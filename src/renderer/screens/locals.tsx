@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Plus, School } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import type { TLocalRoomAttributes as TLocalRoom } from "@/packages/@core/data-access/schema-validations";
 import { useGetLocalRooms } from "@/renderer/libs/queries/seating";
@@ -30,6 +30,7 @@ import {
     UpdateLocalRoomDialog
 } from "@/renderer/dialog-actions/localroom.dialog-action";
 import { useSchoolContext } from "../hooks/app-config-router";
+import { PageShell } from "../components/layouts/page-shell.layout";
 
 
 /**
@@ -69,13 +70,15 @@ export const LocalRoomPage = () => {
     const { schoolId } = useSchoolContext();
     const { data: localRooms = [] } = useGetLocalRooms({ where: { schoolId } });
 
+
     return (
-        <main className="my-10 mx-auto h-full container max-w-screen-2xl space-y-4 py-10">
-            {/* Header de la page */}
-            <section className="flex items-center justify-between">
+        <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
+        <PageShell maxWidth="2xl" header={
+             <section className="container flex items-center justify-between w-full max-w-screen-2xl my-4 ">
+               
+
                 <header className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
-                        <School className="size-5 text-primary" />
                         <h1 className="text-xl font-semibold tracking-tight">Gestion des locaux</h1>
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -90,6 +93,7 @@ export const LocalRoomPage = () => {
                     </Button>
                 </CreateLocalRoomDialog>
             </section>
+        }>
             <DataTable<TLocalRoom>
                 data={localRooms}
                 columns={LocalRoomColumns}
@@ -119,6 +123,7 @@ export const LocalRoomPage = () => {
                     <DataTablePagination />
                 </Suspense>
             </DataTable>
-        </main>
-    );
+        </PageShell>
+        </div>
+    )
 };
