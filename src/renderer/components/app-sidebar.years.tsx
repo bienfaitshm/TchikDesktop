@@ -1,5 +1,14 @@
 "use client";
 
+import { useMemo } from "react";
+import { Link } from "react-router";
+import { ChevronsUpDown, Check, PlusCircle, CalendarDays } from "lucide-react";
+
+import { cn } from "@/renderer/utils";
+import { formatDate } from "@/packages/times";
+import { useConfigActions, useCurrentConfig } from "@/renderer/libs/stores/app-store";
+import { useGetStudyYears } from "@/renderer/libs/queries/school";
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -9,146 +18,105 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/renderer/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/renderer/components/ui/avatar";
 import {
     SidebarMenuButton,
     SidebarMenuItem,
     useSidebar,
 } from "@/renderer/components/ui/sidebar";
-import { ChevronsUpDown, Check, PlusCircle, CalendarDays } from "lucide-react";
-import { cn } from "@/renderer/utils";
 
-import { useConfigActions, useCurrentConfig } from "@/renderer/libs/stores/app-store";
-import { useGetStudyYears } from "@/renderer/libs/queries/school";
-import { Link } from "react-router";
-import { formatDate } from "@/packages/times";
-
-/**
- * Composant de menu latéral pour la sélection de l'année scolaire.
- * Permet à l'utilisateur de voir et de changer l'année scolaire active pour l'école courante.
- * Il affiche également un message si aucune école n'est sélectionnée.
- */
 export const SidebarMenuItemSchoolYear = () => {
     const { isMobile } = useSidebar();
-    const { schoolId: currentSchoolId, year: currentStudyYear } = useCurrentConfig()
-    const configActions = useConfigActions()
+    const configActions = useConfigActions();
+    const { schoolId, year: currentYear } = useCurrentConfig();
 
-    if (!currentSchoolId) return null
+    const { data: studyYears = [], isLoading } = useGetStudyYears({ 
+        where: { schoolId: schoolId! },
+    });
 
+    const isDisabled = !schoolId || isLoading;
+    
+    const labelStatus = useMemo(() => {
+        if (isLoading) return "Chargement...";
+        if (!schoolId) return "Sélectionnez une école";
+        return currentYear?.yearName || "Aucune année active";
+    }, [isLoading, schoolId, currentYear]);
 
-    const { data: studyYears = [], isLoading } = useGetStudyYears({ where: { schoolId: currentSchoolId } });
-
-    const isDisabled = !currentSchoolId || isLoading;
+    if (!schoolId) return null;
 
     return (
         <SidebarMenuItem>
             <DropdownMenu>
-                {/* Le bouton qui déclenche l'ouverture du menu déroulant */}
                 <DropdownMenuTrigger asChild>
                     <SidebarMenuButton
                         size="lg"
-                        className={cn(
-                            "data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group",
-                            isDisabled && "opacity-60 cursor-not-allowed"
-                        )}
                         disabled={isDisabled}
+                        className="data-[state=open]:bg-sidebar-accent group"
                     >
-                        {/* Icône de l'application ou de l'année scolaire */}
                         <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                            <CalendarDays className="size-5" /> {/* Icône représentant l'année scolaire */}
+                            <CalendarDays className={cn("size-5", isLoading && "animate-pulse")} />
                         </div>
-                        {/* Informations sur l'année scolaire actuelle */}
+
                         <div className="grid flex-1 text-left text-sm leading-tight">
-                            <span className="truncate font-medium">Année scolaire</span>{" "}
-                            {/* Libellé fixe */}
-                            {currentStudyYear ? (
-                                <span className="truncate text-xs text-muted-foreground">
-                                    {currentStudyYear.yearName}
-                                </span>
-                            ) : (currentSchoolId && !isLoading) ? (
-                                <span className="truncate text-xs text-muted-foreground italic">
-                                    Aucune année sélectionnée
-                                </span>
-                            ) : (
-                                <span className="truncate text-xs text-muted-foreground italic">
-                                    Sélectionnez une école...
-                                </span>
-                            )}
+                            <span className="truncate font-semibold">Année scolaire</span>
+                            <span className="truncate text-xs text-muted-foreground">
+                                {labelStatus}
+                            </span>
                         </div>
+                        
                         <ChevronsUpDown className="ml-auto size-4 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
                     </SidebarMenuButton>
                 </DropdownMenuTrigger>
 
-                {/* Contenu du menu déroulant */}
                 <DropdownMenuContent
-                    className="w-[--radix-dropdown-menu-trigger-width] min-w-[240px] rounded-lg shadow-lg"
+                    className="w-[--radix-dropdown-menu-trigger-width] min-w-[240px]"
                     side={isMobile ? "bottom" : "right"}
                     align="start"
-                    sideOffset={8}
+                    sideOffset={4}
                 >
-                    {/* Label affichant les détails de l'année scolaire actuellement sélectionnée */}
-                    <DropdownMenuLabel className="p-2 font-normal">
-                        {currentStudyYear ? (
-                            <div className="flex items-center gap-2">
-                                <div className="grid flex-1 text-left text-sm leading-tight">
-                                    <span className="truncate font-medium">
-                                        {currentStudyYear.yearName}
-                                    </span>
-                                    <span className="truncate text-xs text-muted-foreground">
-                                        {formatDate(currentStudyYear.startDate)} -{" "}
-                                        {formatDate(currentStudyYear.endDate)}
-                                    </span>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <Avatar className="h-8 w-8 rounded-lg bg-accent">
-                                    <AvatarFallback className="rounded-lg text-accent-foreground">
-                                        <CalendarDays className="size-5" />
-                                    </AvatarFallback>
-                                </Avatar>
-                                <span className="text-sm italic">Aucune année sélectionnée</span>
-                            </div>
-                        )}
-                    </DropdownMenuLabel>
+                    <HeaderSection currentYear={currentYear} />
+                    
                     <DropdownMenuSeparator />
 
-                    {/* Groupe d'éléments pour la sélection d'année scolaire */}
                     <DropdownMenuGroup>
-                        <DropdownMenuLabel className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-                            Changer d'année scolaire
+                        <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                            Choisir une période
                         </DropdownMenuLabel>
+                        
                         {isLoading ? (
-                            <DropdownMenuItem disabled className="text-muted-foreground italic">
-                                Chargement des années...
-                            </DropdownMenuItem>
+                            <div className="p-2 text-sm text-muted-foreground animate-pulse">
+                                Recherche des sessions...
+                            </div>
                         ) : studyYears.length > 0 ? (
                             studyYears.map((year) => (
                                 <DropdownMenuItem
                                     key={year.yearId}
                                     onSelect={() => configActions.setCurrentStudyYear(year)}
-                                    className="flex items-center justify-between"
-                                    disabled={currentStudyYear?.yearId === year.yearId}
+                                    className="flex items-center justify-between cursor-pointer"
                                 >
-                                    {year.yearName}
-                                    {currentStudyYear?.yearId === year.yearId && (
-                                        <Check className="ml-2 size-4 text-primary" />
+                                    <div className="flex flex-col">
+                                        <span>{year.yearName}</span>
+                                        <span className="text-[10px] text-muted-foreground">
+                                            {formatDate(year.startDate)} - {formatDate(year.endDate)}
+                                        </span>
+                                    </div>
+                                    {currentYear?.yearId === year.yearId && (
+                                        <Check className="size-4 text-primary" />
                                     )}
                                 </DropdownMenuItem>
                             ))
                         ) : (
-                            <DropdownMenuItem disabled className="text-muted-foreground italic">
-                                Aucune année disponible pour cette école
-                            </DropdownMenuItem>
+                            <div className="p-4 text-center text-xs text-muted-foreground italic">
+                                Aucune année enregistrée
+                            </div>
                         )}
                     </DropdownMenuGroup>
 
                     <DropdownMenuSeparator />
 
-                    <DropdownMenuItem className="text-primary text-xs" asChild>
-                        <Link to={"/school-years"}>
+                    <DropdownMenuItem asChild>
+                        <Link to="/school-years" className="cursor-pointer text-primary focus:text-primary">
                             <PlusCircle className="mr-2 size-4" />
-                            <span>Ajouter une nouvelle année scolaire</span>
+                            <span className="font-medium">Gérer les années</span>
                         </Link>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -157,3 +125,24 @@ export const SidebarMenuItemSchoolYear = () => {
     );
 };
 
+/**
+ * Sous-composant pour alléger le menu principal
+ */
+const HeaderSection = ({ currentYear }: { currentYear: any }) => (
+    <DropdownMenuLabel className="p-2 font-normal">
+        <div className="flex items-center gap-3 px-1 py-1.5 text-left text-sm">
+            <div className="grid flex-1 leading-tight">
+                {currentYear ? (
+                    <>
+                        <span className="truncate font-semibold">{currentYear.yearName}</span>
+                        <span className="truncate text-xs text-muted-foreground">
+                            Session : {formatDate(currentYear.startDate)} au {formatDate(currentYear.endDate)}
+                        </span>
+                    </>
+                ) : (
+                    <span className="italic text-muted-foreground">Aucune sélectionnée</span>
+                )}
+            </div>
+        </div>
+    </DropdownMenuLabel>
+);
