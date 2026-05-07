@@ -5,7 +5,7 @@ import { HashRouter as Router, Route, Routes } from "react-router"
 import Launcher from "@/renderer/screens/launcher";
 import { HomePage } from "@/renderer/screens/home";
 
-import { StudyYearPage } from "@/renderer/screens/study-years";
+import { StudyYearsPage } from "@/renderer/screens/study-years";
 import { SchoolsPage } from "@/renderer/screens/schools";
 import { OptionPage } from "@/renderer/screens/options";
 import StudentScreen from "@/renderer/screens/students";
@@ -59,7 +59,7 @@ export default function RouterProvider(): JSX.Element {
           </Route>
           <Route path="locals" element={<LocalRoomPage />} />
           {/* other */}
-          <Route path="school-years" element={<StudyYearPage />} />
+          <Route path="school-years" element={<StudyYearsPage />} />
           <Route path="schools" element={<SchoolsPage />} />
         </Route>
         <Route path="configuration" element={<ConfigurationLayoutScreen />}>

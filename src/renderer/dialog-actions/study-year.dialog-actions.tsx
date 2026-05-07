@@ -23,7 +23,7 @@ export const CreateStudyYearDialog: React.FC<CreateStudyYearDialogProps> = ({ ch
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
                 <DialogHeader>
                     <DialogTitle>Nouvelle année scolaire</DialogTitle>
                     <DialogDescription>
@@ -65,7 +65,7 @@ export const UpdateStudyYearDialog: React.FC<UpdateStudyYearDialogProps> = ({ in
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
                 <DialogHeader>
                     <DialogTitle>Modifier l'année scolaire</DialogTitle>
                     <DialogDescription>

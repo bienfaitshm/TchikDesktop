@@ -21,7 +21,7 @@ export const CreateSchoolDialog: React.FC<CreateSchoolDialogProps> = ({ children
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] md:max-w-[700px]">
+            <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
                 <DialogHeader>
                     <DialogTitle>Nouvel établissement</DialogTitle>
                     <DialogDescription>
@@ -63,7 +63,7 @@ export const UpdateSchoolDialog: React.FC<UpdateSchoolDialogProps> = ({ initialD
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] md:max-w-[700px]">
+            <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
                 <DialogHeader>
                     <DialogTitle>Modifier l'établissement</DialogTitle>
                     <DialogDescription>
