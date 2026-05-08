@@ -3,11 +3,12 @@
 import { 
     Settings, 
     User, 
-    ShieldCheck, 
+    Settings2, 
     Bell, 
-    LogOut, 
     ChevronRight,
-    CreditCard
+    LifeBuoy,
+    Info,
+    Code2
 } from "lucide-react";
 import { Link } from "react-router";
 
@@ -26,24 +27,18 @@ import {
     useSidebar,
 } from "@/renderer/components/ui/sidebar";
 
-/**
- * Configuration des entrées de paramètres
- * Permet de modifier le menu sans toucher à la structure JSX
- */
+
 const SETTINGS_OPTIONS = [
-    { label: "Mon Profil", href: "/settings/profile", icon: User },
-    { label: "Sécurité", href: "/settings/security", icon: ShieldCheck },
+    { label: "Mon compte", href: "/settings/account", icon: User },
+    { label: "Paramètres généraux", href: "/settings", icon: Settings2 },
     { label: "Notifications", href: "/settings/notifications", icon: Bell },
-    { label: "Facturation", href: "/settings/billing", icon: CreditCard },
+    { label: "Aide & Support", href: "/settings/help", icon: LifeBuoy },
+    { label: "À propos", href: "/settings/about", icon: Info },
+    { label: "Mode développeur", href: "/settings/developer", icon: Code2 },
 ];
 
 export const SidebarSettingsButton = () => {
     const { isMobile } = useSidebar();
-
-    // Fonction de déconnexion (à adapter selon ton auth store)
-    const handleLogout = () => {
-        console.log("Logging out...");
-    };
 
     return (
         <SidebarMenuItem>
@@ -61,11 +56,11 @@ export const SidebarSettingsButton = () => {
                         <div className="grid flex-1 text-left text-sm leading-tight">
                             <span className="truncate font-semibold">Paramètres</span>
                             <span className="truncate text-xs text-muted-foreground">
-                                Gestion du compte
+                                Configuration & profil
                             </span>
                         </div>
 
-                        <ChevronRight className="ml-auto size-4 shrink-0 opacity-50 group-hover:translate-x-0.5 transition-all" />
+                        <ChevronRight className="ml-auto size-4 shrink-0 opacity-50 group-hover:translate-x-1 transition-all" />
                     </SidebarMenuButton>
                 </DropdownMenuTrigger>
 
@@ -75,8 +70,8 @@ export const SidebarSettingsButton = () => {
                     align="end"
                     sideOffset={8}
                 >
-                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        Préférences
+                    <DropdownMenuLabel className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        Préférences système
                     </DropdownMenuLabel>
                     
                     <DropdownMenuSeparator />
@@ -84,23 +79,13 @@ export const SidebarSettingsButton = () => {
                     <DropdownMenuGroup>
                         {SETTINGS_OPTIONS.map((item) => (
                             <DropdownMenuItem key={item.href} asChild>
-                                <Link to={item.href} className="flex items-center gap-2 cursor-pointer">
-                                    <item.icon className="size-4 opacity-70" />
-                                    <span className="flex-1">{item.label}</span>
+                                <Link to={item.href} className="flex items-center gap-3 cursor-pointer py-2">
+                                    <item.icon className="size-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                    <span className="flex-1 text-sm">{item.label}</span>
                                 </Link>
                             </DropdownMenuItem>
                         ))}
                     </DropdownMenuGroup>
-
-                    <DropdownMenuSeparator />
-
-                    <DropdownMenuItem 
-                        onSelect={handleLogout}
-                        className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
-                    >
-                        <LogOut className="mr-2 size-4" />
-                        <span className="font-medium">Déconnexion</span>
-                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         </SidebarMenuItem>

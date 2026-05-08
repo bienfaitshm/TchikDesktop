@@ -19,7 +19,7 @@ import {
   StudyYearConfigPage,
   NewStudyYearConfigurationPage
 } from "@/renderer/screens/config";
-
+import { AboutPage, AccountPage, DeveloperPage, HelpPage, SettingsPage, NotificationPage} from "@/renderer/screens/settings"
 import { EnrollmentPage } from "@/renderer/screens/enrollments";
 import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms"
 
@@ -28,6 +28,7 @@ import { StudentLayout } from "@/renderer/components/layouts/students.layout"
 import { ConfigGuard } from "@/renderer/components/layouts/config-guard";
 
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner"
+import { SettingLayout } from "@/renderer/components/layouts/settings.layout";
 
 
 
@@ -61,6 +62,16 @@ export default function RouterProvider(): JSX.Element {
           {/* other */}
           <Route path="school-years" element={<StudyYearsPage />} />
           <Route path="schools" element={<SchoolsPage />} />
+          {/* settings */}
+          <Route path="settings" element={<SettingLayout />}>
+            <Route index element={<SettingsPage />} />
+            <Route path="help" element={<HelpPage />} />
+            <Route path="developer" element={<DeveloperPage />} />
+            <Route path="account" element={<AccountPage />} />
+            <Route path="about" element={<AboutPage />} />
+            <Route path="notifications" element={<NotificationPage />} />
+          </Route>
+         
         </Route>
         <Route path="configuration" element={<ConfigurationLayoutScreen />}>
           <Route index element={<SchoolConfigPage />} />
