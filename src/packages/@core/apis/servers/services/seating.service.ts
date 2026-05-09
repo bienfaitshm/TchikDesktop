@@ -119,7 +119,7 @@ export class SeatingService {
     try {
       return await Promise.all([
         this.roomRepo.findMany({ where: { schoolId } }),
-        this.enrolementRepo.findManyExtended({
+        this.enrolementRepo.findMany({
           where: { schoolId, yearId, status: STUDENT_STATUS_ENUM.EN_COURS },
         }),
       ]);

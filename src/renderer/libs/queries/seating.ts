@@ -80,6 +80,23 @@ export function useCreateSeatingSession() {
   });
 }
 
+/** @description Hook pour supprimer une session de placement */
+export function useDeleteSeatingSession() {
+  return useMutation({
+    mutationKey: ["DELETE_SEATING_SESSION"],
+    mutationFn: (sessionId: string) => seating.deleteSession(sessionId),
+  });
+}
+
+/** @description Hook pour modifier une session de placement */
+export function useUpdateSeatingSession() {
+  return useMutation({
+    mutationKey: ["UPDATE_SEATING_SESSION"],
+    mutationFn: ({ id, data }: TQueryUpdate<TSeatingSessionCreate>) =>
+      seating.updateSession(id, data),
+  });
+}
+
 // =============================================================================
 // HOOKS : SEATING ASSIGNMENTS (Assignations)
 // =============================================================================

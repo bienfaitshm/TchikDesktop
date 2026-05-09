@@ -52,6 +52,10 @@ export type SeatingApi = Readonly<{
     yearId: string;
   }): Promise<SeatingSessionData[]>;
   createSession(data: TSeatingSessionCreate): Promise<SeatingSessionData>;
+  updateSession(
+    sessionId: string,
+    data: Partial<TSeatingSessionCreate>,
+  ): Promise<SeatingSessionData>;
   deleteSession(sessionId: string): Promise<void>;
   fetchSessionRoomsStatus(sessionId: string): Promise<RoomStatusData[]>;
   fetchFullSessionDetails(sessionId: string): Promise<any>;
@@ -112,6 +116,12 @@ export function createSeatingApis(ipcClient: IpcClient): SeatingApi {
 
     deleteSession(sessionId) {
       return ipcClient.delete(SeatingSessionRoutes.DETAIL, {
+        params: { sessionId },
+      });
+    },
+
+    updateSession(sessionId, data) {
+      return ipcClient.put(SeatingSessionRoutes.DETAIL, data, {
         params: { sessionId },
       });
     },
