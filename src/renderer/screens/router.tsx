@@ -29,6 +29,7 @@ import { ConfigGuard } from "@/renderer/components/layouts/config-guard";
 
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner"
 import { SettingLayout } from "@/renderer/components/layouts/settings.layout";
+import { SeatingPage, SeatingSessionDetailPage } from "@/renderer/screens/seating"
 
 
 
@@ -47,7 +48,8 @@ export default function RouterProvider(): JSX.Element {
         >
           <Route index element={<HomePage />} />
           <Route path="inscriptions" element={<EnrollmentPage />} />
-          <Route path="mise-en-places" element={<MiseEnPlaceScreen />} />
+          <Route path="seating" element={<SeatingPage />} />
+           <Route path="seating/:sessionId" element={<SeatingSessionDetailPage />} />
           {/* schools */}
           <Route path="students" element={<StudentScreen />} />
           <Route path="options" element={<OptionPage />} />
