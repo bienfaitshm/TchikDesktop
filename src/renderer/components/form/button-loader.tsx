@@ -1,6 +1,7 @@
 import { Button, ButtonProps } from "@/renderer/components/ui/button";
 import { Loader } from "lucide-react";
 
+export type ButtonLoaderProps = ButtonProps & { isLoading?: boolean; isLoadingText?: string }
 /**
  *
  * @param ButtonProps
@@ -14,7 +15,7 @@ export function ButtonLoader({
   isLoadingText,
   ...props
 }: React.PropsWithChildren<
-  ButtonProps & { isLoading?: boolean; isLoadingText?: string }
+  ButtonLoaderProps
 >): React.ReactNode {
   return (
     <Button type="submit" disabled={isLoading} {...props}>

@@ -41,7 +41,7 @@ const SessionRowActions = React.memo(({ session }: { session: TSeatingSession })
     const initialData = React.useMemo(() => ({ ...session }), [session.sessionId])
 
     return (
-        <ActionContainer className="lg:grid-cols-3">
+        <ActionContainer className="lg:grid-cols-4">
               <Link to={`/seating/${session.sessionId}`} className="contents">
                 <ActionTileDetail />
             </Link>

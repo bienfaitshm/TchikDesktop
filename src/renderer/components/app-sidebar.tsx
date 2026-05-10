@@ -44,7 +44,7 @@ const NAVIGATION_GROUPS: NavSection[] = [
         items: [
             { name: "Accueil", url: "/", icon: Home },
             { name: "Inscriptions", url: "/inscriptions", icon: Clipboard },
-            { name: "Mise en place", url: "/mise-en-places", icon: LayoutDashboard },
+            { name: "Mise en place", url: "/seating", icon: LayoutDashboard },
         ],
     },
     {

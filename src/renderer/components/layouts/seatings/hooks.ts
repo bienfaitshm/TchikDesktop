@@ -1,10 +1,20 @@
-import { useMemo, useCallback, useReducer } from "react";
+import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 
 // --- Types ---
+
+export interface Classroom {
+  identifier: string;
+  optionId: string;
+  section: string;
+  shortIdentifier: string;
+  yearId: string;
+}
 export interface Student {
-  id: string; // enrolementId
+  id: string;
   name: string;
   classId: string;
+  classroom: Classroom;
 }
 
 export interface Seating {
@@ -20,141 +30,189 @@ export interface RoomState {
   studentCount: number;
 }
 
-// Format de sortie "Clean"
-export interface CleanSeatingData {
-  localRoomId: string;
-  enrolementId: string;
+export type StudentSeating = {
+  fullName: string;
+  identifier: string;
+  classroomId: string;
+  row: number;
+  column: number;
+};
+
+// --- Interface du Store ---
+interface GlobalRoomStore {
+  rooms: Record<string, RoomState>;
   sessionId: string;
-  rowPosition: number;
-  columnPosition: number;
+
+  // Actions
+  initStore: (rooms: RoomState[], sessionId: string) => void;
+  removeStudent: (studentId: string) => void;
+  moveStudent: (
+    studentId: string,
+    sourceRoomId: string,
+    targetRoomId: string,
+    targetRow: number,
+    targetCol: number,
+  ) => void;
 }
 
-// --- Reducer pour la performance ---
-type RoomAction =
-  | {
-      type: "TRANSFER_STUDENT";
-      studentId: string;
-      targetRow: number;
-      targetCol: number;
-    }
-  | { type: "REMOVE_STUDENT"; studentId: string }
-  | { type: "ADD_STUDENT"; student: Student; row: number; col: number };
+// --- Store Global ---
+export const useGlobalRoomStore = create<GlobalRoomStore>((set) => ({
+  rooms: {},
+  sessionId: "",
 
-function roomReducer(state: RoomState, action: RoomAction): RoomState {
-  switch (action.type) {
-    case "ADD_STUDENT": {
-      // Vérifier si la place est déjà prise
-      const isOccupied = state.seatingPlan.some(
-        (s) =>
-          s.row === action.row && s.column === action.col && s.student !== null,
-      );
-      if (isOccupied) return state; // On pourrait aussi retourner une erreur ici
+  initStore: (rooms, sessionId) => {
+    const roomsMap = rooms.reduce(
+      (acc, room) => {
+        acc[room.roomId] = room;
+        return acc;
+      },
+      {} as Record<string, RoomState>,
+    );
+    set({ rooms: roomsMap, sessionId });
+  },
 
-      return {
-        ...state,
-        studentCount: state.studentCount + 1,
-        seatingPlan: state.seatingPlan.map((s) =>
-          s.row === action.row && s.column === action.col
-            ? { ...s, student: action.student }
-            : s,
-        ),
-      };
-    }
+  removeStudent: (studentId) =>
+    set((state) => {
+      const newRooms = { ...state.rooms };
 
-    case "REMOVE_STUDENT":
-      return {
-        ...state,
-        studentCount: Math.max(0, state.studentCount - 1),
-        seatingPlan: state.seatingPlan.map((s) =>
-          s.student?.id === action.studentId ? { ...s, student: null } : s,
-        ),
-      };
+      Object.keys(newRooms).forEach((roomId) => {
+        const room = newRooms[roomId];
+        // On vérifie si l'étudiant est présent dans cette salle
+        const hasStudent = room.seatingPlan.some(
+          (s) => s.student?.id === studentId,
+        );
 
-    case "TRANSFER_STUDENT": {
-      const { studentId, targetRow, targetCol } = action;
+        if (hasStudent) {
+          const updatedPlan = room.seatingPlan.map((s) =>
+            s.student?.id === studentId ? { ...s, student: null } : s,
+          );
 
-      // 1. Trouver l'étudiant source et l'éventuel occupant de la cible
-      const sourceSeat = state.seatingPlan.find(
+          newRooms[roomId] = {
+            ...room,
+            seatingPlan: updatedPlan,
+            studentCount: updatedPlan.filter((s) => s.student !== null).length,
+          };
+        }
+      });
+
+      return { rooms: newRooms };
+    }),
+
+  moveStudent: (studentId, sourceRoomId, targetRoomId, targetRow, targetCol) =>
+    set((state) => {
+      const sourceRoom = state.rooms[sourceRoomId];
+      const targetRoom = state.rooms[targetRoomId];
+
+      if (!sourceRoom || !targetRoom) return state;
+
+      // 1. Trouver le siège source
+      const sourceSeat = sourceRoom.seatingPlan.find(
         (s) => s.student?.id === studentId,
       );
-      const targetSeat = state.seatingPlan.find(
+      if (!sourceSeat || !sourceSeat.student) return state;
+
+      const movingStudent = sourceSeat.student;
+
+      // 2. Trouver l'étudiant à la destination (pour le swap)
+      const targetSeat = targetRoom.seatingPlan.find(
         (s) => s.row === targetRow && s.column === targetCol,
       );
+      const studentToSwap = targetSeat?.student || null;
 
-      if (!sourceSeat || !targetSeat) return state;
+      const newRooms = { ...state.rooms };
 
-      const studentToMove = sourceSeat.student;
-      const studentToSwap = targetSeat.student; // Peut être null
-
-      return {
-        ...state,
-        seatingPlan: state.seatingPlan.map((s) => {
-          // La place d'origine reçoit soit l'étudiant délogé (swap), soit devient vide
+      // --- CAS A : Mouvement dans la MÊME salle ---
+      if (sourceRoomId === targetRoomId) {
+        const updatedPlan = sourceRoom.seatingPlan.map((s) => {
+          // La cible reçoit l'étudiant déplacé
+          if (s.row === targetRow && s.column === targetCol) {
+            return { ...s, student: movingStudent };
+          }
+          // L'ancienne place reçoit l'étudiant qui était à la cible (Swap)
           if (s.row === sourceSeat.row && s.column === sourceSeat.column) {
             return { ...s, student: studentToSwap };
           }
-          // La place cible reçoit l'étudiant déplacé
-          if (s.row === targetRow && s.column === targetCol) {
-            return { ...s, student: studentToMove };
-          }
           return s;
-        }),
-      };
-    }
+        });
 
-    default:
-      return state;
-  }
-}
+        newRooms[sourceRoomId] = {
+          ...sourceRoom,
+          seatingPlan: updatedPlan,
+          // Le count ne change pas en mouvement interne
+        };
+      }
+      // --- CAS B : Mouvement entre DEUX salles différentes ---
+      else {
+        // La salle source perd l'étudiant mais récupère celui de la cible (Swap inter-salle)
+        const updatedSourcePlan = sourceRoom.seatingPlan.map((s) =>
+          s.row === sourceSeat.row && s.column === sourceSeat.column
+            ? { ...s, student: studentToSwap }
+            : s,
+        );
 
-export const useRoomManagement = (
-  initialData: RoomState,
-  sessionId: string,
-) => {
-  const [state, dispatch] = useReducer(roomReducer, initialData);
+        // La salle cible reçoit l'étudiant déplacé
+        const updatedTargetPlan = targetRoom.seatingPlan.map((s) =>
+          s.row === targetRow && s.column === targetCol
+            ? { ...s, student: movingStudent }
+            : s,
+        );
 
-  // 1. Actions stables (ne provoquent pas de re-render des composants mémoïsés)
-  const removeStudent = useCallback((studentId: string) => {
-    dispatch({ type: "REMOVE_STUDENT", studentId });
-  }, []);
+        newRooms[sourceRoomId] = {
+          ...sourceRoom,
+          seatingPlan: updatedSourcePlan,
+          studentCount: updatedSourcePlan.filter((s) => s.student !== null)
+            .length,
+        };
 
-  const transferStudent = useCallback(
-    (studentId: string, targetRow: number, targetCol: number) => {
-      dispatch({ type: "TRANSFER_STUDENT", studentId, targetRow, targetCol });
-    },
-    [],
+        newRooms[targetRoomId] = {
+          ...targetRoom,
+          seatingPlan: updatedTargetPlan,
+          studentCount: updatedTargetPlan.filter((s) => s.student !== null)
+            .length,
+        };
+      }
+
+      return { rooms: newRooms };
+    }),
+}));
+
+// --- Sélecteurs ---
+
+/**
+ * Hook optimisé pour l'export des données.
+ * Utilise useShallow pour éviter les re-renders inutiles si les données
+ * calculées n'ont pas changé structurellement.
+ */
+export const useAllCleanSeatingData = () => {
+  return useGlobalRoomStore(
+    useShallow((state) => {
+      return Object.values(state.rooms).flatMap((room) =>
+        room.seatingPlan
+          .filter((s) => s.student !== null)
+          .map((s) => ({
+            localRoomId: room.roomId,
+            enrolementId: s.student!.id,
+            sessionId: state.sessionId,
+            rowPosition: s.row,
+            columnPosition: s.column,
+          })),
+      );
+    }),
   );
+};
 
-  const addStudent = useCallback(
-    (student: Student, row: number, col: number) => {
-      dispatch({ type: "ADD_STUDENT", student, row, col });
-    },
-    [],
-  );
-
-  // 2. Séparation de la donnée brute et de la donnée "Clean"
-  // On utilise useMemo pour ne recalculer le format exportable QUE si le plan de table change
-  const cleanData = useMemo(() => {
-    return state.seatingPlan
-      .filter(
-        (seat): seat is Seating & { student: Student } => seat.student !== null,
-      )
-      .map((seat) => ({
-        localRoomId: state.roomId,
-        enrolementId: seat.student.id, // Ici TS sait que student n'est pas null
-        sessionId,
-        rowPosition: seat.row,
-        columnPosition: seat.column,
-      }));
-  }, [state.seatingPlan, state.roomId, sessionId]);
-
-  return {
-    state,
-    cleanData,
-    actions: {
-      removeStudent,
-      transferStudent,
-      addStudent,
-    },
-  };
+export const mapSeatingToStudentList = (
+  seatingPlan: Seating[],
+): StudentSeating[] => {
+  return seatingPlan
+    .filter(
+      (seat): seat is Seating & { student: Student } => seat.student !== null,
+    )
+    .map((seat) => ({
+      fullName: seat.student.name,
+      identifier: seat.student.classroom.identifier,
+      classroomId: seat.student.classId,
+      row: seat.row,
+      column: seat.column,
+    }));
 };

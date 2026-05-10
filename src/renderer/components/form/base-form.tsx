@@ -25,7 +25,7 @@ export function createSubmitHandler<T extends FieldValues>(
 export interface UseZodFormConfig<T extends FieldValues> {
     schema: ZodSchema<T>;
     defaultValues: DefaultValues<T>;
-    initialValues?: Partial<T>;
+    initialValues?: DefaultValues<T>;
     onSubmit?: (data: T, helpers: { reset: (values?: T) => void }) => void | Promise<void>;
 }
 

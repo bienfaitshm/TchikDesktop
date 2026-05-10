@@ -35,7 +35,7 @@ export const CreateSeatingSessionDialog: React.FC<CreateSeatingSessionDialogProp
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-[550px]">
+            <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
                 <DialogHeader>
                     <DialogTitle>Nouvelle session de mise en place</DialogTitle>
                     <DialogDescription>
@@ -78,7 +78,7 @@ export const UpdateSeatingSessionDialog: React.FC<UpdateSeatingSessionDialogProp
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-[550px]">
+            <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
                 <DialogHeader>
                     <DialogTitle>Modifier la session</DialogTitle>
                     <DialogDescription>
