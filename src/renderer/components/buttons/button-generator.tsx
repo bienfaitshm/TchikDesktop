@@ -1,17 +1,24 @@
-import { RefreshCcw, Wand2 } from 'lucide-react';
-import { ButtonLoader, ButtonLoaderProps } from '@/renderer/components/form/button-loader';
+import { RefreshCcw, Wand2 } from "lucide-react";
+import {
+  ButtonLoader,
+  ButtonLoaderProps,
+} from "@/renderer/components/form/button-loader";
+import React from "react";
 
-type ButtonGeneratorProps = {
+type ButtonGeneratorProps = ButtonLoaderProps & {
   hasGenerated?: boolean;
 };
 
-const ButtonGenerator = ({
-  hasGenerated = false,
-  ...props
-}: ButtonGeneratorProps & ButtonLoaderProps) => {
-  
+/**
+ * ButtonGenerator
+ * Spécialisation du ButtonLoader pour la génération de plan.
+ * Alterne l'icône et le texte selon l'état 'hasGenerated'.
+ */
+const ButtonGenerator = React.forwardRef<
+  HTMLButtonElement,
+  ButtonGeneratorProps
+>(({ hasGenerated = false, ...props }, ref) => {
   const renderContent = () => {
-   
     if (hasGenerated) {
       return (
         <>
@@ -31,14 +38,17 @@ const ButtonGenerator = ({
 
   return (
     <ButtonLoader
+      ref={ref}
       variant={hasGenerated ? "outline" : "default"}
-      className="rounded-full"
+      className="rounded-full px-6"
       isLoadingText="Calcul du placement..."
       {...props}
     >
       {renderContent()}
     </ButtonLoader>
   );
-};
+});
+
+ButtonGenerator.displayName = "ButtonGenerator";
 
 export default ButtonGenerator;

@@ -1,12 +1,17 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import { seating } from "@/renderer/libs/apis"; // On suppose que ton export groupé s'appelle 'seating'
+import { seating } from "@/renderer/libs/apis";
 import {
   TLocalRoomFilter,
   TLocalRoomCreate,
   TLocalRoomUpdate,
   TSeatingSessionCreate,
 } from "@/packages/@core/data-access/schema-validations";
-import { TQueryUpdate } from "./type";
+import { TQueryCreateParams, TQueryUpdate } from "./type";
+import type { BulkAssignParams } from "@/packages/@core/apis/clients/seatings";
+import type {
+  TSeatingAssignmentCreate,
+  SeatingGenerator,
+} from "@/packages/@core/data-access/schema-validations";
 
 // =============================================================================
 // HOOKS : LOCAL ROOMS (Salles Physiques)
@@ -104,11 +109,9 @@ export function useUpdateSeatingSession() {
 export function useGenerateSeating() {
   return useMutation({
     mutationKey: ["SEATING_GENERATION"],
-    mutationFn: (data: {
-      schoolId: string;
-      yearId: string;
-      confortRatio?: number;
-    }) => seating.generateSeating(data),
+    mutationFn: (
+      data: SeatingGenerator & { schoolId: string; yearId: string },
+    ) => seating.generateSeating(data),
   });
 }
 
@@ -132,7 +135,11 @@ export function useGetUnassignedStudents(sessionId: string, yearId: string) {
 export function useBulkAssignStudents() {
   return useMutation({
     mutationKey: ["BULK_ASSIGN_STUDENTS"],
-    mutationFn: (assignments: any[]) => seating.bulkAssign(assignments),
+    mutationFn: ({
+      params,
+      data,
+    }: TQueryCreateParams<TSeatingAssignmentCreate[], BulkAssignParams>) =>
+      seating.bulkAssign(data, params),
   });
 }
 

@@ -55,16 +55,4 @@ export const SeatingStudentColumns: ColumnDef<StudentSeating>[] = [
       );
     },
   },
-
-  //   {
-  //     accessorKey: "classroomId",
-  //     header: ({ column }) => (
-  //       <DataTableColumnHeader column={column} title="ID Salle" />
-  //     ),
-  //     cell: ({ row }) => (
-  //       <TypographySmall className="text-muted-foreground">
-  //         {row.getValue("classroomId")}
-  //       </TypographySmall>
-  //     ),
-  //   },
 ];

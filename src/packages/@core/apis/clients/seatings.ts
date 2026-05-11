@@ -6,6 +6,9 @@ import {
   TLocalRoomUpdate,
   TSeatingSessionAttributes,
   TSeatingSessionCreate,
+  TSeatingAssignmentCreate,
+  TSeatingAssignmentAttributes,
+  SeatingGenerator,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   LocalRoomRoutes,
@@ -36,6 +39,12 @@ export type SeatingAssignmentData = {
   };
 };
 
+export type BulkAssignParams = {
+  schoolId: string;
+  yearId: string;
+  sessionId: string;
+};
+
 export type SeatingApi = Readonly<{
   // --- Local Rooms ---
   fetchLocalRooms(params?: TLocalRoomFilter): Promise<LocalRoomData[]>;
@@ -61,16 +70,15 @@ export type SeatingApi = Readonly<{
   fetchFullSessionDetails(sessionId: string): Promise<any>;
 
   // --- Seating Assignments ---
-  generateSeating(params: {
-    schoolId: string;
-    yearId: string;
-    confortRatio?: number;
-  }): Promise<any>;
+  generateSeating(data: SeatingGenerator): Promise<any>;
   fetchRoomLayout(
     sessionId: string,
     localRoomId: string,
   ): Promise<SeatingAssignmentData[]>;
-  bulkAssign(assignments: any[]): Promise<any[]>;
+  bulkAssign(
+    assignments: TSeatingAssignmentCreate[],
+    params: BulkAssignParams,
+  ): Promise<TSeatingAssignmentAttributes[]>;
   fetchUnassignedStudents(sessionId: string, yearId: string): Promise<any[]>;
   clearRoomAssignments(
     sessionId: string,
@@ -148,8 +156,10 @@ export function createSeatingApis(ipcClient: IpcClient): SeatingApi {
       });
     },
 
-    bulkAssign(assignments) {
-      return ipcClient.post(SeatingAssignmentRoutes.BULK, assignments);
+    bulkAssign(assignments, params) {
+      return ipcClient.post(SeatingAssignmentRoutes.BULK, assignments, {
+        params,
+      });
     },
 
     fetchUnassignedStudents(sessionId, yearId) {
