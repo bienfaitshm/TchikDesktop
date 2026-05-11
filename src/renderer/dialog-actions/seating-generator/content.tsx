@@ -6,16 +6,15 @@ import { RoomState } from "@/renderer/components/layouts/seatings/hooks";
 export type SeatingGeneratorContentProps = {
   rooms?: RoomState[];
   hasGenerate?: boolean;
-  sessionId: string;
 };
 
 export const SeatingGeneratorContent: React.FC<
   SeatingGeneratorContentProps
-> = ({ hasGenerate, sessionId, rooms = [] }) => {
+> = ({ hasGenerate, rooms = [] }) => {
   return (
     <div className="flex flex-col space-y-6">
       {hasGenerate ? (
-        <SeatingViewer sessionId={sessionId} rooms={rooms} />
+        <SeatingViewer rooms={rooms} />
       ) : (
         <div className="flex flex-col items-center justify-center min-h-[400px] border-2 border-dashed rounded-xl bg-muted/5">
           <div className="bg-primary/10 p-4 rounded-full mb-4">

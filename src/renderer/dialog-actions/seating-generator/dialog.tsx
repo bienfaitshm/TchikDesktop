@@ -98,7 +98,6 @@ export const SeatingGeneratorDialog = (
               ) : hasData ? (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <SeatingGeneratorContent
-                    sessionId={props.sessionId}
                     hasGenerate={hasData}
                     rooms={generatedRooms}
                   />

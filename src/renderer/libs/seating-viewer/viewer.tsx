@@ -27,13 +27,9 @@ import { Separator } from "@/renderer/components/ui/separator";
 
 type SeatingViewerProps = {
   rooms: RoomState[];
-  sessionId: string;
 };
 
-export const SeatingViewer: React.FC<SeatingViewerProps> = ({
-  rooms,
-  sessionId,
-}) => {
+export const SeatingViewer: React.FC<SeatingViewerProps> = ({ rooms }) => {
   if (!rooms || rooms.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[400px] border-2 border-dashed rounded-lg">
@@ -68,13 +64,13 @@ export const SeatingViewer: React.FC<SeatingViewerProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <DoorOpen className="h-4 w-4" />
-                  <span className="font-medium truncate max-w-[120px]">
+                  <span className="text-sm font-medium truncate max-w-[120px]">
                     {room.roomName}
                   </span>
                 </div>
                 <Badge
                   variant={room.studentCount > 0 ? "default" : "outline"}
-                  className="ml-2 font-mono"
+                  className="ml-2 font-mono text-xs"
                 >
                   {room.studentCount}
                 </Badge>
