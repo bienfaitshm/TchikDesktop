@@ -1,6 +1,6 @@
 import { sql, eq, and, isNull } from "drizzle-orm";
 import { db } from "../../config";
-import { BaseRepository } from "../base-repository";
+import { BaseRepository } from "../base-repository.new";
 import {
   seatingAssignments,
   classroomEnrolements,
@@ -13,6 +13,10 @@ import type {
   TSeatingAssignmentUpdate,
 } from "../../schemas/types";
 
+import { getLogger } from "@/packages/logger";
+
+const logger = getLogger("Database-Repository");
+
 export class SeatingAssignmentQuery extends BaseRepository<
   typeof seatingAssignments,
   TSeatingAssignment,
@@ -21,6 +25,8 @@ export class SeatingAssignmentQuery extends BaseRepository<
 > {
   constructor() {
     super(
+      db,
+      logger,
       seatingAssignments,
       seatingAssignments.assignmentId,
       "SeatingAssignment",
@@ -114,7 +120,7 @@ export class SeatingAssignmentQuery extends BaseRepository<
       .where(
         and(
           eq(classroomEnrolements.yearId, yearId),
-          isNull(seatingAssignments.assignmentId), // Uniquement ceux sans assignation
+          isNull(seatingAssignments.assignmentId),
         ),
       )
       .orderBy(sql`lower(${users.lastName})`);

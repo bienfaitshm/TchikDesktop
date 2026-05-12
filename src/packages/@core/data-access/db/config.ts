@@ -18,7 +18,7 @@ const DB_CONFIG = {
 export class DatabaseManager {
   private static instance: DatabaseManager;
   private client: Client;
-  public db: LibSQLDatabase;
+  public db: LibSQLDatabase<Record<string, any>>;
 
   private constructor() {
     this.client = createClient({ url: `file:${DB_CONFIG.FILENAME}` });

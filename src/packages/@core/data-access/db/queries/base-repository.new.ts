@@ -1,4 +1,5 @@
 import { eq, Table, AnyColumn } from "drizzle-orm";
+import { LibSQLDatabase } from "drizzle-orm/libsql";
 import { applyQueryOptions, mergeQueryOptions } from "./drizzle-builder";
 import type { FindManyOptions } from "../schemas/types";
 
@@ -6,12 +7,7 @@ export interface ILogger {
   error(message: string, context?: Record<string, unknown>): void;
 }
 
-export type AnyDrizzleDB = {
-  select: (...args: any[]) => any;
-  insert: (...args: any[]) => any;
-  update: (...args: any[]) => any;
-  delete: (...args: any[]) => any;
-};
+export type AnyDrizzleDB = LibSQLDatabase<Record<string, any>>;
 
 export class RepositoryError extends Error {
   constructor(
