@@ -48,10 +48,12 @@ describe("createContextMenuTemplate", () => {
 
     const template = createContextMenuTemplate(mockWebContents, params);
 
-    // Simuler le clic
-    if (template.click) {
-      template.click({} as any, {} as any, {} as any);
-    }
+    const suggestionItem = template.find((item) => item.label === "Test");
+
+    expect(suggestionItem).toBeDefined();
+    expect(typeof suggestionItem?.click).toBe("function");
+
+    suggestionItem?.click?.({} as any, undefined, {} as any);
 
     expect(mockWebContents.replaceMisspelling).toHaveBeenCalledWith("Test");
   });

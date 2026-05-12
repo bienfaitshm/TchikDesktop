@@ -116,6 +116,7 @@ describe("withNotifications", () => {
       expect(mockOriginalOnError).toHaveBeenCalledWith(
         myError,
         "vars",
+        "onMutation",
         "context",
       );
     });

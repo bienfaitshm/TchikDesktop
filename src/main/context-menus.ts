@@ -15,7 +15,6 @@ export function createContextMenuTemplate(
 ): MenuItemConstructorOptions[] {
   const template: MenuItemConstructorOptions[] = [];
 
-  // 1. Suggestions d'orthographe
   if (params.dictionarySuggestions.length > 0) {
     params.dictionarySuggestions.forEach((suggestion) => {
       template.push({
@@ -26,7 +25,6 @@ export function createContextMenuTemplate(
     template.push({ type: "separator" });
   }
 
-  // 2. Actions d'édition (si le champ est éditable)
   if (params.isEditable) {
     template.push(
       { role: "cut", label: "Couper" },
