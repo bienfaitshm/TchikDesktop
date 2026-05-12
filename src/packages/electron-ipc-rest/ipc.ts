@@ -3,8 +3,6 @@
  * @description Architecture IPC Client-Serveur haute performance pour Electron.
  * Fournit une couche d'abstraction HTTP-like (REST over IPC) avec support Middleware, Intercepteurs et Typage fort.
  *
- * @author Big Tech Engineering
- * @copyright 2024 Enterprise Corp.
  */
 
 import { BrowserWindow, type IpcMainInvokeEvent } from "electron";
@@ -305,8 +303,6 @@ export class IpcClient {
       params: config.params ?? {},
       headers: { ...this.baseHeaders, ...config.headers },
     };
-    console.log("Request....", payload);
-    console.log("Request2....", { config, data });
 
     // 1. Pipeline Intercepteurs Requête
     for (const handler of this.interceptors.request.handlers) {
@@ -320,7 +316,6 @@ export class IpcClient {
     try {
       rawResponse = await this.ipcRenderer.invoke(channel, payload);
     } catch (err: any) {
-      // Fallback si l'IPC lui-même échoue (ex: crash du main process)
       throw new HttpException(
         "IPC Communication Failed",
         HttpStatus.SERVICE_UNAVAILABLE,

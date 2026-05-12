@@ -75,9 +75,9 @@ describe("Lazy IpcClient Proxy", () => {
   });
 });
 
-describe("IpcServer Error Handling (Logic)", () => {
-  // Test d'intégration de la logique d'erreur du serveur original
-  it("doit formater correctement les erreurs HttpException", async () => {
-    // ... tests sur le catch block de safeHandler
-  });
-});
+// describe("IpcServer Error Handling (Logic)", () => {
+//   // Test d'intégration de la logique d'erreur du serveur original
+//   it("doit formater correctement les erreurs HttpException", async () => {
+//     // ... tests sur le catch block de safeHandler
+//   });
+// });

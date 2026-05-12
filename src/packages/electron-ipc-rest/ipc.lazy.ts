@@ -10,7 +10,6 @@ export function createLazyIpcClient(ipcRenderer: IpcRenderer): IpcClient {
 
   const getInstance = () => {
     if (!instance) {
-      console.log("[LazyIPC] Initializing IpcClient core...");
       instance = new IpcClient(ipcRenderer);
     }
     return instance;

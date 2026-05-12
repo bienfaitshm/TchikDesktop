@@ -40,8 +40,8 @@ describe("IpcServer", () => {
 
     // CORRECTION 1: Le format est `/resource:method` et tout en minuscule, ex: "/test:get"
     expect(mockIpcMain.handle).toHaveBeenCalledWith(
-      "/test:get", // <-- CORRIGÉ
-      expect.any(Function)
+      "/test:get",
+      expect.any(Function),
     );
   });
 
@@ -65,8 +65,8 @@ describe("IpcServer", () => {
         data: "success",
         status: HttpStatus.OK,
         error: null,
-        timestamp: expect.any(String), // Ajout de la vérification du timestamp
-      })
+        timestamp: expect.any(String),
+      }),
     );
   });
 
@@ -86,7 +86,7 @@ describe("IpcServer", () => {
         message: "Forbidden",
         code: expect.anything(), // Code est la clé de l'enum (ex: 'FORBIDDEN')
         details: undefined,
-      })
+      }),
     );
   });
 });
@@ -118,7 +118,7 @@ describe("IpcClient", () => {
       expect.objectContaining({
         method: HttpMethod.GET,
         route: "/ping",
-      })
+      }),
     );
     expect(result).toBe("pong");
   });
