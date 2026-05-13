@@ -9,12 +9,11 @@ import { getLogger } from "@/packages/logger";
 
 import { apiGateway, ipcServer } from "@/main/apps";
 import { registerContextMenuListener } from "@/main/context-menus";
+import { setupDevelopmentEnvironment } from "@/main/extension.dev";
 
-// Logger principal pour le process Electron
 const mainLogger = getLogger("MainProcess");
 const updaterLogger = getLogger("Updater");
 
-// Configure electron-log (nécessaire pour autoUpdater)
 autoUpdater.logger = updaterLogger;
 
 const createMainWindow = async () => {
@@ -74,6 +73,7 @@ app.whenReady().then(async () => {
   mainLogger.info("AppUserModelId défini.");
 
   await dbManager.performBackup();
+  await setupDevelopmentEnvironment({ logger: mainLogger });
 
   app.on("browser-window-created", (_, window) => {
     mainLogger.info(
@@ -131,14 +131,12 @@ autoUpdater.on("error", (err) => {
 });
 
 autoUpdater.on("download-progress", (progressObj) => {
-  // Utilisation de la structure de log pro pour les métadonnées
   updaterLogger.info("Progression du téléchargement.", {
     speed: progressObj.bytesPerSecond,
     percent: progressObj.percent.toFixed(2),
     transferred: progressObj.transferred,
     total: progressObj.total,
   });
-  // Note: La communication vers le renderer doit se faire avec l'objet mainWindow (si accessible)
 });
 
 autoUpdater.on("update-downloaded", () => {
