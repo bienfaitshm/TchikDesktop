@@ -6,6 +6,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import * as schema from "./schemas";
 import { getLogger } from "@/packages/logger";
+import { createDrizzleLogger } from "./drizzle-adapter";
 
 const dbLogger = getLogger("DataBase");
 
@@ -23,7 +24,10 @@ export class DatabaseManager {
 
   private constructor() {
     this.client = createClient({ url: `file:${DB_CONFIG.FILENAME}` });
-    this.db = drizzle(this.client, { schema });
+    this.db = drizzle(this.client, {
+      schema,
+      logger: createDrizzleLogger(dbLogger),
+    });
   }
 
   /**
