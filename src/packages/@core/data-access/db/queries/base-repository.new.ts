@@ -35,12 +35,12 @@ export abstract class BaseRepository<
     protected readonly defaultSort: FindManyOptions<TTable>,
   ) {}
 
-  protected getQuerySet() {
+  private getQuerySet() {
     return this.db.select().from(this.table).$dynamic();
   }
 
-  protected getDetailQuerySet() {
-    return this.db.select().from(this.table).$dynamic();
+  private getDetailQuerySet() {
+    return this.getQuerySet();
   }
 
   async findMany(filters?: FindManyOptions<TTable>): Promise<TSelect[]> {

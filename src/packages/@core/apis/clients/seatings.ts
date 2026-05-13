@@ -81,6 +81,10 @@ export type SeatingApi = Readonly<{
     assignments: TSeatingAssignmentCreate[],
     params: BulkAssignParams,
   ): Promise<TSeatingAssignmentAttributes[]>;
+  rebuildAssign(
+    sessionId: string,
+    assignments: TSeatingAssignmentCreate[],
+  ): Promise<TSeatingAssignmentAttributes[]>;
   fetchUnassignedStudents(sessionId: string, yearId: string): Promise<any[]>;
   clearRoomAssignments(
     sessionId: string,
@@ -166,6 +170,13 @@ export function createSeatingApis(ipcClient: IpcClient): SeatingApi {
     bulkAssign(assignments, params) {
       return ipcClient.post(SeatingAssignmentRoutes.BULK, assignments, {
         params,
+      });
+    },
+
+    rebuildAssign(sessionId, assignments) {
+      return ipcClient.post(SeatingAssignmentRoutes.RE_ASSIGNED, {
+        sessionId,
+        assignments,
       });
     },
 

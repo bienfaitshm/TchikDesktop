@@ -95,6 +95,7 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   // --- SEATING : Assignments ---
   seatings.GetRoomLayout,
   seatings.BulkAssignStudents,
+  seatings.RebuildAssignments,
   seatings.GetUnassignedStudents,
   seatings.ClearRoomAssignments,
   seatings.FindStudentSeat,

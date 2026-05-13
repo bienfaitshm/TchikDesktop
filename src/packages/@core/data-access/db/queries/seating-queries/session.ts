@@ -1,4 +1,4 @@
-import { sql, eq, and, count } from "drizzle-orm";
+import { sql, eq, and, count, exists, getTableColumns } from "drizzle-orm";
 import { db } from "../../config";
 import { BaseRepository } from "../base-repository.new";
 import {
@@ -25,7 +25,7 @@ const SESSION_SORT = {
 
 export class SeatingSessionQuery extends BaseRepository<
   typeof seatingSessions,
-  TSeatingSession,
+  TSeatingSession & { hasAssignments: boolean },
   TSeatingSessionInsert,
   TSeatingSessionUpdate,
   typeof db
@@ -41,16 +41,19 @@ export class SeatingSessionQuery extends BaseRepository<
     );
   }
 
-  async findByYear(schoolId: string, yearId: string) {
+  override getQuerySet() {
     return this.db
-      .select()
-      .from(seatingSessions)
-      .where(
-        and(
-          eq(seatingSessions.schoolId, schoolId),
-          eq(seatingSessions.yearId, yearId),
+      .select({
+        ...getTableColumns(this.table),
+        hasAssignments: exists(
+          this.db
+            .select()
+            .from(seatingAssignments)
+            .where(eq(seatingAssignments.sessionId, seatingSessions.sessionId)),
         ),
-      );
+      })
+      .from(this.table)
+      .$dynamic();
   }
 
   async getSessionRoomsStatus(sessionId: string) {
