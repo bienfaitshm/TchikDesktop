@@ -1,5 +1,5 @@
 import { IpcClient } from "@/packages/electron-ipc-rest";
-import {
+import type {
   TLocalRoomAttributes,
   TLocalRoomFilter,
   TLocalRoomCreate,
@@ -8,6 +8,7 @@ import {
   TSeatingSessionCreate,
   TSeatingAssignmentCreate,
   TSeatingAssignmentAttributes,
+  TSeatingSessionFilter,
   SeatingGenerator,
 } from "@/packages/@core/data-access/schema-validations";
 import {
@@ -56,10 +57,10 @@ export type SeatingApi = Readonly<{
   deleteLocalRoom(localRoomId: string): Promise<void>;
 
   // --- Seating Sessions ---
-  fetchSessionsByYear(params: {
-    schoolId: string;
-    yearId: string;
-  }): Promise<SeatingSessionData[]>;
+  fetchSessions(
+    filters?: TSeatingSessionFilter,
+  ): Promise<TSeatingSessionAttributes[]>;
+  fetchSessionById(sessionId: string): Promise<TSeatingSessionAttributes>;
   createSession(data: TSeatingSessionCreate): Promise<SeatingSessionData>;
   updateSession(
     sessionId: string,
@@ -114,12 +115,16 @@ export function createSeatingApis(ipcClient: IpcClient): SeatingApi {
     },
 
     // --- Seating Sessions ---
-    fetchSessionsByYear(params) {
-      return ipcClient.get(SeatingSessionRoutes.BY_YEAR, { params });
+    fetchSessions(filters) {
+      return ipcClient.get(SeatingSessionRoutes.ALL, { params: filters });
     },
-
+    fetchSessionById(sessionId) {
+      return ipcClient.get(SeatingSessionRoutes.DETAIL, {
+        params: { sessionId },
+      });
+    },
     createSession(data) {
-      return ipcClient.post(SeatingSessionRoutes.CREATE, data);
+      return ipcClient.post(SeatingSessionRoutes.ALL, data);
     },
 
     deleteSession(sessionId) {
@@ -147,6 +152,7 @@ export function createSeatingApis(ipcClient: IpcClient): SeatingApi {
     },
 
     // --- Seating Assignments ---
+
     generateSeating(data) {
       return ipcClient.post(SeatingAssignmentRoutes.GENERATING, data);
     },

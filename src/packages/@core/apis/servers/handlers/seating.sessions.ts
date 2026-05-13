@@ -8,29 +8,37 @@ import {
 import {
   SeatingSessionAttributesSchema,
   SeatingSessionCreateSchema,
-  SchoolYearSchema,
+  SeatingSessionFilterSchema,
+  type TSeatingSessionFilter,
   type TSeatingSessionCreate,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
 import { SeatingSessionRoutes } from "../../routes-constant";
-
-const SchoolIdYearIdSchemas = SchoolYearSchema;
-type TSchoolIdYearId = z.infer<typeof SchoolIdYearIdSchemas>;
 
 const SeatingSessionIdSchema = SeatingSessionAttributesSchema.pick({
   sessionId: true,
 });
 type TSeatingSessionIdSchema = z.infer<typeof SeatingSessionIdSchema>;
 
-/** Récupère toutes les sessions de placement pour une année scolaire donnée. */
-export class GetSeatingSessionsByYear extends AbstractEndpoint<any> {
-  route = SeatingSessionRoutes.BY_YEAR;
+export class GetSeatingSessions extends AbstractEndpoint<any> {
+  route = SeatingSessionRoutes.ALL;
   method = HttpMethod.GET;
-  schemas: ValidationSchemas = { params: SchoolIdYearIdSchemas };
+  schemas: ValidationSchemas = { params: SeatingSessionFilterSchema };
   protected handle({
     params,
-  }: IpcRequest<unknown, TSchoolIdYearId>): Promise<unknown> {
-    return seatingSessionService.findByYear(params.schoolId!, params.yearId!);
+  }: IpcRequest<unknown, TSeatingSessionFilter>): Promise<unknown> {
+    return seatingSessionService.findMany(params as any);
+  }
+}
+
+export class GetSeatingSession extends AbstractEndpoint<any> {
+  route = SeatingSessionRoutes.DETAIL;
+  method = HttpMethod.GET;
+  schemas: ValidationSchemas = { params: SeatingSessionIdSchema };
+  protected handle({
+    params,
+  }: IpcRequest<unknown, TSeatingSessionIdSchema>): Promise<unknown> {
+    return seatingSessionService.findById(params.sessionId);
   }
 }
 
@@ -47,8 +55,8 @@ export class GetSessionWithAssignments extends AbstractEndpoint<any> {
 }
 
 /** Initialise une nouvelle session de placement (ex: Examen Semestre 1). */
-export class CreateSeatingSession extends AbstractEndpoint<any> {
-  route = SeatingSessionRoutes.CREATE;
+export class PostSeatingSession extends AbstractEndpoint<any> {
+  route = SeatingSessionRoutes.ALL;
   method = HttpMethod.POST;
   schemas: ValidationSchemas = { body: SeatingSessionCreateSchema };
   protected handle({

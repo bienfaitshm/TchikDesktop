@@ -84,10 +84,11 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   seatings.DeleteLocalRoom,
 
   // --- SEATING : Sessions ---
-  seatings.GetSeatingSessionsByYear,
-  seatings.CreateSeatingSession,
-  seatings.DeleteSeatingSession,
+  seatings.GetSeatingSessions,
+  seatings.PostSeatingSession,
+  seatings.GetSeatingSession,
   seatings.UpdateSeatingSession,
+  seatings.DeleteSeatingSession,
   seatings.GetSessionRoomsStatus,
   seatings.GetSessionWithAssignments,
 
