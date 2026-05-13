@@ -1,4 +1,5 @@
 import { eq, and, sql, count, getTableColumns } from "drizzle-orm";
+import { getLogger } from "@/packages/logger";
 import { db } from "../config";
 import {
   classroomEnrolements,
@@ -7,7 +8,7 @@ import {
   studyYears,
 } from "../schemas/schema";
 import { getVisibleUserColumns } from "./user.query";
-import { BaseRepository } from "./base-repository";
+import { BaseRepository } from "./base-repository.new";
 import type {
   TEnrolement,
   TEnrolementInsert,
@@ -30,10 +31,13 @@ export class EnrolementQuery extends BaseRepository<
   typeof classroomEnrolements,
   TEnrolement,
   TEnrolementInsert,
-  TEnrolementUpdate
+  TEnrolementUpdate,
+  typeof db
 > {
   constructor() {
     super(
+      db,
+      getLogger("EnrolementRepository"),
       classroomEnrolements,
       classroomEnrolements.enrolementId,
       "Enrolement",
@@ -56,7 +60,7 @@ export class EnrolementQuery extends BaseRepository<
 
   protected override getQuerySet(): any {
     const { classId, schoolId, ...classFields } = getTableColumns(classRooms);
-    return db
+    return this.db
       .select({
         ...getTableColumns(classroomEnrolements),
         student: getVisibleUserColumns(),
@@ -80,7 +84,7 @@ export class EnrolementQuery extends BaseRepository<
   async getDashboardMetrics(filters: { schoolId: string; yearId: string }) {
     this.validateContext(filters);
     try {
-      const [results] = await db
+      const [results] = await this.db
         .select({
           total: count(),
           news: sql<number>`count(case when ${classroomEnrolements.isNewStudent} = true then 1 end)`,
@@ -104,7 +108,7 @@ export class EnrolementQuery extends BaseRepository<
 
   async getCountByClass(filters: { schoolId: string; yearId: string }) {
     this.validateContext(filters);
-    return db
+    return this.db
       .select({
         classroomId: classroomEnrolements.classroomId,
         label: classRooms.identifier,
@@ -144,7 +148,7 @@ export class EnrolementQuery extends BaseRepository<
     isInSystem: boolean;
     enrolement: TEnrolementInsert;
   }) {
-    return await db.transaction(async (tx) => {
+    return await this.db.transaction(async (tx) => {
       try {
         let targetStudentId = payload.studentId;
 

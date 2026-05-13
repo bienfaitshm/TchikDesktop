@@ -1,11 +1,14 @@
 import { ExamOptimizer, Student, Room, RoomReport } from "exam-seating-engine";
 import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db";
-import { getLogger } from "@/packages/logger";
+import type { CustomLogger } from "@/packages/logger";
 import type {
   LocalRoomQuery,
   EnrolementQuery,
 } from "@/packages/@core/data-access/db/queries";
-import type { TEnrolementDetails } from "@/packages/@core/data-access/db/schemas/types";
+import type {
+  TEnrolementDetails,
+  TLocalRoom,
+} from "@/packages/@core/data-access/db/schemas/types";
 
 export type StudentReport = Student & Pick<TEnrolementDetails, "classroom">;
 export type TSeatingGenerator = RoomReport<StudentReport>;
@@ -15,7 +18,13 @@ interface SeatingConfig {
   columnsPerRoom: number;
 }
 
-const logger = getLogger("SeatingService");
+interface DataParams {
+  localRoomIds: string[];
+  classRoomIds: string[];
+  confortRatio: number;
+  schoolId: string;
+  yearId: string;
+}
 
 const SeatingMapper = {
   toDomainStudent(enrollement: TEnrolementDetails): StudentReport {
@@ -33,7 +42,7 @@ const SeatingMapper = {
     };
   },
 
-  toDomainRoom(dbRoom: any): Room {
+  toDomainRoom(dbRoom: TLocalRoom): Room {
     return {
       id: dbRoom.localRoomId,
       maxCapacity: dbRoom.maxCapacity,
@@ -52,37 +61,35 @@ export class SeatingService {
   constructor(
     private readonly roomRepo: LocalRoomQuery,
     private readonly enrolementRepo: EnrolementQuery,
+    private readonly logger: CustomLogger,
   ) {}
 
-  public async generate<T extends {}>(
-    schoolId: string,
-    yearId: string,
-    options?: T,
-  ): Promise<TSeatingGenerator[]> {
-    const config = { ...this.DEFAULT_CONFIG, ...(options ?? {}) };
+  public async generate(data: DataParams): Promise<TSeatingGenerator[]> {
+    const config: SeatingConfig = {
+      confortRatio: data.confortRatio ?? this.DEFAULT_CONFIG.confortRatio,
+      columnsPerRoom: this.DEFAULT_CONFIG.columnsPerRoom,
+    };
 
-    logger.info("Starting seating plan generation", {
-      schoolId,
-      yearId,
-      config,
-    });
+    this.logger.info("Starting seating plan generation", data);
 
-    const [dbRooms, dbEnrollements] = await this.fetchData(schoolId, yearId);
+    const [dbRooms, dbEnrollements] = await this.fetchData(data);
 
     // Validation des données d'entrée
     if (!dbRooms.length || !dbEnrollements.length) {
-      logger.warn("Generation aborted: Missing rooms or enrollments", {
-        schoolId,
+      this.logger.warn("Generation aborted: Missing rooms or enrollments", {
+        ...data,
         roomCount: dbRooms.length,
         enrollmentCount: dbEnrollements.length,
       });
       return [];
     }
 
-    const students = dbEnrollements.map(SeatingMapper.toDomainStudent);
+    const students = dbEnrollements.map((enrolement) =>
+      SeatingMapper.toDomainStudent(enrolement as TEnrolementDetails),
+    );
     const rooms = dbRooms.map(SeatingMapper.toDomainRoom);
 
-    logger.debug("Data mapped to domain entities", {
+    this.logger.debug("Data mapped to domain entities", {
       studentCount: students.length,
       roomCount: rooms.length,
     });
@@ -95,8 +102,8 @@ export class SeatingService {
         config.columnsPerRoom,
       );
 
-      logger.info("Seating plan generated successfully", {
-        schoolId,
+      this.logger.info("Seating plan generated successfully", {
+        ...data,
         reportCount: reports.length,
         totalStudentsSeated: reports.reduce(
           (acc, r) => acc + r.studentCount,
@@ -106,8 +113,8 @@ export class SeatingService {
 
       return reports;
     } catch (error) {
-      logger.error("Seating engine failed to process plan", {
-        schoolId,
+      this.logger.error("Seating engine failed to process plan", {
+        ...data,
         error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -115,16 +122,27 @@ export class SeatingService {
     }
   }
 
-  private async fetchData(schoolId: string, yearId: string) {
+  private async fetchData({
+    schoolId,
+    yearId,
+    classRoomIds,
+    localRoomIds,
+  }: DataParams) {
     try {
       return await Promise.all([
-        this.roomRepo.findMany({ where: { schoolId } }),
+        this.roomRepo.findMany({
+          where: { schoolId },
+          whereIn: { localRoomId: localRoomIds },
+        }),
         this.enrolementRepo.findMany({
           where: { schoolId, yearId, status: STUDENT_STATUS_ENUM.EN_COURS },
+          whereIn: {
+            classroomId: classRoomIds,
+          },
         }),
       ]);
     } catch (error) {
-      logger.error("Database access failed during seating fetch", {
+      this.logger.error("Database access failed during seating fetch", {
         schoolId,
         yearId,
         error: error instanceof Error ? error.message : "DB Error",

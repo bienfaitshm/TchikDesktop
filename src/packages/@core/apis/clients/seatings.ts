@@ -10,6 +10,7 @@ import type {
   TSeatingAssignmentAttributes,
   TSeatingSessionFilter,
   SeatingGenerator,
+  TSchoolYear,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   LocalRoomRoutes,
@@ -71,7 +72,7 @@ export type SeatingApi = Readonly<{
   getSessionWithAssignments(sessionId: string): Promise<any>;
 
   // --- Seating Assignments ---
-  generateSeating(data: SeatingGenerator): Promise<any>;
+  generateSeating(data: SeatingGenerator & TSchoolYear): Promise<any>;
   fetchRoomLayout(
     sessionId: string,
     localRoomId: string,

@@ -66,6 +66,7 @@ import {
 // =============================================================================
 
 export type TSchoolYearSchemaAttibutes = z.infer<typeof SchoolYearSchema>;
+export type TSchoolYear = TSchoolYearSchemaAttibutes;
 
 /** Type des attributs complets d'une École (lecture depuis la DB) */
 export type TSchoolAttributes = z.infer<typeof SchoolAttributesSchema>;

@@ -9,10 +9,17 @@ import {
   IpcRequest,
   ValidationSchemas,
 } from "@/packages/electron-ipc-rest";
+import {
+  seatingGeneratorSchema,
+  SchoolYearSchema,
+  type SeatingGenerator,
+  type TSchoolYear,
+} from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
 import { SeatingAssignmentRoutes } from "../../routes-constant";
 
 import { SeatingService } from "../services/seating.service";
+import { getLogger } from "@/packages/logger";
 
 /** Genere le mise en place */
 
@@ -20,21 +27,17 @@ export class GenerateSeating extends AbstractEndpoint<any> {
   route = SeatingAssignmentRoutes.GENERATING;
   method = HttpMethod.POST;
   schemas: ValidationSchemas = {
-    body: z.object({
-      schoolId: z.string(),
-      sessionId: z.string().optional(),
-      yearId: z.string(),
-    }),
+    body: seatingGeneratorSchema.merge(SchoolYearSchema),
   };
   protected handle({
-    body: { schoolId, sessionId, yearId },
-  }: IpcRequest<{
-    sessionId: string;
-    schoolId: string;
-    yearId: string;
-  }>): Promise<unknown> {
-    const seating = new SeatingService(localRoomService, enrolementService);
-    return seating.generate(schoolId, yearId, { sessionId });
+    body,
+  }: IpcRequest<SeatingGenerator & TSchoolYear>): Promise<unknown> {
+    const seating = new SeatingService(
+      localRoomService,
+      enrolementService,
+      getLogger("SeatingService"),
+    );
+    return seating.generate(body);
   }
 }
 
