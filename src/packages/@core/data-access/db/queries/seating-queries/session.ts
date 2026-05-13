@@ -27,7 +27,8 @@ export class SeatingSessionQuery extends BaseRepository<
   typeof seatingSessions,
   TSeatingSession,
   TSeatingSessionInsert,
-  TSeatingSessionUpdate
+  TSeatingSessionUpdate,
+  typeof db
 > {
   constructor() {
     super(
@@ -41,7 +42,7 @@ export class SeatingSessionQuery extends BaseRepository<
   }
 
   async findByYear(schoolId: string, yearId: string) {
-    return db
+    return this.db
       .select()
       .from(seatingSessions)
       .where(
@@ -97,7 +98,7 @@ export class SeatingSessionQuery extends BaseRepository<
               localRoom: true,
               enrolement: {
                 with: {
-                  user: true,
+                  student: true,
                 },
               },
             },
@@ -126,6 +127,7 @@ export class SeatingSessionQuery extends BaseRepository<
 
       return sessionDetails;
     } catch (error) {
+      console.log("error", error);
       this.logError("getSessionWithAssignments", error, { sessionId });
       throw error;
     }

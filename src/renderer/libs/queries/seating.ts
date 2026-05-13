@@ -1,4 +1,4 @@
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "./base-query";
 import { seating } from "@/renderer/libs/apis";
 import {
   TLocalRoomFilter,
@@ -19,12 +19,10 @@ import type {
 
 /** @description Hook pour récupérer les locaux (salles physiques) */
 export function useGetLocalRooms(params?: TLocalRoomFilter) {
-  const queryKey = ["GET_LOCAL_ROOMS", params];
-  const query = useSuspenseQuery({
-    queryKey,
+  return useSuspenseQuery({
+    queryKey: ["GET_LOCAL_ROOMS", params],
     queryFn: () => seating.fetchLocalRooms(params),
   });
-  return { ...query, queryKey };
 }
 
 /** @description Hook pour créer un nouveau local */
@@ -61,12 +59,17 @@ export function useGetSeatingSessions(params: {
   schoolId: string;
   yearId: string;
 }) {
-  const queryKey = ["GET_SEATING_SESSIONS", params];
-  const query = useSuspenseQuery({
-    queryKey,
+  return useSuspenseQuery({
+    queryKey: ["GET_SEATING_SESSIONS", params],
     queryFn: () => seating.fetchSessionsByYear(params),
   });
-  return { ...query, queryKey };
+}
+
+export function useSessionWithAssignments(sessionId: string) {
+  return useSuspenseQuery({
+    queryKey: ["GET_SEATING_WITH_ASSIGNMENTS", sessionId],
+    queryFn: () => seating.getSessionWithAssignments(sessionId),
+  });
 }
 
 /** @description Hook pour récupérer le statut d'occupation des salles d'une session */

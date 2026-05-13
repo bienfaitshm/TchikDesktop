@@ -1,5 +1,5 @@
 import z from "zod";
-import { localRoomService } from "@/packages/@core/data-access/db/queries/seating.query";
+import { localRoomService } from "@/packages/@core/data-access/db/queries/seating-queries";
 import {
   HttpMethod,
   IpcRequest,

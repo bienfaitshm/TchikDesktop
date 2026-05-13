@@ -1,5 +1,5 @@
 import z from "zod";
-import { seatingSessionService } from "@/packages/@core/data-access/db/queries/seating.query";
+import { seatingSessionService } from "@/packages/@core/data-access/db/queries/seating-queries";
 import {
   HttpMethod,
   IpcRequest,
@@ -35,14 +35,14 @@ export class GetSeatingSessionsByYear extends AbstractEndpoint<any> {
 }
 
 /** Récupère les détails complets d'une session avec les élèves assignés. */
-export class GetFullSessionDetails extends AbstractEndpoint<any> {
+export class GetSessionWithAssignments extends AbstractEndpoint<any> {
   route = SeatingSessionRoutes.FULL_DETAILS;
   method = HttpMethod.GET;
   schemas: ValidationSchemas = { params: SeatingSessionIdSchema };
   protected handle({
     params,
   }: IpcRequest<unknown, TSeatingSessionIdSchema>): Promise<unknown> {
-    return seatingSessionService.getFullSessionDetails(params.sessionId);
+    return seatingSessionService.getSessionWithAssignments(params.sessionId);
   }
 }
 

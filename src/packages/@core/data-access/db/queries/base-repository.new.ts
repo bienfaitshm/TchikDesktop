@@ -24,9 +24,10 @@ export abstract class BaseRepository<
   TSelect,
   TInsert,
   TUpdate,
+  TDb extends AnyDrizzleDB = AnyDrizzleDB,
 > {
   constructor(
-    protected readonly db: AnyDrizzleDB,
+    protected readonly db: TDb,
     protected readonly logger: ILogger,
     protected readonly table: TTable,
     protected readonly idColumn: AnyColumn,

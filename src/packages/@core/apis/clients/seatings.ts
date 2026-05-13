@@ -67,7 +67,7 @@ export type SeatingApi = Readonly<{
   ): Promise<SeatingSessionData>;
   deleteSession(sessionId: string): Promise<void>;
   fetchSessionRoomsStatus(sessionId: string): Promise<RoomStatusData[]>;
-  fetchFullSessionDetails(sessionId: string): Promise<any>;
+  getSessionWithAssignments(sessionId: string): Promise<any>;
 
   // --- Seating Assignments ---
   generateSeating(data: SeatingGenerator): Promise<any>;
@@ -140,7 +140,7 @@ export function createSeatingApis(ipcClient: IpcClient): SeatingApi {
       });
     },
 
-    fetchFullSessionDetails(sessionId) {
+    getSessionWithAssignments(sessionId) {
       return ipcClient.get(SeatingSessionRoutes.FULL_DETAILS, {
         params: { sessionId },
       });

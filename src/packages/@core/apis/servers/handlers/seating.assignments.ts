@@ -2,7 +2,7 @@ import z from "zod";
 import {
   localRoomService,
   seatingAssignmentService,
-} from "@/packages/@core/data-access/db/queries/seating.query";
+} from "@/packages/@core/data-access/db/queries/seating-queries";
 import { enrolementService } from "@/packages/@core/data-access/db/queries/enrolement.query";
 import {
   HttpMethod,

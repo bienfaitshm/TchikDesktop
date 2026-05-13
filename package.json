@@ -116,6 +116,7 @@
     "drizzle-kit": "^0.31.10",
     "electron": "^37.2.3",
     "electron-builder": "^26.0.12",
+    "electron-devtools-installer": "^4.0.0",
     "electron-vite": "^4.0.0",
     "eslint": "^8.47.0",
     "eslint-plugin-react": "^7.33.2",

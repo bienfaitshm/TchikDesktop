@@ -87,8 +87,9 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   seatings.GetSeatingSessionsByYear,
   seatings.CreateSeatingSession,
   seatings.DeleteSeatingSession,
+  seatings.UpdateSeatingSession,
   seatings.GetSessionRoomsStatus,
-  seatings.GetFullSessionDetails,
+  seatings.GetSessionWithAssignments,
 
   // --- SEATING : Assignments ---
   seatings.GetRoomLayout,
