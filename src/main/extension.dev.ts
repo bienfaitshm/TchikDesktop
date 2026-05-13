@@ -43,5 +43,5 @@ export async function setupDevelopmentEnvironment(
     }
   });
 
-  await Promise.all([installationPromises]);
+  await Promise.all(installationPromises);
 }
