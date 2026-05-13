@@ -11,6 +11,7 @@ import type { BulkAssignParams } from "@/packages/@core/apis/clients/seatings";
 import type {
   TSeatingAssignmentCreate,
   SeatingGenerator,
+  TSeatingSessionFilter,
 } from "@/packages/@core/data-access/schema-validations";
 
 // =============================================================================
@@ -55,13 +56,17 @@ export function useDeleteLocalRoom() {
 // =============================================================================
 
 /** @description Hook pour récupérer les sessions d'une année scolaire */
-export function useGetSeatingSessions(params: {
-  schoolId: string;
-  yearId: string;
-}) {
+export function useGetSeatingSessions(filters?: TSeatingSessionFilter) {
   return useSuspenseQuery({
-    queryKey: ["GET_SEATING_SESSIONS", params],
-    queryFn: () => seating.fetchSessionsByYear(params),
+    queryKey: ["GET_SEATING_SESSIONS", filters],
+    queryFn: () => seating.fetchSessions(filters),
+  });
+}
+
+export function useGetSeatingSessionById(sessionId: string) {
+  return useSuspenseQuery({
+    queryKey: ["GET_SEATING_SESSIONS", sessionId],
+    queryFn: () => seating.fetchSessionById(sessionId),
   });
 }
 

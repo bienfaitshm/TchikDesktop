@@ -4,13 +4,20 @@ import { Wand2 } from "lucide-react"; // Icônes pour l'UX
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
 import { SeatingGeneratorDialog } from "@/renderer/dialog-actions/seating-generator";
-import { useSessionWithAssignments } from "@/renderer/libs/queries/seating";
+import {
+  useGetSeatingSessionById,
+  useSessionWithAssignments,
+} from "@/renderer/libs/queries/seating";
 
 export const SeatingSessionDetailPage = () => {
   const { sessionId } = useParams();
   const { schoolId, yearId } = useSchoolContext();
-  const { data: seatings } = useSessionWithAssignments(sessionId as string);
-  console.log("seatings", seatings);
+  const { data: seatingSession } = useGetSeatingSessionById(
+    sessionId as string,
+  );
+  console.log("seatingSession", seatingSession);
+  // const { data: seatings } = useSessionWithAssignments(sessionId as string);
+  // console.log("seatings", seatings);
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
       <PageShell
