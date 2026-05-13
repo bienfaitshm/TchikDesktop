@@ -109,6 +109,7 @@ export const SeatingAssignmentRoutes = {
   GENERATING: "seating/generating",
   LAYOUT: "seating/assignments/layout/:sessionId/:localRoomId",
   BULK: "seating/assignments/bulk",
+  RE_ASSIGNED: "seating/assignments/assignment",
   UNASSIGNED: "seating/assignments/unassigned/:sessionId/:yearId",
   FIND_STUDENT: "seating/assignments/find/:sessionId/:enrolementId",
   CLEAR_ROOM: "seating/assignments/clear",

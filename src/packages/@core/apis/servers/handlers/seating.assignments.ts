@@ -3,6 +3,7 @@ import {
   localRoomService,
   seatingAssignmentService,
 } from "@/packages/@core/data-access/db/queries/seating-queries";
+import { getLogger } from "@/packages/logger";
 import { enrolementService } from "@/packages/@core/data-access/db/queries/enrolement.query";
 import {
   HttpMethod,
@@ -12,14 +13,14 @@ import {
 import {
   seatingGeneratorSchema,
   SchoolYearSchema,
+  BulkSeatingAssignmentSchema,
+  type TBulkSeatingAssignment,
   type SeatingGenerator,
   type TSchoolYear,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
 import { SeatingAssignmentRoutes } from "../../routes-constant";
-
 import { SeatingService } from "../services/seating.service";
-import { getLogger } from "@/packages/logger";
 
 /** Genere le mise en place */
 
@@ -71,6 +72,19 @@ export class BulkAssignStudents extends AbstractEndpoint<any> {
   schemas: ValidationSchemas = {};
   protected handle({ body }: IpcRequest<any>): Promise<unknown> {
     return seatingAssignmentService.bulkAssign(body);
+  }
+}
+
+export class RebuildAssignments extends AbstractEndpoint<any> {
+  route = SeatingAssignmentRoutes.RE_ASSIGNED;
+  method = HttpMethod.POST;
+  schemas: ValidationSchemas = {
+    body: BulkSeatingAssignmentSchema,
+  };
+  protected handle({
+    body: { sessionId, assignments },
+  }: IpcRequest<TBulkSeatingAssignment>): Promise<unknown> {
+    return seatingAssignmentService.rebuildAssignments(sessionId, assignments);
   }
 }
 

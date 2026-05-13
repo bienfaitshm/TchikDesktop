@@ -83,16 +83,7 @@ export const SeatingAssignmentUpdateSchema = SeatingAssignmentCreateSchema.omit(
 export const BulkSeatingAssignmentSchema = z
   .object({
     sessionId: z.string(),
-    localRoomId: z.string(),
-    assignments: z
-      .array(
-        z.object({
-          enrolementId: z.string(),
-          rowPosition: z.number().int().nonnegative(),
-          columnPosition: z.number().int().nonnegative(),
-        }),
-      )
-      .min(1),
+    assignments: z.array(SeatingAssignmentCreateSchema).min(1),
   })
   .refine(
     (data) => {
