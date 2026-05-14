@@ -49,7 +49,7 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
   const showContent = hasData || props.hasAssignments;
 
   return (
-    <Dialog modal open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog modal={false} open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <ButtonGenerator isLoading={isGenerating} hasGenerated={showContent} />
       </DialogTrigger>
@@ -68,18 +68,15 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
               <DialogTitle className="text-xl font-bold tracking-tight">
                 Générateur de mise en place
               </DialogTitle>
-              <DialogDescription className="text-xs mt-0.5">
-                Session :{" "}
-                <span className="font-semibold text-foreground uppercase">
-                  {props.sessionName}
-                </span>
+              <DialogDescription className="text-xs mt-0.5 font-semibold text-foreground uppercase">
+                {props.sessionName}
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
         <ScrollArea className="flex-1 bg-slate-50/50 dark:bg-background/50">
-          <div className="max-w-6xl mx-auto p-8 space-y-12">
+          <div className="mx-auto p-8 space-y-12">
             <section
               className={cn(
                 "bg-background rounded-xl border p-6 shadow-sm transition-opacity",
@@ -125,7 +122,7 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
           </div>
         </ScrollArea>
 
-        <DialogFooter className="px-8 py-4 border-t bg-background shrink-0 flex flex-row items-center justify-between sm:justify-between">
+        <DialogFooter className="px-8 py-4 border-t bg-background space-x-10">
           <DialogClose asChild>
             <Button
               variant="ghost"

@@ -66,8 +66,9 @@ export const SeatingDisplayContent = ({
           Placement déjà finalisé
         </h4>
         <p className="text-sm text-emerald-700/70 dark:text-emerald-500/70 max-w-sm mt-2">
-          Le seating pour cette session a déjà été généré et enregistré avec
-          succès. Vous pouvez le modifier en relançant une génération ci-dessus.
+          La mise en place pour cette session a déjà été générée et enregistrée
+          avec succès. Vous pouvez la modifier en relançant une génération
+          ci-dessus.
         </p>
       </div>
     );
