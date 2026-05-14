@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 
-import { HashRouter as Router, Route, Routes } from "react-router"
+import { HashRouter as Router, Route, Routes } from "react-router";
 
 import Launcher from "@/renderer/screens/launcher";
 import { HomePage } from "@/renderer/screens/home";
@@ -10,29 +10,35 @@ import { SchoolsPage } from "@/renderer/screens/schools";
 import { OptionPage } from "@/renderer/screens/options";
 import StudentScreen from "@/renderer/screens/students";
 import { LocalRoomPage } from "@/renderer/screens/locals";
-import MiseEnPlaceScreen from "@/renderer/screens/mise-en-places";
 import MainLayout from "@/renderer/screens/layout";
 import {
   ConfigurationLayoutScreen,
   ConfigCreateSchoolPage,
   SchoolConfigPage,
   StudyYearConfigPage,
-  NewStudyYearConfigurationPage
+  NewStudyYearConfigurationPage,
 } from "@/renderer/screens/config";
-import { AboutPage, AccountPage, DeveloperPage, HelpPage, SettingsPage, NotificationPage} from "@/renderer/screens/settings"
+import {
+  AboutPage,
+  AccountPage,
+  DeveloperPage,
+  HelpPage,
+  SettingsPage,
+  NotificationPage,
+} from "@/renderer/screens/settings";
 import { EnrollmentPage } from "@/renderer/screens/enrollments";
-import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms"
+import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms";
 
-import { StudentPage } from "@/renderer/screens/classrooms/students"
-import { StudentLayout } from "@/renderer/components/layouts/students.layout"
+import { StudentPage } from "@/renderer/screens/classrooms/students";
+import { StudentLayout } from "@/renderer/components/layouts/students.layout";
 import { ConfigGuard } from "@/renderer/components/layouts/config-guard";
 
-import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner"
+import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 import { SettingLayout } from "@/renderer/components/layouts/settings.layout";
-import { SeatingPage, SeatingSessionDetailPage } from "@/renderer/screens/seating"
-
-
-
+import {
+  SeatingPage,
+  SeatingSessionDetailPage,
+} from "@/renderer/screens/seating";
 
 export default function RouterProvider(): JSX.Element {
   return (
@@ -49,7 +55,10 @@ export default function RouterProvider(): JSX.Element {
           <Route index element={<HomePage />} />
           <Route path="inscriptions" element={<EnrollmentPage />} />
           <Route path="seating" element={<SeatingPage />} />
-           <Route path="seating/:sessionId" element={<SeatingSessionDetailPage />} />
+          <Route
+            path="seating/:sessionId"
+            element={<SeatingSessionDetailPage />}
+          />
           {/* schools */}
           <Route path="students" element={<StudentScreen />} />
           <Route path="options" element={<OptionPage />} />
@@ -73,16 +82,18 @@ export default function RouterProvider(): JSX.Element {
             <Route path="about" element={<AboutPage />} />
             <Route path="notifications" element={<NotificationPage />} />
           </Route>
-         
         </Route>
         <Route path="configuration" element={<ConfigurationLayoutScreen />}>
           <Route index element={<SchoolConfigPage />} />
           <Route path="school/new" element={<ConfigCreateSchoolPage />} />
           <Route path="school-year" element={<StudyYearConfigPage />} />
-          <Route path="school-year/new" element={<NewStudyYearConfigurationPage />} />
+          <Route
+            path="school-year/new"
+            element={<NewStudyYearConfigurationPage />}
+          />
         </Route>
         <Route path="*" element={<h2>404 Not Found</h2>} />
       </Routes>
     </Router>
-  )
+  );
 }
