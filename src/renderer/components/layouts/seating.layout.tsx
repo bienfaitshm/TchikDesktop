@@ -1,89 +1,118 @@
 "use client";
 
 import * as React from "react";
-import { useParams, Outlet, Link } from "react-router";
-import { Wand2 } from "lucide-react";
+import { useParams, Outlet, useNavigate } from "react-router";
+import { ChevronLeft, Wand2 } from "lucide-react";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
 import { SeatingGeneratorDialog } from "@/renderer/dialog-actions/seating-generator";
 import { useGetSeatingSessionById } from "@/renderer/libs/queries/seating";
 import { SidebarContainer } from "@/renderer/components/sidebar-container";
 import { LocalroomSidebar } from "@/renderer/components/localroom-sidebar";
+import { Skeleton } from "@/renderer/components/ui/skeleton";
+import { Button } from "../ui/button";
+
+export interface SeatingLayoutContext {
+  schoolId: string;
+  yearId: string;
+  sessionId: string;
+  seatingSession: NonNullable<
+    ReturnType<typeof useGetSeatingSessionById>["data"]
+  >;
+}
 
 export const SeatingSessionLayout: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const { schoolId, yearId } = useSchoolContext();
+  const navigate = useNavigate();
 
-  const { data: seatingSession } = useGetSeatingSessionById(sessionId!);
+  const { data: seatingSession, isLoading } = useGetSeatingSessionById(
+    sessionId!,
+  );
 
-  if (!seatingSession) return null;
+  if (isLoading) {
+    return (
+      <PageShell maxWidth="full" header={<Skeleton className="h-14 w-full" />}>
+        <div className="p-6">
+          <Skeleton className="h-[500px] w-full rounded-3xl" />
+        </div>
+      </PageShell>
+    );
+  }
 
+  if (!seatingSession || !sessionId) return null;
   const { hasAssignments, sessionName } = seatingSession;
+  if (hasAssignments) {
+    return (
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 h-full">
+        <SidebarContainer direction="horizontal" sidebar={<LocalroomSidebar />}>
+          <Outlet
+            context={
+              {
+                schoolId,
+                yearId,
+                sessionId,
+                seatingSession,
+              } satisfies SeatingLayoutContext
+            }
+          />
+        </SidebarContainer>
+      </div>
+    );
+  }
 
   return (
-    <PageShell
-      maxWidth="full"
-      header={
-        <div className="flex items-center justify-between w-full py-2">
-          <div className="space-y-1">
-            <h1 className="text-xl font-bold tracking-tight text-foreground">
-              Placement des candidats
-            </h1>
-            {sessionName ? (
-              <Link
-                to="/seating"
-                className="text-sm font-medium text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                {sessionName}
-              </Link>
-            ) : (
-              <span className="text-sm text-muted-foreground">
-                Session non définie
-              </span>
-            )}
-          </div>
+    <div className="flex flex-col gap-8 p-6 max-w-7xl mx-auto w-full mt-5">
+      <header className="flex items-start gap-4 sm:gap-6">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 shrink-0 rounded-xl shadow-sm hover:bg-accent"
+          onClick={() => navigate(-1)}
+        >
+          <ChevronLeft className="size-5" />
+          <span className="sr-only">Retour</span>
+        </Button>
 
-          <div className="flex items-center gap-3">
-            <SeatingGeneratorDialog
-              sessionId={sessionId!}
-              yearId={yearId}
-              schoolId={schoolId}
-              hasAssignments={hasAssignments}
-              sessionName={sessionName}
-            />
-          </div>
-        </div>
-      }
-    >
-      {hasAssignments ? (
-        <div className="animate-in fade-in duration-500">
-          <SidebarContainer
-            direction="horizontal"
-            sidebar={<LocalroomSidebar />}
-          >
-            <Outlet context={{ schoolId, yearId, sessionId, seatingSession }} />
-          </SidebarContainer>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center min-h-[500px] border border-dashed rounded-2xl bg-muted/5 mt-4">
-          <div className="relative">
-            <div className="absolute -inset-1 rounded-full bg-primary/20 blur animate-pulse" />
-            <div className="relative bg-background border p-4 rounded-full mb-6 shadow-sm">
-              <Wand2 className="size-8 text-primary" />
-            </div>
-          </div>
-
-          <h3 className="text-lg font-semibold tracking-tight">
-            Configuration requise
-          </h3>
-          <p className="text-sm text-muted-foreground max-w-sm text-center mt-2 px-6 leading-relaxed">
-            Aucun plan de salle n'a été établi pour cette session. Utilisez le
-            générateur pour répartir automatiquement vos candidats.
+        <div className="space-y-1.5">
+          <h1 className="text-xl font-extrabold tracking-tight sm:text-1xl lg:text-2xl">
+            {sessionName}
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground leading-none">
+            Configuration du plan de salle et répartition des candidats.
           </p>
         </div>
-      )}
-    </PageShell>
+      </header>
+      <div className="flex flex-col items-center justify-center min-h-[65vh] border-2 border-dashed rounded-[2rem] bg-muted/5 mt-4 transition-colors hover:bg-muted/10">
+        <div className="relative mb-6">
+          <div className="absolute -inset-4 rounded-full bg-primary/10 blur-2xl animate-pulse" />
+          <div className="relative bg-background border shadow-sm p-6 rounded-3xl">
+            <Wand2 className="size-12 text-primary" />
+          </div>
+        </div>
+
+        <h3 className="text-2xl font-semibold tracking-tight">
+          Plan de salle vide
+        </h3>
+        <p className="text-muted-foreground max-w-sm text-center mt-3 leading-relaxed">
+          Organisez vos candidats en quelques clics. Utilisez le générateur pour
+          assigner automatiquement les places.
+        </p>
+
+        <div className="mt-10 flex flex-col items-center gap-4">
+          {/* CTA Secondaire au centre car l'utilisateur regarde le centre de l'écran */}
+          <SeatingGeneratorDialog
+            sessionId={sessionId}
+            yearId={yearId}
+            schoolId={schoolId}
+            hasAssignments={hasAssignments}
+            sessionName={sessionName}
+          />
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+            Action requise pour continuer
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
-
-SeatingSessionLayout.displayName = "SeatingSessionLayout";
