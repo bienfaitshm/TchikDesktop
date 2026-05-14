@@ -20,6 +20,12 @@ import {
 
 export type LocalRoomData = TLocalRoomAttributes;
 export type SeatingSessionData = TSeatingSessionAttributes;
+/**
+ * Ajoute l'état d'assignation à un type de base.
+ */
+export type WithAssignment<T> = T & {
+  hasAssignments?: boolean;
+};
 
 /** Interface pour les résultats de statut d'occupation des salles */
 export type RoomStatusData = {
@@ -60,8 +66,10 @@ export type SeatingApi = Readonly<{
   // --- Seating Sessions ---
   fetchSessions(
     filters?: TSeatingSessionFilter,
-  ): Promise<TSeatingSessionAttributes[]>;
-  fetchSessionById(sessionId: string): Promise<TSeatingSessionAttributes>;
+  ): Promise<WithAssignment<TSeatingSessionAttributes>[]>;
+  fetchSessionById(
+    sessionId: string,
+  ): Promise<WithAssignment<TSeatingSessionAttributes>>;
   createSession(data: TSeatingSessionCreate): Promise<SeatingSessionData>;
   updateSession(
     sessionId: string,

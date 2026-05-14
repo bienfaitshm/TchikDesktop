@@ -5,6 +5,6 @@ export { OptionColumns } from "./columns.options";
 export { SchoolColumns } from "./columns.school";
 export { StudentColumns } from "./columns.students";
 export { StudyYearColumns } from "./columns.study-years";
-export { SeatingSessionColumns } from "./columns.seating-session";
+export { seatingSessionColumns } from "./columns.seating-session";
 export { SeatingStudentColumns } from "./columns.seating-student";
 export * from "./columns.utils";

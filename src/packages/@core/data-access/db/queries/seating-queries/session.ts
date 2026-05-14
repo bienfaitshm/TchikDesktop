@@ -45,12 +45,15 @@ export class SeatingSessionQuery extends BaseRepository<
     return this.db
       .select({
         ...getTableColumns(this.table),
-        hasAssignments: sql<boolean>`EXISTS (
-          SELECT 1 FROM ${seatingAssignments} 
-          WHERE ${seatingAssignments.sessionId} = ${seatingSessions.sessionId}
-        )`.mapWith(Boolean),
+        hasAssignments:
+          sql`count(${seatingAssignments.assignmentId}) > 0`.mapWith(Boolean),
       })
       .from(this.table)
+      .leftJoin(
+        seatingAssignments,
+        eq(seatingAssignments.sessionId, this.table.sessionId),
+      )
+      .groupBy(this.table.sessionId)
       .$dynamic();
   }
 

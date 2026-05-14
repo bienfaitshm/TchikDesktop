@@ -15,7 +15,7 @@ import {
   DataTableToolbar,
 } from "@/renderer/components/tables/data-table";
 import {
-  SeatingSessionColumns,
+  seatingSessionColumns,
   enhanceColumnsExpandable,
 } from "@/renderer/components/tables/columns";
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
@@ -36,6 +36,7 @@ import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
 import { Link } from "react-router";
 import type { TSeatingSessionAttributes as TSeatingSession } from "@/packages/@core/data-access/schema-validations/types";
+import { ButtonDialogDocumentExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
 
 /**
  * Actions de ligne mémoïsées pour la performance.
@@ -111,11 +112,11 @@ export const SeatingPage = () => {
       >
         <DataTable<TSeatingSession>
           data={sessions}
-          columns={enhanceColumnsExpandable(SeatingSessionColumns)}
+          columns={enhanceColumnsExpandable(seatingSessionColumns) as any}
           keyExtractor={(item) => item.sessionId}
         >
           <DataTableToolbar searchColumn="sessionName">
-            {/* Tu peux ajouter des filtres ici, par exemple par statut (Brouillon, Publiée) */}
+            <ButtonDialogDocumentExport schoolId={schoolId} yearId={yearId} />
           </DataTableToolbar>
 
           <Suspense
