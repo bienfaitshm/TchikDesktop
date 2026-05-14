@@ -1,7 +1,6 @@
 "use client";
 import { NavLink, useNavigate, useParams } from "react-router";
 import { ChevronLeft } from "lucide-react";
-import { cn } from "@/renderer/utils";
 import { Button } from "@/renderer/components/ui/button";
 import { useClassroomSidebar } from "@/renderer/components/classroom-sidebar.hooks";
 import { ClassroomSidebarHeader } from "@/renderer/components/classroom-sidebar.header";
