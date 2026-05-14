@@ -1,12 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { useParams, Outlet } from "react-router";
+import { useParams, Outlet, Link } from "react-router";
 import { Wand2 } from "lucide-react";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
 import { SeatingGeneratorDialog } from "@/renderer/dialog-actions/seating-generator";
 import { useGetSeatingSessionById } from "@/renderer/libs/queries/seating";
+import { SidebarContainer } from "@/renderer/components/sidebar-container";
+import { LocalroomSidebar } from "@/renderer/components/localroom-sidebar";
 
 export const SeatingSessionLayout: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -27,9 +29,18 @@ export const SeatingSessionLayout: React.FC = () => {
             <h1 className="text-xl font-bold tracking-tight text-foreground">
               Placement des candidats
             </h1>
-            <p className="text-xs text-muted-foreground font-medium">
-              Session : <span className="text-primary">{sessionName}</span>
-            </p>
+            {sessionName ? (
+              <Link
+                to="/seating"
+                className="text-sm font-medium text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {sessionName}
+              </Link>
+            ) : (
+              <span className="text-sm text-muted-foreground">
+                Session non définie
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
@@ -46,7 +57,12 @@ export const SeatingSessionLayout: React.FC = () => {
     >
       {hasAssignments ? (
         <div className="animate-in fade-in duration-500">
-          <Outlet context={{ schoolId, yearId, sessionId, seatingSession }} />
+          <SidebarContainer
+            direction="horizontal"
+            sidebar={<LocalroomSidebar />}
+          >
+            <Outlet context={{ schoolId, yearId, sessionId, seatingSession }} />
+          </SidebarContainer>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center min-h-[500px] border border-dashed rounded-2xl bg-muted/5 mt-4">
