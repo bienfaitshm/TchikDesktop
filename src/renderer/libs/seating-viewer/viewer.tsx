@@ -24,6 +24,7 @@ import { getStudentPlacementDetails, RoomState } from "./utils";
 import { Badge } from "@/renderer/components/ui/badge";
 import { Card } from "@/renderer/components/ui/card";
 import { Separator } from "@/renderer/components/ui/separator";
+import { cn } from "@/renderer/utils";
 
 type SeatingViewerProps = {
   rooms: RoomState[];
@@ -53,29 +54,55 @@ export const SeatingViewer: React.FC<SeatingViewerProps> = ({ rooms }) => {
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">
             Locaux de l'examen
           </h3>
-          <TabsList className="flex flex-col h-auto w-full justify-start bg-transparent p-0 gap-1">
-            {rooms.map((room) => (
-              <TabsTrigger
-                key={room.roomId}
-                value={room.roomId}
-                className="w-full justify-between items-center px-4 py-3 rounded-lg border border-transparent
-                           data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/20
-                           hover:bg-muted/80 transition-all text-left shadow-none"
-              >
-                <div className="flex items-center gap-3">
-                  <DoorOpen className="h-4 w-4" />
-                  <span className="text-sm font-medium truncate max-w-[120px]">
-                    {room.roomName}
-                  </span>
-                </div>
-                <Badge
-                  variant={room.studentCount > 0 ? "default" : "outline"}
-                  className="ml-2 font-mono text-xs"
+          <TabsList className="flex flex-col h-auto w-full justify-start bg-transparent p-0 gap-2">
+            {rooms.map((room) => {
+              const isWarning =
+                (room.occupancyRate ?? 0) > 0.8 && !room.isOverloaded;
+              const isCritical = room.isOverloaded;
+
+              return (
+                <TabsTrigger
+                  key={room.roomId}
+                  value={room.roomId}
+                  className="group w-full justify-between items-center px-4 py-4 rounded-xl border border-border/40
+                   data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border-primary/50
+                   hover:bg-muted/50 transition-all text-left"
                 >
-                  {room.studentCount}
-                </Badge>
-              </TabsTrigger>
-            ))}
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="p-2 rounded-md bg-background border group-data-[state=active]:border-primary/20">
+                      <DoorOpen
+                        className={`h-4 w-4 ${isCritical ? "text-destructive" : ""}`}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className="text-sm font-semibold truncate leading-none">
+                        {room.roomName}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase">
+                        Capacité: {room.maxCapacity}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Badge
+                    variant={
+                      isCritical
+                        ? "destructive"
+                        : room.studentCount > 0
+                          ? "default"
+                          : "outline"
+                    }
+                    className={cn(
+                      "font-mono text-[10px]",
+                      isWarning &&
+                        "bg-yellow-500 hover:bg-yellow-600 text-white border-none",
+                    )}
+                  >
+                    {room.studentCount}
+                  </Badge>
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
         </div>
       </aside>

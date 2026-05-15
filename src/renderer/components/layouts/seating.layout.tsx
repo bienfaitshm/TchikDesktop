@@ -24,7 +24,6 @@ export interface SeatingLayoutContext {
 export const SeatingSessionLayout: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const { schoolId, yearId } = useSchoolContext();
-  const navigate = useNavigate();
 
   const { data: seatingSession, isLoading } = useGetSeatingSessionById(
     sessionId!,
@@ -62,23 +61,41 @@ export const SeatingSessionLayout: React.FC = () => {
   }
 
   return (
+    <EmptyMessage sessionName={sessionName}>
+      <SeatingGeneratorDialog
+        sessionId={sessionId}
+        yearId={yearId}
+        schoolId={schoolId}
+        hasAssignments={hasAssignments}
+        sessionName={sessionName}
+      />
+    </EmptyMessage>
+  );
+};
+
+export const EmptyMessage: React.FC<
+  React.PropsWithChildren<{ sessionName?: string }>
+> = ({ children, sessionName }) => {
+  const navigate = useNavigate();
+
+  return (
     <div className="flex flex-col gap-8 p-6 max-w-7xl mx-auto w-full mt-5">
-      <header className="flex items-start gap-4 sm:gap-6">
+      <header className="flex flex-row items-center gap-4 sm:gap-6">
         <Button
           variant="outline"
           size="icon"
-          className="h-10 w-10 shrink-0 rounded-xl shadow-sm hover:bg-accent"
+          className="size-11 shrink-0 rounded-xl shadow-sm hover:bg-accent"
           onClick={() => navigate(-1)}
         >
           <ChevronLeft className="size-5" />
           <span className="sr-only">Retour</span>
         </Button>
 
-        <div className="space-y-1.5">
-          <h1 className="text-xl font-extrabold tracking-tight sm:text-1xl lg:text-2xl">
+        <div className="space-y-1">
+          <h1 className="text-lg font-extrabold tracking-tight sm:text-xl lg:text-xl">
             {sessionName}
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground leading-none">
+          <p className="text-sm text-muted-foreground leading-none">
             Configuration du plan de salle et répartition des candidats.
           </p>
         </div>
@@ -100,14 +117,7 @@ export const SeatingSessionLayout: React.FC = () => {
         </p>
 
         <div className="mt-10 flex flex-col items-center gap-4">
-          {/* CTA Secondaire au centre car l'utilisateur regarde le centre de l'écran */}
-          <SeatingGeneratorDialog
-            sessionId={sessionId}
-            yearId={yearId}
-            schoolId={schoolId}
-            hasAssignments={hasAssignments}
-            sessionName={sessionName}
-          />
+          {children}
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
             Action requise pour continuer
           </p>

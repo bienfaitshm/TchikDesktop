@@ -8,14 +8,11 @@ import type { Logger } from "drizzle-orm";
 export function createDrizzleLogger(logger: CustomLogger): Logger {
   return {
     logQuery(query: string, params: unknown[]): void {
-      logger.info(
-        `[SQL Query] ${query.substring(0, 256)}${query.length > 256 ? "..." : ""}`,
-        {
-          sql: query,
-          params,
-          source: "drizzle",
-        },
-      );
+      logger.info(`[SQL Query] ${query}`, {
+        sql: query,
+        params,
+        source: "drizzle",
+      });
     },
   };
 }

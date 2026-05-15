@@ -23,10 +23,13 @@ export interface Seating {
 }
 
 export interface RoomState {
+  seatingPlan: Seating[];
   roomId: string;
   roomName: string;
-  seatingPlan: Seating[];
   studentCount: number;
+  maxCapacity?: number;
+  isOverloaded?: boolean;
+  occupancyRate?: number;
 }
 
 export type StudentSeating = {

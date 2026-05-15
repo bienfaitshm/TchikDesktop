@@ -1,4 +1,9 @@
-import { ExamOptimizer, Student, Room, RoomReport } from "exam-seating-engine";
+import {
+  ExamOptimizer,
+  Student,
+  Room,
+  RoomReport,
+} from "@/packages/exam-seating-engine";
 import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db";
 import type { CustomLogger } from "@/packages/logger";
 import type {
@@ -65,89 +70,94 @@ export class SeatingService {
   ) {}
 
   public async generate(data: DataParams): Promise<TSeatingGenerator[]> {
-    const config: SeatingConfig = {
-      confortRatio: data.confortRatio ?? this.DEFAULT_CONFIG.confortRatio,
-      columnsPerRoom: this.DEFAULT_CONFIG.columnsPerRoom,
-    };
+    const parsedRatio = parsePercentage(data.confortRatio);
+    const confortRatio =
+      parsedRatio > 0 ? parsedRatio : this.DEFAULT_CONFIG.confortRatio;
 
-    this.logger.info("Starting seating plan generation", data);
+    this.logger.info("Starting seating plan generation", {
+      ...data,
+      usedRatio: confortRatio,
+    });
 
     const [dbRooms, dbEnrollements] = await this.fetchData(data);
 
-    // Validation des données d'entrée
     if (!dbRooms.length || !dbEnrollements.length) {
-      this.logger.warn("Generation aborted: Missing rooms or enrollments", {
-        ...data,
-        roomCount: dbRooms.length,
-        enrollmentCount: dbEnrollements.length,
+      this.logger.warn("Generation aborted: Empty datasets", {
+        rooms: dbRooms.length,
+        enrollments: dbEnrollements.length,
       });
       return [];
     }
 
-    const students = dbEnrollements.map((enrolement) =>
-      SeatingMapper.toDomainStudent(enrolement as TEnrolementDetails),
+    const students = dbEnrollements.map((enrollement) =>
+      SeatingMapper.toDomainStudent(enrollement as TEnrolementDetails),
     );
     const rooms = dbRooms.map(SeatingMapper.toDomainRoom);
 
-    this.logger.debug("Data mapped to domain entities", {
-      studentCount: students.length,
-      roomCount: rooms.length,
-    });
-
     try {
-      const engine = new ExamOptimizer(config.confortRatio);
-      const reports = engine.generateSeatingPlan(
-        students,
-        rooms,
-        config.columnsPerRoom,
-      );
+      const engine = new ExamOptimizer(confortRatio);
+      const reports = engine.generateSeatingPlan(students, rooms);
 
-      this.logger.info("Seating plan generated successfully", {
-        ...data,
-        reportCount: reports.length,
-        totalStudentsSeated: reports.reduce(
-          (acc, r) => acc + r.studentCount,
-          0,
-        ),
+      this.logger.info("Seating plan generated", {
+        totalStudents: students.length,
+        roomsUsed: reports.length,
       });
 
       return reports;
     } catch (error) {
-      this.logger.error("Seating engine failed to process plan", {
-        ...data,
-        error: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined,
-      });
+      this.handleError(error, data);
       throw error;
     }
   }
 
-  private async fetchData({
-    schoolId,
-    yearId,
-    classRoomIds,
-    localRoomIds,
-  }: DataParams) {
-    try {
-      return await Promise.all([
-        this.roomRepo.findMany({
-          where: { schoolId },
-          whereIn: { localRoomId: localRoomIds },
-        }),
-        this.enrolementRepo.findMany({
-          where: { schoolId, yearId, status: STUDENT_STATUS_ENUM.EN_COURS },
-          whereIn: {
-            classroomId: classRoomIds,
-          },
-        }),
-      ]);
-    } catch (error) {
-      this.logger.error("Database access failed during seating fetch", {
-        schoolId,
-        yearId,
-        error: error instanceof Error ? error.message : "DB Error",
-      });
-      throw new Error(`[SeatingService] Database access failed`);
-    }
+  private async fetchData(params: DataParams) {
+    const { schoolId, yearId, classRoomIds, localRoomIds } = params;
+
+    return Promise.all([
+      this.roomRepo.findMany({
+        where: { schoolId },
+        whereIn: { localRoomId: localRoomIds },
+      }),
+      this.enrolementRepo.findMany({
+        where: { schoolId, yearId, status: STUDENT_STATUS_ENUM.EN_COURS },
+        whereIn: { classroomId: classRoomIds },
+      }),
+    ]);
+  }
+
+  private handleError(error: unknown, context: DataParams): void {
+    const message =
+      error instanceof Error ? error.message : "Unknown seating error";
+    this.logger.error(`[SeatingService] ${message}`, {
+      ...context,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
   }
 }
+
+/**
+ * Convertit une valeur (string ou number) en ratio décimal.
+ * Supporte : "70%", "70", 70, "0.7", "70,5%"
+ */
+export const parsePercentage = (
+  input: string | number | null | undefined,
+): number => {
+  if (input === null || input === undefined || input === "") {
+    return 0;
+  }
+
+  if (typeof input === "number") {
+    return input / 100;
+  }
+
+  const normalized = input.trim().replace("%", "").replace(",", ".");
+
+  const parsed = parseFloat(normalized);
+
+  if (isNaN(parsed)) {
+    console.warn(`[parsePercentage] Valeur invalide reçue: ${input}`);
+    return 0;
+  }
+
+  return parsed / 100;
+};
