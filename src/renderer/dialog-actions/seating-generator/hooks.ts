@@ -105,6 +105,7 @@ export const useSaveSeatingAssignment = (config: SaveSeatingConfig) => {
         data,
         config.sessionId,
       );
+      console.log(seatingData);
       mutate(
         { data: seatingData, params: extraParams },
         createMutationCallbacksWithNotifications({
