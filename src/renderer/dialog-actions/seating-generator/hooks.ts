@@ -42,6 +42,9 @@ export function useSeatingGenerator() {
           onSuccess: (data) => {
             setGeneratedRooms(data as RoomState[]);
           },
+          onError(error) {
+            console.log("error", error);
+          },
         }),
       );
     },
