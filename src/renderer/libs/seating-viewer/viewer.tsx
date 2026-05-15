@@ -3,7 +3,7 @@ import type { Row } from "@tanstack/react-table";
 import { DoorOpen, Users, LayoutGrid } from "lucide-react"; // Ajout d'icônes pour l'UI
 import {
   enhanceColumnsExpandable,
-  SeatingStudentColumns,
+  seatingStudentColumns,
 } from "@/renderer/components/tables/columns";
 import {
   DataContentBody,
@@ -161,7 +161,7 @@ export const SeatingViewTable: React.FC<SeatingViewTableProps> = ({ room }) => {
   return (
     <DataTable<any>
       data={getStudentPlacementDetails(room?.seatingPlan ?? [])}
-      columns={enhanceColumnsExpandable(SeatingStudentColumns)}
+      columns={enhanceColumnsExpandable(seatingStudentColumns)}
       keyExtractor={(item) => item.schoolId}
     >
       <div className="flex items-center justify-between mb-4">

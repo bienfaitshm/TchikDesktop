@@ -47,8 +47,8 @@ export class SeatingAssignmentQuery extends BaseRepository<
         enrolementId: seatingAssignments.enrolementId,
         classroom: {
           classId: classRooms.classId,
-          indentifier: classRooms.identifier,
-          shortIndetifier: classRooms.shortIdentifier,
+          identifier: classRooms.identifier,
+          shortIdetifier: classRooms.shortIdentifier,
         },
         student: {
           firstName: users.firstName,

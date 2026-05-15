@@ -1,5 +1,9 @@
 import { IpcClient } from "@/packages/electron-ipc-rest";
 import type {
+  TClassroom,
+  TUser,
+} from "@/packages/@core/data-access/db/schemas/types";
+import type {
   TLocalRoomAttributes,
   TLocalRoomFilter,
   TLocalRoomCreate,
@@ -47,6 +51,15 @@ export type SeatingAssignmentData = {
   };
 };
 
+export interface Assignment {
+  assignmentId: string;
+  classroom: Pick<TClassroom, "classId" | "identifier" | "shortIdentifier">;
+  column: number;
+  enrolementId: string;
+  row: number;
+  student: Pick<TUser, "firstName" | "lastName" | "middleName" | "gender">;
+}
+
 export type BulkAssignParams = {
   schoolId: string;
   yearId: string;
@@ -84,7 +97,7 @@ export type SeatingApi = Readonly<{
   fetchRoomLayout(
     sessionId: string,
     localRoomId: string,
-  ): Promise<SeatingAssignmentData[]>;
+  ): Promise<Assignment[]>;
   bulkAssign(
     assignments: TSeatingAssignmentCreate[],
     params: BulkAssignParams,

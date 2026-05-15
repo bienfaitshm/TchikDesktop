@@ -1,56 +1,84 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { TypographySmall } from "@/renderer/components/ui/typography";
 import { DataTableColumnHeader } from "@/renderer/components/tables/data-table.column-header";
+import { GenderBadge } from "@/renderer/components/user-gender";
+import { Badge } from "@/renderer/components/ui/badge"; // Hypothèse d'usage de Shadcn
+import type { USER_GENDER_ENUM } from "@/packages/@core/data-access/db";
 
 export type StudentSeating = {
   fullName: string;
   identifier: string;
   classroomId: string;
+  gender?: USER_GENDER_ENUM;
   row: number;
   column: number;
 };
 
-export const SeatingStudentColumns: ColumnDef<StudentSeating>[] = [
+export const seatingStudentColumns: ColumnDef<StudentSeating>[] = [
   {
     accessorKey: "fullName",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Nom complet" />
+      <DataTableColumnHeader column={column} title="Étudiant" />
     ),
     cell: ({ row }) => (
-      <TypographySmall className="font-medium text-foreground">
-        {row.getValue("fullName")}
-      </TypographySmall>
+      <div className="flex flex-col">
+        <span className="font-semibold text-sm text-foreground tracking-tight">
+          {row.original.fullName}
+        </span>
+        {/* On peut ajouter un sous-texte ici si besoin, ex: ID étudiant */}
+      </div>
     ),
+  },
+  {
+    accessorKey: "gender",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Genre" />
+    ),
+    cell: ({ row }) => {
+      const gender = row.original.gender;
+      return gender ? (
+        <GenderBadge withIcon gender={gender} />
+      ) : (
+        <span className="text-muted-foreground/50">-</span>
+      );
+    },
   },
   {
     accessorKey: "identifier",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Salle de classe" />
+      <DataTableColumnHeader column={column} title="Classe" />
     ),
     cell: ({ row }) => (
-      <TypographySmall className="text-muted-foreground">
-        {row.getValue("identifier")}
-      </TypographySmall>
+      <Badge variant="secondary" className="font-normal capitalize">
+        {row.original.identifier}
+      </Badge>
     ),
   },
-
   {
     id: "seat",
-    header: "Siège (Lig/Col)",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Emplacement" />
+    ),
+    accessorFn: (row) => `${row.row}-${row.column}`,
     cell: ({ row }) => {
-      const r = row.original.row;
-      const c = row.original.column;
+      const { row: r, column: c } = row.original;
       return (
         <div
-          className="flex items-center gap-2 text-xs font-medium text-foreground"
-          aria-label={`Rangée ${r}, Colonne ${c}`}
+          className="inline-flex items-center gap-1.5 border rounded-md px-2 py-1 bg-muted/30"
+          title={`Rangée ${r}, Colonne ${c}`}
         >
-          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md">
-            R{r}
-          </span>
-          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md">
-            C{c}
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] uppercase text-muted-foreground font-bold">
+              Ranger
+            </span>
+            <span className="text-sm font-mono font-medium">{r}</span>
+          </div>
+          <div className="w-[1px] h-3 bg-border" />
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] uppercase text-muted-foreground font-bold">
+              Banc
+            </span>
+            <span className="text-sm font-mono font-medium">{c}</span>
+          </div>
         </div>
       );
     },
