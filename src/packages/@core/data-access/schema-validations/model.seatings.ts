@@ -80,21 +80,20 @@ export const SeatingAssignmentUpdateSchema = SeatingAssignmentCreateSchema.omit(
 /**
  * Schéma pour valider le remplissage d'une salle entière
  */
-export const BulkSeatingAssignmentSchema = z
-  .object({
-    sessionId: z.string(),
-    assignments: z.array(SeatingAssignmentCreateSchema).min(1),
-  })
-  .refine(
-    (data) => {
-      // Optionnel : Validation custom pour vérifier les doublons de positions dans l'array
-      const positions = data.assignments.map(
-        (a) => `${a.rowPosition}-${a.columnPosition}`,
-      );
-      return new Set(positions).size === positions.length;
-    },
-    {
-      message: "Doublons de places détectés dans le même local",
-      path: ["assignments"],
-    },
-  );
+export const BulkSeatingAssignmentSchema = z.object({
+  sessionId: z.string(),
+  assignments: z.array(SeatingAssignmentCreateSchema).min(1),
+});
+// .refine(
+//   (data) => {
+//     // Optionnel : Validation custom pour vérifier les doublons de positions dans l'array
+//     const positions = data.assignments.map(
+//       (a) => `${a.rowPosition}-${a.columnPosition}`,
+//     );
+//     return new Set(positions).size === positions.length;
+//   },
+//   {
+//     message: "Doublons de places détectés dans le même local",
+//     path: ["assignments"],
+//   },
+// );

@@ -158,6 +158,17 @@ export function useBulkAssignStudents() {
   });
 }
 
+export function useRebuildAssignStudents() {
+  return useMutation({
+    mutationKey: ["REBUILD_ASSIGN_STUDENTS"],
+    mutationFn: ({
+      params,
+      data,
+    }: TQueryCreateParams<TSeatingAssignmentCreate[], BulkAssignParams>) =>
+      seating.rebuildAssign(params.sessionId, data),
+  });
+}
+
 /** @description Hook pour vider les assignations d'une salle */
 export function useClearRoomAssignments() {
   return useMutation({

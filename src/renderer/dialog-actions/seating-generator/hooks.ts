@@ -3,7 +3,7 @@ import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
 import {
   useGenerateSeating,
   useGetLocalRooms,
-  useBulkAssignStudents,
+  useRebuildAssignStudents,
 } from "@/renderer/libs/queries/seating";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import type { BulkAssignParams } from "@/packages/@core/apis/clients";
@@ -95,7 +95,7 @@ type SaveSeatingConfig = {
  * Hook pour sauvegarder l'assignation des places
  */
 export const useSaveSeatingAssignment = (config: SaveSeatingConfig) => {
-  const { mutate, isPending: isSaving } = useBulkAssignStudents();
+  const { mutate, isPending: isSaving } = useRebuildAssignStudents();
   const onSuccessRef = useRef(config?.onSuccess);
   onSuccessRef.current = config?.onSuccess;
 

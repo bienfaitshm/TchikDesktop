@@ -2,7 +2,7 @@
 
 import React from "react";
 import { NavLink, useNavigate, useParams } from "react-router";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, DoorOpen } from "lucide-react";
 
 import {
   SidebarFlatList,
@@ -52,52 +52,22 @@ export const LocalroomSidebar: React.FC = () => {
       }
       renderItem={(room) => {
         const isCritical = room.occupancyRate >= 90;
-        const isFull = room.occupancyRate >= 100;
+        const isActive = room.localRoomId === localroomId;
+        // const isFull = room.occupancyRate >= 100;
 
         return (
           <SidebarItem
             key={room.localRoomId}
-            isActive={room.localRoomId === localroomId}
+            isActive={isActive}
             asChild
             className="h-auto py-2"
           >
-            <NavLink
-              to={`/seating/${sessionId}/${room.localRoomId}`}
-              className="flex flex-col gap-1.5 items-start w-full"
-            >
-              <div className="flex items-center justify-between w-full gap-2">
-                <div className="flex items-center gap-2 truncate">
-                  <div
-                    className={cn(
-                      "size-1.5 shrink-0 rounded-full",
-                      isFull
-                        ? "bg-red-500"
-                        : isCritical
-                          ? "bg-amber-500"
-                          : "bg-emerald-500",
-                    )}
-                  />
-                  <span className="truncate font-medium">{room.roomName}</span>
-                </div>
-                <span className="text-[10px] tabular-nums text-muted-foreground/70">
-                  {room.assignedCount}/{room.maxCapacity}
-                </span>
-              </div>
-
-              <div className="w-full h-1 bg-muted/40 rounded-full overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full transition-all duration-500",
-                    isFull
-                      ? "bg-red-500"
-                      : isCritical
-                        ? "bg-amber-500"
-                        : "bg-primary/60",
-                  )}
-                  style={{ width: `${Math.min(room.occupancyRate, 100)}%` }}
-                />
-              </div>
-            </NavLink>
+            <RoomNavLink
+              isActive={isActive}
+              room={room}
+              isCritical={isCritical}
+              sessionId={sessionId}
+            />
           </SidebarItem>
         );
       }}
@@ -106,3 +76,48 @@ export const LocalroomSidebar: React.FC = () => {
 };
 
 LocalroomSidebar.displayName = "LocalroomSidebar";
+
+const RoomNavLink = ({ sessionId, room, isCritical, isActive }) => {
+  return (
+    <NavLink
+      to={`/seating/${sessionId}/${room.localRoomId}`}
+      className={cn(
+        "group flex flex-col gap-1.5 p-2 rounded-lg transition-colors hover:bg-accent",
+        isActive && "bg-accent",
+      )}
+    >
+      <div className="flex items-center gap-3 overflow-hidden">
+        {/* Container Icône */}
+        <div
+          className={cn(
+            "p-2 rounded-md bg-background border transition-colors",
+            "group-data-[state=active]:border-primary/40 group-data-[state=active]:bg-primary/5",
+            isCritical && "border-destructive/20 bg-destructive/5",
+          )}
+        >
+          <DoorOpen
+            className={cn(
+              "h-4 w-4 transition-colors",
+              isCritical
+                ? "text-destructive"
+                : "text-muted-foreground group-data-[state=active]:text-primary",
+            )}
+          />
+        </div>
+
+        {/* Textes */}
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <span className={cn("text-sm font-semibold truncate leading-none")}>
+            {room.roomName}
+          </span>
+          <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+            Capacité: <span className="font-bold">{room.maxCapacity}</span>
+            {isCritical && (
+              <span className="sr-only"> (Attention : capacité critique)</span>
+            )}
+          </span>
+        </div>
+      </div>
+    </NavLink>
+  );
+};
