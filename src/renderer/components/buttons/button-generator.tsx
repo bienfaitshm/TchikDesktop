@@ -40,7 +40,7 @@ const ButtonGenerator = React.forwardRef<
     <ButtonLoader
       ref={ref}
       variant={hasGenerated ? "outline" : "default"}
-      className="rounded-full px-6"
+      className="rounded-md px-6"
       isLoadingText="Calcul du placement..."
       {...props}
     >
