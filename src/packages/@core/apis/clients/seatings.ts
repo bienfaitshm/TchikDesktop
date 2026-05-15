@@ -69,6 +69,7 @@ export type BulkAssignParams = {
 export type SeatingApi = Readonly<{
   // --- Local Rooms ---
   fetchLocalRooms(params?: TLocalRoomFilter): Promise<LocalRoomData[]>;
+  fetchLocalRoomById(localRoomId: string): Promise<LocalRoomData>;
   createLocalRoom(data: TLocalRoomCreate): Promise<LocalRoomData>;
   updateLocalRoom(
     localRoomId: string,
@@ -124,6 +125,9 @@ export function createSeatingApis(ipcClient: IpcClient): SeatingApi {
       return ipcClient.get(LocalRoomRoutes.ALL, { params });
     },
 
+    fetchLocalRoomById(localRoomId) {
+      return ipcClient.get(LocalRoomRoutes.DETAIL, { params: { localRoomId } });
+    },
     createLocalRoom(data) {
       return ipcClient.post(LocalRoomRoutes.ALL, data);
     },

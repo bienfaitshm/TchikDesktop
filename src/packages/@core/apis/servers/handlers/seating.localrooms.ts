@@ -32,6 +32,17 @@ export class GetLocalRooms extends AbstractEndpoint<any> {
   }
 }
 
+export class GetLocalRoom extends AbstractEndpoint<any> {
+  route = LocalRoomRoutes.DETAIL;
+  method = HttpMethod.GET;
+  schemas: ValidationSchemas = { params: LocalRoomIdSchema };
+  protected handle({
+    params,
+  }: IpcRequest<unknown, TLocalRoomIdSchema>): Promise<unknown> {
+    return localRoomService.findById(params.localRoomId);
+  }
+}
+
 /** Crée un nouveau local physique dans une école. */
 export class CreateLocalRoom extends AbstractEndpoint<any> {
   route = LocalRoomRoutes.ALL;

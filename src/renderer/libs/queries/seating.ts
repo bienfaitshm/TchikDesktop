@@ -26,6 +26,13 @@ export function useGetLocalRooms(params?: TLocalRoomFilter) {
   });
 }
 
+export function useGetLocalRoomById(localRoomId: string) {
+  return useSuspenseQuery({
+    queryKey: ["GET_LOCAL_ROOMS", localRoomId],
+    queryFn: () => seating.fetchLocalRoomById(localRoomId),
+  });
+}
+
 /** @description Hook pour créer un nouveau local */
 export function useCreateLocalRoom() {
   return useMutation({

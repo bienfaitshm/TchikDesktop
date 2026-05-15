@@ -45,15 +45,15 @@ export const SeatingSessionLayout: React.FC = () => {
     return (
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 h-full">
         <SidebarContainer direction="horizontal" sidebar={<LocalroomSidebar />}>
-          <header className="px-6 py-8 md:px-10 lg:px-12 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
+          <header className="px-4 pb-2 pt-6 md:px-10 lg:px-10">
             <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center max-w-screen-2xl mx-auto">
               <div className="space-y-1">
                 <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                   {seatingSession.sessionName}
                 </h1>
-                <p className="text-sm text-muted-foreground">
+                {/* <p className="text-sm text-muted-foreground">
                   Configuration et gestion du plan de table pour cette session.
-                </p>
+                </p> */}
               </div>
 
               <div className="flex items-center gap-3">
