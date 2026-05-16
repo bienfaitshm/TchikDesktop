@@ -19,7 +19,10 @@ import {
   DataTableToolbar,
   TableFacetedFilterItem,
 } from "@/renderer/components/tables/data-table";
-import { OptionColumns } from "@/renderer/components/tables/columns.options";
+import {
+  optionColumns,
+  enhanceColumnsExpandable,
+} from "@/renderer/components/tables/columns";
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
@@ -34,45 +37,62 @@ import {
   CreateOptionDialog,
   DeleteOptionDialog,
   UpdateOptionDialog,
+  type OptionDialogProps,
 } from "@/renderer/dialog-actions/option.dialog-actions";
 
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
-import type { Row } from "@tanstack/react-table";
+
+const columns = enhanceColumnsExpandable(optionColumns);
+
+interface OptionRowActionsProps
+  extends Pick<OptionDialogProps, "queryKeysToInvalidate"> {
+  option: TOption;
+}
 
 /**
- * Actions de ligne mémoïsées pour la performance.
- * Empêche le re-render massif lors du scroll ou du filtrage.
+ * @description Actions de ligne
  */
-const OptionRowActions = React.memo(({ option }: { option: TOption }) => {
-  // On stabilise les données initiales pour les formulaires d'édition
-  const initialData = React.useMemo(() => ({ ...option }), [option.optionId]);
+const OptionRowActions = React.memo(
+  ({ option, queryKeysToInvalidate }: OptionRowActionsProps) => {
+    return (
+      <ActionContainer className="lg:grid-cols-3">
+        {/* Modification */}
+        <UpdateOptionDialog
+          queryKeysToInvalidate={queryKeysToInvalidate}
+          optionId={option.optionId}
+          defaultValues={option}
+        >
+          <ActionTileEdit />
+        </UpdateOptionDialog>
 
-  return (
-    <ActionContainer className="lg:grid-cols-3">
-      <UpdateOptionDialog optionId={option.optionId} initialData={initialData}>
-        <ActionTileEdit />
-      </UpdateOptionDialog>
+        {/* Duplication */}
+        <CreateOptionDialog
+          queryKeysToInvalidate={queryKeysToInvalidate}
+          defaultValues={option}
+        >
+          <ActionTileCopy />
+        </CreateOptionDialog>
 
-      <CreateOptionDialog defaultValues={initialData}>
-        <ActionTileCopy />
-      </CreateOptionDialog>
+        {/* Suppression unifiée (Plus de Render Props obsolète !) */}
+        <DeleteOptionDialog
+          queryKeysToInvalidate={queryKeysToInvalidate}
+          optionId={option.optionId}
+          optionName={option.optionName}
+        >
+          <ActionTileDelete />
+        </DeleteOptionDialog>
+      </ActionContainer>
+    );
+  },
+);
 
-      <DeleteOptionDialog
-        optionId={option.optionId}
-        optionName={option.optionName}
-      >
-        {({ isLoading, onOpen }) => (
-          <ActionTileDelete onClick={onOpen} disabled={isLoading} />
-        )}
-      </DeleteOptionDialog>
-    </ActionContainer>
-  );
-});
 OptionRowActions.displayName = "OptionRowActions";
 
 export const OptionPage = () => {
   const { schoolId } = useSchoolContext();
-  const { data: rawOptions } = useGetOptions({ where: { schoolId } });
+  const { data: rawOptions, queryKey: queryKeysToInvalidate } = useGetOptions({
+    where: { schoolId },
+  });
   const options = React.useMemo(() => rawOptions ?? [], [rawOptions]);
 
   return (
@@ -91,7 +111,10 @@ export const OptionPage = () => {
               </p>
             </header>
 
-            <CreateOptionDialog defaultValues={{ schoolId }}>
+            <CreateOptionDialog
+              queryKeysToInvalidate={queryKeysToInvalidate}
+              defaultValues={{ schoolId }}
+            >
               <Button size="sm" className="rounded-full shadow-sm">
                 <Plus className="mr-2 size-4" />
                 Ajouter une filière
@@ -100,10 +123,9 @@ export const OptionPage = () => {
           </section>
         }
       >
-        {/* Table de données avec architecture Compound Components */}
         <DataTable<TOption>
           data={options}
-          columns={OptionColumns}
+          columns={columns}
           keyExtractor={(item) => item.optionId}
         >
           <DataTableToolbar searchColumn="optionName">
@@ -129,8 +151,13 @@ export const OptionPage = () => {
               <DataContentBody<TOption>>
                 {({ row }) => (
                   <ExpandableRow
-                    row={row as Row<unknown>}
-                    renderDetail={<OptionRowActions option={row.original} />}
+                    row={row as any}
+                    renderDetail={
+                      <OptionRowActions
+                        option={row.original}
+                        queryKeysToInvalidate={queryKeysToInvalidate}
+                      />
+                    }
                   />
                 )}
               </DataContentBody>

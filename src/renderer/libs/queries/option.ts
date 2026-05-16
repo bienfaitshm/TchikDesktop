@@ -1,42 +1,49 @@
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "./base-query";
 import { option } from "@/renderer/libs/apis";
-import {
+import type {
   TOptionFilter,
   TOptionUpdate,
   TOptionCreate,
 } from "@/packages/@core/data-access/schema-validations";
 import { TQueryUpdate } from "./type";
 
+export const optionKeys = {
+  all: ["options"] as const,
+  lists: (params?: TOptionFilter) =>
+    [...optionKeys.all, "list", { params }] as const,
+  details: () => [...optionKeys.all, "detail"] as const,
+  detail: (id: string) => [...optionKeys.details(), id] as const,
+};
+
 /**
  * @function useGetOptions
  * @description Hook to fetch all options
  */
 export function useGetOptions(params?: TOptionFilter) {
-  const queryKey = ["GET_OPTIONS", params];
-  const query = useSuspenseQuery({
-    queryKey: ["GET_OPTIONS", params],
+  return useSuspenseQuery({
+    queryKey: optionKeys.lists(params),
     queryFn: () => option.fetchOptions(params),
   });
-  return { ...query, queryKey };
 }
 
 /**
- * @function useGetOptions
+ * @function useGetOptionById
  * @description Hook to fetch one option for a given id
  */
 export function useGetOptionById(optionId: string) {
   return useSuspenseQuery({
-    queryKey: ["GET_OPTIONS", optionId],
+    queryKey: optionKeys.detail(optionId),
     queryFn: () => option.fetchOptionById(optionId),
   });
 }
+
 /**
  * @function useCreateOption
  * @description Hook to create a new option.
  */
 export function useCreateOption() {
   return useMutation({
-    mutationKey: ["CREATE_OPTION"],
+    mutationKey: [...optionKeys.all, "create"],
     mutationFn: (data: TOptionCreate) => option.createOption(data),
   });
 }
@@ -47,7 +54,7 @@ export function useCreateOption() {
  */
 export function useUpdateOption() {
   return useMutation({
-    mutationKey: ["UPDATE_OPTION"],
+    mutationKey: [...optionKeys.all, "update"],
     mutationFn: ({ data, id }: TQueryUpdate<TOptionUpdate>) =>
       option.updateOption(id, data),
   });
@@ -59,7 +66,7 @@ export function useUpdateOption() {
  */
 export function useDeleteOption() {
   return useMutation({
-    mutationKey: ["DELETE_OPTION"],
+    mutationKey: [...optionKeys.all, "delete"],
     mutationFn: (optionId: string) => option.deleteOption(optionId),
   });
 }

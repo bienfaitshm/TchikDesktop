@@ -1,115 +1,98 @@
-import { useCallback, useId } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
-import { useCreateOption, useDeleteOption, useUpdateOption } from "@/renderer/libs/queries/option";
+import {
+  useCreateOption,
+  useDeleteOption,
+  useUpdateOption,
+} from "@/renderer/libs/queries/option";
 import { TQueryUpdate } from "@/renderer/libs/queries/type";
 import type { TOptionCreate as OptionFormData } from "@/packages/@core/data-access/schema-validations";
-import type { BaseFormProps } from "./base-form"
-interface UseOptionFormConfig {
-    mutationKeys?: unknown[];
-    onSuccess?: (data?: OptionFormData) => void;
-}
+import {
+  type BaseFormProps,
+  type UseFormBaseConfig,
+  useFormBase,
+} from "./base-form";
 
-/**
- * Hook interne pour la logique partagée des formulaires d'Option.
- */
-function useOptionFormBase(config?: UseOptionFormConfig) {
-    const formId = useId();
-    const queryClient = useQueryClient();
-
-    const notifyAndInvalidate = useCallback(
-        (data: OptionFormData) => {
-            if (config?.mutationKeys) {
-                queryClient.invalidateQueries({ queryKey: config.mutationKeys });
-            }
-            config?.onSuccess?.(data);
-        },
-        [queryClient, config]
-    );
-
-    return {
-        formId,
-        notifyAndInvalidate,
-    };
-}
+export type OptionFormConfig = UseFormBaseConfig<OptionFormData>;
 
 /**
  * Hook pour la CRÉATION d'une option.
  */
-export function useCreateOptionForm(config?: UseOptionFormConfig) {
-    const { formId, notifyAndInvalidate } = useOptionFormBase(config);
-    const mutation = useCreateOption();
+export function useCreateOptionForm(config?: OptionFormConfig) {
+  const { formId, handleSuccess } = useFormBase(config);
+  const mutation = useCreateOption();
 
-    const createOption: BaseFormProps<OptionFormData>["onSubmit"] = useCallback(
-        (data, helpers) => {
-            mutation.mutate(
-                data,
-                createMutationCallbacksWithNotifications({
-                    successMessageTitle: "Filière créée !",
-                    successMessageDescription: `La filière '${data.optionName}' a été ajoutée.`,
-                    errorMessageTitle: "Échec de la création.",
-                    onSuccess: (data) => {
-                        notifyAndInvalidate?.(data)
-                        helpers?.reset?.()
-                    },
-                })
-            );
-        },
-        [mutation, notifyAndInvalidate]
-    );
+  const createOption: BaseFormProps<OptionFormData>["onSubmit"] = useCallback(
+    (data, helpers) => {
+      mutation.mutate(
+        data,
+        createMutationCallbacksWithNotifications({
+          successMessageTitle: "Filière créée !",
+          successMessageDescription: `La filière '${data.optionName}' a été ajoutée.`,
+          errorMessageTitle: "Échec de la création.",
+          onSuccess: (data) => {
+            handleSuccess?.(data);
+            helpers?.reset?.();
+          },
+        }),
+      );
+    },
+    [mutation, handleSuccess],
+  );
 
-    return { formId, createOption, isCreating: mutation.isPending };
+  return { formId, createOption, isCreating: mutation.isPending };
 }
 
 /**
  * Hook pour la MISE À JOUR d'une option.
  */
-export function useUpdateOptionForm(config?: UseOptionFormConfig) {
-    const { formId, notifyAndInvalidate } = useOptionFormBase(config);
-    const mutation = useUpdateOption();
+export function useUpdateOptionForm(config?: OptionFormConfig) {
+  const { formId, handleSuccess } = useFormBase(config);
+  const mutation = useUpdateOption();
 
-    const updateOption: BaseFormProps<TQueryUpdate<OptionFormData>>["onSubmit"] = useCallback(
-        ({ data, id }, helpers) => {
-            mutation.mutate(
-                { data, id },
-                createMutationCallbacksWithNotifications({
-                    successMessageTitle: "Filière mise à jour !",
-                    successMessageDescription: `Les modifications de '${data.optionName}' ont été enregistrées.`,
-                    errorMessageTitle: "Échec de la mise à jour.",
-                    onSuccess: (data) => {
-                        notifyAndInvalidate(data)
-                        helpers?.reset?.()
-                    },
-                })
-            );
-        },
-        [mutation, notifyAndInvalidate]
+  const updateOption: BaseFormProps<TQueryUpdate<OptionFormData>>["onSubmit"] =
+    useCallback(
+      ({ data, id }, helpers) => {
+        mutation.mutate(
+          { data, id },
+          createMutationCallbacksWithNotifications({
+            successMessageTitle: "Filière mise à jour !",
+            successMessageDescription: `Les modifications de '${data.optionName}' ont été enregistrées.`,
+            errorMessageTitle: "Échec de la mise à jour.",
+            onSuccess: (data) => {
+              handleSuccess(data);
+              helpers?.reset?.();
+            },
+          }),
+        );
+      },
+      [mutation, handleSuccess],
     );
 
-    return { formId, updateOption, isUpdating: mutation.isPending };
+  return { formId, updateOption, isUpdating: mutation.isPending };
 }
 
 /**
  * Hook pour la SUPPRESSION d'une option.
  */
-export function useDeleteOptionForm(config?: UseOptionFormConfig) {
-    const mutation = useDeleteOption();
+export function useDeleteOptionForm(config?: UseFormBaseConfig<string>) {
+  const mutation = useDeleteOption();
 
-    const deleteOption = useCallback(
-        (optionId: string, optionName?: string) => {
-            mutation.mutate(
-                optionId,
-                createMutationCallbacksWithNotifications({
-                    successMessageTitle: "Filière supprimée",
-                    successMessageDescription: optionName
-                        ? `La filière '${optionName}' a été retirée.`
-                        : "La filière a été supprimée.",
-                    onSuccess: () => config?.onSuccess?.()
-                })
-            );
-        },
-        [mutation, config]
-    );
+  const deleteOption = useCallback(
+    (optionId: string, optionName?: string) => {
+      mutation.mutate(
+        optionId,
+        createMutationCallbacksWithNotifications({
+          successMessageTitle: "Filière supprimée",
+          successMessageDescription: optionName
+            ? `La filière '${optionName}' a été retirée.`
+            : "La filière a été supprimée.",
+          onSuccess: () => config?.onSuccess?.(optionId),
+        }),
+      );
+    },
+    [mutation, config],
+  );
 
-    return { deleteOption, isDeleting: mutation.isPending };
+  return { deleteOption, isDeleting: mutation.isPending };
 }
