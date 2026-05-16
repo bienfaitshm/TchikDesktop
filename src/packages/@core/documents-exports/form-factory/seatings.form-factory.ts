@@ -8,6 +8,7 @@ export class SeatingFormFactory {
       label: "Mise en place",
       required: true,
       defaultValue: "eng",
+      multiple: true,
       colSpan: 4,
       ...config,
     };

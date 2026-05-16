@@ -42,7 +42,6 @@ export const SeatingSessionAssignmentPage = () => {
     localroomId!,
   );
 
-  console.log("layoutAssignments", layoutAssignments);
   const formattedData = useMemo(() => {
     return layoutAssignments.map(
       (layout: Assignment): StudentSeating => ({

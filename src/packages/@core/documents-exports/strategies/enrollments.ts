@@ -8,8 +8,8 @@ import {
 } from "@/packages/dynamic-form";
 import { CsvExportExtension, JsonExportExtension } from "./enrollments.engines";
 import {
-  type TCreateEnrollmentsgFormParams,
-  createEnrollmentsgFieldForm,
+  type TCreateEnrollmentFormParams,
+  createEnrollmentFieldForm,
 } from "./enrollments.form-fields";
 import { prependFileTypeField } from "./base.form-fields";
 
@@ -41,7 +41,7 @@ export class EnrollmentExportStrategy extends AbstractExportStrategy<
    */
   public override async getFormFields(params) {
     try {
-      const fields = await createEnrollmentsgFieldForm(params);
+      const fields = await createEnrollmentFieldForm(params);
       return prependFileTypeField(fields, this.extensionFilters);
     } catch (error) {
       throw new Error(
@@ -55,7 +55,7 @@ export class EnrollmentExportStrategy extends AbstractExportStrategy<
    * Le processeur (Extension) se chargera de la transformation.
    */
   public override async resolveData(
-    contextParams: TCreateEnrollmentsgFormParams,
+    contextParams: TCreateEnrollmentFormParams,
   ): Promise<ServiceResult<any>> {
     return {
       success: true,

@@ -83,6 +83,7 @@ export const SeatingSessionLayout: React.FC = () => {
 
             <div className="flex items-center gap-3">
               <ButtonDialogDocumentExport
+                key={sessionId}
                 schoolId={schoolId}
                 yearId={yearId}
                 defaultValues={{ sessionId }}

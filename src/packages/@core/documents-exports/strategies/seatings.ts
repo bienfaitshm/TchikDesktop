@@ -35,7 +35,7 @@ export class SeatingExportStrategy extends AbstractExportStrategy<
   public readonly description =
     "Génère un état détaillé de la répartition des élèves par salle. Cet export inclut les listes d'émargement, l'affectation aux pupitres et les métadonnées de l'établissement pour faciliter l'organisation physique des épreuves ou des cours.";
 
-  public readonly validationSchema = z.object({});
+  public readonly validationSchema = SchoolYearSchema;
 
   public readonly dataSourceDefinition = {
     classrooms: ClassroomIds.findAllClassroomsWithEnrollment,
@@ -52,7 +52,9 @@ export class SeatingExportStrategy extends AbstractExportStrategy<
   public override async getFormFields(params): Promise<FormFieldDef[]> {
     try {
       const fields = await createSeatingFieldForm(params);
-      return prependFileTypeField(fields, this.extensionFilters);
+      return prependFileTypeField(fields, this.extensionFilters, {
+        colSpan: 6,
+      });
     } catch (error) {
       throw new Error(
         `[${this.id}] Impossible de charger les options d'export.`,

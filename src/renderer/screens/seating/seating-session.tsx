@@ -100,6 +100,10 @@ export const SeatingPage = () => {
       where: { schoolId, yearId },
     });
   const sessions = React.useMemo(() => rawSessions ?? [], [rawSessions]);
+  const sessionIds = React.useMemo(
+    () => (rawSessions ?? []).map((session) => session.sessionId),
+    [rawSessions],
+  );
 
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
@@ -136,7 +140,11 @@ export const SeatingPage = () => {
           keyExtractor={(item) => item.sessionId}
         >
           <DataTableToolbar searchColumn="sessionName">
-            <ButtonDialogDocumentExport schoolId={schoolId} yearId={yearId} />
+            <ButtonDialogDocumentExport
+              schoolId={schoolId}
+              yearId={yearId}
+              defaultValues={{ sessionId: sessionIds }}
+            />
           </DataTableToolbar>
 
           <Suspense
