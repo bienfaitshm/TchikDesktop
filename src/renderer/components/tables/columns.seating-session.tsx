@@ -8,7 +8,7 @@ import type { TSeatingSession } from "@/packages/@core/data-access/db/schemas/ty
  * Évite les intersections "&" à la volée dans la définition des colonnes.
  */
 export type SeatingSessionTableData = TSeatingSession & {
-  hasAssignments: boolean;
+  hasAssignments?: boolean;
 };
 
 export const seatingSessionColumns: ColumnDef<SeatingSessionTableData>[] = [

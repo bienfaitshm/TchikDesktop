@@ -186,7 +186,7 @@ export type TLocalRoomAttributes = z.infer<typeof LocalRoomAttributesSchema>;
 /** Type des attributs complets d'une Session de placement */
 export type TSeatingSessionAttributes = z.infer<
   typeof SeatingSessionAttributesSchema
->;
+> & { hasAssignments?: boolean };
 
 /** Type des attributs complets d'une Assignation de place */
 export type TSeatingAssignmentAttributes = z.infer<

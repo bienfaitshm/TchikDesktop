@@ -77,6 +77,7 @@ export function useUpdateOptionForm(config?: OptionFormConfig) {
  */
 export function useDeleteOptionForm(config?: UseFormBaseConfig<string>) {
   const mutation = useDeleteOption();
+  const { handleSuccess } = useFormBase(config);
 
   const deleteOption = useCallback(
     (optionId: string, optionName?: string) => {
@@ -87,7 +88,7 @@ export function useDeleteOptionForm(config?: UseFormBaseConfig<string>) {
           successMessageDescription: optionName
             ? `La filière '${optionName}' a été retirée.`
             : "La filière a été supprimée.",
-          onSuccess: () => config?.onSuccess?.(optionId),
+          onSuccess: () => handleSuccess(optionId),
         }),
       );
     },

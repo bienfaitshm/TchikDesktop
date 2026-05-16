@@ -2,10 +2,18 @@
 
 import * as React from "react";
 import { Plus } from "lucide-react";
+import { Link } from "react-router";
+
+import type { TSeatingSessionAttributes as TSeatingSession } from "@/packages/@core/data-access/schema-validations/types";
 import { useGetSeatingSessions } from "@/renderer/libs/queries/seating";
+
 import { Button } from "@/renderer/components/ui/button";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
+import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
+import { ButtonDialogDocumentExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
+import { useSchoolContext } from "@/renderer/hooks/app-config-router";
+
 import {
   DataTable,
   DataContentBody,
@@ -30,58 +38,68 @@ import {
   CreateSeatingSessionDialog,
   DeleteSeatingSessionDialog,
   UpdateSeatingSessionDialog,
+  type SeatingSessionDialogProps,
 } from "@/renderer/dialog-actions/seating-session.dialog-actions";
-import type { Row } from "@tanstack/react-table";
-import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
-import { Link } from "react-router";
-import type { TSeatingSessionAttributes as TSeatingSession } from "@/packages/@core/data-access/schema-validations/types";
-import { ButtonDialogDocumentExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
+
+const columns = enhanceColumnsExpandable(seatingSessionColumns);
+
+interface SessionRowActionsProps
+  extends Pick<SeatingSessionDialogProps, "queryKeysToInvalidate"> {
+  session: TSeatingSession;
+}
 
 /**
- * Actions de ligne mémoïsées pour la performance.
+ * @description Actions de ligne.
  */
 const SessionRowActions = React.memo(
-  ({ session }: { session: TSeatingSession }) => {
-    const initialData = React.useMemo(
-      () => ({ ...session }),
-      [session.sessionId],
-    );
-
+  ({ session, queryKeysToInvalidate }: SessionRowActionsProps) => {
     return (
       <ActionContainer className="lg:grid-cols-4">
+        {/* Redirection vers le détail de la session */}
         <Link to={`/seating/${session.sessionId}`} className="contents">
           <ActionTileDetail />
         </Link>
+
+        {/* Édition : Correction de la prop initialData -> defaultValues */}
         <UpdateSeatingSessionDialog
           seatingSessionId={session.sessionId}
-          initialData={initialData}
+          defaultValues={session}
+          queryKeysToInvalidate={queryKeysToInvalidate}
         >
           <ActionTileEdit />
         </UpdateSeatingSessionDialog>
-        <CreateSeatingSessionDialog defaultValues={initialData}>
+
+        {/* Duplication */}
+        <CreateSeatingSessionDialog
+          defaultValues={session}
+          queryKeysToInvalidate={queryKeysToInvalidate}
+        >
           <ActionTileCopy />
         </CreateSeatingSessionDialog>
 
+        {/* Suppression : Alignée avec notre API standardisée (Plus de Render Props) */}
         <DeleteSeatingSessionDialog
           seatingSessionId={session.sessionId}
           seatingSessionName={session.sessionName}
+          queryKeysToInvalidate={queryKeysToInvalidate}
         >
-          {({ isLoading, onOpen }) => (
-            <ActionTileDelete onClick={onOpen} disabled={isLoading} />
-          )}
+          <ActionTileDelete />
         </DeleteSeatingSessionDialog>
       </ActionContainer>
     );
   },
 );
+
 SessionRowActions.displayName = "SessionRowActions";
 
 export const SeatingPage = () => {
   const { schoolId, yearId } = useSchoolContext();
-  const { data: sessions = [] } = useGetSeatingSessions({
-    where: { schoolId, yearId },
-  });
+
+  const { data: rawSessions, queryKey: queryKeysToInvalidate } =
+    useGetSeatingSessions({
+      where: { schoolId, yearId },
+    });
+  const sessions = React.useMemo(() => rawSessions ?? [], [rawSessions]);
 
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
@@ -97,8 +115,10 @@ export const SeatingPage = () => {
                 Organisez les plans de salle et la répartition des candidats.
               </p>
             </header>
-
-            <CreateSeatingSessionDialog defaultValues={{ schoolId, yearId }}>
+            <CreateSeatingSessionDialog
+              defaultValues={{ schoolId, yearId }}
+              queryKeysToInvalidate={queryKeysToInvalidate}
+            >
               <Button
                 size="sm"
                 className="rounded-full shadow-sm bg-primary hover:bg-primary/90"
@@ -112,7 +132,7 @@ export const SeatingPage = () => {
       >
         <DataTable<TSeatingSession>
           data={sessions}
-          columns={enhanceColumnsExpandable(seatingSessionColumns) as any}
+          columns={columns}
           keyExtractor={(item) => item.sessionId}
         >
           <DataTableToolbar searchColumn="sessionName">
@@ -134,8 +154,13 @@ export const SeatingPage = () => {
               <DataContentBody<TSeatingSession>>
                 {({ row }) => (
                   <ExpandableRow
-                    row={row as Row<unknown>}
-                    renderDetail={<SessionRowActions session={row.original} />}
+                    row={row as any}
+                    renderDetail={
+                      <SessionRowActions
+                        session={row.original}
+                        queryKeysToInvalidate={queryKeysToInvalidate}
+                      />
+                    }
                   />
                 )}
               </DataContentBody>
