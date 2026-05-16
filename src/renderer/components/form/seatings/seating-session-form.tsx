@@ -9,7 +9,7 @@ import {
 } from "@/renderer/components/ui/form";
 import { Input } from "@/renderer/components/ui/input";
 import { SeatingSessionCreateSchema } from "@/packages/@core/data-access/schema-validations";
-import { type BaseFormProps, useZodForm } from "./base-form";
+import { type BaseFormProps, useZodForm } from "../base-form";
 import { z } from "zod";
 export type SeatingSessionData = z.infer<typeof SeatingSessionCreateSchema>;
 

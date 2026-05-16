@@ -14,13 +14,13 @@ import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import {
   SeatingSessionForm,
   type SeatingSessionData,
-} from "@/renderer/components/form/seating-sessin-form";
+} from "@/renderer/components/form/seatings/seating-session-form";
 import {
   useCreateSeatingSessionForm,
   useDeleteSeatingSessionForm,
   useUpdateSeatingSessionForm,
   type SeatingSessionFormConfig,
-} from "@/renderer/components/form/seating-sessin-form.actions";
+} from "@/renderer/components/form/seatings/seating-session-form.actions";
 import {
   ConfirmDeleteDialog,
   useConfirm,

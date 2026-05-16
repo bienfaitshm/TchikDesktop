@@ -10,7 +10,7 @@ import {
   type BaseFormProps,
   type UseFormBaseConfig,
   useFormBase,
-} from "./base-form";
+} from "../base-form";
 import { z } from "zod";
 
 export type SeatingSessionData = z.infer<typeof SeatingSessionCreateSchema>;

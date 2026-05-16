@@ -222,7 +222,9 @@ export const useInvalidateSeatingCache = () => {
 
   const invalidate = useCallback(() => {
     if (!sessionId) return;
-
+    queryClient.invalidateQueries({
+      queryKey: seatingKeys.sessionDetail(sessionId),
+    });
     queryClient.invalidateQueries({
       queryKey: seatingKeys.sessionRoomsStatus(sessionId),
     });
