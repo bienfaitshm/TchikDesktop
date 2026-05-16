@@ -143,7 +143,7 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
               className="min-w-[160px]"
             />
 
-            {showContent && (
+            {hasData && (
               <ButtonLoader
                 onClick={handleSave}
                 isLoading={isSaving}

@@ -14,6 +14,37 @@ import type {
   TSeatingSessionFilter,
 } from "@/packages/@core/data-access/schema-validations";
 
+export const seatingKeys = {
+  all: ["seating"] as const,
+
+  // Local Rooms
+  rooms: () => [...seatingKeys.all, "rooms"] as const,
+  roomLists: (params?: TLocalRoomFilter) =>
+    [...seatingKeys.rooms(), "list", { params }] as const,
+  roomDetails: () => [...seatingKeys.rooms(), "detail"] as const,
+  roomDetail: (id: string) => [...seatingKeys.roomDetails(), id] as const,
+
+  // Seating Sessions
+  sessions: () => [...seatingKeys.all, "sessions"] as const,
+  sessionLists: (filters?: TSeatingSessionFilter) =>
+    [...seatingKeys.sessions(), "list", { filters }] as const,
+  sessionDetails: () => [...seatingKeys.sessions(), "detail"] as const,
+  sessionDetail: (id: string) => [...seatingKeys.sessionDetails(), id] as const,
+  sessionAssignments: (id: string) =>
+    [...seatingKeys.sessionDetail(id), "assignments"] as const,
+  sessionRoomsStatus: (id: string) =>
+    [...seatingKeys.sessionDetail(id), "rooms-status"] as const,
+  sessionRoomLayout: (id: string, roomId: string) =>
+    [...seatingKeys.sessionDetail(id), "room-layout", roomId] as const,
+
+  // Students & Assignments
+  students: () => [...seatingKeys.all, "students"] as const,
+  unassignedStudents: (sessionId: string, yearId: string) =>
+    [...seatingKeys.students(), "unassigned", { sessionId, yearId }] as const,
+  studentSeat: (sessionId: string, enrolmentId: string) =>
+    [...seatingKeys.students(), "seat", { sessionId, enrolmentId }] as const,
+};
+
 // =============================================================================
 // HOOKS : LOCAL ROOMS (Salles Physiques)
 // =============================================================================
@@ -21,14 +52,14 @@ import type {
 /** @description Hook pour récupérer les locaux (salles physiques) */
 export function useGetLocalRooms(params?: TLocalRoomFilter) {
   return useSuspenseQuery({
-    queryKey: ["GET_LOCAL_ROOMS", params],
+    queryKey: seatingKeys.roomLists(params),
     queryFn: () => seating.fetchLocalRooms(params),
   });
 }
 
 export function useGetLocalRoomById(localRoomId: string) {
   return useSuspenseQuery({
-    queryKey: ["GET_LOCAL_ROOMS", localRoomId],
+    queryKey: seatingKeys.roomDetail(localRoomId),
     queryFn: () => seating.fetchLocalRoomById(localRoomId),
   });
 }
@@ -36,7 +67,7 @@ export function useGetLocalRoomById(localRoomId: string) {
 /** @description Hook pour créer un nouveau local */
 export function useCreateLocalRoom() {
   return useMutation({
-    mutationKey: ["CREATE_LOCAL_ROOM"],
+    mutationKey: [...seatingKeys.rooms(), "create"],
     mutationFn: (data: TLocalRoomCreate) => seating.createLocalRoom(data),
   });
 }
@@ -44,7 +75,7 @@ export function useCreateLocalRoom() {
 /** @description Hook pour mettre à jour un local */
 export function useUpdateLocalRoom() {
   return useMutation({
-    mutationKey: ["UPDATE_LOCAL_ROOM"],
+    mutationKey: [...seatingKeys.rooms(), "update"],
     mutationFn: ({ data, id }: TQueryUpdate<TLocalRoomUpdate>) =>
       seating.updateLocalRoom(id, data),
   });
@@ -53,7 +84,7 @@ export function useUpdateLocalRoom() {
 /** @description Hook pour supprimer un local */
 export function useDeleteLocalRoom() {
   return useMutation({
-    mutationKey: ["DELETE_LOCAL_ROOM"],
+    mutationKey: [...seatingKeys.rooms(), "delete"],
     mutationFn: (localRoomId: string) => seating.deleteLocalRoom(localRoomId),
   });
 }
@@ -65,21 +96,21 @@ export function useDeleteLocalRoom() {
 /** @description Hook pour récupérer les sessions d'une année scolaire */
 export function useGetSeatingSessions(filters?: TSeatingSessionFilter) {
   return useSuspenseQuery({
-    queryKey: ["GET_SEATING_SESSIONS", filters],
+    queryKey: seatingKeys.sessionLists(filters),
     queryFn: () => seating.fetchSessions(filters),
   });
 }
 
 export function useGetSeatingSessionById(sessionId: string) {
   return useSuspenseQuery({
-    queryKey: ["GET_SEATING_SESSIONS", sessionId],
+    queryKey: seatingKeys.sessionDetail(sessionId),
     queryFn: () => seating.fetchSessionById(sessionId),
   });
 }
 
 export function useSessionWithAssignments(sessionId: string) {
   return useSuspenseQuery({
-    queryKey: ["GET_SEATING_WITH_ASSIGNMENTS", sessionId],
+    queryKey: seatingKeys.sessionAssignments(sessionId),
     queryFn: () => seating.getSessionWithAssignments(sessionId),
   });
 }
@@ -87,7 +118,7 @@ export function useSessionWithAssignments(sessionId: string) {
 /** @description Hook pour récupérer le statut d'occupation des salles d'une session */
 export function useGetSessionRoomsStatus(sessionId: string) {
   return useSuspenseQuery({
-    queryKey: ["GET_SESSION_ROOMS_STATUS", sessionId],
+    queryKey: seatingKeys.sessionRoomsStatus(sessionId),
     queryFn: () => seating.fetchSessionRoomsStatus(sessionId),
   });
 }
@@ -95,7 +126,7 @@ export function useGetSessionRoomsStatus(sessionId: string) {
 /** @description Hook pour créer une session de placement */
 export function useCreateSeatingSession() {
   return useMutation({
-    mutationKey: ["CREATE_SEATING_SESSION"],
+    mutationKey: [...seatingKeys.sessions(), "create"],
     mutationFn: (data: TSeatingSessionCreate) => seating.createSession(data),
   });
 }
@@ -103,7 +134,7 @@ export function useCreateSeatingSession() {
 /** @description Hook pour supprimer une session de placement */
 export function useDeleteSeatingSession() {
   return useMutation({
-    mutationKey: ["DELETE_SEATING_SESSION"],
+    mutationKey: [...seatingKeys.sessions(), "delete"],
     mutationFn: (sessionId: string) => seating.deleteSession(sessionId),
   });
 }
@@ -111,7 +142,7 @@ export function useDeleteSeatingSession() {
 /** @description Hook pour modifier une session de placement */
 export function useUpdateSeatingSession() {
   return useMutation({
-    mutationKey: ["UPDATE_SEATING_SESSION"],
+    mutationKey: [...seatingKeys.sessions(), "update"],
     mutationFn: ({ id, data }: TQueryUpdate<TSeatingSessionCreate>) =>
       seating.updateSession(id, data),
   });
@@ -123,7 +154,7 @@ export function useUpdateSeatingSession() {
 
 export function useGenerateSeating() {
   return useMutation({
-    mutationKey: ["SEATING_GENERATION"],
+    mutationKey: [...seatingKeys.all, "generation"],
     mutationFn: (
       data: SeatingGenerator & { schoolId: string; yearId: string },
     ) => seating.generateSeating(data),
@@ -133,7 +164,7 @@ export function useGenerateSeating() {
 /** @description Hook pour récupérer la disposition (layout) d'une salle précise */
 export function useGetRoomLayout(sessionId: string, localRoomId: string) {
   return useSuspenseQuery({
-    queryKey: ["GET_ROOM_LAYOUT", sessionId, localRoomId],
+    queryKey: seatingKeys.sessionRoomLayout(sessionId, localRoomId),
     queryFn: () => seating.fetchRoomLayout(sessionId, localRoomId),
   });
 }
@@ -141,7 +172,7 @@ export function useGetRoomLayout(sessionId: string, localRoomId: string) {
 /** @description Hook pour récupérer les élèves non assignés (utile pour le drag & drop) */
 export function useGetUnassignedStudents(sessionId: string, yearId: string) {
   return useSuspenseQuery({
-    queryKey: ["GET_UNASSIGNED_STUDENTS", sessionId, yearId],
+    queryKey: seatingKeys.unassignedStudents(sessionId, yearId),
     queryFn: () => seating.fetchUnassignedStudents(sessionId, yearId),
   });
 }
@@ -149,7 +180,7 @@ export function useGetUnassignedStudents(sessionId: string, yearId: string) {
 /** @description Hook pour effectuer un placement massif (Bulk Assign) */
 export function useBulkAssignStudents() {
   return useMutation({
-    mutationKey: ["BULK_ASSIGN_STUDENTS"],
+    mutationKey: [...seatingKeys.all, "bulk-assign"],
     mutationFn: ({
       params,
       data,
@@ -160,7 +191,7 @@ export function useBulkAssignStudents() {
 
 export function useRebuildAssignStudents() {
   return useMutation({
-    mutationKey: ["REBUILD_ASSIGN_STUDENTS"],
+    mutationKey: [...seatingKeys.all, "rebuild-assign"],
     mutationFn: ({
       params,
       data,
@@ -172,7 +203,7 @@ export function useRebuildAssignStudents() {
 /** @description Hook pour vider les assignations d'une salle */
 export function useClearRoomAssignments() {
   return useMutation({
-    mutationKey: ["CLEAR_ROOM_ASSIGNMENTS"],
+    mutationKey: [...seatingKeys.all, "clear-room"],
     mutationFn: ({
       sessionId,
       localRoomId,
@@ -186,7 +217,7 @@ export function useClearRoomAssignments() {
 /** @description Hook pour localiser un étudiant spécifique dans une session */
 export function useFindStudentSeat(sessionId: string, enrolementId: string) {
   return useSuspenseQuery({
-    queryKey: ["FIND_STUDENT_SEAT", sessionId, enrolementId],
+    queryKey: seatingKeys.studentSeat(sessionId, enrolementId),
     queryFn: () => seating.findStudentSeat(sessionId, enrolementId),
   });
 }

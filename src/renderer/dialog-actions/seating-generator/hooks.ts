@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState, useRef, useId } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
 import {
   useGenerateSeating,
   useGetLocalRooms,
   useRebuildAssignStudents,
+  seatingKeys,
 } from "@/renderer/libs/queries/seating";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import type { BulkAssignParams } from "@/packages/@core/apis/clients";
@@ -12,6 +14,7 @@ import {
   formatRoomsToSeatingAssignments,
 } from "@/renderer/libs/seating-viewer";
 import type { SeatingGenerator } from "@/packages/@core/data-access/schema-validations";
+import { useParams } from "react-router";
 
 type SeatingGeneratorPayload = {
   localRoomIds: string[];
@@ -204,4 +207,32 @@ export const useSeatingGeneratorManager = ({
     handleFormSubmit,
     handleSave,
   };
+};
+
+/**
+ * @description Hook  pour invalider le cache des salles
+ */
+export const useInvalidateSeatingCache = () => {
+  const { sessionId, localRoomId } = useParams<{
+    sessionId: string;
+    localRoomId?: string;
+  }>();
+
+  const queryClient = useQueryClient();
+
+  const invalidate = useCallback(() => {
+    if (!sessionId) return;
+
+    queryClient.invalidateQueries({
+      queryKey: seatingKeys.sessionRoomsStatus(sessionId),
+    });
+
+    if (localRoomId) {
+      queryClient.invalidateQueries({
+        queryKey: seatingKeys.sessionRoomLayout(sessionId, localRoomId),
+      });
+    }
+  }, [queryClient, sessionId, localRoomId]);
+
+  return invalidate;
 };
