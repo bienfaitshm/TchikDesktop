@@ -61,7 +61,7 @@ export function useUpdateOptionForm(config?: OptionFormConfig) {
             errorMessageTitle: "Échec de la mise à jour.",
             onSuccess: (data) => {
               handleSuccess(data);
-              helpers?.reset?.();
+              helpers?.reset?.(data as any);
             },
           }),
         );

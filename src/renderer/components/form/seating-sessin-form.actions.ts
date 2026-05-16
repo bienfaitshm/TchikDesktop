@@ -70,7 +70,7 @@ export function useUpdateSeatingSessionForm({
           successMessageDescription: `Les changements sur "${data.sessionName}" ont été enregistrés.`,
           onSuccess: (responseData) => {
             handleSuccess(responseData);
-            helpers?.reset?.();
+            helpers?.reset?.(responseData);
           },
         }),
       );
