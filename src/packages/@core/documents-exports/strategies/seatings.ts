@@ -2,7 +2,6 @@
  * @description Stratégie d'export pour la mise en place (seating).
  */
 
-import z from "zod";
 import {
   AbstractExportStrategy,
   ServiceResult,
@@ -24,13 +23,14 @@ import {
 } from "./seatings.form-fields";
 import { prependFileTypeField } from "./base.form-fields";
 import { SeatingDataResolver } from "./seating.data-resolver";
-import { SeatingPlanBySheetExcelExportExtension } from "../extensions/seatings";
-
-type TSeatingExportData = z.infer<typeof SchoolYearSchema>;
+import {
+  type ExportPayload,
+  SeatingPlanBySheetExcelExportExtension,
+} from "../extensions/seatings";
 
 export class SeatingExportStrategy extends AbstractExportStrategy<
   FormFieldDef,
-  TSeatingExportData
+  ExportPayload
 > {
   public readonly id = "SEATING_EXPORT" as const;
   public readonly displayName = "Liste de la mise en place";
