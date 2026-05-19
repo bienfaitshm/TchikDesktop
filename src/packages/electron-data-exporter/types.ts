@@ -30,7 +30,11 @@ export interface ServiceError {
 }
 
 /** Contenu binaire ou textuel après transformation. */
-export type RawFileContent = string | Uint8Array | Buffer;
+export type RawFileContent =
+  | string
+  | Uint8Array
+  | Buffer
+  | Uint8Array<ArrayBufferLike>;
 
 /**
  * Artefact d'export final.

@@ -24,8 +24,9 @@ export interface TMeta<TFormField = unknown> {
  */
 export interface IExportExtension<TData = unknown> {
   readonly extension: DOCUMENT_EXTENSION;
+  readonly description?: string;
   getExtensionFilter(): FileFilter;
-  process(data: TData): RawFileContent;
+  process(data: TData): Promise<RawFileContent>;
 }
 
 /**
@@ -35,15 +36,17 @@ export abstract class AbstractExportExtension<TData = unknown>
   implements IExportExtension<TData>
 {
   abstract readonly extension: DOCUMENT_EXTENSION;
+  abstract readonly description?: string;
 
-  public getExtensionFilter(): FileFilter {
+  public getExtensionFilter(): FileFilter & { description?: string } {
     return {
       name: getFileDescription(this.extension),
+      description: "",
       extensions: [this.extension],
     };
   }
 
-  public abstract process(data: TData): RawFileContent;
+  public abstract process(data: TData): Promise<RawFileContent>;
 }
 
 /**
@@ -121,9 +124,10 @@ export abstract class AbstractExportStrategy<
    * Récupère tous les filtres de fichiers supportés par cette stratégie.
    */
   public get extensionFilters(): FileFilter[] {
-    return Array.from(this.extensionsRegistry.values()).map((engine) =>
-      engine.getExtensionFilter(),
-    );
+    return Array.from(this.extensionsRegistry.values()).map((engine) => ({
+      ...engine.getExtensionFilter(),
+      description: engine?.description,
+    }));
   }
 
   /**
@@ -204,7 +208,7 @@ export abstract class AbstractExportStrategy<
     }
 
     try {
-      const content = engine.process(data as TData);
+      const content = await engine.process(data as TData);
       return { success: true, data: content };
     } catch (error) {
       const errorMessage =

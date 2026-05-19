@@ -16,12 +16,13 @@ export class CsvExportExtension<
   T extends object | object[],
 > extends AbstractExportExtension<T> {
   readonly extension = DOCUMENT_EXTENSION.CSV;
+  readonly description = undefined;
 
   /**
    * Transforme les données en CSV.
    * Si un objet unique est passé, il est automatiquement traité comme une ligne unique.
    */
-  public process(data: T): string {
+  public async process(data: T) {
     if (!data) return "";
 
     const normalizedData = Array.isArray(data) ? data : [data];
@@ -49,8 +50,9 @@ export class CsvExportExtension<
  */
 export class JsonExportExtension<T> extends AbstractExportExtension<T> {
   readonly extension = DOCUMENT_EXTENSION.JSON;
+  readonly description = undefined;
 
-  public process(data: T): string {
+  public async process(data: T) {
     try {
       return JSON.stringify(data ?? [], null, 2);
     } catch (error) {

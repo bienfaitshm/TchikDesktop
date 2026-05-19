@@ -24,6 +24,7 @@ import {
 } from "./seatings.form-fields";
 import { prependFileTypeField } from "./base.form-fields";
 import { SeatingDataResolver } from "./seating.data-resolver";
+import { SeatingPlanBySheetExcelExportExtension } from "../extensions/seatings";
 
 type TSeatingExportData = z.infer<typeof SchoolYearSchema>;
 
@@ -45,7 +46,11 @@ export class SeatingExportStrategy extends AbstractExportStrategy<
 
   constructor() {
     super({
-      extensions: [new CsvExportExtension(), new JsonExportExtension()],
+      extensions: [
+        new SeatingPlanBySheetExcelExportExtension(),
+        new JsonExportExtension(),
+        new CsvExportExtension(),
+      ],
       getSchemasCreator: generateValidationSchema,
     });
   }

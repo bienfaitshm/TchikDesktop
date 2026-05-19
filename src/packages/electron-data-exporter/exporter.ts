@@ -17,20 +17,20 @@ import type {
 
 export class DataExport {
   private readonly logger = getLogger("DataExport");
-  private readonly strategyRegistry = new Map<string, IExportStrategy>();
+  private readonly strategyRegistry = new Map<string, IExportStrategy<any>>();
 
   /**
    * @param strategies Liste des stratégies d'export injectées.
    * @param fileSystem Interface abstraite pour les opérations I/O (Injection de dépendance).
    */
   constructor(
-    strategies: IExportStrategy[],
+    strategies: IExportStrategy<any>[],
     private readonly fileSystem: IFileSystem,
   ) {
     this.registerStrategies(strategies);
   }
 
-  private registerStrategies(strategies: IExportStrategy[]): void {
+  private registerStrategies(strategies: IExportStrategy<any>[]): void {
     strategies.forEach((strategy) => {
       if (this.strategyRegistry.has(strategy.id)) {
         this.logger.warn(`Duplicate strategy ID detected: ${strategy.id}.`);
