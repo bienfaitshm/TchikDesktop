@@ -9,6 +9,40 @@ import {
 } from "../../schemas/schema";
 import type { FindManyOptions } from "../../schemas/types";
 
+import {
+  TClassroom,
+  TEnrolement,
+  TUser as TStudent,
+  TLocalRoom,
+  TSeatingSession,
+} from "@/packages/@core/data-access/db/schemas/types";
+
+export type TEnrolementWithRelations = TEnrolement & {
+  student: TStudent;
+  classRoom: TClassroom;
+};
+
+// Définition propre de l'Assignment
+export type TAssignment = {
+  assignmentId: string;
+  sessionId: string;
+  localRoomId: string;
+  enrolementId: string;
+  rowPosition: number;
+  columnPosition: number;
+  localRoom: TLocalRoom;
+  enrolement: TEnrolementWithRelations;
+};
+
+export type TSeatingSessionWithAssignment = TSeatingSession & {
+  assignments: TAssignment[];
+};
+export type TSeatingSessionGrouped = TSeatingSession & {
+  assignments: (TLocalRoom & {
+    students: TAssignment[];
+  })[];
+};
+
 const SESSION_SORT = {
   orderBy: [
     { column: sql`lower(${seatingSessions.sessionName})`, order: "asc" },
@@ -73,7 +107,9 @@ export class SeatingSessionQuery extends BaseRepository<
         .orderBy(localRooms.name);
     } catch (error) {
       this.logError("getSessionRoomsStatus", error, { sessionId });
-      throw new Error("Impossible de récupérer l'état des salles.");
+      throw new Error("Impossible de récupérer l'état des salles.", {
+        cause: error,
+      });
     }
   }
 
@@ -81,7 +117,9 @@ export class SeatingSessionQuery extends BaseRepository<
    * Récupère une session avec ses affectations, localisations et utilisateurs inscrits,
    * triés par nom de famille puis prénom.
    */
-  async getSessionWithAssignments(sessionId: string) {
+  async getSessionWithAssignments(
+    sessionId: string,
+  ): Promise<TSeatingSessionWithAssignment | null> {
     try {
       const sessionDetails = await this.db.query.seatingSessions.findFirst({
         where: eq(seatingSessions.sessionId, sessionId),
@@ -92,6 +130,7 @@ export class SeatingSessionQuery extends BaseRepository<
               enrolement: {
                 with: {
                   student: true,
+                  classRoom: true,
                 },
               },
             },
@@ -103,16 +142,18 @@ export class SeatingSessionQuery extends BaseRepository<
 
       // Tri côté applicatif (Drizzle ne supporte pas encore le tri sur les relations imbriquées via 'with')
       if (sessionDetails.assignments) {
-        sessionDetails.assignments.sort((a: any, b: any) => {
-          const userA = a.enrolement?.user;
-          const userB = b.enrolement?.user;
+        sessionDetails.assignments.sort((a, b) => {
+          const userA = a.enrolement?.student;
+          const userB = b.enrolement?.student;
 
-          const nameA = `${userA?.lastName ?? ""} ${userA?.firstName ?? ""}`
-            .trim()
-            .toLowerCase();
-          const nameB = `${userB?.lastName ?? ""} ${userB?.firstName ?? ""}`
-            .trim()
-            .toLowerCase();
+          const nameA =
+            `${userA?.lastName ?? ""} ${userA?.middleName ?? ""} ${userA?.firstName ?? ""}`
+              .trim()
+              .toLowerCase();
+          const nameB =
+            `${userB?.lastName ?? ""} ${userB?.middleName ?? ""} ${userB?.firstName ?? ""}`
+              .trim()
+              .toLowerCase();
 
           return nameA.localeCompare(nameB, "fr", { sensitivity: "base" });
         });
@@ -129,3 +170,33 @@ export class SeatingSessionQuery extends BaseRepository<
   static instance = new SeatingSessionQuery();
 }
 export const seatingSessionService = SeatingSessionQuery.instance;
+
+/**
+ * Groupe les affectations par localRoom.
+ * @param assignments - Liste des affectations issues de la session
+ */
+export function groupByLocalRoom(
+  sessionData: TSeatingSessionWithAssignment,
+): TSeatingSessionGrouped {
+  const grouped = sessionData.assignments.reduce(
+    (acc, assignment) => {
+      const { localRoomId, localRoom } = assignment;
+
+      if (!acc[localRoomId]) {
+        acc[localRoomId] = {
+          ...localRoom,
+          students: [],
+        };
+      }
+
+      acc[localRoomId].students.push(assignment);
+      return acc;
+    },
+    {} as Record<string, TLocalRoom & { students: TAssignment[] }>,
+  );
+
+  return {
+    ...sessionData,
+    assignments: Object.values(grouped),
+  };
+}

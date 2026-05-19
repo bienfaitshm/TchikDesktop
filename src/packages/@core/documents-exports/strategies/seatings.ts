@@ -23,6 +23,7 @@ import {
   type TCreateSeatingFormParams,
 } from "./seatings.form-fields";
 import { prependFileTypeField } from "./base.form-fields";
+import { SeatingDataResolver } from "./seating.data-resolver";
 
 type TSeatingExportData = z.infer<typeof SchoolYearSchema>;
 
@@ -69,9 +70,22 @@ export class SeatingExportStrategy extends AbstractExportStrategy<
   public override async resolveData(
     contextParams: TCreateSeatingFormParams,
   ): Promise<ServiceResult<any>> {
-    return {
-      success: true,
-      data: contextParams,
-    };
+    try {
+      const resolvedData = await SeatingDataResolver.resolveData(contextParams);
+
+      return {
+        success: true,
+        data: resolvedData,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          code: "DATA_FETCH_ERROR",
+          message: error instanceof Error ? error.message : "Erreur inconnue",
+          details: error instanceof Error ? error.message : "Erreur inconnue",
+        },
+      };
+    }
   }
 }

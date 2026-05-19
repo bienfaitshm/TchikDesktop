@@ -1,15 +1,11 @@
 import type { FormFieldDef } from "@/packages/dynamic-form";
-import {
-  seatingSessionService,
-  localRoomService,
-} from "@/packages/@core/data-access/db/queries";
+import { seatingSessionService } from "@/packages/@core/data-access/db/queries";
 import { SeatingFormFactory } from "../form-factory";
 
 export type TCreateSeatingFormParams = {
   yearId?: string;
   schoolId?: string;
-  sessionId?: string | string[];
-  localRoomId?: string | string[];
+  sessionId?: string;
 };
 
 export const SeatingMappers = {
@@ -19,14 +15,6 @@ export const SeatingMappers = {
     sessions.map((session) => ({
       label: session.sessionName,
       value: session.sessionId,
-    })),
-
-  toLocalRoomOptions: (
-    rooms: Awaited<ReturnType<typeof localRoomService.findMany>>,
-  ) =>
-    rooms.map((room) => ({
-      label: room.name,
-      value: room.localRoomId,
     })),
 };
 
@@ -45,16 +33,11 @@ export async function createSeatingFieldForm({
 
   const [seatings] = await Promise.all([
     seatingSessionService.findMany({ where: { schoolId, yearId } }),
-    // localRoomService.findMany({ where: { schoolId } }),
   ]);
 
   const defaultSessionValue = Array.isArray(sessionId)
-    ? sessionId
+    ? sessionId[0]
     : (sessionId ?? undefined);
-
-  // const defaultLocalRoomValue = Array.isArray(localRoomId)
-  //   ? localRoomId
-  //   : (localRoomId ?? undefined);
 
   return [
     SeatingFormFactory.buildSeatingField({
@@ -62,10 +45,5 @@ export async function createSeatingFieldForm({
       defaultValue: defaultSessionValue,
       colSpan: 6,
     }),
-
-    // SeatingFormFactory.buildLocalRoomsField({
-    //   options: SeatingMappers.toLocalRoomOptions(localRooms),
-    //   defaultValue: defaultLocalRoomValue,
-    // }),
   ];
 }

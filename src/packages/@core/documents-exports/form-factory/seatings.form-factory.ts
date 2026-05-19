@@ -3,12 +3,11 @@ type TFieldConfig = Partial<FormFieldDef>;
 export class SeatingFormFactory {
   static buildSeatingField(config?: TFieldConfig): FormFieldDef {
     return {
-      id: "seating",
+      id: "sessionId",
       type: "select",
       label: "Mise en place",
       required: true,
       defaultValue: "eng",
-      multiple: true,
       colSpan: 4,
       ...config,
     };
