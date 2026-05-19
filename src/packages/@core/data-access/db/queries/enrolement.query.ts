@@ -1,6 +1,6 @@
 import { eq, and, sql, count, getTableColumns } from "drizzle-orm";
 import { getLogger } from "@/packages/logger";
-import { db } from "../config";
+import { db, type TDataBase } from "../config";
 import {
   classroomEnrolements,
   users,
@@ -8,13 +8,8 @@ import {
   studyYears,
 } from "../schemas/schema";
 import { getVisibleUserColumns } from "./user.query";
-import { BaseRepository } from "./base-repository.new";
-import type {
-  TEnrolement,
-  TEnrolementInsert,
-  TEnrolementUpdate,
-  FindManyOptions,
-} from "../schemas/types";
+import { BaseRepository } from "./base-repository";
+import type { TEnrolementInsert, FindManyOptions } from "../schemas/types";
 
 /**
  * Configuration du tri par défaut (Nom complet de l'étudiant)
@@ -29,20 +24,17 @@ const ENROLEMENT_DEFAULT_SORT = {
 
 export class EnrolementQuery extends BaseRepository<
   typeof classroomEnrolements,
-  TEnrolement,
-  TEnrolementInsert,
-  TEnrolementUpdate,
-  typeof db
+  TDataBase
 > {
   constructor() {
-    super(
+    super({
       db,
-      getLogger("EnrolementRepository"),
-      classroomEnrolements,
-      classroomEnrolements.enrolementId,
-      "Enrolement",
-      ENROLEMENT_DEFAULT_SORT,
-    );
+      table: classroomEnrolements,
+      idColumn: classroomEnrolements.classroomId,
+      entityName: "En",
+      logger: getLogger,
+      defaultSort: ENROLEMENT_DEFAULT_SORT,
+    });
   }
 
   /**
@@ -53,10 +45,6 @@ export class EnrolementQuery extends BaseRepository<
       throw new Error("Missing Context: schoolId and yearId are required.");
     }
   }
-
-  // =============================================================================
-  //  LECTURE (OVERRIDE & EXTENSIONS)
-  // =============================================================================
 
   protected override getQuerySet(): any {
     const { classId, schoolId, ...classFields } = getTableColumns(classRooms);
@@ -76,10 +64,6 @@ export class EnrolementQuery extends BaseRepository<
       .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
       .$dynamic();
   }
-
-  // =============================================================================
-  //  ANALYTICS (REPORTING)
-  // =============================================================================
 
   async getDashboardMetrics(filters: { schoolId: string; yearId: string }) {
     this.validateContext(filters);
@@ -133,10 +117,6 @@ export class EnrolementQuery extends BaseRepository<
       )
       .orderBy(classRooms.shortIdentifier);
   }
-
-  // =============================================================================
-  //  OPERATIONS ATOMIQUES (TRANSACTIONS)
-  // =============================================================================
 
   /**
    * Création d'un étudiant + Inscription en une seule transaction.

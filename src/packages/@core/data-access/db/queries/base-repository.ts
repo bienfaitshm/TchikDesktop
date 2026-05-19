@@ -1,15 +1,33 @@
-import { eq, Table, AnyColumn } from "drizzle-orm";
-import { db } from "../config";
+import { eq, Table } from "drizzle-orm";
 import { applyQueryOptions, mergeQueryOptions } from "./drizzle-builder";
-import { getLogger } from "@/packages/logger";
 import type { FindManyOptions } from "../schemas/types";
 
-const logger = getLogger("Database-Repository");
+type TableColumn<TTable extends Table> =
+  TTable["_"]["columns"][keyof TTable["_"]["columns"]];
 
-/**
- * Erreur spécifique à la couche d'accès aux données.
- * Permet un filtrage ciblé dans les middlewares de gestion d'erreurs (Sentry, Datadog, etc.).
- */
+export interface ILogger {
+  error(message: string, context?: Record<string, unknown>): void;
+}
+
+export interface IDrizzleConnection {
+  select: any;
+  insert: any;
+  update: any;
+  delete: any;
+}
+
+export interface IBaseRepositoryConfig<
+  TTable extends Table,
+  TDb extends IDrizzleConnection,
+> {
+  db: TDb;
+  table: TTable;
+  idColumn: TableColumn<TTable>;
+  logger: (context: string) => ILogger;
+  entityName: string;
+  defaultSort?: FindManyOptions<TTable>;
+}
+
 export class RepositoryError extends Error {
   constructor(
     message: string,
@@ -22,38 +40,44 @@ export class RepositoryError extends Error {
 
 export abstract class BaseRepository<
   TTable extends Table,
-  TSelect,
-  TInsert,
-  TUpdate,
+  TDb extends IDrizzleConnection = IDrizzleConnection,
+  TSelect = TTable["$inferSelect"],
+  TInsert = TTable["$inferInsert"],
+  TUpdate = Partial<TTable["$inferInsert"]>,
 > {
-  constructor(
-    protected readonly table: TTable,
-    protected readonly idColumn: AnyColumn,
-    protected readonly entityName: string,
-    protected readonly defaultSort: FindManyOptions<TTable>,
-  ) {}
+  protected db: TDb;
+  protected logger: ILogger;
+  protected table: TTable;
+  protected idColumn: TableColumn<TTable>;
+  protected entityName: string;
+  protected defaultSort: FindManyOptions<TTable> | undefined;
 
-  /**
-   * Construit la requête de base pour les listes.
-   * Protégée pour permettre aux classes enfants d'ajouter des JOINs par défaut (ex: with relations).
-   */
-  protected getQuerySet() {
-    return db.select().from(this.table).$dynamic();
+  constructor(config: IBaseRepositoryConfig<TTable, TDb>) {
+    this.db = config.db;
+    this.table = config.table;
+    this.idColumn = config.idColumn;
+    this.entityName = config.entityName;
+    this.defaultSort = config.defaultSort;
+    this.logger = config.logger(`${config.entityName}Repository`);
   }
 
-  /**
-   * Construit la requête de base pour les détails (findById).
-   */
+  protected getQuerySet() {
+    return this.db.select().from(this.table).$dynamic();
+  }
+
   protected getDetailQuerySet() {
-    return db.select().from(this.table).$dynamic();
+    return this.getQuerySet();
   }
 
   async findMany(filters?: FindManyOptions<TTable>): Promise<TSelect[]> {
     try {
       const query = this.getQuerySet();
       const finalOptions = mergeQueryOptions(filters, this.defaultSort);
-
-      return await applyQueryOptions(query, this.table, finalOptions);
+      return (await applyQueryOptions(
+        query,
+        this.table,
+        finalOptions,
+      )) as TSelect[];
     } catch (error) {
       this.logError("findMany", error, { filters });
       throw new RepositoryError(
@@ -70,7 +94,6 @@ export abstract class BaseRepository<
       const [result] = await this.getDetailQuerySet().where(
         eq(this.idColumn, id),
       );
-
       return (result as TSelect) ?? null;
     } catch (error) {
       this.logError("findById", error, { id });
@@ -83,11 +106,10 @@ export abstract class BaseRepository<
 
   async create(payload: TInsert): Promise<TSelect> {
     try {
-      const [newRecord] = await db
+      const [newRecord] = await this.db
         .insert(this.table)
-        .values(payload as any)
+        .values(payload)
         .returning();
-
       return newRecord as TSelect;
     } catch (error) {
       this.logError("create", error, { payload });
@@ -102,12 +124,11 @@ export abstract class BaseRepository<
     if (id === undefined || id === null) return null;
 
     try {
-      const [updated] = await db
+      const [updated] = await this.db
         .update(this.table)
-        .set(updates as any)
+        .set(updates)
         .where(eq(this.idColumn, id))
         .returning();
-
       return (updated as TSelect) ?? null;
     } catch (error) {
       this.logError("update", error, { id, updates });
@@ -119,11 +140,10 @@ export abstract class BaseRepository<
     if (id === undefined || id === null) return false;
 
     try {
-      const result = await db
+      const result = await this.db
         .delete(this.table)
         .where(eq(this.idColumn, id))
         .returning();
-
       return result.length > 0;
     } catch (error) {
       this.logError("delete", error, { id });
@@ -139,7 +159,7 @@ export abstract class BaseRepository<
     error: unknown,
     context: Record<string, unknown>,
   ) {
-    logger.error(`[${this.entityName}Repository] ${op} operation failed`, {
+    this.logger.error(`[${this.entityName}Repository] ${op} operation failed`, {
       error: error instanceof Error ? error.message : error,
       stack: error instanceof Error ? error.stack : undefined,
       ...context,

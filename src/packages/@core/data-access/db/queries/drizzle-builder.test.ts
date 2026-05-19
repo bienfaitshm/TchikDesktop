@@ -6,7 +6,7 @@ import {
   DEFAULT_MAX_LIMIT,
   mergeQueryOptions,
 } from "./drizzle-builder";
-import { createClient } from "@libsql/client/.";
+import { createClient } from "@libsql/client";
 
 const mockTable = sqliteTable("test_table", {
   id: integer("id").primaryKey(),

@@ -1,6 +1,6 @@
 import { sql, eq, and, isNull } from "drizzle-orm";
-import { db } from "../../config";
-import { BaseRepository } from "../base-repository.new";
+import { db, TDataBase } from "../../config";
+import { BaseRepository } from "../base-repository";
 import {
   seatingAssignments,
   classroomEnrolements,
@@ -11,28 +11,22 @@ import {
 import type {
   TSeatingAssignment,
   TSeatingAssignmentInsert,
-  TSeatingAssignmentUpdate,
 } from "../../schemas/types";
 
 import { getLogger } from "@/packages/logger";
 
-const logger = getLogger("Database-Repository");
-
 export class SeatingAssignmentQuery extends BaseRepository<
   typeof seatingAssignments,
-  TSeatingAssignment,
-  TSeatingAssignmentInsert,
-  TSeatingAssignmentUpdate
+  TDataBase
 > {
   constructor() {
-    super(
+    super({
       db,
-      logger,
-      seatingAssignments,
-      seatingAssignments.assignmentId,
-      "SeatingAssignment",
-      {},
-    );
+      table: seatingAssignments,
+      idColumn: seatingAssignments.assignmentId,
+      entityName: "SeatingAssignmen",
+      logger: getLogger,
+    });
   }
 
   /**

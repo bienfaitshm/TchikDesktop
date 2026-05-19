@@ -1,21 +1,13 @@
-import { sql, eq, and, count, exists, getTableColumns } from "drizzle-orm";
-import { db } from "../../config";
-import { BaseRepository } from "../base-repository.new";
+import { sql, eq, and, count, getTableColumns } from "drizzle-orm";
+import { db, type TDataBase } from "../../config";
+import { getLogger } from "@/packages/logger";
+import { BaseRepository } from "../base-repository";
 import {
   seatingAssignments,
   seatingSessions,
   localRooms,
 } from "../../schemas/schema";
-import type {
-  TSeatingSession,
-  TSeatingSessionInsert,
-  TSeatingSessionUpdate,
-  FindManyOptions,
-} from "../../schemas/types";
-
-import { getLogger } from "@/packages/logger";
-
-const logger = getLogger("Database-Repository");
+import type { FindManyOptions } from "../../schemas/types";
 
 const SESSION_SORT = {
   orderBy: [
@@ -25,20 +17,17 @@ const SESSION_SORT = {
 
 export class SeatingSessionQuery extends BaseRepository<
   typeof seatingSessions,
-  TSeatingSession & { hasAssignments: boolean },
-  TSeatingSessionInsert,
-  TSeatingSessionUpdate,
-  typeof db
+  TDataBase
 > {
   constructor() {
-    super(
+    super({
       db,
-      logger,
-      seatingSessions,
-      seatingSessions.sessionId,
-      "SeatingSession",
-      SESSION_SORT,
-    );
+      table: seatingSessions,
+      idColumn: seatingSessions.sessionId,
+      entityName: "SeatingSession",
+      logger: getLogger,
+      defaultSort: SESSION_SORT,
+    });
   }
 
   override getQuerySet() {

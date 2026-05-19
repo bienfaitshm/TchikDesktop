@@ -1,13 +1,9 @@
 import { getTableColumns, sql } from "drizzle-orm";
 import { users } from "../schemas/schema";
-import { db } from "../config";
+import { db, type TDataBase } from "../config";
+import { getLogger } from "@/packages/logger";
 import { BaseRepository } from "./base-repository";
-import type {
-  TUser,
-  TUserInsert,
-  TUserUpdate,
-  FindManyOptions,
-} from "../schemas/types";
+import type { FindManyOptions } from "../schemas/types";
 
 /**
  * Fragment SQL réutilisable pour le nom complet.
@@ -22,17 +18,6 @@ export const getVisibleUserColumns = () => {
   return { ...userFields, fullName: fullNameSql };
 };
 
-/**
- * Tri standard : Nom, Post-nom, Prénom (Case-Insensitive)
- */
-// const USER_DEFAULT_SORT: FindManyOptions<typeof users> = {
-//   orderBy: [
-//     { column: sql`lower(${users.lastName})`, order: "asc" },
-//     { column: sql`lower(${users.middleName})`, order: "asc" },
-//     { column: sql`lower(${users.firstName})`, order: "asc" },
-//   ],
-// };
-
 const USER_DEFAULT_SORT = {
   orderBy: [
     { column: sql`lower(${users.lastName})`, order: "asc" },
@@ -43,23 +28,20 @@ const USER_DEFAULT_SORT = {
   ],
 } as unknown as FindManyOptions<typeof users>;
 
-export class UserQuery extends BaseRepository<
-  typeof users,
-  TUser,
-  TUserInsert,
-  TUserUpdate
-> {
+export class UserQuery extends BaseRepository<typeof users, TDataBase> {
   constructor() {
-    // On passe l'entité "User" pour les logs et les erreurs
-    super(users, users.userId, "User", USER_DEFAULT_SORT);
+    super({
+      db,
+      table: users,
+      idColumn: users.userId,
+      entityName: "User",
+      logger: getLogger,
+      defaultSort: USER_DEFAULT_SORT,
+    });
   }
 
   protected override getQuerySet(): any {
     return db.select(getVisibleUserColumns()).from(this.table).$dynamic();
-  }
-
-  protected override getDetailQuerySet() {
-    return this.getQuerySet();
   }
 
   static readonly instance = new UserQuery();

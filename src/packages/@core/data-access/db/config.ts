@@ -138,3 +138,4 @@ export class DatabaseManager {
 
 export const dbManager = DatabaseManager.getInstance();
 export const db = dbManager.db;
+export type TDataBase = typeof db;

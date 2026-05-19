@@ -1,5 +1,6 @@
 import { eq, sql, getTableColumns } from "drizzle-orm";
-import { db } from "../config";
+import { db, type TDataBase } from "../config";
+import { getLogger } from "@/packages/logger";
 import {
   classRooms,
   options,
@@ -9,12 +10,7 @@ import {
 } from "../schemas/schema";
 import { BaseRepository } from "./base-repository";
 import { applyQueryOptions } from "./drizzle-builder";
-import type {
-  TClassroom,
-  TClassroomInsert,
-  TClassroomUpdate,
-  FindManyOptions,
-} from "../schemas/types";
+import type { TClassroom, FindManyOptions } from "../schemas/types";
 
 /**
  * DTO enrichi pour le Frontend
@@ -37,11 +33,8 @@ const CLASSROOM_DEFAULT_SORT = {
 
 export class ClassroomQuery extends BaseRepository<
   typeof classRooms,
-  TClassroom,
-  TClassroomInsert,
-  TClassroomUpdate
+  TDataBase
 > {
-  // Définition statique des colonnes pour éviter les problèmes de contexte
   private readonly selection = {
     ...getTableColumns(classRooms),
     optionName: options.optionName,
@@ -52,7 +45,14 @@ export class ClassroomQuery extends BaseRepository<
   };
 
   constructor() {
-    super(classRooms, classRooms.classId, "Classroom", CLASSROOM_DEFAULT_SORT);
+    super({
+      db,
+      table: classRooms,
+      idColumn: classRooms.classId,
+      entityName: "Classroom",
+      logger: getLogger,
+      defaultSort: CLASSROOM_DEFAULT_SORT,
+    });
   }
 
   /**
@@ -65,8 +65,8 @@ export class ClassroomQuery extends BaseRepository<
       const query = db
         .select(this.selection)
         .from(classRooms)
-        .leftJoin(options, eq(classRooms.optionId, options.optionId))
         .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
+        .leftJoin(options, eq(classRooms.optionId, options.optionId))
         .$dynamic();
 
       return (await applyQueryOptions(
@@ -124,7 +124,6 @@ export class ClassroomQuery extends BaseRepository<
           },
         })
         .from(classRooms)
-        // Utilisation de leftJoin pour ne pas perdre les classes sans élèves/options
         .leftJoin(options, eq(classRooms.optionId, options.optionId))
         .leftJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
         .leftJoin(

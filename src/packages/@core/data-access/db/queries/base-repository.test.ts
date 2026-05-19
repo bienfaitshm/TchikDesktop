@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  BaseRepository,
-  RepositoryError,
-  ILogger,
-} from "./base-repository.new";
+import { BaseRepository, RepositoryError, ILogger } from "./base-repository";
 import * as drizzleBuilder from "./drizzle-builder";
 
 // Création d'une classe concrète pour tester la classe abstraite
@@ -60,14 +56,13 @@ describe("BaseRepository", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     dbMock = createMockDb();
-    repository = new TestRepository(
-      dbMock,
-      mockLogger,
-      mockTable,
-      mockIdColumn,
-      "TestEntity",
-      {},
-    );
+    repository = new TestRepository({
+      db: dbMock,
+      entityName: "TestEntity",
+      idColumn: mockIdColumn,
+      logger: (_) => mockLogger,
+      table: mockTable,
+    });
   });
 
   describe("findById", () => {
