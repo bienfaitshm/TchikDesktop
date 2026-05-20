@@ -7043,10 +7043,10 @@ pbkdf2@^3.1.2, pbkdf2@^3.1.5:
     sha.js "^2.4.12"
     to-buffer "^1.2.1"
 
-pdfkit@^0.17.1:
-  version "0.17.1"
-  resolved "https://registry.yarnpkg.com/pdfkit/-/pdfkit-0.17.1.tgz#df00ec822fa56d40a235d7493cba841dedba2e12"
-  integrity sha512-Kkf1I9no14O/uo593DYph5u3QwiMfby7JsBSErN1WqeyTgCBNJE3K4pXBn3TgkdKUIVu+buSl4bYUNC+8Up4xg==
+pdfkit@^0.17.2:
+  version "0.17.2"
+  resolved "https://registry.yarnpkg.com/pdfkit/-/pdfkit-0.17.2.tgz#f77d7129ca49bc5015246b890d1aca6cb6b71f00"
+  integrity sha512-UnwF5fXy08f0dnp4jchFYAROKMNTaPqb/xgR8GtCzIcqoTnbOqtp3bwKvO4688oHI6vzEEs8Q6vqqEnC5IUELw==
   dependencies:
     crypto-js "^4.2.0"
     fontkit "^2.0.4"
