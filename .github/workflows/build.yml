@@ -39,7 +39,7 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Build Release Files
-        run: npm run build
+        run: npm run build:all
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: List Output Files
