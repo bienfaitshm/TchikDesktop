@@ -4,6 +4,9 @@ out
 release
 releases
 *.log*
+*.sql
+*.sqlite
+*.db
 .env
 loggs
 backups
