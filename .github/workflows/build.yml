@@ -42,10 +42,12 @@ jobs:
         run: npm run build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: List Output Files
+        run: ls -R
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: release_${{ github.ref_name }}_${{ matrix.os }}
-          path: release/
+          path: dist/
           retention-days: 7
