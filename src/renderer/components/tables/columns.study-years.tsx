@@ -1,20 +1,19 @@
-import type { StudyYearAttributes } from "@/commons/types/models";
 import type { ColumnDef } from "@tanstack/react-table";
 import { TypographySmall } from "@/renderer/components/ui/typography";
 import React from "react";
 import { Badge } from "@/renderer/components/ui/badge";
-import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
-import { Checkbox } from "@/renderer/components/ui/checkbox";
+import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { CheckCircle, MinusCircle } from "lucide-react";
-import { formatDate } from "@/commons/libs/times";
-
+import { formatDate } from "@/packages/times";
+import type { TStudyYearAttributes as TStudyYear } from "@/packages/@core/data-access/schema-validations/types"
+import { DataTableColumnHeader } from "./data-table.column-header";
 
 /**
  * Composant de badge affichant le statut d'activation d'une année d'étude.
  * Indique si l'année passée est l'année d'étude active configurée.
  */
 const StudyYearStatusBadge: React.FC<{ yearId: string }> = ({ yearId }) => {
-    const currentActiveYearId = useApplicationConfigurationStore(store => store.currentStudyYear?.yearId);
+    const { yearId: currentActiveYearId } = useCurrentConfig()
     const isActive = currentActiveYearId === yearId;
 
     return (
@@ -32,44 +31,12 @@ const StudyYearStatusBadge: React.FC<{ yearId: string }> = ({ yearId }) => {
     );
 };
 
-export const StudyYearColumns: ColumnDef<StudyYearAttributes>[] = [
-    {
-        id: "select",
-        header: ({ table }) => (
-            <div className="flex items-center justify-center">
-                <Checkbox
-                    checked={
-                        table.getIsAllPageRowsSelected() ||
-                        (table.getIsSomePageRowsSelected() && "indeterminate")
-                    }
-                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                    aria-label="Sélectionner toutes les lignes"
-                />
-            </div>
-        ),
-        cell: ({ row }) => (
-            <div className="flex items-center justify-center">
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label="Sélectionner la ligne"
-                />
-            </div>
-        ),
-        enableSorting: false,
-        enableHiding: false,
-    },
-    {
-        accessorKey: "yearId",
-        header: "#ID",
-        cell: ({ row }) => {
-            return <TypographySmall>{row.original.yearId}</TypographySmall>;
-        },
-        enableHiding: false,
-    },
+export const StudyYearColumns: ColumnDef<TStudyYear>[] = [
     {
         accessorKey: "yearName",
-        header: "Nom de l'année scolaire",
+          header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Nom de l'année scolaire" />
+        ),
         cell: ({ row }) => {
             return <TypographySmall>{row.original.yearName}</TypographySmall>;
         },

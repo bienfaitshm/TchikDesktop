@@ -1,4 +1,3 @@
-import { WithSchoolAndYearId } from "@/commons/types/services"
 import { TypographyH2, TypographyH3, TypographyP, TypographySmall } from "@/renderer/components/ui/typography"
 import { Shapes } from "lucide-react"
 import {
@@ -7,21 +6,21 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/renderer/components/ui/tabs"
-import { useGetCurrentYearSchool } from "@/renderer/libs/stores/app-store"
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom"
-import { SECTION, SECTION_TRANSLATIONS } from "@/commons/constants/enum"
-import { getEnumKeyValueList } from "@/commons/utils"
+
 import { Badge } from "@/renderer/components/ui/badge"
 import { Link } from "react-router"
+import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum"
+import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options"
+import { useSchoolContext } from "../hooks/app-config-router"
 
 
-type CurrentYearSchoolProps<T extends {} = {}> = Required<WithSchoolAndYearId<T>>
+type CurrentYearSchoolProps<T = any> = Required<any>
 
 
-const SECTIONS_LISTS = getEnumKeyValueList(SECTION, SECTION_TRANSLATIONS)
 
-const ClassroomSection: React.FC<CurrentYearSchoolProps<{ section: SECTION }>> = ({ schoolId, section, yearId }) => {
-    const { data: classrooms = [] } = useGetClassrooms({ schoolId, yearId, params: { section } })
+const ClassroomSection: React.FC<CurrentYearSchoolProps<{ section: SECTION_ENUM }>> = ({ schoolId, section, yearId }) => {
+    const { data: classrooms = [] } = useGetClassrooms({ where: { section, schoolId, yearId } })
     console.log({ classrooms })
     return (
         <div className="grid grid-cols-3 gap-5 mt-5">
@@ -49,13 +48,13 @@ const ClassroomGrid: React.FC<CurrentYearSchoolProps> = ({ schoolId, yearId }) =
                 </TypographySmall>
             </div>
             <div>
-                <Tabs defaultValue={SECTION.SECONDARY}>
+                <Tabs defaultValue={SECTION_ENUM.SECONDARY}>
                     <TabsList className="rounded-full mb-4">
-                        {SECTIONS_LISTS.map(section => (
+                        {SECTION_OPTIONS.map(section => (
                             <TabsTrigger className="rounded-full" key={section.key} value={section.value}>{section.label}</TabsTrigger>
                         ))}
                     </TabsList>
-                    {SECTIONS_LISTS.map(section => (
+                    {SECTION_OPTIONS.map(section => (
                         <TabsContent key={section.key} value={section.value}>
                             <ClassroomSection section={section.value} schoolId={schoolId} yearId={yearId} />
                         </TabsContent>
@@ -68,7 +67,7 @@ const ClassroomGrid: React.FC<CurrentYearSchoolProps> = ({ schoolId, yearId }) =
 
 
 const StudentScreen = () => {
-    const { schoolId, yearId } = useGetCurrentYearSchool()
+    const { schoolId, yearId } = useSchoolContext();
     if (!schoolId && !yearId) {
         return null;
     }

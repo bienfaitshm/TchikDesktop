@@ -1,31 +1,37 @@
+import * as React from "react";
 import { Button, ButtonProps } from "@/renderer/components/ui/button";
 import { Loader } from "lucide-react";
 
+export type ButtonLoaderProps = ButtonProps & {
+  isLoading?: boolean;
+  isLoadingText?: string;
+};
+
 /**
- *
- * @param ButtonProps
- * @param isLoading boolean
- * * use when is action isloading
- * @param pendingText string
- * @returns ReactNode
+ * ButtonLoader
+ * Un bouton qui gère l'état de chargement avec un spinner et un texte optionnel.
  */
-export function ButtonLoader({
-  isLoading,
-  isLoadingText,
-  ...props
-}: React.PropsWithChildren<
-  ButtonProps & { isLoading?: boolean; isLoadingText?: string }
->): React.ReactNode {
+export const ButtonLoader = React.forwardRef<
+  HTMLButtonElement,
+  ButtonLoaderProps
+>(({ isLoading, isLoadingText, children, disabled, ...props }, ref) => {
   return (
-    <Button type="submit" disabled={isLoading} {...props}>
+    <Button
+      ref={ref}
+      type={props.type || "submit"}
+      disabled={isLoading || disabled}
+      {...props}
+    >
       {isLoading ? (
         <span className="flex justify-center items-center gap-2">
           <Loader className="h-4 w-4 animate-spin" />
-          {isLoadingText}
+          {isLoadingText && <span>{isLoadingText}</span>}
         </span>
       ) : (
-        props.children
+        children
       )}
     </Button>
   );
-}
+});
+
+ButtonLoader.displayName = "ButtonLoader";

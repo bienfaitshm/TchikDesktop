@@ -7,18 +7,21 @@ import {
   ClassroomAttributesSchema,
   EnrolementAttributesSchema,
   EnrolementActionAttributesSchema,
-  WithPaginationAndSortSchema,
+  withQueryOptions,
 } from "./model";
-
-const orArray = <T extends z.ZodTypeAny>(schema: T) =>
-  z.union([schema, z.array(schema)]);
+import { orArray } from "./filters.base";
 
 // =============================================================================
 // I. SCHÉMAS DE FILTRE (Supportant Valeurs Simples ou Tableaux)
 // =============================================================================
 
+export const SchoolYearSchema = z.object({
+  schoolId: z.string().min(1, "L'ID de l'école est requis"),
+  yearId: z.string().min(1, "L'ID de l'année est requis"),
+});
+
 // 1. School Filter
-export const SchoolFilterSchema = WithPaginationAndSortSchema(
+export const SchoolFilterSchema = withQueryOptions(
   z.object({
     name: orArray(SchoolAttributesSchema.shape.name),
     adress: orArray(SchoolAttributesSchema.shape.adress),
@@ -27,7 +30,7 @@ export const SchoolFilterSchema = WithPaginationAndSortSchema(
 );
 
 // 2. User Filter
-export const UserFilterSchema = WithPaginationAndSortSchema(
+export const UserFilterSchema = withQueryOptions(
   z.object({
     userId: orArray(UserAttributesSchema.shape.userId.unwrap()), // On unwrap si optionnel/nullable
     lastName: orArray(UserAttributesSchema.shape.lastName),
@@ -40,7 +43,7 @@ export const UserFilterSchema = WithPaginationAndSortSchema(
 );
 
 // 3. Option Filter
-export const OptionFilterSchema = WithPaginationAndSortSchema(
+export const OptionFilterSchema = withQueryOptions(
   z.object({
     optionId: orArray(OptionAttributesSchema.shape.optionId),
     optionName: orArray(OptionAttributesSchema.shape.optionName),
@@ -51,7 +54,7 @@ export const OptionFilterSchema = WithPaginationAndSortSchema(
 );
 
 // 4. StudyYear Filter
-export const StudyYearFilterSchema = WithPaginationAndSortSchema(
+export const StudyYearFilterSchema = withQueryOptions(
   z.object({
     yearId: orArray(StudyYearAttributesSchema.shape.yearId),
     yearName: orArray(StudyYearAttributesSchema.shape.yearName),
@@ -60,7 +63,7 @@ export const StudyYearFilterSchema = WithPaginationAndSortSchema(
 );
 
 // 5. Classroom Filter
-export const ClassroomFilterSchema = WithPaginationAndSortSchema(
+export const ClassroomFilterSchema = withQueryOptions(
   z.object({
     classId: orArray(ClassroomAttributesSchema.shape.classId),
     identifier: orArray(ClassroomAttributesSchema.shape.identifier),
@@ -74,7 +77,7 @@ export const ClassroomFilterSchema = WithPaginationAndSortSchema(
 );
 
 // 6. Enrolement Filter
-export const EnrolementFilterSchema = WithPaginationAndSortSchema(
+export const EnrolementFilterSchema = withQueryOptions(
   z.object({
     enrolementId: orArray(EnrolementAttributesSchema.shape.enrolementId),
     classroomId: orArray(EnrolementAttributesSchema.shape.classroomId),
@@ -86,7 +89,7 @@ export const EnrolementFilterSchema = WithPaginationAndSortSchema(
 );
 
 // 7. Enrolement Action Filter
-export const EnrolementActionFilterSchema = WithPaginationAndSortSchema(
+export const EnrolementActionFilterSchema = withQueryOptions(
   z.object({
     actionId: orArray(EnrolementActionAttributesSchema.shape.actionId),
     enrolementId: orArray(EnrolementActionAttributesSchema.shape.enrolementId),
@@ -96,7 +99,4 @@ export const EnrolementActionFilterSchema = WithPaginationAndSortSchema(
 
 // 8. Stats
 
-export const StatsFilterSchema = z.object({
-  schoolId: z.string().min(1, "L'ID de l'école est requis"),
-  yearId: z.string().min(1, "L'ID de l'année est requis"),
-});
+export const StatsFilterSchema = SchoolYearSchema;

@@ -1,10 +1,10 @@
-import React, { useCallback, useMemo } from "react";
-import { SchoolForm, type SchoolFormData as FormValueType } from "@/renderer/components/form/school-form";
-import { SchoolColumns } from "@/renderer/components/tables/columns.school";
+import React, { useMemo } from "react";
 import { Button } from "@/renderer/components/ui/button";
-import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
-import type { DataTableMenu } from "@/renderer/components/button-menus";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useGetSchools } from "@/renderer/libs/queries/school";
+import type { TSchool } from "@/packages/@core/data-access/db/schemas/types";
+import { Suspense } from "@/renderer/libs/queries/suspense"
+import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner"
 
 import {
     DataTable,
@@ -13,127 +13,112 @@ import {
     DataTableContent,
     DataTablePagination,
     DataTableToolbar,
-} from "@/renderer/components/tables/data-table";
-import { TypographyH3 } from "@/renderer/components/ui/typography";
-import type { TSchool } from "@/commons/types/models";
-import { useSchoolManagement } from "@/renderer/hooks/query.mangements";
-import { createMenuActionManager } from "@/renderer/utils/handle-action";
-import { useGetSchools } from "@/renderer/libs/queries/school";
+} from "@/renderer/components/tables/data-table"
+import { enhanceColumnsExpandable, SchoolColumns } from "@/renderer/components/tables/columns"
+import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable"
 import {
-    TableActionManager,
-    useTableAction,
-} from "@/renderer/components/dialog/dialog.table-action";
-import { MUTATION_ACTION } from "@/commons/constants/enum";
+    ActionContainer,
+    ActionTileCopy,
+    ActionTileDelete,
+    ActionTileEdit,
+} from "@/renderer/components/tables/data-table.action-tiles"
 
+import {
+    CreateSchoolDialog,
+    DeleteSchoolDialog,
+    UpdateSchoolDialog
+} from "@/renderer/dialog-actions/school.dialog-actions"
 
+import type { Row } from "@tanstack/react-table"
+import { PageShell } from "../components/layouts/page-shell.layout";
 
-const tableMenus: DataTableMenu[] = [
-    { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
-    { key: "delete", label: "Supprimer", separator: true, icon: <Trash2 className="size-3" /> },
-];
-
-
-
-export const SchoolsPage: React.FC = ({ }) => {
-
-    const {
-        createMutation,
-        updateMutation,
-        deleteMutation,
-        handleCreate,
-        handleUpdate,
-        handleDelete,
-    } = useSchoolManagement()
-
-
-    const { data: schools = [] } = useGetSchools();
-    const tableAction = useTableAction<TSchool>();
-    const onConfirmDelete = useCallback(
-        (item: TSchool) => {
-            handleDelete(item.schoolId, item.name, () => {
-                tableAction.onClose();
-            });
-        },
-        [handleDelete, tableAction]
-    );
-
-
-    const handleFormSubmit = useCallback(
-        ({ data, type, initialData }: { data: FormValueType, type: MUTATION_ACTION, initialData?: TSchool }) => {
-            if (type === MUTATION_ACTION.CREATE) {
-                handleCreate(data, data.name, () => {
-                    tableAction.onClose();
-                });
-            } else if (type === MUTATION_ACTION.EDIT && initialData) {
-                handleUpdate(initialData.schoolId, data, data.name, () => {
-                    tableAction.onClose();
-                });
-            }
-        },
-        [handleCreate, handleUpdate, tableAction]
-    );
-
-
-
-
-
-    const { menus, handleMenusAction: onPressMenu } = useMemo(
-        () =>
-            createMenuActionManager(tableMenus, {
-                edit: tableAction.onUpdate,
-                delete: tableAction.onDelete,
-            }),
-        [tableAction.onUpdate, tableAction.onDelete]
-    );
-
-
-
-    const enhancedColumns = useMemo(
-        () =>
-            enhanceColumnsWithMenu<TSchool>({
-                menus,
-                onPressMenu,
-                columns: SchoolColumns,
-            }),
-        [menus, onPressMenu]
-    );
-
-
-    const isActionLoading =
-        updateMutation.isPending || createMutation.isPending || deleteMutation.isPending;
+/**
+ * Actions de ligne mémoïsées.
+ * On utilise les props cohérentes : schoolId et schoolName.
+ */
+const SchoolRowActions = React.memo(({ school }: { school: TSchool }) => {
+    const initialData = useMemo(() => ({ ...school }), [school.schoolId])
 
     return (
-        <div className="my-10 mx-auto h-full container max-w-screen-lg">
-            <DataTable<TSchool>
-                data={schools}
-                columns={enhancedColumns}
-                keyExtractor={(item) => item.schoolId}
-            >
-                <DataTableToolbar className="justify-between">
-                    <TypographyH3>Gestion des écoles</TypographyH3>
-                    <Button size="sm" className="rounded-full" onClick={tableAction.onCreate}>
-                        <Plus className="size-4" />
-                        <span>Ajouter une école</span>
-                    </Button>
-                </DataTableToolbar>
-                <DataTableContent>
-                    <DataContentHead />
-                    <DataContentBody />
-                </DataTableContent>
-                <DataTablePagination />
-            </DataTable>
+        <ActionContainer className="lg:grid-cols-3">
+            <UpdateSchoolDialog schoolId={school.schoolId} initialData={initialData}>
+                <ActionTileEdit />
+            </UpdateSchoolDialog>
 
-            {/* Les dialogues sont rendus au niveau racine pour une meilleure accessibilité et superposition */}
-            <TableActionManager
-                ref={tableAction.tableActionRef}
-                itemName="école"
-                isLoading={isActionLoading}
-                onConfirmDelete={onConfirmDelete as any}
-                onFormSubmit={handleFormSubmit as any}
-                renderForm={({ initialData, onSubmit }: any) => (
-                    <SchoolForm onSubmit={onSubmit} initialValues={initialData} />
-                ) as any}
-            />
+            <CreateSchoolDialog defaultValues={initialData}>
+                <ActionTileCopy />
+            </CreateSchoolDialog>
+
+            <DeleteSchoolDialog
+                schoolId={school.schoolId}
+                schoolName={school.name}
+            >
+                {({ isLoading, onOpen }) => (
+                    <ActionTileDelete onClick={onOpen} disabled={isLoading} />
+                )}
+            </DeleteSchoolDialog>
+        </ActionContainer>
+    )
+})
+SchoolRowActions.displayName = "SchoolRowActions"
+
+export const SchoolsPage = () => {
+    const { data: schools = [] } = useGetSchools();
+
+    return (
+        <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
+            <PageShell 
+                maxWidth="2xl" 
+                header={
+                    <section className="container flex items-center justify-between w-full max-w-screen-2xl my-4 ">
+                        <header className="space-y-1">
+                            <h1 className="text-2xl font-bold tracking-tight">Gestion des établissements</h1>
+                            <p className="text-sm text-muted-foreground">
+                                Visualisez et administrez la liste des écoles enregistrées.
+                            </p>
+                        </header>
+
+                        {/* Changé CreateOptionDialog en CreateSchoolDialog */}
+                        <CreateSchoolDialog>
+                            <Button size="sm" className="rounded-full shadow-sm">
+                                <Plus className="size-4" />
+                                <span>Ajouter une école</span>
+                            </Button>
+                        </CreateSchoolDialog>
+                    </section>
+                }
+            >
+                <DataTable<TSchool>
+                    data={schools}
+                    columns={enhanceColumnsExpandable(SchoolColumns)}
+                    keyExtractor={(item) => item.schoolId}
+                >
+                    <DataTableToolbar searchColumn="name" />
+
+                    <Suspense
+                        fallback={
+                            <div className="flex h-64 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/10">
+                                <LoadingSpinner className="text-primary" />
+                                <p className="text-sm text-muted-foreground animate-pulse">Chargement des établissements...</p>
+                            </div>
+                        }
+                    >
+                        <DataTableContent>
+                            <DataContentHead />
+                            <DataContentBody<TSchool>>
+                                {({ row }) => (
+                                    <ExpandableRow
+                                        row={row as Row<unknown>}
+                                        renderDetail={<SchoolRowActions school={row.original} />}
+                                    />
+                                )}
+                            </DataContentBody>
+                        </DataTableContent>
+
+                        <DataTablePagination />
+                    </Suspense>
+                </DataTable>
+            </PageShell>
         </div>
-    );
-};
+    )
+}

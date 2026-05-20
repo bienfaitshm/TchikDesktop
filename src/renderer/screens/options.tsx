@@ -1,161 +1,172 @@
-import React, { useCallback, useMemo } from "react";
-import {
-    DataTable,
-    DataContentBody,
-    DataContentHead,
-    DataTableContent,
-    DataTablePagination,
-    DataTableToolbar,
-} from "@/renderer/components/tables/data-table";
-import { TypographyH3 } from "@/renderer/components/ui/typography";
-import { OptionForm, type OptionFormData as FormValueType } from "@/renderer/components/form/option-form";
-import { Button } from "@/renderer/components/ui/button";
-import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
-import { OptionColumns } from "@/renderer/components/tables/columns.options";
-import type { TOption } from "@/commons/types/models";
-import type { DataTableMenu } from "@/renderer/components/button-menus";
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import { Suspense } from "@/renderer/libs/queries/suspense";
-import { useOptionManagement } from "@/renderer/hooks/query.mangements";
-import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
-import { WithSchoolAndYearId } from "@/commons/types/services";
-import { createMenuActionManager } from "@/renderer/utils/handle-action";
+"use client";
+
+import * as React from "react";
+import { Plus } from "lucide-react";
+
+import type { TOptionAttributes as TOption } from "@/packages/@core/data-access/schema-validations";
 import { useGetOptions } from "@/renderer/libs/queries/option";
+
+import { Button } from "@/renderer/components/ui/button";
+import { Suspense } from "@/renderer/libs/queries/suspense";
+import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
+
 import {
-    TableActionManager,
-    useTableAction,
-} from "@/renderer/components/dialog/dialog.table-action";
-import { MUTATION_ACTION } from "@/commons/constants/enum";
+  DataTable,
+  DataContentBody,
+  DataContentHead,
+  DataTableContent,
+  DataTablePagination,
+  DataTableToolbar,
+  TableFacetedFilterItem,
+} from "@/renderer/components/tables/data-table";
+import {
+  optionColumns,
+  enhanceColumnsExpandable,
+} from "@/renderer/components/tables/columns";
+import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
+import { useSchoolContext } from "@/renderer/hooks/app-config-router";
+import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
+import {
+  ActionContainer,
+  ActionTileCopy,
+  ActionTileDelete,
+  ActionTileEdit,
+} from "@/renderer/components/tables/data-table.action-tiles";
 
+import {
+  CreateOptionDialog,
+  DeleteOptionDialog,
+  UpdateOptionDialog,
+  type OptionDialogProps,
+} from "@/renderer/dialog-actions/option.dialog-actions";
 
+import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 
-const tableMenus: DataTableMenu[] = [
-    { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
-    { key: "delete", label: "Supprimer", separator: true, icon: <Trash2 className="size-3" /> },
-];
+const columns = enhanceColumnsExpandable(optionColumns);
 
-
-const renderForm = ({ initialData, onSubmit }: { initialData?: FormValueType, onSubmit?(value: FormValueType): void }) => {
-    return (
-        <OptionForm
-            onSubmit={onSubmit}
-            initialValues={initialData}
-        />
-    )
+interface OptionRowActionsProps
+  extends Pick<OptionDialogProps, "queryKeysToInvalidate"> {
+  option: TOption;
 }
 
-const OptionManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId }) => {
-
-    const {
-        createMutation,
-        updateMutation,
-        deleteMutation,
-        handleCreate,
-        handleUpdate,
-        handleDelete,
-    } = useOptionManagement();
-
-
-    const { data: options = [] } = useGetOptions({ schoolId });
-    const tableAction = useTableAction<TOption>();
-    const onConfirmDelete = useCallback(
-        (item: TOption) => {
-            handleDelete(item.optionId, item.optionName, () => {
-                tableAction.onClose();
-            });
-        },
-        [handleDelete, tableAction]
-    );
-
-
-    const handleFormSubmit = useCallback(
-        ({ data, type, initialData }: { data: FormValueType, type: MUTATION_ACTION, initialData?: TOption }) => {
-            if (type === MUTATION_ACTION.CREATE) {
-
-                handleCreate({ schoolId, ...data }, data.optionName, () => {
-
-                    tableAction.onClose();
-                });
-            } else if (type === MUTATION_ACTION.EDIT && initialData) {
-
-                handleUpdate(initialData.optionId, data, data.optionName, () => {
-
-                    tableAction.onClose();
-                });
-            }
-        },
-        [handleCreate, handleUpdate, schoolId, tableAction]
-    );
-
-
-
-
-
-    const { menus, handleMenusAction: onPressMenu } = useMemo(
-        () =>
-            createMenuActionManager(tableMenus, {
-                edit: tableAction.onUpdate,
-                delete: tableAction.onDelete,
-            }),
-        [tableAction.onUpdate, tableAction.onDelete]
-    );
-
-
-
-    const enhancedColumns = useMemo(
-        () =>
-            enhanceColumnsWithMenu<TOption>({
-                menus,
-                onPressMenu,
-                columns: OptionColumns,
-            }),
-        [menus, onPressMenu]
-    );
-
-
-    const isActionLoading =
-        updateMutation.isPending || createMutation.isPending || deleteMutation.isPending;
-
+/**
+ * @description Actions de ligne
+ */
+const OptionRowActions = React.memo(
+  ({ option, queryKeysToInvalidate }: OptionRowActionsProps) => {
     return (
-        <div className="my-10 mx-auto h-full container max-w-screen-lg">
-            <DataTable<TOption>
-                data={options}
-                columns={enhancedColumns}
-                keyExtractor={(item) => item.optionId}
+      <ActionContainer className="lg:grid-cols-3">
+        {/* Modification */}
+        <UpdateOptionDialog
+          queryKeysToInvalidate={queryKeysToInvalidate}
+          optionId={option.optionId}
+          defaultValues={option}
+        >
+          <ActionTileEdit />
+        </UpdateOptionDialog>
+
+        {/* Duplication */}
+        <CreateOptionDialog
+          queryKeysToInvalidate={queryKeysToInvalidate}
+          defaultValues={option}
+        >
+          <ActionTileCopy />
+        </CreateOptionDialog>
+
+        {/* Suppression unifiée (Plus de Render Props obsolète !) */}
+        <DeleteOptionDialog
+          queryKeysToInvalidate={queryKeysToInvalidate}
+          optionId={option.optionId}
+          optionName={option.optionName}
+        >
+          <ActionTileDelete />
+        </DeleteOptionDialog>
+      </ActionContainer>
+    );
+  },
+);
+
+OptionRowActions.displayName = "OptionRowActions";
+
+export const OptionPage = () => {
+  const { schoolId } = useSchoolContext();
+  const { data: rawOptions, queryKey: queryKeysToInvalidate } = useGetOptions({
+    where: { schoolId },
+  });
+  const options = React.useMemo(() => rawOptions ?? [], [rawOptions]);
+
+  return (
+    <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
+      <PageShell
+        maxWidth="2xl"
+        header={
+          <section className="container flex items-center justify-between w-full max-w-screen-2xl my-4 ">
+            <header className="space-y-1">
+              <h1 className="text-2xl font-bold tracking-tight">
+                Gestion des filières
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Visualisez et administrez les options et filières de votre
+                établissement.
+              </p>
+            </header>
+
+            <CreateOptionDialog
+              queryKeysToInvalidate={queryKeysToInvalidate}
+              defaultValues={{ schoolId }}
             >
-                <DataTableToolbar className="justify-between">
-                    <TypographyH3>Gestion des options de l'établissement</TypographyH3>
-                    <Button size="sm" className="rounded-full" onClick={tableAction.onCreate}>
-                        <Plus className="size-4" />
-                        <span>Ajouter une option</span>
-                    </Button>
-                </DataTableToolbar>
-                <DataTableContent>
-                    <DataContentHead />
-                    <DataContentBody />
-                </DataTableContent>
-                <DataTablePagination />
-            </DataTable>
-
-            {/* Les dialogues sont rendus au niveau racine pour une meilleure accessibilité et superposition */}
-            <TableActionManager
-                ref={tableAction.tableActionRef}
-                itemName="option"
-                isLoading={isActionLoading}
-                onConfirmDelete={onConfirmDelete as any}
-                onFormSubmit={handleFormSubmit as any}
-                renderForm={renderForm as any}
+              <Button size="sm" className="rounded-full shadow-sm">
+                <Plus className="mr-2 size-4" />
+                Ajouter une filière
+              </Button>
+            </CreateOptionDialog>
+          </section>
+        }
+      >
+        <DataTable<TOption>
+          data={options}
+          columns={columns}
+          keyExtractor={(item) => item.optionId}
+        >
+          <DataTableToolbar searchColumn="optionName">
+            <TableFacetedFilterItem
+              title="Section"
+              columnId="section"
+              options={SECTION_OPTIONS}
             />
-        </div>
-    );
-};
+          </DataTableToolbar>
 
-const Option: React.FC<WithSchoolAndYearId> = (props) => {
-    return (
-        <Suspense>
-            <OptionManagementPage {...props} />
-        </Suspense>
-    );
-};
+          <Suspense
+            fallback={
+              <div className="flex h-64 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/10">
+                <LoadingSpinner className="text-primary" />
+                <p className="text-sm text-muted-foreground animate-pulse">
+                  Chargement des filières...
+                </p>
+              </div>
+            }
+          >
+            <DataTableContent>
+              <DataContentHead />
+              <DataContentBody<TOption>>
+                {({ row }) => (
+                  <ExpandableRow
+                    row={row as any}
+                    renderDetail={
+                      <OptionRowActions
+                        option={row.original}
+                        queryKeysToInvalidate={queryKeysToInvalidate}
+                      />
+                    }
+                  />
+                )}
+              </DataContentBody>
+            </DataTableContent>
 
-export const OptionPage = withSchoolConfig(Option);
+            <DataTablePagination />
+          </Suspense>
+        </DataTable>
+      </PageShell>
+    </div>
+  );
+};

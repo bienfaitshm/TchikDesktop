@@ -1,142 +1,112 @@
 "use client";
 
-import React from "react";
+import { useMemo } from "react";
 import { useParams } from "react-router";
-import { Plus } from "lucide-react";
+import { Edit2, UserPen } from "lucide-react";
 
+import { GENDER_OPTIONS, STUDENT_STATUS_OPTIONS } from "@/packages/@core/data-access/db/options";
 import {
     DataTable,
-    DataTableColumnFilter,
+    TableFacetedFilterItem,
     DataTableContent,
     DataContentHead,
     DataContentBody,
     DataTablePagination,
     DataTableToolbar,
 } from "@/renderer/components/tables";
-import { Button } from "@/renderer/components/ui/button";
-import { StudentColumns } from "@/renderer/components/tables/columns.students";
-import { TypographyH2, TypographySmall } from "@/renderer/components/ui/typography";
+import { StudentColumns, TEnrolement } from "@/renderer/components/tables/columns.students";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
-import { WithSchoolAndYearId } from "@/commons/types/services";
-import { useGetClassroomById } from "@/renderer/libs/queries/classroom";
-import { ButtonDataExport } from "@/renderer/components/sheets/export-button";
-import { ButtonSheetStudentStat } from "./students.stat";
-import { Suspense } from "@/renderer/libs/queries/suspense";
-import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
-import { Skeleton } from "@/renderer/components/ui/skeleton";
-import { EnrollmentDialog } from "@/renderer/components/dialog/quick-enrollment-dialog-form";
-import { StudentDetailsCard } from "@/renderer/components/student-details-infos";
-import { DataSheetViewer, useDataSheetViewer } from "@/renderer/components/sheets/sheet-viewer"
+import { ActionContainer, ActionTileDelete, ActionTileDetail, ActionTile } from "@/renderer/components/tables/data-table.action-tiles";
+import {
+    DeleteEnrollmentDialog,
+    UpdateEnrollmentDialog
+} from "@/renderer/dialog-actions/enrolement.dialog-actions";
+import { UpdateStudentDialog } from "@/renderer/dialog-actions/student.dialog-action";
 
-/**
- * Composant d'en-tête de la page de la classe.
- * Affiche le nom de la classe et gère son chargement.
- * Utilise un Skeleton pour une meilleure expérience utilisateur pendant le chargement.
+import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
+import { enhanceColumnsExpandable } from "@/renderer/components/tables/columns";
+import type { BaseFormConfig } from "@/renderer/dialog-actions/base.dialog-actions";
+
+import { useSchoolContext } from "@/renderer/hooks/app-config-router";
+
+const enrolementStudentColumns = enhanceColumnsExpandable(StudentColumns);
+
+/** * ACTIONS : Rafraîchies avec un design plus compact 
  */
-const ClassroomHeader: React.FC<{ classId: string }> = ({ classId }) => {
-    const { data: classroom, isLoading } = useGetClassroomById(classId);
+const EnrollementActions = ({ enrolement, schoolId, yearId, options }: {
+    schoolId: string;
+    yearId: string;
+    options?: BaseFormConfig
+    enrolement: TEnrolement,
 
-    if (isLoading) {
-        return (
-            <div className="space-y-2">
-                <Skeleton className="h-8 w-64" />
-                <Skeleton className="h-4 w-96" />
-            </div>
-        );
-    }
+}) => {
+    const { student, enrolementId, studentId, ...restValue } = enrolement;
+    const initialData = useMemo(() => ({ ...restValue, schoolId, yearId, enrolementId }), [restValue, schoolId, yearId, enrolementId]);
 
     return (
-        <header className="">
-            <TypographyH2 className="uppercase font-bold mb-0 pb-0 tracking-tight text-xl">
-                {classroom?.identifier || "Nom de la classe inconnu"}
-            </TypographyH2>
-            <p className="text-xs text-muted-foreground">
-                Liste des élèves inscrits dans cette classe.
-            </p>
-        </header>
+        <ActionContainer className="bg-muted/30 p-4 rounded-lg border-dashed border-2">
+            <ActionTileDetail />
+            <UpdateStudentDialog studentId={studentId} initialData={student} {...options}>
+                <ActionTile icon={UserPen} label="Profil" description="Modifier l'identité de l'élève" />
+            </UpdateStudentDialog>
+            <UpdateEnrollmentDialog
+                initialData={initialData}
+                fullName={student.fullName}
+                enrollmentId={enrolementId}
+                schoolId={schoolId}
+                yearId={yearId}
+                {...options}
+            >
+                <ActionTile icon={Edit2} label="Gérer l'inscription" description="Modifier le statut, gérer les transferts ou signaler un abandon." />
+            </UpdateEnrollmentDialog>
+            <DeleteEnrollmentDialog enrollmentId={enrolementId} studentName={student.fullName} {...options}>
+                {({ onOpen }) => <ActionTileDelete onClick={onOpen} />}
+            </DeleteEnrollmentDialog>
+        </ActionContainer>
     );
 };
 
-/**
- * Composant principal affichant la liste des élèves pour une classe spécifique.
- * Il récupère les données des élèves et gère les interactions (détails, ajout, export, stats).
- * Ce composant est enveloppé par `withSchoolConfig` pour obtenir `schoolId` et `yearId`.
- */
-const StudentListContent: React.FC<WithSchoolAndYearId> = ({ schoolId, yearId }) => {
-    const { classroomId } = useParams<{ classroomId: string }>();
-    const currentClassroomId = classroomId as string;
 
-    const { sheetRef, showDetails } = useDataSheetViewer<any>();
-    const { data: students = [], refetch } = useGetEnrollments({
-        schoolId,
-        yearId,
-        classroomId: currentClassroomId
+export const StudentPage = () => {
+    const { schoolId, yearId } = useSchoolContext();
+    const { classroomId } = useParams();
+    const { data: students = [], queryKey } = useGetEnrollments({
+        where: { schoolId, yearId, classroomId: classroomId! }
     });
-
+    // min-h-screen
     return (
-        <>
-            <div className="overflow-hidden bg-background">
-                <div className="pt-6 pb-4 px-6">
-                    {/* Barre d'outils de la table : filtres et actions */}
-                    <Suspense fallback={<TypographySmall>Chargement...</TypographySmall>}>
-                        {/* L'en-tête de la classe, qui peut charger ses propres données */}
-                        <ClassroomHeader classId={currentClassroomId} />
-                    </Suspense>
-                    {/* La table des données des élèves */}
-                    <div className="my-4">
-                        <DataTable
-                            data={students}
-                            columns={StudentColumns}
-                            keyExtractor={(student: any) => `${student.enrolementId}`}
 
-                        >
-                            <DataTableToolbar>
-                                <DataTableColumnFilter />
-                                <div className="flex items-center gap-3 ml-auto">
-                                    {/* Le bouton d'exportation des données */}
-                                    <ButtonDataExport currentClassroom={classroomId} />
-                                    {/* Le bouton pour les statistiques des élèves */}
-                                    <ButtonSheetStudentStat students={students} />
-                                    {/* Formulaire d'inscription rapide d'un nouvel élève */}
-                                    <Suspense fallback={<Button size="sm" disabled>Chargement...</Button>}>
-                                        <EnrollmentDialog
-                                            schoolId={schoolId}
-                                            yearId={yearId}
-                                            initialValues={{ classroomId: currentClassroomId }}
-                                            dialogDescription="Inscription et ajout de l'élève dans la salle ouverte"
-                                            onSuccess={refetch}
-                                        >
-                                            <Button size="sm" className="flex items-center gap-2">
-                                                <Plus className="size-4" />
-                                                <span>Nouvel élève</span>
-                                            </Button>
-                                        </EnrollmentDialog>
-                                    </Suspense>
-                                </div>
-                            </DataTableToolbar>
-                            <DataTableContent>
-                                <DataContentHead />
-                                {/* Le clic sur une ligne ouvre la feuille de détails de l'élève */}
-                                <DataContentBody
-                                    onClick={(row) => {
-                                        showDetails(row.original)
-                                    }}
-                                />
-                            </DataTableContent>
-                            <DataTablePagination />
-                        </DataTable>
-                    </div>
-                </div>
-            </div>
-
-            {/* La feuille de détails de l'élève, toujours présente mais cachée jusqu'à l'ouverture */}
-            <DataSheetViewer ref={sheetRef}>
-                {student => <StudentDetailsCard data={student} schoolId={schoolId} yearId={yearId as string} onRefresh={refetch} />}
-            </DataSheetViewer>
-        </>
+        <div className="overflow-hidden">
+            <DataTable
+                data={students}
+                columns={enrolementStudentColumns}
+                keyExtractor={(s: any) => s.enrolementId}
+            >
+                <DataTableToolbar searchColumn="student_fullName" className="flex-wrap gap-4">
+                    <TableFacetedFilterItem columnId="student_gender" title="Sexe" options={GENDER_OPTIONS} />
+                    <TableFacetedFilterItem columnId="status" title="Statut" options={STUDENT_STATUS_OPTIONS} />
+                </DataTableToolbar>
+                <DataTableContent>
+                    <DataContentHead className="bg-muted/10" />
+                    <DataContentBody>
+                        {({ row }) => (
+                            <ExpandableRow
+                                row={row as any}
+                                className="hover:bg-muted/5 transition-colors cursor-pointer"
+                                renderDetail={
+                                    <EnrollementActions
+                                        enrolement={row.original as any}
+                                        schoolId={schoolId}
+                                        yearId={yearId}
+                                        options={{ mutationKeys: queryKey }}
+                                    />
+                                }
+                            />
+                        )}
+                    </DataContentBody>
+                </DataTableContent>
+                <DataTablePagination />
+            </DataTable>
+        </div>
     );
 };
-
-// Exporte le composant StudentListContent enveloppé dans le HOC withSchoolConfig.
-// Cela assure que `schoolId` et `yearId` sont injectés ou qu'un message de configuration est affiché.
-export const StudentsOfClassrrom = withSchoolConfig(StudentListContent);

@@ -1,26 +1,11 @@
-import type { ColumnDef } from "@tanstack/react-table";
-import { ButtonMenu } from "@/renderer/components/button-menus";
-import type { DataTableMenu } from "@/renderer/components/button-menus";
+export { EnrollmentHistoricsColumns } from "./columns.enrollment-history";
+export { SchoolColumns } from "./columns.school";
+export { StudentColumns } from "./columns.students";
+export { StudyYearColumns } from "./columns.study-years";
 
-
-export type EnhanceColumnsWithMenuParams<T> = {
-    columns: ColumnDef<T>[];
-    menus?: DataTableMenu[];
-    onPressMenu?: (key: string, value: T) => void;
-};
-
-export function enhanceColumnsWithMenu<T>({
-    columns,
-    menus,
-    onPressMenu,
-}: EnhanceColumnsWithMenuParams<T>): ColumnDef<T>[] {
-    if (!menus?.length) return columns;
-
-    return [
-        ...columns,
-        {
-            id: "actions",
-            cell: ({ row }) => <ButtonMenu value={row.original} menus={menus} onPressMenu={onPressMenu} />
-        } as ColumnDef<T>,
-    ];
-}
+export { localRoomColumns } from "./columns.local-rooms";
+export { optionColumns } from "./columns.options";
+export { classroomColumns } from "./columns.classroom";
+export { seatingSessionColumns } from "./columns.seating-session";
+export { seatingStudentColumns } from "./columns.seating-student";
+export * from "./columns.utils";

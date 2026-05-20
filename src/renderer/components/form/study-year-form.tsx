@@ -1,6 +1,6 @@
-import React, { PropsWithChildren } from "react";
-import { useControlledForm } from "@/commons/libs/forms";
-import { StudyYearSchema, type StudyYearAttributes } from "@/renderer/libs/schemas";
+import React, { useMemo } from "react";
+import { useZodForm } from "@/packages/use-zod-form";
+import { StudyYearCreateSchema, type TStudyYearCreate } from "@/packages/@core/data-access/schema-validations";
 import {
     Form,
     FormControl,
@@ -10,190 +10,144 @@ import {
     FormLabel,
     FormMessage,
 } from "@/renderer/components/ui/form";
-import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { Input } from "@/renderer/components/ui/input";
 import { DateInput } from "@/renderer/components/form/fields/date";
+import type { BaseFormProps } from "./base-form";
+import { CalendarDays, AlertCircle } from "lucide-react";
 
-export * from "./utils"
+export type StudyYearFormData = TStudyYearCreate;
 
-/**
- * @typedef {StudyYearAttributes} StudyYearFormData
- * @description Type alias for the data structure expected from the StudyYear form.
- * This aligns with the `StudyYearAttributes` type defined in your schema.
- * Note: `schoolId` is assumed to be handled externally or implicitly, as it's not a direct input field in this form.
- */
-export type StudyYearFormData = StudyYearAttributes
-
-/**
- * @constant DEFAULT_STUDY_YEAR_FORM_VALUES
- * @description Default initial values for the study year form fields.
- * Ensures that form fields have a starting state, especially for date inputs.
- */
-const DEFAULT_STUDY_YEAR_FORM_VALUES: StudyYearFormData = {
+const DEFAULT_VALUES: StudyYearFormData = {
     yearName: "",
     schoolId: "",
     startDate: new Date(),
-    endDate: new Date(),
+    endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
 };
 
 /**
- * @interface StudyYearFormProps
- * @description Props for the `StudyYearForm` component.
- * @property {(values: StudyYearFormData) => void} [onSubmit] - Optional callback function to be invoked when the form is
- * submitted and successfully validated. It receives the form data as `StudyYearFormData`.
- * @property {Partial<StudyYearFormData>} [initialValues] - Optional initial values to pre-fill the form fields.
- * These values will be merged with `DEFAULT_STUDY_YEAR_FORM_VALUES`.
+ * Formulaire de configuration de l'année académique.
+ * Focus : Précision temporelle, accessibilité WCAG et robustesse UX.
  */
-export interface StudyYearFormProps {
-    onSubmit?: (values: StudyYearFormData) => void;
-    initialValues?: Partial<StudyYearFormData>;
-}
+export const StudyYearForm: React.FC<BaseFormProps<StudyYearFormData>> = ({
+    formId,
+    onSubmit,
+    initialValues = {}
+}) => {
 
-/**
- * @interface StudyYearFormHandle
- * @description Extends `FormHandleRef` to define the imperative handle for the `StudyYearForm` component.
- * This allows a parent component to programmatically interact with the form, such as
- * submitting it, resetting its fields, or accessing its current state.
- */
-export interface StudyYearFormHandle extends ImperativeFormHandle<StudyYearFormData> { }
+    const mergedValues = useMemo(() => ({
+        ...DEFAULT_VALUES,
+        ...initialValues
+    }), [initialValues]);
 
-/**
- * @component StudyYearForm
- * @description A reusable form component for creating or editing study year details.
- * It integrates with `react-hook-form` and a Zod schema for validation.
- * The form supports controlled behavior and can be imperatively controlled by a parent
- * component via `React.forwardRef`. It also accepts additional child elements to be
- * rendered within the form (e.g., submit buttons).
- *
- * @param {PropsWithChildren<StudyYearFormProps>} props - The props for the component,
- * including `onSubmit`, `initialValues`, and `children`.
- * @param {React.Ref<StudyYearFormHandle>} ref - A ref forwarded from the parent component
- * to allow imperative control over the form.
- * @returns {JSX.Element} The rendered study year form.
- *
- * @example
- * ```tsx
- * import React from "react";
- * import { StudyYearForm, StudyYearFormHandle, StudyYearFormData } from './path/to/this/file';
- * import { Button } from "@/renderer/components/ui/button"; // Assuming shadcn button
- * import { toast } from "sonner"; // Assuming sonner for notifications
- *
- * function CreateStudyYearPage() {
- * const formRef = React.useRef<StudyYearFormHandle>(null);
- *
- * const handleFormSubmit = (data: StudyYearFormData) => {
- * console.log("Form Data Submitted:", data);
- * toast.success("Année scolaire enregistrée !", {
- * description: `Nom: ${data.yearName}, Début: ${data.startDate.toLocaleDateString()}, Fin: ${data.endDate.toLocaleDateString()}`,
- * });
- * // Simulate API call
- * // await myApiService.createStudyYear(data);
- * };
- *
- * return (
- * <div className="p-6 max-w-lg mx-auto bg-white rounded-lg shadow-md">
- * <h2 className="text-2xl font-bold mb-6 text-center">Créer une Année Scolaire</h2>
- * <StudyYearForm ref={formRef} onSubmit={handleFormSubmit}>
- * <div className="flex justify-end mt-6">
- * <Button type="submit" onClick={() => formRef.current?.submit()}>
- * Soumettre l'Année Scolaire
- * </Button>
- * </div>
- * </StudyYearForm>
- * </div>
- * );
- * }
- * ```
- */
-export const StudyYearForm = React.forwardRef<
-    StudyYearFormHandle,
-    PropsWithChildren<StudyYearFormProps>
->(({ children, onSubmit, initialValues = {} }, ref) => {
-    const [form, handleSubmit] = useControlledForm({
-        schema: StudyYearSchema,
-        defaultValues: { ...DEFAULT_STUDY_YEAR_FORM_VALUES, ...initialValues },
-        onSubmit: (values) => {
-            onSubmit?.(values);
+    const form = useZodForm({
+        schema: StudyYearCreateSchema,
+        defaultValues: mergedValues,
+        onSubmit: async (values) => {
+            try {
+                await onSubmit?.(values);
+            } catch (error) {
+                form.setError("root", {
+                    message: "Impossible d'enregistrer l'année. Vérifiez la cohérence des dates."
+                });
+            }
         },
     });
 
-    useFormImperativeHandle(ref, form);
-
+    const isSubmitting = form.formState.isSubmitting;
 
     return (
         <Form {...form}>
-            <form className="space-y-4" onSubmit={handleSubmit}>
-                {/* Field for Year Name */}
-                <FormField
-                    control={form.control}
-                    name="yearName"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Nom de l'année scolaire</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Ex: Année scolaire 2025-2026" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                                Saisissez un nom unique pour cette année scolaire (par exemple, "Année scolaire 2025-2026").
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <div className="grid grid-cols-2 gap-5">
-                    <div>
-                        {/* Field for Start Date */}
-                        <FormField
-                            control={form.control}
-                            name="startDate"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel>Date de début</FormLabel>
-                                    <FormControl>
-                                        <DateInput
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Sélectionner la date de début"
-                                        />
-                                    </FormControl>
-                                    <FormDescription>
-                                        Sélectionnez la date de début de l'année scolaire.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                    </div>
-                    <div>
-                        {/* Field for End Date */}
-                        <FormField
-                            control={form.control}
-                            name="endDate"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel>Date de fin</FormLabel>
-                                    <FormControl>
-                                        <DateInput
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Sélectionner la date de fin"
-                                        />
-                                    </FormControl>
-                                    <FormDescription>
-                                        Sélectionnez la date de fin de l'année scolaire.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
+            <form
+                id={formId}
+                className="space-y-8"
+                onSubmit={form.submit}
+                aria-label="Configuration de l'année scolaire"
+                noValidate
+            >
+                {/* Section : Identification de la période */}
+                <div>
+                    <FormField
+                        control={form.control}
+                        name="yearName"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2 font-bold text-base">
+                                    Désignation de l'année
+                                    <span className="text-destructive" aria-hidden="true">*</span>
+                                </FormLabel>
+                                <FormControl>
+                                    <Input
+                                        placeholder="Ex: 2025-2026"
+                                        className="h-11 focus-visible:ring-primary"
+                                        disabled={isSubmitting}
+                                        aria-required="true"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormDescription>
+                                    Sera utilisé sur les bulletins et documents officiels.
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
-                {children}
+
+                {/* Groupe Temporel : Calendrier Scolaire */}
+                <fieldset aria-labelledby="period-legend" className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-lg border text-muted-foreground">
+                    <legend className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4 px-2 flex items-center gap-2" id="period-legend">
+                        <CalendarDays className="h-5 w-5  text-muted-foreground" />
+                        <h3 className="font-semibold">Calendrier Scolaire</h3>
+                    </legend>
+
+                    <FormField
+                        control={form.control}
+                        name="startDate"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel className="font-medium text-muted-foreground">Date d'ouverture</FormLabel>
+                                <FormControl>
+                                    <DateInput
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Date de rentrée"
+                                        disabled={isSubmitting}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="endDate"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel className="font-medium text-muted-foreground">Date de clôture</FormLabel>
+                                <FormControl>
+                                    <DateInput
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Fin des cours"
+                                        disabled={isSubmitting}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </fieldset>
+                {/* Alerte d'erreur globale */}
+                {form.formState.errors.root && (
+                    <div role="alert" className="flex items-center gap-2 p-3 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-md">
+                        <AlertCircle className="h-4 w-4" />
+                        {form.formState.errors.root.message}
+                    </div>
+                )}
             </form>
         </Form>
     );
-});
+};
 
 StudyYearForm.displayName = "StudyYearForm";

@@ -4,7 +4,7 @@ import { TStatsFilter } from "@/packages/@core/data-access/schema-validations";
 import type {
   ChartDataPoint,
   ClassStatsDTO,
-} from "@/packages/@core/data-access/data-queries";
+} from "@/packages/@core/data-access/db/queries";
 
 /**
  * Interface représentant les KPIs rapides pour les cartes de résumé.

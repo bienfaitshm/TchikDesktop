@@ -1,70 +1,78 @@
-export enum SECTION {
+export enum SECTION_ENUM {
   KINDERGARTEN = "KINDERGARTEN",
   PRIMARY = "PRIMARY",
   SECONDARY = "SECONDARY",
 }
 
-export const SECTION_TRANSLATIONS: Record<SECTION, string> = {
-  [SECTION.KINDERGARTEN]: "Maternelle",
-  [SECTION.PRIMARY]: "Primaire",
-  [SECTION.SECONDARY]: "Secondaire",
+export const SECTION_ENUM_TRANSLATIONS: Record<SECTION_ENUM, string> = {
+  [SECTION_ENUM.KINDERGARTEN]: "Maternelle",
+  [SECTION_ENUM.PRIMARY]: "Primaire",
+  [SECTION_ENUM.SECONDARY]: "Secondaire",
 };
 
-export enum USER_ROLE {
+export enum USER_ROLE_ENUM {
   STAFF = "STAFF",
   PROMOTER = "PROMOTER",
   ADMIN = "ADMINISTRATOR",
   STUDENT = "STUDENT",
 }
 
-export const USER_ROLE_TRANSLATIONS: Record<USER_ROLE, string> = {
-  [USER_ROLE.STAFF]: "Personnel",
-  [USER_ROLE.PROMOTER]: "Promoteur",
-  [USER_ROLE.ADMIN]: "Administrateur",
-  [USER_ROLE.STUDENT]: "Élève",
+export const USER_ROLE_ENUM_TRANSLATIONS: Record<USER_ROLE_ENUM, string> = {
+  [USER_ROLE_ENUM.STAFF]: "Personnel",
+  [USER_ROLE_ENUM.PROMOTER]: "Promoteur",
+  [USER_ROLE_ENUM.ADMIN]: "Administrateur",
+  [USER_ROLE_ENUM.STUDENT]: "Élève",
 };
 
-export enum USER_GENDER {
+export enum USER_GENDER_ENUM {
   MALE = "M",
   FEMALE = "F",
 }
 
-export const USER_GENDER_TRANSLATIONS: Record<USER_GENDER, string> = {
-  [USER_GENDER.MALE]: "Masculin",
-  [USER_GENDER.FEMALE]: "Féminin",
+export const USER_GENDER_ENUM_TRANSLATIONS: Record<USER_GENDER_ENUM, string> = {
+  [USER_GENDER_ENUM.MALE]: "Masculin",
+  [USER_GENDER_ENUM.FEMALE]: "Féminin",
 };
 
-export enum MUTATION_ACTION {
+export enum MUTATION_ACTION_ENUM {
   CREATE = "CREATE",
   EDIT = "EDIT",
   DELETE = "DELETE",
 }
 
-export const MUTATION_ACTION_TRANSLATIONS: Record<MUTATION_ACTION, string> = {
-  [MUTATION_ACTION.CREATE]: "Créer",
-  [MUTATION_ACTION.EDIT]: "Modifier",
-  [MUTATION_ACTION.DELETE]: "Supprimer",
+export const MUTATION_ACTION_ENUM_TRANSLATIONS: Record<
+  MUTATION_ACTION_ENUM,
+  string
+> = {
+  [MUTATION_ACTION_ENUM.CREATE]: "Créer",
+  [MUTATION_ACTION_ENUM.EDIT]: "Modifier",
+  [MUTATION_ACTION_ENUM.DELETE]: "Supprimer",
 };
 
-export enum STUDENT_STATUS {
+export enum STUDENT_STATUS_ENUM {
   EN_COURS = "EN_COURS",
   ABANDON = "ABANDON",
   EXCLUT = "EXCLUT",
 }
 
-export const STUDENT_STATUS_TRANSLATIONS: Record<STUDENT_STATUS, string> = {
-  [STUDENT_STATUS.EN_COURS]: "Actif",
-  [STUDENT_STATUS.ABANDON]: "Abandon",
-  [STUDENT_STATUS.EXCLUT]: "Exclu",
+export const STUDENT_STATUS_ENUM_TRANSLATIONS: Record<
+  STUDENT_STATUS_ENUM,
+  string
+> = {
+  [STUDENT_STATUS_ENUM.EN_COURS]: "Actif",
+  [STUDENT_STATUS_ENUM.ABANDON]: "Abandon",
+  [STUDENT_STATUS_ENUM.EXCLUT]: "Exclu",
 };
 
-export enum ENROLEMENT_ACTION {
+export enum ENROLEMENT_ACTION_ENUM {
   STUDENT_STATUS = "STUDENT_STATUS",
   STUDENT_TRANSFERT = "STUDENT_TRANSFERT",
 }
 
-export const ENROLEMENT_ACTION_TRANSLATIONS: Record<ENROLEMENT_ACTION, string> =
-  {
-    [ENROLEMENT_ACTION.STUDENT_STATUS]: "Statut de l'élève",
-    [ENROLEMENT_ACTION.STUDENT_TRANSFERT]: "Transfert de l'élève",
-  };
+export const ENROLEMENT_ACTION_ENUM_TRANSLATIONS: Record<
+  ENROLEMENT_ACTION_ENUM,
+  string
+> = {
+  [ENROLEMENT_ACTION_ENUM.STUDENT_STATUS]: "Statut de l'élève",
+  [ENROLEMENT_ACTION_ENUM.STUDENT_TRANSFERT]: "Transfert de l'élève",
+};

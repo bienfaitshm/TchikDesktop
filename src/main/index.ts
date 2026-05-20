@@ -1,24 +1,22 @@
+import icon from "../../resources/icon.png?asset";
 import { app, shell, BrowserWindow, dialog } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { autoUpdater } from "electron-updater";
 
-import icon from "../../resources/icon.png?asset";
-import { sequelize, performBackup } from "@/packages/@core/data-access/db";
+import { dbManager } from "@/packages/@core/data-access/db";
 import { getLogger } from "@/packages/logger";
 
 import { apiGateway, ipcServer } from "@/main/apps";
+import { registerContextMenuListener } from "@/main/context-menus";
+import { setupDevelopmentEnvironment } from "@/main/extension.dev";
 
-// Logger principal pour le process Electron
 const mainLogger = getLogger("MainProcess");
-const dbLogger = getLogger("Database");
 const updaterLogger = getLogger("Updater");
 
-// Configure electron-log (nécessaire pour autoUpdater)
 autoUpdater.logger = updaterLogger;
-const ALTER_DB: boolean = false;
 
-const createMainWindow = (): void => {
+const createMainWindow = async () => {
   mainLogger.info("Création de la fenêtre principale...");
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -30,37 +28,19 @@ const createMainWindow = (): void => {
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
+      spellcheck: true,
     },
   });
   mainLogger.info("Fenêtre principale créée avec les options par défaut.");
 
-  // Synchronisation de la base de données
-  dbLogger.info(
-    `Tentative de synchronisation de la base de données (ALTER_DB: ${ALTER_DB}).`,
-  );
-  sequelize
-    .sync({ alter: ALTER_DB, logging: false })
-    .then(() => {
-      dbLogger.info("Base de données synchronisée avec succès.");
+  await dbManager.initialize();
+  // Démarrage du serveur API interne
+  mainLogger.info("Démarrage du serveur API Electron...");
+  apiGateway.registerEndpoints();
+  ipcServer.listen();
 
-      // Démarrage du serveur API interne
-      mainLogger.info("Démarrage du serveur API Electron...");
-      apiGateway.registerEndpoints();
-      ipcServer.listen();
-    })
-    .catch((error) => {
-      // Log professionnel en cas d'échec de la DB
-      console.log("error", error);
-      dbLogger.error(
-        "Échec de la synchronisation de la base de données!",
-        error,
-      );
-      // Optionnel: Afficher une boîte de dialogue critique à l'utilisateur
-      dialog.showErrorBox(
-        "Erreur Critique de Démarrage",
-        "La base de données n'a pas pu être initialisée. L'application pourrait ne pas fonctionner correctement.",
-      );
-    });
+  // Activaction des menus context de correction orthographique
+  registerContextMenuListener(mainWindow);
 
   mainWindow.once("ready-to-show", () => {
     mainLogger.info("Fenêtre prête à être affichée.");
@@ -92,7 +72,8 @@ app.whenReady().then(async () => {
   electronApp.setAppUserModelId("com.electron.tchik");
   mainLogger.info("AppUserModelId défini.");
 
-  await performBackup();
+  await dbManager.performBackup();
+  await setupDevelopmentEnvironment({ logger: mainLogger });
 
   app.on("browser-window-created", (_, window) => {
     mainLogger.info(
@@ -118,7 +99,7 @@ app.on("window-all-closed", async () => {
     mainLogger.info(
       'Événement "window-all-closed": Fermeture de l\'application.',
     );
-    await performBackup();
+    await dbManager.performBackup();
     app.quit();
   }
 });
@@ -150,14 +131,12 @@ autoUpdater.on("error", (err) => {
 });
 
 autoUpdater.on("download-progress", (progressObj) => {
-  // Utilisation de la structure de log pro pour les métadonnées
   updaterLogger.info("Progression du téléchargement.", {
     speed: progressObj.bytesPerSecond,
     percent: progressObj.percent.toFixed(2),
     transferred: progressObj.transferred,
     total: progressObj.total,
   });
-  // Note: La communication vers le renderer doit se faire avec l'objet mainWindow (si accessible)
 });
 
 autoUpdater.on("update-downloaded", () => {

@@ -1,12 +1,11 @@
-
-import { StudyYearForm, type StudyYearFormData as FormValueType } from "@/renderer/components/form/study-year-form";
+import React, { useMemo } from "react";
 import { Button } from "@/renderer/components/ui/button";
-import { enhanceColumnsWithMenu } from "@/renderer/components/tables/columns";
-import type { DataTableMenu } from "@/renderer/components/button-menus";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useGetStudyYears } from "@/renderer/libs/queries/school"; // Ou ton dossier spécifique study-year
+import type { TStudyYear } from "@/packages/@core/data-access/db/schemas/types";
 import { Suspense } from "@/renderer/libs/queries/suspense";
+import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 
-import React, { useCallback, useMemo } from "react";
 import {
     DataTable,
     DataContentBody,
@@ -15,139 +14,109 @@ import {
     DataTablePagination,
     DataTableToolbar,
 } from "@/renderer/components/tables/data-table";
-import { TypographyH3 } from "@/renderer/components/ui/typography";
-import { StudyYearColumns } from "@/renderer/components/tables/columns.study-years";
-import type { TStudyYear } from "@/commons/types/models";
-import { useStudyYearManagement } from "@/renderer/hooks/query.mangements";
-import { withSchoolConfig } from "@/renderer/hooks/with-application-config";
-import { WithSchoolAndYearId } from "@/commons/types/services";
-import { createMenuActionManager } from "@/renderer/utils/handle-action";
-import { useGetStudyYears } from "@/renderer/libs/queries/school";
+import { enhanceColumnsExpandable, StudyYearColumns } from "@/renderer/components/tables/columns";
+import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import {
-    TableActionManager,
-    useTableAction,
-} from "@/renderer/components/dialog/dialog.table-action";
-import { MUTATION_ACTION } from "@/commons/constants/enum";
+    ActionContainer,
+    ActionTileCopy,
+    ActionTileDelete,
+    ActionTileEdit,
+} from "@/renderer/components/tables/data-table.action-tiles";
 
+import {
+    CreateStudyYearDialog,
+    DeleteStudyYearDialog,
+    UpdateStudyYearDialog
+} from "@/renderer/dialog-actions/study-year.dialog-actions";
 
+import type { Row } from "@tanstack/react-table";
+import { PageShell } from "../components/layouts/page-shell.layout";
 
-const tableMenus: DataTableMenu[] = [
-    { key: "edit", label: "Modifier", icon: <Pencil className="size-3" /> },
-    { key: "delete", label: "Supprimer", separator: true, icon: <Trash2 className="size-3" /> },
-];
-
-
-
-const StudyYearManagementPage: React.FC<WithSchoolAndYearId> = ({ schoolId }) => {
-
-    const {
-        createMutation,
-        updateMutation,
-        deleteMutation,
-        handleCreate,
-        handleUpdate,
-        handleDelete,
-    } = useStudyYearManagement();
-
-
-    const { data: studyYears = [] } = useGetStudyYears(schoolId);
-    const tableAction = useTableAction<TStudyYear>();
-    const onConfirmDelete = useCallback(
-        (item: TStudyYear) => {
-            handleDelete(item.yearId, item.yearName, () => {
-                tableAction.onClose();
-            });
-        },
-        [handleDelete, tableAction]
-    );
-
-
-    const handleFormSubmit = useCallback(
-        ({ data, type, initialData }: { data: FormValueType, type: MUTATION_ACTION, initialData?: TStudyYear }) => {
-            if (type === MUTATION_ACTION.CREATE) {
-                handleCreate(data, data.yearName, () => {
-                    tableAction.onClose();
-                });
-            } else if (type === MUTATION_ACTION.EDIT && initialData) {
-                handleUpdate(initialData.yearId, data, data.yearName, () => {
-                    tableAction.onClose();
-                });
-            }
-        },
-        [handleCreate, handleUpdate, schoolId, tableAction]
-    );
-
-
-
-
-
-    const { menus, handleMenusAction: onPressMenu } = useMemo(
-        () =>
-            createMenuActionManager(tableMenus, {
-                edit: tableAction.onUpdate,
-                delete: tableAction.onDelete,
-            }),
-        [tableAction.onUpdate, tableAction.onDelete]
-    );
-
-
-
-    const enhancedColumns = useMemo(
-        () =>
-            enhanceColumnsWithMenu<TStudyYear>({
-                menus,
-                onPressMenu,
-                columns: StudyYearColumns,
-            }),
-        [menus, onPressMenu]
-    );
-
-
-    const isActionLoading =
-        updateMutation.isPending || createMutation.isPending || deleteMutation.isPending;
+/**
+ * Actions de ligne mémoïsées pour la performance.
+ */
+const StudyYearRowActions = React.memo(({ year }: { year: TStudyYear }) => {
+    const initialData = useMemo(() => ({ ...year }), [year.yearId]);
 
     return (
-        <div className="my-10 mx-auto h-full container max-w-screen-lg">
-            <DataTable<TStudyYear>
-                data={studyYears}
-                columns={enhancedColumns}
-                keyExtractor={(item) => item.yearId}
-            >
-                <DataTableToolbar className="justify-between">
-                    <TypographyH3>Gestion des années scolaire</TypographyH3>
-                    <Button size="sm" className="rounded-full" onClick={tableAction.onCreate}>
-                        <Plus className="size-4" />
-                        <span>Ajouter une année scolaire</span>
-                    </Button>
-                </DataTableToolbar>
-                <DataTableContent>
-                    <DataContentHead />
-                    <DataContentBody />
-                </DataTableContent>
-                <DataTablePagination />
-            </DataTable>
+        <ActionContainer className="lg:grid-cols-3">
+            <UpdateStudyYearDialog studyYearId={year.yearId} initialData={initialData}>
+                <ActionTileEdit />
+            </UpdateStudyYearDialog>
 
-            {/* Les dialogues sont rendus au niveau racine pour une meilleure accessibilité et superposition */}
-            <TableActionManager
-                ref={tableAction.tableActionRef}
-                itemName="année scolaire"
-                isLoading={isActionLoading}
-                onConfirmDelete={onConfirmDelete as any}
-                onFormSubmit={handleFormSubmit as any}
-                renderForm={({ initialData, onSubmit }: any) => (
-                    <StudyYearForm onSubmit={onSubmit} initialValues={{ ...initialData, schoolId }} />
-                ) as any}
-            />
+            <CreateStudyYearDialog defaultValues={initialData}>
+                <ActionTileCopy />
+            </CreateStudyYearDialog>
+
+            <DeleteStudyYearDialog
+                studyYearId={year.yearId}
+                yearName={year.yearName}
+            >
+                {({ isLoading, onOpen }) => (
+                    <ActionTileDelete onClick={onOpen} disabled={isLoading} />
+                )}
+            </DeleteStudyYearDialog>
+        </ActionContainer>
+    );
+});
+StudyYearRowActions.displayName = "StudyYearRowActions";
+
+export const StudyYearsPage = () => {
+    const { data: studyYears = [] } = useGetStudyYears();
+
+    return (
+        <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
+            <PageShell 
+                maxWidth="2xl" 
+                header={
+                    <section className="container flex items-center justify-between w-full max-w-screen-2xl my-4">
+                        <header className="space-y-1">
+                            <h1 className="text-2xl font-bold tracking-tight">Années Scolaires</h1>
+                            <p className="text-sm text-muted-foreground">
+                                Gérez les périodes académiques de votre établissement.
+                            </p>
+                        </header>
+
+                        <CreateStudyYearDialog>
+                            <Button size="sm" className="rounded-full shadow-sm">
+                                <Plus className="size-4" />
+                                <span>Nouvelle année</span>
+                            </Button>
+                        </CreateStudyYearDialog>
+                    </section>
+                }
+            >
+                <DataTable<TStudyYear>
+                    data={studyYears}
+                    columns={enhanceColumnsExpandable(StudyYearColumns)}
+                    keyExtractor={(item) => item.yearId}
+                >
+                    <DataTableToolbar searchColumn="yearName" />
+
+                    <Suspense
+                        fallback={
+                            <div className="flex h-64 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/10">
+                                <LoadingSpinner className="text-primary" />
+                                <p className="text-sm text-muted-foreground animate-pulse">Chargement des années...</p>
+                            </div>
+                        }
+                    >
+                        <DataTableContent>
+                            <DataContentHead />
+                            <DataContentBody<TStudyYear>>
+                                {({ row }) => (
+                                    <ExpandableRow
+                                        row={row as Row<unknown>}
+                                        renderDetail={<StudyYearRowActions year={row.original} />}
+                                    />
+                                )}
+                            </DataContentBody>
+                        </DataTableContent>
+
+                        <DataTablePagination />
+                    </Suspense>
+                </DataTable>
+            </PageShell>
         </div>
     );
 };
-
-const SttudyYear: React.FC<WithSchoolAndYearId> = (props) => {
-    return (
-        <Suspense>
-            <StudyYearManagementPage {...props} />
-        </Suspense>
-    );
-};
-
-export const StudyYearsPage = withSchoolConfig(SttudyYear);

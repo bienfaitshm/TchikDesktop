@@ -1,6 +1,5 @@
 "use client"
 
-import React from "react";
 import {
   Plus,
   Search,
@@ -17,9 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/ren
 
 import { ChartPie } from "../components/charts/pie";
 import { BarChart } from "../components/charts/bars";
-import { withSchoolConfig } from "../hooks/with-application-config";
 import { useDashboardStatistics } from "../libs/queries/stats";
-import { WithSchoolAndYearId } from "@/commons/types/services";
+import { useSchoolContext } from "../hooks/app-config-router";
 
 // --- CONFIGURATIONS DES GRAPHIQUES ---
 
@@ -46,7 +44,8 @@ const RETENTION_CONFIG = {
   nouveaux: { label: "Nouveaux", color: "hsl(var(--chart-5))" },
 };
 
-const Home: React.FC<WithSchoolAndYearId> = (props) => {
+export const HomePage = () => {
+  const { schoolId, yearId } = useSchoolContext();
   const {
     genderDistribution,
     statusDistribution,
@@ -54,7 +53,7 @@ const Home: React.FC<WithSchoolAndYearId> = (props) => {
     retentionData,
     studentsByOption,
     summary
-  } = useDashboardStatistics(props);
+  } = useDashboardStatistics({ schoolId, yearId });
 
   return (
     <div className="flex flex-col gap-8 p-6 lg:p-10">
@@ -205,5 +204,3 @@ const KpiCard = ({ title, value, icon, description }: any) => (
     </CardContent>
   </Card>
 );
-
-export const HomePage = withSchoolConfig(Home);

@@ -1,22 +1,22 @@
 import { z } from "zod";
 import {
-  SECTION,
-  USER_GENDER,
-  USER_ROLE,
-  STUDENT_STATUS,
-  ENROLEMENT_ACTION,
-} from "@/packages/@core/data-access/db";
+  SECTION_ENUM,
+  USER_GENDER_ENUM,
+  USER_ROLE_ENUM,
+  STUDENT_STATUS_ENUM,
+  ENROLEMENT_ACTION_ENUM,
+} from "@/packages/@core/data-access/db/enum";
 import { createZodEnum } from "./utils";
 
 // =============================================================================
 // I. ENUMS ZOD (Définitions Simples)
 // =============================================================================
 
-const ZSECTION = createZodEnum(SECTION);
-const ZUSER_GENDER = createZodEnum(USER_GENDER);
-const ZUSER_ROLE = createZodEnum(USER_ROLE);
-const ZSTUDENT_STATUS = createZodEnum(STUDENT_STATUS);
-const ZENROLEMENT_ACTION = createZodEnum(ENROLEMENT_ACTION);
+const ZSECTION_ENUM = createZodEnum(SECTION_ENUM);
+const ZUSER_GENDER_ENUM = createZodEnum(USER_GENDER_ENUM);
+const ZUSER_ROLE_ENUM = createZodEnum(USER_ROLE_ENUM);
+const ZSTUDENT_STATUS_ENUM = createZodEnum(STUDENT_STATUS_ENUM);
+const ZENROLEMENT_ACTION_ENUM = createZodEnum(ENROLEMENT_ACTION_ENUM);
 
 // =============================================================================
 // II. SCHÉMAS DE BASE (Attributs LECTURE - Équivalent aux Interfaces)
@@ -55,7 +55,7 @@ export const UserAttributesSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Identifiant unique de l'utilisateur (optionnel pour l'insertion)"
+      "Identifiant unique de l'utilisateur (optionnel pour l'insertion)",
     ),
   lastName: z.string().min(2).max(100).describe("Nom de famille (requis)"),
   middleName: z.string().min(2).max(100).describe("Post-nom (requis)"),
@@ -67,13 +67,13 @@ export const UserAttributesSchema = z.object({
     .optional()
     .describe("Prénom (optionnel)"),
   // Le champ 'fullname' est virtuel, on utilise .optional() car il n'est pas envoyé par le client.
-  fullname: z
+  fullName: z
     .string()
     .optional()
     .describe("Nom complet (Champ virtuel, non géré par le client)"),
-  gender: ZUSER_GENDER.optional().describe("Sexe de l'utilisateur"),
-  role: ZUSER_ROLE.optional().describe(
-    "Rôle de l'utilisateur (Admin, Teacher, Student)"
+  gender: ZUSER_GENDER_ENUM.optional().describe("Sexe de l'utilisateur"),
+  role: ZUSER_ROLE_ENUM.optional().describe(
+    "Rôle de l'utilisateur (Admin, Teacher, Student)",
   ),
   birthDate: z.coerce
     .date()
@@ -118,8 +118,8 @@ export const OptionAttributesSchema = z.object({
     .max(10)
     .describe("Nom abrégé (sigle) de l'option"),
   schoolId: z.string().describe("Clé étrangère vers l'École"),
-  section: ZSECTION.optional().describe(
-    "Section à laquelle appartient l'option"
+  section: ZSECTION_ENUM.optional().describe(
+    "Section à laquelle appartient l'option",
   ),
 });
 
@@ -165,7 +165,7 @@ export const ClassroomAttributesSchema = z.object({
     .describe("Identifiant court (ex: 7ème S)"),
   yearId: z.string().describe("Clé étrangère vers l'Année d'Étude"),
   schoolId: z.string().describe("Clé étrangère vers l'École"),
-  section: ZSECTION.optional().describe("Section de la classe"),
+  section: ZSECTION_ENUM.optional().describe("Section de la classe"),
   optionId: z
     .string()
 
@@ -197,8 +197,8 @@ export const EnrolementAttributesSchema = z.object({
     .describe("Indique si c'est un nouvel étudiant dans l'école"),
   schoolId: z.string().describe("Clé étrangère vers l'École"),
   yearId: z.string().describe("Clé étrangère vers l'Année d'Étude"),
-  status: ZSTUDENT_STATUS.optional().describe(
-    "Statut de l'étudiant dans cette classe"
+  status: ZSTUDENT_STATUS_ENUM.optional().describe(
+    "Statut de l'étudiant dans cette classe",
   ),
   code: z
     .string()
@@ -226,8 +226,8 @@ export const EnrolementActionAttributesSchema = z.object({
     .max(500)
     .optional()
     .describe("Raison du changement de statut ou de l'action"),
-  action: ZENROLEMENT_ACTION.describe(
-    "Type d'action effectuée (Create, ChangeStatus, Transfer)"
+  action: ZENROLEMENT_ACTION_ENUM.describe(
+    "Type d'action effectuée (Create, ChangeStatus, Transfer)",
   ),
 });
 
@@ -255,7 +255,7 @@ export const SchoolUpdateSchema = SchoolCreateSchema.partial();
 /** Schéma pour la création d'un Utilisateur (exclut 'userId', 'fullname'). */
 export const UserCreateSchema = UserAttributesSchema.omit({
   userId: true,
-  fullname: true,
+  fullName: true,
 });
 /** Schéma pour la mise à jour d'un Utilisateur (rend tous les champs de création optionnels, sauf clés potentiellement invariantes). */
 export const UserUpdateSchema = UserCreateSchema.partial();
@@ -335,7 +335,7 @@ export const EnrolementQuickCreateSchema = EnrolementCreateSchema.merge(
 
     // Données du nouvel étudiant (requis si isInSystem est FAUX).
     student: BaseStudentSchema.optional(),
-  })
+  }),
 )
   // -------------------------------------------------------------------------
   // Logique de validation conditionnelle appliquée via superRefine
@@ -404,48 +404,64 @@ export const EnrolementActionCreateSchema =
 // IV. SCHÉMAS UTILITAIRES (Filtres, Pagination)
 // =============================================================================
 
-// Supposons une dépendance (comme dans votre exemple précédent)
-const ZodQueryFilter = z.string().optional();
+/**
+ * Extrait les clés d'un schéma Zod pour garantir que
+ * les tris et recherches ne se font que sur des colonnes existantes.
+ */
+const getKeys = <T extends z.ZodRawShape>(shape: T) => {
+  return Object.keys(shape) as [keyof T & string, ...(keyof T & string)[]];
+};
 
 /**
- * Schéma Zod pour les paramètres de pagination et de tri standard.
- * Tous les champs sont optionnels car les valeurs par défaut sont appliquées côté serveur.
+ * REECRITURE PRO & GÉNÉRIQUE
  */
-export const PaginationAndSortSchema = z
-  .object({
-    limit: z.coerce
-      .number()
-      .int()
-      .positive()
-      .describe("Nombre maximal d'éléments à retourner.")
-      .default(10)
-      .optional(),
-    offset: z.coerce
-      .number()
-      .int()
-      .nonnegative()
-      .describe("Décalage (offset) pour la pagination.")
-      .default(0)
-      .optional(),
-    orderBy: ZodQueryFilter.describe(
-      "Nom du champ sur lequel trier les résultats."
-    ),
-    order: z
-      .enum(["ASC", "DESC"])
-      .optional()
-      .describe("Direction du tri (ASCendant ou DESCendant)."),
-  })
-  .partial(); // Rendre l'objet complet optionnel pour la validation des requêtes.
+export const withQueryOptions = <T extends z.ZodRawShape>(
+  dataSchema: z.ZodObject<T>,
+) => {
+  const keys = getKeys(dataSchema.shape);
 
-/**
- * Schéma Zod utilitaire pour envelopper n'importe quel type de filtre de données
- * avec les paramètres de pagination et de tri.
- * @template TData Le schéma de base pour les filtres spécifiques à une ressource.
- */
-export const WithPaginationAndSortSchema = <TData extends z.ZodRawShape>(
-  dataSchema: z.ZodObject<TData>
-) =>
-  dataSchema
-    .partial()
-    .and(PaginationAndSortSchema)
-    .describe("Schéma combinant les filtres de données et la pagination.");
+  // 1. Schéma pour le tri (Strict sur les colonnes)
+  const SortStepSchema = z.object({
+    column: z.enum(keys).describe("Nom de la colonne existante"),
+    order: z.enum(["asc", "desc"]).default("asc"),
+  });
+
+  // 2. Construction du schéma global
+  return z
+    .object({
+      /**
+       * WHERE : Filtres d'égalité simples
+       * On utilise partial() pour que chaque champ soit optionnel
+       */
+      where: dataSchema.partial().optional(),
+
+      /**
+       * WHERE IN : Record<colonne, tableau_de_valeurs>
+       */
+      whereIn: z.record(z.enum(keys), z.array(z.any())).optional(),
+
+      /**
+       * SEARCH : Record<colonne, chaine_recherche>
+       */
+      search: z.record(z.enum(keys), z.string()).optional(),
+
+      /**
+       * OR : Tableau de filtres partiels (chaque objet est un bloc OR)
+       */
+      or: z.array(dataSchema.partial()).optional(),
+
+      /**
+       * PAGINATION & TRI
+       */
+      limit: z.coerce
+        .number()
+        .int()
+        .positive()
+        .max(500)
+        .default(100)
+        .optional(),
+      offset: z.coerce.number().int().nonnegative().default(0).optional(),
+      orderBy: z.array(SortStepSchema).optional(),
+    })
+    .describe("Options de requête génériques typées sur la ressource.");
+};

@@ -19,7 +19,7 @@ import {
 import { ChevronsUpDown, Check, PlusCircle } from "lucide-react";
 
 import IconImage from "@/renderer/assets/icon.svg";
-import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
+import { useConfigActions, useConfigStore } from "@/renderer/libs/stores/app-store";
 import { useGetSchools } from "@/renderer/libs/queries/school";
 import { Link } from "react-router";
 
@@ -30,8 +30,9 @@ import { Link } from "react-router";
  */
 export function SidebarHead() {
     const { isMobile } = useSidebar();
-    const currentSchool = useApplicationConfigurationStore(store => store.currentSchool)
-    const changeCurrentSchool = useApplicationConfigurationStore(store => store.setCurrentSchool)
+    const configActions = useConfigActions()
+    const { currentSchool } = useConfigStore()
+
     const { data: schools = [] } = useGetSchools();
 
     return (
@@ -105,7 +106,7 @@ export function SidebarHead() {
                                 schools.map((school) => (
                                     <DropdownMenuItem
                                         key={school.schoolId}
-                                        onSelect={() => changeCurrentSchool(school)}
+                                        onSelect={() => configActions.setCurrentSchool(school)}
                                         className="flex items-center justify-between"
                                         disabled={currentSchool?.schoolId === school.schoolId}
                                     >

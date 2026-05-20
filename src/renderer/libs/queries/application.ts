@@ -1,9 +1,9 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { getSystemInfos } from "@/renderer/libs/apis/application";
+import { appInfos } from "@/renderer/libs/apis";
 
 export function useGetSystemInfo() {
   return useSuspenseQuery({
     queryKey: ["GET_SYS_INFOS"],
-    queryFn: () => getSystemInfos(),
+    queryFn: () => appInfos.fetchSystemInfos(),
   });
 }

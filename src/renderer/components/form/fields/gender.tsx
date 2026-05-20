@@ -1,33 +1,73 @@
-import { USER_GENDER, USER_GENDER_TRANSLATIONS } from "@/commons/constants/enum";
-import { getEnumKeyValueList } from "@/commons/utils";
-import React from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/renderer/components/ui/select";
-import { FormControl } from "@/renderer/components/ui/form";
+"use client"
 
-const GENDER_OPTIONS = getEnumKeyValueList(USER_GENDER, USER_GENDER_TRANSLATIONS);
+import * as React from "react"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "@/renderer/components/ui/select"
+import { FormControl } from "@/renderer/components/ui/form"
 
-
-type GenderInputProps = {
-    value?: USER_GENDER,
-    onChange?(gender: USER_GENDER): void
+export type GenderOption = {
+    value: string
+    label: string
 }
-export const GenderInput = React.forwardRef<any, GenderInputProps>(({ onChange, value = USER_GENDER.MALE }, ref) => {
-    return (
-        <Select onValueChange={onChange} defaultValue={value} value={value}>
-            <FormControl>
-                <SelectTrigger>
-                    <SelectValue ref={ref} placeholder="Sélectionner le sexe ici..." />
-                </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-                {GENDER_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                    </SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
-    )
-})
+
+interface GenderInputProps {
+    options?: GenderOption[]
+    value?: string
+    defaultValue?: string
+    onChange?: (value: string) => void
+    placeholder?: string
+    disabled?: boolean
+}
+
+/**
+ * GenderInput
+ */
+export const GenderInput = React.forwardRef<HTMLButtonElement, GenderInputProps>(
+    ({ onChange, value, options = [], defaultValue, placeholder = "Sélectionner...", disabled }, ref) => {
+
+        const currentValue = value ?? ""
+
+        return (
+            <Select
+                onValueChange={onChange}
+                value={currentValue}
+                defaultValue={defaultValue}
+                disabled={disabled}
+            >
+                <FormControl>
+                    <SelectTrigger
+                        ref={ref}
+                        aria-label="Sélectionner une option"
+                        className="w-full h-11"
+                    >
+                        <SelectValue placeholder={placeholder} />
+                    </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                    {options.length > 0 ? (
+                        options.map((option) => (
+                            <SelectItem
+                                key={option.value}
+                                value={option.value}
+                                className="cursor-pointer"
+                            >
+                                {option.label}
+                            </SelectItem>
+                        ))
+                    ) : (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                            Aucune option disponible
+                        </div>
+                    )}
+                </SelectContent>
+            </Select>
+        )
+    }
+)
 
 GenderInput.displayName = "GenderInput"

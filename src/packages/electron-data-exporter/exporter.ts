@@ -1,61 +1,69 @@
 /**
- * @file DataExport.ts
+ * @file exporter.ts
  * @description Service d'orchestration pour l'exportation de documents.
  * Centralise la logique de récupération de données et de génération d'artefacts.
  */
 
 import { getLogger } from "@/packages/logger";
-import { FileSystem } from "@/packages/electron-file-system";
 import { getFileExtension } from "@/packages/file-extension";
-import { IExportStrategy } from "./abstractions";
-import {
-  IDataFetchingService,
+import type { IExportStrategy } from "./abstractions";
+import type { IFileSystem } from "./types";
+import type {
   ServiceResult,
   DocumentMetadata,
   ServiceError,
-  DataSourceQueryDefinition,
+  ContextParams,
 } from "./types";
 
 export class DataExport {
   private readonly logger = getLogger("DataExport");
-  private readonly strategyRegistry = new Map<string, IExportStrategy>();
-  private readonly metadataCache: DocumentMetadata[] = [];
+  private readonly strategyRegistry = new Map<string, IExportStrategy<any>>();
 
+  /**
+   * @param strategies Liste des stratégies d'export injectées.
+   * @param fileSystem Interface abstraite pour les opérations I/O (Injection de dépendance).
+   */
   constructor(
-    strategies: IExportStrategy[],
-    private readonly dataFetcher: IDataFetchingService
+    strategies: IExportStrategy<any>[],
+    private readonly fileSystem: IFileSystem,
   ) {
     this.registerStrategies(strategies);
   }
 
-  private registerStrategies(strategies: IExportStrategy[]): void {
+  private registerStrategies(strategies: IExportStrategy<any>[]): void {
     strategies.forEach((strategy) => {
       if (this.strategyRegistry.has(strategy.id)) {
         this.logger.warn(`Duplicate strategy ID detected: ${strategy.id}.`);
         return;
       }
       this.strategyRegistry.set(strategy.id, strategy);
-      this.metadataCache.push({
-        key: strategy.id,
-        ...strategy.meta,
-      });
     });
     this.logger.info(
-      `Ready with ${this.strategyRegistry.size} export strategies.`
+      `Ready with ${this.strategyRegistry.size} export strategies.`,
     );
   }
 
-  public getAvailableExports(): DocumentMetadata[] {
-    return this.metadataCache;
+  public async getAvailableExports<TParams extends Record<string, unknown>>(
+    params?: TParams,
+  ): Promise<ReadonlyArray<DocumentMetadata>> {
+    const metadata: DocumentMetadata[] = [];
+
+    for (const strategy of this.strategyRegistry.values()) {
+      const data = await strategy.getMeta(params);
+      metadata.push({
+        id: strategy.id, // Correction de 'key' vers 'id' pour la cohérence
+        ...data,
+      });
+    }
+    return Object.freeze(metadata);
   }
 
   /**
    * Orchestre le workflow d'exportation.
-   * L'ordre est optimisé : on demande le chemin AVANT la génération pour économiser les ressources.
    */
   public async executeExport(
     strategyId: string,
-    contextParams: unknown
+    contextParams: ContextParams,
   ): Promise<ServiceResult<string>> {
     const strategy = this.strategyRegistry.get(strategyId);
 
@@ -67,14 +75,13 @@ export class DataExport {
     log.info("Workflow initiated", { contextParams });
 
     try {
-      // 1. Validation des paramètres (Rapide)
+      // 1. Validation
       const validation = strategy.validateContext(contextParams);
       if (!validation.success) return validation;
 
-      // 2. Sélection du chemin (Interaction utilisateur)
-      // On le fait tôt pour ne pas lancer de calculs inutiles si l'utilisateur annule.
-      const savedPath = await FileSystem.promptSavePath(
-        strategy.getSaveOptions()
+      // 2. Sélection du chemin via l'abstraction IFileSystem
+      const savedPath = await this.fileSystem.promptSavePath(
+        strategy.getSaveOptions(contextParams?.fileType),
       );
 
       if (!savedPath) {
@@ -82,34 +89,31 @@ export class DataExport {
         return this.fail("CANCELLED", "Exportation annulée.");
       }
 
-      // 3. Identification de l'extension choisie
+      // 3. Identification de l'extension
       const fileExtension = getFileExtension(savedPath);
       if (!fileExtension) {
         return this.fail(
           "VALIDATION_ERROR",
-          "Extension de fichier non supportée."
+          "Extension de fichier non supportée.",
         );
       }
 
-      // 4. Récupération des données (Peut être lent)
+      // 4. Récupération des données
       log.info("Fetching required data...");
-      const dataResult = await this.resolveData(
-        strategy.getDataSourceDefinition(),
-        contextParams
-      );
+      const dataResult = await strategy.resolveData(contextParams);
       if (!dataResult.success) return dataResult;
 
-      // 5. Génération de l'artefact (Transformation CPU-intensive)
+      // 5. Génération de l'artefact
       log.info(`Generating ${fileExtension} artifact...`);
       const artifactResult = await strategy.buildArtifact(
         fileExtension,
-        dataResult.data
+        dataResult.data,
       );
       if (!artifactResult.success) return artifactResult;
 
-      // 6. Persistance (I/O)
+      // 6. Persistance via l'abstraction IFileSystem
       log.info("Writing file to disk...");
-      await FileSystem.persistToDisk(savedPath, artifactResult.data);
+      await this.fileSystem.persistToDisk(savedPath, artifactResult.data);
 
       log.info("Export completed successfully");
       return { success: true, data: savedPath };
@@ -118,47 +122,19 @@ export class DataExport {
       return this.fail(
         "GENERATION_ERROR",
         "Une erreur système est survenue.",
-        error
+        error,
       );
     }
   }
 
   /**
-   * Résout les dépendances de données de manière atomique ou groupée.
+   * Utilisation de never pour garantir le respect de l'union type ServiceResult.
    */
-  private async resolveData(
-    definition: DataSourceQueryDefinition,
-    params: unknown
-  ): Promise<ServiceResult<unknown>> {
-    if (typeof definition === "string") {
-      return this.dataFetcher.fetch(definition, params);
-    }
-
-    const keys = Object.keys(definition);
-    const results = await Promise.all(
-      keys.map((key) =>
-        this.dataFetcher
-          .fetch(definition[key], params)
-          .then((res) => ({ key, res }))
-      )
-    );
-
-    const firstFailure = results.find((r) => !r.res.success);
-    if (firstFailure) return firstFailure.res as ServiceResult<unknown>;
-
-    const aggregatedData: Record<string, unknown> = {};
-    results.forEach(({ key, res }) => {
-      if (res.success) aggregatedData[key] = res.data;
-    });
-
-    return { success: true, data: aggregatedData };
-  }
-
   private fail(
     code: ServiceError["code"],
     message: string,
-    details?: unknown
-  ): ServiceResult<any> {
+    details?: unknown,
+  ): ServiceResult<never> {
     return { success: false, error: { code, message, details } };
   }
 }

@@ -1,7 +1,4 @@
 import React from 'react';
-
-import type { TEnrolement, WithSchoolAndYearId } from '@/commons/types/services';
-
 import { Button } from '@/renderer/components/ui/button';
 import {
     Dialog,
@@ -18,7 +15,6 @@ import {
     QuickEnrollmentForm,
     QuickEnrollmentFormData,
     useFormHandleRef,
-    getDefaultValues
 } from '@/renderer/components/form/quick-enrolement-form';
 import { ButtonLoader } from '@/renderer/components/form/button-loader';
 import { FormSubmitter } from '@/renderer/components/form/form-submiter';
@@ -26,14 +22,15 @@ import { FormSubmitter } from '@/renderer/components/form/form-submiter';
 import { useGetClassroomAsOptions } from '@/renderer/hooks/data-as-options';
 import { useQuickEnrollement } from '@/renderer/hooks/query.actions';
 import { TypographySmall } from '../ui/typography';
+import { TEnrolementAttributes } from '@/packages/@core/data-access/schema-validations';
 
 
-export type EnrollmentDialogProps = React.PropsWithChildren<WithSchoolAndYearId<{
+export type EnrollmentDialogProps = React.PropsWithChildren<{
     initialValues?: Partial<QuickEnrollmentFormData>,
     onSuccess?(): void,
     dialogTitle?: string;
     dialogDescription?: string;
-}>>
+}>
 
 /**
  * @description A dialog component containing the form for a new enrollment.
@@ -41,22 +38,18 @@ export type EnrollmentDialogProps = React.PropsWithChildren<WithSchoolAndYearId<
  */
 export const EnrollmentDialog: React.FC<EnrollmentDialogProps> = ({
     initialValues,
-    schoolId,
-    yearId,
     children,
     dialogTitle = "Nouvelle Inscription",
     dialogDescription = "Remplissez les informations ci-dessous pour inscrire un nouvel élève.",
     onSuccess,
 }) => {
     const formRef = useFormHandleRef<QuickEnrollmentFormData>();
-    const classroomsOptions = useGetClassroomAsOptions({ schoolId, yearId }, { labelFormat: "short" });
+    const classroomsOptions = useGetClassroomAsOptions({ where: { schoolId: initialValues?.schoolId, yearId: initialValues?.yearId } }, { labelFormat: "short" });
 
-    const [prevEnrollement, setPrevEnrollement] = React.useState<TEnrolement | undefined>(undefined)
+    const [prevEnrollement, setPrevEnrollement] = React.useState<TEnrolementAttributes | undefined>(undefined)
 
     const { onSubmit, quickEnrolementMutation } = useQuickEnrollement({
         onSuccess: (enrolement) => {
-            const value = getDefaultValues({ schoolId, yearId, ...initialValues });
-            console.log({ value })
             formRef.current?.reset();
             onSuccess?.()
             setPrevEnrollement(enrolement)
@@ -86,12 +79,11 @@ export const EnrollmentDialog: React.FC<EnrollmentDialogProps> = ({
                     <FormSubmitter.Wrapper>
                         <QuickEnrollmentForm
                             ref={formRef}
-                            initialValues={{ schoolId, yearId, ...initialValues }}
+                            initialValues={initialValues}
                             onSubmit={onSubmit}
                             classrooms={classroomsOptions}
                         />
                     </FormSubmitter.Wrapper>
-
                     <DialogFooter>
                         <DialogClose asChild>
                             <Button id="close-dialog-button" variant="outline">Annuler</Button>

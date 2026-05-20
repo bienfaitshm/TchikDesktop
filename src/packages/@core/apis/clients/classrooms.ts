@@ -6,7 +6,7 @@ import {
   TClassroomAttributes,
 } from "@/packages/@core/data-access/schema-validations";
 
-import { TClassroomDTO } from "@/packages/@core/data-access/data-queries";
+import type { TClassroomDTO } from "@/packages/@core/data-access/db/queries";
 import { ClassroomRoutes } from "../routes-constant";
 
 /**
@@ -53,7 +53,7 @@ export type ClassroomApi = Readonly<{
    */
   updateClassroom(
     classroomId: string,
-    data: TClassroomUpdate
+    data: TClassroomUpdate,
   ): Promise<TClassroomDTO>;
 
   /**

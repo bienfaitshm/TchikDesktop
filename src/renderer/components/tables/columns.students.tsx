@@ -1,74 +1,70 @@
-import type { TEnrolement, TWithUser } from "@/commons/types/models";
 import type { ColumnDef } from "@tanstack/react-table";
-import { TypographySmall } from "@/renderer/components/ui/typography";
-import { Avatar, AvatarFallback } from "@/renderer/components/ui/avatar";
-import { Checkbox } from "@/renderer/components/ui/checkbox";
 import { GenderBadge } from "../user-gender";
 import { StudentStatusBadge } from "../student-status";
+import { StudentAvatar } from "../student-avatar";
+import { DataTableColumnHeader } from "./data-table.column-header";
 
-export const StudentColumns: ColumnDef<TWithUser<TEnrolement>>[] = [
-    {
-        id: "select",
-        header: ({ table }) => (
-            <div className="flex items-center justify-center">
-                <Checkbox
-                    checked={
-                        table.getIsAllPageRowsSelected() ||
-                        (table.getIsSomePageRowsSelected() && "indeterminate")
-                    }
-                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                    aria-label="Select all"
-                />
-            </div>
-        ),
-        cell: ({ row }) => (
-            <div className="flex items-center justify-center">
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label="Select row"
-                />
-            </div>
-        ),
-        enableSorting: false,
-        enableHiding: false,
+export type TEnrolement = {
+  enrolementId: string;
+  status: any;
+  isNewStudent: boolean;
+  studentCode: string;
+  studentId: string;
+  student: {
+    gender: any;
+    fullName: string;
+  };
+  classroom: {
+    shortIdentifier: string;
+  };
+};
+
+export const StudentColumns: ColumnDef<TEnrolement>[] = [
+  {
+    accessorKey: "student.fullName",
+    enableSorting: true,
+    enableColumnFilter: true,
+    enableHiding: false,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Nom, postnom et prénom" />
+    ),
+    cell: ({ row }) => {
+      const student = row.original.student;
+      const isNew = row.original.isNewStudent;
+      return (
+        <div className="flex items-center gap-3">
+          <StudentAvatar fullName={student.fullName} />
+          <div className="flex flex-col">
+            <span className="font-medium leading-none">{student.fullName}</span>
+            <span className="text-[10px] uppercase mt-1 text-muted-foreground">
+              {isNew ? "Nouveau" : "Ancien"}
+            </span>
+          </div>
+        </div>
+      );
     },
-    {
-        accessorKey: "fullname",
-        header: "Nom, postnom et prénom",
-        cell: ({ row }) => {
-            const fullname = row.original.User.fullname;
-            return (
-                <div className="flex flex-row gap-2">
-                    <Avatar>
-                        <AvatarFallback>{fullname.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <TypographySmall className="text-sm text-black dark:text-white">
-                            {fullname}
-                        </TypographySmall>
-                        <TypographySmall className="text-xs text-muted-foreground block">
-                            {row.original.isNewStudent ? "Nouveau" : "Ancien"}
-                        </TypographySmall>
-                    </div>
-                </div>
-            );
-        },
-        enableHiding: false,
-    },
-    {
-        accessorKey: "sexe",
-        header: "Sexe",
-        cell: ({ row }) => <GenderBadge withIcon gender={row.original.User.gender} />
-    },
-    {
-        accessorKey: "code",
-        header: "Code",
-        cell: ({ row }) => <TypographySmall>{row.original.code}</TypographySmall>,
-    },
-    {
-        accessorKey: "section",
-        header: "Status",
-        cell: ({ row }) => <StudentStatusBadge status={row.original.status} />
-    },
+  },
+  {
+    accessorKey: "student.gender",
+    header: "Sexe",
+    cell: ({
+      row: {
+        original: { student },
+      },
+    }) => <GenderBadge withIcon gender={student.gender} />,
+  },
+  {
+    accessorKey: "studentCode",
+    header: "Code",
+    cell: ({ row }) => (
+      <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs font-semibold">
+        {row.original.studentCode}
+      </code>
+    ),
+  },
+  {
+    accessorKey: "status",
+    header: "Statut",
+    cell: ({ row }) => <StudentStatusBadge status={row.original.status} />,
+  },
 ];

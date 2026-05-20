@@ -1,8 +1,12 @@
+import type {
+  TClassroomFilter,
+  TUserFilter,
+} from "@/packages/@core/data-access/schema-validations";
 import { useMemo } from "react";
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
-import { GetClassroomParams } from "@/commons/types/services";
+import { useGetUsers } from "@/renderer/libs/queries/account";
 import { useGetOptions } from "@/renderer/libs/queries/option";
-import { useGetAvailableExports } from "@/renderer/libs/queries/document-export";
+import { useAvailableExports } from "@/renderer/libs/queries/document-export";
 
 /**
  * Définit les options de formatage pour la conversion de données en options de sélection.
@@ -92,13 +96,13 @@ export function useDataToOptions<T extends DataItem>({
 /**
  * Hook pour récupérer les classes et les convertir en un tableau d'options de sélection.
  *
- * @param {GetClassroomParams} params Les paramètres pour filtrer les classes.
+ * @param {TClassroomFilter} params Les paramètres pour filtrer les classes.
  * @param {DataToOptionConverterOptions} [options] Options de formatage du libellé.
  * @returns {Option[]} Un tableau d'options de classe.
  */
 export function useGetClassroomAsOptions(
-  params: GetClassroomParams,
-  options?: DataToOptionConverterOptions
+  params: TClassroomFilter,
+  options?: DataToOptionConverterOptions,
 ): Option[] {
   const { data: classrooms = [] } = useGetClassrooms(params);
 
@@ -119,9 +123,9 @@ export function useGetClassroomAsOptions(
  */
 export function useGetOptionAsOptions(
   schoolId: string,
-  options?: DataToOptionConverterOptions
+  options?: DataToOptionConverterOptions,
 ) {
-  const { data: dataOptions = [] } = useGetOptions({ schoolId });
+  const { data: dataOptions = [] } = useGetOptions({ where: { schoolId } });
   const _options = useDataToOptions({
     data: dataOptions,
     valueKey: "optionId",
@@ -135,8 +139,23 @@ export function useGetOptionAsOptions(
   };
 }
 
+export function useGetUsersAsOptions(
+  params: TUserFilter,
+  options?: DataToOptionConverterOptions,
+): Option[] {
+  const { data: users = [] } = useGetUsers(params);
+  console.log("users", users);
+  return useDataToOptions({
+    data: users,
+    valueKey: "userId",
+    labelKeyLong: "fullName",
+    labelKeyShort: "lastName",
+    options,
+  });
+}
+
 export function useGetAvailableExportsAsOptions() {
-  const { data } = useGetAvailableExports();
+  const { data } = useAvailableExports();
   return {
     options: data,
     defaultValue: undefined,

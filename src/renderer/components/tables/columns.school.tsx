@@ -1,15 +1,15 @@
-import type { TSchool } from "@/commons/types/models"
 import type { ColumnDef } from "@tanstack/react-table"
 import { TypographySmall } from "@/renderer/components/ui/typography"
 import React from "react";
 import { Badge } from "@/renderer/components/ui/badge";
-import { useApplicationConfigurationStore } from "@/renderer/libs/stores/app-store";
-import { Checkbox } from "@/renderer/components/ui/checkbox";
+import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { CheckCircle, MinusCircle } from "lucide-react";
+import type { TSchool } from "@/packages/@core/data-access/db/schemas/types";
+import { DataTableColumnHeader } from "./data-table.column-header";
 
 
 const SchoolStatusBadge: React.FC<{ schoolId: string }> = ({ schoolId }) => {
-    const currentActiveSchoolId = useApplicationConfigurationStore(store => store.currentSchool?.schoolId);
+    const { schoolId: currentActiveSchoolId } = useCurrentConfig();
     const isActive = currentActiveSchoolId === schoolId;
 
     return (
@@ -26,44 +26,13 @@ const SchoolStatusBadge: React.FC<{ schoolId: string }> = ({ schoolId }) => {
         </Badge>
     );
 };
+
 export const SchoolColumns: ColumnDef<TSchool>[] = [
     {
-        id: "select",
-        header: ({ table }) => (
-            <div className="flex items-center justify-center">
-                <Checkbox
-                    checked={
-                        table.getIsAllPageRowsSelected() ||
-                        (table.getIsSomePageRowsSelected() && "indeterminate")
-                    }
-                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                    aria-label="Sélectionner toutes les lignes"
-                />
-            </div>
-        ),
-        cell: ({ row }) => (
-            <div className="flex items-center justify-center">
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label="Sélectionner la ligne"
-                />
-            </div>
-        ),
-        enableSorting: false,
-        enableHiding: false,
-    },
-    {
-        accessorKey: "schoolId",
-        header: "#ID",
-        cell: ({ row }) => {
-            return <TypographySmall>{row.original.schoolId}</TypographySmall>
-        },
-        enableHiding: false,
-    },
-    {
         accessorKey: "name",
-        header: "Nom",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Nom" />
+        ),
         cell: ({ row }) => {
             return <TypographySmall>{row.original.name}</TypographySmall>
         },

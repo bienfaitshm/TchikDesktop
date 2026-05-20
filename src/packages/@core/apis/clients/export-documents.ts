@@ -4,8 +4,13 @@ import {} from "@/packages/@core/data-access/schema-validations";
 import { DocumentExportRoutes } from "../routes-constant";
 
 export type DocumentExportApi = Readonly<{
-  getAvailableExports(): Promise<DocumentMetadata[]>;
-  executeExport(data: any): Promise<string>;
+  getAvailableExports<TParams extends Record<string, unknown>>(
+    params?: TParams,
+  ): Promise<DocumentMetadata[]>;
+  executeExport<TData, TParams extends Record<string, unknown> = {}>(
+    data: TData,
+    params?: TParams,
+  ): Promise<string>;
 }>;
 
 /**
@@ -17,14 +22,14 @@ export type DocumentExportApi = Readonly<{
  * @returns L'objet DocumentExportApi contenant les méthodes de gestion des salles de classe.
  */
 export function createDocumentExportApis(
-  ipcClient: IpcClient
+  ipcClient: IpcClient,
 ): DocumentExportApi {
   return {
-    executeExport(data) {
-      return ipcClient.post(DocumentExportRoutes.EXPORTS, data);
+    executeExport(data, params) {
+      return ipcClient.post(DocumentExportRoutes.EXPORTS, data, { params });
     },
-    getAvailableExports() {
-      return ipcClient.get(DocumentExportRoutes.INFOS);
+    getAvailableExports(params) {
+      return ipcClient.get(DocumentExportRoutes.INFOS, { params });
     },
   } as const;
 }

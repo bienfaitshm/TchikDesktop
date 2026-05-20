@@ -1,15 +1,15 @@
 import type {
-  TSchoolInsert,
-  TStudyYearInsert,
-  TSchool,
-  TStudyYear,
-  TOption,
-  TOptionInsert,
-  TClassroom,
-  TClassroomInsert,
-  TUser,
-  TUserInsert,
-} from "@/commons/types/services";
+  TSchoolAttributes,
+  TSchoolCreate,
+  TStudyYearAttributes,
+  TStudyYearCreate,
+  TOptionAttributes,
+  TOptionCreate,
+  TClassroomAttributes,
+  TUserAttributes,
+  TUserCreate,
+  TClassroomCreate,
+} from "@/packages/@core/data-access/schema-validations";
 import { createManagementHook } from "@/renderer/hooks/base-query";
 import {
   useCreateSchool,
@@ -39,22 +39,23 @@ import {
 /**
  * @description Hook de gestion pour l'entité School (École).
  */
-export const useSchoolManagement = createManagementHook<TSchool, TSchoolInsert>(
-  {
-    itemName: "École",
-    queryKey: ["GET_SCHOOLS"],
-    useCreateMutation: useCreateSchool,
-    useUpdateMutation: useUpdateSchool,
-    useDeleteMutation: useDeleteSchool,
-  }
-);
+export const useSchoolManagement = createManagementHook<
+  TSchoolAttributes,
+  TSchoolCreate
+>({
+  itemName: "École",
+  queryKey: ["GET_SCHOOLS"],
+  useCreateMutation: useCreateSchool,
+  useUpdateMutation: useUpdateSchool,
+  useDeleteMutation: useDeleteSchool,
+});
 
 /**
  * @description Hook de gestion pour l'entité StudyYear (Année d'étude).
  */
 export const useStudyYearManagement = createManagementHook<
-  TStudyYear,
-  TStudyYearInsert
+  TStudyYearAttributes,
+  TStudyYearCreate
 >({
   itemName: "Année d'étude",
   queryKey: ["GET_STUDY_YEARS"],
@@ -66,23 +67,24 @@ export const useStudyYearManagement = createManagementHook<
 /**
  * @description Hook de gestion pour l'entité Option.
  */
-export const useOptionManagement = createManagementHook<TOption, TOptionInsert>(
-  {
-    itemName: "Option",
-    queryKey: ["GET_OPTIONS"],
-    useCreateMutation: useCreateOption,
-    useDeleteMutation: useDeleteOption,
-    useUpdateMutation: useUpdateOption,
-  }
-);
+export const useOptionManagement = createManagementHook<
+  TOptionAttributes,
+  TOptionCreate
+>({
+  itemName: "Option",
+  queryKey: ["GET_OPTIONS"],
+  useCreateMutation: useCreateOption,
+  useDeleteMutation: useDeleteOption,
+  useUpdateMutation: useUpdateOption,
+});
 
 /**
  * @description Hook de gestion pour l'entité Classroom (salle de classe).
  */
 
 export const useClassroomManagement = createManagementHook<
-  TClassroom,
-  TClassroomInsert
+  TClassroomAttributes,
+  TClassroomCreate
 >({
   itemName: "Salle de classe",
   queryKey: ["GET_CLASSROOMS"],
@@ -95,7 +97,10 @@ export const useClassroomManagement = createManagementHook<
  * @description Hook de gestion pour l'entité User (utilisateur).
  */
 
-export const useUserManagement = createManagementHook<TUser, TUserInsert>({
+export const useUserManagement = createManagementHook<
+  TUserAttributes,
+  TUserCreate
+>({
   itemName: "Utilisateur/Eleve",
   queryKey: ["GET_USERS"],
   useCreateMutation: useCreateUser,

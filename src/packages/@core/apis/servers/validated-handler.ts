@@ -54,7 +54,7 @@ export type InferParams<S extends ValidationSchemas> =
     ? z.infer<S["params"]>
     : Record<string, unknown>;
 
-const logger = getLogger("Validation");
+const logger = getLogger("IPCValidation");
 /**
  * Valide une section spécifique de la requête (Body, Params ou Headers).
  */
@@ -62,7 +62,7 @@ function validateSection(
   schema: ZodTypeAny | undefined,
   data: unknown,
   location: ValidationErrorDetail["location"],
-  errors: ValidationErrorDetail[]
+  errors: ValidationErrorDetail[],
 ): any {
   if (!schema) return data;
 
@@ -72,7 +72,7 @@ function validateSection(
     result.error.issues.forEach((issue) => {
       errors.push({
         location,
-        path: issue.path.join("."), // Format "user.address.street"
+        path: issue.path.join("."),
         message: issue.message,
       });
     });
@@ -101,7 +101,7 @@ function validateSection(
  */
 export function createValidatedHandler<S extends ValidationSchemas>(
   options: ValidatorOptions<S>,
-  handler: RequestHandler<any, InferBody<S>, InferParams<S>>
+  handler: RequestHandler<any, InferBody<S>, InferParams<S>>,
 ): RequestHandler<any, any, any> {
   const { schemas, errorMessage = "Validation Failed" } = options;
 
@@ -112,19 +112,19 @@ export function createValidatedHandler<S extends ValidationSchemas>(
       schemas?.body,
       req?.body,
       "body",
-      errors
+      errors,
     );
     const validatedParams = validateSection(
       schemas?.params,
       req?.params,
       "params",
-      errors
+      errors,
     );
     const validatedHeaders = validateSection(
       schemas?.headers,
       req?.headers,
       "headers",
-      errors
+      errors,
     );
 
     // 2. Gestion des erreurs agrégées
@@ -132,7 +132,7 @@ export function createValidatedHandler<S extends ValidationSchemas>(
       logger.error(
         `Erreur lors de la validation ${JSON.stringify(errors)}`,
         undefined,
-        { issues: errors }
+        { issues: errors },
       );
       throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST, {
         issues: errors,

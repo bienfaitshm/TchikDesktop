@@ -1,6 +1,4 @@
-import React, { PropsWithChildren } from "react";
-import { useControlledForm } from "@/commons/libs/forms";
-import { SchoolSchema, type SchoolAttributes } from "@/renderer/libs/schemas";
+import React from "react";
 import {
     Form,
     FormControl,
@@ -10,22 +8,13 @@ import {
     FormLabel,
     FormMessage,
 } from "@/renderer/components/ui/form";
-import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { Input } from "@/renderer/components/ui/input";
+import { SchoolCreateSchema, type TSchoolCreate } from "@/packages/@core/data-access/schema-validations";
+import { BaseFormProps, useZodForm } from "./base-form";
+import { Loader2 } from "lucide-react";
 
-export * from "./utils"
+export type SchoolFormData = TSchoolCreate;
 
-/**
- * @typedef {SchoolAttributes} SchoolFormData
- * @description Type alias for the data structure representing a school's attributes.
- * This is derived from the `SchoolAttributes` type in your schema.
- */
-export type SchoolFormData = SchoolAttributes;
-
-/**
- * @constant DEFAULT_SCHOOL_VALUES
- * @description Default initial values for the school form fields.
- */
 const DEFAULT_SCHOOL_VALUES: SchoolFormData = {
     name: "",
     adress: "",
@@ -33,174 +22,127 @@ const DEFAULT_SCHOOL_VALUES: SchoolFormData = {
     logo: undefined
 };
 
-
 /**
- * @interface SchoolFormProps
- * @description Props for the `SchoolForm` component.
- * @property {(value: SchoolFormData) => void} [onSubmit] - Optional callback function to be called when the form is submitted and validated successfully.
- * @property {Partial<SchoolFormData>} [initialValues] - Optional initial values to pre-fill the form. These will merge with `DEFAULT_SCHOOL_VALUES`.
+ * Formulaire de configuration de l'établissement scolaire.
  */
-export interface SchoolFormProps {
-    onSubmit?: (value: SchoolFormData) => void;
-    initialValues?: Partial<SchoolFormData>;
-}
-
-/**
- * @interface SchoolFormHandle
- * @description Extends `FormRef` to define the imperative handle for the `SchoolForm` component.
- * This allows a parent component to programmatically submit, reset, or access form state.
- */
-export interface SchoolFormHandle extends ImperativeFormHandle<SchoolFormData> { }
-
-/**
- * @interface SectionSelectProps
- * @description Props for the `SectionSelect` component.
- * @property {{ label: string; value: string }[]} options - An array of objects, each with a `label` and `value`, to populate the select dropdown.
- * @property {string} [value] - The currently selected value for the input.
- * @property {(value: string) => void} onChangeValue - Callback function triggered when the select value changes.
- * @deprecated This interface seems unrelated to SchoolForm and might be a leftover from a previous context. Consider removing if not used.
- */
-export interface SectionSelectProps {
-    options: { label: string; value: string }[];
-    value?: string;
-    onChangeValue(value: string): void;
-}
+export const SchoolForm: React.FC<BaseFormProps<SchoolFormData>> = ({
+    formId,
+    onSubmit,
+    initialValues = {}
+}) => {
 
 
-/**
- * @component SchoolForm
- * @description A reusable form component for managing school attributes (name, address, town, logo).
- * It leverages `react-hook-form` via `useControlledForm` for state management and validation
- * against `SchoolSchema`. It exposes imperative methods (like `submit`, `reset`) through a ref.
- * @param {React.ForwardedRef<SchoolFormHandle>} ref - A ref to imperatively control the form.
- * @param {PropsWithChildren<SchoolFormProps>} { children, onSubmit, initialValues } - Props for the component.
- * `children` can be used to render additional form elements or submission buttons.
- * `onSubmit` is called with validated form data. `initialValues` can pre-fill the form.
- * @returns {JSX.Element} The rendered school form.
- *
- * @example
- * ```tsx
- * import { useFormRef } from "@/path/to/this/file";
- * import { FormDialog } from "@/path/to/your/FormDialog";
- *
- * const MySchoolManagement = () => {
- * const SchoolFormRef = useFormRef<SchoolFormHandle>();
- * const dialogRef = FormDialog.useFormDialogRef();
- *
- * const handleFormSubmit = (data: SchoolFormData) => {
- * console.log("Form submitted with data:", data);
- * dialogRef.current?.closeDialog(); // Close dialog after successful submission
- * };
- *
- * const handleOpenEdit = (initialData: SchoolFormData) => {
- * SchoolFormRef.current?.reset(initialData); // Reset form with initial data for editing
- * dialogRef.current?.openDialog();
- * };
- *
- * return (
- * <>
- * <button onClick={() => dialogRef.current?.openDialog()}>Create New School</button>
- * <FormDialog.Root ref={dialogRef}>
- * <FormDialog.Header>
- * <FormDialog.Title>School Details</FormDialog.Title>
- * </FormDialog.Header>
- * <FormDialog.Content>
- * <FormDialog.FormWrapper>
- * <SchoolForm ref={SchoolFormRef} onSubmit={handleFormSubmit}>
- * <div className="pt-6">
- * <FormDialog.SubmitButton asChild>
- * <button type="submit">Save School</button>
- * </FormDialog.SubmitButton>
- * </div>
- * </SchoolForm>
- * </FormDialog.FormWrapper>
- * </FormDialog.Content>
- * </FormDialog.Root>
- *
- * <button onClick={() => handleOpenEdit({ name: "My School", adress: "123 Main St", town: "Anytown" })}>
- * Edit Existing School
- * </button>
- * </>
- * );
- * };
- * ```
- */
-export const SchoolForm = React.forwardRef<
-    SchoolFormHandle,
-    PropsWithChildren<SchoolFormProps>
->(({ children, onSubmit, initialValues = {} }, ref) => {
-    const [form, handleSubmit] = useControlledForm({
-        schema: SchoolSchema,
-        defaultValues: { ...DEFAULT_SCHOOL_VALUES, ...initialValues },
-        onSubmit: (value) => {
-            onSubmit?.(value); // Trigger the prop onSubmit callback
-        },
+
+    const form = useZodForm({
+        schema: SchoolCreateSchema,
+        defaultValues: DEFAULT_SCHOOL_VALUES,
+        initialValues,
+        onSubmit: onSubmit
     });
 
-    useFormImperativeHandle(ref, form);
+    const isSubmitting = form.isSubmitting;
 
     return (
-        <div>
-            <Form {...form}>
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                    {/* School Name Field */}
+        <Form {...form}>
+            <form
+                id={formId}
+                className="space-y-8"
+                onSubmit={form.submit}
+                aria-label="Configuration de l'établissement scolaire"
+                noValidate
+            >
+                {/* Section : Informations Générales */}
+                <section className="space-y-6">
                     <FormField
                         control={form.control}
                         name="name"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Nom complet</FormLabel>
+                                <FormLabel className="flex items-center gap-1 font-bold text-muted-foreground">
+                                    Nom officiel de l'école
+                                    <span className="text-destructive" aria-hidden="true">*</span>
+                                </FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input
+                                        placeholder="Ex: Complexe Scolaire MASOMO"
+                                        autoComplete="organization"
+                                        className="h-11 focus-visible:ring-primary/50"
+                                        disabled={isSubmitting}
+                                        aria-required="true"
+                                        {...field}
+                                    />
                                 </FormControl>
                                 <FormDescription>
-                                    Saisissez le nom complet de l’école.
+                                    Saisissez le nom complet tel qu'il doit apparaître sur les bulletins et rapports.
                                 </FormDescription>
-                                <FormMessage />
+                                <FormMessage className="font-medium" />
                             </FormItem>
                         )}
                     />
+                </section>
 
-                    {/* School Town Field */}
+                {/* Section : Localisation avec Fieldset pour l'accessibilité */}
+                <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-lg border text-muted-foreground">
+                    <legend className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4 px-2">
+                        Localisation Géographique
+                    </legend>
+
                     <FormField
                         control={form.control}
                         name="town"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Ville</FormLabel>
+                                <FormLabel className="font-semibold">Ville</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input
+                                        {...field}
+                                        placeholder="Ex: Lubumbashi"
+                                        autoComplete="address-level2"
+                                        disabled={isSubmitting}
+                                    />
                                 </FormControl>
-                                <FormDescription>
-                                    Saisissez la ville où se trouve l'école.
-                                </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
 
-                    {/* School Adress Field */}
                     <FormField
                         control={form.control}
                         name="adress"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Adresse</FormLabel>
+                                <FormLabel className="font-semibold">Adresse physique</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input
+                                        {...field}
+                                        placeholder="Ex: 12, Avenue des Écoles, Q/Golf"
+                                        autoComplete="street-address"
+                                        disabled={isSubmitting}
+                                    />
                                 </FormControl>
-                                <FormDescription>
-                                    Saisissez l'adresse physique de l'école.
-                                </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
-                    {children}
-                </form>
-            </Form>
-        </div>
+                </fieldset>
+
+                {/* Gestion des erreurs globales (Root) */}
+                {form.formState.errors.root && (
+                    <div role="alert" className="p-3 text-sm font-medium text-destructive bg-destructive/10 rounded-md">
+                        {form.formState.errors.root.message}
+                    </div>
+                )}
+
+                {/* Optionnel : Indicateur visuel de chargement si le bouton est à l'extérieur */}
+                {isSubmitting && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground animate-pulse" aria-live="polite">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Traitement en cours...
+                    </div>
+                )}
+            </form>
+        </Form>
     );
-});
+};
 
 SchoolForm.displayName = "SchoolForm";

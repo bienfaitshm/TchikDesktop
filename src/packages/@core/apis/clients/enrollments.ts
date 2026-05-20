@@ -30,7 +30,7 @@ export type EnrollementApi = Readonly<{
    * @returns Une promesse résolue avec la liste des EnrollementData.
    */
   fetchEnrollements(
-    params?: EnrollementQueryParams
+    params?: EnrollementQueryParams,
   ): Promise<EnrollementData[]>;
 
   /**
@@ -39,15 +39,15 @@ export type EnrollementApi = Readonly<{
    * @returns Une promesse résolue avec la liste des EnrollementData.
    */
   fetchEnrollementHistory(
-    params?: EnrollementQueryParams
+    params?: EnrollementQueryParams,
   ): Promise<EnrollementData[]>;
 
   /**
    * Récupère les détails d'une salle des inscriptions spécifique par son ID.
-   * @param enrollementId L'identifiant unique de la salle des inscriptions.
+   * @param enrolementId L'identifiant unique de la salle des inscriptions.
    * @returns Une promesse résolue avec l'objet EnrollementData.
    */
-  fetchEnrollementById(enrollementId: string): Promise<EnrollementData>;
+  fetchEnrollementById(enrolementId: string): Promise<EnrollementData>;
 
   /**
    * Crée une nouvelle salle des inscriptions.
@@ -62,26 +62,26 @@ export type EnrollementApi = Readonly<{
    * @returns Une promesse résolue avec l'objet EnrollementData nouvellement créé.
    */
   createQuickEnrollement(
-    data: TEnrolementQuickCreate
+    data: TEnrolementQuickCreate,
   ): Promise<EnrollementData>;
 
   /**
    * Met à jour une salle des inscriptions existante.
-   * @param enrollementId L'identifiant unique de la salle des inscriptions à mettre à jour.
+   * @param enrolementId L'identifiant unique de la salle des inscriptions à mettre à jour.
    * @param data Les champs partiels de EnrollementData à modifier.
    * @returns Une promesse résolue avec l'objet EnrollementData mis à jour.
    */
   updateEnrollement(
-    enrollementId: string,
-    data: TEnrolementUpdate
+    enrolementId: string,
+    data: TEnrolementUpdate,
   ): Promise<EnrollementData>;
 
   /**
    * Supprime une salle des inscriptions par son ID.
-   * @param enrollementId L'identifiant unique de la salle des inscriptions à supprimer.
+   * @param enrolementId L'identifiant unique de la salle des inscriptions à supprimer.
    * @returns Une promesse résolue une fois la suppression terminée (souvent avec un objet vide ou un statut de succès).
    */
-  deleteEnrollement(enrollementId: string): Promise<void>;
+  deleteEnrollement(enrolementId: string): Promise<void>;
 }>;
 
 /**
@@ -104,9 +104,9 @@ export function createEnrollementApis(ipcClient: IpcClient): EnrollementApi {
       return ipcClient.get(EnrollementRoutes.ALL_HISTORIES, { params });
     },
 
-    fetchEnrollementById(enrollementId) {
+    fetchEnrollementById(enrolementId) {
       return ipcClient.get(EnrollementRoutes.DETAIL, {
-        params: { enrollementId },
+        params: { enrolementId },
       });
     },
 
@@ -120,17 +120,17 @@ export function createEnrollementApis(ipcClient: IpcClient): EnrollementApi {
       return ipcClient.post(EnrollementRoutes.QUICK_ENROLLEMENT, data);
     },
 
-    updateEnrollement(enrollementId, data) {
+    updateEnrollement(enrolementId, data) {
       // Envoi du corps pour la mise à jour (PATCH ou PUT, ici PUT est utilisé)
       return ipcClient.put(EnrollementRoutes.DETAIL, data, {
-        params: { enrollementId },
+        params: { enrolementId },
       });
     },
 
-    deleteEnrollement(enrollementId) {
+    deleteEnrollement(enrolementId) {
       // La suppression ne nécessite pas de corps de requête
       return ipcClient.delete(EnrollementRoutes.DETAIL, {
-        params: { enrollementId },
+        params: { enrolementId },
       });
     },
   } as const;

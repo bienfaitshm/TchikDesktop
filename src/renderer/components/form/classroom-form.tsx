@@ -1,6 +1,5 @@
-import { forwardRef, useCallback, type PropsWithChildren } from "react";
-import { SECTION, SECTION_TRANSLATIONS, getEnumKeyValueList} from "@/packages/@core/data-access/db";
-import { ClassroomCreateSchema, type TClassroomCreate }  from "@/packages/@core/data-access/schema-validations"
+import React from "react";
+import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 import {
     Form,
     FormControl,
@@ -11,6 +10,7 @@ import {
     FormMessage,
 } from "@/renderer/components/ui/form";
 import { Input } from "@/renderer/components/ui/input";
+import { Loader2 } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -18,50 +18,20 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/renderer/components/ui/select";
-import { useZodForm } from "@/packages/use-zod-form"
-import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
-import { ButtonAi } from "../buttons/button-ai";
+import { ButtonAi } from "@/renderer/components/buttons/button-ai";
+import { useClassroomForm, type ClassroomFormData, type TSuggestion } from "./classroom-form.utils"
+import type { BaseFormProps } from "./base-form"
 
-export * from "./utils";
 
-export type ClassroomFormData = TClassroomCreate;
-
-const DEFAULT_CLASSROOM_VALUES: ClassroomFormData = {
-    identifier: "",
-    shortIdentifier: "",
-    schoolId: "",
-    optionId: null,
-    yearId: "",
-    section: SECTION.SECONDARY,
-};
-
-const SECTION_SELECT_OPTIONS = getEnumKeyValueList(
-    SECTION,
-    SECTION_TRANSLATIONS
-);
-
-export interface ClassroomFormProps {
-    onSubmit?: (value: ClassroomFormData) => void;
-    initialValues?: Partial<ClassroomFormData>;
-    options?: { label: string; value: string }[];
-    onGenerateSuggestion?(optionId: string | string, name: string): { name: string, shortName: string }
-}
-
-export interface ClassroomFormHandle extends ImperativeFormHandle<ClassroomFormData> { }
-
-interface SelectProps {
-    options: { label: string; value: string }[];
-    placeholder?: string;
-}
 
 /**
- * A reusable select component for handling options.
+ * OptionsSelect optimisé avec support ARIA
  */
-function OptionsSelect({ options, placeholder }: SelectProps) {
+function OptionsSelect({ options, placeholder }: { options: { label: string; value: string }[], placeholder?: string }) {
     return (
         <>
             <FormControl>
-                <SelectTrigger>
+                <SelectTrigger aria-label={placeholder}>
                     <SelectValue placeholder={placeholder} />
                 </SelectTrigger>
             </FormControl>
@@ -76,64 +46,50 @@ function OptionsSelect({ options, placeholder }: SelectProps) {
     );
 }
 
-/**
- * Renders a form to manage classroom data.
- * @description This form is a controlled component with an imperative handle for
- * submitting and resetting the form from a parent component.
- */
-export const ClassroomForm = forwardRef<
-    ClassroomFormHandle,
-    PropsWithChildren<ClassroomFormProps>
->(({ children, onSubmit, onGenerateSuggestion, initialValues = {}, options = [] }, ref) => {
-    const form = useZodForm({
-        schema: ClassroomCreateSchema,
-        defaultValues: { ...DEFAULT_CLASSROOM_VALUES, ...initialValues },
-        onSubmit,
-    });
-
-    useFormImperativeHandle(ref, form);
-
-    const handleGenerate = useCallback(() => {
-        const { identifier, optionId } = form.getValues();
-        form.clearErrors(["identifier", "optionId"]);
-        if (!identifier) {
-            form.setError("identifier", { type: "required", message: "L'identifiant est requis pour générer une suggestion." });
-            return;
-        }
-
-        if (!optionId) {
-            form.setError("optionId", { type: "required", message: "L'option de suggestion est requise, Veuillez sélectionner une option." });
-            return;
-        }
-
-        // 2. Logique de Génération (maintenant assurée d'avoir les valeurs)
-        const result = onGenerateSuggestion?.(optionId, identifier);
-
-        if (result) {
-            form.setValue("identifier", result?.name);
-            form.setValue("shortIdentifier", result?.shortName);
-        }
-
-        form.clearErrors(["identifier", "optionId"]);
-    }, [form, onGenerateSuggestion]);
+type ClassroomProps = {
+    options?: { label: string; value: string }[];
+    onGenerateSuggestion?(optionId: string, name: string): TSuggestion | null
+}
+export const ClassroomForm: React.FC<BaseFormProps<ClassroomFormData> & ClassroomProps> = ({ formId, onSubmit, onGenerateSuggestion, initialValues = {}, options = [] }) => {
+    const { form, handleGenerate, isGenerating } = useClassroomForm({ initialValues, onGenerateSuggestion, onSubmit })
     return (
         <Form {...form}>
-            <form onSubmit={form.submit} className="space-y-4">
+            <form
+                id={formId}
+                onSubmit={form.submit}
+                className="space-y-6"
+                aria-label="Formulaire de création de classe"
+            >
+                {/* Champ Identifiant avec Bouton AI intégré proprement */}
                 <FormField
                     control={form.control}
                     name="identifier"
                     render={({ field }) => (
-                        <FormItem>
-                            <div className="flex items-center justify-between">
-                                <FormLabel>Nom complet</FormLabel>
-                                <ButtonAi onClick={handleGenerate} />
+                        <FormItem className="relative">
+                            <div className="flex items-center justify-between mb-1">
+                                <FormLabel className="font-semibold">Nom complet de la classe</FormLabel>
+                                <ButtonAi
+                                    type="button"
+                                    disabled={isGenerating}
+                                    onClick={handleGenerate}
+                                    aria-busy={isGenerating}
+                                    title="Générer une suggestion via IA"
+                                />
                             </div>
                             <FormControl>
-                                <Input {...field} />
+                                <div className="relative">
+                                    <Input
+                                        {...field}
+                                        placeholder="Ex: 6ème Math-Physique"
+                                        className={isGenerating ? "opacity-50" : ""}
+                                    />
+                                    {isGenerating && (
+                                        <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+                                    )}
+                                </div>
                             </FormControl>
                             <FormDescription>
-                                Saisissez le nom complet de la classe (ex. : 2e Électricité
-                                Générale, 1er Humanités Scientifiques).
+                                Ce nom apparaîtra sur les bulletins et les listes officielles.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
@@ -145,73 +101,58 @@ export const ClassroomForm = forwardRef<
                     name="shortIdentifier"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Nom abrégé</FormLabel>
+                            <FormLabel className="font-semibold">Code / Nom abrégé</FormLabel>
                             <FormControl>
-                                <Input {...field} />
+                                <Input {...field} placeholder="Ex: 6MP" />
                             </FormControl>
-                            <FormDescription>
-                                Saisissez le nom abrégé de la classe (ex. : 2e ELEC, 3e HSC, 1er
-                                TCC).
-                            </FormDescription>
+                            <FormDescription>Utilisé pour les affichages compacts.</FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-                <div className="grid grid-cols-2 gap-5">
-                    <div>
-                        <FormField
-                            control={form.control}
-                            name="optionId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Option</FormLabel>
-                                    <Select
-                                        onValueChange={(value) =>
-                                            field.onChange(value === "null" ? null : value)
-                                        }
-                                        defaultValue={field.value ?? "null"}
-                                    >
-                                        <OptionsSelect
-                                            options={[{ label: "Aucune options.", value: "null" }, ...options]}
-                                            placeholder="Précisez l'option ici..."
-                                        />
-                                    </Select>
-                                    <FormDescription>
-                                        Précisez l'option ici.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-                    <div>
-                        <FormField
-                            control={form.control}
-                            name="section"
-                            render={({ field: { onChange, ...field } }) => (
-                                <FormItem>
-                                    <FormLabel>Section</FormLabel>
-                                    <Select onValueChange={onChange} defaultValue={field.value}>
-                                        <OptionsSelect
-                                            options={SECTION_SELECT_OPTIONS}
-                                            placeholder="Sélectionner la section ici..."
-                                        />
-                                    </Select>
-                                    <FormDescription>Précisez la section ici.</FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                        control={form.control}
+                        name="optionId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="font-semibold">Option / Filière</FormLabel>
+                                <Select
+                                    onValueChange={(val) => field.onChange(val === "none" ? null : val)}
+                                    value={field.value ?? "none"}
+                                >
+                                    <OptionsSelect
+                                        options={[{ label: "Tronc commun (Aucune option)", value: "none" }, ...options]}
+                                        placeholder="Choisir une option..."
+                                    />
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="section"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="font-semibold">Niveau d'enseignement / Sections</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <OptionsSelect
+                                        options={SECTION_OPTIONS}
+                                        placeholder="Sélectionner le niveau..."
+                                    />
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
-
-
-
-
-                {children}
             </form>
         </Form>
     );
-});
+};
 
 ClassroomForm.displayName = "ClassroomForm";
+export { createSuggestion, type ClassroomFormData } from "./classroom-form.utils"

@@ -1,7 +1,7 @@
-import React, { PropsWithChildren } from "react";
-import { useControlledForm } from "@/commons/libs/forms";
-import { SECTION, SECTION_TRANSLATIONS } from "@/commons/constants/enum";
-import { OptionSchema, type OptionAttributes } from "@/renderer/libs/schemas";
+import React from "react";
+import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
+import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
+import { OptionCreateSchema, type TOptionCreate } from "@/packages/@core/data-access/schema-validations";
 import {
     Form,
     FormControl,
@@ -11,7 +11,6 @@ import {
     FormLabel,
     FormMessage,
 } from "@/renderer/components/ui/form";
-import { useFormImperativeHandle, type ImperativeFormHandle } from "./utils";
 import { Input } from "@/renderer/components/ui/input";
 import {
     Select,
@@ -20,248 +19,170 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/renderer/components/ui/select";
-import { getEnumKeyValueList } from "@/commons/utils";
+import { BaseFormProps, useZodForm } from "./base-form";
 
-export * from "./utils"
+export type OptionFormData = TOptionCreate;
 
-
-/**
- * @typedef {OptionAttributes} OptionFormData
- * @description Type alias for the data structure representing an option's attributes.
- * This is derived from the `OptionAttributes` type in your schema.
- */
-export type OptionFormData = OptionAttributes;
-
-/**
- * @constant DEFAULT_OPTION_VALUES
- * @description Default initial values for the option form fields.
- */
 const DEFAULT_OPTION_VALUES: OptionFormData = {
     optionName: "",
     optionShortName: "",
-    section: SECTION.SECONDARY,
+    section: SECTION_ENUM.SECONDARY,
+    schoolId: ""
 };
 
 /**
- * @constant SECTION_SELECT_OPTIONS
- * @description Prepared list of options for the section select input,
- * mapping enum values to their translated labels.
+ * SectionSelect : Composant atomique optimisé pour l'accessibilité.
+ * Utilise les patterns de Radix UI pour la gestion du focus.
  */
-const SECTION_SELECT_OPTIONS = getEnumKeyValueList(SECTION, SECTION_TRANSLATIONS);
-
-/**
- * @interface OptionFormProps
- * @description Props for the `OptionForm` component.
- * @property {(value: OptionFormData) => void} [onSubmit] - Optional callback function to be called when the form is submitted and validated successfully.
- * @property {Partial<OptionFormData>} [initialValues] - Optional initial values to pre-fill the form. These will merge with `DEFAULT_OPTION_VALUES`.
- */
-export interface OptionFormProps {
-    onSubmit?: (value: OptionFormData) => void;
-    initialValues?: Partial<OptionFormData>;
-}
-
-/**
- * @interface OptionFormHandle
- * @description Extends `FormRef` to define the imperative handle for the `OptionForm` component.
- * This allows a parent component to programmatically submit, reset, or access form state.
- */
-export interface OptionFormHandle extends ImperativeFormHandle<OptionFormData> { }
-
-/**
- * @interface SectionSelectProps
- * @description Props for the `SectionSelect` component.
- * @property {{ label: string; value: string }[]} options - An array of objects, each with a `label` and `value`, to populate the select dropdown.
- * @property {string} [value] - The currently selected value for the input.
- * @property {(value: string) => void} onChangeValue - Callback function triggered when the select value changes.
- */
-export interface SectionSelectProps {
+interface SectionSelectProps {
     options: { label: string; value: string }[];
     value?: string;
     onChangeValue(value: string): void;
+    disabled?: boolean;
 }
 
-/**
- * @component SectionSelect
- * @description A controlled select input component specifically designed for choosing a section.
- * It integrates with Radix UI's `Select` component.
- * @param {SectionSelectProps} { onChangeValue, options, value } - Props for the component.
- * @returns {JSX.Element} The rendered section select input.
- *
- * @example
- * ```tsx
- * // Inside a form field:
- * <SectionSelect
- * options={[{ label: "Primary", value: "PRIMARY" }, { label: "Secondary", value: "SECONDARY" }]}
- * value={field.value}
- * onChangeValue={field.onChange}
- * />
- * ```
- */
 export const SectionSelect: React.FC<SectionSelectProps> = ({
     onChangeValue,
     options,
     value,
-}) => {
-    return (
-        <Select onValueChange={onChangeValue} defaultValue={value}>
-            <FormControl>
-                <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner la section ici..." />
-                </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-                {options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                    </SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
-    );
-};
+    disabled
+}) => (
+    <Select onValueChange={onChangeValue} value={value} disabled={disabled}>
+        <FormControl>
+            <SelectTrigger
+                className="w-full h-11"
+                aria-label="Sélectionner le niveau d'enseignement"
+            >
+                <SelectValue placeholder="Choisir le niveau..." />
+            </SelectTrigger>
+        </FormControl>
+        <SelectContent>
+            {options.map((option) => (
+                <SelectItem key={option.value} value={option.value} className="cursor-pointer">
+                    {option.label}
+                </SelectItem>
+            ))}
+        </SelectContent>
+    </Select>
+);
 
-/**
- * @component OptionForm
- * @description A reusable form component for managing option attributes (name, short name, section).
- * It leverages `react-hook-form` via `useControlledForm` for state management and validation
- * against `OptionSchema`. It exposes imperative methods (like `submit`, `reset`) through a ref.
- * @param {React.ForwardedRef<OptionFormHandle>} ref - A ref to imperatively control the form.
- * @param {PropsWithChildren<OptionFormProps>} { children, onSubmit, initialValues } - Props for the component.
- * `children` can be used to render additional form elements or submission buttons.
- * `onSubmit` is called with validated form data. `initialValues` can pre-fill the form.
- * @returns {JSX.Element} The rendered option form.
- *
- * @example
- * ```tsx
- * import { useFormRef } from "@/path/to/this/file";
- * import { FormDialog } from "@/path/to/your/FormDialog";
- *
- * const MyOptionManagement = () => {
- * const optionFormRef = useFormRef<OptionFormHandle>();
- * const dialogRef = FormDialog.useFormDialogRef();
- *
- * const handleFormSubmit = (data: OptionFormData) => {
- * console.log("Form submitted with data:", data);
- * dialogRef.current?.closeDialog(); // Close dialog after successful submission
- * };
- *
- * const handleOpenEdit = (initialData: OptionFormData) => {
- * optionFormRef.current?.reset(initialData); // Reset form with initial data for editing
- * dialogRef.current?.openDialog();
- * };
- *
- * return (
- * <>
- * <button onClick={() => dialogRef.current?.openDialog()}>Create New Option</button>
- * <FormDialog.Root ref={dialogRef}>
- * <FormDialog.Header>
- * <FormDialog.Title>Option Details</FormDialog.Title>
- * </FormDialog.Header>
- * <FormDialog.Content>
- * <FormDialog.FormWrapper>
- * <OptionForm ref={optionFormRef} onSubmit={handleFormSubmit}>
- * <div className="pt-6">
- * <FormDialog.SubmitButton asChild>
- * <button type="submit">Save Option</button>
- * </FormDialog.SubmitButton>
- * </div>
- * </OptionForm>
- * </FormDialog.FormWrapper>
- * </FormDialog.Content>
- * </FormDialog.Root>
- *
- * <button onClick={() => handleOpenEdit({ optionName: "Existing Opt", optionShortName: "EO", section: SECTION.PRIMARY })}>
- * Edit Existing Option
- * </button>
- * </>
- * );
- * };
- * ```
- */
-export const OptionForm = React.forwardRef<
-    OptionFormHandle,
-    PropsWithChildren<OptionFormProps>
->(({ children, onSubmit, initialValues = {} }, ref) => {
-    const [form, handleSubmit] = useControlledForm({
-        schema: OptionSchema, // Use the Zod schema for validation
-        defaultValues: { ...DEFAULT_OPTION_VALUES, ...initialValues }, // Merge defaults with any provided initial values
-        onSubmit: (value) => {
-            onSubmit?.(value); // Trigger the prop onSubmit callback
-        },
+export const OptionForm: React.FC<BaseFormProps<OptionFormData>> = ({
+    formId,
+    initialValues,
+    onSubmit
+}) => {
+
+
+
+    const form = useZodForm({
+        schema: OptionCreateSchema,
+        initialValues,
+        defaultValues: DEFAULT_OPTION_VALUES,
+        onSubmit
     });
 
-    useFormImperativeHandle(ref, form);
+    const isSubmitting = form.formState.isSubmitting;
 
     return (
-        <div>
-            <Form {...form}> {/* Pass the form instance from useControlledForm */}
-                <form className="space-y-4" onSubmit={handleSubmit}> {/* Use the handleSubmit from useControlledForm */}
-                    {/* Option Name Field */}
+        <Form {...form}>
+            <form
+                id={formId}
+                className="space-y-8"
+                onSubmit={form.submit}
+                aria-label="Configuration de la filière d'étude"
+                noValidate
+            >
+                {/* Section : Identification de l'Option */}
+                <div className="space-y-6">
                     <FormField
                         control={form.control}
                         name="optionName"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Nom complet</FormLabel>
+                                <FormLabel className="flex items-center gap-2 font-bold text-base">
+                                    Nom de l'option / filière
+                                    <span className="text-destructive" aria-hidden="true">*</span>
+                                </FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Input
+                                        {...field}
+                                        disabled={isSubmitting}
+                                        placeholder="Ex: Pédagogie Générale ou Commerciale & Gestion"
+                                        className="h-11 focus-visible:ring-primary/50"
+                                        aria-required="true"
+                                    />
                                 </FormControl>
-                                <FormDescription>
-                                    Saisissez le nom complet de l’option (ex. : Électricité Générale, Humanités Scientifiques).
+                                <FormDescription className="text-xs">
+                                    Le libellé complet tel qu'il apparaîtra sur les titres scolaires.
                                 </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
 
-                    <div className="grid grid-cols-2 gap-2">
-
-                        {/* Option Short Name Field */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {/* Nom abrégé / Code */}
                         <FormField
                             control={form.control}
                             name="optionShortName"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Nom abrégé</FormLabel>
+                                    <FormLabel className="flex items-center gap-2 font-semibold">
+                                        Code (Abréviation)
+                                    </FormLabel>
                                     <FormControl>
-                                        <Input {...field} />
+                                        <Input
+                                            {...field}
+                                            disabled={isSubmitting}
+                                            placeholder="Ex: HSC"
+                                            maxLength={10}
+                                            className="uppercase font-mono"
+                                        />
                                     </FormControl>
-                                    <FormDescription>
-                                        Saisissez le nom abrégé de l’option (ex. : ELEC, HSC, TCC).
+                                    <FormDescription className="text-[11px] leading-tight">
+                                        Utilisé pour les tableaux compacts (Max 10 car.).
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
 
-                        {/* Section Select Field */}
+                        {/* Section / Niveau */}
                         <FormField
                             control={form.control}
                             name="section"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Section</FormLabel>
+                                    <FormLabel className="flex items-center gap-2 font-semibold">
+                                        Section
+                                    </FormLabel>
                                     <FormControl>
                                         <SectionSelect
-                                            options={SECTION_SELECT_OPTIONS}
+                                            options={SECTION_OPTIONS}
                                             value={field.value}
                                             onChangeValue={field.onChange}
+                                            disabled={isSubmitting}
                                         />
                                     </FormControl>
-                                    <FormDescription>
-                                        Précisez la section ici.
+                                    <FormDescription className="text-[11px] leading-tight">
+                                        Niveau d'enseignement attaché.
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
                     </div>
+                </div>
 
-                    {children} {/* Render any additional children passed to the form */}
-                </form>
-            </Form>
-        </div>
+                {/* Feedback d'erreur globale */}
+                {form.formState.errors.root && (
+                    <div role="alert" className="p-3 text-red-600 border rounded-md text-sm font-medium animate-in fade-in zoom-in duration-200">
+                        {form.formState.errors.root.message}
+                    </div>
+                )}
+            </form>
+        </Form>
     );
-});
+}
 
 OptionForm.displayName = "OptionForm";
