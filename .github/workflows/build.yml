@@ -17,6 +17,10 @@ on:
       - ".github/**"
       - "!.github/workflows/build.yml"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -49,5 +53,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release_${{ github.ref_name }}_${{ matrix.os }}
-          path: dist/
+          path: release/
           retention-days: 7
