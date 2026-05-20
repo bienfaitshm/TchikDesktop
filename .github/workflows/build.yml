@@ -2,7 +2,9 @@ name: Build
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - develop
     paths-ignore:
       - "**.md"
       - "**.spec.js"
@@ -30,6 +32,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
+          cache: "npm"
 
       - name: Install Dependencies
         run: npm install
@@ -42,6 +45,6 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release_on_${{ matrix.os }}
+          name: release_${{ github.ref_name }}_${{ matrix.os }}
           path: release/
-          retention-days: 90
+          retention-days: 7
