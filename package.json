@@ -6,6 +6,25 @@
   "author": "Bienfait Shomari",
   "homepage": "https://github.com/bienfaitshm/TchikDesktop",
   "license": "GPL-3.0-or-later",
+  "build": {
+    "productName": "Tchik",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "Tchik_Installer_Windows_${version}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "deb",
+        "AppImage"
+      ],
+      "artifactName": "Tchik_Installer_Linux_${version}.${ext}"
+    }
+  },
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
