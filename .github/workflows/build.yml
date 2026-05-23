@@ -15,6 +15,9 @@ on:
 permissions:
   contents: write
 
+env:
+  ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
+
 jobs:
   compile:
     name: Build & Publish Tchik (${{ matrix.os }})
