@@ -1,0 +1,38 @@
+{
+  "branches": [
+    "main",
+    {
+      "name": "develop",
+      "prerelease": "beta"
+    }
+  ],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/npm",
+      {
+        "npmPublish": false
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          {
+            "path": "release/**/*.exe",
+            "label": "Tchik Installer Windows (.exe)"
+          },
+          {
+            "path": "release/**/*.deb",
+            "label": "Tchik Installer Linux (.deb)"
+          },
+          {
+            "path": "release/**/*.AppImage",
+            "label": "Tchik Portable Linux (.AppImage)"
+          }
+        ]
+      }
+    ]
+  ]
+}
