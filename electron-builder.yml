@@ -32,7 +32,7 @@ win:
 
 nsis:
   oneClick: false
-  artifactName: ${name}-${version}-setup.${ext}
+  artifactName: ${name}_Installer_Windows_${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   displayLanguageSelector: true
@@ -49,7 +49,7 @@ mac:
   notarize: false
 
 dmg:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: ${name}_Installer_MacOs_${version}.${ext}
   icon: build/icon.icns
 
 linux:
@@ -61,7 +61,7 @@ linux:
   icon: build/icon.png
 
 appImage:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: ${name}_Installer_Linux_${version}.${ext}
 
 npmRebuild: false
 
