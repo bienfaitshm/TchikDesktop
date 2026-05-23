@@ -62,7 +62,7 @@ jobs:
 
       # Exécution de la compilation avec les flags natifs injectés
       - name: Build & Publish Electron App
-        run: npm run build:all --publish always
+        run: npm run build:all -- --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
