@@ -22,6 +22,10 @@
         "deb",
         "AppImage"
       ],
+      "author": {
+        "name": "Bienfait Shomari",
+        "email": "bienfaitshm@gmail.com"
+      },
       "artifactName": "Tchik_Installer_Linux_${version}.${ext}"
     }
   },
