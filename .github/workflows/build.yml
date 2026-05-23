@@ -1,4 +1,4 @@
-name: Continuous Compilation & Deployment (Build)
+name: Build & Publish Desktop Apps
 
 on:
   push:
