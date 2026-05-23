@@ -69,3 +69,4 @@ publish:
   provider: github
   owner: bienfaitshm
   repo: TchikDesktop
+  releaseType: release
