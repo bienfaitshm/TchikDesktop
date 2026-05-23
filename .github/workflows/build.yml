@@ -2,9 +2,10 @@ name: Build & Publish Desktop Apps
 
 on:
   push:
+    branches:
+      - main # Se déclenche sur les pushs vers la branche main
     tags:
-      - "v*" # Se déclenche uniquement sur les tags de version (ex: v1.0.0, v1.4.2-beta.1)
-      - main
+      - "v*" # Se déclenche sur les tags de version (ex: v1.0.0)
     paths-ignore:
       - "**.md"
       - ".idea/**"
@@ -47,8 +48,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libarchive-tools rpm
 
-      # Configuration dynamique des variables d'environnement natives d'electron-builder
+      # Attention : Correction ici pour Windows (le shell par défaut sur windows-latest est PowerShell, pas Bash)
       - name: Configure Electron Builder Release Flags
+        shell: bash
         run: |
           if [ "${{ github.ref_name }}" = "main" ]; then
             echo "EP_PRE_RELEASE=false" >> $GITHUB_ENV
