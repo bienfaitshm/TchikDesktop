@@ -11,11 +11,8 @@ import { type VitestUserConfig } from "vitest/config";
  * @see https://vitejs.dev/config/
  */
 
-
 export default defineConfig(
   (): UserConfig => ({
-
-
     // --- PLUGINS ---
     /**
      * Liste des plugins utilisés par Vite.
@@ -95,6 +92,6 @@ export default defineConfig(
           singleThread: true,
         },
       },
-    }
-  })
+    },
+  }),
 );
