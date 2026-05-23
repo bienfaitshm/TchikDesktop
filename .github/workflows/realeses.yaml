@@ -1,10 +1,10 @@
-name: Continuous Delivery (Release)
+name: Automated Release
 
 on:
   push:
     branches:
       - main
-      - master
+      - develop
 
 permissions:
   contents: write
