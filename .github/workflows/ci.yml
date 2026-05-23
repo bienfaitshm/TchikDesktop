@@ -29,27 +29,38 @@ jobs:
               - 'yarn.lock'
               - 'pnpm-lock.yaml'
 
-      - name: Enforce Contribution Policy
-        if: steps.filter_restricted.outputs.change == 'true'
+      - name: Comment About Changes We Can't Accept
+        if: ${{ steps.filter_restricted.outputs.change == 'true' }}
         uses: actions/github-script@v7
         with:
           script: |
-            const badFiles = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'].join('\n- ');
-            const reviewMessage = `👋 Hello! It looks like your contribution contains modifications to restricted ecosystem lockfiles:\n- ${badFiles}\n\nTo proceed, please revert these changes locally using \`git checkout origin/main <file_name>\` and update your Pull Request. Thank you! :octocat:`;
+            // 1. Vérification de l'auteur de la Pull Request
+            const prActor = context.payload.pull_request.user.login;
 
-            let workflowFailMessage = "Forbidden file modifications detected in the lockfiles.";
+            // Si c'est le bot officiel de GitHub Actions qui a fait la modification (pour le bump de version), on l'autorise !
+            if (prActor === 'github-actions[bot]') {
+              console.log("Modification détectée par github-actions[bot]. Autorisation accordée automatiquement.");
+              return;
+            }
+
+            // 2. Comportement standard pour les vrais utilisateurs / contributeurs externes
+            let workflowFailMessage = "It looks like you've modified some files that we can't accept as contributions."
             try {
+              const badFilesArr = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
+              const badFiles = badFilesArr.join('\n- ')
+              const reviewMessage = `👋 Hey there. It looks like you've modified some system lockfiles that we can't accept as contributions:\n- ${badFiles}\n\nYou'll need to revert all of the files you changed in that list using \`git checkout origin/main <file_name>\`. Once reverted, the review process will continue. :octocat:`
+              
               const createdComment = await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.number,
                 body: reviewMessage,
-              });
-              workflowFailMessage += ` Please refer to ${createdComment.data.html_url} for context.`;
+              })
+              workflowFailMessage = `${workflowFailMessage} Please see ${createdComment.data.html_url} for details.`
             } catch(err) {
-              console.error("Failed to append dynamic PR comment.", err);
+              console.log("Error creating comment.", err)
             }
-            core.setFailed(workflowFailMessage);
+            core.setFailed(workflowFailMessage)
 
       - name: Filter Markdown Assets
         if: always()
