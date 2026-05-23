@@ -1,47 +1,65 @@
-name: Build
+name: Continuous Compilation & Deployment (Build)
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - develop
     paths-ignore:
       - "**.md"
-      - "**.spec.js"
-      - ".idea"
-      - ".vscode"
-      - ".dockerignore"
-      - "Dockerfile"
+      - ".idea/**"
+      - ".vscode/**"
       - ".gitignore"
       - ".github/**"
       - "!.github/workflows/build.yml"
 
-jobs:
-  build:
-    runs-on: ${{ matrix.os }}
+permissions:
+  contents: write
 
+jobs:
+  compile:
+    name: Build & Publish Tchik (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout Source Tree
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Initialize Node.js Runtime
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: "20"
+          cache: "npm"
 
-      - name: Install Dependencies
-        run: npm install
+      - name: Install Project Dependencies
+        run: npm install --legacy-peer-deps
 
-      - name: Build Release Files
-        run: npm run build
+      - name: Install Linux Build Dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools rpm
+
+      # Configuration dynamique des variables d'environnement natives d'electron-builder
+      - name: Configure Electron Builder Release Flags
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "EP_PRE_RELEASE=false" >> $GITHUB_ENV
+            echo "EP_DRAFT=false" >> $GITHUB_ENV
+          else
+            echo "EP_PRE_RELEASE=true" >> $GITHUB_ENV
+            echo "EP_DRAFT=false" >> $GITHUB_ENV
+          fi
+
+      # Exécution de la compilation avec les flags natifs injectés
+      - name: Build & Publish Electron App
+        run: npm run build:all -- --publish always
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: release_on_${{ matrix.os }}
-          path: release/
-          retention-days: 5
+          EP_PRE_RELEASE: ${{ env.EP_PRE_RELEASE }}
+          EP_DRAFT: ${{ env.EP_DRAFT }}

@@ -28,6 +28,7 @@ asarUnpack:
 
 win:
   executableName: Tchik
+  icon: build/icon.ico
 
 nsis:
   oneClick: false
@@ -49,14 +50,15 @@ mac:
 
 dmg:
   artifactName: ${name}-${version}.${ext}
+  icon: build/icon.icns
 
 linux:
   target:
     - AppImage
-    - snap
     - deb
   maintainer: Bienfait Shomari
-  category: Utility
+  category: Education
+  icon: build/icon.png
 
 appImage:
   artifactName: ${name}-${version}.${ext}
@@ -67,4 +69,3 @@ publish:
   provider: github
   owner: bienfaitshm
   repo: TchikDesktop
-  releaseType: release
