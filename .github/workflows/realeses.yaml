@@ -1,4 +1,4 @@
-name: Release
+name: Continuous Delivery (Release)
 
 on:
   push:
@@ -13,37 +13,45 @@ permissions:
 
 jobs:
   release:
-    name: Release
+    name: Automated Semantic Release
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false # Évite les conflits de droits lors du push
 
-      - name: Set up Node.js
+      - name: Set up Node.js Environment
         uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
+          cache: "npm"
 
-      - name: Install dependencies
+      - name: Install Project Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Semantic Release
+      - name: Execute Semantic Release
         id: semantic
         uses: cycjimmy/semantic-release-action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update package.json version
+      - name: Sync and Commit Package Version
         if: steps.semantic.outputs.new_release_published == 'true'
         run: |
-          VERSION="${{ steps.semantic.outputs.new_release_version }}"
-          if [ -n "$VERSION" ]; then
-            npm version --no-git-tag-version "$VERSION"
+          NEW_VERSION="${{ steps.semantic.outputs.new_release_version }}"
+          if [ -n "$NEW_VERSION" ]; then
+            # Met à jour la version sans recréer un tag Git local
+            npm version --no-git-tag-version "$NEW_VERSION"
+            
+            # Configuration de l'identité du bot GitHub
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
+            
+            # Validation et déploiement des modifications sur la branche courante
             git add package.json package-lock.json || true
-            git commit -m "chore: update package.json version to $VERSION [skip ci]"
-            git push
+            git commit -m "chore: bump package.json version to $NEW_VERSION [skip ci]"
+            git push origin HEAD:${{ github.ref_name }}
           fi

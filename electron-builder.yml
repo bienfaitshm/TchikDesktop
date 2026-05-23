@@ -56,7 +56,7 @@ linux:
     - snap
     - deb
   maintainer: Bienfait Shomari
-  category: Utility
+  category: Education
 
 appImage:
   artifactName: ${name}-${version}.${ext}
@@ -67,4 +67,5 @@ publish:
   provider: github
   owner: bienfaitshm
   repo: TchikDesktop
-  releaseType: release
+  # On utilise une variable d'environnement définie dans le workflow (release ou prerelease)
+  releaseType: ${RELEASE_TYPE}

@@ -1,4 +1,4 @@
-name: Build
+name: Continuous Compilation & Deployment (Build)
 
 on:
   push:
@@ -7,51 +7,57 @@ on:
       - develop
     paths-ignore:
       - "**.md"
-      - "**.spec.js"
-      - "**.spec.ts"
-      - ".idea"
-      - ".vscode"
-      - ".dockerignore"
-      - "Dockerfile"
+      - ".idea/**"
+      - ".vscode/**"
       - ".gitignore"
       - ".github/**"
       - "!.github/workflows/build.yml"
 
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.ref }}
-#   cancel-in-progress: false
+permissions:
+  contents: write
 
 jobs:
-  build:
+  compile:
+    name: Build & Publish Tchik (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest] # Tu pourras ajouter windows-latest ici plus tard
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout Source Tree
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Initialize Node.js Runtime
+        uses: actions/setup-node@v4
         with:
-          node-version: 20 || >=24
+          node-version: "20"
           cache: "npm"
 
-      - name: Install Dependencies
+      - name: Install Project Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Build Release Files
-        run: npm run build:all
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: List Output Files
-        run: ls -R
+      # Configuration Linux pour la génération des paquets (.deb, rpm, etc.)
+      - name: Install Linux Build Dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools rpm
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: release_${{ github.ref_name }}_${{ matrix.os }}
-          path: release/
-          retention-days: 7
+      # Étape clé : Détermination dynamique du type de release
+      - name: Set Release Type Environment
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "RELEASE_TYPE=release" >> $GITHUB_ENV
+          else
+            echo "RELEASE_TYPE=prerelease" >> $GITHUB_ENV
+          fi
+
+      # Compilation et publication des fichiers d'installation natifs (Tchik-1.0.0-setup.exe, .deb, etc.)
+      - name: Build & Publish Electron App
+        run: npm run build:all -- --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TYPE: ${{ env.RELEASE_TYPE }}
