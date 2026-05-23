@@ -1,4 +1,4 @@
-name: Continuous Compilation & Deployment (Build)
+name: Build & Publish Desktop Apps
 
 on:
   push:
@@ -14,6 +14,9 @@ on:
 
 permissions:
   contents: write
+
+env:
+  ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
 
 jobs:
   compile:
