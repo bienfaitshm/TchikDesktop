@@ -67,5 +67,3 @@ publish:
   provider: github
   owner: bienfaitshm
   repo: TchikDesktop
-  # On utilise une variable d'environnement définie dans le workflow (release ou prerelease)
-  releaseType: ${RELEASE_TYPE}

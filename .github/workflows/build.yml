@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest] # Tu pourras ajouter windows-latest ici plus tard
+        os: [ubuntu-latest]
 
     steps:
       - name: Checkout Source Tree
@@ -38,26 +38,28 @@ jobs:
       - name: Install Project Dependencies
         run: npm install --legacy-peer-deps
 
-      # Configuration Linux pour la génération des paquets (.deb, rpm, etc.)
       - name: Install Linux Build Dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libarchive-tools rpm
 
-      # Étape clé : Détermination dynamique du type de release
-      - name: Set Release Type Environment
+      # Configuration dynamique des variables d'environnement natives d'electron-builder
+      - name: Configure Electron Builder Release Flags
         run: |
           if [ "${{ github.ref_name }}" = "main" ]; then
-            echo "RELEASE_TYPE=release" >> $GITHUB_ENV
+            echo "EP_PRE_RELEASE=false" >> $GITHUB_ENV
+            echo "EP_DRAFT=false" >> $GITHUB_ENV
           else
-            echo "RELEASE_TYPE=prerelease" >> $GITHUB_ENV
+            echo "EP_PRE_RELEASE=true" >> $GITHUB_ENV
+            echo "EP_DRAFT=false" >> $GITHUB_ENV
           fi
 
-      # Compilation et publication des fichiers d'installation natifs (Tchik-1.0.0-setup.exe, .deb, etc.)
+      # Exécution de la compilation avec les flags natifs injectés
       - name: Build & Publish Electron App
         run: npm run build:all -- --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TYPE: ${{ env.RELEASE_TYPE }}
+          EP_PRE_RELEASE: ${{ env.EP_PRE_RELEASE }}
+          EP_DRAFT: ${{ env.EP_DRAFT }}
