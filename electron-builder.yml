@@ -55,11 +55,10 @@ dmg:
 linux:
   target:
     - AppImage
-    - snap
     - deb
   maintainer: Bienfait Shomari
   category: Education
-  icon: build
+  icon: build/icon.png
 
 appImage:
   artifactName: ${name}-${version}.${ext}
