@@ -28,6 +28,7 @@ asarUnpack:
 
 win:
   executableName: Tchik
+  icon: build/icon.ico
 
 nsis:
   oneClick: false
@@ -49,6 +50,7 @@ mac:
 
 dmg:
   artifactName: ${name}-${version}.${ext}
+  icon: build/icon.icns
 
 linux:
   target:
@@ -57,6 +59,7 @@ linux:
     - deb
   maintainer: Bienfait Shomari
   category: Education
+  icon: build
 
 appImage:
   artifactName: ${name}-${version}.${ext}
