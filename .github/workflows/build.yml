@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*" # Se déclenche uniquement sur les tags de version (ex: v1.0.0, v1.4.2-beta.1)
+      - main
     paths-ignore:
       - "**.md"
       - ".idea/**"
