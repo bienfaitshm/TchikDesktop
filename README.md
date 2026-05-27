@@ -1,7 +1,15 @@
 # Tchik : La gestion scolaire libérée, intelligente et autonome
 
+<img align="right" width="110" src="https://raw.githubusercontent.com/bienfaitshm/TchikDesktop/refs/heads/main/resources/icon.png">
+
 **Tchik** est la solution open source qui transforme la gestion administrative des établissements scolaires. Dites adieu aux fichiers Excel complexes, aux erreurs de saisie et à la dépendance aux logiciels propriétaires coûteux. Avec Tchik, reprenez le contrôle de vos données tout en automatisant vos tâches répétitives en un clic.
 
+[![LICENSE](https://img.shields.io/github/license/bienfaitshm/TchikDesktop)](LICENSE)
+[![Release](https://img.shields.io/github/release/bienfaitshm/TchikDesktop.svg)](https://github.com/bienfaitshm/TchikDesktop/releases)
+[![Download](https://img.shields.io/github/downloads/bienfaitshm/TchikDesktop/total)](https://github.com/bienfaitshm/TchikDesktop/releases)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fqishibo%2FAnotherRedisDesktopManager.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fqishibo%2FAnotherRedisDesktopManager?ref=badge_shield)
+<a href="https://www.producthunt.com/posts/another-redis-desktop-manager?utm_source=badge-featured"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=340552&theme=dark" height="20" width="93" /></a>
+[![STARS](https://img.shields.io/github/stars/bienfaitshm/TchikDesktop)](https://github.com/bienfaitshm/TchikDesktop/)
 ---
 
 ## Pourquoi choisir Tchik pour votre établissement ?
