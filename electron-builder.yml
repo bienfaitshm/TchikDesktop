@@ -28,6 +28,8 @@ extraFiles:
   - drizzle/**
 
 asarUnpack:
+  - node_modules/sqlite3
+  - out/main/chunks/*.node
   - resources/**
 
 win:

@@ -1,5 +1,4 @@
-import icon from "../../resources/icon.png?asset";
-import { app, shell, BrowserWindow } from "electron";
+import { app, shell, BrowserWindow, nativeImage } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 
@@ -10,11 +9,15 @@ import { apiGateway, ipcServer } from "@/main/apps";
 import { registerContextMenuListener } from "@/main/context-menus";
 import { setupDevelopmentEnvironment } from "@/main/extension.dev";
 import { updateInit } from "@/main/update";
+import { getAppIconPath } from "@/main/utils";
 
 const mainLogger = getLogger("MainProcess");
 
 const createMainWindow = async (): Promise<BrowserWindow> => {
   mainLogger.info("Création de la fenêtre principale...");
+  const iconPath = getAppIconPath();
+
+  const appIcon = nativeImage.createFromPath(iconPath);
 
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -27,7 +30,7 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
     backgroundColor: "#ffffff",
 
     title: "Tchik",
-    icon: icon,
+    icon: appIcon,
     autoHideMenuBar: true,
     titleBarStyle: "default",
     webPreferences: {

@@ -5,7 +5,8 @@ on:
     branches:
       - main # Se déclenche sur les pushs vers la branche main
     tags:
-      - "v*" # Se déclenche sur les tags de version (ex: v1.0.0)
+      - v*.*.*
+
     paths-ignore:
       - "**.md"
       - ".idea/**"
