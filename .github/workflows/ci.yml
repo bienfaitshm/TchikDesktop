@@ -17,12 +17,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
-          cache: "npm"
+          cache: "yarn"
 
       - name: Install Dependencies
-        run: npm ci --legacy-peer-deps
+        run: yarn install --frozen-lockfile
 
-      # Tu peux ajouter tes tests ici : run: npm run test ou npm run lint
+      - name: Run Linters & Tests
+        # Exemple de commandes standards à décommenter/adapter :
+        # run: yarn lint && yarn test
+        run: echo "Exécutez vos scripts de tests ici"
 
   check-lockfiles:
     runs-on: ubuntu-latest
@@ -40,6 +43,8 @@ jobs:
         run: |
           # Liste les fichiers modifiés dans la PR
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+
+          # Alerte si yarn.lock est modifié manuellement OU si des lockfiles parasites (npm/pnpm) sont injectés
           if echo "$CHANGED_FILES" | grep -E 'package-lock.json|yarn.lock|pnpm-lock.yaml'; then
             echo "lockfile_changed=true" >> $GITHUB_OUTPUT
           fi
@@ -50,104 +55,18 @@ jobs:
         with:
           script: |
             const prActor = context.payload.pull_request.user.login;
+
+            // On autorise uniquement le bot (ex: pour le bump automatique de version lors d'une release)
             if (prActor === 'github-actions[bot]') {
               console.log("Modification par le bot autorisée.");
               return;
             }
 
-            let msg = "⚠️ Les fichiers de lock (*-lock.json) ne doivent pas être modifiés manuellement dans les PRs.";
+            let msg = "⚠️ **Alerte Intégrité** : Le fichier `yarn.lock` ne doit pas être modifié manuellement dans les Pull Requests. De plus, assurez-vous de ne pas avoir introduit de lockfile parasite (package-lock.json ou pnpm-lock.yaml).";
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.number,
               body: msg
             });
-            core.setFailed("Lockfile modifié par un utilisateur.");
-
-# name: Continuous Integration
-# on:
-#   push:
-#     branches: [main, develop]
-#   pull_request:
-#     branches: [main, develop]
-
-# permissions:
-#   pull-requests: write
-#   contents: read
-
-# jobs:
-#   triage:
-#     name: Verify Integrity and Linting
-#     runs-on: ubuntu-latest
-#     outputs:
-#       markdown_change: ${{ steps.filter_markdown.outputs.change }}
-#       markdown_files: ${{ steps.filter_markdown.outputs.change_files }}
-
-#     # steps:
-#     #   - name: Scan Restricted File Changes
-#     #     uses: dorny/paths-filter@v3
-#     #     id: filter_restricted
-#     #     with:
-#     #       list-files: json
-#     #       filters: |
-#     #         change:
-#     #           # - 'package-lock.json'
-#     #           # - 'yarn.lock'
-#     #           # - 'pnpm-lock.yaml'
-
-#       #   - name: Comment About Changes We Can't Accept
-#       #     if: ${{ steps.filter_restricted.outputs.change == 'true' }}
-#       #     uses: actions/github-script@v7
-#       #     with:
-#       #       script: |
-#       #         // 1. Vérification de l'auteur de la Pull Request
-#       #         const prActor = context.payload.pull_request.user.login;
-
-#       #         // Si c'est le bot officiel de GitHub Actions qui a fait la modification (pour le bump de version), on l'autorise !
-#       #         if (prActor === 'github-actions[bot]') {
-#       #           console.log("Modification détectée par github-actions[bot]. Autorisation accordée automatiquement.");
-#       #           return;
-#       #         }
-
-#       #         // 2. Comportement standard pour les vrais utilisateurs / contributeurs externes
-#       #         let workflowFailMessage = "It looks like you've modified some files that we can't accept as contributions."
-#       #         try {
-#       #           const badFilesArr = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
-#       #           const badFiles = badFilesArr.join('\n- ')
-#       #           const reviewMessage = `👋 Hey there. It looks like you've modified some system lockfiles that we can't accept as contributions:\n- ${badFiles}\n\nYou'll need to revert all of the files you changed in that list using \`git checkout origin/main <file_name>\`. Once reverted, the review process will continue. :octocat:`
-
-#       #           const createdComment = await github.rest.issues.createComment({
-#       #             owner: context.repo.owner,
-#       #             repo: context.repo.repo,
-#       #             issue_number: context.payload.number,
-#       #             body: reviewMessage,
-#       #           })
-#       #           workflowFailMessage = `${workflowFailMessage} Please see ${createdComment.data.html_url} for details.`
-#       #         } catch(err) {
-#       #           console.log("Error creating comment.", err)
-#       #         }
-#       #         core.setFailed(workflowFailMessage)
-
-#   #     - name: Filter Markdown Assets
-#   #       if: always()
-#   #       uses: dorny/paths-filter@v3
-#   #       id: filter_markdown
-#   #       with:
-#   #         list-files: shell
-#   #         filters: |
-#   #           change:
-#   #             - added|modified: '*.md'
-
-#   # lint-markdown:
-#   #   name: Quality Assurance (Markdown)
-#   #   runs-on: ubuntu-latest
-#   #   needs: triage
-#   #   if: always() && needs.triage.outputs.markdown_change == 'true'
-#   #   steps:
-#   #     - name: Checkout Target Payload
-#   #       uses: actions/checkout@v4
-#   #       with:
-#   #         ref: ${{ github.event.pull_request.head.sha }}
-
-#   #     - name: Lint Documentation Standard
-#   #       run: npx markdownlint-cli ${{ needs.triage.outputs.markdown_files }} --ignore node_modules
+            core.setFailed("Intégrité du lockfile compromise par un utilisateur.");

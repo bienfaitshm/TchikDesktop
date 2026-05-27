@@ -5,7 +5,8 @@ on:
     branches:
       - main # Se déclenche sur les pushs vers la branche main
     tags:
-      - "v*" # Se déclenche sur les tags de version (ex: v1.0.0)
+      - v*.*.*
+
     paths-ignore:
       - "**.md"
       - ".idea/**"
@@ -37,10 +38,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
-          cache: "npm"
+          cache: "yarn"
 
       - name: Install Project Dependencies
-        run: npm install --legacy-peer-deps
+        # Yarn gère nativement mieux la résolution d'arbres, l'équivalent de --legacy-peer-deps n'est pas requis
+        run: yarn install --frozen-lockfile
 
       - name: Install Linux Build Dependencies
         if: matrix.os == 'ubuntu-latest'
@@ -48,7 +50,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libarchive-tools rpm
 
-      # Attention : Correction ici pour Windows (le shell par défaut sur windows-latest est PowerShell, pas Bash)
       - name: Configure Electron Builder Release Flags
         shell: bash
         run: |
@@ -60,9 +61,8 @@ jobs:
             echo "EP_DRAFT=false" >> $GITHUB_ENV
           fi
 
-      # Exécution de la compilation avec les flags natifs injectés
       - name: Build & Publish Electron App
-        run: npm run build:all -- --publish always
+        run: yarn build:all --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

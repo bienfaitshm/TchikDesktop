@@ -1,5 +1,5 @@
 import { resolve } from "path";
-import { defineConfig, externalizeDepsPlugin } from "electron-vite";
+import { defineConfig, swcPlugin } from "electron-vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
@@ -11,19 +11,33 @@ export default defineConfig({
       },
     },
     plugins: [
-      externalizeDepsPlugin({
-        exclude: ["sqlite3", "pg-hstore"],
-      }),
+      swcPlugin(), // Conserve SWC pour compiler le TypeScript rapidement
     ],
     build: {
+      // 1. Remplacement moderne de externalizeDepsPlugin() pour le Main
+      externalizeDeps: true,
+
       rollupOptions: {
-        external: ["pg", "pg-hstore", "mysql2", "tedious", "oracledb"],
+        // 2. On déclare TOUS les modules de base de données comme externes.
+        // Electron ira les chercher directement dans node_modules sans essayer de les compiler.
+        external: [
+          "electron",
+          "sqlite3",
+          "pg",
+          "pg-hstore",
+          "mysql2",
+          "tedious",
+          "oracledb",
+        ],
       },
     },
   },
 
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    // 3. Remplacement moderne de externalizeDepsPlugin() pour le Preload
+    build: {
+      externalizeDeps: true,
+    },
   },
 
   renderer: {
