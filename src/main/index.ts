@@ -1,8 +1,7 @@
 import icon from "../../resources/icon.png?asset";
-import { app, shell, BrowserWindow, dialog } from "electron";
+import { app, shell, BrowserWindow } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import { autoUpdater } from "electron-updater";
 
 import { dbManager } from "@/packages/@core/data-access/db";
 import { getLogger } from "@/packages/logger";
@@ -10,36 +9,47 @@ import { getLogger } from "@/packages/logger";
 import { apiGateway, ipcServer } from "@/main/apps";
 import { registerContextMenuListener } from "@/main/context-menus";
 import { setupDevelopmentEnvironment } from "@/main/extension.dev";
+import { updateInit } from "@/main/update";
 
 const mainLogger = getLogger("MainProcess");
-const updaterLogger = getLogger("Updater");
 
-autoUpdater.logger = updaterLogger;
-
-const createMainWindow = async () => {
+const createMainWindow = async (): Promise<BrowserWindow> => {
   mainLogger.info("Création de la fenêtre principale...");
+
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
+    minWidth: 670,
+    minHeight: 600,
+    center: true,
+
     show: false,
-    icon,
+    backgroundColor: "#ffffff",
+
+    title: "Tchik",
+    icon: icon,
     autoHideMenuBar: true,
-    ...(process.platform === "linux" ? { icon } : {}),
+    titleBarStyle: "default",
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
-      sandbox: false,
+
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+
       spellcheck: true,
+      backgroundThrottling: true,
+      devTools: is.dev,
     },
   });
+
   mainLogger.info("Fenêtre principale créée avec les options par défaut.");
 
   await dbManager.initialize();
-  // Démarrage du serveur API interne
   mainLogger.info("Démarrage du serveur API Electron...");
   apiGateway.registerEndpoints();
   ipcServer.listen();
 
-  // Activaction des menus context de correction orthographique
   registerContextMenuListener(mainWindow);
 
   mainWindow.once("ready-to-show", () => {
@@ -53,7 +63,6 @@ const createMainWindow = async () => {
     return { action: "deny" };
   });
 
-  // Chargement de l'URL ou du fichier
   if (is.dev && process.env.ELECTRON_RENDERER_URL) {
     mainLogger.info(
       `Chargement de l'URL de développement: ${process.env.ELECTRON_RENDERER_URL}`,
@@ -64,6 +73,8 @@ const createMainWindow = async () => {
     mainLogger.info(`Chargement du fichier de production: ${filePath}`);
     mainWindow.loadFile(filePath);
   }
+
+  return mainWindow;
 };
 
 app.whenReady().then(async () => {
@@ -82,14 +93,17 @@ app.whenReady().then(async () => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  createMainWindow();
+  const mainWindow = await createMainWindow();
 
-  app.on("activate", () => {
+  updateInit(mainWindow);
+
+  app.on("activate", async () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       mainLogger.info(
         'Événement "activate": Recréation de la fenêtre principale.',
       );
-      createMainWindow();
+      const window = await createMainWindow();
+      updateInit(window);
     }
   });
 });
@@ -102,61 +116,4 @@ app.on("window-all-closed", async () => {
     await dbManager.performBackup();
     app.quit();
   }
-});
-
-// -----------------------------------------------------
-// Événements de l'auto-updater (Utilise 'updaterLogger')
-// -----------------------------------------------------
-
-autoUpdater.on("checking-for-update", () => {
-  updaterLogger.info("Vérification de mise à jour...");
-});
-
-autoUpdater.on("update-available", (info) => {
-  updaterLogger.info("Mise à jour disponible.", { version: info.version });
-  dialog.showMessageBox({
-    type: "info",
-    title: "Mise à jour disponible",
-    message: "Une nouvelle version est disponible. Téléchargement en cours...",
-    buttons: ["OK"],
-  });
-});
-
-autoUpdater.on("update-not-available", () => {
-  updaterLogger.info("Pas de mise à jour disponible.");
-});
-
-autoUpdater.on("error", (err) => {
-  updaterLogger.error("Erreur dans l'auto-updater.", err);
-});
-
-autoUpdater.on("download-progress", (progressObj) => {
-  updaterLogger.info("Progression du téléchargement.", {
-    speed: progressObj.bytesPerSecond,
-    percent: progressObj.percent.toFixed(2),
-    transferred: progressObj.transferred,
-    total: progressObj.total,
-  });
-});
-
-autoUpdater.on("update-downloaded", () => {
-  updaterLogger.info("Mise à jour téléchargée. Prêt pour l'installation.");
-  dialog
-    .showMessageBox({
-      type: "info",
-      title: "Mise à jour prête à être installée",
-      message:
-        "La nouvelle version a été téléchargée. Redémarrez l'application pour l'installer.",
-      buttons: ["Redémarrer", "Plus tard"],
-    })
-    .then((result) => {
-      if (result.response === 0) {
-        updaterLogger.info(
-          "Commande de redémarrage et d'installation de la mise à jour.",
-        );
-        autoUpdater.quitAndInstall();
-      } else {
-        updaterLogger.info("Installation différée par l'utilisateur.");
-      }
-    });
 });
