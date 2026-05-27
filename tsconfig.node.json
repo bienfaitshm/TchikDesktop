@@ -5,18 +5,16 @@
     "src/main/*",
     "src/main/**/*",
     "src/preload/*",
-    "src/commons/*",
-    "src/commons/**/*",
     "src/packages/*",
     "src/packages/**/*"
   ],
   "compilerOptions": {
     "composite": true,
+    "jsx": "react-jsx",
     "types": ["electron-vite/node"],
     "baseUrl": "./",
     "paths": {
       "@/main/*": ["./src/main/*"],
-      "@/commons/*": ["./src/commons/*"],
       "@/packages/*": ["./src/packages/*"]
     }
   }

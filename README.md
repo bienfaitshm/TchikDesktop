@@ -1,8 +1,29 @@
-# Tchik : La gestion scolaire libérée, intelligente et autonome
+# Tchik
+
+<img align="right" width="110" src="https://raw.githubusercontent.com/bienfaitshm/TchikDesktop/refs/heads/main/resources/icon.png">
 
 **Tchik** est la solution open source qui transforme la gestion administrative des établissements scolaires. Dites adieu aux fichiers Excel complexes, aux erreurs de saisie et à la dépendance aux logiciels propriétaires coûteux. Avec Tchik, reprenez le contrôle de vos données tout en automatisant vos tâches répétitives en un clic.
 
+[![LICENSE](https://img.shields.io/github/license/bienfaitshm/TchikDesktop)](LICENSE)
+[![Release](https://img.shields.io/github/release/bienfaitshm/TchikDesktop.svg)](https://github.com/bienfaitshm/TchikDesktop/releases)
+[![Download](https://img.shields.io/github/downloads/bienfaitshm/TchikDesktop/total)](https://github.com/bienfaitshm/TchikDesktop/releases)
+[![STARS](https://img.shields.io/github/stars/bienfaitshm/TchikDesktop)](https://github.com/bienfaitshm/TchikDesktop/)
+
+## Téléchargement
+
+Téléchargez la dernière version stable de **Tchik** pour votre système d'exploitation :
+
+| Plateforme | Format | Lien de téléchargement direct |
+| :--- | :--- | :--- |
+| **Windows** | Installeur (`.exe`) | [Télécharger pour Windows (64-bit)](https://github.com/bienfaitshm/TchikDesktop/releases/latest/download/TchikDesktop_Installer_Windows_setup.exe) |
+| **macOS** | Image Disque (`.dmg`) | [Télécharger pour macOS (Intel/Apple Silicon)](https://github.com/bienfaitshm/TchikDesktop/releases/latest/download/TchikDesktop_Installer_MacOs.dmg) |
+| **Linux** | Paquet Debian (`.deb`) | [Télécharger pour Ubuntu / Debian](https://github.com/bienfaitshm/TchikDesktop/releases/latest/download/TchikDesktop_Installer_Linux.deb) |
+| **Linux** | Standalone (`.AppImage`) | [Télécharger au format AppImage](https://github.com/bienfaitshm/TchikDesktop/releases/latest/download/TchikDesktop_Installer_Linux.AppImage) |
+
 ---
+
+### Autres versions
+Vous pouvez également parcourir l'historique complet des versions, consulter les notes de mise à jour (*changelogs*) ou télécharger des architectures spécifiques directement depuis la page des [GitHub Releases](https://github.com/bienfaitshm/TchikDesktop/releases).
 
 ## Pourquoi choisir Tchik pour votre établissement ?
 
@@ -11,7 +32,6 @@
 * **Simplicité sans expertise :** Conçu pour les gestionnaires, pas pour les ingénieurs. Obtenez des documents professionnels instantanément, sans formule complexe ni formation technique.
 * **Évolutivité sur-mesure :** Une architecture ouverte qui s'intègre à votre écosystème existant et permet à vos équipes IT d'ajouter des fonctionnalités spécifiques à vos besoins.
 
----
 
 ## Les piliers de votre productivité
 

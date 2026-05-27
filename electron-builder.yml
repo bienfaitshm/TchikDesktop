@@ -1,12 +1,15 @@
 productName: Tchik
 appId: Tchik.electron.app
 
+# Variables d'environnement pour la CI/CD (GitHub Actions)
+# Windows: CSC_LINK et CSC_KEY_PASSWORD
+# Mac: APPLE_ID et APPLE_ID_PASSWORD
+
 directories:
   buildResources: build
   output: release/${version}
 
 files:
-  # Exclure les fichiers/dossiers inutiles du package
   - '!**/.vscode/**'
   - '!src/**'
   - '!electron.vite.config.*'
@@ -22,6 +25,7 @@ files:
 
 extraFiles:
   - documents_templates/**
+  - drizzle/**
 
 asarUnpack:
   - resources/**
@@ -29,24 +33,38 @@ asarUnpack:
 win:
   executableName: Tchik
   icon: build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - arm64
 
 nsis:
   oneClick: false
+  perMachine: true
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
   artifactName: ${name}_Installer_Windows_${version}-setup.${ext}
   shortcutName: ${productName}
-  uninstallDisplayName: ${productName}
+  uninstallDisplayName: ${productName}_uninstaller
   displayLanguageSelector: true
-  allowToChangeInstallationDirectory: true
   createDesktopShortcut: always
 
 mac:
+  entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     NSCameraUsageDescription: Application requests access to the device's camera.
     NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
-  notarize: false
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  notarize:
+    provider: appleId
 
 dmg:
   artifactName: ${name}_Installer_MacOs_${version}.${ext}
@@ -59,6 +77,7 @@ linux:
   maintainer: Bienfait Shomari
   category: Education
   icon: build/icon.png
+  artifactName: ${name}_Installer_Linux_${version}.${ext}
 
 appImage:
   artifactName: ${name}_Installer_Linux_${version}.${ext}
@@ -70,4 +89,4 @@ publish:
   owner: bienfaitshm
   repo: TchikDesktop
   releaseType: release
-  
+  updaterCacheDirName: tchik-updater
