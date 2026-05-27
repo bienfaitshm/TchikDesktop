@@ -16,7 +16,7 @@ We actively monitor and fix security vulnerabilities. Please ensure you are runn
 If you discover a security vulnerability within **Tchik** (or any related repositories), please do not open a public issue. Instead, follow the responsible disclosure process below:
 
 ### 1. Submission
-Send a detailed email to **bienfaitshm@gmail.com** with the subject line `[SECURITY VULNERABILITY] <Short Description>`. 
+Send a detailed email to **bienfaitshm@gmail.com** with the subject line `[TCHIK SECURITY VULNERABILITY] <Short Description>`. 
 
 ### 2. What to Include
 To help us triage and resolve the issue quickly, please provide:
