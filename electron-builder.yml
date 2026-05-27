@@ -63,8 +63,8 @@ mac:
       arch:
         - x64
         - arm64
-  notarize:
-    provider: appleId
+  notarize: false
+    # provider: appleId
 
 dmg:
   artifactName: ${name}_Installer_MacOs_${version}.${ext}
