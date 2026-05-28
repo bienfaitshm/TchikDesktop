@@ -1,33 +1,59 @@
 name: Build & Publish Desktop Apps
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to build"
-        required: true
   push:
-    tags: ["v*"]
+    tags:
+      - "v*"
 
 permissions:
   contents: write
 
+env:
+  ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
+
 jobs:
   compile:
+    name: Build & Publish (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - uses: actions/setup-node@v4
-        with: { node-version: "lts/*", cache: "yarn" }
-      - run: yarn install --frozen-lockfile
+        os: [ubuntu-latest, windows-latest]
 
-      - name: Build & Publish
-        run: yarn build:all --publish always
+    steps:
+      - name: Checkout Source Tree
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Initialize Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: "yarn"
+
+      - name: Cache electron-builder binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/electron-builder
+          key: ${{ runner.os }}-electron-builder
+
+      - name: Install Project Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Linux Build Dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools rpm
+
+      - name: Build Application (Compile)
+        run: yarn build:all --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Force le build pour le tag reçu en entrée ou le tag actuel
-          EP_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+      - name: Publish Assets to GitHub Release
+        # On exécute la publication séparément pour isoler l'upload
+        run: npx electron-builder --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
