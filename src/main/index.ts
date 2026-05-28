@@ -7,7 +7,7 @@ import { getLogger } from "@/packages/logger";
 
 import { apiGateway, ipcServer } from "@/main/apps";
 import { registerContextMenuListener } from "@/main/context-menus";
-import { setupDevelopmentEnvironment } from "@/main/extension.dev";
+import { setupDevelopmentEnvironment } from "@/main/electron-dev-extension";
 import { updateInit } from "@/main/update";
 import { getAppIconPath } from "@/main/utils";
 
