@@ -2,35 +2,21 @@ name: Automated Release
 
 on:
   push:
-    branches:
-      - main
-      - develop
-
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+    branches: [main, develop]
 
 jobs:
   release:
-    name: Automated Semantic Release
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: true
-
-      - name: Set up Node.js Environment
-        uses: actions/setup-node@v4
-        with:
-          node-version: "lts/*"
-          cache: "yarn" # <-- Changement : Optimisation avec le cache Yarn
-
-      - name: Install Project Dependencies
-        run: yarn install --frozen-lockfile # <-- Changement : Installation propre via Yarn
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "lts/*", cache: "yarn" }
+      - run: yarn install --frozen-lockfile
 
       - name: Execute Semantic Release
         id: semantic
@@ -38,31 +24,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sync and Commit Package Version
+      - name: Trigger Build Workflow
         if: steps.semantic.outputs.new_release_published == 'true'
-        run: |
-          NEW_VERSION="${{ steps.semantic.outputs.new_release_version }}"
-
-          if [ -n "$NEW_VERSION" ]; then
-            # Récupère la version actuellement inscrite dans le package.json
-            CURRENT_VERSION=$(node -p "require('./package.json').version")
-            
-            # Compare les deux versions avant d'agir
-            if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
-              echo "La version dans package.json est déjà synchronisée ($NEW_VERSION). Étape ignorée."
-            else
-              echo "Mise à jour de la version : $CURRENT_VERSION -> $NEW_VERSION"
-              
-              # Force la modification de version avec la syntaxe native Yarn
-              yarn version --no-git-tag-version --new-version "$NEW_VERSION"
-              
-              # Configuration de l'identité du bot GitHub
-              git config user.name "github-actions[bot]"
-              git config user.email "github-actions[bot]@users.noreply.github.com"
-              
-              # Validation et push sécurisé des modifications (package.json et yarn.lock)
-              git add package.json yarn.lock || true
-              git commit -m "chore: bump package.json version to $NEW_VERSION [skip ci]"
-              git push origin HEAD:${{ github.ref_name }}
-            fi
-          fi
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: build.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          inputs: '{ "tag": "${{ steps.semantic.outputs.new_release_version }}" }'
