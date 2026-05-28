@@ -2,18 +2,8 @@ name: Build & Publish Desktop Apps
 
 on:
   push:
-    branches:
-      - main # Se déclenche sur les pushs vers la branche main
     tags:
-      - v*.*.*
-
-    paths-ignore:
-      - "**.md"
-      - ".idea/**"
-      - ".vscode/**"
-      - ".gitignore"
-      - ".github/**"
-      - "!.github/workflows/build.yml"
+      - "v*.*.*"
 
 permissions:
   contents: write
@@ -23,16 +13,18 @@ env:
 
 jobs:
   compile:
-    name: Build & Publish Tchik (${{ matrix.os }})
+    name: Build & Publish App (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
       - name: Checkout Source Tree
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Initialize Node.js Runtime
         uses: actions/setup-node@v4
@@ -41,7 +33,6 @@ jobs:
           cache: "yarn"
 
       - name: Install Project Dependencies
-        # Yarn gère nativement mieux la résolution d'arbres, l'équivalent de --legacy-peer-deps n'est pas requis
         run: yarn install --frozen-lockfile
 
       - name: Install Linux Build Dependencies
@@ -50,18 +41,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libarchive-tools rpm
 
-      - name: Configure Electron Builder Release Flags
+      - name: Configure Release Flags Dynamically
         shell: bash
         run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            echo "EP_PRE_RELEASE=false" >> $GITHUB_ENV
-            echo "EP_DRAFT=false" >> $GITHUB_ENV
-          else
+          # Si le tag contient un trait d'union (ex: v1.2.0-beta.2), on le considère comme pre-release
+          if [[ "${{ github.ref_name }}" == *"-"* ]]; then
             echo "EP_PRE_RELEASE=true" >> $GITHUB_ENV
-            echo "EP_DRAFT=false" >> $GITHUB_ENV
+          else
+            echo "EP_PRE_RELEASE=false" >> $GITHUB_ENV
           fi
+          echo "EP_DRAFT=false" >> $GITHUB_ENV
 
-      - name: Build & Publish Electron App
+      - name: Build & Upload Assets to GitHub Release
         run: yarn build:all --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
