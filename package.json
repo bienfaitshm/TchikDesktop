@@ -15,7 +15,7 @@
     "test": "vitest",
     "start": "electron-vite preview",
     "buildNc": "npm run typecheck",
-    "dev": "electron-vite dev",
+    "dev": "electron-vite dev --watch",
     "build": "electron-vite build",
     "build:all": "npm run build && electron-builder --publish always",
     "build:win": "npm run build && electron-builder --win",
