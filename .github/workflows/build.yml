@@ -1,15 +1,16 @@
 name: Build & Publish Desktop Apps
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build"
+        required: true
   push:
-    tags:
-      - "v*"
+    tags: ["v*"]
 
 permissions:
   contents: write
-
-env:
-  ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
 
 jobs:
   compile:
