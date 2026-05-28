@@ -3,8 +3,7 @@ name: Build & Publish Desktop Apps
 on:
   push:
     tags:
-      - "v*.*.*"
-
+      - "v*"
 permissions:
   contents: write
 
@@ -14,6 +13,8 @@ env:
 jobs:
   compile:
     name: Build & Publish App (${{ matrix.os }})
+    permissions:
+      contents: write
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
