@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { setupDevelopmentEnvironment } from "./extension.dev";
+import { setupDevelopmentEnvironment } from "./electron-dev-extension";
 import installExtension, {
   REACT_DEVELOPER_TOOLS,
 } from "electron-devtools-installer";

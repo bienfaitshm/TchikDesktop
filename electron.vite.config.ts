@@ -4,6 +4,8 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   main: {
+    esbuild: false,
+    oxc: false,
     resolve: {
       alias: {
         "@/main": resolve("src/main"),
