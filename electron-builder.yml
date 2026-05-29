@@ -23,9 +23,13 @@ files:
   - '!pnpm-lock.yaml'
   - '!tsconfig*.json'
 
-extraFiles:
-  - documents_templates/**
-  - drizzle/**
+extraResources:
+  - from: "documents_templates"
+    to: "documents_templates"
+  - from: "drizzle"
+    to: "drizzle"
+
+
 
 asarUnpack:
   - node_modules/sqlite3
@@ -46,7 +50,7 @@ nsis:
   perMachine: true
   allowElevation: true
   allowToChangeInstallationDirectory: true
-  artifactName: ${name}_Installer_Windows_${version}-setup.${ext}
+  artifactName: ${productName}_Installer_Windows_${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}_uninstaller
   displayLanguageSelector: true
@@ -69,20 +73,40 @@ mac:
     # provider: appleId
 
 dmg:
-  artifactName: ${name}_Installer_MacOs_${version}.${ext}
+  artifactName: ${productName}_Installer_MacOs_${version}.${ext}
   icon: build/icon.icns
-
 linux:
   target:
-    - AppImage
-    - deb
-  maintainer: Bienfait Shomari
+    - target: AppImage
+    - target: deb
+  maintainer: Bienfait Shomari <bienfaitshm@google.com>
   category: Education
-  icon: build/icon.png
-  artifactName: ${name}_Installer_Linux_${version}.${ext}
+  icon: build/
+  description: "Gestionnaire Tchik pour l'éducation"
+  
+  # Configuration conforme à la documentation
+  desktop:
+    entry:
+      Name: Tchik
+      Comment: Gestionnaire Tchik pour l'éducation
+      Categories: Education;Utility;
+      Terminal: false
+      Type: Application
+      StartupWMClass: Tchik
+      
+    # Actions de clic droit sur l'icône du dock
+    desktopActions:
+      NewWindow:
+        Name: New Window
+        Exec: Tchik --new-window
+      NewFile:
+        Name: New File
+        Exec: Tchik --new-file
+
+  artifactName: ${productName}_Installer_Linux_${version}.${ext}
 
 appImage:
-  artifactName: ${name}_Installer_Linux_${version}.${ext}
+  artifactName: ${productName}_Installer_Linux_${version}.${ext}
 
 npmRebuild: false
 

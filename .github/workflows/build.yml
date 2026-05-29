@@ -1,24 +1,25 @@
 name: Build & Publish Desktop Apps
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build"
+        required: true
   push:
-    tags:
-      - "v*.*.*"
+    tags: ["v*"]
 
 permissions:
   contents: write
 
-env:
-  ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
-
 jobs:
   compile:
-    name: Build & Publish App (${{ matrix.os }})
+    name: Build & Publish (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - name: Checkout Source Tree
@@ -32,6 +33,12 @@ jobs:
           node-version: "lts/*"
           cache: "yarn"
 
+      - name: Cache electron-builder binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/electron-builder
+          key: ${{ runner.os }}-electron-builder
+
       - name: Install Project Dependencies
         run: yarn install --frozen-lockfile
 
@@ -41,21 +48,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libarchive-tools rpm
 
-      - name: Configure Release Flags Dynamically
-        shell: bash
-        run: |
-          # Si le tag contient un trait d'union (ex: v1.2.0-beta.2), on le considère comme pre-release
-          if [[ "${{ github.ref_name }}" == *"-"* ]]; then
-            echo "EP_PRE_RELEASE=true" >> $GITHUB_ENV
-          else
-            echo "EP_PRE_RELEASE=false" >> $GITHUB_ENV
-          fi
-          echo "EP_DRAFT=false" >> $GITHUB_ENV
-
-      - name: Build & Upload Assets to GitHub Release
-        run: yarn build:all --publish always
+      - name: Build Application (Compile)
+        run: yarn build:all --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          EP_PRE_RELEASE: ${{ env.EP_PRE_RELEASE }}
-          EP_DRAFT: ${{ env.EP_DRAFT }}
+
+      - name: Publish Assets to GitHub Release
+        # On exécute la publication séparément pour isoler l'upload
+        run: npx electron-builder --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
