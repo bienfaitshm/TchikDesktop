@@ -1,5 +1,5 @@
-import { app, shell, BrowserWindow, nativeImage } from "electron";
-import { join } from "path";
+import { app, shell, BrowserWindow } from "electron";
+import path from "node:path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 
 import { dbManager } from "@/packages/@core/data-access/db";
@@ -32,7 +32,7 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
     autoHideMenuBar: true,
     titleBarStyle: "default",
     webPreferences: {
-      preload: join(__dirname, "../preload/index.js"),
+      preload: path.join(__dirname, "../preload/index.js"),
 
       sandbox: true,
       contextIsolation: true,
@@ -70,7 +70,7 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
     );
     mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
-    const filePath = join(__dirname, "../renderer/index.html");
+    const filePath = path.join(__dirname, "../renderer/index.html");
     mainLogger.info(`Chargement du fichier de production: ${filePath}`);
     mainWindow.loadFile(filePath);
   }

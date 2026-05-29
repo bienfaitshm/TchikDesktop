@@ -46,7 +46,7 @@ nsis:
   perMachine: true
   allowElevation: true
   allowToChangeInstallationDirectory: true
-  artifactName: ${name}_Installer_Windows_${version}-setup.${ext}
+  artifactName: ${productName}_Installer_Windows_${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}_uninstaller
   displayLanguageSelector: true
@@ -69,14 +69,14 @@ mac:
     # provider: appleId
 
 dmg:
-  artifactName: ${name}_Installer_MacOs_${version}.${ext}
+  artifactName: ${productName}_Installer_MacOs_${version}.${ext}
   icon: build/icon.icns
 
 linux:
   target:
     - target: AppImage
     - target: deb
-  maintainer: Bienfait Shomari <ton-email@exemple.com>
+  maintainer: Bienfait Shomari <bienfaitshm@google.com>
   category: Education
   icon: build/icon.png
   desktop:
@@ -86,10 +86,10 @@ linux:
     Type: Application
     Categories: Education;Utility;
     MimeType: application/tchik
-  artifactName: ${name}_Installer_Linux_${version}.${ext}
+  artifactName: ${productName}_Installer_Linux_${version}.${ext}
 
 appImage:
-  artifactName: ${name}_Installer_Linux_${version}.${ext}
+  artifactName: ${productName}_Installer_Linux_${version}.${ext}
 
 npmRebuild: false
 

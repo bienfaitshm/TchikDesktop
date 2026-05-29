@@ -1,5 +1,5 @@
 import { app, nativeImage } from "electron";
-import { join } from "path";
+import { join } from "node:path";
 
 /**
  * Retourne le chemin absolu de l'icône de l'application.
