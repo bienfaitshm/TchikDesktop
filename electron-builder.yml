@@ -74,11 +74,18 @@ dmg:
 
 linux:
   target:
-    - AppImage
-    - deb
-  maintainer: Bienfait Shomari
+    - target: AppImage
+    - target: deb
+  maintainer: Bienfait Shomari <ton-email@exemple.com>
   category: Education
   icon: build/icon.png
+  desktop:
+    Name: Tchik
+    Comment: Gestionnaire Tchik pour l'éducation
+    Terminal: false
+    Type: Application
+    Categories: Education;Utility;
+    MimeType: application/tchik
   artifactName: ${name}_Installer_Linux_${version}.${ext}
 
 appImage:

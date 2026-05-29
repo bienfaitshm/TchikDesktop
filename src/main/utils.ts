@@ -1,4 +1,4 @@
-import { app } from "electron";
+import { app, nativeImage } from "electron";
 import { join } from "path";
 
 /**
@@ -9,6 +9,11 @@ import { join } from "path";
  */
 export const getAppIconPath = (): string => {
   return app.isPackaged
-    ? join(process.resourcesPath, "resources", "icon.ico") // En Production (Chemin stable hors ASAR)
-    : join(app.getAppPath(), "resources", "icon.ico"); // En Développement (Racine du projet)
+    ? join(process.resourcesPath, "resources", "icon.png") // En Production (Chemin stable hors ASAR)
+    : join(app.getAppPath(), "resources", "icon.png"); // En Développement (Racine du projet)
+};
+
+export const getAppIcon = (): Electron.NativeImage => {
+  const iconPath = getAppIconPath();
+  return nativeImage.createFromPath(iconPath);
 };

@@ -9,15 +9,13 @@ import { apiGateway, ipcServer } from "@/main/apps";
 import { registerContextMenuListener } from "@/main/context-menus";
 import { setupDevelopmentEnvironment } from "@/main/electron-dev-extension";
 import { updateInit } from "@/main/update";
-import { getAppIconPath } from "@/main/utils";
+import { getAppIcon } from "@/main/utils";
 
 const mainLogger = getLogger("MainProcess");
 
 const createMainWindow = async (): Promise<BrowserWindow> => {
   mainLogger.info("Création de la fenêtre principale...");
-  const iconPath = getAppIconPath();
-
-  const appIcon = nativeImage.createFromPath(iconPath);
+  const appIcon = getAppIcon();
 
   const mainWindow = new BrowserWindow({
     width: 900,
