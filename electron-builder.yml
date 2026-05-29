@@ -71,21 +71,34 @@ mac:
 dmg:
   artifactName: ${productName}_Installer_MacOs_${version}.${ext}
   icon: build/icon.icns
-
 linux:
   target:
     - target: AppImage
     - target: deb
   maintainer: Bienfait Shomari <bienfaitshm@google.com>
   category: Education
-  icon: build/icon.png
+  icon: build/
+  description: "Gestionnaire Tchik pour l'éducation"
+  
+  # Configuration conforme à la documentation
   desktop:
-    Name: Tchik
-    Comment: Gestionnaire Tchik pour l'éducation
-    Terminal: false
-    Type: Application
-    Categories: Education;Utility;
-    MimeType: application/tchik
+    entry:
+      Name: Tchik
+      Comment: Gestionnaire Tchik pour l'éducation
+      Categories: Education;Utility;
+      Terminal: false
+      Type: Application
+      StartupWMClass: Tchik
+      
+    # Actions de clic droit sur l'icône du dock
+    desktopActions:
+      NewWindow:
+        Name: New Window
+        Exec: Tchik --new-window
+      NewFile:
+        Name: New File
+        Exec: Tchik --new-file
+
   artifactName: ${productName}_Installer_Linux_${version}.${ext}
 
 appImage:
