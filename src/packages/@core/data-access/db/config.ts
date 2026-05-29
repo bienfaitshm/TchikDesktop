@@ -6,16 +6,16 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import * as schema from "./schemas";
 import { getLogger } from "@/packages/logger";
-import { getExtraPath } from "@/packages/electron-utility";
+import { getUserDataPath, getResourcePath } from "@/packages/electron-utility";
 import { createDrizzleLogger } from "./drizzle-adapter";
 
 const dbLogger = getLogger("DataBase");
 
 const DB_CONFIG = {
-  FILENAME: process.env.DB_FILENAME || "sqlite.db",
-  BACKUP_DIR: getExtraPath(process.env.BACKUP_DIR || "backups"),
+  FILENAME: getUserDataPath(process.env.DB_FILENAME || "sqlite.db"),
+  BACKUP_DIR: getUserDataPath(process.env.BACKUP_DIR || "backups"),
   MAX_BACKUPS: parseInt(process.env.DB_MAX_BACKUPS || "10", 10),
-  MIGRATIONS_FOLDER: getExtraPath(
+  MIGRATIONS_FOLDER: getResourcePath(
     process.env.DB_MIGRATIONS_FOLDER || "drizzle",
   ),
 };

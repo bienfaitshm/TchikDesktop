@@ -23,9 +23,13 @@ files:
   - '!pnpm-lock.yaml'
   - '!tsconfig*.json'
 
-extraFiles:
-  - documents_templates/**
-  - drizzle/**
+extraResources:
+  - from: "documents_templates"
+    to: "documents_templates"
+  - from: "drizzle"
+    to: "drizzle"
+
+
 
 asarUnpack:
   - node_modules/sqlite3

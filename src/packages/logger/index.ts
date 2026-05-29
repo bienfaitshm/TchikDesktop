@@ -1,4 +1,5 @@
 import { createLogger, format, transports } from "winston";
+import { getUserDataPath } from "@/packages/electron-utility";
 const { combine, timestamp, printf, colorize, errors, json } = format;
 
 /**
@@ -30,7 +31,7 @@ export const mainLogger = createLogger({
 
     // 2. ERRORS LOG : Enregistre uniquement les erreurs avec détails complets
     new transports.File({
-      filename: "loggs/errors.log",
+      filename: getUserDataPath("loggs/errors.log"),
       level: "error",
       // On garde un format texte détaillé pour le fichier d'erreur pour faciliter la lecture directe
       format: combine(timestamp(), consoleFormat),
@@ -38,7 +39,7 @@ export const mainLogger = createLogger({
 
     // 3. COMBINED LOG : Toutes les activités en format JSON (idéal pour analyse)
     new transports.File({
-      filename: "loggs/combined.log",
+      filename: getUserDataPath("loggs/combined.log"),
     }),
   ],
 });
