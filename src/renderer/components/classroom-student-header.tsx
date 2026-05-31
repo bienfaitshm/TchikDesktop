@@ -10,9 +10,6 @@ import {
   QuickCreateEnrollmentDialog,
 } from "@/renderer/dialog-actions/enrolement.dialog-actions";
 import { Separator } from "@/renderer/components/ui/separator";
-import { ButtonSheetStudentStat } from "@/renderer/components/sheets/students.stat";
-import { ButtonDialogDocumentExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
-
 export const ClassroomHeader = ({
   classId,
   schoolId,
@@ -31,7 +28,7 @@ export const ClassroomHeader = ({
   if (isLoading) return <HeaderSkeleton />;
 
   return (
-    <div className="space-y-4 w-full">
+    <div className="space-y-4 w-full mt-5">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
@@ -73,18 +70,6 @@ export const ClassroomHeader = ({
           </CreateEnrollmentDialog>
         </div>
       </div>
-      {/* Statistics & Export Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-1.5">
-        <div className="md:col-span-2 flex items-center gap-4">
-          <ButtonSheetStudentStat students={[]} />
-          <ButtonDialogDocumentExport
-            schoolId={schoolId}
-            yearId={yearId}
-            defaultValues={{ classId }}
-          />
-        </div>
-      </div>
-      <Separator />
     </div>
   );
 };
