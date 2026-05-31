@@ -36,6 +36,8 @@
     --chart-3: 240 80% 60%; /* Violet */
     --chart-4: 210 60% 40%; /* Bleu foncé */
     --chart-5: 195 75% 65%; /* Bleu clair */
+    --chart-danger: 0 84.2% 60.2%;
+    --chart-success: 140 50% 50%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -79,6 +81,8 @@
     --chart-3: 240 80% 60%;
     --chart-4: 210 60% 40%;
     --chart-5: 195 75% 65%;
+    --chart-danger: 0 80% 65%;
+    --chart-success: 140 50% 50%;
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;

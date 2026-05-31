@@ -5,7 +5,7 @@ import {
   classRooms,
   options,
 } from "../schemas/schema";
-import { eq, and, sql, count } from "drizzle-orm";
+import { eq, and, sql, count, SQL } from "drizzle-orm";
 import { getLogger } from "@/packages/logger";
 import { USER_ROLE_ENUM, STUDENT_STATUS_ENUM } from "../enum";
 
@@ -14,7 +14,6 @@ const logger = getLogger("StatsService");
 export interface ChartDataPoint {
   label: string;
   value: number;
-  fill?: string;
 }
 
 export interface ClassStatsDTO extends ChartDataPoint {
@@ -22,12 +21,19 @@ export interface ClassStatsDTO extends ChartDataPoint {
   shortName: string;
 }
 
+/**
+ * Service de statistiques scolaires.
+ * Toutes les méthodes renvoient des données sans informations de style (couleurs, etc.)
+ * pour respecter la séparation backend / frontend.
+ */
 export class StatsService {
   /**
-   * Helper privé pour les agrégations simples.
-   * Utilise le moteur de requêtes Drizzle pour un groupement performant.
+   * Agrégation générique groupée par une colonne.
    */
-  private static async aggregateCount(
+  private static async aggregateCount<
+    TTable extends Record<string, any>,
+    TColumn extends keyof TTable & string,
+  >(
     table: any,
     column: any,
     filters: any,
@@ -45,7 +51,7 @@ export class StatsService {
 
       return results.map((item) => ({
         label:
-          labelMapping?.[item.groupKey as string] || (item.groupKey as string),
+          labelMapping?.[item.groupKey as string] ?? (item.groupKey as string),
         value: Number(item.count),
       }));
     } catch (error) {
@@ -75,12 +81,19 @@ export class StatsService {
   // --- DONNÉES GRAPHIQUES ---
 
   /**
-   * Répartition Hommes/Femmes (PieChart)
+   * Répartition Hommes/Femmes.
+   * Retourne des labels sans accents : "masculin", "feminin", "autre".
+   * Correspond à la config GENDER_CONFIG (clés : masculin, féminin).
    */
   static async getGenderDistribution(
     schoolId: string,
   ): Promise<ChartDataPoint[]> {
-    const labels = { MALE: "Masculin", FEMALE: "Féminin", OTHER: "Autre" };
+    const labels = {
+      MALE: "masculin",
+      FEMALE: "feminin",
+      OTHER: "autre",
+    };
+
     return this.aggregateCount(
       users,
       users.gender,
@@ -90,7 +103,9 @@ export class StatsService {
   }
 
   /**
-   * Nombre d'élèves par classe (BarChart)
+   * Nombre d'élèves par classe (BarChart).
+   * Les champs `label` et `shortName` sont conservés tels quels ;
+   * la config CLASS_CONFIG peut mapper `value` → couleur.
    */
   static async getStudentsCountByClass(
     schoolId: string,
@@ -129,7 +144,8 @@ export class StatsService {
   }
 
   /**
-   * Répartition par Option (Radar ou BarChart)
+   * Répartition par Option (BarChart).
+   * Le label est le nom court de l'option.
    */
   static async getStudentsCountByOption(
     schoolId: string,
@@ -162,7 +178,9 @@ export class StatsService {
   }
 
   /**
-   * Taux de rétention (Anciens vs Nouveaux)
+   * Taux de rétention (Anciens vs Nouveaux).
+   * Labels retournés : "anciens", "nouveaux".
+   * Compatible avec RETENTION_CONFIG.
    */
   static async getRetentionMetrics(
     schoolId: string,
@@ -187,31 +205,25 @@ export class StatsService {
     const oldStudents = total - news;
 
     return [
-      { label: "Anciens", value: oldStudents, fill: "var(--color-old)" },
-      { label: "Nouveaux", value: news, fill: "var(--color-new)" },
+      { label: "anciens", value: oldStudents },
+      { label: "nouveaux", value: news },
     ];
   }
 
   /**
-   * Statuts des élèves (Actif, Abandon, etc.)
+   * Statuts des élèves (Actif, Abandon, Exclu).
+   * Labels retournés : "active", "abandon", "exclu".
+   * Compatible avec STATUS_CONFIG.
    */
   static async getStudentStatusStats(
     schoolId: string,
     yearId: string,
   ): Promise<ChartDataPoint[]> {
-    const statusLabels: Record<string, { label: string; color: string }> = {
-      [STUDENT_STATUS_ENUM.EN_COURS]: {
-        label: "Actifs / Abonnés",
-        color: "var(--color-active)",
-      },
-      [STUDENT_STATUS_ENUM.ABANDON]: {
-        label: "Abandons",
-        color: "var(--color-abandon)",
-      },
-      [STUDENT_STATUS_ENUM.EXCLUT]: {
-        label: "Exclus",
-        color: "var(--color-excluded)",
-      },
+    // Mapping de l'enum vers les clés de STATUS_CONFIG
+    const statusKeys: Record<string, string> = {
+      [STUDENT_STATUS_ENUM.EN_COURS]: "active",
+      [STUDENT_STATUS_ENUM.ABANDON]: "abandon",
+      [STUDENT_STATUS_ENUM.EXCLUT]: "exclu",
     };
 
     const results = await db
@@ -229,21 +241,21 @@ export class StatsService {
       .groupBy(classroomEnrolements.status);
 
     return results.map((item) => ({
-      label: statusLabels[item.status]?.label || item.status,
+      label: statusKeys[item.status] ?? item.status,
       value: Number(item.count),
-      fill: statusLabels[item.status]?.color || "var(--color-default)",
     }));
   }
 
   /**
-   * KPI Rapide pour Summary Cards
+   * KPI rapides pour les Summary Cards.
+   * Retourne les totaux calculés à partir des statuts.
    */
   static async getQuickKpis(schoolId: string, yearId: string) {
     const stats = await this.getStudentStatusStats(schoolId, yearId);
-    return {
-      total: stats.reduce((acc, curr) => acc + curr.value, 0),
-      active: stats.find((s) => s.label.includes("Actif"))?.value || 0,
-      excluded: stats.find((s) => s.label.includes("Exclu"))?.value || 0,
-    };
+    const total = stats.reduce((acc, curr) => acc + curr.value, 0);
+    const active = stats.find((s) => s.label === "active")?.value ?? 0;
+    const excluded = stats.find((s) => s.label === "exclu")?.value ?? 0;
+
+    return { total, active, excluded };
   }
 }

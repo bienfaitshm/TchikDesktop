@@ -1,110 +1,121 @@
-"use client"
+"use client";
 
-import { Pie, PieChart, Label } from "recharts"
+import { Pie, PieChart, Label } from "recharts";
+import React, { useMemo } from "react";
 import {
-    ChartConfig,
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-} from "@/renderer/components/ui/chart"
-import { useMemo } from "react"
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/renderer/components/ui/chart";
 
-/**
- * Interface pour les données de statistiques formatées pour le graphique.
- */
 interface ChartPieData {
-    label: string;
-    value: number;
-    fill?: string;
-    [key: string]: any; // Permet d'accepter d'autres propriétés (ex: id, slug)
+  label: string;
+  value: number;
+  fill?: string;
+  [key: string]: any;
 }
 
 interface ChartPieProps {
-    /** Tableau de données provenant du StatsService */
-    data: ChartPieData[];
-    /** Configuration des couleurs et labels Shadcn */
-    config: ChartConfig;
-    /** Informations optionnelles à afficher au centre du donut */
-    centerDataInfos?: {
-        total: number | string;
-        totalLabel: string
-    };
-    /** Classes CSS additionnelles */
-    className?: string;
+  data: ChartPieData[];
+  config: ChartConfig;
+  centerDataInfos?: {
+    total: number; // Forcé à number pour toLocaleString()
+    totalLabel: string;
+  };
+  className?: string;
+  height?: number;
+  showTooltipLabel?: boolean;
+  innerRadius?: number; // Permet de personnaliser l'épaisseur du donut
+  outerRadius?: number;
 }
 
-/**
- * Composant de graphique en camembert (Pie/Donut) réutilisable.
- * Conçu pour s'intégrer directement avec les retours du StatsService.
- */
 export function ChartPie({
-    data,
-    config,
-    centerDataInfos,
-    className
+  data,
+  config,
+  centerDataInfos,
+  className,
+  height = 250,
+  showTooltipLabel = false,
+  innerRadius = 60,
+  outerRadius,
 }: ChartPieProps) {
+  const colorVars = React.useMemo(() => {
+    return Object.entries(config).reduce<Record<string, string>>(
+      (acc, [key, item]) => {
+        if (item && "color" in item && typeof item.color === "string") {
+          acc[`--color-${key}`] = item.color;
+        }
+        return acc;
+      },
+      {},
+    );
+  }, [config]);
 
-    // On prépare les données en injectant les variables de couleur basées sur le label
-    const chartData = useMemo(() => {
-        return data.map((item) => ({
-            ...item,
-            // On utilise le label (en minuscule/slug) pour mapper vers var(--color-xxx)
-            fill: item.fill || `var(--color-${item.label.toLowerCase().replace(/\s+/g, "-")})`
-        }));
-    }, [data]);
+  const chartData = useMemo(() => {
+    return data.map((item) => {
+      // Cherche la clé dans la config correspondant au label slugifié
+      const slug = item.label.toLowerCase().replace(/\s+/g, "-");
+      const configEntry = config[slug];
+      const fill =
+        item.fill ||
+        (configEntry && "color" in configEntry
+          ? (configEntry as { color: string }).color
+          : undefined) ||
+        `var(--color-${slug})`; // fallback (peut être une variable invalide si non définie)
+      return { ...item, fill };
+    });
+  }, [data, config]);
 
-    return (
-        <ChartContainer
-            config={config}
-            className={className || "mx-auto aspect-square max-h-[250px] pb-0"}
+  return (
+    <ChartContainer
+      config={config}
+      className={`mx-auto aspect-square h-[${height}px] pb-0 ${className || ""}`}
+    >
+      <div style={colorVars}>
+        <PieChart
+          data={chartData}
+          dataKey="value"
+          //   nameKey=""
+          innerRadius={centerDataInfos ? innerRadius : 0}
+          outerRadius={outerRadius}
+          //   strokeWidth={2}
         >
-            <PieChart>
-                <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel />}
-                />
-                <Pie
-                    data={chartData}
-                    dataKey="value"
-                    nameKey="label"
-                    innerRadius={centerDataInfos ? 60 : 0} // Mode Donut si infos centrales
-                    strokeWidth={5}
-                >
-                    {centerDataInfos && (
-                        <Label
-                            content={({ viewBox }) => {
-                                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                                    return (
-                                        <text
-                                            x={viewBox.cx}
-                                            y={viewBox.cy}
-                                            textAnchor="middle"
-                                            dominantBaseline="middle"
-                                        >
-                                            <tspan
-                                                x={viewBox.cx}
-                                                y={viewBox.cy}
-                                                className="fill-foreground text-3xl font-bold"
-                                            >
-                                                {centerDataInfos.total.toLocaleString()}
-                                            </tspan>
-                                            <tspan
-                                                x={viewBox.cx}
-                                                y={(viewBox.cy || 0) + 24}
-                                                className="fill-muted-foreground text-xs uppercase tracking-wider"
-                                            >
-                                                {centerDataInfos.totalLabel}
-                                            </tspan>
-                                        </text>
-                                    )
-                                }
-                            }}
-                        />
-                    )}
-                </Pie>
-            </PieChart>
-        </ChartContainer>
-    )
+          {centerDataInfos && (
+            <Label
+              content={({ viewBox }) => {
+                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                  return (
+                    <text
+                      x={viewBox.cx}
+                      y={viewBox.cy}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                    >
+                      <tspan
+                        x={viewBox.cx}
+                        y={viewBox.cy}
+                        className="fill-foreground text-3xl font-bold"
+                      >
+                        {centerDataInfos.total.toLocaleString()}
+                      </tspan>
+                      <tspan
+                        x={viewBox.cx}
+                        y={(viewBox.cy || 0) + 24}
+                        className="fill-muted-foreground text-xs uppercase tracking-wider"
+                      >
+                        {centerDataInfos.totalLabel}
+                      </tspan>
+                    </text>
+                  );
+                }
+              }}
+            />
+          )}
+        </PieChart>
+      </div>
+    </ChartContainer>
+  );
 }
 
 ChartPie.displayName = "ChartPie";
