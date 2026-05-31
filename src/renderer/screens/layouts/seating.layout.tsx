@@ -11,7 +11,6 @@ import { SidebarContainer } from "@/renderer/components/sidebar-container";
 import { LocalroomSidebar } from "@/renderer/components/localroom-sidebar";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
 import { Button } from "@/renderer/components/ui/button";
-import { ButtonDialogDocumentExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
 import { useInvalidateSeatingCache } from "@/renderer/dialog-actions/seating-generator/hooks";
 
 export interface SeatingLayoutContext {
@@ -73,26 +72,6 @@ export const SeatingSessionLayout: React.FC = () => {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 h-full">
       <SidebarContainer direction="horizontal" sidebar={<LocalroomSidebar />}>
-        <header className="px-4 pb-2 pt-6 md:px-10 lg:px-10">
-          <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center max-w-screen-2xl mx-auto">
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                {sessionName}
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <ButtonDialogDocumentExport
-                key={sessionId}
-                schoolId={schoolId}
-                yearId={yearId}
-                defaultValues={{ sessionId }}
-              />
-              <SeatingGeneratorDialog {...generatorDialogProps} />
-            </div>
-          </div>
-        </header>
-
         <Outlet
           context={
             {

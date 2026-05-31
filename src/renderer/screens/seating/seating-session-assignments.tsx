@@ -127,7 +127,7 @@ export const RoomHeaderInfo = ({ localroom, layoutAssignments }) => {
         </div>
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Layout className="h-3.5 w-3.5" />
-          Visualisez la répartition des étudiants dans la salle.
+          Visualisez la répartition des éleves dans la salle.
         </p>
       </header>
 

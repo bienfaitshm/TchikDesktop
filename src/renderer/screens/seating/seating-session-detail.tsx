@@ -2,7 +2,7 @@ import { MousePointerClick, LayoutDashboard } from "lucide-react";
 
 export const SeatingSessionDetailPage = () => {
   return (
-    <div className="flex w-full flex-col items-center justify-center p-8 text-center mt-28">
+    <div className="flex w-full h-full flex-col items-center justify-center p-8 text-center">
       <div className="relative mb-6">
         <div className="absolute inset-0 scale-150 bg-primary/5 blur-2xl rounded-full" />
         <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-primary/20 bg-primary/5 shadow-sm">

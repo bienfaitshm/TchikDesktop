@@ -41,7 +41,7 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
 
       spellcheck: true,
       backgroundThrottling: true,
-      devTools: is.dev,
+      devTools: true,
     },
   });
 

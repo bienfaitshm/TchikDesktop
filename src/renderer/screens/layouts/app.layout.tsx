@@ -16,12 +16,21 @@ export function AppLayout() {
     <SidebarProvider>
       <ApplicationSidebar />
       <SidebarInset>
-        <header className="bg-background sticky top-0 flex shrink-0 items-center gap-2 border-b p-4 z-30">
-          <SidebarTrigger className="-ml-1" />
+        <header className="bg-background/95 backdrop-blur sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-4 transition-all">
+          {/* Partie Gauche : Navigation */}
+          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+
           <Separator
             orientation="vertical"
-            className="mr-2 data-[orientation=vertical]:h-4"
+            className="mr-2 data-[orientation=vertical]:h-4 bg-border"
           />
+
+          {/* Optionnel : Tu peux glisser un titre de page ou un Breadcrumb ici */}
+          {/* <span className="text-sm font-medium tracking-tight hidden sm:inline-block">
+            Vue d'ensemble
+          </span> */}
+
+          {/* Partie Droite : Actions poussées grâce à ml-auto */}
         </header>
         <main className="h-[calc(100vh-64px)] w-full overflow-hidden">
           <Suspense
