@@ -36,12 +36,14 @@ import {
   type LocalRoomDialogProps,
 } from "@/renderer/dialog-actions/localroom.dialog-action";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
+import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 
 const columns = enhanceColumnsExpandable(localRoomColumns);
 
-interface LocalRoomRowActionsProps
-  extends Pick<LocalRoomDialogProps, "queryKeysToInvalidate"> {
+interface LocalRoomRowActionsProps extends Pick<
+  LocalRoomDialogProps,
+  "queryKeysToInvalidate"
+> {
   room: TLocalRoom;
 }
 

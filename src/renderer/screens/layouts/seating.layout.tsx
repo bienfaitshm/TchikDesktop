@@ -4,13 +4,13 @@ import * as React from "react";
 import { useParams, Outlet, useNavigate } from "react-router";
 import { ChevronLeft, Wand2 } from "lucide-react";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
+import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import { SeatingGeneratorDialog } from "@/renderer/dialog-actions/seating-generator";
 import { useGetSeatingSessionById } from "@/renderer/libs/queries/seating";
 import { SidebarContainer } from "@/renderer/components/sidebar-container";
 import { LocalroomSidebar } from "@/renderer/components/localroom-sidebar";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
-import { Button } from "../ui/button";
+import { Button } from "@/renderer/components/ui/button";
 import { ButtonDialogDocumentExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
 import { useInvalidateSeatingCache } from "@/renderer/dialog-actions/seating-generator/hooks";
 

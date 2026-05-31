@@ -34,6 +34,8 @@ import {
   SeatingSessionAssignmentPage,
 } from "@/renderer/screens/seating";
 
+import { ROUTES } from "@/renderer/constants";
+
 export default function RouterProvider(): JSX.Element {
   return (
     <Router>
@@ -41,7 +43,7 @@ export default function RouterProvider(): JSX.Element {
         <Route
           element={
             <Layout.ConfigGuard
-              redirectTo="configuration"
+              redirectTo={ROUTES.CONFIG.ROOT}
               loader={<LoadingSpinner />}
             >
               <Layout.AppLayout />
@@ -50,50 +52,80 @@ export default function RouterProvider(): JSX.Element {
           errorElement={<Launcher />}
         >
           <Route index element={<HomePage />} />
-          <Route path="inscriptions" element={<EnrollmentPage />} />
-          <Route path="seating">
+          <Route path={ROUTES.ENROLLMENTS} element={<EnrollmentPage />} />
+
+          {/* Seating */}
+          <Route path={ROUTES.SEATING.ROOT}>
             <Route index element={<SeatingPage />} />
-            <Route path=":sessionId" element={<Layout.SeatingSessionLayout />}>
+            <Route
+              path={ROUTES.SEATING.SESSION}
+              element={<Layout.SeatingSessionLayout />}
+            >
               <Route index element={<SeatingSessionDetailPage />} />
               <Route
-                path=":localroomId/"
+                path={ROUTES.SEATING.SESSION_ASSIGNMENT}
                 element={<SeatingSessionAssignmentPage />}
               />
             </Route>
           </Route>
-          {/* schools */}
-          <Route path="options" element={<OptionPage />} />
-          {/* classrooms */}
-          <Route path="classrooms">
+
+          {/* Schools & Options */}
+          <Route path={ROUTES.OPTIONS} element={<OptionPage />} />
+          <Route path={ROUTES.SCHOOLS} element={<SchoolsPage />} />
+          <Route path={ROUTES.STUDY_YEARS} element={<StudyYearsPage />} />
+          <Route path={ROUTES.LOCALS} element={<LocalRoomPage />} />
+
+          {/* Classrooms */}
+          <Route path={ROUTES.CLASSROOMS.ROOT}>
             <Route index element={<ClassroomPage />} />
-            <Route path=":classroomId" element={<Layout.StudentLayout />}>
-              <Route path="students" element={<StudentPage />} />
+            <Route
+              path={ROUTES.CLASSROOMS.CLASSROOM}
+              element={<Layout.StudentLayout />}
+            >
+              <Route
+                path={ROUTES.CLASSROOMS.STUDENTS}
+                element={<StudentPage />}
+              />
             </Route>
           </Route>
 
-          <Route path="locals" element={<LocalRoomPage />} />
-          {/* other */}
-          <Route path="school-years" element={<StudyYearsPage />} />
-          <Route path="schools" element={<SchoolsPage />} />
-          {/* settings */}
-          <Route path="settings" element={<Layout.SettingLayout />}>
+          {/* Settings */}
+          <Route path={ROUTES.SETTINGS.ROOT} element={<Layout.SettingLayout />}>
             <Route index element={<SettingsPage />} />
-            <Route path="help" element={<HelpPage />} />
-            <Route path="developer" element={<DeveloperPage />} />
-            <Route path="account" element={<AccountPage />} />
-            <Route path="about" element={<AboutPage />} />
-            <Route path="notifications" element={<NotificationPage />} />
+            <Route path={ROUTES.SETTINGS.HELP} element={<HelpPage />} />
+            <Route
+              path={ROUTES.SETTINGS.DEVELOPER}
+              element={<DeveloperPage />}
+            />
+            <Route path={ROUTES.SETTINGS.ACCOUNT} element={<AccountPage />} />
+            <Route path={ROUTES.SETTINGS.ABOUT} element={<AboutPage />} />
+            <Route
+              path={ROUTES.SETTINGS.NOTIFICATIONS}
+              element={<NotificationPage />}
+            />
           </Route>
         </Route>
-        <Route path="configuration" element={<ConfigurationLayoutScreen />}>
+
+        {/* Configuration */}
+        <Route
+          path={ROUTES.CONFIG.ROOT}
+          element={<ConfigurationLayoutScreen />}
+        >
           <Route index element={<SchoolConfigPage />} />
-          <Route path="school/new" element={<ConfigCreateSchoolPage />} />
-          <Route path="school-year" element={<StudyYearConfigPage />} />
           <Route
-            path="school-year/new"
+            path={ROUTES.CONFIG.SCHOOL_NEW}
+            element={<ConfigCreateSchoolPage />}
+          />
+          <Route
+            path={ROUTES.CONFIG.STUDY_YEAR}
+            element={<StudyYearConfigPage />}
+          />
+          <Route
+            path={ROUTES.CONFIG.STUDY_YEAR_NEW}
             element={<NewStudyYearConfigurationPage />}
           />
         </Route>
+
         <Route path="*" element={<h2>404 Not Found</h2>} />
       </Routes>
     </Router>

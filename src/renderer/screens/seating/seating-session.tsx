@@ -10,7 +10,7 @@ import { useGetSeatingSessions } from "@/renderer/libs/queries/seating";
 import { Button } from "@/renderer/components/ui/button";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
-import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
+import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import { ButtonDialogDocumentExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 
@@ -43,8 +43,10 @@ import {
 
 const columns = enhanceColumnsExpandable(seatingSessionColumns);
 
-interface SessionRowActionsProps
-  extends Pick<SeatingSessionDialogProps, "queryKeysToInvalidate"> {
+interface SessionRowActionsProps extends Pick<
+  SeatingSessionDialogProps,
+  "queryKeysToInvalidate"
+> {
   session: TSeatingSession;
 }
 

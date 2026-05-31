@@ -38,12 +38,14 @@ import { Link } from "react-router";
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 import { useGetOptionAsOptions } from "@/renderer/hooks/data-as-options";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
+import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 
 const columns = enhanceColumnsExpandable(classroomColumns);
 
-interface ClassroomRowActionsProps
-  extends Pick<ClassroomDialogProps, "queryKeysToInvalidate"> {
+interface ClassroomRowActionsProps extends Pick<
+  ClassroomDialogProps,
+  "queryKeysToInvalidate"
+> {
   classroom: TClassroom;
   schoolId: string;
   yearId: string;

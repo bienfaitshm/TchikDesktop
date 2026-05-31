@@ -19,7 +19,7 @@ import {
   enhanceColumnsExpandable,
 } from "@/renderer/components/tables/columns";
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
-import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
+import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 import type { StudentSeating } from "@/renderer/components/tables/columns.seating-student";

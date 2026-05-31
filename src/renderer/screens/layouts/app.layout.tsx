@@ -3,7 +3,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/renderer/components/ui/sidebar";
-import { ApplicationSidebar } from "@/renderer/components/app-sidebar";
+import { ApplicationSidebar } from "@/renderer/components/app-sidebar/app-sidebar";
 import { Outlet } from "react-router";
 import { Separator } from "@/renderer/components/ui/separator";
 import { Suspense } from "@/renderer/libs/queries/suspense";

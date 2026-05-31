@@ -25,7 +25,7 @@ import {
 } from "@/renderer/components/tables/columns";
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
+import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import {
   ActionContainer,
   ActionTileCopy,
@@ -44,8 +44,10 @@ import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 
 const columns = enhanceColumnsExpandable(optionColumns);
 
-interface OptionRowActionsProps
-  extends Pick<OptionDialogProps, "queryKeysToInvalidate"> {
+interface OptionRowActionsProps extends Pick<
+  OptionDialogProps,
+  "queryKeysToInvalidate"
+> {
   option: TOption;
 }
 
