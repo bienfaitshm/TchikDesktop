@@ -8,6 +8,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/renderer/components/ui/chart";
+import { cn } from "@/renderer/utils";
 
 interface ChartPieData {
   label: string;
@@ -20,14 +21,12 @@ interface ChartPieProps {
   data: ChartPieData[];
   config: ChartConfig;
   centerDataInfos?: {
-    total: number; // Forcé à number pour toLocaleString()
+    total: number;
     totalLabel: string;
   };
   className?: string;
   height?: number;
-  showTooltipLabel?: boolean;
-  innerRadius?: number; // Permet de personnaliser l'épaisseur du donut
-  outerRadius?: number;
+  innerRadius?: number;
 }
 
 export function ChartPie({
@@ -36,16 +35,12 @@ export function ChartPie({
   centerDataInfos,
   className,
   height = 250,
-  showTooltipLabel = false,
   innerRadius = 60,
-  outerRadius,
 }: ChartPieProps) {
   const colorVars = React.useMemo(() => {
     return Object.entries(config).reduce<Record<string, string>>(
       (acc, [key, item]) => {
-        if (item && "color" in item && typeof item.color === "string") {
-          acc[`--color-${key}`] = item.color;
-        }
+        if (item?.color) acc[`--color-${key}`] = item.color;
         return acc;
       },
       {},
@@ -54,67 +49,65 @@ export function ChartPie({
 
   const chartData = useMemo(() => {
     return data.map((item) => {
-      // Cherche la clé dans la config correspondant au label slugifié
       const slug = item.label.toLowerCase().replace(/\s+/g, "-");
-      const configEntry = config[slug];
-      const fill =
-        item.fill ||
-        (configEntry && "color" in configEntry
-          ? (configEntry as { color: string }).color
-          : undefined) ||
-        `var(--color-${slug})`; // fallback (peut être une variable invalide si non définie)
-      return { ...item, fill };
+      return { ...item, fill: item.fill || `var(--color-${slug})` };
     });
-  }, [data, config]);
+  }, [data]);
 
   return (
-    <ChartContainer
-      config={config}
-      className={`mx-auto aspect-square h-[${height}px] pb-0 ${className || ""}`}
+    <div
+      style={{ height: `${height}px`, ...colorVars }}
+      className={cn("mx-auto flex justify-center", className)}
     >
-      <div style={colorVars}>
-        <PieChart
-          data={chartData}
-          dataKey="value"
-          //   nameKey=""
-          innerRadius={centerDataInfos ? innerRadius : 0}
-          outerRadius={outerRadius}
-          //   strokeWidth={2}
-        >
-          {centerDataInfos && (
-            <Label
-              content={({ viewBox }) => {
-                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                  return (
-                    <text
-                      x={viewBox.cx}
-                      y={viewBox.cy}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                    >
-                      <tspan
+      <ChartContainer config={config} className="h-full aspect-square">
+        <PieChart>
+          <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent hideLabel />}
+          />
+          <Pie
+            data={chartData}
+            dataKey="value"
+            nameKey="label"
+            innerRadius={centerDataInfos ? innerRadius : 0}
+            strokeWidth={5} // Ajoute un petit espace entre les segments (pro)
+            stroke="hsl(var(--background))"
+          >
+            {centerDataInfos && (
+              <Label
+                content={({ viewBox }) => {
+                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                    return (
+                      <text
                         x={viewBox.cx}
                         y={viewBox.cy}
-                        className="fill-foreground text-3xl font-bold"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
                       >
-                        {centerDataInfos.total.toLocaleString()}
-                      </tspan>
-                      <tspan
-                        x={viewBox.cx}
-                        y={(viewBox.cy || 0) + 24}
-                        className="fill-muted-foreground text-xs uppercase tracking-wider"
-                      >
-                        {centerDataInfos.totalLabel}
-                      </tspan>
-                    </text>
-                  );
-                }
-              }}
-            />
-          )}
+                        <tspan
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          className="fill-foreground text-3xl font-bold"
+                        >
+                          {centerDataInfos.total.toLocaleString()}
+                        </tspan>
+                        <tspan
+                          x={viewBox.cx}
+                          y={(viewBox.cy || 0) + 24}
+                          className="fill-muted-foreground text-xs uppercase tracking-wider"
+                        >
+                          {centerDataInfos.totalLabel}
+                        </tspan>
+                      </text>
+                    );
+                  }
+                }}
+              />
+            )}
+          </Pie>
         </PieChart>
-      </div>
-    </ChartContainer>
+      </ChartContainer>
+    </div>
   );
 }
 

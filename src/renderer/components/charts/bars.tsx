@@ -14,6 +14,8 @@ import {
   ChartTooltipContent,
 } from "@/renderer/components/ui/chart";
 import React from "react";
+import { cn } from "@/renderer/utils";
+
 interface BarChartProps<T extends object> {
   config: ChartConfig;
   data: T[];
@@ -36,16 +38,15 @@ export function BarChart<T extends object>({
   stacked = false,
   labelFormatter,
   className,
-  height = 200,
+  height = 200, // On laisse cette valeur par défaut
   margin = { top: 20, right: 20, left: 0, bottom: 0 },
   showLegend = true,
   tooltipIndicator = "dashed",
 }: BarChartProps<T>) {
-  // Génère les styles CSS pour les variables de couleur
   const colorVars = React.useMemo(() => {
     return Object.entries(config).reduce<Record<string, string>>(
       (acc, [key, item]) => {
-        if (item && "color" in item && typeof item.color === "string") {
+        if (item?.color) {
           acc[`--color-${key}`] = item.color;
         }
         return acc;
@@ -55,11 +56,11 @@ export function BarChart<T extends object>({
   }, [config]);
 
   return (
-    <ChartContainer
-      config={config}
-      className={`h-[${height}px] w-full ${className || ""}`}
+    <div
+      style={{ height: `${height}px`, ...colorVars }}
+      className={cn("w-full", className)}
     >
-      <div style={colorVars}>
+      <ChartContainer config={config} className="h-full w-full">
         <RechartsBarChart accessibilityLayer data={data} margin={margin}>
           <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.4} />
           <XAxis
@@ -88,8 +89,8 @@ export function BarChart<T extends object>({
             />
           ))}
         </RechartsBarChart>
-      </div>
-    </ChartContainer>
+      </ChartContainer>
+    </div>
   );
 }
 
