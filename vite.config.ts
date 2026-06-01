@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { type UserConfig } from "vite";
 import { type VitestUserConfig } from "vitest/config";
+import tailwindcss from "@tailwindcss/vite";
 
 /**
  * Configuration de base pour un projet TypeScript utilisant Vite.
@@ -24,6 +25,7 @@ export default defineConfig(
        * @see https://github.com/aleclarson/vite-tsconfig-paths
        */
       tsconfigPaths(),
+      tailwindcss(),
     ],
 
     // --- VITEST CONFIGURATION ---
