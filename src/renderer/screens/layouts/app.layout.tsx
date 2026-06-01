@@ -16,7 +16,7 @@ export function AppLayout() {
     <SidebarProvider>
       <ApplicationSidebar />
       <SidebarInset>
-        <header className="bg-background/95 backdrop-blur sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-4 transition-all">
+        <header className="bg-background/95 backdrop-blur-sm sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-4 transition-all">
           {/* Partie Gauche : Navigation */}
           <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
 

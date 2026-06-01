@@ -86,7 +86,7 @@ function GenericComboBoxInner<T>(
             </PopoverTrigger>
 
             <PopoverContent
-                className={cn("w-[var(--radix-popover-trigger-width)] min-w-[280px] p-0 shadow-md", contentClassName)}
+                className={cn("w-(--radix-popover-trigger-width) min-w-[280px] p-0 shadow-md", contentClassName)}
                 align="start"
             >
                 <Command className="flex flex-col">

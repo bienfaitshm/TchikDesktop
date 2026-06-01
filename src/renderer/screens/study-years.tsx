@@ -72,7 +72,7 @@ export const StudyYearsPage = () => {
       <PageShell
         maxWidth="2xl"
         header={
-          <section className="container flex items-center justify-between w-full max-w-screen-2xl my-4">
+          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
             <header className="space-y-1">
               <h1 className="text-2xl font-bold tracking-tight">
                 Années Scolaires
@@ -83,7 +83,7 @@ export const StudyYearsPage = () => {
             </header>
 
             <CreateStudyYearDialog>
-              <Button size="sm" className="rounded-full shadow-sm">
+              <Button size="sm" className="rounded-full shadow-xs">
                 <Plus className="size-4" />
                 <span>Nouvelle année</span>
               </Button>

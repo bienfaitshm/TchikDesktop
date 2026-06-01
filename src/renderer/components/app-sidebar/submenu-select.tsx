@@ -92,7 +92,7 @@ export function MenuSelectItem({
         e.preventDefault();
         onSelect?.();
       }}
-      className="flex items-center justify-between py-2 px-3 cursor-pointer rounded-md transition-colors text-sm focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+      className="flex items-center justify-between py-2 px-3 cursor-pointer rounded-md transition-colors text-sm focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50"
     >
       <div className="flex items-center gap-3 text-left片段">
         {icon && (

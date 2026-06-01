@@ -44,7 +44,7 @@ function SchoolProfile({ school }: { school: any }) {
 
   return (
     <div className="flex items-center gap-3">
-      <Avatar className="h-9 w-9 rounded-lg border border-sidebar-border shadow-sm">
+      <Avatar className="h-9 w-9 rounded-lg border border-sidebar-border shadow-xs">
         {school.logo && (
           <AvatarImage src={school.logo} alt={`Logo ${school.name}`} />
         )}
@@ -85,7 +85,7 @@ export function SidebarHead() {
                   group"
               >
                 {/* Logo */}
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg shadow-sm transition-transform duration-300 group-hover:scale-105">
+                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg shadow-xs transition-transform duration-300 group-hover:scale-105">
                   <img
                     alt="Logo application Tchik"
                     src={IconImage}
@@ -117,7 +117,7 @@ export function SidebarHead() {
             </MenubarTrigger>
 
             <MenubarContent
-              className="w-[--radix-menubar-trigger-width] min-w-[360px] rounded-lg shadow-xl border-sidebar-border"
+              className="w-(--radix-menubar-trigger-width) min-w-[360px] rounded-lg shadow-xl border-sidebar-border"
               side={isMobile ? "bottom" : "right"}
               align="start"
               sideOffset={8}

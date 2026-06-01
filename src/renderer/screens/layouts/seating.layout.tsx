@@ -98,7 +98,7 @@ export const EmptyMessage: React.FC<
         <Button
           variant="outline"
           size="icon"
-          className="size-11 shrink-0 rounded-xl shadow-sm hover:bg-accent"
+          className="size-11 shrink-0 rounded-xl shadow-xs hover:bg-accent"
           onClick={() => navigate(-1)}
         >
           <ChevronLeft className="size-5" />
@@ -114,10 +114,10 @@ export const EmptyMessage: React.FC<
           </p>
         </div>
       </header>
-      <div className="flex flex-col items-center justify-center min-h-[65vh] border-2 border-dashed rounded-[2rem] bg-muted/5 mt-4 transition-colors hover:bg-muted/10">
+      <div className="flex flex-col items-center justify-center min-h-[65vh] border-2 border-dashed rounded-4xl bg-muted/5 mt-4 transition-colors hover:bg-muted/10">
         <div className="relative mb-6">
           <div className="absolute -inset-4 rounded-full bg-primary/10 blur-2xl animate-pulse" />
-          <div className="relative bg-background border shadow-sm p-6 rounded-3xl">
+          <div className="relative bg-background border shadow-xs p-6 rounded-3xl">
             <Wand2 className="size-12 text-primary" />
           </div>
         </div>

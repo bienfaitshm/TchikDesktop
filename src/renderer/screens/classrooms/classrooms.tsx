@@ -119,7 +119,7 @@ export const ClassroomPage = () => {
       <PageShell
         maxWidth="2xl"
         header={
-          <section className="container flex items-center justify-between w-full max-w-screen-2xl my-4">
+          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
             <header className="space-y-1">
               <h1 className="text-2xl font-bold tracking-tight">
                 Gestion des classes
@@ -134,7 +134,7 @@ export const ClassroomPage = () => {
               defaultValues={{ yearId, schoolId }}
               queryKeysToInvalidate={queryKeysToInvalidate}
             >
-              <Button size="sm" className="rounded-full shadow-sm">
+              <Button size="sm" className="rounded-full shadow-xs">
                 <Plus className="size-4 mr-2" />
                 <span>Ajouter une classe</span>
               </Button>

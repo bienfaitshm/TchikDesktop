@@ -103,7 +103,7 @@ const KpiCard = ({
     className="group relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:scale-[1.02] cursor-pointer"
     onClick={onClick}
   >
-    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+    <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
     <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
       <CardTitle className="text-sm font-medium text-muted-foreground">
         {title}
@@ -156,7 +156,7 @@ const ChartCard = ({
   action,
 }: ChartCardProps) => (
   <Card
-    className={`overflow-hidden shadow-sm hover:shadow-md transition-shadow ${className}`}
+    className={`overflow-hidden shadow-xs hover:shadow-md transition-shadow ${className}`}
   >
     <CardHeader className="flex flex-row items-center justify-between pb-2">
       <div>
@@ -233,7 +233,7 @@ export const DashBoardPage = () => {
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">Exporter</span>
           </Button>
-          <Button className="h-9 shadow-sm gap-2">
+          <Button className="h-9 shadow-xs gap-2">
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Nouvelle Inscription</span>
           </Button>
@@ -371,7 +371,7 @@ export const DashBoardPage = () => {
             </ChartCard>
 
             {/* Carte vide pour équilibrer la grille, ou une autre stat */}
-            <Card className="lg:col-span-9 shadow-sm">
+            <Card className="lg:col-span-9 shadow-xs">
               <CardHeader>
                 <CardTitle className="text-base font-semibold">
                   Répartition géographique (placeholder)

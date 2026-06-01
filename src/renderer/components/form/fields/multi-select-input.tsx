@@ -75,7 +75,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] min-w-[280px] p-0 shadow-md"
+          className="w-(--radix-popover-trigger-width) min-w-[280px] p-0 shadow-md"
           align="start"
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
@@ -86,8 +86,8 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Rechercher..."
               className={cn(
-                "flex w-full bg-transparent py-3 text-xs outline-none placeholder:text-xs placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
-                "h-8 text-xs border-0 border-none shadow-none focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                "flex w-full bg-transparent py-3 text-xs outline-hidden placeholder:text-xs placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+                "h-8 text-xs border-0 border-none shadow-none focus:ring-0 focus:outline-hidden focus-visible:ring-0 focus-visible:ring-offset-0"
               )}
             />
             {searchTerm && (

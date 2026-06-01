@@ -25,8 +25,8 @@ export const usePageShell = () => {
 }
 
 const MAX_WIDTH_CLASSES = {
-    xl: "max-w-screen-xl",
-    "2xl": "max-w-screen-2xl",
+    xl: "max-w-(--breakpoint-xl)",
+    "2xl": "max-w-(--breakpoint-2xl)",
     full: "max-w-full"
 } as const
 
@@ -60,7 +60,7 @@ export const PageShell = ({
                             className={cn(
                                 "top-0 z-5 w-full pt-8 px-6 transition-all duration-500 ease-in-out lg:px-10",
                                 isScrolled
-                                    ? "bg-background/80 backdrop-blur-md py-3 shadow-sm"
+                                    ? "bg-background/80 backdrop-blur-md py-3 shadow-xs"
                                     : "bg-transparent py-8"
                             )}
                         >

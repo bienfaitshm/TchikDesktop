@@ -115,7 +115,7 @@ export const SidebarSettingsButton = () => {
           </MenubarTrigger>
 
           <MenubarContent
-            className="w-[--radix-menubar-trigger-width] min-w-[350px]"
+            className="w-(--radix-menubar-trigger-width) min-w-[350px]"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={8}

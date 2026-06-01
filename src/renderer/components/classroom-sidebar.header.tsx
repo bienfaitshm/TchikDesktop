@@ -57,7 +57,7 @@ export const ClassroomSidebarHeader = ({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full h-8 justify-between px-2 text-[11px] font-medium border border-border/40 bg-background/50 hover:bg-muted/50 transition-all shadow-sm"
+            className="w-full h-8 justify-between px-2 text-[11px] font-medium border border-border/40 bg-background/50 hover:bg-muted/50 transition-all shadow-xs"
           >
             <span className="flex items-center gap-2 truncate">
               <Layers className="size-3 text-muted-foreground/70" />
@@ -67,7 +67,7 @@ export const ClassroomSidebarHeader = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[200px]"
+          className="w-(--radix-dropdown-menu-trigger-width) min-w-[200px]"
           align="start"
         >
           <DropdownMenuLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/70">

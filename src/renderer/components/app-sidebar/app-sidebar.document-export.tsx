@@ -38,7 +38,7 @@ export function SidebarExportDocument({
                 className="w-full justify-center group transition-all duration-300 dynamic-tailwind-classes"
                 tooltip="Exporter les données ou documents"
               >
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:bg-sidebar-primary/90">
+                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg shadow-xs transition-all duration-300 group-hover:scale-105 group-hover:bg-sidebar-primary/90">
                   <Download className="size-4 transition-transform group-hover:-translate-y-0.5" />
                 </div>
               </SidebarMenuButton>
@@ -47,7 +47,7 @@ export function SidebarExportDocument({
         ) : (
           <div
             className={cn(
-              "w-full rounded-xl border border-sidebar-border bg-sidebar-accent/30 p-3 backdrop-blur-sm shadow-sm",
+              "w-full rounded-xl border border-sidebar-border bg-sidebar-accent/30 p-3 backdrop-blur-xs shadow-xs",
               "animate-in fade-in-50 slide-in-from-left-2 duration-200 ease-out",
             )}
           >
@@ -65,7 +65,7 @@ export function SidebarExportDocument({
               schoolId={schoolId}
               yearId={yearId}
               buttonTrigger={
-                <ButtonExport className="w-full justify-center shadow-xs" />
+                <ButtonExport className="w-full justify-center shadow-2xs" />
               }
             />
           </div>

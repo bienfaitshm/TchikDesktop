@@ -45,7 +45,7 @@ export const SettingLayout = () => {
                     defaultSize={20}
                     minSize={15}
                     maxSize={25}
-                    className="h-full bg-muted/30 backdrop-blur-sm"
+                    className="h-full bg-muted/30 backdrop-blur-xs"
                 >
                     <div className="flex flex-col h-full">
                         <div className="p-6">
@@ -65,7 +65,7 @@ export const SettingLayout = () => {
                                                 "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all",
                                                 "hover:bg-accent hover:text-accent-foreground",
                                                 isActive 
-                                                    ? "bg-background shadow-sm text-primary ring-1 ring-border" 
+                                                    ? "bg-background shadow-xs text-primary ring-1 ring-border" 
                                                     : "text-muted-foreground"
                                             )}
                                         >

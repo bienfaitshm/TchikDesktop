@@ -63,7 +63,7 @@ export const ClassroomHeader = ({
             yearId={yearId}
             defaultValues={defaultValues}
           >
-            <Button size="sm" className="gap-2 shadow-sm">
+            <Button size="sm" className="gap-2 shadow-xs">
               <UserPlus className="h-4 w-4" />
               <span>Nouvelle Inscription</span>
             </Button>

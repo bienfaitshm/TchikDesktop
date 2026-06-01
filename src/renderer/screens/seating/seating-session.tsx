@@ -112,7 +112,7 @@ export const SeatingPage = () => {
       <PageShell
         maxWidth="2xl"
         header={
-          <section className="container flex items-center justify-between w-full max-w-screen-2xl my-4">
+          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
             <header className="space-y-1">
               <h1 className="text-2xl font-bold tracking-tight">
                 Sessions de mise en place
@@ -127,7 +127,7 @@ export const SeatingPage = () => {
             >
               <Button
                 size="sm"
-                className="rounded-full shadow-sm bg-primary hover:bg-primary/90"
+                className="rounded-full shadow-xs bg-primary hover:bg-primary/90"
               >
                 <Plus className="mr-2 size-4" />
                 Nouvelle session

@@ -36,7 +36,7 @@ export const ClassroomSidebar = ({ classrooms }: ClassroomSidebarProps) => {
             <Button
               variant="ghost"
               size="icon"
-              className="size-7 shrink-0 rounded-md hover:bg-accent border border-border/40 shadow-sm"
+              className="size-7 shrink-0 rounded-md hover:bg-accent border border-border/40 shadow-xs"
               onClick={() => navigate(-1)}
               aria-label="Retour"
             >

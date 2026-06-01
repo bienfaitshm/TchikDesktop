@@ -27,11 +27,11 @@ const SidebarItem = React.forwardRef<HTMLDivElement, SidebarItemProps>(
         ref={ref}
         aria-current={isActive ? "page" : undefined}
         className={cn(
-          "flex items-center gap-3 px-3 h-9 rounded-md text-xs font-medium transition-all outline-none",
+          "flex items-center gap-3 px-3 h-9 rounded-md text-xs font-medium transition-all outline-hidden",
           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
           "cursor-pointer select-none",
           isActive
-            ? "bg-primary text-primary-foreground shadow-sm"
+            ? "bg-primary text-primary-foreground shadow-xs"
             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
           className,
         )}

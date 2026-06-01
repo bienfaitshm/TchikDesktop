@@ -67,7 +67,7 @@ export const StudentSeniorityStatusSelect: React.FC<StudentSeniorityStatusSelect
                             <FormLabel
                                 htmlFor={`seniority-${option.value}`}
                                 className={cn(
-                                    "flex flex-1 cursor-pointer flex-row items-start gap-4 rounded-xl border-2 p-4 transition-all duration-200 outline-none",
+                                    "flex flex-1 cursor-pointer flex-row items-start gap-4 rounded-xl border-2 p-4 transition-all duration-200 outline-hidden",
                                     "hover:bg-muted/50",
                                     "peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2",
                                     isSelected

@@ -114,7 +114,7 @@ export const RoomHeaderInfo = ({ localroom, layoutAssignments }) => {
     (layoutAssignments.length / localroom.maxCapacity) * 100;
 
   return (
-    <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-screen-2xl mt-2 gap-4">
+    <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-(--breakpoint-2xl) mt-2 gap-4">
       <header className="space-y-1.5">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-md bg-primary/10 text-primary">

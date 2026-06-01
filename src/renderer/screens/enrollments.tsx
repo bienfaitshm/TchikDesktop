@@ -80,7 +80,7 @@ export const EnrollmentPage = () => {
     const defaultValues = { schoolId, yearId };
 
     return (
-        <div className="container mx-auto max-w-screen-xl py-10 px-4 sm:px-4">
+        <div className="container mx-auto max-w-(--breakpoint-xl) py-10 px-4 sm:px-4">
             {/* Header avec Actions Groupées */}
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 mt-10">
                 <div className="space-y-1">
@@ -101,7 +101,7 @@ export const EnrollmentPage = () => {
 
                     {/* Inscription Complète : Bouton Principal */}
                     <CreateEnrollmentDialog schoolId={schoolId} yearId={yearId} defaultValues={{ schoolId, yearId }}>
-                        <Button className="gap-2 shadow-sm">
+                        <Button className="gap-2 shadow-xs">
                             <UserPlus className="h-4 w-4" />
                             <span>Inscription Complète</span>
                         </Button>

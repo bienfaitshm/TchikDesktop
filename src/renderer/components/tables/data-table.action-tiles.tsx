@@ -9,11 +9,11 @@ import { cn } from "@/renderer/utils"
 // --- Variants Definition (The Shadcn Way) ---
 
 const actionTileVariants = cva(
-    "group relative flex flex-col items-center justify-center p-4 gap-2.5 rounded-xl border border-border/50 bg-background text-center text-foreground transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+    "group relative flex flex-col items-center justify-center p-4 gap-2.5 rounded-xl border border-border/50 bg-background text-center text-foreground transition-all duration-200 outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
     {
         variants: {
             variant: {
-                default: "hover:border-primary/30 hover:bg-primary/5 hover:shadow-sm",
+                default: "hover:border-primary/30 hover:bg-primary/5 hover:shadow-xs",
                 warning: "hover:border-amber-300/50 hover:bg-amber-50 dark:hover:bg-amber-950/20",
                 success: "hover:border-emerald-300/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/20",
                 danger: "hover:border-red-300/50 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-700 dark:hover:text-red-400",

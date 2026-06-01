@@ -84,7 +84,7 @@ export function AdvancedSearchEngine() {
             placeholder="Rechercher ou taper des opérateurs (ex: site:tshik.cd)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-transparent border-0 p-0 text-sm placeholder:text-muted-foreground focus:ring-0 focus:outline-none"
+            className="w-full bg-transparent border-0 p-0 text-sm placeholder:text-muted-foreground focus:ring-0 focus:outline-hidden"
           />
 
           {/* Bouton Toggle Options Avancées */}
@@ -94,7 +94,7 @@ export function AdvancedSearchEngine() {
             className={cn(
               "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
               isAdvancedOpen
-                ? "bg-primary text-primary-foreground shadow-sm"
+                ? "bg-primary text-primary-foreground shadow-xs"
                 : "bg-muted text-muted-foreground hover:bg-muted/80",
             )}
           >
@@ -257,7 +257,7 @@ export function AdvancedSearchEngine() {
                 </button>
                 <button
                   type="submit"
-                  className="bg-primary text-primary-foreground font-medium px-4 py-2 rounded-lg shadow-sm hover:bg-primary/90 transition-colors"
+                  className="bg-primary text-primary-foreground font-medium px-4 py-2 rounded-lg shadow-xs hover:bg-primary/90 transition-colors"
                 >
                   Lancer la recherche approfondie
                 </button>
