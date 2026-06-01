@@ -5,10 +5,13 @@ import React, { useMemo } from "react";
 import {
   ChartConfig,
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/renderer/components/ui/chart";
 import { cn } from "@/renderer/utils";
+import { useChartPieData } from "./utils";
 
 interface ChartPieData {
   label: string;
@@ -27,6 +30,7 @@ interface ChartPieProps {
   className?: string;
   height?: number;
   innerRadius?: number;
+  showLegend?: boolean;
 }
 
 export function ChartPie({
@@ -36,27 +40,13 @@ export function ChartPie({
   className,
   height = 250,
   innerRadius = 60,
+  showLegend = true,
 }: ChartPieProps) {
-  const colorVars = React.useMemo(() => {
-    return Object.entries(config).reduce<Record<string, string>>(
-      (acc, [key, item]) => {
-        if (item?.color) acc[`--color-${key}`] = item.color;
-        return acc;
-      },
-      {},
-    );
-  }, [config]);
-
-  const chartData = useMemo(() => {
-    return data.map((item) => {
-      const slug = item.label.toLowerCase().replace(/\s+/g, "-");
-      return { ...item, fill: item.fill || `var(--color-${slug})` };
-    });
-  }, [data]);
+  const chartData = useChartPieData(data, config);
 
   return (
     <div
-      style={{ height: `${height}px`, ...colorVars }}
+      style={{ height }}
       className={cn("mx-auto flex justify-center", className)}
     >
       <ChartContainer config={config} className="h-full aspect-square">
@@ -71,40 +61,43 @@ export function ChartPie({
             nameKey="label"
             innerRadius={centerDataInfos ? innerRadius : 0}
             strokeWidth={5} // Ajoute un petit espace entre les segments (pro)
-            stroke="hsl(var(--background))"
+            stroke="var(--background)"
           >
             {centerDataInfos && (
               <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
+                content={(props) => {
+                  const viewBox = props.viewBox as
+                    | { cx?: number; cy?: number }
+                    | undefined;
+                  if (!viewBox?.cx || !viewBox?.cy) return null;
+                  return (
+                    <text
+                      x={viewBox.cx}
+                      y={viewBox.cy}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                    >
+                      <tspan
                         x={viewBox.cx}
                         y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
+                        className="fill-foreground text-3xl font-bold"
                       >
-                        <tspan
-                          x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
-                        >
-                          {centerDataInfos.total.toLocaleString()}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground text-xs uppercase tracking-wider"
-                        >
-                          {centerDataInfos.totalLabel}
-                        </tspan>
-                      </text>
-                    );
-                  }
+                        {centerDataInfos.total.toLocaleString()}
+                      </tspan>
+                      <tspan
+                        x={viewBox.cx}
+                        y={(viewBox.cy || 0) + 24}
+                        className="fill-muted-foreground text-xs uppercase tracking-wider"
+                      >
+                        {centerDataInfos.totalLabel}
+                      </tspan>
+                    </text>
+                  );
                 }}
               />
             )}
           </Pie>
+          {showLegend && <ChartLegend content={<ChartLegendContent />} />}
         </PieChart>
       </ChartContainer>
     </div>

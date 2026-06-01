@@ -2,23 +2,18 @@
 
 import * as React from "react";
 import {
-  Plus,
-  Search,
   Users,
   UserMinus,
   UserCheck,
   GraduationCap,
   ArrowUpRight,
   ArrowDownRight,
-  Download,
-  Calendar,
   SlidersHorizontal,
   FileText,
   Clock,
 } from "lucide-react";
 
 import { Button } from "@/renderer/components/ui/button";
-import { Input } from "@/renderer/components/ui/input";
 import {
   Card,
   CardContent,
@@ -26,13 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/renderer/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/renderer/components/ui/select";
+
 import { Badge } from "@/renderer/components/ui/badge";
 import {
   Tabs,
@@ -53,15 +42,14 @@ import type { ChartConfig } from "@/renderer/components/ui/chart";
 
 // --- CONFIGURATIONS DES GRAPHIQUES ---
 const GENDER_CONFIG = {
-  value: { label: "Élèves" },
-  masculin: { label: "Garçons", color: "var(--chart-1)" },
-  féminin: { label: "Filles", color: "var(--chart-2)" },
+  M: { label: "Garçons", color: "var(--chart-1)" },
+  F: { label: "Filles", color: "var(--chart-3)" },
 } satisfies ChartConfig;
 
 const STATUS_CONFIG = {
-  active: { label: "Actifs", color: "var(--chart-1)" },
-  exclu: { label: "Exclus", color: "var(--chart-2)" },
-  abandon: { label: "Abandons", color: "var(--chart-3)" },
+  active: { label: "Actifs", color: "var(--color-primary)" },
+  exclu: { label: "Exclus", color: "var(--color-destructive)" },
+  abandon: { label: "Abandons", color: "var(--color-secondary)" },
 } satisfies ChartConfig;
 
 const OPTION_CONFIG = {
@@ -188,10 +176,6 @@ const ChartCard = ({
 
 export const DashBoardPage = () => {
   const { schoolId, yearId } = useSchoolContext();
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [timeRange, setTimeRange] = React.useState("this-year");
-  const [activeTab, setActiveTab] = React.useState("overview");
-
   const {
     genderDistribution,
     statusDistribution,
@@ -223,36 +207,7 @@ export const DashBoardPage = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative w-full sm:w-60">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground/70" />
-            <Input
-              placeholder="Rechercher une fiche..."
-              className="pl-9 h-9 text-sm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="h-9 w-(150px) text-sm gap-2">
-              <Calendar className="h-4 w-4 text-primary" />
-              <SelectValue placeholder="Période" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="this-year">Année en cours</SelectItem>
-              <SelectItem value="last-year">Année précédente</SelectItem>
-              <SelectItem value="custom">Filtre avancé</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
-            <Download className="h-4 w-4 opacity-80" />
-            Exporter
-          </Button>
-          <Button size="sm" className="h-9 gap-2 text-sm shadow-xs font-medium">
-            <Plus className="h-4 w-4" />
-            Inscription
-          </Button>
-        </div>
+        <div className="flex flex-wrap items-center gap-3">{/*  */}</div>
       </div>
 
       {/* 2. CORE METRICS */}
@@ -288,11 +243,7 @@ export const DashBoardPage = () => {
       </div>
 
       {/* 3. TABS CONTAINER */}
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="space-y-6"
-      >
+      <Tabs defaultValue="overview" className="space-y-6">
         <div className="flex items-center justify-between border-b border-border/40 pb-2">
           <TabsList className="bg-muted/50 p-1 rounded-lg">
             <TabsTrigger value="overview" className="text-xs px-4 py-1.5">
@@ -300,6 +251,9 @@ export const DashBoardPage = () => {
             </TabsTrigger>
             <TabsTrigger value="details" className="text-xs px-4 py-1.5">
               Niveaux & Classes
+            </TabsTrigger>
+            <TabsTrigger value="enrollment" className="text-xs px-4 py-1.5">
+              Dernierres Inscriptions
             </TabsTrigger>
           </TabsList>
           <Button
@@ -370,13 +324,10 @@ export const DashBoardPage = () => {
               description="Synthèse de l'état opérationnel global"
               className="lg:col-span-3"
             >
-              <InteractivePieChart
-                id="discipline-pie"
+              <ChartPie
                 data={statusDistribution || []}
                 config={STATUS_CONFIG}
-                title=""
-                dataKey="value"
-                nameKey="label"
+                height={220}
               />
             </ChartCard>
           </div>
@@ -394,75 +345,6 @@ export const DashBoardPage = () => {
                 height={220}
               />
             </ChartCard>
-
-            {/* Flux d'activité Premium remplaçant le placeholder vide */}
-            <Card className="lg:col-span-8 border-border/60 shadow-xs flex flex-col justify-between">
-              <CardHeader className="pb-4 border-b border-border/40 bg-muted/10">
-                <CardTitle className="text-sm font-semibold tracking-tight">
-                  Dernières Inscriptions
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Historique en temps réel des derniers dossiers validés
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-4 flex-1">
-                <div className="divide-y divide-border/40 text-sm">
-                  {[
-                    {
-                      name: "Kavira Malasi",
-                      class: "3ème Générale",
-                      time: "Il y a 12 min",
-                      status: "Validé",
-                    },
-                    {
-                      name: "Ilunga Ngoie",
-                      class: "1ère Sec. Technique",
-                      time: "Il y a 45 min",
-                      status: "En attente",
-                    },
-                    {
-                      name: "Mbuyi Tshimanga",
-                      class: "4ème Humanités",
-                      time: "Il y a 2 heures",
-                      status: "Validé",
-                    },
-                  ].map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs">
-                          {item.name.substring(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-medium text-foreground text-xs">
-                            {item.name}
-                          </p>
-                          <p className="text-muted-foreground text-xs flex items-center gap-1">
-                            <FileText className="h-3 w-3 opacity-60" />{" "}
-                            {item.class}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-muted-foreground">
-                          {item.time}
-                        </p>
-                        <Badge
-                          variant={
-                            item.status === "Validé" ? "outline" : "secondary"
-                          }
-                          className="text-[10px] px-1.5 py-0 mt-0.5"
-                        >
-                          {item.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </TabsContent>
 
@@ -479,6 +361,79 @@ export const DashBoardPage = () => {
               height={420}
             />
           </ChartCard>
+        </TabsContent>
+        <TabsContent
+          value="enrollment"
+          className="focus-visible:outline-hidden"
+        >
+          {/* Flux d'activité Premium remplaçant le placeholder vide */}
+          <Card className="lg:col-span-8 border-border/60 shadow-xs flex flex-col justify-between">
+            <CardHeader className="pb-4 border-b border-border/40 bg-muted/10">
+              <CardTitle className="text-sm font-semibold tracking-tight">
+                Dernières Inscriptions
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Historique en temps réel des derniers dossiers validés
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4 flex-1">
+              <div className="divide-y divide-border/40 text-sm">
+                {[
+                  {
+                    name: "Kavira Malasi",
+                    class: "3ème Générale",
+                    time: "Il y a 12 min",
+                    status: "Validé",
+                  },
+                  {
+                    name: "Ilunga Ngoie",
+                    class: "1ère Sec. Technique",
+                    time: "Il y a 45 min",
+                    status: "En attente",
+                  },
+                  {
+                    name: "Mbuyi Tshimanga",
+                    class: "4ème Humanités",
+                    time: "Il y a 2 heures",
+                    status: "Validé",
+                  },
+                ].map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs">
+                        {item.name.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground text-xs">
+                          {item.name}
+                        </p>
+                        <p className="text-muted-foreground text-xs flex items-center gap-1">
+                          <FileText className="h-3 w-3 opacity-60" />{" "}
+                          {item.class}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground">
+                        {item.time}
+                      </p>
+                      <Badge
+                        variant={
+                          item.status === "Validé" ? "outline" : "secondary"
+                        }
+                        className="text-[10px] px-1.5 py-0 mt-0.5"
+                      >
+                        {item.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
