@@ -17,7 +17,7 @@ export class SeatingPlanBySheetExcelExportExtension extends AbstractExportExtens
   public async process(payload: ExportPayload): Promise<RawFileContent> {
     const workbook = new ExcelJS.Workbook();
 
-    workbook.creator = "Système de Gestion Scolaire";
+    workbook.creator = "Tchik";
     workbook.created = new Date();
 
     payload.assignment.assignments.forEach((room) => {

@@ -100,7 +100,7 @@ export class DataExport {
 
       // 4. Récupération des données
       log.info("Fetching required data...");
-      const dataResult = await strategy.resolveData(contextParams);
+      const dataResult = await strategy.handlerResolveData(contextParams);
       if (!dataResult.success) return dataResult;
 
       // 5. Génération de l'artefact

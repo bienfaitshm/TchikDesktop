@@ -2,10 +2,7 @@
  * @description Stratégie d'export pour la mise en place (seating).
  */
 
-import {
-  AbstractExportStrategy,
-  ServiceResult,
-} from "@/packages/electron-data-exporter";
+import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
 import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
 import {
   ClassroomIds,
@@ -74,23 +71,7 @@ export class SeatingExportStrategy extends AbstractExportStrategy<
    */
   public override async resolveData(
     contextParams: TCreateSeatingFormParams,
-  ): Promise<ServiceResult<any>> {
-    try {
-      const resolvedData = await SeatingDataResolver.resolveData(contextParams);
-
-      return {
-        success: true,
-        data: resolvedData,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          code: "DATA_FETCH_ERROR",
-          message: error instanceof Error ? error.message : "Erreur inconnue",
-          details: error instanceof Error ? error.message : "Erreur inconnue",
-        },
-      };
-    }
+  ): Promise<any> {
+    return SeatingDataResolver.resolveData(contextParams);
   }
 }

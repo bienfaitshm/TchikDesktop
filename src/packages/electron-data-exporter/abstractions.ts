@@ -16,7 +16,7 @@ export interface TMeta<TFormField = unknown> {
   title: string;
   description: string;
   extensions: FileFilter[];
-  fields?: TFormField[];
+  fields?: readonly TFormField[];
 }
 
 /**
@@ -32,9 +32,9 @@ export interface IExportExtension<TData = unknown> {
 /**
  * Base pour l'implémentation de processeurs de formats (ex: PDF, CSV).
  */
-export abstract class AbstractExportExtension<TData = unknown>
-  implements IExportExtension<TData>
-{
+export abstract class AbstractExportExtension<
+  TData = unknown,
+> implements IExportExtension<TData> {
   abstract readonly extension: DOCUMENT_EXTENSION;
   abstract readonly description?: string;
 
@@ -56,13 +56,14 @@ export interface IExportStrategy<TFormField> {
   readonly id: string;
   getFormFields<TParams extends ContextParams>(
     params?: TParams,
-  ): Promise<TFormField[]>;
+  ): Promise<readonly TFormField[]>;
   getMeta<TParams extends ContextParams>(
     params?: TParams,
   ): Promise<TMeta<TFormField>>;
   validateContext(params: unknown): ServiceResult<void>;
   getSaveOptions(targetExtension?: DOCUMENT_EXTENSION): SaveDialogOptions;
-  resolveData(dataContext: unknown): Promise<ServiceResult<unknown>>;
+  resolveData(dataContext: unknown): Promise<unknown>;
+  handlerResolveData(dataContext: unknown): Promise<ServiceResult<unknown>>;
   buildArtifact(
     targetExtension: DOCUMENT_EXTENSION,
     data: unknown,
@@ -76,8 +77,7 @@ export interface IExportStrategy<TFormField> {
 export abstract class AbstractExportStrategy<
   TFormField = unknown,
   TData = unknown,
-> implements IExportStrategy<TFormField>
-{
+> implements IExportStrategy<TFormField> {
   public abstract readonly id: string;
   public abstract readonly displayName: string;
   public abstract readonly description: string;
@@ -134,9 +134,29 @@ export abstract class AbstractExportStrategy<
    * Doit être implémentée par les stratégies concrètes pour fetch les données spécifiques.
    * On force l'implémentation via `abstract` au lieu de retourner une erreur par défaut.
    */
-  public abstract resolveData(
+  public abstract resolveData(dataContext: unknown): Promise<TData>;
+
+  public async handlerResolveData(
     dataContext: unknown,
-  ): Promise<ServiceResult<TData>>;
+  ): Promise<ServiceResult<TData>> {
+    try {
+      const resolvedData = await this.resolveData(dataContext);
+
+      return {
+        success: true,
+        data: resolvedData,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          code: "DATA_FETCH_ERROR",
+          message: error instanceof Error ? error.message : "Erreur inconnue",
+          details: error instanceof Error ? error.message : "Erreur inconnue",
+        },
+      };
+    }
+  }
 
   public getSaveOptions(
     targetExtension?: DOCUMENT_EXTENSION,
@@ -165,7 +185,7 @@ export abstract class AbstractExportStrategy<
 
   public async getFormFields<TParams extends ContextParams>(
     _params?: TParams,
-  ): Promise<TFormField[]> {
+  ): Promise<readonly TFormField[]> {
     return this.formFields;
   }
 
