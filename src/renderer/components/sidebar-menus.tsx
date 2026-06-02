@@ -31,7 +31,7 @@ const SidebarItem = React.forwardRef<HTMLDivElement, SidebarItemProps>(
           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
           "cursor-pointer select-none",
           isActive
-            ? "bg-primary text-primary-foreground shadow-xs"
+            ? "bg-secondary text-secondary-foreground-foreground shadow-xs"
             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
           className,
         )}
