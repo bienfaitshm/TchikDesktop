@@ -10,7 +10,7 @@ type SeatingResolverParams = {
   sessionId?: string;
 };
 
-export class SeatingDataResolver {
+export class SeatingSessionDataResolver {
   /**
    * Résout les données nécessaires pour la vue de placement.
    */

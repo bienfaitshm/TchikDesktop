@@ -2,6 +2,7 @@ import type { FormFieldDef } from "@/packages/dynamic-form";
 import {
   seatingSessionService,
   classroomService,
+  localRoomService,
 } from "@/packages/@core/data-access/db/queries";
 import {
   SeatingSessionFieldFactory,
@@ -121,6 +122,42 @@ export const createClassroomField = async (
     throw new FieldCreationError(
       "FETCH_ERROR",
       "classroom",
+      error instanceof Error ? error.message : undefined,
+    );
+  }
+};
+
+export const createLocalroomField = async (
+  params: Readonly<IClassroomFormParams & FileTypeFieldConfig>,
+): Promise<FormFieldDef> => {
+  try {
+    const { schoolId, ...config } = params;
+
+    const localrooms = await localRoomService.findMany({
+      where: { schoolId },
+    });
+
+    if (!localrooms.length) {
+      throw new FieldCreationError(
+        "VALIDATION_ERROR",
+        "localroom",
+        "No localrooms found for the given criteria",
+      );
+    }
+
+    const options = DataMappers.localroomsToOptions(localrooms);
+
+    return LocalRoomsFieldFactory.create({
+      options,
+      colSpan: 4,
+      ...config,
+    });
+  } catch (error) {
+    if (error instanceof FieldCreationError) throw error;
+
+    throw new FieldCreationError(
+      "FETCH_ERROR",
+      "localroom",
       error instanceof Error ? error.message : undefined,
     );
   }

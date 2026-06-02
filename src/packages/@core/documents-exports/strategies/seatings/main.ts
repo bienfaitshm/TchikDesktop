@@ -12,22 +12,21 @@ import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
-import { CsvExportExtension, JsonExportExtension } from "./enrollments.engines";
+import { extensions } from "@/packages/@core/documents-exports/extensions/seatings";
+import { createSeatingSessionExportForm } from "./form";
+import { SeatingSessionDataResolver } from "./resolver";
+import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 
-import {
-  createSeatingFieldForm,
-  type TCreateSeatingFormParams,
-} from "./seatings.form-fields";
-import { prependFileTypeField } from "./base.form-fields";
-import { SeatingDataResolver } from "./seating.data-resolver";
-import {
-  type ExportPayload,
-  SeatingPlanBySheetExcelExportExtension,
-} from "../extensions/seatings";
+type ExportPayload = {
+  schoolId: string;
+  yearId: string;
+  fileType: DOCUMENT_EXTENSION;
+  sessionId: string;
+};
 
 export class SeatingExportStrategy extends AbstractExportStrategy<
   FormFieldDef,
-  ExportPayload
+  any
 > {
   public readonly id = "SEATING_EXPORT" as const;
   public readonly displayName = "Liste de la mise en place";
@@ -43,35 +42,23 @@ export class SeatingExportStrategy extends AbstractExportStrategy<
 
   constructor() {
     super({
-      extensions: [
-        new SeatingPlanBySheetExcelExportExtension(),
-        new JsonExportExtension(),
-        new CsvExportExtension(),
-      ],
+      extensions,
       getSchemasCreator: generateValidationSchema,
     });
   }
 
-  public override async getFormFields(params): Promise<FormFieldDef[]> {
-    try {
-      const fields = await createSeatingFieldForm(params);
-      return prependFileTypeField(fields, this.extensionFilters, {
-        colSpan: 6,
-      });
-    } catch (error) {
-      throw new Error(
-        `[${this.id}] Impossible de charger les options d'export.`,
-      );
-    }
+  public override async getFormFields(
+    params,
+  ): Promise<readonly FormFieldDef[]> {
+    return createSeatingSessionExportForm({
+      fileTypeFilters: this.extensionFilters,
+      ...params,
+    });
   }
 
-  /**
-   * Résolution des données. Ici, on transmet simplement les filtres validés.
-   * Le processeur (Extension) se chargera de la transformation.
-   */
   public override async resolveData(
-    contextParams: TCreateSeatingFormParams,
+    contextParams: ExportPayload,
   ): Promise<any> {
-    return SeatingDataResolver.resolveData(contextParams);
+    return SeatingSessionDataResolver.resolveData(contextParams);
   }
 }

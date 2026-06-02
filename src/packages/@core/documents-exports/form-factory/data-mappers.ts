@@ -2,6 +2,7 @@ import type { SelectOption } from "@/packages/dynamic-form";
 import {
   seatingSessionService,
   classroomService,
+  localRoomService,
 } from "@/packages/@core/data-access/db/queries";
 
 /**
@@ -40,6 +41,23 @@ export const DataMappers = {
     return classrooms.map((classroom) => ({
       label: classroom.shortIdentifier ?? `Classe ${classroom.classId}`,
       value: classroom.classId,
+    }));
+  },
+
+  /**
+   * Maps localRooms to select options
+   * Provides fallback labels for missing short identifiers
+   */
+  localroomsToOptions(
+    localrooms: ReadonlyArray<
+      Awaited<ReturnType<typeof localRoomService.findMany>>[number]
+    >,
+  ): readonly SelectOption[] {
+    if (!localrooms?.length) return [];
+
+    return localrooms.map((localroom) => ({
+      label: localroom.name ?? `Classe ${localroom.localRoomId}`,
+      value: localroom.localRoomId,
     }));
   },
 } as const;

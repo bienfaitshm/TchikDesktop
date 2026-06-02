@@ -1,0 +1,1 @@
+export { SeatingExportStrategy } from "./main";
