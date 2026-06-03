@@ -28,10 +28,7 @@ export class CotationDataResolver {
     try {
       const [school, classrooms] = await Promise.all([
         schoolService.fetchSchoolInfo(schoolId, yearId),
-        classroomService.findWithEnrollments({
-          whereIn: { classId },
-          where: { schoolId, yearId },
-        }),
+        classroomService.getClassroomsWithStudents(schoolId, yearId, classId),
       ]);
 
       return {

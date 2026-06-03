@@ -1,4 +1,4 @@
-import { and, eq, getTableColumns } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray } from "drizzle-orm";
 import { db, type TDataBase } from "../config";
 import { getLogger } from "@/packages/logger";
 import {
@@ -127,11 +127,16 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
     }
   }
 
-  async getClassroomsWithStudents(schoolId: string, yearId: string) {
+  async getClassroomsWithStudents(
+    schoolId: string,
+    yearId: string,
+    classIds: string[] = [],
+  ) {
     const classrooms = await this.db.query.classRooms.findMany({
       where: and(
         eq(classRooms.schoolId, schoolId),
         eq(classRooms.yearId, yearId),
+        inArray(classRooms.classId, classIds),
       ),
       with: {
         enrolements: {

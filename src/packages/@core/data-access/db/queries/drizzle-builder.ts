@@ -247,6 +247,91 @@ export function applyQueryOptions<
 }
 
 /**
+ * Extrait et structure les options de requête de manière générique pour Drizzle .findMany()
+ * @template T Le type de la table Drizzle
+ * @template TFixedFilters Structure des filtres obligatoires (ex: { schoolId: string } ou { userId: string })
+ */
+export function extractQueryPayload<
+  T extends SQLiteTable,
+  TFixedFilters extends Record<string, any> = Record<string, never>,
+>(table: T, options?: FindManyOptions<T>, fixedFilters?: TFixedFilters) {
+  const columns = getTableColumns(table);
+  const andConditions: SQL[] = [];
+
+  if (fixedFilters) {
+    for (const [key, value] of Object.entries(fixedFilters)) {
+      if (value !== undefined && key in columns) {
+        andConditions.push(eq(columns[key], value));
+      }
+    }
+  }
+
+  if (options?.where) {
+    for (const [key, value] of Object.entries(options.where)) {
+      if (value !== undefined && key in columns) {
+        andConditions.push(eq(columns[key], value));
+      }
+    }
+  }
+
+  if (options?.whereIn) {
+    for (const [key, values] of Object.entries(options.whereIn)) {
+      if (Array.isArray(values) && values.length > 0 && key in columns) {
+        andConditions.push(inArray(columns[key], values));
+      }
+    }
+  }
+
+  if (options?.search) {
+    for (const [key, value] of Object.entries(options.search)) {
+      if (typeof value === "string" && value.trim() !== "" && key in columns) {
+        andConditions.push(ilike(columns[key], `%${value.trim()}%`));
+      }
+    }
+  }
+
+  if (options?.or && options.or.length > 0) {
+    const orConditions: SQL[] = [];
+    for (const orGroup of options.or) {
+      const groupConditions: SQL[] = [];
+      for (const [key, value] of Object.entries(orGroup)) {
+        if (value !== undefined && key in columns) {
+          groupConditions.push(eq(columns[key], value));
+        }
+      }
+      if (groupConditions.length > 0) {
+        orConditions.push(and(...groupConditions)!);
+      }
+    }
+    if (orConditions.length > 0) {
+      andConditions.push(or(...orConditions)!);
+    }
+  }
+
+  let orderByPayload: SQL[] | undefined = undefined;
+  if (options?.orderBy && options.orderBy.length > 0) {
+    orderByPayload = options.orderBy
+      .filter((sort) => sort.column in columns)
+      .map((sort) => {
+        const column = columns[sort.column];
+        return sort.order === "desc" ? desc(column) : asc(column);
+      });
+  }
+
+  const limit = Math.max(
+    1,
+    Math.min(options?.limit ?? DEFAULT_MAX_LIMIT, DEFAULT_MAX_LIMIT),
+  );
+
+  return {
+    where: andConditions.length > 0 ? and(...andConditions) : undefined,
+    limit: limit,
+    offset: options?.offset ?? 0,
+    orderBy: orderByPayload,
+  };
+}
+
+/**
  * Fusionne proprement les options en bloquant la pollution de prototype
  */
 export function mergeQueryOptions<T extends SQLiteTable>(

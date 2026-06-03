@@ -29,6 +29,8 @@ export const schools = sqliteTable("Schools", {
   ...timestamps,
 });
 
+export type TableSchool = typeof schools;
+
 export const users = sqliteTable("Users", {
   userId: primaryKeyId("user_id"),
   lastName: text("last_name").notNull(),
@@ -53,6 +55,8 @@ export const users = sqliteTable("Users", {
   ...timestamps,
 });
 
+export type TableUser = typeof users;
+
 export const options = sqliteTable("Options", {
   optionId: primaryKeyId("option_id"),
   optionName: text("option_name").notNull(),
@@ -65,6 +69,8 @@ export const options = sqliteTable("Options", {
     .references(() => schools.schoolId),
 });
 
+export type TableOption = typeof options;
+
 export const studyYears = sqliteTable("StudyYears", {
   yearId: primaryKeyId("year_id"),
   yearName: text("year_name").notNull().unique(),
@@ -75,6 +81,8 @@ export const studyYears = sqliteTable("StudyYears", {
     .references(() => schools.schoolId),
   ...timestamps,
 });
+
+export type TableStudyYear = typeof studyYears;
 
 // --- ACADEMIC ---
 
@@ -92,6 +100,7 @@ export const classRooms = sqliteTable("ClassRooms", {
     .references(() => schools.schoolId),
   ...timestamps,
 });
+export type TableClassroom = typeof classRooms;
 
 export const classroomEnrolements = sqliteTable("ClassroomEnrolements", {
   enrolementId: primaryKeyId("enrolement_id"),
@@ -119,6 +128,8 @@ export const classroomEnrolements = sqliteTable("ClassroomEnrolements", {
   ...timestamps,
 });
 
+export type TableClassroomEnrolement = typeof classroomEnrolements;
+
 export const classroomEnrolementActions = sqliteTable(
   "ClassroomEnrolementActions",
   {
@@ -131,6 +142,8 @@ export const classroomEnrolementActions = sqliteTable(
     ...timestamps,
   },
 );
+
+export type TableClassroomEnrolementAction = typeof classroomEnrolementActions;
 
 // --- SEATING (PLACEMENT) ---
 
@@ -145,6 +158,8 @@ export const localRooms = sqliteTable("LocalRooms", {
     .references(() => schools.schoolId),
 });
 
+export type TableLocalRoom = typeof localRooms;
+
 export const seatingSessions = sqliteTable("SeatingSessions", {
   sessionId: primaryKeyId("session_id"),
   sessionName: text("session_name").notNull(),
@@ -155,6 +170,8 @@ export const seatingSessions = sqliteTable("SeatingSessions", {
     .notNull()
     .references(() => studyYears.yearId),
 });
+
+export type TableSeatingSession = typeof seatingSessions;
 
 export const seatingAssignments = sqliteTable(
   "SeatingAssignments",
@@ -186,3 +203,5 @@ export const seatingAssignments = sqliteTable(
     ),
   }),
 );
+
+export type TableSeatingAssignment = typeof seatingAssignments;
