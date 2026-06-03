@@ -16,6 +16,7 @@ import {
   TLocalRoom,
   TSeatingSession,
 } from "@/packages/@core/data-access/db/schemas/types";
+import { compareByFullName } from "../query-utils";
 
 export type TEnrolementWithRelations = TEnrolement & {
   student: TStudent;
@@ -43,12 +44,9 @@ export type TSeatingSessionGrouped = TSeatingSession & {
   })[];
 };
 
-const SESSION_SORT = {
-  orderBy: [
-    { column: sql`lower(${seatingSessions.sessionName})`, order: "asc" },
-  ],
-} as unknown as FindManyOptions<typeof seatingSessions>;
-
+const SESSION_SORT: FindManyOptions<typeof seatingSessions> = {
+  orderBy: [{ column: "sessionName", order: "asc" }],
+};
 export class SeatingSessionQuery extends BaseRepository<
   typeof seatingSessions,
   TDataBase
@@ -140,23 +138,10 @@ export class SeatingSessionQuery extends BaseRepository<
 
       if (!sessionDetails) return null;
 
-      // Tri côté applicatif (Drizzle ne supporte pas encore le tri sur les relations imbriquées via 'with')
       if (sessionDetails.assignments) {
-        sessionDetails.assignments.sort((a, b) => {
-          const userA = a.enrolement?.student;
-          const userB = b.enrolement?.student;
-
-          const nameA =
-            `${userA?.lastName ?? ""} ${userA?.middleName ?? ""} ${userA?.firstName ?? ""}`
-              .trim()
-              .toLowerCase();
-          const nameB =
-            `${userB?.lastName ?? ""} ${userB?.middleName ?? ""} ${userB?.firstName ?? ""}`
-              .trim()
-              .toLowerCase();
-
-          return nameA.localeCompare(nameB, "fr", { sensitivity: "base" });
-        });
+        sessionDetails.assignments.sort(
+          compareByFullName((assignment) => assignment.enrolement?.student),
+        );
       }
 
       return sessionDetails;

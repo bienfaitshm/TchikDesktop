@@ -1,4 +1,4 @@
-import { eq, sql, getTableColumns } from "drizzle-orm";
+import { and, eq, getTableColumns } from "drizzle-orm";
 import { db, type TDataBase } from "../config";
 import { getLogger } from "@/packages/logger";
 import {
@@ -8,10 +8,13 @@ import {
   classroomEnrolements,
   users,
 } from "../schemas/schema";
+import { getVisibleUserColumns } from "./user.query";
 import { BaseRepository } from "./base-repository";
 import { applyQueryOptions } from "./drizzle-builder";
 import type { TClassroom, FindManyOptions } from "../schemas/types";
+import { compareByFullName } from "./query-utils";
 
+type TableClassroom = typeof classRooms;
 /**
  * DTO enrichi pour le Frontend
  */
@@ -23,18 +26,15 @@ export type TClassroomDTO = TClassroom & {
   endDate: Date;
 };
 
-const CLASSROOM_DEFAULT_SORT = {
+const CLASSROOM_DEFAULT_SORT: FindManyOptions<TableClassroom> = {
   orderBy: [
-    { column: sql`lower(${classRooms.identifier})`, order: "asc" },
+    { column: "identifier", order: "asc" },
 
-    { column: sql`lower(${classRooms.shortIdentifier})`, order: "asc" },
+    { column: "shortIdentifier", order: "asc" },
   ],
-} as unknown as FindManyOptions<typeof classRooms>;
+};
 
-export class ClassroomQuery extends BaseRepository<
-  typeof classRooms,
-  TDataBase
-> {
+export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
   private readonly selection = {
     ...getTableColumns(classRooms),
     optionName: options.optionName,
@@ -59,10 +59,10 @@ export class ClassroomQuery extends BaseRepository<
    * Version étendue avec Jointures SQL (Performance brute)
    */
   async findManyExtended(
-    filters?: FindManyOptions<typeof classRooms>,
+    filters?: FindManyOptions<TableClassroom>,
   ): Promise<TClassroomDTO[]> {
     try {
-      const query = db
+      const query = this.db
         .select(this.selection)
         .from(classRooms)
         .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
@@ -86,7 +86,7 @@ export class ClassroomQuery extends BaseRepository<
   override async findById(classId: string): Promise<TClassroomDTO | null> {
     if (!classId) return null;
     try {
-      const [result] = await db
+      const [result] = await this.db
         .select(this.selection)
         .from(classRooms)
         .leftJoin(options, eq(classRooms.optionId, options.optionId))
@@ -101,27 +101,15 @@ export class ClassroomQuery extends BaseRepository<
     }
   }
 
-  /**
-   * API Relationnelle (Nested objects)
-   * Idéal pour les vues de détails complexes avec listes d'élèves.
-   */
-  async findWithEnrollments(
-    filters?: FindManyOptions<typeof classRooms>,
-  ): Promise<any[]> {
+  async findWithEnrollments(filters: FindManyOptions<TableClassroom> = {}) {
     try {
-      const query = db
+      const query = this.db
         .select({
-          classRoom: classRooms,
+          classroom: classRooms,
           option: options,
           studyYear: studyYears,
-          enrolement: classroomEnrolements,
-          user: {
-            userId: users.userId,
-            firstName: users.firstName,
-            lastName: users.lastName,
-            middleName: users.middleName,
-            gender: users.gender,
-          },
+          enrollment: classroomEnrolements,
+          user: getVisibleUserColumns(),
         })
         .from(classRooms)
         .leftJoin(options, eq(classRooms.optionId, options.optionId))
@@ -132,16 +120,34 @@ export class ClassroomQuery extends BaseRepository<
         )
         .leftJoin(users, eq(classroomEnrolements.studentId, users.userId))
         .$dynamic();
-
-      return (await applyQueryOptions(
-        query,
-        classRooms,
-        filters as any,
-      )) as TClassroomDTO[];
+      return await applyQueryOptions(query, classRooms, filters);
     } catch (error) {
       this.logError("findWithEnrollments", error, { ...filters });
       throw new Error("Erreur lors de la récupération des inscriptions.");
     }
+  }
+
+  async getClassroomsWithStudents(schoolId: string, yearId: string) {
+    const classrooms = await this.db.query.classRooms.findMany({
+      where: and(
+        eq(classRooms.schoolId, schoolId),
+        eq(classRooms.yearId, yearId),
+      ),
+      with: {
+        enrolements: {
+          with: {
+            student: true,
+          },
+        },
+      },
+    });
+
+    return classrooms.map((classroom) => ({
+      ...classroom,
+      enrollments: classroom.enrolements.sort(
+        compareByFullName((enrollment) => enrollment.student),
+      ),
+    }));
   }
 
   static instance = new ClassroomQuery();
