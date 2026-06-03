@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import createReport from "docx-templates";
 import { getResourcePath } from "@/packages/electron-utility";
+import { additionalJsContext } from "./additional-context";
 
 const DEFAULT_TEMPLATES_DIR = "documents_templates";
 const TEMPLATE_BASE_PATH = getResourcePath(
@@ -30,6 +31,7 @@ export async function generateDocxReport(
     return await createReport({
       template: templateBuffer,
       data: templateData,
+      additionalJsContext,
     });
   } catch (error) {
     throw new Error(
