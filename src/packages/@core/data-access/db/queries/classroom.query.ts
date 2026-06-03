@@ -1,4 +1,4 @@
-import { and, eq, getTableColumns, inArray } from "drizzle-orm";
+import { eq, getTableColumns } from "drizzle-orm";
 import { db, type TDataBase } from "../config";
 import { getLogger } from "@/packages/logger";
 import {
@@ -7,17 +7,19 @@ import {
   studyYears,
   classroomEnrolements,
   users,
+  type TableClassroom,
+  type TableClassroomEnrolement,
 } from "../schemas/schema";
 import { getVisibleUserColumns } from "./user.query";
 import { BaseRepository } from "./base-repository";
-import { applyQueryOptions } from "./drizzle-builder";
+import { applyQueryOptions, extractQueryPayload } from "./drizzle-builder";
 import type { TClassroom, FindManyOptions } from "../schemas/types";
 import { compareByFullName } from "./query-utils";
 
-type TableClassroom = typeof classRooms;
-/**
- * DTO enrichi pour le Frontend
- */
+interface GetClassroomsOptions {
+  classroomOptions?: Partial<FindManyOptions<TableClassroom>>;
+  enrollmentOptions?: Partial<FindManyOptions<TableClassroomEnrolement>>;
+}
 export type TClassroomDTO = TClassroom & {
   optionName: string | null;
   optionShortName: string | null;
@@ -127,19 +129,24 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
     }
   }
 
-  async getClassroomsWithStudents(
-    schoolId: string,
-    yearId: string,
-    classIds: string[] = [],
-  ) {
+  async getClassroomsWithStudents({
+    classroomOptions,
+    enrollmentOptions,
+  }: GetClassroomsOptions = {}) {
+    const classroomQueryOptions = extractQueryPayload(
+      this.table,
+      classroomOptions,
+    );
+    const enrollmentQueryOptions = extractQueryPayload(
+      classroomEnrolements,
+      enrollmentOptions,
+    );
+
     const classrooms = await this.db.query.classRooms.findMany({
-      where: and(
-        eq(classRooms.schoolId, schoolId),
-        eq(classRooms.yearId, yearId),
-        inArray(classRooms.classId, classIds),
-      ),
+      ...classroomQueryOptions,
       with: {
         enrolements: {
+          ...enrollmentQueryOptions,
           with: {
             student: true,
           },
@@ -147,9 +154,9 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
       },
     });
 
-    return classrooms.map((classroom) => ({
+    return classrooms.map(({ enrolements, ...classroom }) => ({
       ...classroom,
-      enrollments: classroom.enrolements.sort(
+      enrollments: enrolements.sort(
         compareByFullName((enrollment) => enrollment.student),
       ),
     }));
