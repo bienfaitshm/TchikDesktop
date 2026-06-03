@@ -14,7 +14,7 @@ import { getVisibleUserColumns } from "./user.query";
 import { BaseRepository } from "./base-repository";
 import { applyQueryOptions, extractQueryPayload } from "./drizzle-builder";
 import type { TClassroom, FindManyOptions } from "../schemas/types";
-import { compareByFullName } from "./query-utils";
+import { compareByFullName, withFullName } from "./query-utils";
 
 interface GetClassroomsOptions {
   classroomOptions?: Partial<FindManyOptions<TableClassroom>>;
@@ -154,12 +154,18 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
       },
     });
 
-    return classrooms.map(({ enrolements, ...classroom }) => ({
-      ...classroom,
-      enrollments: enrolements.sort(
+    return classrooms.map(({ enrolements, ...classroom }) => {
+      const enrollments = enrolements.sort(
         compareByFullName((enrollment) => enrollment.student),
-      ),
-    }));
+      );
+      return {
+        ...classroom,
+        enrollments: enrollments.map((enrollment) => ({
+          ...enrollment,
+          student: withFullName(enrollment.student),
+        })),
+      };
+    });
   }
 
   static instance = new ClassroomQuery();

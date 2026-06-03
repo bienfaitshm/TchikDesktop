@@ -4,6 +4,8 @@ export interface UserNames {
   middleName?: string | null;
 }
 
+type WithFullName<T> = T & { fullName: string };
+
 const getSortableFullName = (user: UserNames | undefined | null): string => {
   if (!user) return "";
 
@@ -15,6 +17,32 @@ const getSortableFullName = (user: UserNames | undefined | null): string => {
   if (firstName) fullName += (fullName ? " " : "") + firstName;
 
   return fullName.trim();
+};
+
+/**
+ * Formats a user's name components into a single, clean full name string.
+ * Removes any empty, null, or undefined parts to prevent double spacing.
+ */
+export const formatFullName = (user: UserNames | null | undefined): string => {
+  if (!user) return "";
+
+  return [user.lastName, user.middleName, user.firstName]
+    .map((name) => name?.trim())
+    .filter(Boolean)
+    .join(" ");
+};
+
+/**
+ * Enriches a user object with a computed fullName property.
+ * Safe-casts the return object to satisfy the generic constraint T.
+ */
+export const withFullName = <T extends UserNames | undefined | null>(
+  user: T | null | undefined,
+): WithFullName<T> => {
+  return {
+    ...user,
+    fullName: formatFullName(user),
+  } as WithFullName<T>;
 };
 
 export const compareByFullName = <T>(
