@@ -8,9 +8,11 @@ import {
   JsonExportExtension,
 } from "@/packages/@core/documents-exports/extensions/data";
 import { EnrollmentReportExportDocxExtension } from "./enrollment-docx";
+import { EnrollmentSheetExportExtension } from "./enrollment-sheet";
 
 const EXTENSION_CLASSES: ClassConstructor<IExportExtension<unknown>>[] = [
   EnrollmentReportExportDocxExtension,
+  EnrollmentSheetExportExtension,
   CsvExportExtension,
   JsonExportExtension,
 ];

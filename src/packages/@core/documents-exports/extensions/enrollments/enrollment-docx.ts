@@ -2,16 +2,22 @@ import {
   AbstractExportExtension,
   RawFileContent,
 } from "@/packages/electron-data-exporter";
+import { generateDocxReport } from "@/packages/docx-template";
 import { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 import type {
   TEnrolement,
   TSchool,
   TUser,
+  TStudyYear,
+  TClassroom,
 } from "@/packages/@core/data-access/db/schemas/types";
-import { generateDocxReport } from "@/packages/docx-template";
 
-export interface EnrollmentReportPayload extends TSchool {
-  classrooms: (TEnrolement & { student: TUser })[];
+type EnrollmentWithStudent = TEnrolement & { student: TUser };
+type SchoolWithYearStudy = TSchool & { studyYear: TStudyYear };
+
+export interface EnrollmentReportPayload {
+  school: SchoolWithYearStudy;
+  classrooms: (TClassroom & { enrollments: EnrollmentWithStudent[] })[];
 }
 
 /**

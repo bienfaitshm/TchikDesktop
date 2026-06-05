@@ -3,15 +3,20 @@ import {
   RawFileContent,
 } from "@/packages/electron-data-exporter";
 import { DOCUMENT_EXTENSION } from "@/packages/file-extension";
+import { generateDocxReport } from "@/packages/docx-template";
 import type {
   TEnrolement,
   TSchool,
   TUser,
+  TStudyYear,
+  TClassroom,
 } from "@/packages/@core/data-access/db/schemas/types";
-import { generateDocxReport } from "@/packages/docx-template";
+
+type EnrollmentWithStudent = TEnrolement & { student: TUser };
 
 export interface CotationReportPayload extends TSchool {
-  classrooms: (TEnrolement & { student: TUser })[];
+  studyYear: TStudyYear;
+  classrooms: (TClassroom & { enrollments: EnrollmentWithStudent[] })[];
 }
 
 /**
