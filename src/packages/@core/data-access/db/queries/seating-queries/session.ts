@@ -9,28 +9,22 @@ import {
 } from "../../schemas/schema";
 import type { FindManyOptions } from "../../schemas/types";
 
-import {
+import type {
   TClassroom,
   TEnrolement,
   TUser as TStudent,
   TLocalRoom,
   TSeatingSession,
+  TSeatingAssignment,
 } from "@/packages/@core/data-access/db/schemas/types";
-import { compareByFullName } from "../query-utils";
+import { compareByFullName, withFullName } from "../query-utils";
 
 export type TEnrolementWithRelations = TEnrolement & {
   student: TStudent;
   classRoom: TClassroom;
 };
 
-// Définition propre de l'Assignment
-export type TAssignment = {
-  assignmentId: string;
-  sessionId: string;
-  localRoomId: string;
-  enrolementId: string;
-  rowPosition: number;
-  columnPosition: number;
+export type TAssignment = TSeatingAssignment & {
   localRoom: TLocalRoom;
   enrolement: TEnrolementWithRelations;
 };
@@ -38,6 +32,7 @@ export type TAssignment = {
 export type TSeatingSessionWithAssignment = TSeatingSession & {
   assignments: TAssignment[];
 };
+
 export type TSeatingSessionGrouped = TSeatingSession & {
   assignments: (TLocalRoom & {
     students: TAssignment[];
@@ -115,9 +110,7 @@ export class SeatingSessionQuery extends BaseRepository<
    * Récupère une session avec ses affectations, localisations et utilisateurs inscrits,
    * triés par nom de famille puis prénom.
    */
-  async getSessionWithAssignments(
-    sessionId: string,
-  ): Promise<TSeatingSessionWithAssignment | null> {
+  async getSessionWithAssignments(sessionId: string) {
     try {
       const sessionDetails = await this.db.query.seatingSessions.findFirst({
         where: eq(seatingSessions.sessionId, sessionId),
@@ -143,7 +136,6 @@ export class SeatingSessionQuery extends BaseRepository<
           compareByFullName((assignment) => assignment.enrolement?.student),
         );
       }
-
       return sessionDetails;
     } catch (error) {
       console.log("error", error);
@@ -165,7 +157,7 @@ export function groupByLocalRoom(
 ): TSeatingSessionGrouped {
   const grouped = sessionData.assignments.reduce(
     (acc, assignment) => {
-      const { localRoomId, localRoom } = assignment;
+      const { localRoomId, localRoom, enrolement } = assignment;
 
       if (!acc[localRoomId]) {
         acc[localRoomId] = {
@@ -173,8 +165,14 @@ export function groupByLocalRoom(
           students: [],
         };
       }
-
-      acc[localRoomId].students.push(assignment);
+      const student: TAssignment = {
+        ...assignment,
+        enrolement: {
+          ...enrolement,
+          student: withFullName(enrolement.student),
+        },
+      };
+      acc[localRoomId].students.push(student);
       return acc;
     },
     {} as Record<string, TLocalRoom & { students: TAssignment[] }>,

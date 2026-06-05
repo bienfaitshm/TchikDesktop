@@ -8,8 +8,10 @@ import {
   JsonExportExtension,
 } from "@/packages/@core/documents-exports/extensions/data";
 import { SeatingPlanBySheetExcelExportExtension } from "./seating-plan";
+import { SeatingExportDocxExtension } from "./seating.docx";
 
 const EXTENSION_CLASSES: ClassConstructor<IExportExtension<unknown>>[] = [
+  SeatingExportDocxExtension,
   SeatingPlanBySheetExcelExportExtension,
   CsvExportExtension,
   JsonExportExtension,

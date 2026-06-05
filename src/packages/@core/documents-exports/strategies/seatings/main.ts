@@ -29,7 +29,7 @@ export class SeatingExportStrategy extends AbstractExportStrategy<
   any
 > {
   public readonly id = "SEATING_EXPORT" as const;
-  public readonly displayName = "Liste de la mise en place";
+  public readonly displayName = "Fiche de mise en place des examens";
   public readonly description =
     "Génère un état détaillé de la répartition des élèves par salle. Cet export inclut les listes d'émargement, l'affectation aux pupitres et les métadonnées de l'établissement pour faciliter l'organisation physique des épreuves ou des cours.";
 
