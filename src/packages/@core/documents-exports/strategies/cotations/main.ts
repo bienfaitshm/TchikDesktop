@@ -12,7 +12,7 @@ import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
-import { extentions } from "@/packages/@core/documents-exports/extensions/cotations";
+import { extensions } from "@/packages/@core/documents-exports/extensions/cotations";
 import { createCotationDocumentExportForm } from "./form";
 import { CotationDataResolver } from "./resolver";
 import type { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
@@ -43,7 +43,7 @@ export class FicheCotationExportStrategy extends AbstractExportStrategy<
 
   constructor() {
     super({
-      extensions: extentions,
+      extensions,
       getSchemasCreator: generateValidationSchema,
     });
   }

@@ -7,13 +7,13 @@ import {
   CsvExportExtension,
   JsonExportExtension,
 } from "@/packages/@core/documents-exports/extensions/data";
-import { FicheCotationExportExtension } from "./cotation-docx";
+import { CotationReportExportDocxExtension } from "./cotation-docx";
 
 const EXTENSION_CLASSES: ClassConstructor<IExportExtension<unknown>>[] = [
-  FicheCotationExportExtension,
+  CotationReportExportDocxExtension,
   CsvExportExtension,
   JsonExportExtension,
 ];
 
-export const extentions: IExportExtension<unknown>[] =
+export const extensions: IExportExtension<unknown>[] =
   instantiateClasses(EXTENSION_CLASSES);

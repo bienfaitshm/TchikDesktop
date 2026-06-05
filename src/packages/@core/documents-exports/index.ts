@@ -25,5 +25,4 @@ export const documentExport = new DataExport(registeredStrategies, fileSystem);
  * 3. Exportation des types et constantes pour la consommation externe.
  * Pratique pour le typage des Handlers IPC ou du Bridge Preload.
  */
-export type { AvailableStrategyId } from "./strategies";
 export { DOCUMENT_EXPORT_ROUTES } from "./constants";

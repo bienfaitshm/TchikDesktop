@@ -11,7 +11,7 @@ const TEMPLATE_BASE_PATH = getResourcePath(
 
 export interface GenerateDocxReportOptions {
   templateName: string;
-  templateData: Record<string, unknown>;
+  templateData: object;
 }
 
 export async function generateDocxReport(
