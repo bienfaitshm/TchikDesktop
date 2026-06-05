@@ -65,7 +65,12 @@ export const createEnrollmentDocumentExportForm = async (
   return composeFields(
     createFileTypeField(fileTypeFilters, { colSpan: fileTypeColSpan }),
     createSectionField({ colSpan: sectionColSpan }),
-    createClassroomField({ schoolId, yearId, colSpan: classroomColSpan }),
+    createClassroomField({
+      schoolId,
+      yearId,
+      required: true,
+      colSpan: classroomColSpan,
+    }),
   );
 };
 
