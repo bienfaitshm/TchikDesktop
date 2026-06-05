@@ -50,7 +50,9 @@ export class CotationDataResolver {
         "Erreur lors de la résolution des données de cotation :",
         error,
       );
-      throw new Error("Impossible de récupérer les données de cotation.");
+      throw new Error("Impossible de récupérer les données de cotation.", {
+        cause: error,
+      });
     }
   }
 }

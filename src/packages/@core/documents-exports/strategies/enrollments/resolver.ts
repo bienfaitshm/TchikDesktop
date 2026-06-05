@@ -28,9 +28,16 @@ export class EnrollmentDataResolver {
     try {
       const [school, classrooms] = await Promise.all([
         schoolService.fetchSchoolInfo(schoolId, yearId),
-        classroomService.findWithEnrollments({
-          whereIn: { classId },
-          where: { schoolId, yearId },
+        classroomService.getClassroomsWithStudents({
+          classroomOptions: {
+            where: {
+              yearId,
+              schoolId,
+            },
+            whereIn: {
+              classId: classId,
+            },
+          },
         }),
       ]);
 
@@ -40,10 +47,12 @@ export class EnrollmentDataResolver {
       };
     } catch (error) {
       console.error(
-        "Erreur lors de la résolution des données de enrollment :",
+        "Erreur lors de la résolution des données de cotation :",
         error,
       );
-      throw new Error("Impossible de récupérer les données de enrollment.");
+      throw new Error("Impossible de récupérer les données de cotation.", {
+        cause: error,
+      });
     }
   }
 }

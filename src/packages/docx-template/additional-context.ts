@@ -7,7 +7,7 @@ import { formatDate } from "@/packages/times";
  */
 
 /** Normalise les entrées de type Date ou chaîne en objet Date. */
-const toDate = (value: Date | string): Date =>
+const toDate = (value: Date | string | number): Date =>
   value instanceof Date ? value : new Date(value);
 
 /** Cache des formateurs Intl pour optimiser les performances de rendu. */
@@ -41,7 +41,8 @@ export const additionalJsContext = {
   // --- Date Formatters ---
 
   /** Formate une date en chaîne lisible via le moteur de formatage global. */
-  formatDate: (value: Date | string): string => formatDate(toDate(value)),
+  formatDate: (value: Date | string | number): string =>
+    formatDate(toDate(value)),
 
   /** Alias pour la cohérence des templates. */
   formatDateTime: (value: Date | string): string => formatDate(toDate(value)),
@@ -89,7 +90,7 @@ export const additionalJsContext = {
     FORMATTERS.number(decimals).format(value),
 
   /** Formate un montant en devise (Défaut: EUR). */
-  formatCurrency: (value: number, currency: string = "EUR"): string =>
+  formatCurrency: (value: number, currency: string = "CDF"): string =>
     FORMATTERS.currency(currency).format(value),
 
   /** Multiplie par 100 et ajoute le suffixe %. */
