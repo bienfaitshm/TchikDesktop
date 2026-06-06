@@ -3,7 +3,7 @@ import {
   RawFileContent,
 } from "@/packages/electron-data-exporter";
 import { DOCUMENT_EXTENSION } from "@/packages/file-extension";
-import { generateDocxReport } from "@/packages/docx-template";
+import { generateDocxReport } from "@/packages/document-template";
 import type {
   TEnrolement,
   TSchool,

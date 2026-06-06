@@ -3,10 +3,8 @@ import {
   RawFileContent,
 } from "@/packages/electron-data-exporter";
 import { DOCUMENT_EXTENSION } from "@/packages/file-extension";
-import { generateDocxReport } from "@/packages/docx-template";
-import type {} from "@/packages/@core/data-access/db/schemas/types";
-
-export interface SeatingReportPayload {}
+import { generateDocxReport } from "@/packages/document-template";
+import type { SeatingReportPayload } from "./type";
 
 /**
  * Extension responsable de la génération des fiches de mise en place.
