@@ -72,7 +72,7 @@ export const seatingStudentColumns: ColumnDef<StudentSeating>[] = [
             </span>
             <span className="text-sm font-mono font-medium">{r}</span>
           </div>
-          <div className="w-[1px] h-3 bg-border" />
+          <div className="w-px h-3 bg-border" />
           <div className="flex items-center gap-1">
             <span className="text-[10px] uppercase text-muted-foreground font-bold">
               Banc

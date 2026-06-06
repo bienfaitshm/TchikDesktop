@@ -11,19 +11,16 @@ import { getVisibleUserColumns } from "./user.query";
 import { BaseRepository } from "./base-repository";
 import type { TEnrolementInsert, FindManyOptions } from "../schemas/types";
 
+type TableEnrollment = typeof classroomEnrolements;
+
 /**
  * Configuration du tri par défaut (Nom complet de l'étudiant)
  */
-const ENROLEMENT_DEFAULT_SORT = {
-  orderBy: [
-    { column: sql`lower(${users.lastName})`, order: "asc" },
-    { column: sql`lower(${users.middleName})`, order: "asc" },
-    { column: sql`lower(${users.firstName})`, order: "asc" },
-  ],
-} as unknown as FindManyOptions<typeof classroomEnrolements>;
-
+const ENROLEMENT_DEFAULT_SORT: FindManyOptions<TableEnrollment> = {
+  orderBy: [],
+};
 export class EnrolementQuery extends BaseRepository<
-  typeof classroomEnrolements,
+  TableEnrollment,
   TDataBase
 > {
   constructor() {

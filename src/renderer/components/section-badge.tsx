@@ -10,7 +10,7 @@ import { School, GraduationCap, Building } from 'lucide-react';
 const SECTION_VARIANT_MAP = {
     [SECTION_ENUM.KINDERGARTEN]: 'default',
     [SECTION_ENUM.PRIMARY]: 'secondary',
-    [SECTION_ENUM.SECONDARY]: 'outline',
+    [SECTION_ENUM.SECONDARY]: 'outline-solid',
 };
 
 /**
@@ -43,7 +43,7 @@ interface SectionBadgeProps {
  * @returns {JSX.Element} Le composant Badge avec l'icône et le texte de la section.
  */
 export const SectionBadge = ({ section = SECTION_ENUM.SECONDARY }: SectionBadgeProps) => {
-    const variant = (SECTION_VARIANT_MAP[section] || 'default') as 'default' | 'secondary' | 'outline' | 'destructive';
+    const variant = (SECTION_VARIANT_MAP[section] || 'default') as 'default' | 'secondary' | 'outline-solid' | 'destructive';
 
     const IconComponent = SECTION_ICON_MAP[section];
 

@@ -38,12 +38,14 @@ import { Link } from "react-router";
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 import { useGetOptionAsOptions } from "@/renderer/hooks/data-as-options";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
+import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 
 const columns = enhanceColumnsExpandable(classroomColumns);
 
-interface ClassroomRowActionsProps
-  extends Pick<ClassroomDialogProps, "queryKeysToInvalidate"> {
+interface ClassroomRowActionsProps extends Pick<
+  ClassroomDialogProps,
+  "queryKeysToInvalidate"
+> {
   classroom: TClassroom;
   schoolId: string;
   yearId: string;
@@ -117,7 +119,7 @@ export const ClassroomPage = () => {
       <PageShell
         maxWidth="2xl"
         header={
-          <section className="container flex items-center justify-between w-full max-w-screen-2xl my-4">
+          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
             <header className="space-y-1">
               <h1 className="text-2xl font-bold tracking-tight">
                 Gestion des classes
@@ -132,7 +134,7 @@ export const ClassroomPage = () => {
               defaultValues={{ yearId, schoolId }}
               queryKeysToInvalidate={queryKeysToInvalidate}
             >
-              <Button size="sm" className="rounded-full shadow-sm">
+              <Button size="sm" className="rounded-full shadow-xs">
                 <Plus className="size-4 mr-2" />
                 <span>Ajouter une classe</span>
               </Button>

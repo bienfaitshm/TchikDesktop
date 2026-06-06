@@ -32,7 +32,7 @@ const InscriptionFormLoader: React.FC<any> = ({ schoolId, yearId }) => {
 
 const Inscription: React.FC<any> = ({ schoolId, yearId }) => {
     return (
-        <div className="mx-auto container max-w-screen-md">
+        <div className="mx-auto container max-w-(--breakpoint-md)">
             <TypographyH1>
                 Inscription Screen
             </TypographyH1>

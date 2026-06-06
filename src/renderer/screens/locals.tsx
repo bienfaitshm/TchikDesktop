@@ -36,12 +36,14 @@ import {
   type LocalRoomDialogProps,
 } from "@/renderer/dialog-actions/localroom.dialog-action";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
+import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 
 const columns = enhanceColumnsExpandable(localRoomColumns);
 
-interface LocalRoomRowActionsProps
-  extends Pick<LocalRoomDialogProps, "queryKeysToInvalidate"> {
+interface LocalRoomRowActionsProps extends Pick<
+  LocalRoomDialogProps,
+  "queryKeysToInvalidate"
+> {
   room: TLocalRoom;
 }
 
@@ -97,7 +99,7 @@ export const LocalRoomPage = () => {
       <PageShell
         maxWidth="2xl"
         header={
-          <section className="container flex items-center justify-between w-full max-w-screen-2xl my-4">
+          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
             <header className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-semibold tracking-tight">
@@ -113,7 +115,7 @@ export const LocalRoomPage = () => {
               defaultValues={{ schoolId }}
               queryKeysToInvalidate={queryKeysToInvalidate}
             >
-              <Button size="sm" className="rounded-full shadow-sm">
+              <Button size="sm" className="rounded-full shadow-xs">
                 <Plus className="size-4 mr-2" />
                 <span>Ajouter un local</span>
               </Button>

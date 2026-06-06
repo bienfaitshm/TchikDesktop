@@ -10,7 +10,7 @@ import { useGetSeatingSessions } from "@/renderer/libs/queries/seating";
 import { Button } from "@/renderer/components/ui/button";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
-import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
+import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import { ButtonDialogDocumentExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 
@@ -43,8 +43,10 @@ import {
 
 const columns = enhanceColumnsExpandable(seatingSessionColumns);
 
-interface SessionRowActionsProps
-  extends Pick<SeatingSessionDialogProps, "queryKeysToInvalidate"> {
+interface SessionRowActionsProps extends Pick<
+  SeatingSessionDialogProps,
+  "queryKeysToInvalidate"
+> {
   session: TSeatingSession;
 }
 
@@ -110,7 +112,7 @@ export const SeatingPage = () => {
       <PageShell
         maxWidth="2xl"
         header={
-          <section className="container flex items-center justify-between w-full max-w-screen-2xl my-4">
+          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
             <header className="space-y-1">
               <h1 className="text-2xl font-bold tracking-tight">
                 Sessions de mise en place
@@ -125,7 +127,7 @@ export const SeatingPage = () => {
             >
               <Button
                 size="sm"
-                className="rounded-full shadow-sm bg-primary hover:bg-primary/90"
+                className="rounded-full shadow-xs bg-primary hover:bg-primary/90"
               >
                 <Plus className="mr-2 size-4" />
                 Nouvelle session

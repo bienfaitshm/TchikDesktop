@@ -35,7 +35,7 @@ export const seatingSessionColumns: ColumnDef<SeatingSessionTableData>[] = [
 
       return (
         <Badge
-          variant={isAssigned ? "success" : "outline"}
+          variant={isAssigned ? "success" : "outline-solid"}
           className={!isAssigned ? "text-muted-foreground italic" : ""}
         >
           {isAssigned ? "Assignée" : "À pourvoir"}

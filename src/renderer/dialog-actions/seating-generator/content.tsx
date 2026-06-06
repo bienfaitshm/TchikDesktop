@@ -77,7 +77,7 @@ export const SeatingDisplayContent = ({
   // 4. État initial : Rien
   return (
     <div className="h-[300px] flex flex-col items-center justify-center rounded-xl border border-dashed bg-muted/20 text-center p-8">
-      <div className="bg-background size-12 flex items-center justify-center rounded-full mb-4 shadow-sm border">
+      <div className="bg-background size-12 flex items-center justify-center rounded-full mb-4 shadow-xs border">
         <RockingChair className="size-5 text-muted-foreground" />
       </div>
       <h4 className="font-medium text-foreground">Prêt pour la génération</h4>

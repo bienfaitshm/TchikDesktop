@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { CheckIcon, PlusCircle } from "lucide-react"
-import { type Column } from "@tanstack/react-table"
+import * as React from "react";
+import { CheckIcon, PlusCircle } from "lucide-react";
+import { type Column } from "@tanstack/react-table";
 
-import { cn } from "@/renderer/utils"
-import { Badge } from "@/renderer/components/ui/badge"
-import { Button } from "@/renderer/components/ui/button"
+import { cn } from "@/renderer/utils";
+import { Badge } from "@/renderer/components/ui/badge";
+import { Button } from "@/renderer/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -15,21 +15,25 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/renderer/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/renderer/components/ui/popover"
-import { Separator } from "@/renderer/components/ui/separator"
+} from "@/renderer/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/renderer/components/ui/popover";
+import { Separator } from "@/renderer/components/ui/separator";
 
 interface TableFacetedFilterOption {
-  label: string
-  value: string
-  icon?: React.ComponentType<{ className?: string }>
+  label: string;
+  value: string;
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 interface TableFacetedFilterProps<TData, TValue> {
-  column?: Column<TData, TValue>
-  title?: string
-  options: TableFacetedFilterOption[]
-  className?: string
+  column?: Column<TData, TValue>;
+  title?: string;
+  options: TableFacetedFilterOption[];
+  className?: string;
 }
 
 export function TableFacetedFilter<TData, TValue>({
@@ -38,18 +42,14 @@ export function TableFacetedFilter<TData, TValue>({
   options,
   className,
 }: TableFacetedFilterProps<TData, TValue>) {
-  const facets = column?.getFacetedUniqueValues()
+  const facets = column?.getFacetedUniqueValues();
   // On récupère les valeurs filtrées en s'assurant qu'on travaille avec un Set pour la perf
-  const selectedValues = new Set(column?.getFilterValue() as string[])
+  const selectedValues = new Set(column?.getFilterValue() as string[]);
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn("h-8 border-dashed", className)}
-        >
+        <Button variant="outline" size="sm" className={className}>
           <PlusCircle className="mr-2 h-4 w-4" />
           {title}
           {selectedValues?.size > 0 && (
@@ -94,22 +94,22 @@ export function TableFacetedFilter<TData, TValue>({
             <CommandEmpty>Aucun résultat.</CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
-                const isSelected = selectedValues.has(option.value)
-                const facetValue = facets?.get(option.value)
+                const isSelected = selectedValues.has(option.value);
+                const facetValue = facets?.get(option.value);
 
                 return (
                   <CommandItem
                     key={option.value}
                     onSelect={() => {
                       if (isSelected) {
-                        selectedValues.delete(option.value)
+                        selectedValues.delete(option.value);
                       } else {
-                        selectedValues.add(option.value)
+                        selectedValues.add(option.value);
                       }
-                      const filterValues = Array.from(selectedValues)
+                      const filterValues = Array.from(selectedValues);
                       column?.setFilterValue(
-                        filterValues.length ? filterValues : undefined
-                      )
+                        filterValues.length ? filterValues : undefined,
+                      );
                     }}
                   >
                     <div
@@ -117,7 +117,7 @@ export function TableFacetedFilter<TData, TValue>({
                         "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary transition-colors",
                         isSelected
                           ? "bg-primary text-primary-foreground"
-                          : "opacity-50 [&_svg]:invisible"
+                          : "opacity-50 [&_svg]:invisible",
                       )}
                     >
                       <CheckIcon className="h-4 w-4" />
@@ -132,7 +132,7 @@ export function TableFacetedFilter<TData, TValue>({
                       </span>
                     )}
                   </CommandItem>
-                )
+                );
               })}
             </CommandGroup>
             {selectedValues.size > 0 && (
@@ -152,7 +152,7 @@ export function TableFacetedFilter<TData, TValue>({
         </Command>
       </PopoverContent>
     </Popover>
-  )
+  );
 }
 
-TableFacetedFilter.displayName = "TableFacetedFilter"
+TableFacetedFilter.displayName = "TableFacetedFilter";

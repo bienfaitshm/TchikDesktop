@@ -19,7 +19,7 @@ import {
   enhanceColumnsExpandable,
 } from "@/renderer/components/tables/columns";
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
-import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
+import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 import type { StudentSeating } from "@/renderer/components/tables/columns.seating-student";
@@ -114,7 +114,7 @@ export const RoomHeaderInfo = ({ localroom, layoutAssignments }) => {
     (layoutAssignments.length / localroom.maxCapacity) * 100;
 
   return (
-    <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-screen-2xl mt-2 gap-4">
+    <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-(--breakpoint-2xl) mt-2 gap-4">
       <header className="space-y-1.5">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-md bg-primary/10 text-primary">
@@ -127,7 +127,7 @@ export const RoomHeaderInfo = ({ localroom, layoutAssignments }) => {
         </div>
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Layout className="h-3.5 w-3.5" />
-          Visualisez la répartition des étudiants dans la salle.
+          Visualisez la répartition des éleves dans la salle.
         </p>
       </header>
 

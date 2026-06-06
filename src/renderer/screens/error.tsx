@@ -17,7 +17,7 @@ type ErrorPageProps = {
  */
 const ErrorPage = ({ onRetry, error }: ErrorPageProps) => {
     return (
-        <div className="min-h-screen mx-auto max-w-screen-md flex flex-col justify-center items-center text-center p-4">
+        <div className="min-h-screen mx-auto max-w-(--breakpoint-md) flex flex-col justify-center items-center text-center p-4">
             <div className="space-y-4">
                 <TypographyH3>Oups! Erreur</TypographyH3>
                 <TypographyP>

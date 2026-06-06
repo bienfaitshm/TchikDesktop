@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import { FileText, Loader2 } from "lucide-react";
+import React, { useState, useCallback, ReactNode } from "react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/renderer/components/ui/button";
 import {
   Dialog,
@@ -21,6 +21,7 @@ type WithSchoolAndYearId<T> = T & { schoolId: string; yearId?: string };
 
 interface DialogDataExportProps {
   defaultValues?: Record<string, unknown>;
+  buttonTrigger?: ReactNode;
 }
 
 /**
@@ -42,7 +43,7 @@ const ExportLoadingOverlay: React.FC<{ message?: string }> = ({
 
 export const DialogDataExport: React.FC<
   WithSchoolAndYearId<DialogDataExportProps>
-> = ({ schoolId, yearId, defaultValues }) => {
+> = ({ schoolId, yearId, defaultValues, buttonTrigger }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const formManager = useDocumentExportManager(
@@ -73,16 +74,7 @@ export const DialogDataExport: React.FC<
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange} modal={false}>
-      <DialogTrigger asChild>
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-2 transition-all hover:bg-primary hover:text-primary-foreground"
-        >
-          <FileText className="size-4" />
-          <span>Exporter les données</span>
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{buttonTrigger}</DialogTrigger>
 
       <DialogContent className="sm:max-w-[700px] lg:max-w-[900px] gap-0 p-0 overflow-hidden">
         <div className="p-6">

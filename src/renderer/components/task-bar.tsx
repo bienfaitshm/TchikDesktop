@@ -2,7 +2,7 @@ import { Terminal, Wifi, CheckCircle2, ChevronUp, Bell } from "lucide-react";
 
 export function TaskBar() {
   return (
-    <footer className="h-6 w-full bg-[#22863a] text-white flex items-center justify-between px-3 text-[11px] select-none z-[100] shrink-0">
+    <footer className="h-6 w-full bg-[#22863a] text-white flex items-center justify-between px-3 text-[11px] select-none z-100 shrink-0">
       {/* Gauche */}
       <div className="flex items-center gap-4 h-full">
         <button className="flex items-center gap-1.5 px-2 hover:bg-white/10 h-full transition-colors cursor-default">

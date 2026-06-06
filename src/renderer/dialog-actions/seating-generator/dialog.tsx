@@ -79,7 +79,7 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
           <div className="mx-auto p-8 space-y-12">
             <section
               className={cn(
-                "bg-background rounded-xl border p-6 shadow-sm transition-opacity",
+                "bg-background rounded-xl border p-6 shadow-xs transition-opacity",
                 isBusy && "opacity-50 pointer-events-none",
               )}
             >

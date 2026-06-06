@@ -53,7 +53,7 @@ export const SidebarContainer = React.forwardRef<
           maxSize={30}
           {...sidebarProps}
           className={cn(
-            "h-full bg-sidebar/50 backdrop-blur-sm",
+            "h-full bg-sidebar/50 backdrop-blur-xs",
             sidebarProps?.className,
           )}
         >

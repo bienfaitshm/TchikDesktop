@@ -7,7 +7,7 @@ import { Cog } from "lucide-react";
 export const ConfigurationLayoutScreen: React.FC = () => {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-4 ">
-            <div className="container mx-auto max-w-screen-md space-y-8 p-6">
+            <div className="container mx-auto max-w-(--breakpoint-md) space-y-8 p-6">
                 <div className="flex items-center gap-4 border-b pb-4 border-neutral-200 dark:border-neutral-700">
                     <Cog className="size-10 text-neutral-600 dark:text-neutral-400 animate-spin-slow" />
                     <TypographyH2 className="mb-0 pb-0 text-gray-800 dark:text-gray-100">

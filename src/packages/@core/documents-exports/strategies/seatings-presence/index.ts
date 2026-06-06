@@ -1,0 +1,1 @@
+export { SeatingPresenceExportStrategy } from "./main";

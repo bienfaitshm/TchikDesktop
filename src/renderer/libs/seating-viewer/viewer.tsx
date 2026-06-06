@@ -90,7 +90,7 @@ export const SeatingViewer: React.FC<SeatingViewerProps> = ({ rooms }) => {
                         ? "destructive"
                         : room.studentCount > 0
                           ? "default"
-                          : "outline"
+                          : "outline-solid"
                     }
                     className={cn(
                       "font-mono text-[10px]",
@@ -115,7 +115,7 @@ export const SeatingViewer: React.FC<SeatingViewerProps> = ({ rooms }) => {
           <TabsContent
             key={room.roomId}
             value={room.roomId}
-            className="mt-0 focus-visible:ring-0 outline-none"
+            className="mt-0 focus-visible:ring-0 outline-hidden"
           >
             {/* Header de la salle sélectionnée - Amélioration UX */}
             <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">

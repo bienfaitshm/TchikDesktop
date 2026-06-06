@@ -1,5 +1,6 @@
 export type FieldType = "text" | "email" | "number" | "select";
 
+export type ColSpan = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 export interface SelectOption {
   label: string;
   value: string | number;
@@ -14,8 +15,8 @@ export interface FormFieldDef {
   required?: boolean;
   hidden?: boolean;
   defaultValue?: string | number | string[] | number[];
-  options?: SelectOption[];
+  options?: Readonly<SelectOption[]>;
   multiple?: boolean;
-  colSpan?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+  colSpan?: ColSpan;
   customClass?: string;
 }

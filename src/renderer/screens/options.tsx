@@ -25,7 +25,7 @@ import {
 } from "@/renderer/components/tables/columns";
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import { PageShell } from "@/renderer/components/layouts/page-shell.layout";
+import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import {
   ActionContainer,
   ActionTileCopy,
@@ -44,8 +44,10 @@ import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 
 const columns = enhanceColumnsExpandable(optionColumns);
 
-interface OptionRowActionsProps
-  extends Pick<OptionDialogProps, "queryKeysToInvalidate"> {
+interface OptionRowActionsProps extends Pick<
+  OptionDialogProps,
+  "queryKeysToInvalidate"
+> {
   option: TOption;
 }
 
@@ -100,7 +102,7 @@ export const OptionPage = () => {
       <PageShell
         maxWidth="2xl"
         header={
-          <section className="container flex items-center justify-between w-full max-w-screen-2xl my-4 ">
+          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4 ">
             <header className="space-y-1">
               <h1 className="text-2xl font-bold tracking-tight">
                 Gestion des filières
@@ -115,7 +117,7 @@ export const OptionPage = () => {
               queryKeysToInvalidate={queryKeysToInvalidate}
               defaultValues={{ schoolId }}
             >
-              <Button size="sm" className="rounded-full shadow-sm">
+              <Button size="sm" className="rounded-full shadow-xs">
                 <Plus className="mr-2 size-4" />
                 Ajouter une filière
               </Button>

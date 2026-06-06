@@ -1,9 +1,11 @@
 import { getTableColumns, sql } from "drizzle-orm";
+import { getLogger } from "@/packages/logger";
 import { users } from "../schemas/schema";
 import { db, type TDataBase } from "../config";
-import { getLogger } from "@/packages/logger";
 import { BaseRepository } from "./base-repository";
 import type { FindManyOptions } from "../schemas/types";
+
+type TUser = typeof users;
 
 /**
  * Fragment SQL réutilisable pour le nom complet.
@@ -18,17 +20,17 @@ export const getVisibleUserColumns = () => {
   return { ...userFields, fullName: fullNameSql };
 };
 
-const USER_DEFAULT_SORT = {
+const USER_DEFAULT_SORT: FindManyOptions<TUser> = {
   orderBy: [
-    { column: sql`lower(${users.lastName})`, order: "asc" },
+    { column: "lastName", order: "asc" },
 
-    { column: sql`lower(${users.middleName})`, order: "asc" },
+    { column: "middleName", order: "asc" },
 
-    { column: sql`lower(${users.firstName})`, order: "asc" },
+    { column: "firstName", order: "asc" },
   ],
-} as unknown as FindManyOptions<typeof users>;
+};
 
-export class UserQuery extends BaseRepository<typeof users, TDataBase> {
+export class UserQuery extends BaseRepository<TUser, TDataBase> {
   constructor() {
     super({
       db,

@@ -8,7 +8,7 @@ import type {
   TStudyYearAttributes as TStudyYear,
 } from "@/packages/@core/data-access/schema-validations";
 
-const APP_STORE_NAME = "app-configuration";
+const APP_STORE_NAME = "@app-configuration";
 
 /**
  * Interface de l'état
