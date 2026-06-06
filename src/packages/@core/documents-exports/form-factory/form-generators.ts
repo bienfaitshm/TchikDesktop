@@ -164,7 +164,7 @@ export const createLocalroomField = async (
 };
 
 export const composeFields = async (
-  ...fieldCreators: readonly Promise<FormFieldDef>[]
+  ...fieldCreators: readonly (Promise<FormFieldDef> | FormFieldDef)[]
 ): Promise<readonly FormFieldDef[]> => {
   const results = await Promise.allSettled(fieldCreators);
 

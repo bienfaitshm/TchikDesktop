@@ -76,3 +76,15 @@ export const SectionFieldFactory = {
       .build(config);
   },
 };
+
+export const NumberDaysFieldFactory = {
+  create(config?: TBaseFieldConfig): FormFieldDef {
+    return FieldBuilder.create("nDays", "number")
+      .withLabel("Nombre de jours")
+      .withPlaceholder("Ex: 3")
+      .withDefaultValue(14)
+      .withColSpan(5)
+      .required()
+      .build(config);
+  },
+};

@@ -1,5 +1,5 @@
 import * as ExcelJS from "exceljs";
-import { AdditionalJsContext as utils } from "./additional-context";
+import { additionalJsContext as utils } from "./additional-context";
 
 /** Constantes de style par défaut (élimine les "magic values") */
 const DEFAULT_STYLES = {
