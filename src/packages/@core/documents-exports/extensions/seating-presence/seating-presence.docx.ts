@@ -14,7 +14,7 @@ export class SeatingPresenceExportDocxExtension extends AbstractExportExtension<
   readonly description =
     "Génère les fiches de presences de mise en place par local";
 
-  private readonly TEMPLATE_NAME = "seatings.docx";
+  private readonly TEMPLATE_NAME = "seating-presence.docx";
 
   public async process(payload: SeatingReportPayload): Promise<RawFileContent> {
     return generateDocxReport({
