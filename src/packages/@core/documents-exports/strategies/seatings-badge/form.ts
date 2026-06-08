@@ -23,8 +23,8 @@ interface DocumentExportLayout {
 
 const DEFAULT_LAYOUT: Readonly<DocumentExportLayout> = {
   fileTypeColSpan: 3,
-  sessionColSpan: 3,
-  sectionColSpan: 3,
+  sessionColSpan: 4,
+  sectionColSpan: 2,
   classroomColSpan: 3,
 } as const;
 
