@@ -7,18 +7,26 @@ import {
   studyYears,
   classroomEnrolements,
   users,
+  seatingAssignments,
   type TableClassroom,
   type TableClassroomEnrolement,
+  type TableSeatingAssignment,
 } from "../schemas/schema";
 import { getVisibleUserColumns } from "./user.query";
 import { BaseRepository } from "./base-repository";
 import { applyQueryOptions, extractQueryPayload } from "./drizzle-builder";
-import type { TClassroom, FindManyOptions } from "../schemas/types";
+import type {
+  TClassroom,
+  FindManyOptions,
+  TEnrolement,
+  TUser,
+} from "../schemas/types";
 import { compareByFullName, withFullName } from "./query-utils";
 
 interface GetClassroomsOptions {
   classroomOptions?: Partial<FindManyOptions<TableClassroom>>;
   enrollmentOptions?: Partial<FindManyOptions<TableClassroomEnrolement>>;
+  assignementOptions?: Partial<FindManyOptions<TableSeatingAssignment>>;
 }
 export type TClassroomDTO = TClassroom & {
   optionName: string | null;
@@ -129,43 +137,63 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
     }
   }
 
-  async getClassroomsWithStudents({
-    classroomOptions,
-    enrollmentOptions,
-  }: GetClassroomsOptions = {}) {
-    const classroomQueryOptions = extractQueryPayload(
-      this.table,
-      classroomOptions,
-    );
-    const enrollmentQueryOptions = extractQueryPayload(
-      classroomEnrolements,
-      enrollmentOptions,
-    );
+  private formatClassrooms<
+    T extends { enrolements: (TEnrolement & { student: TUser })[] },
+  >(classrooms: T[]) {
+    return classrooms.map(({ enrolements, ...classroom }) => {
+      const sortedEnrollments = enrolements.sort(
+        compareByFullName((e) => e.student),
+      );
 
+      return {
+        ...classroom,
+        enrollments: sortedEnrollments.map((e) => ({
+          ...e,
+          student: withFullName(e.student),
+        })),
+      };
+    });
+  }
+
+  async getClassroomsWithStudents({
+    classroomOptions = {},
+    enrollmentOptions = {},
+  }: GetClassroomsOptions = {}) {
     const classrooms = await this.db.query.classRooms.findMany({
-      ...classroomQueryOptions,
+      ...extractQueryPayload(this.table, classroomOptions),
       with: {
         enrolements: {
-          ...enrollmentQueryOptions,
+          ...extractQueryPayload(classroomEnrolements, enrollmentOptions),
+          with: { student: true },
+        },
+      },
+    });
+
+    return this.formatClassrooms(classrooms);
+  }
+
+  async getClassroomsWithStudentAndAssignement({
+    classroomOptions = {},
+    enrollmentOptions = {},
+    assignementOptions = {},
+  }: GetClassroomsOptions = {}) {
+    const classrooms = await this.db.query.classRooms.findMany({
+      ...extractQueryPayload(this.table, classroomOptions),
+      with: {
+        enrolements: {
+          ...extractQueryPayload(classroomEnrolements, enrollmentOptions),
           with: {
             student: true,
+            seatingAssignments: {
+              ...extractQueryPayload(seatingAssignments, assignementOptions),
+              with: { localRoom: true },
+            },
           },
         },
       },
     });
 
-    return classrooms.map(({ enrolements, ...classroom }) => {
-      const enrollments = enrolements.sort(
-        compareByFullName((enrollment) => enrollment.student),
-      );
-      return {
-        ...classroom,
-        enrollments: enrollments.map((enrollment) => ({
-          ...enrollment,
-          student: withFullName(enrollment.student),
-        })),
-      };
-    });
+    return this.formatClassrooms(classrooms);
   }
 
   static instance = new ClassroomQuery();

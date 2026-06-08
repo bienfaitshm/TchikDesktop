@@ -1,16 +1,17 @@
 import {
   schoolService,
-  seatingSessionService,
-  groupByLocalRoom,
+  classroomService,
 } from "@/packages/@core/data-access/db/queries";
+import type { SECTION_ENUM } from "@/packages/@core/data-access/db";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 
-type SeatingResolverParams = {
+export type SeatingResolverParams = {
   schoolId: string;
   yearId: string;
   fileType: DOCUMENT_EXTENSION;
   sessionId: string;
-  nDays: number;
+  sectionId: SECTION_ENUM;
+  classId: string[];
 };
 
 export class SeatingPresenceSessionDataResolver {
@@ -21,23 +22,32 @@ export class SeatingPresenceSessionDataResolver {
     schoolId,
     sessionId,
     yearId,
-    nDays,
+    sectionId,
+    classId = [],
   }: SeatingResolverParams) {
     if (!schoolId || !yearId || !sessionId) {
       throw new Error(
         "Paramètres requis manquants : schoolId, yearId ou sessionId.",
       );
     }
-    const days = Array.from({ length: nDays }, (_, i) => i);
-    const [school, sessionData] = await Promise.all([
+    const [school, classrooms] = await Promise.all([
       schoolService.fetchSchoolInfo(schoolId, yearId),
-      seatingSessionService.getSessionWithAssignments(sessionId),
+      classroomService.getClassroomsWithStudentAndAssignement({
+        classroomOptions: {
+          where: { schoolId, yearId, section: sectionId },
+          whereIn: { classId },
+        },
+        assignementOptions: {
+          where: {
+            sessionId,
+          },
+        },
+      }),
     ]);
 
     return {
       school,
-      assignment: sessionData ? groupByLocalRoom(sessionData) : [],
-      days,
+      classrooms,
     };
   }
 }
