@@ -1,0 +1,1 @@
+export { SeatingBadgeExportStrategy } from "./main";
