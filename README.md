@@ -1,13 +1,14 @@
 # Tchik
 
-<img align="right" width="110" src="https://raw.githubusercontent.com/bienfaitshm/TchikDesktop/refs/heads/main/resources/icon.png">
-
-**Tchik** est la solution open source qui transforme la gestion administrative des établissements scolaires. Dites adieu aux fichiers Excel complexes, aux erreurs de saisie et à la dépendance aux logiciels propriétaires coûteux. Avec Tchik, reprenez le contrôle de vos données tout en automatisant vos tâches répétitives en un clic.
-
 [![LICENSE](https://img.shields.io/github/license/bienfaitshm/TchikDesktop)](LICENSE)
 [![Release](https://img.shields.io/github/release/bienfaitshm/TchikDesktop.svg)](https://github.com/bienfaitshm/TchikDesktop/releases)
 [![Download](https://img.shields.io/github/downloads/bienfaitshm/TchikDesktop/total)](https://github.com/bienfaitshm/TchikDesktop/releases)
 [![STARS](https://img.shields.io/github/stars/bienfaitshm/TchikDesktop)](https://github.com/bienfaitshm/TchikDesktop/)
+
+<img align="right" width="110" src="https://raw.githubusercontent.com/bienfaitshm/TchikDesktop/refs/heads/main/resources/icon.png">
+
+**Tchik** est la solution open source qui transforme la gestion administrative des établissements scolaires. Dites adieu aux fichiers Excel complexes, aux erreurs de saisie et à la dépendance aux logiciels propriétaires coûteux. Avec Tchik, reprenez le contrôle de vos données tout en automatisant vos tâches répétitives en un clic.
+
 
 ## Téléchargement
 
