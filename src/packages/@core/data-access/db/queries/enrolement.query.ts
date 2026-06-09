@@ -160,4 +160,4 @@ export class EnrolementQuery extends BaseRepository<
   static instance = new EnrolementQuery();
 }
 
-export const enrolementService = EnrolementQuery.instance;
+export const enrollmentService = EnrolementQuery.instance;

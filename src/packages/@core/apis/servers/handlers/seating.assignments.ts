@@ -4,7 +4,7 @@ import {
   seatingAssignmentService,
 } from "@/packages/@core/data-access/db/queries/seating-queries";
 import { getLogger } from "@/packages/logger";
-import { enrolementService } from "@/packages/@core/data-access/db/queries/enrolement.query";
+import { enrollmentService } from "@/packages/@core/data-access/db/queries/enrolement.query";
 import {
   HttpMethod,
   IpcRequest,
@@ -35,7 +35,7 @@ export class GenerateSeating extends AbstractEndpoint<any> {
   }: IpcRequest<SeatingGenerator & SchoolYear>): Promise<unknown> {
     const seating = new SeatingService(
       localroomService,
-      enrolementService,
+      enrollmentService,
       getLogger("SeatingService"),
     );
     return seating.generate(body);

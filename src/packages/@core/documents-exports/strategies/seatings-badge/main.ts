@@ -2,18 +2,17 @@ import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
 import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 import {
-  ClassroomIds,
-  ShoolRouteIds,
-} from "@/packages/@core/data-access/data-system-access";
-import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
 import { extensions } from "@/packages/@core/documents-exports/extensions/seatings-badge";
 import { createSeatingBadgeExportForm } from "./form";
-import { SeatingPresenceSessionDataResolver } from "./resolver";
+import {
+  SeatingPresenceSessionDataResolver,
+  SeatingResolverParams,
+} from "./resolver";
 
-type ExportPayload = {
+type ExportPayload = SeatingResolverParams & {
   schoolId: string;
   yearId: string;
   fileType: DOCUMENT_EXTENSION;
@@ -31,12 +30,6 @@ export class SeatingBadgeExportStrategy extends AbstractExportStrategy<
     "Générez et exportez les badges de participation pour les candidats aux examens.";
 
   public readonly validationSchema = SchoolYearSchema;
-
-  public readonly dataSourceDefinition = {
-    classrooms: ClassroomIds.findAllClassroomsWithEnrollment,
-    school: ShoolRouteIds.findSchoolById,
-  } as const;
-
   constructor() {
     super({
       extensions,

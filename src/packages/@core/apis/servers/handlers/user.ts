@@ -6,10 +6,10 @@ import {
   ValidationSchemas,
 } from "@/packages/electron-ipc-rest";
 import {
-  type TUserFilter,
-  type TUserCreate,
-  type TUserUpdate,
-  UserAttributesSchema,
+  type UserFilter,
+  type UserCreate,
+  type UserUpdate,
+  UserSchema,
   UserFilterSchema,
   UserCreateSchema,
   UserUpdateSchema,
@@ -17,7 +17,7 @@ import {
 import { AbstractEndpoint } from "../abstract";
 import { UserRoutes } from "../../routes-constant";
 
-const UserIdSchema = UserAttributesSchema.pick({ userId: true }).required();
+const UserIdSchema = UserSchema.pick({ userId: true }).required();
 type UserId = z.infer<typeof UserIdSchema>;
 
 export class GetUsers extends AbstractEndpoint<any> {
@@ -28,7 +28,7 @@ export class GetUsers extends AbstractEndpoint<any> {
     params: UserFilterSchema,
   };
 
-  protected handle({ params }: IpcRequest<any, TUserFilter>): Promise<unknown> {
+  protected handle({ params }: IpcRequest<any, UserFilter>): Promise<unknown> {
     return userService.findMany(params);
   }
 }
@@ -41,7 +41,7 @@ export class PostUser extends AbstractEndpoint<any> {
     body: UserCreateSchema,
   };
 
-  protected handle({ body }: IpcRequest<TUserCreate, any>): Promise<unknown> {
+  protected handle({ body }: IpcRequest<UserCreate, any>): Promise<unknown> {
     return userService.create(body);
   }
 }
@@ -71,7 +71,7 @@ export class UpdateUser extends AbstractEndpoint<any> {
   protected handle({
     params,
     body,
-  }: IpcRequest<TUserUpdate, UserId>): Promise<unknown> {
+  }: IpcRequest<UserUpdate, UserId>): Promise<unknown> {
     return userService.update(params.userId, body);
   }
 }
