@@ -3,10 +3,10 @@ import { db, TDataBase } from "../../config";
 import { BaseRepository } from "../base-repository";
 import {
   seatingAssignments,
-  classroomEnrolements,
-  classRooms,
+  classroomEnrollments,
+  classrooms,
   users,
-  localRooms,
+  localrooms,
 } from "../../schemas/schema";
 import type {
   TSeatingAssignment,
@@ -38,11 +38,11 @@ export class SeatingAssignmentQuery extends BaseRepository<
         assignmentId: seatingAssignments.assignmentId,
         row: seatingAssignments.rowPosition,
         column: seatingAssignments.columnPosition,
-        enrolementId: seatingAssignments.enrolementId,
+        enrollmentId: seatingAssignments.enrollmentId,
         classroom: {
-          classId: classRooms.classId,
-          identifier: classRooms.identifier,
-          shortIdetifier: classRooms.shortIdentifier,
+          classId: classrooms.classId,
+          identifier: classrooms.identifier,
+          shortIdetifier: classrooms.shortIdentifier,
         },
         student: {
           firstName: users.firstName,
@@ -53,13 +53,13 @@ export class SeatingAssignmentQuery extends BaseRepository<
       })
       .from(seatingAssignments)
       .innerJoin(
-        classroomEnrolements,
-        eq(seatingAssignments.enrolementId, classroomEnrolements.enrolementId),
+        classroomEnrollments,
+        eq(seatingAssignments.enrollmentId, classroomEnrollments.enrollmentId),
       )
-      .innerJoin(users, eq(classroomEnrolements.studentId, users.userId))
+      .innerJoin(users, eq(classroomEnrollments.studentId, users.userId))
       .innerJoin(
-        classRooms,
-        eq(classroomEnrolements.classroomId, classRooms.classId),
+        classrooms,
+        eq(classroomEnrollments.classroomId, classrooms.classId),
       )
       .where(
         and(
@@ -77,22 +77,22 @@ export class SeatingAssignmentQuery extends BaseRepository<
   /**
    * Trouver un étudiant spécifique dans une session (ex: Un surveillant cherche un élève)
    */
-  async findStudentSeat(sessionId: string, enrolementId: string) {
+  async findStudentSeat(sessionId: string, enrollmentId: string) {
     const [seat] = await this.db
       .select({
-        roomName: localRooms.name,
+        roomName: localrooms.name,
         row: seatingAssignments.rowPosition,
         column: seatingAssignments.columnPosition,
       })
       .from(seatingAssignments)
       .innerJoin(
-        localRooms,
-        eq(seatingAssignments.localRoomId, localRooms.localRoomId),
+        localrooms,
+        eq(seatingAssignments.localRoomId, localrooms.localRoomId),
       )
       .where(
         and(
           eq(seatingAssignments.sessionId, sessionId),
-          eq(seatingAssignments.enrolementId, enrolementId),
+          eq(seatingAssignments.enrollmentId, enrollmentId),
         ),
       );
     return seat || null;
@@ -105,25 +105,25 @@ export class SeatingAssignmentQuery extends BaseRepository<
   async getUnassignedStudents(sessionId: string, yearId: string) {
     return this.db
       .select({
-        enrolementId: classroomEnrolements.enrolementId,
+        enrollmentId: classroomEnrollments.enrollmentId,
         firstName: users.firstName,
         lastName: users.lastName,
       })
-      .from(classroomEnrolements)
-      .innerJoin(users, eq(classroomEnrolements.studentId, users.userId))
+      .from(classroomEnrollments)
+      .innerJoin(users, eq(classroomEnrollments.studentId, users.userId))
       .leftJoin(
         seatingAssignments,
         and(
           eq(
-            seatingAssignments.enrolementId,
-            classroomEnrolements.enrolementId,
+            seatingAssignments.enrollmentId,
+            classroomEnrollments.enrollmentId,
           ),
           eq(seatingAssignments.sessionId, sessionId),
         ),
       )
       .where(
         and(
-          eq(classroomEnrolements.yearId, yearId),
+          eq(classroomEnrollments.yearId, yearId),
           isNull(seatingAssignments.assignmentId),
         ),
       )

@@ -2,16 +2,16 @@ import { eq, and, sql, count, getTableColumns } from "drizzle-orm";
 import { getLogger } from "@/packages/logger";
 import { db, type TDataBase } from "../config";
 import {
-  classroomEnrolements,
+  classroomEnrollments,
   users,
-  classRooms,
+  classrooms,
   studyYears,
 } from "../schemas/schema";
 import { getVisibleUserColumns } from "./user.query";
 import { BaseRepository } from "./base-repository";
 import type { TEnrolementInsert, FindManyOptions } from "../schemas/types";
 
-type TableEnrollment = typeof classroomEnrolements;
+type TableEnrollment = typeof classroomEnrollments;
 
 /**
  * Configuration du tri par défaut (Nom complet de l'étudiant)
@@ -26,8 +26,8 @@ export class EnrolementQuery extends BaseRepository<
   constructor() {
     super({
       db,
-      table: classroomEnrolements,
-      idColumn: classroomEnrolements.classroomId,
+      table: classroomEnrollments,
+      idColumn: classroomEnrollments.classroomId,
       entityName: "En",
       logger: getLogger,
       defaultSort: ENROLEMENT_DEFAULT_SORT,
@@ -44,21 +44,21 @@ export class EnrolementQuery extends BaseRepository<
   }
 
   protected override getQuerySet(): any {
-    const { classId, schoolId, ...classFields } = getTableColumns(classRooms);
+    const { classId, schoolId, ...classFields } = getTableColumns(classrooms);
     return this.db
       .select({
-        ...getTableColumns(classroomEnrolements),
+        ...getTableColumns(classroomEnrollments),
         student: getVisibleUserColumns(),
         classroom: classFields,
         yearName: studyYears.yearName,
       })
-      .from(classroomEnrolements)
-      .innerJoin(users, eq(classroomEnrolements.studentId, users.userId))
+      .from(classroomEnrollments)
+      .innerJoin(users, eq(classroomEnrollments.studentId, users.userId))
       .innerJoin(
-        classRooms,
-        eq(classroomEnrolements.classroomId, classRooms.classId),
+        classrooms,
+        eq(classroomEnrollments.classroomId, classrooms.classId),
       )
-      .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
+      .innerJoin(studyYears, eq(classrooms.yearId, studyYears.yearId))
       .$dynamic();
   }
 
@@ -68,13 +68,13 @@ export class EnrolementQuery extends BaseRepository<
       const [results] = await this.db
         .select({
           total: count(),
-          news: sql<number>`count(case when ${classroomEnrolements.isNewStudent} = true then 1 end)`,
+          news: sql<number>`count(case when ${classroomEnrollments.isNewStudent} = true then 1 end)`,
         })
-        .from(classroomEnrolements)
+        .from(classroomEnrollments)
         .where(
           and(
-            eq(classroomEnrolements.schoolId, filters.schoolId),
-            eq(classroomEnrolements.yearId, filters.yearId),
+            eq(classroomEnrollments.schoolId, filters.schoolId),
+            eq(classroomEnrollments.yearId, filters.yearId),
           ),
         );
 
@@ -91,28 +91,28 @@ export class EnrolementQuery extends BaseRepository<
     this.validateContext(filters);
     return this.db
       .select({
-        classroomId: classroomEnrolements.classroomId,
-        label: classRooms.identifier,
-        shortName: classRooms.shortIdentifier,
-        value: count(classroomEnrolements.studentId),
+        classroomId: classroomEnrollments.classroomId,
+        label: classrooms.identifier,
+        shortName: classrooms.shortIdentifier,
+        value: count(classroomEnrollments.studentId),
       })
-      .from(classroomEnrolements)
+      .from(classroomEnrollments)
       .innerJoin(
-        classRooms,
-        eq(classroomEnrolements.classroomId, classRooms.classId),
+        classrooms,
+        eq(classroomEnrollments.classroomId, classrooms.classId),
       )
       .where(
         and(
-          eq(classroomEnrolements.schoolId, filters.schoolId),
-          eq(classroomEnrolements.yearId, filters.yearId),
+          eq(classroomEnrollments.schoolId, filters.schoolId),
+          eq(classroomEnrollments.yearId, filters.yearId),
         ),
       )
       .groupBy(
-        classroomEnrolements.classroomId,
-        classRooms.identifier,
-        classRooms.shortIdentifier,
+        classroomEnrollments.classroomId,
+        classrooms.identifier,
+        classrooms.shortIdentifier,
       )
-      .orderBy(classRooms.shortIdentifier);
+      .orderBy(classrooms.shortIdentifier);
   }
 
   /**
@@ -144,7 +144,7 @@ export class EnrolementQuery extends BaseRepository<
           throw new Error("Student ID is required for enrolement.");
 
         const [enrolement] = await tx
-          .insert(classroomEnrolements)
+          .insert(classroomEnrollments)
           .values({ ...payload.enrolement, studentId: targetStudentId })
           .returning();
 

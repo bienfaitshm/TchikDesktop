@@ -1,11 +1,11 @@
 import { db } from "../config";
 import {
   users,
-  classroomEnrolements,
-  classRooms,
+  classroomEnrollments,
+  classrooms,
   options,
 } from "../schemas/schema";
-import { eq, and, sql, count, SQL } from "drizzle-orm";
+import { eq, and, sql, count } from "drizzle-orm";
 import { getLogger } from "@/packages/logger";
 import { USER_ROLE_ENUM, STUDENT_STATUS_ENUM } from "../enum";
 
@@ -30,10 +30,7 @@ export class StatsService {
   /**
    * Agrégation générique groupée par une colonne.
    */
-  private static async aggregateCount<
-    TTable extends Record<string, any>,
-    TColumn extends keyof TTable & string,
-  >(
+  private static async aggregateCount(
     table: any,
     column: any,
     filters: any,
@@ -68,11 +65,11 @@ export class StatsService {
   ): Promise<number> {
     const [result] = await db
       .select({ value: count() })
-      .from(classroomEnrolements)
+      .from(classroomEnrollments)
       .where(
         and(
-          eq(classroomEnrolements.schoolId, schoolId),
-          eq(classroomEnrolements.yearId, yearId),
+          eq(classroomEnrollments.schoolId, schoolId),
+          eq(classroomEnrollments.yearId, yearId),
         ),
       );
     return result?.value ?? 0;
@@ -114,24 +111,24 @@ export class StatsService {
     try {
       const results = await db
         .select({
-          classId: classRooms.classId,
-          label: classRooms.identifier,
-          shortName: classRooms.shortIdentifier,
-          value: count(classroomEnrolements.studentId),
+          classId: classrooms.classId,
+          label: classrooms.identifier,
+          shortName: classrooms.shortIdentifier,
+          value: count(classroomEnrollments.studentId),
         })
-        .from(classroomEnrolements)
+        .from(classroomEnrollments)
         .innerJoin(
-          classRooms,
-          eq(classroomEnrolements.classroomId, classRooms.classId),
+          classrooms,
+          eq(classroomEnrollments.classroomId, classrooms.classId),
         )
         .where(
           and(
-            eq(classroomEnrolements.schoolId, schoolId),
-            eq(classRooms.yearId, yearId),
+            eq(classroomEnrollments.schoolId, schoolId),
+            eq(classrooms.yearId, yearId),
           ),
         )
-        .groupBy(classRooms.classId)
-        .orderBy(classRooms.shortIdentifier);
+        .groupBy(classrooms.classId)
+        .orderBy(classrooms.shortIdentifier);
 
       return results.map((item) => ({
         ...item,
@@ -155,18 +152,18 @@ export class StatsService {
       return await db
         .select({
           label: options.optionShortName,
-          value: count(classroomEnrolements.studentId),
+          value: count(classroomEnrollments.studentId),
         })
-        .from(classroomEnrolements)
+        .from(classroomEnrollments)
         .innerJoin(
-          classRooms,
-          eq(classroomEnrolements.classroomId, classRooms.classId),
+          classrooms,
+          eq(classroomEnrollments.classroomId, classrooms.classId),
         )
-        .innerJoin(options, eq(classRooms.optionId, options.optionId))
+        .innerJoin(options, eq(classrooms.optionId, options.optionId))
         .where(
           and(
-            eq(classroomEnrolements.schoolId, schoolId),
-            eq(classRooms.yearId, yearId),
+            eq(classroomEnrollments.schoolId, schoolId),
+            eq(classrooms.yearId, yearId),
           ),
         )
         .groupBy(options.optionShortName)
@@ -187,17 +184,17 @@ export class StatsService {
     yearId: string,
   ): Promise<ChartDataPoint[]> {
     const baseFilter = and(
-      eq(classroomEnrolements.schoolId, schoolId),
-      eq(classroomEnrolements.yearId, yearId),
-      eq(classroomEnrolements.status, STUDENT_STATUS_ENUM.EN_COURS),
+      eq(classroomEnrollments.schoolId, schoolId),
+      eq(classroomEnrollments.yearId, yearId),
+      eq(classroomEnrollments.status, STUDENT_STATUS_ENUM.ACTIVE),
     );
 
     const [results] = await db
       .select({
         total: count(),
-        newStudents: sql<number>`count(case when ${classroomEnrolements.isNewStudent} = 1 then 1 end)`,
+        newStudents: sql<number>`count(case when ${classroomEnrollments.isNewStudent} = 1 then 1 end)`,
       })
-      .from(classroomEnrolements)
+      .from(classroomEnrollments)
       .where(baseFilter);
 
     const total = results?.total ?? 0;
@@ -221,24 +218,24 @@ export class StatsService {
   ): Promise<ChartDataPoint[]> {
     // Mapping de l'enum vers les clés de STATUS_CONFIG
     const statusKeys: Record<string, string> = {
-      [STUDENT_STATUS_ENUM.EN_COURS]: "active",
-      [STUDENT_STATUS_ENUM.ABANDON]: "abandon",
-      [STUDENT_STATUS_ENUM.EXCLUT]: "exclu",
+      [STUDENT_STATUS_ENUM.ACTIVE]: "active",
+      [STUDENT_STATUS_ENUM.DROPOUT]: "abandon",
+      [STUDENT_STATUS_ENUM.EXPELLED]: "exclu",
     };
 
     const results = await db
       .select({
-        status: classroomEnrolements.status,
+        status: classroomEnrollments.status,
         count: count(),
       })
-      .from(classroomEnrolements)
+      .from(classroomEnrollments)
       .where(
         and(
-          eq(classroomEnrolements.schoolId, schoolId),
-          eq(classroomEnrolements.yearId, yearId),
+          eq(classroomEnrollments.schoolId, schoolId),
+          eq(classroomEnrollments.yearId, yearId),
         ),
       )
-      .groupBy(classroomEnrolements.status);
+      .groupBy(classroomEnrollments.status);
 
     return results.map((item) => ({
       label: statusKeys[item.status] ?? item.status,

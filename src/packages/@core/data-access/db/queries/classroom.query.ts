@@ -2,14 +2,14 @@ import { eq, getTableColumns } from "drizzle-orm";
 import { db, type TDataBase } from "../config";
 import { getLogger } from "@/packages/logger";
 import {
-  classRooms,
+  classrooms,
   options,
   studyYears,
-  classroomEnrolements,
+  classroomEnrollments,
   users,
   seatingAssignments,
   type TableClassroom,
-  type TableClassroomEnrolement,
+  type TableClassroomEnrollment,
   type TableSeatingAssignment,
 } from "../schemas/schema";
 import { getVisibleUserColumns } from "./user.query";
@@ -25,7 +25,7 @@ import { compareByFullName, withFullName } from "./query-utils";
 
 interface GetClassroomsOptions {
   classroomOptions?: Partial<FindManyOptions<TableClassroom>>;
-  enrollmentOptions?: Partial<FindManyOptions<TableClassroomEnrolement>>;
+  enrollmentOptions?: Partial<FindManyOptions<TableClassroomEnrollment>>;
   assignementOptions?: Partial<FindManyOptions<TableSeatingAssignment>>;
 }
 export type TClassroomDTO = TClassroom & {
@@ -46,7 +46,7 @@ const CLASSROOM_DEFAULT_SORT: FindManyOptions<TableClassroom> = {
 
 export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
   private readonly selection = {
-    ...getTableColumns(classRooms),
+    ...getTableColumns(classrooms),
     optionName: options.optionName,
     optionShortName: options.optionShortName,
     yearName: studyYears.yearName,
@@ -57,8 +57,8 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
   constructor() {
     super({
       db,
-      table: classRooms,
-      idColumn: classRooms.classId,
+      table: classrooms,
+      idColumn: classrooms.classId,
       entityName: "Classroom",
       logger: getLogger,
       defaultSort: CLASSROOM_DEFAULT_SORT,
@@ -74,14 +74,14 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
     try {
       const query = this.db
         .select(this.selection)
-        .from(classRooms)
-        .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
-        .leftJoin(options, eq(classRooms.optionId, options.optionId))
+        .from(classrooms)
+        .innerJoin(studyYears, eq(classrooms.yearId, studyYears.yearId))
+        .leftJoin(options, eq(classrooms.optionId, options.optionId))
         .$dynamic();
 
       return (await applyQueryOptions(
         query,
-        classRooms,
+        classrooms,
         filters as any,
       )) as TClassroomDTO[];
     } catch (error) {
@@ -93,18 +93,18 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
   /**
    * Recherche par ID avec relations à plat
    */
-  override async findById(classId: string): Promise<TClassroomDTO | null> {
+  override async findById(classId: string) {
     if (!classId) return null;
     try {
       const [result] = await this.db
         .select(this.selection)
-        .from(classRooms)
-        .leftJoin(options, eq(classRooms.optionId, options.optionId))
-        .innerJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
-        .where(eq(classRooms.classId, classId))
+        .from(classrooms)
+        .leftJoin(options, eq(classrooms.optionId, options.optionId))
+        .innerJoin(studyYears, eq(classrooms.yearId, studyYears.yearId))
+        .where(eq(classrooms.classId, classId))
         .limit(1);
 
-      return (result as TClassroomDTO) || null;
+      return result || null;
     } catch (error) {
       this.logError("findById", error, { classId });
       throw new Error("Impossible de trouver la classe spécifiée.");
@@ -115,22 +115,22 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
     try {
       const query = this.db
         .select({
-          classroom: classRooms,
+          classroom: classrooms,
           option: options,
           studyYear: studyYears,
-          enrollment: classroomEnrolements,
+          enrollment: classroomEnrollments,
           user: getVisibleUserColumns(),
         })
-        .from(classRooms)
-        .leftJoin(options, eq(classRooms.optionId, options.optionId))
-        .leftJoin(studyYears, eq(classRooms.yearId, studyYears.yearId))
+        .from(classrooms)
+        .leftJoin(options, eq(classrooms.optionId, options.optionId))
+        .leftJoin(studyYears, eq(classrooms.yearId, studyYears.yearId))
         .leftJoin(
-          classroomEnrolements,
-          eq(classRooms.classId, classroomEnrolements.classroomId),
+          classroomEnrollments,
+          eq(classrooms.classId, classroomEnrollments.classroomId),
         )
-        .leftJoin(users, eq(classroomEnrolements.studentId, users.userId))
+        .leftJoin(users, eq(classroomEnrollments.studentId, users.userId))
         .$dynamic();
-      return await applyQueryOptions(query, classRooms, filters);
+      return await applyQueryOptions(query, classrooms, filters);
     } catch (error) {
       this.logError("findWithEnrollments", error, { ...filters });
       throw new Error("Erreur lors de la récupération des inscriptions.");
@@ -138,10 +138,10 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
   }
 
   private formatClassrooms<
-    T extends { enrolements: (TEnrolement & { student: TUser })[] },
+    T extends { enrollments: (TEnrolement & { student: TUser })[] },
   >(classrooms: T[]) {
-    return classrooms.map(({ enrolements, ...classroom }) => {
-      const sortedEnrollments = enrolements.sort(
+    return classrooms.map(({ enrollments, ...classroom }) => {
+      const sortedEnrollments = enrollments.sort(
         compareByFullName((e) => e.student),
       );
 
@@ -159,17 +159,17 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
     classroomOptions = {},
     enrollmentOptions = {},
   }: GetClassroomsOptions = {}) {
-    const classrooms = await this.db.query.classRooms.findMany({
+    const classroomsQueries = await this.db.query.classrooms.findMany({
       ...extractQueryPayload(this.table, classroomOptions),
       with: {
-        enrolements: {
-          ...extractQueryPayload(classroomEnrolements, enrollmentOptions),
+        enrollments: {
+          ...extractQueryPayload(classroomEnrollments, enrollmentOptions),
           with: { student: true },
         },
       },
     });
 
-    return this.formatClassrooms(classrooms);
+    return this.formatClassrooms(classroomsQueries);
   }
 
   async getClassroomsWithStudentAndAssignement({
@@ -177,11 +177,11 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
     enrollmentOptions = {},
     assignementOptions = {},
   }: GetClassroomsOptions = {}) {
-    const classrooms = await this.db.query.classRooms.findMany({
+    const classroomsQueries = await this.db.query.classrooms.findMany({
       ...extractQueryPayload(this.table, classroomOptions),
       with: {
-        enrolements: {
-          ...extractQueryPayload(classroomEnrolements, enrollmentOptions),
+        enrollments: {
+          ...extractQueryPayload(classroomEnrollments, enrollmentOptions),
           with: {
             student: true,
             seatingAssignments: {
@@ -193,7 +193,22 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
       },
     });
 
-    return this.formatClassrooms(classrooms);
+    return this.formatClassrooms(classroomsQueries);
+  }
+
+  // ClassroomWithAssignments
+
+  private normalizeEnrollments(classrooms: any[]) {
+    return classrooms.map((classroom) =>
+      classroom.enrollments.map((enrollment) => {
+        const [firstAssignment] = enrollment.seatingAssignments ?? [];
+
+        return {
+          ...enrollment,
+          assignment: firstAssignment ?? null,
+        };
+      }),
+    );
   }
 
   static instance = new ClassroomQuery();

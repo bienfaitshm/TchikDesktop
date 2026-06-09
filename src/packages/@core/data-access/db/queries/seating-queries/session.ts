@@ -5,7 +5,7 @@ import { BaseRepository } from "../base-repository";
 import {
   seatingAssignments,
   seatingSessions,
-  localRooms,
+  localrooms,
 } from "../../schemas/schema";
 import type { FindManyOptions } from "../../schemas/types";
 
@@ -78,26 +78,26 @@ export class SeatingSessionQuery extends BaseRepository<
     try {
       return await this.db
         .select({
-          localRoomId: localRooms.localRoomId,
-          roomName: localRooms.name,
-          maxCapacity: localRooms.maxCapacity,
+          localRoomId: localrooms.localRoomId,
+          roomName: localrooms.name,
+          maxCapacity: localrooms.maxCapacity,
           assignedCount: count(seatingAssignments.assignmentId),
-          occupancyRate: sql<number>`CAST(COUNT(${seatingAssignments.assignmentId}) AS FLOAT) / ${localRooms.maxCapacity} * 100`,
+          occupancyRate: sql<number>`CAST(COUNT(${seatingAssignments.assignmentId}) AS FLOAT) / ${localrooms.maxCapacity} * 100`,
         })
-        .from(localRooms)
+        .from(localrooms)
         .innerJoin(
           seatingAssignments,
           and(
-            eq(seatingAssignments.localRoomId, localRooms.localRoomId),
+            eq(seatingAssignments.localRoomId, localrooms.localRoomId),
             eq(seatingAssignments.sessionId, sessionId),
           ),
         )
         .groupBy(
-          localRooms.localRoomId,
-          localRooms.name,
-          localRooms.maxCapacity,
+          localrooms.localRoomId,
+          localrooms.name,
+          localrooms.maxCapacity,
         )
-        .orderBy(localRooms.name);
+        .orderBy(localrooms.name);
     } catch (error) {
       this.logError("getSessionRoomsStatus", error, { sessionId });
       throw new Error("Impossible de récupérer l'état des salles.", {
@@ -118,7 +118,7 @@ export class SeatingSessionQuery extends BaseRepository<
           assignments: {
             with: {
               localRoom: true,
-              enrolement: {
+              enrollment: {
                 with: {
                   student: true,
                   classRoom: true,
@@ -133,7 +133,7 @@ export class SeatingSessionQuery extends BaseRepository<
 
       if (sessionDetails.assignments) {
         sessionDetails.assignments.sort(
-          compareByFullName((assignment) => assignment.enrolement?.student),
+          compareByFullName((assignment) => assignment.enrollment.student),
         );
       }
       return sessionDetails;

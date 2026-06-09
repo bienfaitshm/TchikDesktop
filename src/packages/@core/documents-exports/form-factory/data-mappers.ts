@@ -2,7 +2,7 @@ import type { SelectOption } from "@/packages/dynamic-form";
 import {
   seatingSessionService,
   classroomService,
-  localRoomService,
+  localroomService,
 } from "@/packages/@core/data-access/db/queries";
 
 /**
@@ -50,7 +50,7 @@ export const DataMappers = {
    */
   localroomsToOptions(
     localrooms: ReadonlyArray<
-      Awaited<ReturnType<typeof localRoomService.findMany>>[number]
+      Awaited<ReturnType<typeof localroomService.findMany>>[number]
     >,
   ): readonly SelectOption[] {
     if (!localrooms?.length) return [];

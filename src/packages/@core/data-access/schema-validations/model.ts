@@ -4,7 +4,7 @@ import {
   USER_GENDER_ENUM,
   USER_ROLE_ENUM,
   STUDENT_STATUS_ENUM,
-  ENROLEMENT_ACTION_ENUM,
+  ENROLLMENT_ACTION_ENUM,
 } from "@/packages/@core/data-access/db/enum";
 import { createZodEnum } from "./utils";
 
@@ -16,7 +16,7 @@ const ZSECTION_ENUM = createZodEnum(SECTION_ENUM);
 const ZUSER_GENDER_ENUM = createZodEnum(USER_GENDER_ENUM);
 const ZUSER_ROLE_ENUM = createZodEnum(USER_ROLE_ENUM);
 const ZSTUDENT_STATUS_ENUM = createZodEnum(STUDENT_STATUS_ENUM);
-const ZENROLEMENT_ACTION_ENUM = createZodEnum(ENROLEMENT_ACTION_ENUM);
+const ZENROLLMENT_ACTION_ENUM = createZodEnum(ENROLLMENT_ACTION_ENUM);
 
 // =============================================================================
 // II. SCHÉMAS DE BASE (Attributs LECTURE - Équivalent aux Interfaces)
@@ -226,7 +226,7 @@ export const EnrolementActionAttributesSchema = z.object({
     .max(500)
     .optional()
     .describe("Raison du changement de statut ou de l'action"),
-  action: ZENROLEMENT_ACTION_ENUM.describe(
+  action: ZENROLLMENT_ACTION_ENUM.describe(
     "Type d'action effectuée (Create, ChangeStatus, Transfer)",
   ),
 });

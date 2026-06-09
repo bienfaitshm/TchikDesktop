@@ -1,6 +1,6 @@
 import z from "zod";
 import {
-  localRoomService,
+  localroomService,
   seatingAssignmentService,
 } from "@/packages/@core/data-access/db/queries/seating-queries";
 import { getLogger } from "@/packages/logger";
@@ -34,7 +34,7 @@ export class GenerateSeating extends AbstractEndpoint<any> {
     body,
   }: IpcRequest<SeatingGenerator & TSchoolYear>): Promise<unknown> {
     const seating = new SeatingService(
-      localRoomService,
+      localroomService,
       enrolementService,
       getLogger("SeatingService"),
     );

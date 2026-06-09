@@ -1,11 +1,250 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6d2c9adf-84c4-4e81-9f32-509e1627f03f",
+  "id": "e02a6d16-50c0-4231-9da6-930cd1a10317",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "ClassRooms": {
-      "name": "ClassRooms",
+    "classroom_enrollment_actions": {
+      "name": "classroom_enrollment_actions",
+      "columns": {
+        "action_id": {
+          "name": "action_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "enrollment_id": {
+          "name": "enrollment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "actions_enrollment_idx": {
+          "name": "actions_enrollment_idx",
+          "columns": [
+            "enrollment_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "classroom_enrollment_actions_enrollment_id_classroom_enrollments_enrollment_id_fk": {
+          "name": "classroom_enrollment_actions_enrollment_id_classroom_enrollments_enrollment_id_fk",
+          "tableFrom": "classroom_enrollment_actions",
+          "tableTo": "classroom_enrollments",
+          "columnsFrom": [
+            "enrollment_id"
+          ],
+          "columnsTo": [
+            "enrollment_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "classroom_enrollments": {
+      "name": "classroom_enrollments",
+      "columns": {
+        "enrollment_id": {
+          "name": "enrollment_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "classroom_id": {
+          "name": "classroom_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'ACTIVE'"
+        },
+        "is_new_student": {
+          "name": "is_new_student",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "student_code": {
+          "name": "student_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "school_id": {
+          "name": "school_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "year_id": {
+          "name": "year_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "enrollments_school_idx": {
+          "name": "enrollments_school_idx",
+          "columns": [
+            "school_id"
+          ],
+          "isUnique": false
+        },
+        "enrollments_classroom_idx": {
+          "name": "enrollments_classroom_idx",
+          "columns": [
+            "classroom_id"
+          ],
+          "isUnique": false
+        },
+        "enrollments_student_idx": {
+          "name": "enrollments_student_idx",
+          "columns": [
+            "student_id"
+          ],
+          "isUnique": false
+        },
+        "student_year_unique_idx": {
+          "name": "student_year_unique_idx",
+          "columns": [
+            "student_id",
+            "year_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "classroom_enrollments_classroom_id_classrooms_class_id_fk": {
+          "name": "classroom_enrollments_classroom_id_classrooms_class_id_fk",
+          "tableFrom": "classroom_enrollments",
+          "tableTo": "classrooms",
+          "columnsFrom": [
+            "classroom_id"
+          ],
+          "columnsTo": [
+            "class_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "classroom_enrollments_student_id_users_user_id_fk": {
+          "name": "classroom_enrollments_student_id_users_user_id_fk",
+          "tableFrom": "classroom_enrollments",
+          "tableTo": "users",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "classroom_enrollments_school_id_schools_school_id_fk": {
+          "name": "classroom_enrollments_school_id_schools_school_id_fk",
+          "tableFrom": "classroom_enrollments",
+          "tableTo": "schools",
+          "columnsFrom": [
+            "school_id"
+          ],
+          "columnsTo": [
+            "school_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "classroom_enrollments_year_id_study_years_year_id_fk": {
+          "name": "classroom_enrollments_year_id_study_years_year_id_fk",
+          "tableFrom": "classroom_enrollments",
+          "tableTo": "study_years",
+          "columnsFrom": [
+            "year_id"
+          ],
+          "columnsTo": [
+            "year_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "classrooms": {
+      "name": "classrooms",
       "columns": {
         "class_id": {
           "name": "class_id",
@@ -71,45 +310,60 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "classrooms_school_idx": {
+          "name": "classrooms_school_idx",
+          "columns": [
+            "school_id"
+          ],
+          "isUnique": false
+        },
+        "classrooms_year_idx": {
+          "name": "classrooms_year_idx",
+          "columns": [
+            "year_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
-        "ClassRooms_year_id_StudyYears_year_id_fk": {
-          "name": "ClassRooms_year_id_StudyYears_year_id_fk",
-          "tableFrom": "ClassRooms",
-          "tableTo": "StudyYears",
+        "classrooms_year_id_study_years_year_id_fk": {
+          "name": "classrooms_year_id_study_years_year_id_fk",
+          "tableFrom": "classrooms",
+          "tableTo": "study_years",
           "columnsFrom": [
             "year_id"
           ],
           "columnsTo": [
             "year_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "ClassRooms_option_id_Options_option_id_fk": {
-          "name": "ClassRooms_option_id_Options_option_id_fk",
-          "tableFrom": "ClassRooms",
-          "tableTo": "Options",
+        "classrooms_option_id_options_option_id_fk": {
+          "name": "classrooms_option_id_options_option_id_fk",
+          "tableFrom": "classrooms",
+          "tableTo": "options",
           "columnsFrom": [
             "option_id"
           ],
           "columnsTo": [
             "option_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "ClassRooms_school_id_Schools_school_id_fk": {
-          "name": "ClassRooms_school_id_Schools_school_id_fk",
-          "tableFrom": "ClassRooms",
-          "tableTo": "Schools",
+        "classrooms_school_id_schools_school_id_fk": {
+          "name": "classrooms_school_id_schools_school_id_fk",
+          "tableFrom": "classrooms",
+          "tableTo": "schools",
           "columnsFrom": [
             "school_id"
           ],
           "columnsTo": [
             "school_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -117,209 +371,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "ClassroomEnrolementActions": {
-      "name": "ClassroomEnrolementActions",
-      "columns": {
-        "action_id": {
-          "name": "action_id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "enrolement_id": {
-          "name": "enrolement_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "reason": {
-          "name": "reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "action": {
-          "name": "action",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "ClassroomEnrolementActions_enrolement_id_ClassroomEnrolements_enrolement_id_fk": {
-          "name": "ClassroomEnrolementActions_enrolement_id_ClassroomEnrolements_enrolement_id_fk",
-          "tableFrom": "ClassroomEnrolementActions",
-          "tableTo": "ClassroomEnrolements",
-          "columnsFrom": [
-            "enrolement_id"
-          ],
-          "columnsTo": [
-            "enrolement_id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "ClassroomEnrolements": {
-      "name": "ClassroomEnrolements",
-      "columns": {
-        "enrolement_id": {
-          "name": "enrolement_id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "classroom_id": {
-          "name": "classroom_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'EN_COURS'"
-        },
-        "is_new_student": {
-          "name": "is_new_student",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "student_code": {
-          "name": "student_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "student_id": {
-          "name": "student_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "school_id": {
-          "name": "school_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "year_id": {
-          "name": "year_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "ClassroomEnrolements_classroom_id_ClassRooms_class_id_fk": {
-          "name": "ClassroomEnrolements_classroom_id_ClassRooms_class_id_fk",
-          "tableFrom": "ClassroomEnrolements",
-          "tableTo": "ClassRooms",
-          "columnsFrom": [
-            "classroom_id"
-          ],
-          "columnsTo": [
-            "class_id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "ClassroomEnrolements_student_id_Users_user_id_fk": {
-          "name": "ClassroomEnrolements_student_id_Users_user_id_fk",
-          "tableFrom": "ClassroomEnrolements",
-          "tableTo": "Users",
-          "columnsFrom": [
-            "student_id"
-          ],
-          "columnsTo": [
-            "user_id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "ClassroomEnrolements_school_id_Schools_school_id_fk": {
-          "name": "ClassroomEnrolements_school_id_Schools_school_id_fk",
-          "tableFrom": "ClassroomEnrolements",
-          "tableTo": "Schools",
-          "columnsFrom": [
-            "school_id"
-          ],
-          "columnsTo": [
-            "school_id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "ClassroomEnrolements_year_id_StudyYears_year_id_fk": {
-          "name": "ClassroomEnrolements_year_id_StudyYears_year_id_fk",
-          "tableFrom": "ClassroomEnrolements",
-          "tableTo": "StudyYears",
-          "columnsFrom": [
-            "year_id"
-          ],
-          "columnsTo": [
-            "year_id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "LocalRooms": {
-      "name": "LocalRooms",
+    "local_rooms": {
+      "name": "local_rooms",
       "columns": {
         "local_room_id": {
           "name": "local_room_id",
@@ -367,19 +420,27 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "local_rooms_school_idx": {
+          "name": "local_rooms_school_idx",
+          "columns": [
+            "school_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
-        "LocalRooms_school_id_Schools_school_id_fk": {
-          "name": "LocalRooms_school_id_Schools_school_id_fk",
-          "tableFrom": "LocalRooms",
-          "tableTo": "Schools",
+        "local_rooms_school_id_schools_school_id_fk": {
+          "name": "local_rooms_school_id_schools_school_id_fk",
+          "tableFrom": "local_rooms",
+          "tableTo": "schools",
           "columnsFrom": [
             "school_id"
           ],
           "columnsTo": [
             "school_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -387,8 +448,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "Options": {
-      "name": "Options",
+    "options": {
+      "name": "options",
       "columns": {
         "option_id": {
           "name": "option_id",
@@ -427,19 +488,27 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "options_school_idx": {
+          "name": "options_school_idx",
+          "columns": [
+            "school_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
-        "Options_school_id_Schools_school_id_fk": {
-          "name": "Options_school_id_Schools_school_id_fk",
-          "tableFrom": "Options",
-          "tableTo": "Schools",
+        "options_school_id_schools_school_id_fk": {
+          "name": "options_school_id_schools_school_id_fk",
+          "tableFrom": "options",
+          "tableTo": "schools",
           "columnsFrom": [
             "school_id"
           ],
           "columnsTo": [
             "school_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -447,8 +516,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "Schools": {
-      "name": "Schools",
+    "schools": {
+      "name": "schools",
       "columns": {
         "school_id": {
           "name": "school_id",
@@ -464,8 +533,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "adress": {
-          "name": "adress",
+        "address": {
+          "name": "address",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -506,8 +575,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "SeatingAssignments": {
-      "name": "SeatingAssignments",
+    "seating_assignments": {
+      "name": "seating_assignments",
       "columns": {
         "assignment_id": {
           "name": "assignment_id",
@@ -530,8 +599,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "enrolement_id": {
-          "name": "enrolement_id",
+        "enrollment_id": {
+          "name": "enrollment_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -553,11 +622,11 @@
         }
       },
       "indexes": {
-        "session_enrolement_idx": {
-          "name": "session_enrolement_idx",
+        "session_enrollment_idx": {
+          "name": "session_enrollment_idx",
           "columns": [
             "session_id",
-            "enrolement_id"
+            "enrollment_id"
           ],
           "isUnique": true
         },
@@ -573,43 +642,43 @@
         }
       },
       "foreignKeys": {
-        "SeatingAssignments_session_id_SeatingSessions_session_id_fk": {
-          "name": "SeatingAssignments_session_id_SeatingSessions_session_id_fk",
-          "tableFrom": "SeatingAssignments",
-          "tableTo": "SeatingSessions",
+        "seating_assignments_session_id_seating_sessions_session_id_fk": {
+          "name": "seating_assignments_session_id_seating_sessions_session_id_fk",
+          "tableFrom": "seating_assignments",
+          "tableTo": "seating_sessions",
           "columnsFrom": [
             "session_id"
           ],
           "columnsTo": [
             "session_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "SeatingAssignments_local_room_id_LocalRooms_local_room_id_fk": {
-          "name": "SeatingAssignments_local_room_id_LocalRooms_local_room_id_fk",
-          "tableFrom": "SeatingAssignments",
-          "tableTo": "LocalRooms",
+        "seating_assignments_local_room_id_local_rooms_local_room_id_fk": {
+          "name": "seating_assignments_local_room_id_local_rooms_local_room_id_fk",
+          "tableFrom": "seating_assignments",
+          "tableTo": "local_rooms",
           "columnsFrom": [
             "local_room_id"
           ],
           "columnsTo": [
             "local_room_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "SeatingAssignments_enrolement_id_ClassroomEnrolements_enrolement_id_fk": {
-          "name": "SeatingAssignments_enrolement_id_ClassroomEnrolements_enrolement_id_fk",
-          "tableFrom": "SeatingAssignments",
-          "tableTo": "ClassroomEnrolements",
+        "seating_assignments_enrollment_id_classroom_enrollments_enrollment_id_fk": {
+          "name": "seating_assignments_enrollment_id_classroom_enrollments_enrollment_id_fk",
+          "tableFrom": "seating_assignments",
+          "tableTo": "classroom_enrollments",
           "columnsFrom": [
-            "enrolement_id"
+            "enrollment_id"
           ],
           "columnsTo": [
-            "enrolement_id"
+            "enrollment_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -617,8 +686,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "SeatingSessions": {
-      "name": "SeatingSessions",
+    "seating_sessions": {
+      "name": "seating_sessions",
       "columns": {
         "session_id": {
           "name": "session_id",
@@ -649,32 +718,40 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "seating_sessions_school_idx": {
+          "name": "seating_sessions_school_idx",
+          "columns": [
+            "school_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
-        "SeatingSessions_school_id_Schools_school_id_fk": {
-          "name": "SeatingSessions_school_id_Schools_school_id_fk",
-          "tableFrom": "SeatingSessions",
-          "tableTo": "Schools",
+        "seating_sessions_school_id_schools_school_id_fk": {
+          "name": "seating_sessions_school_id_schools_school_id_fk",
+          "tableFrom": "seating_sessions",
+          "tableTo": "schools",
           "columnsFrom": [
             "school_id"
           ],
           "columnsTo": [
             "school_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "SeatingSessions_year_id_StudyYears_year_id_fk": {
-          "name": "SeatingSessions_year_id_StudyYears_year_id_fk",
-          "tableFrom": "SeatingSessions",
-          "tableTo": "StudyYears",
+        "seating_sessions_year_id_study_years_year_id_fk": {
+          "name": "seating_sessions_year_id_study_years_year_id_fk",
+          "tableFrom": "seating_sessions",
+          "tableTo": "study_years",
           "columnsFrom": [
             "year_id"
           ],
           "columnsTo": [
             "year_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -682,8 +759,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "StudyYears": {
-      "name": "StudyYears",
+    "study_years": {
+      "name": "study_years",
       "columns": {
         "year_id": {
           "name": "year_id",
@@ -736,26 +813,34 @@
         }
       },
       "indexes": {
-        "StudyYears_year_name_unique": {
-          "name": "StudyYears_year_name_unique",
+        "study_years_school_idx": {
+          "name": "study_years_school_idx",
           "columns": [
+            "school_id"
+          ],
+          "isUnique": false
+        },
+        "school_year_name_unique_idx": {
+          "name": "school_year_name_unique_idx",
+          "columns": [
+            "school_id",
             "year_name"
           ],
           "isUnique": true
         }
       },
       "foreignKeys": {
-        "StudyYears_school_id_Schools_school_id_fk": {
-          "name": "StudyYears_school_id_Schools_school_id_fk",
-          "tableFrom": "StudyYears",
-          "tableTo": "Schools",
+        "study_years_school_id_schools_school_id_fk": {
+          "name": "study_years_school_id_schools_school_id_fk",
+          "tableFrom": "study_years",
+          "tableTo": "schools",
           "columnsFrom": [
             "school_id"
           ],
           "columnsTo": [
             "school_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -763,8 +848,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "Users": {
-      "name": "Users",
+    "users": {
+      "name": "users",
       "columns": {
         "user_id": {
           "name": "user_id",
@@ -806,8 +891,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "'000000'"
+          "autoincrement": false
         },
         "gender": {
           "name": "gender",
@@ -862,26 +946,40 @@
         }
       },
       "indexes": {
-        "Users_username_unique": {
-          "name": "Users_username_unique",
+        "users_username_unique": {
+          "name": "users_username_unique",
           "columns": [
             "username"
           ],
           "isUnique": true
+        },
+        "users_school_idx": {
+          "name": "users_school_idx",
+          "columns": [
+            "school_id"
+          ],
+          "isUnique": false
+        },
+        "users_role_idx": {
+          "name": "users_role_idx",
+          "columns": [
+            "role"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
-        "Users_school_id_Schools_school_id_fk": {
-          "name": "Users_school_id_Schools_school_id_fk",
-          "tableFrom": "Users",
-          "tableTo": "Schools",
+        "users_school_id_schools_school_id_fk": {
+          "name": "users_school_id_schools_school_id_fk",
+          "tableFrom": "users",
+          "tableTo": "schools",
           "columnsFrom": [
             "school_id"
           ],
           "columnsTo": [
             "school_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

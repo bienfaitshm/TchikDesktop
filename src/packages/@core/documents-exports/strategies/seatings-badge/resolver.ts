@@ -51,3 +51,18 @@ export class SeatingPresenceSessionDataResolver {
     };
   }
 }
+
+// ClassroomWithAssignments
+
+export function normalizeEnrollments(classrooms: any[]) {
+  return classrooms.map((classroom) =>
+    classroom.enrollments.map((enrollment) => {
+      const [firstAssignment] = enrollment.seatingAssignments ?? [];
+
+      return {
+        ...enrollment,
+        assignment: firstAssignment ?? null,
+      };
+    }),
+  );
+}

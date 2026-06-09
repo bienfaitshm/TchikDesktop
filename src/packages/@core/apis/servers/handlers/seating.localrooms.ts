@@ -1,5 +1,5 @@
 import z from "zod";
-import { localRoomService } from "@/packages/@core/data-access/db/queries/seating-queries";
+import { localroomService } from "@/packages/@core/data-access/db/queries/seating-queries";
 import {
   HttpMethod,
   IpcRequest,
@@ -28,7 +28,7 @@ export class GetLocalRooms extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<unknown, TLocalRoomFilter>): Promise<unknown> {
-    return localRoomService.findMany(params as any);
+    return localroomService.findMany(params as any);
   }
 }
 
@@ -39,7 +39,7 @@ export class GetLocalRoom extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<unknown, TLocalRoomIdSchema>): Promise<unknown> {
-    return localRoomService.findById(params.localRoomId);
+    return localroomService.findById(params.localRoomId);
   }
 }
 
@@ -49,7 +49,7 @@ export class CreateLocalRoom extends AbstractEndpoint<any> {
   method = HttpMethod.POST;
   schemas: ValidationSchemas = { body: LocalRoomCreateSchema };
   protected handle({ body }: IpcRequest<TLocalRoomCreate>): Promise<unknown> {
-    return localRoomService.create(body);
+    return localroomService.create(body);
   }
 }
 
@@ -65,7 +65,7 @@ export class UpdateLocalRoom extends AbstractEndpoint<any> {
     params,
     body,
   }: IpcRequest<TLocalRoomUpdate, TLocalRoomIdSchema>): Promise<unknown> {
-    return localRoomService.update(params.localRoomId, body);
+    return localroomService.update(params.localRoomId, body);
   }
 }
 
@@ -77,6 +77,6 @@ export class DeleteLocalRoom extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<undefined, TLocalRoomIdSchema>): Promise<unknown> {
-    return localRoomService.delete(params.localRoomId);
+    return localroomService.delete(params.localRoomId);
   }
 }
