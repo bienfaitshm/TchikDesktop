@@ -1,6 +1,6 @@
 "use client";
 
-import type { TClassroomAttributes as TClassroom } from "@/packages/@core/data-access/schema-validations";
+import type { Classroom } from "@/packages/@core/data-access/schema-validations";
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
 import React, { useMemo } from "react";
 import {
@@ -46,7 +46,7 @@ interface ClassroomRowActionsProps extends Pick<
   ClassroomDialogProps,
   "queryKeysToInvalidate"
 > {
-  classroom: TClassroom;
+  classroom: Classroom;
   schoolId: string;
   yearId: string;
 }
@@ -142,7 +142,7 @@ export const ClassroomPage = () => {
           </section>
         }
       >
-        <DataTable<TClassroom>
+        <DataTable<Classroom>
           data={classrooms}
           columns={columns}
           keyExtractor={(item) => item.classId}
@@ -167,7 +167,7 @@ export const ClassroomPage = () => {
           >
             <DataTableContent>
               <DataContentHead />
-              <DataContentBody<TClassroom>>
+              <DataContentBody<Classroom>>
                 {({ row }) => (
                   <ExpandableRow
                     row={row as any}

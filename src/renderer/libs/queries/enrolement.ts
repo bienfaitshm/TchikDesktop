@@ -1,16 +1,16 @@
 import { useMutation, useSuspenseQuery } from "./base-query";
 import {
-  TEnrolementAttributes,
-  TEnrolementCreate,
-  TEnrolementQuickCreate,
-  TEnrolementUpdate,
-  TEnrolementFilter,
+  Enrollment,
+  EnrollmentCreate,
+  EnrollmentQuickCreate,
+  EnrollmentUpdate,
+  EnrollmentFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { enrollement } from "@/renderer/libs/apis";
 import { TQueryUpdate } from "./type";
 import type { UseSuspenseQueryOptions } from "@tanstack/react-query";
 
-export function useGetEnrollments(params?: TEnrolementFilter) {
+export function useGetEnrollments(params?: EnrollmentFilter) {
   return useSuspenseQuery({
     queryKey: ["GET_ENROLLMENTS", params],
     queryFn: () => enrollement.fetchEnrollements(params),
@@ -18,45 +18,44 @@ export function useGetEnrollments(params?: TEnrolementFilter) {
 }
 
 export function useGetEnrollmentById(
-  enrolementId: string,
-  options?: Partial<UseSuspenseQueryOptions<TEnrolementAttributes>>,
+  enrollmentId: string,
+  options?: Partial<UseSuspenseQueryOptions<Enrollment>>,
 ) {
   return useSuspenseQuery({
-    queryKey: ["GET_ENROLLMENT", enrolementId],
-    queryFn: () => enrollement.fetchEnrollementById(enrolementId),
+    queryKey: ["GET_ENROLLMENT", enrollmentId],
+    queryFn: () => enrollement.fetchEnrollementById(enrollmentId),
     ...options,
   });
 }
 
-export function useCreateEnrolement() {
+export function useCreateEnrollment() {
   return useMutation({
-    mutationKey: ["CREATE_ENROLEMENT"],
-    mutationFn: (data: TEnrolementCreate) =>
-      enrollement.createEnrollement(data),
+    mutationKey: ["CREATE_ENROLLMENT"],
+    mutationFn: (data: EnrollmentCreate) => enrollement.createEnrollement(data),
   });
 }
 
 //
 
-export function useCreateQuickEnrolement() {
+export function useCreateQuickEnrollment() {
   return useMutation({
-    mutationKey: ["QUICK_ENROLEMENT"],
-    mutationFn: (data: TEnrolementQuickCreate) =>
+    mutationKey: ["QUICK_ENROLLMENT"],
+    mutationFn: (data: EnrollmentQuickCreate) =>
       enrollement.createQuickEnrollement(data),
   });
 }
 
 export function useUpdateEnrollment() {
   return useMutation({
-    mutationKey: ["UPDATE_ENROLEMENT"],
-    mutationFn: ({ data, id }: TQueryUpdate<TEnrolementUpdate>) =>
+    mutationKey: ["UPDATE_ENROLLMENT"],
+    mutationFn: ({ data, id }: TQueryUpdate<EnrollmentUpdate>) =>
       enrollement.updateEnrollement(id, data),
   });
 }
 
 export function useDeleteEnrollment() {
   return useMutation({
-    mutationKey: ["DELETE_ENROLEMENT"],
+    mutationKey: ["DELETE_ENROLLMENT"],
     mutationFn: (id: string) => enrollement.deleteEnrollement(id),
   });
 }
