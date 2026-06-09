@@ -1,13 +1,13 @@
 import z from "zod";
 import { classroomService } from "@/packages/@core/data-access/db/queries";
 import {
-  ClassroomAttributesSchema,
+  ClassroomSchema,
   ClassroomCreateSchema,
   ClassroomUpdateSchema,
   ClassroomFilterSchema,
-  TClassroomFilter,
-  TClassroomCreate,
-  TClassroomUpdate,
+  ClassroomFilter,
+  ClassroomCreate,
+  ClassroomUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -17,11 +17,11 @@ import {
 import { AbstractEndpoint } from "../abstract";
 import { ClassroomRoutes } from "../../routes-constant";
 
-const ClassIdSchema = ClassroomAttributesSchema.pick({ classId: true });
+const ClassIdSchema = ClassroomSchema.pick({ classId: true });
 
 type ClassId = z.infer<typeof ClassIdSchema>;
 
-export class GetClassrooms extends AbstractEndpoint<any> {
+export class GeClassrooms extends AbstractEndpoint<any> {
   route = ClassroomRoutes.ALL;
   method = HttpMethod.GET;
   validationErrorMessage?: string | undefined = undefined;
@@ -31,12 +31,12 @@ export class GetClassrooms extends AbstractEndpoint<any> {
 
   protected handle({
     params,
-  }: IpcRequest<any, TClassroomFilter>): Promise<unknown> {
+  }: IpcRequest<any, ClassroomFilter>): Promise<unknown> {
     return classroomService.findManyExtended(params);
   }
 }
 
-export class GetClassroomsWithEnrollments extends AbstractEndpoint<any> {
+export class GeClassroomsWithEnrollments extends AbstractEndpoint<any> {
   route = ClassroomRoutes.ALL_ENROLLMENT;
   method = HttpMethod.GET;
   validationErrorMessage?: string | undefined = undefined;
@@ -46,12 +46,12 @@ export class GetClassroomsWithEnrollments extends AbstractEndpoint<any> {
 
   protected handle({
     params,
-  }: IpcRequest<any, TClassroomFilter>): Promise<unknown> {
+  }: IpcRequest<any, ClassroomFilter>): Promise<unknown> {
     return classroomService.findWithEnrollments(params);
   }
 }
 
-export class PostClassroom extends AbstractEndpoint<any> {
+export class PosClassroom extends AbstractEndpoint<any> {
   route = ClassroomRoutes.ALL;
   method = HttpMethod.POST;
   validationErrorMessage?: string | undefined = undefined;
@@ -61,12 +61,12 @@ export class PostClassroom extends AbstractEndpoint<any> {
 
   protected handle({
     body,
-  }: IpcRequest<TClassroomCreate, any>): Promise<unknown> {
+  }: IpcRequest<ClassroomCreate, any>): Promise<unknown> {
     return classroomService.create(body);
   }
 }
 
-export class GetClassroom extends AbstractEndpoint<any> {
+export class GeClassroom extends AbstractEndpoint<any> {
   route = ClassroomRoutes.DETAIL;
   method = HttpMethod.GET;
   validationErrorMessage?: string | undefined = undefined;
@@ -90,7 +90,7 @@ export class UpdateClassroom extends AbstractEndpoint<any> {
   protected handle({
     params,
     body,
-  }: IpcRequest<TClassroomUpdate, ClassId>): Promise<unknown> {
+  }: IpcRequest<ClassroomUpdate, ClassId>): Promise<unknown> {
     return classroomService.update(params.classId, body);
   }
 }

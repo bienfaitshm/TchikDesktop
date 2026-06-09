@@ -19,6 +19,14 @@ import {
 } from "../utils";
 import { primaryKeyId, enumColumn, timestamps } from "../drizzle-fields";
 
+type AsUpdatePayload<T, PK extends keyof T> = Partial<
+  Omit<T, PK | "createdAt" | "updatedAt">
+>;
+
+// ==========================================
+// --- IDENTITY & CORE ---
+// ==========================================
+
 export const schools = sqliteTable("schools", {
   schoolId: primaryKeyId("school_id"),
   name: text("name").notNull(),
@@ -28,9 +36,10 @@ export const schools = sqliteTable("schools", {
   ...timestamps,
 });
 
-export type School = InferSelectModel<typeof schools>;
-export type InsertSchool = InferInsertModel<typeof schools>;
 export type TableSchool = typeof schools;
+export type School = InferSelectModel<TableSchool>;
+export type InsertSchool = InferInsertModel<TableSchool>;
+export type UpdateSchool = AsUpdatePayload<InsertSchool, "schoolId">;
 
 export const users = sqliteTable(
   "users",
@@ -66,6 +75,7 @@ export const users = sqliteTable(
 export type TableUser = typeof users;
 export type User = InferSelectModel<TableUser>;
 export type InsertUser = InferInsertModel<TableUser>;
+export type UpdateUser = AsUpdatePayload<InsertUser, "userId">;
 
 export const options = sqliteTable(
   "options",
@@ -86,6 +96,7 @@ export const options = sqliteTable(
 export type TableOption = typeof options;
 export type Option = InferSelectModel<TableOption>;
 export type InsertOption = InferInsertModel<TableOption>;
+export type UpdateOption = AsUpdatePayload<InsertOption, "optionId">;
 
 export const studyYears = sqliteTable(
   "study_years",
@@ -111,6 +122,11 @@ export const studyYears = sqliteTable(
 export type TableStudyYear = typeof studyYears;
 export type StudyYear = InferSelectModel<TableStudyYear>;
 export type InsertStudyYear = InferInsertModel<TableStudyYear>;
+export type UpdateStudyYear = AsUpdatePayload<InsertStudyYear, "yearId">;
+
+// ==========================================
+// --- ACADEMIC ---
+// ==========================================
 
 export const classrooms = sqliteTable(
   "classrooms",
@@ -139,6 +155,7 @@ export const classrooms = sqliteTable(
 export type TableClassroom = typeof classrooms;
 export type Classroom = InferSelectModel<TableClassroom>;
 export type InsertClassroom = InferInsertModel<TableClassroom>;
+export type UpdateClassroom = AsUpdatePayload<InsertClassroom, "classId">;
 
 export const classroomEnrollments = sqliteTable(
   "classroom_enrollments",
@@ -179,6 +196,10 @@ export type TableClassroomEnrollment = typeof classroomEnrollments;
 export type ClassroomEnrollment = InferSelectModel<TableClassroomEnrollment>;
 export type InsertClassroomEnrollment =
   InferInsertModel<TableClassroomEnrollment>;
+export type UpdateClassroomEnrollment = AsUpdatePayload<
+  InsertClassroomEnrollment,
+  "enrollmentId"
+>;
 
 export const classroomEnrollmentActions = sqliteTable(
   "classroom_enrollment_actions",
@@ -201,11 +222,19 @@ export type ClassroomEnrollmentAction =
   InferSelectModel<TableClassroomEnrollmentAction>;
 export type InsertClassroomEnrollmentAction =
   InferInsertModel<TableClassroomEnrollmentAction>;
+export type UpdateClassroomEnrollmentAction = AsUpdatePayload<
+  InsertClassroomEnrollmentAction,
+  "actionId"
+>;
+
+// ==========================================
+// --- SEATING (PLACEMENT) ---
+// ==========================================
 
 export const localrooms = sqliteTable(
   "local_rooms",
   {
-    localRoomId: primaryKeyId("local_room_id"),
+    localroomId: primaryKeyId("local_room_id"),
     name: text("name").notNull(),
     maxCapacity: integer("max_capacity").notNull().default(0),
     totalRows: integer("total_rows").notNull().default(0),
@@ -217,9 +246,10 @@ export const localrooms = sqliteTable(
   (table) => [index("local_rooms_school_idx").on(table.schoolId)],
 );
 
-export type TableLocalRoom = typeof localrooms;
-export type LocalRoom = InferSelectModel<TableLocalRoom>;
-export type InsertLocalRoom = InferInsertModel<TableLocalRoom>;
+export type TableLocalroom = typeof localrooms;
+export type Localroom = InferSelectModel<TableLocalroom>;
+export type InsertLocalroom = InferInsertModel<TableLocalroom>;
+export type UpdateLocalroom = AsUpdatePayload<InsertLocalroom, "localroomId">;
 
 export const seatingSessions = sqliteTable(
   "seating_sessions",
@@ -239,6 +269,10 @@ export const seatingSessions = sqliteTable(
 export type TableSeatingSession = typeof seatingSessions;
 export type SeatingSession = InferSelectModel<TableSeatingSession>;
 export type InsertSeatingSession = InferInsertModel<TableSeatingSession>;
+export type UpdateSeatingSession = AsUpdatePayload<
+  InsertSeatingSession,
+  "sessionId"
+>;
 
 export const seatingAssignments = sqliteTable(
   "seating_assignments",
@@ -247,9 +281,9 @@ export const seatingAssignments = sqliteTable(
     sessionId: text("session_id")
       .notNull()
       .references(() => seatingSessions.sessionId, { onDelete: "cascade" }),
-    localRoomId: text("local_room_id")
+    localroomId: text("local_room_id")
       .notNull()
-      .references(() => localrooms.localRoomId, { onDelete: "cascade" }),
+      .references(() => localrooms.localroomId, { onDelete: "cascade" }),
     enrollmentId: text("enrollment_id")
       .notNull()
       .references(() => classroomEnrollments.enrollmentId, {
@@ -265,7 +299,7 @@ export const seatingAssignments = sqliteTable(
     ),
     uniqueIndex("seat_position_idx").on(
       table.sessionId,
-      table.localRoomId,
+      table.localroomId,
       table.rowPosition,
       table.columnPosition,
     ),
@@ -275,3 +309,7 @@ export const seatingAssignments = sqliteTable(
 export type TableSeatingAssignment = typeof seatingAssignments;
 export type SeatingAssignment = InferSelectModel<TableSeatingAssignment>;
 export type InsertSeatingAssignment = InferInsertModel<TableSeatingAssignment>;
+export type UpdateSeatingAssignment = AsUpdatePayload<
+  InsertSeatingAssignment,
+  "assignmentId"
+>;

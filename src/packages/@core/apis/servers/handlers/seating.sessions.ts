@@ -6,16 +6,16 @@ import {
   ValidationSchemas,
 } from "@/packages/electron-ipc-rest";
 import {
-  SeatingSessionAttributesSchema,
+  SeatingSessionSchema,
   SeatingSessionCreateSchema,
   SeatingSessionFilterSchema,
-  type TSeatingSessionFilter,
-  type TSeatingSessionCreate,
+  type SeatingSessionFilter,
+  type SeatingSessionCreate,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
 import { SeatingSessionRoutes } from "../../routes-constant";
 
-const SeatingSessionIdSchema = SeatingSessionAttributesSchema.pick({
+const SeatingSessionIdSchema = SeatingSessionSchema.pick({
   sessionId: true,
 });
 type TSeatingSessionIdSchema = z.infer<typeof SeatingSessionIdSchema>;
@@ -26,7 +26,7 @@ export class GetSeatingSessions extends AbstractEndpoint<any> {
   schemas: ValidationSchemas = { params: SeatingSessionFilterSchema };
   protected handle({
     params,
-  }: IpcRequest<unknown, TSeatingSessionFilter>): Promise<unknown> {
+  }: IpcRequest<unknown, SeatingSessionFilter>): Promise<unknown> {
     return seatingSessionService.findMany(params as any);
   }
 }
@@ -61,7 +61,7 @@ export class PostSeatingSession extends AbstractEndpoint<any> {
   schemas: ValidationSchemas = { body: SeatingSessionCreateSchema };
   protected handle({
     body,
-  }: IpcRequest<TSeatingSessionCreate>): Promise<unknown> {
+  }: IpcRequest<SeatingSessionCreate>): Promise<unknown> {
     return seatingSessionService.create(body);
   }
 }
@@ -77,7 +77,7 @@ export class UpdateSeatingSession extends AbstractEndpoint<any> {
     params: { sessionId },
     body,
   }: IpcRequest<
-    TSeatingSessionCreate,
+    SeatingSessionCreate,
     TSeatingSessionIdSchema
   >): Promise<unknown> {
     return seatingSessionService.update(sessionId, body);

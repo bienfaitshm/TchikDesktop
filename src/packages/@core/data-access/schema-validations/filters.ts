@@ -1,102 +1,135 @@
 import { z } from "zod";
 import {
-  SchoolAttributesSchema,
-  UserAttributesSchema,
-  OptionAttributesSchema,
-  StudyYearAttributesSchema,
-  ClassroomAttributesSchema,
-  EnrolementAttributesSchema,
-  EnrolementActionAttributesSchema,
+  SchoolSchema,
+  UserSchema,
+  OptionSchema,
+  StudyYearSchema,
+  ClassroomSchema,
+  EnrollmentSchema,
+  EnrollmentActionSchema,
+  LocalroomSchema,
+  SeatingSessionSchema,
+  SeatingAssignmentSchema,
   withQueryOptions,
 } from "./model";
-import { orArray } from "./filters.base";
 
-// =============================================================================
-// I. SCHÉMAS DE FILTRE (Supportant Valeurs Simples ou Tableaux)
-// =============================================================================
+import { orArray } from "./filters.base";
 
 export const SchoolYearSchema = z.object({
   schoolId: z.string().min(1, "L'ID de l'école est requis"),
   yearId: z.string().min(1, "L'ID de l'année est requis"),
 });
 
-// 1. School Filter
 export const SchoolFilterSchema = withQueryOptions(
   z.object({
-    name: orArray(SchoolAttributesSchema.shape.name),
-    adress: orArray(SchoolAttributesSchema.shape.adress),
-    town: orArray(SchoolAttributesSchema.shape.town),
+    name: orArray(SchoolSchema.shape.name),
+    address: orArray(SchoolSchema.shape.address),
+    town: orArray(SchoolSchema.shape.town),
   }),
 );
 
-// 2. User Filter
 export const UserFilterSchema = withQueryOptions(
   z.object({
-    userId: orArray(UserAttributesSchema.shape.userId.unwrap()), // On unwrap si optionnel/nullable
-    lastName: orArray(UserAttributesSchema.shape.lastName),
-    middleName: orArray(UserAttributesSchema.shape.middleName),
-    firstName: orArray(UserAttributesSchema.shape.firstName.unwrap().unwrap()),
-    gender: orArray(UserAttributesSchema.shape.gender.unwrap()),
-    role: orArray(UserAttributesSchema.shape.role.unwrap()),
-    schoolId: orArray(UserAttributesSchema.shape.schoolId.unwrap()),
+    userId: orArray(UserSchema.shape.userId),
+    lastName: orArray(UserSchema.shape.lastName),
+    middleName: orArray(UserSchema.shape.middleName),
+    firstName: orArray(UserSchema.shape.firstName.unwrap().unwrap()),
+    gender: orArray(UserSchema.shape.gender),
+    role: orArray(UserSchema.shape.role),
+    schoolId: orArray(UserSchema.shape.schoolId),
   }),
 );
 
-// 3. Option Filter
 export const OptionFilterSchema = withQueryOptions(
   z.object({
-    optionId: orArray(OptionAttributesSchema.shape.optionId),
-    optionName: orArray(OptionAttributesSchema.shape.optionName),
-    optionShortName: orArray(OptionAttributesSchema.shape.optionShortName),
-    schoolId: orArray(OptionAttributesSchema.shape.schoolId),
-    section: orArray(OptionAttributesSchema.shape.section.unwrap()),
+    optionId: orArray(OptionSchema.shape.optionId),
+    optionName: orArray(OptionSchema.shape.optionName),
+    optionShortName: orArray(OptionSchema.shape.optionShortName),
+    schoolId: orArray(OptionSchema.shape.schoolId),
+    section: orArray(OptionSchema.shape.section),
   }),
 );
 
-// 4. StudyYear Filter
 export const StudyYearFilterSchema = withQueryOptions(
   z.object({
-    yearId: orArray(StudyYearAttributesSchema.shape.yearId),
-    yearName: orArray(StudyYearAttributesSchema.shape.yearName),
-    schoolId: orArray(StudyYearAttributesSchema.shape.schoolId),
+    yearId: orArray(StudyYearSchema.shape.yearId),
+    yearName: orArray(StudyYearSchema.shape.yearName),
+    schoolId: orArray(StudyYearSchema.shape.schoolId),
   }),
 );
 
-// 5. Classroom Filter
 export const ClassroomFilterSchema = withQueryOptions(
   z.object({
-    classId: orArray(ClassroomAttributesSchema.shape.classId),
-    identifier: orArray(ClassroomAttributesSchema.shape.identifier),
-    yearId: orArray(ClassroomAttributesSchema.shape.yearId),
-    schoolId: orArray(ClassroomAttributesSchema.shape.schoolId),
-    section: orArray(ClassroomAttributesSchema.shape.section.unwrap()),
-    optionId: orArray(
-      ClassroomAttributesSchema.shape.optionId.unwrap().unwrap(),
-    ),
+    classId: orArray(ClassroomSchema.shape.classId),
+    identifier: orArray(ClassroomSchema.shape.identifier),
+    shortIdentifier: orArray(ClassroomSchema.shape.shortIdentifier),
+    yearId: orArray(ClassroomSchema.shape.yearId),
+    schoolId: orArray(ClassroomSchema.shape.schoolId),
+    section: orArray(ClassroomSchema.shape.section),
+    optionId: orArray(ClassroomSchema.shape.optionId.unwrap().unwrap()),
   }),
 );
 
-// 6. Enrolement Filter
-export const EnrolementFilterSchema = withQueryOptions(
+export const EnrollmentFilterSchema = withQueryOptions(
   z.object({
-    enrolementId: orArray(EnrolementAttributesSchema.shape.enrolementId),
-    classroomId: orArray(EnrolementAttributesSchema.shape.classroomId),
-    studentId: orArray(EnrolementAttributesSchema.shape.studentId),
-    schoolId: orArray(EnrolementAttributesSchema.shape.schoolId),
-    yearId: orArray(EnrolementAttributesSchema.shape.yearId),
-    status: orArray(EnrolementAttributesSchema.shape.status.unwrap()),
+    enrollmentId: orArray(EnrollmentSchema.shape.enrollmentId),
+    classroomId: orArray(EnrollmentSchema.shape.classroomId),
+    studentId: orArray(EnrollmentSchema.shape.studentId),
+    schoolId: orArray(EnrollmentSchema.shape.schoolId),
+    yearId: orArray(EnrollmentSchema.shape.yearId),
+    status: orArray(EnrollmentSchema.shape.status),
+    studentCode: orArray(EnrollmentSchema.shape.studentCode),
   }),
 );
 
-// 7. Enrolement Action Filter
-export const EnrolementActionFilterSchema = withQueryOptions(
+export const EnrollmentActionFilterSchema = withQueryOptions(
   z.object({
-    actionId: orArray(EnrolementActionAttributesSchema.shape.actionId),
-    enrolementId: orArray(EnrolementActionAttributesSchema.shape.enrolementId),
-    action: orArray(EnrolementActionAttributesSchema.shape.action),
+    actionId: orArray(EnrollmentActionSchema.shape.actionId),
+    enrollmentId: orArray(EnrollmentActionSchema.shape.enrollmentId),
+    action: orArray(EnrollmentActionSchema.shape.action),
   }),
 );
 
-// 8. Stats
+export const LocalroomFilterSchema = withQueryOptions(
+  z.object({
+    localroomId: orArray(LocalroomSchema.shape.localroomId),
+    name: orArray(LocalroomSchema.shape.name),
+    schoolId: orArray(LocalroomSchema.shape.schoolId),
+    maxCapacity: orArray(LocalroomSchema.shape.maxCapacity),
+  }),
+);
+
+export const SeatingSessionFilterSchema = withQueryOptions(
+  z.object({
+    sessionId: orArray(SeatingSessionSchema.shape.sessionId),
+    sessionName: orArray(SeatingSessionSchema.shape.sessionName),
+    schoolId: orArray(SeatingSessionSchema.shape.schoolId),
+    yearId: orArray(SeatingSessionSchema.shape.yearId),
+  }),
+);
+
+export const SeatingAssignmentFilterSchema = withQueryOptions(
+  z.object({
+    assignmentId: orArray(SeatingAssignmentSchema.shape.assignmentId),
+    sessionId: orArray(SeatingAssignmentSchema.shape.sessionId),
+    localroomId: orArray(SeatingAssignmentSchema.shape.localroomId),
+    enrollmentId: orArray(SeatingAssignmentSchema.shape.enrollmentId),
+    rowPosition: orArray(SeatingAssignmentSchema.shape.rowPosition),
+    columnPosition: orArray(SeatingAssignmentSchema.shape.columnPosition),
+  }),
+);
+
+/**
+ * Schéma pour filtrer les tableaux de bord et métriques de placement.
+ * Pro-Tip: On réutilise les types de base plutôt que de re-déclarer du z.string().uuid()
+ * pour éviter les désynchronisations si la stratégie d'ID change en DB.
+ */
+export const SeatingStatsFilterSchema = z.object({
+  schoolId: SeatingSessionSchema.shape.schoolId,
+  yearId: SeatingSessionSchema.shape.yearId,
+  sessionId: SeatingSessionSchema.shape.sessionId.optional(),
+});
+
+export type SeatingStatsFilter = z.infer<typeof SeatingStatsFilterSchema>;
 
 export const StatsFilterSchema = SchoolYearSchema;

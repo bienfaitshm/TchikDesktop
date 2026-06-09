@@ -45,6 +45,10 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
     },
   });
 
+  if (is.dev) {
+    mainWindow.webContents.openDevTools({ mode: "detach" });
+  }
+
   mainLogger.info("Fenêtre principale créée avec les options par défaut.");
 
   registerContextMenuListener(mainWindow);

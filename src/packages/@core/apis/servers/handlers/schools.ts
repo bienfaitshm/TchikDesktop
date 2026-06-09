@@ -9,29 +9,29 @@ import {
   type ValidationSchemas,
 } from "@/packages/electron-ipc-rest";
 import {
-  SchoolAttributesSchema,
-  StudyYearAttributesSchema,
+  SchoolSchema,
+  StudyYearSchema,
   SchoolCreateSchema,
   SchoolUpdateSchema,
   SchoolFilterSchema,
   StudyYearCreateSchema,
   StudyYearUpdateSchema,
   StudyYearFilterSchema,
-  type TSchoolCreate,
-  type TSchoolUpdate,
-  type TSchoolFilter,
-  type TStudyYearCreate,
-  type TStudyYearUpdate,
-  type TStudyYearFilter,
+  type SchoolCreate,
+  type SchoolUpdate,
+  type SchoolFilter,
+  type StudyYearCreate,
+  type StudyYearUpdate,
+  type StudyYearFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
 import { SchoolRoutes, StudyYearRoutes } from "../../routes-constant";
 
-const SchoolIdSchema = SchoolAttributesSchema.pick({ schoolId: true });
+const SchoolIdSchema = SchoolSchema.pick({ schoolId: true });
 
 type SchoolId = z.infer<typeof SchoolIdSchema>;
 
-const YearIdSchema = StudyYearAttributesSchema.pick({ yearId: true });
+const YearIdSchema = StudyYearSchema.pick({ yearId: true });
 
 type YearId = z.infer<typeof YearIdSchema>;
 
@@ -45,7 +45,7 @@ export class GetSchools extends AbstractEndpoint<any> {
 
   protected handle({
     params,
-  }: IpcRequest<any, TSchoolFilter>): Promise<unknown> {
+  }: IpcRequest<any, SchoolFilter>): Promise<unknown> {
     return schoolService.findMany(params);
   }
 }
@@ -60,7 +60,7 @@ export class PostSchool extends AbstractEndpoint<any> {
 
   protected handle({
     body,
-  }: IpcRequest<TSchoolCreate, unknown>): Promise<unknown> {
+  }: IpcRequest<SchoolCreate, unknown>): Promise<unknown> {
     return schoolService.create(body);
   }
 }
@@ -90,7 +90,7 @@ export class UpdateSchool extends AbstractEndpoint<any> {
   protected handle({
     params,
     body,
-  }: IpcRequest<TSchoolUpdate, SchoolId>): Promise<unknown> {
+  }: IpcRequest<SchoolUpdate, SchoolId>): Promise<unknown> {
     return schoolService.update(params.schoolId, body);
   }
 }
@@ -120,7 +120,7 @@ export class GetStudyYears extends AbstractEndpoint<any> {
 
   protected handle({
     params,
-  }: IpcRequest<any, TStudyYearFilter>): Promise<unknown> {
+  }: IpcRequest<any, StudyYearFilter>): Promise<unknown> {
     return studyYearService.findMany(params);
   }
 }
@@ -135,7 +135,7 @@ export class PostStudyYear extends AbstractEndpoint<any> {
 
   protected handle({
     body,
-  }: IpcRequest<TStudyYearCreate, any>): Promise<unknown> {
+  }: IpcRequest<StudyYearCreate, any>): Promise<unknown> {
     return studyYearService.create(body);
   }
 }
@@ -165,7 +165,7 @@ export class UpdateStudyYear extends AbstractEndpoint<any> {
   protected handle({
     params,
     body,
-  }: IpcRequest<TStudyYearUpdate, YearId>): Promise<unknown> {
+  }: IpcRequest<StudyYearUpdate, YearId>): Promise<unknown> {
     return studyYearService.update(params.yearId, body);
   }
 }

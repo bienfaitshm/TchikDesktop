@@ -1,18 +1,18 @@
 import { IpcClient } from "@/packages/electron-ipc-rest";
 import {
-  TUserAttributes,
-  TUserFilter,
-  TUserCreate,
-  TUserUpdate,
+  User,
+  UserFilter,
+  UserCreate,
+  UserUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import { UserRoutes } from "../routes-constant";
 
-export type UserData = TUserAttributes;
+export type UserData = User;
 
 /**
  * Type définissant les paramètres de requête pour les listes.
  */
-export type UserQueryParams = TUserFilter;
+export type UserQueryParams = UserFilter;
 
 /**
  * Type de l'objet API retourné. Le 'as const' garantit que toutes les propriétés
@@ -38,7 +38,7 @@ export type UserApi = Readonly<{
    * @param data L'objet de données nécessaire pour créer la salle de classe.
    * @returns Une promesse résolue avec l'objet UserData nouvellement créé.
    */
-  createUser(data: TUserCreate): Promise<UserData>;
+  createUser(data: UserCreate): Promise<UserData>;
 
   /**
    * Met à jour une salle de classe existante.
@@ -46,7 +46,7 @@ export type UserApi = Readonly<{
    * @param data Les champs partiels de UserData à modifier.
    * @returns Une promesse résolue avec l'objet UserData mis à jour.
    */
-  updateUser(userId: string, data: TUserUpdate): Promise<UserData>;
+  updateUser(userId: string, data: UserUpdate): Promise<UserData>;
 
   /**
    * Supprime une salle de classe par son ID.

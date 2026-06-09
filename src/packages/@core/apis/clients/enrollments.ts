@@ -1,10 +1,10 @@
 import { IpcClient } from "@/packages/electron-ipc-rest";
 import {
-  TEnrolementQuickCreate,
-  TEnrolementAttributes,
-  TEnrolementCreate,
-  TEnrolementUpdate,
-  TEnrolementFilter,
+  EnrollmentQuickCreate,
+  Enrollment,
+  EnrollmentCreate,
+  EnrollmentUpdate,
+  EnrollmentFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { EnrollementRoutes } from "../routes-constant";
 
@@ -12,12 +12,12 @@ import { EnrollementRoutes } from "../routes-constant";
  * type représentant la structure des données d'une salle des inscriptions (Enrollement).
  * Remplace 'unknown' par les propriétés réelles de votre Enrollement.
  */
-export type EnrollementData = TEnrolementAttributes;
+export type EnrollementData = Enrollment;
 
 /**
  * Type définissant les paramètres de requête pour les listes.
  */
-export type EnrollementQueryParams = TEnrolementFilter;
+export type EnrollementQueryParams = EnrollmentFilter;
 
 /**
  * Type de l'objet API retourné. Le 'as const' garantit que toutes les propriétés
@@ -54,16 +54,14 @@ export type EnrollementApi = Readonly<{
    * @param data L'objet de données nécessaire pour créer la salle des inscriptions.
    * @returns Une promesse résolue avec l'objet EnrollementData nouvellement créé.
    */
-  createEnrollement(data: TEnrolementCreate): Promise<EnrollementData>;
+  createEnrollement(data: EnrollmentCreate): Promise<EnrollementData>;
 
   /**
    * Crée une nouvelle salle des inscriptions rapides.
    * @param data L'objet de données nécessaire pour créer la salle des inscriptions.
    * @returns Une promesse résolue avec l'objet EnrollementData nouvellement créé.
    */
-  createQuickEnrollement(
-    data: TEnrolementQuickCreate,
-  ): Promise<EnrollementData>;
+  createQuickEnrollement(data: EnrollmentQuickCreate): Promise<EnrollementData>;
 
   /**
    * Met à jour une salle des inscriptions existante.
@@ -73,7 +71,7 @@ export type EnrollementApi = Readonly<{
    */
   updateEnrollement(
     enrolementId: string,
-    data: TEnrolementUpdate,
+    data: EnrollmentUpdate,
   ): Promise<EnrollementData>;
 
   /**

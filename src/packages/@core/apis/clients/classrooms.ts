@@ -1,19 +1,19 @@
 import { IpcClient } from "@/packages/electron-ipc-rest";
-import {
-  TClassroomCreate,
-  TClassroomFilter,
-  TClassroomUpdate,
-  TClassroomAttributes,
+import type {
+  ClassroomCreate,
+  ClassroomFilter,
+  ClassroomUpdate,
+  Classroom,
 } from "@/packages/@core/data-access/schema-validations";
 
-import type { TClassroomDTO } from "@/packages/@core/data-access/db/queries";
+import type { ClassroomDTO } from "@/packages/@core/data-access/db/queries";
 import { ClassroomRoutes } from "../routes-constant";
 
 /**
  * Interface représentant la structure des données d'une salle de classe (Classroom).
  * Remplace 'unknown' par les propriétés réelles de votre Classroom.
  */
-export type ClassroomData = TClassroomAttributes;
+export type ClassroomData = Classroom;
 /**
  * Type définissant les paramètres de requête pour les listes.
  */
@@ -27,23 +27,23 @@ export type ClassroomApi = Readonly<{
   /**
    * Récupère toutes les salles de classe, éventuellement filtrées par des paramètres.
    * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
-   * @returns Une promesse résolue avec la liste des TClassroomDTO.
+   * @returns Une promesse résolue avec la liste des ClassroomDTO.
    */
-  fetchClassrooms(params?: TClassroomFilter): Promise<TClassroomDTO[]>;
+  fetchClassrooms(params?: ClassroomFilter): Promise<ClassroomDTO[]>;
 
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
    * @param classroomId L'identifiant unique de la salle de classe.
    * @returns Une promesse résolue avec l'objet ClassroomData.
    */
-  fetchClassroomById(classroomId: string): Promise<TClassroomDTO>;
+  fetchClassroomById(classroomId: string): Promise<ClassroomDTO>;
 
   /**
    * Crée une nouvelle salle de classe.
    * @param data L'objet de données nécessaire pour créer la salle de classe.
    * @returns Une promesse résolue avec l'objet ClassroomData nouvellement créé.
    */
-  createClassroom(data: TClassroomCreate): Promise<ClassroomData>;
+  createClassroom(data: ClassroomCreate): Promise<ClassroomData>;
 
   /**
    * Met à jour une salle de classe existante.
@@ -53,8 +53,8 @@ export type ClassroomApi = Readonly<{
    */
   updateClassroom(
     classroomId: string,
-    data: TClassroomUpdate,
-  ): Promise<TClassroomDTO>;
+    data: ClassroomUpdate,
+  ): Promise<ClassroomDTO>;
 
   /**
    * Supprime une salle de classe par son ID.

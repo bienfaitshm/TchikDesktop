@@ -10,7 +10,7 @@ import {
   localrooms,
   seatingSessions,
   seatingAssignments,
-} from "./schema.new";
+} from "./schema";
 
 // ==========================================
 // --- IDENTITY & CORE RELATIONS ---
@@ -141,8 +141,8 @@ export const seatingAssignmentsRelations = relations(
       references: [seatingSessions.sessionId],
     }),
     localRoom: one(localrooms, {
-      fields: [seatingAssignments.localRoomId],
-      references: [localrooms.localRoomId],
+      fields: [seatingAssignments.localroomId],
+      references: [localrooms.localroomId],
     }),
     enrollment: one(classroomEnrollments, {
       fields: [seatingAssignments.enrollmentId],

@@ -9,15 +9,15 @@ import {
   OptionFilterSchema,
   OptionCreateSchema,
   OptionUpdateSchema,
-  OptionAttributesSchema,
-  type TOptionCreate,
-  type TOptionUpdate,
-  type TOptionFilter,
+  OptionSchema,
+  type OptionCreate,
+  type OptionUpdate,
+  type OptionFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
 import { OptionRoutes } from "../../routes-constant";
 
-const OptionIdSchema = OptionAttributesSchema.pick({ optionId: true });
+const OptionIdSchema = OptionSchema.pick({ optionId: true });
 
 type OptionId = z.infer<typeof OptionIdSchema>;
 
@@ -31,7 +31,7 @@ export class GetOptions extends AbstractEndpoint<any> {
 
   protected handle({
     params,
-  }: IpcRequest<any, TOptionFilter>): Promise<unknown> {
+  }: IpcRequest<any, OptionFilter>): Promise<unknown> {
     return optionService.findMany(params);
   }
 }
@@ -44,7 +44,7 @@ export class PostOption extends AbstractEndpoint<any> {
     body: OptionCreateSchema,
   };
 
-  protected handle({ body }: IpcRequest<TOptionCreate, any>): Promise<unknown> {
+  protected handle({ body }: IpcRequest<OptionCreate, any>): Promise<unknown> {
     return optionService.create(body);
   }
 }
@@ -74,7 +74,7 @@ export class UpdateOption extends AbstractEndpoint<any> {
   protected handle({
     params,
     body,
-  }: IpcRequest<TOptionUpdate, OptionId>): Promise<unknown> {
+  }: IpcRequest<OptionUpdate, OptionId>): Promise<unknown> {
     return optionService.update(params.optionId, body);
   }
 }

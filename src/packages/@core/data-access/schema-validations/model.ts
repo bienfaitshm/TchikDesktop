@@ -8,130 +8,65 @@ import {
 } from "@/packages/@core/data-access/db/enum";
 import { createZodEnum } from "./utils";
 
-// =============================================================================
-// I. ENUMS ZOD (Définitions Simples)
-// =============================================================================
+export const ZSECTION_ENUM = createZodEnum(SECTION_ENUM);
+export const ZUSER_GENDER_ENUM = createZodEnum(USER_GENDER_ENUM);
+export const ZUSER_ROLE_ENUM = createZodEnum(USER_ROLE_ENUM);
+export const ZSTUDENT_STATUS_ENUM = createZodEnum(STUDENT_STATUS_ENUM);
+export const ZENROLLMENT_ACTION_ENUM = createZodEnum(ENROLLMENT_ACTION_ENUM);
 
-const ZSECTION_ENUM = createZodEnum(SECTION_ENUM);
-const ZUSER_GENDER_ENUM = createZodEnum(USER_GENDER_ENUM);
-const ZUSER_ROLE_ENUM = createZodEnum(USER_ROLE_ENUM);
-const ZSTUDENT_STATUS_ENUM = createZodEnum(STUDENT_STATUS_ENUM);
-const ZENROLLMENT_ACTION_ENUM = createZodEnum(ENROLLMENT_ACTION_ENUM);
+const timestampFields = {
+  createdAt: z.coerce.date().describe("Date de création système"),
+  updatedAt: z.coerce.date().describe("Date de dernière mise à jour"),
+};
 
-// =============================================================================
-// II. SCHÉMAS DE BASE (Attributs LECTURE - Équivalent aux Interfaces)
-// =============================================================================
-
-// ---------------------------
-// 1. School Schemas
-// ---------------------------
-
-/**
- * Schéma Zod pour valider les attributs complets d'une École (lecture depuis la DB).
- * @typedef {z.infer<typeof SchoolAttributesSchema>} SchoolAttributes
- */
-export const SchoolAttributesSchema = z.object({
+export const SchoolSchema = z.object({
   schoolId: z.string().describe("Identifiant unique de l'école (UUID)"),
   name: z.string().min(3).max(255).describe("Nom complet de l'école"),
-  adress: z.string().max(255).describe("Adresse physique de l'école"),
+  address: z.string().max(255).describe("Adresse physique de l'école"), // Corrigé : address (deux 'd')
   town: z.string().max(100).describe("Ville où se situe l'école"),
-  logo: z
-    .string()
-    .nullable()
-    .optional()
-    .describe("URL ou chemin du logo, peut être null"),
+  logo: z.string().nullable().optional().describe("URL ou chemin du logo"),
+  ...timestampFields,
 });
 
-// ---------------------------
-// 2. User Schemas
-// ---------------------------
+export type School = z.infer<typeof SchoolSchema>;
 
-/**
- * Schéma Zod pour valider les attributs complets d'un Utilisateur (lecture depuis la DB).
- * @typedef {z.infer<typeof UserAttributesSchema>} UserAttributes
- */
-export const UserAttributesSchema = z.object({
-  userId: z
-    .string()
-    .optional()
-    .describe(
-      "Identifiant unique de l'utilisateur (optionnel pour l'insertion)",
-    ),
-  lastName: z.string().min(2).max(100).describe("Nom de famille (requis)"),
-  middleName: z.string().min(2).max(100).describe("Post-nom (requis)"),
-  firstName: z
-    .string()
-    .min(2)
-    .max(100)
-    .nullable()
-    .optional()
-    .describe("Prénom (optionnel)"),
-  // Le champ 'fullname' est virtuel, on utilise .optional() car il n'est pas envoyé par le client.
-  fullName: z
-    .string()
-    .optional()
-    .describe("Nom complet (Champ virtuel, non géré par le client)"),
-  gender: ZUSER_GENDER_ENUM.optional().describe("Sexe de l'utilisateur"),
-  role: ZUSER_ROLE_ENUM.optional().describe(
-    "Rôle de l'utilisateur (Admin, Teacher, Student)",
-  ),
+export const UserSchema = z.object({
+  userId: z.string().describe("Identifiant unique de l'utilisateur"),
+  lastName: z.string().min(2).max(100).describe("Nom de famille"),
+  middleName: z.string().min(2).max(100).describe("Post-nom"),
+  firstName: z.string().max(100).nullable().optional().describe("Prénom"),
+  username: z.string().min(4).max(50).describe("Nom d'utilisateur unique"),
+  password: z.string().min(6).max(255).describe("Mot de passe (hashé)"),
+  gender: ZUSER_GENDER_ENUM.describe("Sexe de l'utilisateur"),
+  role: ZUSER_ROLE_ENUM.describe("Rôle au sein de l'établissement"),
   birthDate: z.coerce
     .date()
     .nullable()
     .optional()
-    .describe("Date de naissance (format Date ou chaîne coercible)"),
+    .describe("Date de naissance"),
   birthPlace: z
     .string()
     .max(100)
     .nullable()
     .optional()
     .describe("Lieu de naissance"),
-  username: z
-    .string()
-    .min(4)
-    .max(50)
-    .optional()
-    .describe("Nom d'utilisateur unique"),
-  schoolId: z.string().optional().describe("Clé étrangère vers l'École"),
-  password: z
-    .string()
-    .min(6)
-    .max(255)
-    .optional()
-    .describe("Mot de passe (hashé en DB)"),
+  schoolId: z.string().describe("Clé étrangère vers l'école"),
+  ...timestampFields,
 });
 
-// ---------------------------
-// 3. Option Schemas
-// ---------------------------
+export type User = z.infer<typeof UserSchema>;
 
-/**
- * Schéma Zod pour valider les attributs complets d'une Option/Filière.
- * @typedef {z.infer<typeof OptionAttributesSchema>} OptionAttributes
- */
-export const OptionAttributesSchema = z.object({
+export const OptionSchema = z.object({
   optionId: z.string().describe("Identifiant unique de l'option"),
   optionName: z.string().min(3).max(100).describe("Nom complet de l'option"),
-  optionShortName: z
-    .string()
-    .min(1)
-    .max(10)
-    .describe("Nom abrégé (sigle) de l'option"),
-  schoolId: z.string().describe("Clé étrangère vers l'École"),
-  section: ZSECTION_ENUM.optional().describe(
-    "Section à laquelle appartient l'option",
-  ),
+  optionShortName: z.string().min(1).max(10).describe("Nom abrégé (sigle)"),
+  section: ZSECTION_ENUM.describe("Section à laquelle appartient l'option"),
+  schoolId: z.string().describe("Clé étrangère vers l'école"),
 });
 
-// ---------------------------
-// 4. StudyYear Schemas
-// ---------------------------
+export type Option = z.infer<typeof OptionSchema>;
 
-/**
- * Schéma Zod pour valider les attributs complets d'une Année d'Étude.
- * @typedef {z.infer<typeof StudyYearAttributesSchema>} StudyYearAttributes
- */
-export const StudyYearAttributesSchema = z.object({
+export const StudyYearSchema = z.object({
   yearId: z.string().describe("Identifiant unique de l'année d'étude"),
   yearName: z
     .string()
@@ -140,18 +75,13 @@ export const StudyYearAttributesSchema = z.object({
     .describe("Nom de l'année (ex: 2024-2025)"),
   startDate: z.coerce.date().describe("Date de début de l'année scolaire"),
   endDate: z.coerce.date().describe("Date de fin de l'année scolaire"),
-  schoolId: z.string().describe("Clé étrangère vers l'École"),
+  schoolId: z.string().describe("Clé étrangère vers l'école"),
+  ...timestampFields,
 });
 
-// ---------------------------
-// 5. Classroom Schemas
-// ---------------------------
+export type StudyYear = z.infer<typeof StudyYearSchema>;
 
-/**
- * Schéma Zod pour valider les attributs complets d'une Classe (Classroom).
- * @typedef {z.infer<typeof ClassroomAttributesSchema>} ClassroomAttributes
- */
-export const ClassroomAttributesSchema = z.object({
+export const ClassroomSchema = z.object({
   classId: z.string().describe("Identifiant unique de la classe"),
   identifier: z
     .string()
@@ -163,296 +93,256 @@ export const ClassroomAttributesSchema = z.object({
     .min(1)
     .max(10)
     .describe("Identifiant court (ex: 7ème S)"),
-  yearId: z.string().describe("Clé étrangère vers l'Année d'Étude"),
-  schoolId: z.string().describe("Clé étrangère vers l'École"),
-  section: ZSECTION_ENUM.optional().describe("Section de la classe"),
+  section: ZSECTION_ENUM.describe("Section de la classe"),
+  yearId: z.string().describe("Clé étrangère vers l'année d'étude"),
   optionId: z
     .string()
-
     .nullable()
     .optional()
-    .describe("Clé étrangère vers l'Option (null si pas de filière)"),
+    .describe("Clé étrangère vers l'option"),
+  schoolId: z.string().describe("Clé étrangère vers l'école"),
+  ...timestampFields,
 });
 
-// ---------------------------
-// 6. Enrolement Schemas
-// ---------------------------
+export type Classroom = z.infer<typeof ClassroomSchema>;
 
-/**
- * Schéma Zod pour valider les attributs complets d'une Inscription (ClassroomEnrolement).
- * @typedef {z.infer<typeof EnrolementAttributesSchema>} ClassroomEnrolementAttributes
- */
-export const EnrolementAttributesSchema = z.object({
-  enrolementId: z
-    .string()
-
-    .describe("Identifiant unique de l'inscription"),
-  classroomId: z.string().describe("Clé étrangère vers la Classe"),
-  studentId: z
-    .string()
-
-    .describe("Clé étrangère vers l'Utilisateur (Étudiant)"),
-  isNewStudent: z
-    .boolean()
-    .describe("Indique si c'est un nouvel étudiant dans l'école"),
-  schoolId: z.string().describe("Clé étrangère vers l'École"),
-  yearId: z.string().describe("Clé étrangère vers l'Année d'Étude"),
-  status: ZSTUDENT_STATUS_ENUM.optional().describe(
+export const EnrollmentSchema = z.object({
+  enrollmentId: z.string().describe("Identifiant unique de l'inscription"),
+  classroomId: z.string().describe("Clé étrangère vers la classe"),
+  studentId: z.string().describe("Clé étrangère vers l'étudiant (User)"),
+  status: ZSTUDENT_STATUS_ENUM.describe(
     "Statut de l'étudiant dans cette classe",
   ),
-  code: z
+  isNewStudent: z.boolean().describe("Indique si c'est un nouvel étudiant"),
+  studentCode: z
     .string()
     .max(50)
-    .optional()
     .describe("Code ou matricule de l'inscription"),
+  schoolId: z.string().describe("Clé étrangère vers l'école"),
+  yearId: z.string().describe("Clé étrangère vers l'année d'étude"),
+  ...timestampFields,
 });
 
-// ---------------------------
-// 7. Enrolement Action Schemas
-// ---------------------------
+export type Enrollment = z.infer<typeof EnrollmentSchema>;
 
-/**
- * Schéma Zod pour valider les attributs complets d'une Action d'Inscription (Audit/Historique).
- * @typedef {z.infer<typeof EnrolementActionAttributesSchema>} ClassroomEnrolementActionAttributes
- */
-export const EnrolementActionAttributesSchema = z.object({
-  actionId: z.string().describe("Identifiant unique de l'action"),
-  enrolementId: z
+export const EnrollmentActionSchema = z.object({
+  actionId: z.string().describe("Identifiant unique de l'action d'audit"),
+  enrollmentId: z
     .string()
-
     .describe("Clé étrangère vers l'inscription concernée"),
+  action: ZENROLLMENT_ACTION_ENUM.describe("Type d'action effectuée"),
   reason: z
     .string()
     .max(500)
+    .nullable()
     .optional()
-    .describe("Raison du changement de statut ou de l'action"),
-  action: ZENROLLMENT_ACTION_ENUM.describe(
-    "Type d'action effectuée (Create, ChangeStatus, Transfer)",
-  ),
+    .describe("Raison du changement"),
+  ...timestampFields,
 });
 
-// =============================================================================
-// III. SCHÉMAS CRUD (Création, Mise à Jour)
-// =============================================================================
+export type EnrollmentAction = z.infer<typeof EnrollmentActionSchema>;
 
-// Chaque schéma T...Create/Update est dérivé du schéma d'attributs de base.
+export const LocalroomSchema = z.object({
+  localroomId: z.string().describe("Identifiant unique de la salle"),
+  name: z.string().min(1).max(100).describe("Nom ou numéro de la salle"),
+  maxCapacity: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe("Capacité maximale d'accueil"),
+  totalRows: z.number().int().nonnegative().describe("Nombre total de rangées"),
+  totalColumns: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe("Nombre total de colonnes"),
+  schoolId: z.string().describe("Clé étrangère vers l'école"),
+});
 
-// ---------------------------
-// 1. School CRUD
-// ---------------------------
+export type Localroom = z.infer<typeof LocalroomSchema>;
 
-/** Schéma pour la création d'une École (exclut 'schoolId', 'createdAt', 'updatedAt'). */
-export const SchoolCreateSchema = SchoolAttributesSchema.omit({
+export const SeatingSessionSchema = z.object({
+  sessionId: z
+    .string()
+    .describe("Identifiant unique de la session de placement"),
+  sessionName: z
+    .string()
+    .min(3)
+    .max(255)
+    .describe("Nom de la session (ex: Examen Premier Semestre)"),
+  schoolId: z.string().describe("Clé étrangère vers l'école"),
+  yearId: z.string().describe("Clé étrangère vers l'année d'étude"),
+});
+
+export type SeatingSession = z.infer<typeof SeatingSessionSchema>;
+
+export const SeatingAssignmentSchema = z.object({
+  assignmentId: z
+    .string()
+    .describe("Identifiant unique du placement d'un élève"),
+  sessionId: z.string().describe("Clé étrangère vers la session de placement"),
+  localroomId: z.string().describe("Clé étrangère vers la salle de classe"),
+  enrollmentId: z
+    .string()
+    .describe("Clé étrangère vers l'inscription de l'élève"),
+  rowPosition: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe("Index de la rangée attribuée"),
+  columnPosition: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe("Index de la colonne attribuée"),
+});
+
+export type SeatingAssignment = z.infer<typeof SeatingAssignmentSchema>;
+
+export const SchoolCreateSchema = SchoolSchema.omit({
   schoolId: true,
+  createdAt: true,
+  updatedAt: true,
 });
-/** Schéma pour la mise à jour d'une École (rend tous les champs de création optionnels). */
 export const SchoolUpdateSchema = SchoolCreateSchema.partial();
-
-// ---------------------------
-// 2. User CRUD
-// ---------------------------
-
-/** Schéma pour la création d'un Utilisateur (exclut 'userId', 'fullname'). */
-export const UserCreateSchema = UserAttributesSchema.omit({
+export const UserCreateSchema = UserSchema.omit({
   userId: true,
-  fullName: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  password: z.string().min(6).max(255),
 });
-/** Schéma pour la mise à jour d'un Utilisateur (rend tous les champs de création optionnels, sauf clés potentiellement invariantes). */
 export const UserUpdateSchema = UserCreateSchema.partial();
-// On peut affiner : par exemple, rendre 'username' et 'schoolId' non modifiables ou séparer la validation.
 
-// ---------------------------
-// 3. Option CRUD
-// ---------------------------
-
-/** Schéma pour la création d'une Option (exclut 'optionId'). */
-export const OptionCreateSchema = OptionAttributesSchema.omit({
-  optionId: true,
-});
-/** Schéma pour la mise à jour d'une Option. */
+export const OptionCreateSchema = OptionSchema.omit({ optionId: true });
 export const OptionUpdateSchema = OptionCreateSchema.partial();
 
-// ---------------------------
-// 4. StudyYear CRUD
-// ---------------------------
-
-/** Schéma pour la création d'une Année d'Étude (exclut 'yearId', 'createdAt', 'updatedAt'). */
-export const StudyYearCreateSchema = StudyYearAttributesSchema.omit({
+export const StudyYearCreateSchema = StudyYearSchema.omit({
   yearId: true,
+  createdAt: true,
+  updatedAt: true,
 });
-/** Schéma pour la mise à jour d'une Année d'Étude. */
 export const StudyYearUpdateSchema = StudyYearCreateSchema.partial();
 
-// ---------------------------
-// 5. Classroom CRUD
-// ---------------------------
-
-/** Schéma pour la création d'une Classe (exclut 'classId'). */
-export const ClassroomCreateSchema = ClassroomAttributesSchema.omit({
+export const ClassroomCreateSchema = ClassroomSchema.omit({
   classId: true,
+  createdAt: true,
+  updatedAt: true,
 });
-/** Schéma pour la mise à jour d'une Classe. */
 export const ClassroomUpdateSchema = ClassroomCreateSchema.partial();
 
-// ---------------------------
-// 6. Enrolement CRUD
-// ---------------------------
-
-/** Schéma pour la création d'une Inscription (exclut 'enrolementId'). */
-export const EnrolementCreateSchema = EnrolementAttributesSchema.omit({
-  enrolementId: true,
-  code: true,
+export const EnrollmentCreateSchema = EnrollmentSchema.omit({
+  enrollmentId: true,
+  studentCode: true,
+  createdAt: true,
+  updatedAt: true,
 });
-/** Schéma pour la mise à jour d'une Inscription (exclut les clés étrangères essentielles 'studentId' et 'classroomId' de la modification). */
-export const EnrolementUpdateSchema = EnrolementCreateSchema.omit({
+export const EnrollmentUpdateSchema = EnrollmentCreateSchema.omit({
   studentId: true,
   classroomId: true,
 }).partial();
 
-// Schéma de base des attributs de l'utilisateur pour la création, moins les champs système
+export const EnrollmentActionCreateSchema = EnrollmentActionSchema.omit({
+  actionId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const LocalroomCreateSchema = LocalroomSchema.omit({
+  localroomId: true,
+});
+export const LocalroomUpdateSchema = LocalroomCreateSchema.partial();
+
+export const SeatingSessionCreateSchema = SeatingSessionSchema.omit({
+  sessionId: true,
+});
+export const SeatingSessionUpdateSchema = SeatingSessionCreateSchema.partial();
+
+export const SeatingAssignmentCreateSchema = SeatingAssignmentSchema.omit({
+  assignmentId: true,
+});
+export const SeatingAssignmentUpdateSchema =
+  SeatingAssignmentCreateSchema.partial();
+
 const BaseStudentSchema = UserCreateSchema.omit({
   password: true,
   username: true,
   schoolId: true,
 });
 
-/**
- * Schéma Zod pour la création rapide d'une inscription (Quick Enrolment).
- *
- * Ce schéma est conditionnel :
- * 1. Si `isInSystem` est VRAI : `studentId` est requis, et `student` doit être omis.
- * 2. Si `isInSystem` est FAUX : `student` est requis (pour créer le nouvel utilisateur), et `studentId` doit être omis.
- *
- * @typedef {z.infer<typeof EnrolementQuickCreateSchema>} TEnrolementQuickCreate
- */
-export const EnrolementQuickCreateSchema = EnrolementCreateSchema.merge(
+export const EnrollmentQuickCreateSchema = EnrollmentCreateSchema.merge(
   z.object({
-    // Indique si l'étudiant existe déjà dans le système. Défaut à FAUX.
-    isInSystem: z.boolean().default(false).optional(),
-
-    // ID de l'étudiant existant (requis si isInSystem est VRAI).
+    isInSystem: z.boolean().default(false),
     studentId: z.string().optional(),
-
-    // Données du nouvel étudiant (requis si isInSystem est FAUX).
     student: BaseStudentSchema.optional(),
   }),
-)
-  // -------------------------------------------------------------------------
-  // Logique de validation conditionnelle appliquée via superRefine
-  // -------------------------------------------------------------------------
-  .superRefine((data, ctx) => {
-    const { isInSystem, studentId, student } = data;
+).superRefine((data, ctx) => {
+  const { isInSystem, studentId, student } = data;
 
-    if (isInSystem) {
-      // CAS 1 : L'étudiant existe (isInSystem = true ou undefined)
-
-      // studentId DOIT être fourni et être un UUID valide.
-      if (!studentId || !z.string().uuid().safeParse(studentId).success) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            "L'ID de l'étudiant existant (`studentId`) est requis lorsque l'étudiant est déjà dans le système.",
-          path: ["studentId"],
-        });
-      }
-
-      // Le corps du nouvel étudiant (`student`) DOIT être omis.
-      if (student) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            "Les données de l'étudiant (`student`) doivent être omises lorsque son ID (`studentId`) est fourni.",
-          path: ["student"],
-        });
-      }
-    } else {
-      // CAS 2 : L'étudiant est nouveau (isInSystem = false)
-
-      // Le corps du nouvel étudiant (`student`) DOIT être fourni.
-      if (!student) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            "Les données de l'étudiant (`student`) sont requises pour la création d'un nouvel utilisateur.",
-          path: ["student"],
-        });
-      }
-
-      // studentId DOIT être omis.
-      if (studentId) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            "L'ID de l'étudiant (`studentId`) doit être omis lors de la création d'un nouvel utilisateur.",
-          path: ["studentId"],
-        });
-      }
+  if (isInSystem) {
+    if (!studentId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "L'identifiant `studentId` est obligatoire lorsque l'élève est déjà référencé dans le système.",
+        path: ["studentId"],
+      });
     }
-  });
+    if (student) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Le bloc de données `student` ne doit pas être fourni lorsque l'élève existe déjà.",
+        path: ["student"],
+      });
+    }
+  } else {
+    if (!student) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Le bloc de données de l'élève `student` est requis pour créer son profil utilisateur.",
+        path: ["student"],
+      });
+    }
+    if (studentId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "L'identifiant `studentId` doit être omis lors d'une nouvelle inscription rapide.",
+        path: ["studentId"],
+      });
+    }
+  }
+});
 
-// ---------------------------
-// 7. Enrolement Action CRUD
-// ---------------------------
+export type EnrollmentQuickCreate = z.infer<typeof EnrollmentQuickCreateSchema>;
 
-/** Schéma pour l'enregistrement d'une nouvelle Action d'Inscription (Audit). */
-export const EnrolementActionCreateSchema =
-  EnrolementActionAttributesSchema.omit({
-    actionId: true,
-  });
-
-// =============================================================================
-// IV. SCHÉMAS UTILITAIRES (Filtres, Pagination)
-// =============================================================================
-
-/**
- * Extrait les clés d'un schéma Zod pour garantir que
- * les tris et recherches ne se font que sur des colonnes existantes.
- */
 const getKeys = <T extends z.ZodRawShape>(shape: T) => {
   return Object.keys(shape) as [keyof T & string, ...(keyof T & string)[]];
 };
 
 /**
- * REECRITURE PRO & GÉNÉRIQUE
+ * Générateur d'options de requêtes complexes et typées dynamiquement pour le Pattern Repository.
  */
 export const withQueryOptions = <T extends z.ZodRawShape>(
   dataSchema: z.ZodObject<T>,
 ) => {
   const keys = getKeys(dataSchema.shape);
 
-  // 1. Schéma pour le tri (Strict sur les colonnes)
   const SortStepSchema = z.object({
-    column: z.enum(keys).describe("Nom de la colonne existante"),
+    column: z
+      .enum(keys)
+      .describe("Nom de la colonne sur laquelle appliquer le tri"),
     order: z.enum(["asc", "desc"]).default("asc"),
   });
 
-  // 2. Construction du schéma global
   return z
     .object({
-      /**
-       * WHERE : Filtres d'égalité simples
-       * On utilise partial() pour que chaque champ soit optionnel
-       */
       where: dataSchema.partial().optional(),
-
-      /**
-       * WHERE IN : Record<colonne, tableau_de_valeurs>
-       */
       whereIn: z.record(z.enum(keys), z.array(z.any())).optional(),
-
-      /**
-       * SEARCH : Record<colonne, chaine_recherche>
-       */
       search: z.record(z.enum(keys), z.string()).optional(),
-
-      /**
-       * OR : Tableau de filtres partiels (chaque objet est un bloc OR)
-       */
       or: z.array(dataSchema.partial()).optional(),
-
-      /**
-       * PAGINATION & TRI
-       */
       limit: z.coerce
         .number()
         .int()
@@ -463,5 +353,7 @@ export const withQueryOptions = <T extends z.ZodRawShape>(
       offset: z.coerce.number().int().nonnegative().default(0).optional(),
       orderBy: z.array(SortStepSchema).optional(),
     })
-    .describe("Options de requête génériques typées sur la ressource.");
+    .describe("Options d'interrogations génériques normalisées.");
 };
+
+export * from "./model.seatings";

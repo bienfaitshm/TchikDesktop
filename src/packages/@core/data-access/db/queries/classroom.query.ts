@@ -28,7 +28,7 @@ interface GetClassroomsOptions {
   enrollmentOptions?: Partial<FindManyOptions<TableClassroomEnrollment>>;
   assignementOptions?: Partial<FindManyOptions<TableSeatingAssignment>>;
 }
-export type TClassroomDTO = TClassroom & {
+export type ClassroomDTO = TClassroom & {
   optionName: string | null;
   optionShortName: string | null;
   yearName: string;
@@ -70,7 +70,7 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
    */
   async findManyExtended(
     filters?: FindManyOptions<TableClassroom>,
-  ): Promise<TClassroomDTO[]> {
+  ): Promise<ClassroomDTO[]> {
     try {
       const query = this.db
         .select(this.selection)
@@ -83,7 +83,7 @@ export class ClassroomQuery extends BaseRepository<TableClassroom, TDataBase> {
         query,
         classrooms,
         filters as any,
-      )) as TClassroomDTO[];
+      )) as ClassroomDTO[];
     } catch (error) {
       this.logError("findManyExtended", error, { filters });
       throw new Error("Erreur lors de la récupération des classes enrichies.");

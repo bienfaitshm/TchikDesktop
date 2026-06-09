@@ -1,9 +1,9 @@
 import { IpcClient } from "@/packages/electron-ipc-rest";
 import {
-  TOptionAttributes,
-  TOptionFilter,
-  TOptionCreate,
-  TOptionUpdate,
+  Option,
+  OptionFilter,
+  OptionCreate,
+  OptionUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import { OptionRoutes } from "../routes-constant";
 
@@ -11,12 +11,12 @@ import { OptionRoutes } from "../routes-constant";
  * type représentant la structure des données d'une salle de classe (Option).
  * Remplace 'unknown' par les propriétés réelles de votre Option.
  */
-export type OptionData = TOptionAttributes;
+export type OptionData = Option;
 
 /**
  * Type définissant les paramètres de requête pour les listes.
  */
-export type OptionQueryParams = TOptionFilter;
+export type OptionQueryParams = OptionFilter;
 
 /**
  * Type de l'objet API retourné. Le 'as const' garantit que toutes les propriétés
@@ -42,7 +42,7 @@ export type OptionApi = Readonly<{
    * @param data L'objet de données nécessaire pour créer la salle de classe.
    * @returns Une promesse résolue avec l'objet OptionData nouvellement créé.
    */
-  createOption(data: TOptionCreate): Promise<OptionData>;
+  createOption(data: OptionCreate): Promise<OptionData>;
 
   /**
    * Met à jour une salle de classe existante.
@@ -50,7 +50,7 @@ export type OptionApi = Readonly<{
    * @param data Les champs partiels de OptionData à modifier.
    * @returns Une promesse résolue avec l'objet OptionData mis à jour.
    */
-  updateOption(optionId: string, data: TOptionUpdate): Promise<OptionData>;
+  updateOption(optionId: string, data: OptionUpdate): Promise<OptionData>;
 
   /**
    * Supprime une salle de classe par son ID.

@@ -16,7 +16,7 @@ import {
   BulkSeatingAssignmentSchema,
   type TBulkSeatingAssignment,
   type SeatingGenerator,
-  type TSchoolYear,
+  type SchoolYear,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
 import { SeatingAssignmentRoutes } from "../../routes-constant";
@@ -32,7 +32,7 @@ export class GenerateSeating extends AbstractEndpoint<any> {
   };
   protected handle({
     body,
-  }: IpcRequest<SeatingGenerator & TSchoolYear>): Promise<unknown> {
+  }: IpcRequest<SeatingGenerator & SchoolYear>): Promise<unknown> {
     const seating = new SeatingService(
       localroomService,
       enrolementService,
