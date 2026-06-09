@@ -5,10 +5,6 @@
 import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
 import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
 import {
-  ClassroomIds,
-  ShoolRouteIds,
-} from "@/packages/@core/data-access/data-system-access";
-import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
@@ -35,11 +31,6 @@ export class FicheCotationExportStrategy extends AbstractExportStrategy<
   public readonly description = "Génère les fiches de cotations par classe";
 
   public readonly validationSchema = SchoolYearSchema;
-
-  public readonly dataSourceDefinition = {
-    classrooms: ClassroomIds.findAllClassroomsWithEnrollment,
-    school: ShoolRouteIds.findSchoolById,
-  } as const;
 
   constructor() {
     super({

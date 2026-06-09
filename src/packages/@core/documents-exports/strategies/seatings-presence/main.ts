@@ -6,10 +6,6 @@ import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
 import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 import {
-  ClassroomIds,
-  ShoolRouteIds,
-} from "@/packages/@core/data-access/data-system-access";
-import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
@@ -35,11 +31,6 @@ export class SeatingPresenceExportStrategy extends AbstractExportStrategy<
     "Génère la liste de présence pour la mise en place des examens.";
 
   public readonly validationSchema = SchoolYearSchema;
-
-  public readonly dataSourceDefinition = {
-    classrooms: ClassroomIds.findAllClassroomsWithEnrollment,
-    school: ShoolRouteIds.findSchoolById,
-  } as const;
 
   constructor() {
     super({

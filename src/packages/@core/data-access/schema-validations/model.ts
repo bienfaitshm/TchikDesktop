@@ -174,7 +174,9 @@ export const SeatingSessionSchema = z.object({
   yearId: z.string().describe("Clé étrangère vers l'année d'étude"),
 });
 
-export type SeatingSession = z.infer<typeof SeatingSessionSchema>;
+export type SeatingSession = z.infer<typeof SeatingSessionSchema> & {
+  hasAssignments?: boolean;
+};
 
 export const SeatingAssignmentSchema = z.object({
   assignmentId: z
@@ -318,6 +320,45 @@ export const EnrollmentQuickCreateSchema = EnrollmentCreateSchema.merge(
 
 export type EnrollmentQuickCreate = z.infer<typeof EnrollmentQuickCreateSchema>;
 
+/**
+ * Schéma pour valider le remplissage ou la mise à jour d'une ou plusieurs salles.
+ * Intègre un algorithme de détection de collisions de sièges au niveau applicatif.
+ */
+export const BulkSeatingAssignmentSchema = z
+  .object({
+    sessionId: z.string().describe("ID de la session active"),
+    assignments: z
+      .array(SeatingAssignmentCreateSchema)
+      .min(1)
+      .describe("Liste des assignations à insérer"),
+  })
+  .superRefine((data, ctx) => {
+    const occupiedSeatsByRoom = new Map<string, Set<string>>();
+
+    data.assignments.forEach((assignment, index) => {
+      const roomKey = assignment.localroomId;
+      const seatCoordinates = `${assignment.rowPosition}-${assignment.columnPosition}`;
+
+      if (!occupiedSeatsByRoom.has(roomKey)) {
+        occupiedSeatsByRoom.set(roomKey, new Set());
+      }
+
+      const roomSeats = occupiedSeatsByRoom.get(roomKey)!;
+
+      if (roomSeats.has(seatCoordinates)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Conflit de placement : La place [Rangée ${assignment.rowPosition}, Colonne ${assignment.columnPosition}] est déjà attribuée dans cette salle.`,
+          path: ["assignments", index],
+        });
+      } else {
+        roomSeats.add(seatCoordinates);
+      }
+    });
+  });
+
+export type BulkSeatingAssignment = z.infer<typeof BulkSeatingAssignmentSchema>;
+
 const getKeys = <T extends z.ZodRawShape>(shape: T) => {
   return Object.keys(shape) as [keyof T & string, ...(keyof T & string)[]];
 };
@@ -355,5 +396,3 @@ export const withQueryOptions = <T extends z.ZodRawShape>(
     })
     .describe("Options d'interrogations génériques normalisées.");
 };
-
-export * from "./model.seatings";
