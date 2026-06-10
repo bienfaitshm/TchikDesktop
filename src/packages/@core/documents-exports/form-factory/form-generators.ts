@@ -1,8 +1,8 @@
 import type { FormFieldDef } from "@/packages/dynamic-form";
 import {
-  seatingSessionService,
-  classroomService,
-  localroomService,
+  seatingSessionRepository,
+  classroomRepository,
+  localRoomRepository,
 } from "@/packages/@core/data-access/db/queries";
 import {
   SeatingSessionFieldFactory,
@@ -69,7 +69,7 @@ export const createSessionField = async (
   try {
     const { schoolId, yearId, sessionId, ...config } = params;
 
-    const sessions = await seatingSessionService.findMany({
+    const sessions = await seatingSessionRepository.findMany({
       where: { schoolId, yearId },
     });
 
@@ -97,7 +97,7 @@ export const createClassroomField = async (
   try {
     const { schoolId, yearId, classId, ...config } = params;
 
-    const classrooms = await classroomService.findMany({
+    const classrooms = await classroomRepository.findMany({
       where: { schoolId, yearId },
     });
 
@@ -133,7 +133,7 @@ export const createLocalroomField = async (
   try {
     const { schoolId, ...config } = params;
 
-    const localrooms = await localroomService.findMany({
+    const localrooms = await localRoomRepository.findMany({
       where: { schoolId },
     });
 

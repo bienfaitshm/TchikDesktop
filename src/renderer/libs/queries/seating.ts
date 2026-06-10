@@ -57,10 +57,10 @@ export function useGetLocalRooms(params?: LocalroomFilter) {
   });
 }
 
-export function useGetLocalRoomById(localRoomId: string) {
+export function useGetLocalRoomById(localroomId: string) {
   return useSuspenseQuery({
-    queryKey: seatingKeys.roomDetail(localRoomId),
-    queryFn: () => seating.fetchLocalroomById(localRoomId),
+    queryKey: seatingKeys.roomDetail(localroomId),
+    queryFn: () => seating.fetchLocalroomById(localroomId),
   });
 }
 
@@ -85,7 +85,7 @@ export function useUpdateLocalRoom() {
 export function useDeleteLocalRoom() {
   return useMutation({
     mutationKey: [...seatingKeys.rooms(), "delete"],
-    mutationFn: (localRoomId: string) => seating.deleteLocalroom(localRoomId),
+    mutationFn: (localroomId: string) => seating.deleteLocalroom(localroomId),
   });
 }
 
@@ -162,10 +162,10 @@ export function useGenerateSeating() {
 }
 
 /** @description Hook pour récupérer la disposition (layout) d'une salle précise */
-export function useGetRoomLayout(sessionId: string, localRoomId: string) {
+export function useGetRoomLayout(sessionId: string, localroomId: string) {
   return useSuspenseQuery({
-    queryKey: seatingKeys.sessionRoomLayout(sessionId, localRoomId),
-    queryFn: () => seating.fetchRoomLayout(sessionId, localRoomId),
+    queryKey: seatingKeys.sessionRoomLayout(sessionId, localroomId),
+    queryFn: () => seating.fetchRoomLayout(sessionId, localroomId),
   });
 }
 
@@ -206,11 +206,11 @@ export function useClearRoomAssignments() {
     mutationKey: [...seatingKeys.all, "clear-room"],
     mutationFn: ({
       sessionId,
-      localRoomId,
+      localroomId,
     }: {
       sessionId: string;
-      localRoomId: string;
-    }) => seating.clearRoomAssignments(sessionId, localRoomId),
+      localroomId: string;
+    }) => seating.clearRoomAssignments(sessionId, localroomId),
   });
 }
 

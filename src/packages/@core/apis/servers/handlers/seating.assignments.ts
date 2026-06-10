@@ -41,18 +41,18 @@ export class GetRoomLayout extends AbstractEndpoint<any> {
   schemas: ValidationSchemas = {
     params: z.object({
       sessionId: z.string(),
-      localRoomId: z.string(),
+      localroomId: z.string(),
     }),
   };
   protected handle({
     params,
   }: IpcRequest<
     unknown,
-    { sessionId: string; localRoomId: string }
+    { sessionId: string; localroomId: string }
   >): Promise<unknown> {
     return seatingAssignmentRepository.getRoomLayout(
       params.sessionId,
-      params.localRoomId,
+      params.localroomId,
     );
   }
 }
@@ -113,15 +113,15 @@ export class ClearRoomAssignments extends AbstractEndpoint<any> {
   schemas: ValidationSchemas = {
     body: z.object({
       sessionId: z.string(),
-      localRoomId: z.string(),
+      localroomId: z.string(),
     }),
   };
   protected async handle({
     body,
-  }: IpcRequest<{ sessionId: string; localRoomId: string }>): Promise<unknown> {
+  }: IpcRequest<{ sessionId: string; localroomId: string }>): Promise<unknown> {
     const success = await seatingAssignmentRepository.clearRoomAssignments(
       body.sessionId,
-      body.localRoomId,
+      body.localroomId,
     );
     return { success };
   }

@@ -8,6 +8,7 @@ type TableColumn<TTable extends Table> =
 
 export interface ILogger {
   error(message: string, context?: Record<string, unknown>): void;
+  info(messahe: string): void;
 }
 
 /**
@@ -108,6 +109,9 @@ export abstract class BaseRepository<
       const [result] = await this.getDetailQuerySet(tx).where(
         eq(this.idColumn, id),
       );
+      if (!result) {
+        this.logger.info(`Not found element with Id ${id}`);
+      }
       return (result as TSelect) ?? null;
     } catch (error) {
       this.logError("findById", error, { id });

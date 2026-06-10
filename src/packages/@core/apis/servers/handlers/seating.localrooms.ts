@@ -17,7 +17,9 @@ import {
   type LocalroomFilter,
 } from "@/packages/@core/data-access/schema-validations";
 
-const LocalRoomIdSchema = LocalroomSchema.pick({ localroomId: true });
+const LocalRoomIdSchema = LocalroomSchema.pick({
+  localroomId: true,
+}).required();
 type TLocalRoomIdSchema = z.infer<typeof LocalRoomIdSchema>;
 
 /** Récupère la liste des locaux filtrée (généralement par schoolId). */

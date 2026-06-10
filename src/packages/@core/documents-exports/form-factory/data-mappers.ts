@@ -1,8 +1,8 @@
 import type { SelectOption } from "@/packages/dynamic-form";
 import {
-  seatingSessionService,
-  classroomService,
-  localroomService,
+  seatingSessionRepository,
+  localRoomRepository,
+  classroomRepository,
 } from "@/packages/@core/data-access/db/queries";
 
 /**
@@ -16,7 +16,7 @@ export const DataMappers = {
    */
   sessionsToOptions(
     sessions: ReadonlyArray<
-      Awaited<ReturnType<typeof seatingSessionService.findMany>>[number]
+      Awaited<ReturnType<typeof seatingSessionRepository.findMany>>[number]
     >,
   ): readonly SelectOption[] {
     if (!sessions?.length) return [];
@@ -33,7 +33,7 @@ export const DataMappers = {
    */
   classroomsToOptions(
     classrooms: ReadonlyArray<
-      Awaited<ReturnType<typeof classroomService.findMany>>[number]
+      Awaited<ReturnType<typeof classroomRepository.findMany>>[number]
     >,
   ): readonly SelectOption[] {
     if (!classrooms?.length) return [];
@@ -50,14 +50,14 @@ export const DataMappers = {
    */
   localroomsToOptions(
     localrooms: ReadonlyArray<
-      Awaited<ReturnType<typeof localroomService.findMany>>[number]
+      Awaited<ReturnType<typeof localRoomRepository.findMany>>[number]
     >,
   ): readonly SelectOption[] {
     if (!localrooms?.length) return [];
 
     return localrooms.map((localroom) => ({
-      label: localroom.name ?? `Classe ${localroom.localRoomId}`,
-      value: localroom.localRoomId,
+      label: localroom.name ?? `Classe ${localroom.localroomId}`,
+      value: localroom.localroomId,
     }));
   },
 } as const;

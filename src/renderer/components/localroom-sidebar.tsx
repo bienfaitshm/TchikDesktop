@@ -13,7 +13,7 @@ import { useGetSessionRoomsStatus } from "@/renderer/libs/queries/seating";
 import { cn } from "@/renderer/utils";
 
 interface LocalRoomStatus {
-  localRoomId: string;
+  localroomId: string;
   roomName: string;
   assignedCount: number;
   maxCapacity: number;
@@ -52,12 +52,12 @@ export const LocalroomSidebar: React.FC = () => {
       }
       renderItem={(room) => {
         const isCritical = room.occupancyRate >= 90;
-        const isActive = room.localRoomId === localroomId;
+        const isActive = room.localroomId === localroomId;
         // const isFull = room.occupancyRate >= 100;
 
         return (
           <SidebarItem
-            key={room.localRoomId}
+            key={room.localroomId}
             isActive={isActive}
             asChild
             className="h-auto py-2"
@@ -80,7 +80,7 @@ LocalroomSidebar.displayName = "LocalroomSidebar";
 const RoomNavLink = ({ sessionId, room, isCritical, isActive }) => {
   return (
     <NavLink
-      to={`/seating/${sessionId}/${room.localRoomId}`}
+      to={`/seating/${sessionId}/${room.localroomId}`}
       className={cn(
         "group flex flex-col gap-1.5 p-2 rounded-lg transition-colors hover:bg-accent",
         isActive && "bg-accent",

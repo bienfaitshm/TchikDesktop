@@ -1,5 +1,5 @@
 import z from "zod";
-import { classroomService } from "@/packages/@core/data-access/db/queries";
+import { classroomRepository } from "@/packages/@core/data-access/db/queries";
 import {
   ClassroomSchema,
   ClassroomCreateSchema,
@@ -32,7 +32,7 @@ export class GetClassrooms extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, ClassroomFilter>): Promise<unknown> {
-    return classroomService.findMany(params);
+    return classroomRepository.findMany(params);
   }
 }
 
@@ -47,7 +47,9 @@ export class GetClassroomsWithEnrollments extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, ClassroomFilter>): Promise<unknown> {
-    return classroomService.findWithEnrollments(params);
+    return classroomRepository.findClassroomsWithStudents({
+      classroomOptions: params,
+    });
   }
 }
 
@@ -62,7 +64,7 @@ export class PostClassroom extends AbstractEndpoint<any> {
   protected handle({
     body,
   }: IpcRequest<ClassroomCreate, any>): Promise<unknown> {
-    return classroomService.create(body);
+    return classroomRepository.create(body);
   }
 }
 
@@ -74,7 +76,7 @@ export class GetClassroom extends AbstractEndpoint<any> {
     params: ClassIdSchema,
   };
   protected handle({ params }: IpcRequest<any, ClassId>): Promise<unknown> {
-    return classroomService.findById(params.classId);
+    return classroomRepository.findById(params.classId);
   }
 }
 
@@ -91,7 +93,7 @@ export class UpdateClassroom extends AbstractEndpoint<any> {
     params,
     body,
   }: IpcRequest<ClassroomUpdate, ClassId>): Promise<unknown> {
-    return classroomService.update(params.classId, body);
+    return classroomRepository.update(params.classId, body);
   }
 }
 
@@ -104,6 +106,6 @@ export class DeleteClassroom extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, ClassId>): Promise<unknown> {
-    return classroomService.delete(params.classId);
+    return classroomRepository.delete(params.classId);
   }
 }
