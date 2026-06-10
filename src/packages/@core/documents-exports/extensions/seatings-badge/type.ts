@@ -1,19 +1,23 @@
 import type {
-  TSeatingSessionGrouped,
-  TAssignment,
-} from "@/packages/@core/data-access/db/queries/seating-queries";
-import type {
-  TSchool,
-  TStudyYear,
-} from "@/packages/@core/data-access/db/schemas/types";
+  ClassroomEnrollment,
+  School,
+  User,
+  StudyYear,
+  Classroom,
+  SeatingAssignment,
+  Localroom,
+} from "@/packages/@core/data-access/db/schemas";
 
-export type Student = TAssignment;
+export type ClassroomWithEnrollements = Classroom & {
+  enrollments: EnrollmentWithStudent[];
+};
+export type EnrollmentWithStudent = ClassroomEnrollment & {
+  student: User;
+  assignment: SeatingAssignment & { localroom: Localroom };
+};
+export type SchoolWithYearStudy = School & { studyYear: StudyYear };
 
-export interface School extends TSchool {
-  studyYear: TStudyYear;
-}
-
-export interface SeatingReportPayload {
-  school: School;
-  assignment: TSeatingSessionGrouped;
+export interface SeatingBadgeReportPayload {
+  school: SchoolWithYearStudy;
+  classrooms: ClassroomWithEnrollements[];
 }

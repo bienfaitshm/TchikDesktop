@@ -1,16 +1,19 @@
 import {
-  ExcelWorkbookBuilder,
-  type SheetConfig,
-  type ColumnDef,
-} from "@/packages/document-template";
-import {
   AbstractExportExtension,
   RawFileContent,
 } from "@/packages/electron-data-exporter";
 import { DOCUMENT_EXTENSION } from "@/packages/file-extension";
-import type { SeatingReportPayload } from "./type";
-
-type RoomAssignment = SeatingReportPayload["assignment"]["assignments"][0];
+import {
+  type ColumnDef,
+  ExcelWorkbookBuilder,
+  SheetConfig,
+  additionalJsContext as utils,
+} from "@/packages/document-template";
+import type {
+  SeatingBadgeReportPayload,
+  EnrollmentWithStudent,
+  ClassroomWithEnrollements,
+} from "./type";
 
 /**
  * Couleur d’en‑tête sobre, proche du bleu standard d’Excel.
@@ -29,14 +32,16 @@ const BORDER_COLOR = "FFB2D8D8";
  * Les titres respectent les conventions de l’éducation nationale.
  */
 const enrollmentColumns: ColumnDef[] = [
-  { header: "N°", key: "n", width: 8, align: "center" },
+  { header: "N°", key: "index", width: 6 },
   { header: "Nom", key: "lastName", width: 24 },
-  { header: "Post-nom", key: "middleName", width: 22 },
-  { header: "Prénom", key: "firstName", width: 22 },
-  { header: "Sexe", key: "gender", width: 10, align: "center" },
-  { header: "Classe", key: "className", width: 30 },
-  { header: "Emplacement", key: "seat", width: 16, align: "center" },
-  { header: "Code d’inscription", key: "code", width: 30, align: "center" },
+  { header: "Post-nom", key: "middleName", width: 24 },
+  { header: "Prénom", key: "firstName", width: 24 },
+  { header: "Sexe", key: "gender", width: 8 },
+  { header: "Lieu de naissance", key: "birthPlace", width: 24 },
+  { header: "Date de naissance", key: "birthDate", width: 18 },
+  { header: "Statut", key: "status", width: 14 },
+  { header: "Code d’inscription", key: "studentCode", width: 20 },
+  { header: "Local", key: "seat", width: 20 },
 ] as const;
 
 /**
@@ -46,32 +51,30 @@ const enrollmentColumns: ColumnDef[] = [
  * @param room - Les données du local (nom, liste d’élèves, etc.)
  * @returns La configuration prête à être ajoutée au classeur.
  */
-function buildEnrollmentSheet(
-  room: RoomAssignment,
-): SheetConfig<RoomAssignment["students"][0], string> {
+function buildSheet({
+  enrollments,
+  shortIdentifier,
+}: ClassroomWithEnrollements): SheetConfig<EnrollmentWithStudent, string> {
   return {
-    sheetName: truncateSheetName(room.name),
-    officialHeaders: [],
+    sheetName: shortIdentifier,
     columns: enrollmentColumns,
-    data: room.students,
+    data: enrollments,
 
-    rowMapper: (studentRecord, idx) => {
-      const {
-        enrolement: { student, studentCode, classRoom },
-        rowPosition,
-        columnPosition,
-      } = studentRecord;
-
+    rowMapper: (
+      { student, isNewStudent, studentCode, assignment: { localroom } },
+      idx,
+    ) => {
       return {
         index: idx + 1,
-        n: idx + 1,
-        lastName: student.lastName,
-        middleName: student.middleName,
-        firstName: student.firstName,
+        lastName: utils.toUpperCase(student.lastName),
+        middleName: utils.toUpperCase(student.middleName),
+        firstName: utils.toUpperCase(student.firstName ?? ""),
         gender: student.gender,
-        className: classRoom.shortIdentifier,
-        code: studentCode,
-        seat: `${rowPosition}‑${columnPosition}`,
+        birthPlace: student.birthPlace,
+        birthDate: utils.formatDate(student.birthPlace ?? ""),
+        status: utils.conditionalFormat(isNewStudent, "Nouveau", "Ancien"),
+        studentCode,
+        seat: localroom.name,
       };
     },
 
@@ -91,34 +94,25 @@ function buildEnrollmentSheet(
 }
 
 /**
- * Génère un plan de salle au format Excel.
- * Chaque local devient une feuille distincte dans le classeur.
+ * Extension responsable de la génération de la liste des élèves sur Excel.
+ * Le nom reste agnostique du format (pas de suffixe 'Excel').
  */
-export class SeatingBadgeSheetExcelExportExtension extends AbstractExportExtension<SeatingReportPayload> {
+export class SeatingBadgeSheetExcelExportExtension extends AbstractExportExtension<SeatingBadgeReportPayload> {
   readonly extension = DOCUMENT_EXTENSION.XLSX;
   readonly description =
-    "Génère un plan de salle avec une feuille Excel par local";
+    "Génère un fichier Excel contenant la liste détaillée des élèves pour la classe sélectionnée avec leurs local.";
 
   public async process({
     school,
-    assignment,
-  }: SeatingReportPayload): Promise<RawFileContent> {
+    classrooms,
+  }: SeatingBadgeReportPayload): Promise<RawFileContent> {
     const creator = `Tchik-${school.name ?? "App"}`;
     const builder = new ExcelWorkbookBuilder(creator);
 
-    assignment.assignments.forEach((room) => {
-      builder.addSheet(buildEnrollmentSheet(room));
+    classrooms.forEach((clasroom) => {
+      builder.addSheet(buildSheet(clasroom));
     });
 
     return builder.build() as unknown as RawFileContent;
   }
-}
-
-/**
- * Tronque un nom de feuille pour ne pas dépasser la limite Excel.
- * Ajoute éventuellement des points de suspension.
- */
-function truncateSheetName(name: string, maxLength = 31): string {
-  if (name.length <= maxLength) return name;
-  return name.slice(0, maxLength - 1) + "…";
 }

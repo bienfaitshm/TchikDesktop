@@ -110,7 +110,7 @@ export const classroomEnrollmentActionsRelations = relations(
 // --- SEATING (PLACEMENT) RELATIONS ---
 // ==========================================
 
-export const localRoomsRelations = relations(localrooms, ({ one, many }) => ({
+export const localroomsRelations = relations(localrooms, ({ one, many }) => ({
   school: one(schools, {
     fields: [localrooms.schoolId],
     references: [schools.schoolId],
@@ -140,7 +140,7 @@ export const seatingAssignmentsRelations = relations(
       fields: [seatingAssignments.sessionId],
       references: [seatingSessions.sessionId],
     }),
-    localRoom: one(localrooms, {
+    localroom: one(localrooms, {
       fields: [seatingAssignments.localroomId],
       references: [localrooms.localroomId],
     }),

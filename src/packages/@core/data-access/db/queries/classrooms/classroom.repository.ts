@@ -103,7 +103,7 @@ export class ClassroomRepository extends BaseRepository<
               student: true,
               seatingAssignments: {
                 ...extractQueryPayload(seatingAssignments, assignmentOptions),
-                with: { localRoom: true },
+                with: { localroom: true },
               },
             },
           },
