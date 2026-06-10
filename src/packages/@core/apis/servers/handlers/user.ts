@@ -1,5 +1,5 @@
 import z from "zod";
-import { userService } from "@/packages/@core/data-access/db/queries";
+import { userRepository } from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcRequest,
@@ -28,8 +28,8 @@ export class GetUsers extends AbstractEndpoint<any> {
     params: UserFilterSchema,
   };
 
-  protected handle({ params }: IpcRequest<any, UserFilter>): Promise<unknown> {
-    return userService.findMany(params);
+  protected handle({ params }: IpcRequest<unknown, UserFilter>) {
+    return userRepository.findMany(params);
   }
 }
 
@@ -41,8 +41,8 @@ export class PostUser extends AbstractEndpoint<any> {
     body: UserCreateSchema,
   };
 
-  protected handle({ body }: IpcRequest<UserCreate, any>): Promise<unknown> {
-    return userService.create(body);
+  protected handle({ body }: IpcRequest<UserCreate, unknown>) {
+    return userRepository.create(body);
   }
 }
 
@@ -54,8 +54,8 @@ export class GetUser extends AbstractEndpoint<any> {
     params: UserIdSchema,
   };
 
-  protected handle({ params }: IpcRequest<any, UserId>): Promise<unknown> {
-    return userService.findById(params.userId);
+  protected handle({ params }: IpcRequest<any, UserId>) {
+    return userRepository.findById(params.userId);
   }
 }
 
@@ -68,11 +68,8 @@ export class UpdateUser extends AbstractEndpoint<any> {
     body: UserUpdateSchema,
   };
 
-  protected handle({
-    params,
-    body,
-  }: IpcRequest<UserUpdate, UserId>): Promise<unknown> {
-    return userService.update(params.userId, body);
+  protected handle({ params, body }: IpcRequest<UserUpdate, UserId>) {
+    return userRepository.update(params.userId, body);
   }
 }
 
@@ -84,7 +81,7 @@ export class DeleteUser extends AbstractEndpoint<any> {
     params: UserIdSchema,
   };
 
-  protected handle({ params }: IpcRequest<any, UserId>): Promise<unknown> {
-    return userService.delete(params.userId);
+  protected handle({ params }: IpcRequest<any, UserId>) {
+    return userRepository.delete(params.userId);
   }
 }

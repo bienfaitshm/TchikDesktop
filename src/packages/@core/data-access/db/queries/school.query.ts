@@ -1,13 +1,31 @@
-import { db, type TDataBase } from "../config";
 import { getLogger } from "@/packages/logger";
-import { BaseRepository } from "./base-repository";
-import { schools, studyYears } from "../schemas/schema";
 import { and, eq, getTableColumns } from "drizzle-orm";
+import { db, type TDataBase } from "@/packages/@core/data-access/db";
+import { BaseRepository } from "./base-repository";
+import {
+  schools,
+  studyYears,
+  type TableSchool,
+  type TableStudyYear,
+  type FindManyOptions,
+} from "@/packages/@core/data-access/db/schemas";
+
+const SCHOOL_DEFAULT_SORT: FindManyOptions<TableSchool> = {
+  orderBy: [{ column: "name", order: "asc" }],
+};
+
+const YEAR_DEFAULT_SORT: FindManyOptions<TableStudyYear> = {
+  orderBy: [
+    { column: "yearName", order: "asc" },
+    { column: "yearName", order: "desc" },
+    { column: "startDate", order: "desc" },
+  ],
+};
 
 /**
  * Gestion des Écoles
  */
-export class SchoolQuery extends BaseRepository<typeof schools, TDataBase> {
+export class SchoolQuery extends BaseRepository<TableSchool, TDataBase> {
   constructor() {
     super({
       db,
@@ -15,7 +33,7 @@ export class SchoolQuery extends BaseRepository<typeof schools, TDataBase> {
       idColumn: schools.schoolId,
       entityName: "School",
       logger: getLogger,
-      defaultSort: [{ column: "name", order: "asc" }] as any,
+      defaultSort: SCHOOL_DEFAULT_SORT,
     });
   }
 
@@ -67,10 +85,7 @@ export class StudyYearQuery extends BaseRepository<
       idColumn: studyYears.yearId,
       entityName: "StudyYear",
       logger: getLogger,
-      defaultSort: [
-        { column: "yearName", order: "desc" },
-        { column: "startDate", order: "desc" },
-      ] as any,
+      defaultSort: YEAR_DEFAULT_SORT,
     });
   }
 

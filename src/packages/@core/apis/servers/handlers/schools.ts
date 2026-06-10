@@ -1,7 +1,7 @@
 import z from "zod";
 import {
-  schoolService,
-  studyYearService,
+  schoolRepository,
+  studyYearRepository,
 } from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
@@ -46,7 +46,7 @@ export class GetSchools extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, SchoolFilter>): Promise<unknown> {
-    return schoolService.findMany(params);
+    return schoolRepository.findMany(params);
   }
 }
 
@@ -61,7 +61,7 @@ export class PostSchool extends AbstractEndpoint<any> {
   protected handle({
     body,
   }: IpcRequest<SchoolCreate, unknown>): Promise<unknown> {
-    return schoolService.create(body);
+    return schoolRepository.create(body);
   }
 }
 
@@ -74,7 +74,7 @@ export class GetSchool extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, SchoolId>): Promise<unknown> {
-    return schoolService.findById(params.schoolId);
+    return schoolRepository.findById(params.schoolId);
   }
 }
 
@@ -91,7 +91,7 @@ export class UpdateSchool extends AbstractEndpoint<any> {
     params,
     body,
   }: IpcRequest<SchoolUpdate, SchoolId>): Promise<unknown> {
-    return schoolService.update(params.schoolId, body);
+    return schoolRepository.update(params.schoolId, body);
   }
 }
 
@@ -104,7 +104,7 @@ export class DeleteSchool extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, SchoolId>): Promise<unknown> {
-    return schoolService.delete(params.schoolId);
+    return schoolRepository.delete(params.schoolId);
   }
 }
 
@@ -121,7 +121,7 @@ export class GetStudyYears extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, StudyYearFilter>): Promise<unknown> {
-    return studyYearService.findMany(params);
+    return studyYearRepository.findMany(params);
   }
 }
 
@@ -136,7 +136,7 @@ export class PostStudyYear extends AbstractEndpoint<any> {
   protected handle({
     body,
   }: IpcRequest<StudyYearCreate, any>): Promise<unknown> {
-    return studyYearService.create(body);
+    return studyYearRepository.create(body);
   }
 }
 
@@ -149,7 +149,7 @@ export class GetStudyYear extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, YearId>): Promise<unknown> {
-    return studyYearService.findById(params.yearId);
+    return studyYearRepository.findById(params.yearId);
   }
 }
 
@@ -166,7 +166,7 @@ export class UpdateStudyYear extends AbstractEndpoint<any> {
     params,
     body,
   }: IpcRequest<StudyYearUpdate, YearId>): Promise<unknown> {
-    return studyYearService.update(params.yearId, body);
+    return studyYearRepository.update(params.yearId, body);
   }
 }
 
@@ -179,6 +179,6 @@ export class DeleteStudyYear extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, YearId>): Promise<unknown> {
-    return studyYearService.delete(params.yearId);
+    return studyYearRepository.delete(params.yearId);
   }
 }

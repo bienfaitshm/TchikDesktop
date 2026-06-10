@@ -7,7 +7,7 @@ import {
   useUpdateOption,
 } from "@/renderer/libs/queries/option";
 import { TQueryUpdate } from "@/renderer/libs/queries/type";
-import type { TSeatingAssignmentCreate as SeatingAssignementFormData } from "@/packages/@core/data-access/schema-validations";
+import type { SeatingAssignmentCreate as SeatingAssignementFormData } from "@/packages/@core/data-access/schema-validations";
 import type { BaseFormProps } from "@/renderer/components/form/base-form";
 
 interface UseSeatingSessionFormConfig {

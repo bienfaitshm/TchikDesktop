@@ -1,4 +1,5 @@
-import { eq, Table } from "drizzle-orm";
+import { eq, Table, type InferInsertModel } from "drizzle-orm";
+import type { LibSQLDatabase, LibSQLTransaction } from "drizzle-orm/libsql";
 import { applyQueryOptions, mergeQueryOptions } from "./drizzle-builder";
 import type { FindManyOptions } from "../schemas/types";
 
@@ -9,16 +10,17 @@ export interface ILogger {
   error(message: string, context?: Record<string, unknown>): void;
 }
 
-export interface IDrizzleConnection {
-  select: any;
-  insert: any;
-  update: any;
-  delete: any;
-}
+/**
+ * Type d'infrastructure unifié.
+ * Représente soit le client de base, soit la transaction active pour LibSQL.
+ */
+export type LibSqlClient =
+  | LibSQLDatabase<Record<string, unknown>>
+  | LibSQLTransaction<any, any>;
 
 export interface IBaseRepositoryConfig<
   TTable extends Table,
-  TDb extends IDrizzleConnection,
+  TDb extends LibSqlClient,
 > {
   db: TDb;
   table: TTable;
@@ -29,18 +31,15 @@ export interface IBaseRepositoryConfig<
 }
 
 export class RepositoryError extends Error {
-  constructor(
-    message: string,
-    public readonly cause?: unknown,
-  ) {
-    super(message);
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
     this.name = "RepositoryError";
   }
 }
 
 export abstract class BaseRepository<
   TTable extends Table,
-  TDb extends IDrizzleConnection = IDrizzleConnection,
+  TDb extends LibSqlClient = LibSqlClient,
   TSelect = TTable["$inferSelect"],
   TInsert = TTable["$inferInsert"],
   TUpdate = Partial<TTable["$inferInsert"]>,
@@ -61,17 +60,30 @@ export abstract class BaseRepository<
     this.logger = config.logger(`${config.entityName}Repository`);
   }
 
-  protected getQuerySet() {
-    return this.db.select().from(this.table).$dynamic();
+  /**
+   * Extrait le client d'exécution correct (priorité à la transaction en cours).
+   */
+  protected getClient(tx?: LibSqlClient): LibSqlClient {
+    return tx ?? this.db;
   }
 
-  protected getDetailQuerySet() {
-    return this.getQuerySet();
+  /**
+   * Génère le QuerySet de base pour les sélections.
+   */
+  protected getQuerySet(tx?: LibSqlClient) {
+    return this.getClient(tx).select().from(this.table).$dynamic();
   }
 
-  async findMany(filters?: FindManyOptions<TTable>): Promise<TSelect[]> {
+  protected getDetailQuerySet(tx?: LibSqlClient) {
+    return this.getQuerySet(tx);
+  }
+
+  async findMany(
+    filters?: FindManyOptions<TTable>,
+    tx?: LibSqlClient,
+  ): Promise<TSelect[]> {
     try {
-      const query = this.getQuerySet();
+      const query = this.getQuerySet(tx);
       const finalOptions = mergeQueryOptions(filters, this.defaultSort);
       return (await applyQueryOptions(
         query,
@@ -80,77 +92,83 @@ export abstract class BaseRepository<
       )) as TSelect[];
     } catch (error) {
       this.logError("findMany", error, { filters });
-      throw new RepositoryError(
-        `Failed to fetch ${this.entityName} list.`,
-        error,
-      );
+      throw new RepositoryError(`Failed to fetch ${this.entityName} list.`, {
+        cause: error,
+      });
     }
   }
 
-  async findById(id: string | number): Promise<TSelect | null> {
+  async findById(
+    id: string | number,
+    tx?: LibSqlClient,
+  ): Promise<TSelect | null> {
     if (id === undefined || id === null) return null;
 
     try {
-      const [result] = await this.getDetailQuerySet().where(
+      const [result] = await this.getDetailQuerySet(tx).where(
         eq(this.idColumn, id),
       );
       return (result as TSelect) ?? null;
     } catch (error) {
       this.logError("findById", error, { id });
-      throw new RepositoryError(
-        `Failed to fetch ${this.entityName} by ID.`,
-        error,
-      );
+      throw new RepositoryError(`Failed to fetch ${this.entityName} by ID.`, {
+        cause: error,
+      });
     }
   }
 
-  async create(payload: TInsert): Promise<TSelect> {
+  async create(payload: TInsert, tx?: LibSqlClient): Promise<TSelect> {
     try {
-      const [newRecord] = await this.db
+      const [newRecord] = await this.getClient(tx)
         .insert(this.table)
-        .values(payload)
+        .values(payload as InferInsertModel<typeof this.table>)
         .returning();
       return newRecord as TSelect;
     } catch (error) {
       this.logError("create", error, { payload });
-      throw new RepositoryError(
-        `Creation failed for ${this.entityName}.`,
-        error,
-      );
+      throw new RepositoryError(`Creation failed for ${this.entityName}.`, {
+        cause: error,
+      });
     }
   }
 
-  async update(id: string | number, updates: TUpdate): Promise<TSelect | null> {
+  async update(
+    id: string | number,
+    updates: TUpdate,
+    tx?: LibSqlClient,
+  ): Promise<TSelect | null> {
     if (id === undefined || id === null) return null;
 
     try {
-      const [updated] = await this.db
+      const [updated] = await this.getClient(tx)
         .update(this.table)
-        .set(updates)
+        .set(updates as Record<string, unknown>)
         .where(eq(this.idColumn, id))
         .returning();
       return (updated as TSelect) ?? null;
     } catch (error) {
       this.logError("update", error, { id, updates });
-      throw new RepositoryError(`Update failed for ${this.entityName}.`, error);
+      throw new RepositoryError(`Update failed for ${this.entityName}.`, {
+        cause: error,
+      });
     }
   }
 
-  async delete(id: string | number): Promise<boolean> {
+  async delete(id: string | number, tx?: LibSqlClient): Promise<boolean> {
     if (id === undefined || id === null) return false;
 
     try {
-      const result = await this.db
+      const result = await this.getClient(tx)
         .delete(this.table)
         .where(eq(this.idColumn, id))
         .returning();
-      return result.length > 0;
+
+      return Array.isArray(result) ? result.length > 0 : !!result;
     } catch (error) {
       this.logError("delete", error, { id });
-      throw new RepositoryError(
-        `Deletion failed for ${this.entityName}.`,
-        error,
-      );
+      throw new RepositoryError(`Deletion failed for ${this.entityName}.`, {
+        cause: error,
+      });
     }
   }
 

@@ -21,7 +21,7 @@ const ClassIdSchema = ClassroomSchema.pick({ classId: true });
 
 type ClassId = z.infer<typeof ClassIdSchema>;
 
-export class GeClassrooms extends AbstractEndpoint<any> {
+export class GetClassrooms extends AbstractEndpoint<any> {
   route = ClassroomRoutes.ALL;
   method = HttpMethod.GET;
   validationErrorMessage?: string | undefined = undefined;
@@ -32,11 +32,11 @@ export class GeClassrooms extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, ClassroomFilter>): Promise<unknown> {
-    return classroomService.findManyExtended(params);
+    return classroomService.findMany(params);
   }
 }
 
-export class GeClassroomsWithEnrollments extends AbstractEndpoint<any> {
+export class GetClassroomsWithEnrollments extends AbstractEndpoint<any> {
   route = ClassroomRoutes.ALL_ENROLLMENT;
   method = HttpMethod.GET;
   validationErrorMessage?: string | undefined = undefined;
@@ -51,7 +51,7 @@ export class GeClassroomsWithEnrollments extends AbstractEndpoint<any> {
   }
 }
 
-export class PosClassroom extends AbstractEndpoint<any> {
+export class PostClassroom extends AbstractEndpoint<any> {
   route = ClassroomRoutes.ALL;
   method = HttpMethod.POST;
   validationErrorMessage?: string | undefined = undefined;
@@ -66,7 +66,7 @@ export class PosClassroom extends AbstractEndpoint<any> {
   }
 }
 
-export class GeClassroom extends AbstractEndpoint<any> {
+export class GetClassroom extends AbstractEndpoint<any> {
   route = ClassroomRoutes.DETAIL;
   method = HttpMethod.GET;
   validationErrorMessage?: string | undefined = undefined;

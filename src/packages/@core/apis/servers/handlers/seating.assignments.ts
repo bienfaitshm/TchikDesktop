@@ -4,7 +4,7 @@ import {
   seatingAssignmentService,
 } from "@/packages/@core/data-access/db/queries/seating-queries";
 import { getLogger } from "@/packages/logger";
-import { enrollmentService } from "@/packages/@core/data-access/db/queries/enrolement.query";
+import { enrollmentService } from "@/packages/@core/data-access/db/queries/enrollment.query";
 import {
   HttpMethod,
   IpcRequest,

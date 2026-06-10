@@ -1,13 +1,12 @@
-import { sql } from "drizzle-orm";
 import { BaseRepository } from "../base-repository";
-import { localrooms } from "../../schemas/schema";
+import { localrooms, type TableLocalroom } from "../../schemas/schema";
 import { db, type TDataBase } from "../../config";
 import type { FindManyOptions } from "../../schemas/types";
 import { getLogger } from "@/packages/logger";
 
-const LOCAL_ROOM_SORT = {
-  orderBy: [{ column: sql`lower(${localrooms.name})`, order: "asc" }],
-} as unknown as FindManyOptions<typeof localrooms>;
+const LOCAL_ROOM_SORT: FindManyOptions<TableLocalroom> = {
+  orderBy: [{ column: "name", order: "asc" }],
+};
 
 export class LocalRoomQuery extends BaseRepository<
   typeof localrooms,
@@ -17,7 +16,7 @@ export class LocalRoomQuery extends BaseRepository<
     super({
       db,
       table: localrooms,
-      idColumn: localrooms.localRoomId,
+      idColumn: localrooms.localroomId,
       entityName: "LocalRoom",
       logger: getLogger,
       defaultSort: LOCAL_ROOM_SORT,

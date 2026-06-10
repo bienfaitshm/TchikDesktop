@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { drizzle, LibSQLDatabase } from "drizzle-orm/libsql";
+import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";
 import { createClient, Client } from "@libsql/client";
 import { migrate } from "drizzle-orm/libsql/migrator";
 import * as fs from "fs/promises";

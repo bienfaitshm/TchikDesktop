@@ -1,15 +1,16 @@
 import { eq, and, sql, count, getTableColumns } from "drizzle-orm";
 import { getLogger } from "@/packages/logger";
 import { db, type TDataBase } from "../config";
+import type { EnrollmentQuickCreate } from "@/packages/@core/data-access/schema-validations";
 import {
   classroomEnrollments,
   users,
   classrooms,
   studyYears,
 } from "../schemas/schema";
-import { getVisibleUserColumns } from "./user.query";
+import { getVisibleUserColumns } from "./users/user.repository";
 import { BaseRepository } from "./base-repository";
-import type { TEnrolementInsert, FindManyOptions } from "../schemas/types";
+import type { FindManyOptions } from "../schemas/types";
 
 type TableEnrollment = typeof classroomEnrollments;
 
@@ -119,23 +120,24 @@ export class EnrolementQuery extends BaseRepository<
    * Création d'un étudiant + Inscription en une seule transaction.
    * On évite d'avoir un utilisateur créé sans inscription en cas de crash.
    */
-  async quickCreate(payload: {
-    student?: any;
-    studentId?: string;
-    isInSystem: boolean;
-    enrolement: TEnrolementInsert;
-  }) {
+  async quickCreate({
+    classroomId,
+    isInSystem,
+    isNewStudent,
+    schoolId,
+    status,
+    yearId,
+    student,
+    studentId,
+  }: EnrollmentQuickCreate) {
     return await this.db.transaction(async (tx) => {
       try {
-        let targetStudentId = payload.studentId;
+        let targetStudentId = studentId;
 
-        if (!payload.isInSystem && payload.student) {
+        if (!isInSystem && student) {
           const [newUser] = await tx
             .insert(users)
-            .values({
-              ...payload.student,
-              schoolId: payload.enrolement.schoolId,
-            })
+            .values({ ...student, schoolId, password: "0000" })
             .returning();
           targetStudentId = newUser.userId;
         }
@@ -145,12 +147,28 @@ export class EnrolementQuery extends BaseRepository<
 
         const [enrolement] = await tx
           .insert(classroomEnrollments)
-          .values({ ...payload.enrolement, studentId: targetStudentId })
+          .values({
+            classroomId,
+            schoolId,
+            yearId,
+            status,
+            isNewStudent,
+            studentId: targetStudentId,
+          })
           .returning();
 
         return enrolement;
       } catch (error) {
-        this.logError("quickCreate", error, payload);
+        this.logError("quickCreate", error, {
+          classroomId,
+          isInSystem,
+          isNewStudent,
+          schoolId,
+          status,
+          yearId,
+          student,
+          studentId,
+        });
         tx.rollback();
         throw error;
       }

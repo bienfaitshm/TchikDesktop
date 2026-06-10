@@ -6,8 +6,8 @@ import {
   useDeleteLocalRoom,
 } from "@/renderer/libs/queries/seating";
 import type {
-  TLocalRoomCreate as LocalRoomFormData,
-  TLocalRoomUpdate,
+  LocalroomCreate as LocalroomFormData,
+  LocalroomUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   type BaseFormProps,
@@ -15,14 +15,14 @@ import {
   useFormBase,
 } from "../base-form";
 
-export type LocalRoomFormConfig = UseFormBaseConfig<LocalRoomFormData>;
+export type LocalRoomFormConfig = UseFormBaseConfig<LocalroomFormData>;
 
 export function useCreateLocalRoomForm(config?: LocalRoomFormConfig) {
   const { formId, handleSuccess } = useFormBase(config);
   const mutation = useCreateLocalRoom();
 
   const onSubmit = useCallback<
-    NonNullable<BaseFormProps<LocalRoomFormData>["onSubmit"]>
+    NonNullable<BaseFormProps<LocalroomFormData>["onSubmit"]>
   >(
     (data, helpers) => {
       mutation.mutate(
@@ -44,7 +44,7 @@ export function useCreateLocalRoomForm(config?: LocalRoomFormConfig) {
   return { formId, onSubmit, isCreating: mutation.isPending };
 }
 
-interface UpdateLocalRoomConfig extends UseFormBaseConfig<TLocalRoomUpdate> {
+interface UpdateLocalRoomConfig extends UseFormBaseConfig<LocalroomUpdate> {
   localRoomId: string;
 }
 
@@ -56,7 +56,7 @@ export function useUpdateLocalRoomForm({
   const mutation = useUpdateLocalRoom();
 
   const onSubmit = useCallback<
-    NonNullable<BaseFormProps<TLocalRoomUpdate>["onSubmit"]>
+    NonNullable<BaseFormProps<LocalroomUpdate>["onSubmit"]>
   >(
     (data, helpers) => {
       mutation.mutate(

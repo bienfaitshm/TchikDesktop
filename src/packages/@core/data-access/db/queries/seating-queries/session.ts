@@ -78,7 +78,7 @@ export class SeatingSessionQuery extends BaseRepository<
     try {
       return await this.db
         .select({
-          localRoomId: localrooms.localRoomId,
+          localroomId: localrooms.localroomId,
           roomName: localrooms.name,
           maxCapacity: localrooms.maxCapacity,
           assignedCount: count(seatingAssignments.assignmentId),
@@ -88,12 +88,12 @@ export class SeatingSessionQuery extends BaseRepository<
         .innerJoin(
           seatingAssignments,
           and(
-            eq(seatingAssignments.localRoomId, localrooms.localRoomId),
+            eq(seatingAssignments.localroomId, localrooms.localroomId),
             eq(seatingAssignments.sessionId, sessionId),
           ),
         )
         .groupBy(
-          localrooms.localRoomId,
+          localrooms.localroomId,
           localrooms.name,
           localrooms.maxCapacity,
         )
@@ -157,10 +157,10 @@ export function groupByLocalRoom(
 ): TSeatingSessionGrouped {
   const grouped = sessionData.assignments.reduce(
     (acc, assignment) => {
-      const { localRoomId, localRoom, enrolement } = assignment;
+      const { localroomId, localRoom, enrolement } = assignment;
 
-      if (!acc[localRoomId]) {
-        acc[localRoomId] = {
+      if (!acc[localroomId]) {
+        acc[localroomId] = {
           ...localRoom,
           students: [],
         };
@@ -172,7 +172,7 @@ export function groupByLocalRoom(
           student: withFullName(enrolement.student),
         },
       };
-      acc[localRoomId].students.push(student);
+      acc[localroomId].students.push(student);
       return acc;
     },
     {} as Record<string, TLocalRoom & { students: TAssignment[] }>,
