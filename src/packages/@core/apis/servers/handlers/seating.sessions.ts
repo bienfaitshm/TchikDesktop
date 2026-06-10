@@ -1,5 +1,5 @@
 import z from "zod";
-import { seatingSessionService } from "@/packages/@core/data-access/db/queries/seating-queries";
+import { seatingSessionRepository } from "@/packages/@core/data-access/db/queries/seatings";
 import {
   HttpMethod,
   IpcRequest,
@@ -27,7 +27,7 @@ export class GetSeatingSessions extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<unknown, SeatingSessionFilter>): Promise<unknown> {
-    return seatingSessionService.findMany(params as any);
+    return seatingSessionRepository.findMany(params as any);
   }
 }
 
@@ -38,7 +38,7 @@ export class GetSeatingSession extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<unknown, TSeatingSessionIdSchema>): Promise<unknown> {
-    return seatingSessionService.findById(params.sessionId);
+    return seatingSessionRepository.findById(params.sessionId);
   }
 }
 
@@ -50,7 +50,7 @@ export class GetSessionWithAssignments extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<unknown, TSeatingSessionIdSchema>): Promise<unknown> {
-    return seatingSessionService.getSessionWithAssignments(params.sessionId);
+    return seatingSessionRepository.getSessionWithAssignments(params.sessionId);
   }
 }
 
@@ -62,7 +62,7 @@ export class PostSeatingSession extends AbstractEndpoint<any> {
   protected handle({
     body,
   }: IpcRequest<SeatingSessionCreate>): Promise<unknown> {
-    return seatingSessionService.create(body);
+    return seatingSessionRepository.create(body);
   }
 }
 
@@ -80,7 +80,7 @@ export class UpdateSeatingSession extends AbstractEndpoint<any> {
     SeatingSessionCreate,
     TSeatingSessionIdSchema
   >): Promise<unknown> {
-    return seatingSessionService.update(sessionId, body);
+    return seatingSessionRepository.update(sessionId, body);
   }
 }
 
@@ -92,7 +92,7 @@ export class DeleteSeatingSession extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<unknown, TSeatingSessionIdSchema>): Promise<unknown> {
-    return seatingSessionService.delete(params.sessionId);
+    return seatingSessionRepository.delete(params.sessionId);
   }
 }
 
@@ -104,6 +104,6 @@ export class GetSessionRoomsStatus extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<unknown, TSeatingSessionIdSchema>): Promise<unknown> {
-    return seatingSessionService.getSessionRoomsStatus(params.sessionId);
+    return seatingSessionRepository.getSessionRoomsStatus(params.sessionId);
   }
 }

@@ -11,7 +11,7 @@ import {
   type TableClassroomEnrollment,
   type TableSeatingAssignment,
 } from "@/packages/@core/data-access/db/schemas/schema";
-import { BaseRepository } from "../base-repository";
+import { BaseRepository, LibSqlClient } from "../base-repository";
 import { extractQueryPayload } from "../drizzle-builder";
 import type { FindManyOptions } from "../../schemas/types";
 
@@ -52,33 +52,14 @@ export class ClassroomRepository extends BaseRepository<
     });
   }
 
-  override getQuerySet() {
-    return this.db
+  override getQuerySet(tx?: LibSqlClient) {
+    return this.getClient(tx)
       .select(this.selection)
       .from(classrooms)
       .innerJoin(studyYears, eq(classrooms.yearId, studyYears.yearId))
       .leftJoin(options, eq(classrooms.optionId, options.optionId))
       .$dynamic();
   }
-
-  override async findById(classId: string) {
-    if (!classId) return null;
-    try {
-      const [result] = await this.db
-        .select(this.selection)
-        .from(classrooms)
-        .leftJoin(options, eq(classrooms.optionId, options.optionId))
-        .innerJoin(studyYears, eq(classrooms.yearId, studyYears.yearId))
-        .where(eq(classrooms.classId, classId))
-        .limit(1);
-
-      return result || null;
-    } catch (error) {
-      this.logError("findById", error, { classId });
-      throw new Error(`Impossible de trouver la classe avec l'ID : ${classId}`);
-    }
-  }
-
   /**
    * Récupère les classes avec les étudiants associés via Drizzle Relational API
    */

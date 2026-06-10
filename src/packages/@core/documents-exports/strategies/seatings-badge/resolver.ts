@@ -1,5 +1,5 @@
 import {
-  schoolService,
+  schoolRepository,
   classroomService,
 } from "@/packages/@core/data-access/db/queries";
 import type { SECTION_ENUM } from "@/packages/@core/data-access/db";
@@ -31,7 +31,7 @@ export class SeatingPresenceSessionDataResolver {
       );
     }
     const [school, classrooms] = await Promise.all([
-      schoolService.fetchSchoolInfo(schoolId, yearId),
+      schoolRepository.fetchSchoolInfo(schoolId, yearId),
       classroomService.getClassroomsWithStudentAndAssignement({
         classroomOptions: {
           where: { schoolId, yearId, section: sectionId },

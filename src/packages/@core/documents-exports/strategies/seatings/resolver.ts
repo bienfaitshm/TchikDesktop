@@ -1,5 +1,5 @@
 import {
-  schoolService,
+  schoolRepository,
   seatingSessionService,
   groupByLocalRoom,
 } from "@/packages/@core/data-access/db/queries";
@@ -26,7 +26,7 @@ export class SeatingSessionDataResolver {
     }
 
     const [school, sessionData] = await Promise.all([
-      schoolService.fetchSchoolInfo(schoolId, yearId),
+      schoolRepository.fetchSchoolInfo(schoolId, yearId),
       seatingSessionService.getSessionWithAssignments(sessionId),
     ]);
 

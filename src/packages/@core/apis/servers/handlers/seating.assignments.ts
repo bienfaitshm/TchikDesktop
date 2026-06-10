@@ -1,10 +1,9 @@
 import z from "zod";
 import {
-  localroomService,
-  seatingAssignmentService,
-} from "@/packages/@core/data-access/db/queries/seating-queries";
-import { getLogger } from "@/packages/logger";
-import { enrollmentService } from "@/packages/@core/data-access/db/queries/enrollment.query";
+  seatingAssignmentRepository,
+  seatingSessionService,
+} from "@/packages/@core/data-access/db/queries/seatings";
+
 import {
   HttpMethod,
   IpcRequest,
@@ -20,10 +19,8 @@ import {
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
 import { SeatingAssignmentRoutes } from "../../routes-constant";
-import { SeatingService } from "../services/seating.service";
 
 /** Genere le mise en place */
-
 export class GenerateSeating extends AbstractEndpoint<any> {
   route = SeatingAssignmentRoutes.GENERATING;
   method = HttpMethod.POST;
@@ -33,12 +30,7 @@ export class GenerateSeating extends AbstractEndpoint<any> {
   protected handle({
     body,
   }: IpcRequest<SeatingGenerator & SchoolYear>): Promise<unknown> {
-    const seating = new SeatingService(
-      localroomService,
-      enrollmentService,
-      getLogger("SeatingService"),
-    );
-    return seating.generate(body);
+    return seatingSessionService.generate(body);
   }
 }
 
@@ -58,7 +50,7 @@ export class GetRoomLayout extends AbstractEndpoint<any> {
     unknown,
     { sessionId: string; localRoomId: string }
   >): Promise<unknown> {
-    return seatingAssignmentService.getRoomLayout(
+    return seatingAssignmentRepository.getRoomLayout(
       params.sessionId,
       params.localRoomId,
     );
@@ -71,7 +63,7 @@ export class BulkAssignStudents extends AbstractEndpoint<any> {
   method = HttpMethod.POST;
   schemas: ValidationSchemas = {};
   protected handle({ body }: IpcRequest<any>): Promise<unknown> {
-    return seatingAssignmentService.bulkAssign(body);
+    return seatingAssignmentRepository.bulkAssign(body);
   }
 }
 
@@ -84,7 +76,10 @@ export class RebuildAssignments extends AbstractEndpoint<any> {
   protected handle({
     body: { sessionId, assignments },
   }: IpcRequest<TBulkSeatingAssignment>): Promise<unknown> {
-    return seatingAssignmentService.rebuildAssignments(sessionId, assignments);
+    return seatingAssignmentRepository.rebuildAssignments(
+      sessionId,
+      assignments,
+    );
   }
 }
 
@@ -104,7 +99,7 @@ export class GetUnassignedStudents extends AbstractEndpoint<any> {
     unknown,
     { sessionId: string; yearId: string }
   >): Promise<unknown> {
-    return seatingAssignmentService.getUnassignedStudents(
+    return seatingAssignmentRepository.getUnassignedStudents(
       params.sessionId,
       params.yearId,
     );
@@ -124,7 +119,7 @@ export class ClearRoomAssignments extends AbstractEndpoint<any> {
   protected async handle({
     body,
   }: IpcRequest<{ sessionId: string; localRoomId: string }>): Promise<unknown> {
-    const success = await seatingAssignmentService.clearRoomAssignments(
+    const success = await seatingAssignmentRepository.clearRoomAssignments(
       body.sessionId,
       body.localRoomId,
     );
@@ -148,7 +143,7 @@ export class FindStudentSeat extends AbstractEndpoint<any> {
     unknown,
     { sessionId: string; enrolementId: string }
   >): Promise<unknown> {
-    return seatingAssignmentService.findStudentSeat(
+    return seatingAssignmentRepository.findStudentSeat(
       params.sessionId,
       params.enrolementId,
     );

@@ -1,48 +1,25 @@
 import { sql, eq, and, count, getTableColumns } from "drizzle-orm";
-import { db, type TDataBase } from "../../config";
+import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
-import { BaseRepository } from "../base-repository";
+import { BaseRepository, type LibSqlClient } from "../base-repository";
 import {
   seatingAssignments,
   seatingSessions,
   localrooms,
-} from "../../schemas/schema";
-import type { FindManyOptions } from "../../schemas/types";
-
-import type {
-  TClassroom,
-  TEnrolement,
-  TUser as TStudent,
-  TLocalRoom,
-  TSeatingSession,
-  TSeatingAssignment,
-} from "@/packages/@core/data-access/db/schemas/types";
-import { compareByFullName, withFullName } from "../query-utils";
-
-export type TEnrolementWithRelations = TEnrolement & {
-  student: TStudent;
-  classRoom: TClassroom;
-};
-
-export type TAssignment = TSeatingAssignment & {
-  localRoom: TLocalRoom;
-  enrolement: TEnrolementWithRelations;
-};
-
-export type TSeatingSessionWithAssignment = TSeatingSession & {
-  assignments: TAssignment[];
-};
-
-export type TSeatingSessionGrouped = TSeatingSession & {
-  assignments: (TLocalRoom & {
-    students: TAssignment[];
-  })[];
-};
+  type FindManyOptions,
+} from "@/packages/@core/data-access/db/schemas";
+import { compareByFullName } from "@/packages/@core/data-access/db/queries/query-utils";
+import type { SeatingSessionWithAssignment } from "./type";
 
 const SESSION_SORT: FindManyOptions<typeof seatingSessions> = {
   orderBy: [{ column: "sessionName", order: "asc" }],
 };
-export class SeatingSessionQuery extends BaseRepository<
+
+// ==========================================
+// REPOSITORY (Single Responsibility: Data Access Only)
+// ==========================================
+
+export class SeatingSessionRepository extends BaseRepository<
   typeof seatingSessions,
   TDataBase
 > {
@@ -57,8 +34,8 @@ export class SeatingSessionQuery extends BaseRepository<
     });
   }
 
-  override getQuerySet() {
-    return this.db
+  override getQuerySet(tx?: LibSqlClient) {
+    return this.getClient(tx)
       .select({
         ...getTableColumns(this.table),
         hasAssignments:
@@ -75,6 +52,7 @@ export class SeatingSessionQuery extends BaseRepository<
 
   async getSessionRoomsStatus(sessionId: string) {
     if (!sessionId) return [];
+
     try {
       return await this.db
         .select({
@@ -82,7 +60,10 @@ export class SeatingSessionQuery extends BaseRepository<
           roomName: localrooms.name,
           maxCapacity: localrooms.maxCapacity,
           assignedCount: count(seatingAssignments.assignmentId),
-          occupancyRate: sql<number>`CAST(COUNT(${seatingAssignments.assignmentId}) AS FLOAT) / ${localrooms.maxCapacity} * 100`,
+          // Sécurisation contre la division par zéro via NULLIF en SQL
+          occupancyRate: sql<number>`
+            CAST(COUNT(${seatingAssignments.assignmentId}) AS FLOAT) / NULLIF(${localrooms.maxCapacity}, 0) * 100
+          `,
         })
         .from(localrooms)
         .innerJoin(
@@ -106,11 +87,9 @@ export class SeatingSessionQuery extends BaseRepository<
     }
   }
 
-  /**
-   * Récupère une session avec ses affectations, localisations et utilisateurs inscrits,
-   * triés par nom de famille puis prénom.
-   */
-  async getSessionWithAssignments(sessionId: string) {
+  async getSessionWithAssignments(
+    sessionId: string,
+  ): Promise<SeatingSessionWithAssignment | null> {
     try {
       const sessionDetails = await this.db.query.seatingSessions.findFirst({
         where: eq(seatingSessions.sessionId, sessionId),
@@ -119,6 +98,7 @@ export class SeatingSessionQuery extends BaseRepository<
             with: {
               localRoom: true,
               enrollment: {
+                // Correction de la typo enrolement -> enrollment pour matcher la DB
                 with: {
                   student: true,
                   classRoom: true,
@@ -131,55 +111,23 @@ export class SeatingSessionQuery extends BaseRepository<
 
       if (!sessionDetails) return null;
 
-      if (sessionDetails.assignments) {
-        sessionDetails.assignments.sort(
+      // Cast nécessaire suite au mapping relationnel de Drizzle
+      const typedSession =
+        sessionDetails as unknown as SeatingSessionWithAssignment;
+
+      if (typedSession.assignments) {
+        typedSession.assignments.sort(
           compareByFullName((assignment) => assignment.enrollment.student),
         );
       }
-      return sessionDetails;
+
+      return typedSession;
     } catch (error) {
-      console.log("error", error);
+      // Suppression du console.log redondant pour la prod
       this.logError("getSessionWithAssignments", error, { sessionId });
       throw error;
     }
   }
-
-  static instance = new SeatingSessionQuery();
 }
-export const seatingSessionService = SeatingSessionQuery.instance;
 
-/**
- * Groupe les affectations par localRoom.
- * @param assignments - Liste des affectations issues de la session
- */
-export function groupByLocalRoom(
-  sessionData: TSeatingSessionWithAssignment,
-): TSeatingSessionGrouped {
-  const grouped = sessionData.assignments.reduce(
-    (acc, assignment) => {
-      const { localroomId, localRoom, enrolement } = assignment;
-
-      if (!acc[localroomId]) {
-        acc[localroomId] = {
-          ...localRoom,
-          students: [],
-        };
-      }
-      const student: TAssignment = {
-        ...assignment,
-        enrolement: {
-          ...enrolement,
-          student: withFullName(enrolement.student),
-        },
-      };
-      acc[localroomId].students.push(student);
-      return acc;
-    },
-    {} as Record<string, TLocalRoom & { students: TAssignment[] }>,
-  );
-
-  return {
-    ...sessionData,
-    assignments: Object.values(grouped),
-  };
-}
+export const seatingSessionRepository = new SeatingSessionRepository();

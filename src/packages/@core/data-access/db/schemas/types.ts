@@ -10,6 +10,7 @@ import {
   localrooms,
   seatingSessions,
   seatingAssignments,
+  type ClassroomEnrollment,
 } from "./schema";
 import { SQLiteTableWithColumns } from "drizzle-orm/sqlite-core";
 
@@ -39,7 +40,7 @@ export type TEnrolementUpdate = Partial<
   Omit<TEnrolementInsert, "enrolementId" | "studentId" | "classroomId">
 >;
 
-export type TEnrolementDetails = TEnrolement & {
+export type EnrolementDetails = ClassroomEnrollment & {
   student: Omit<TUser, "password" | "createdAt" | "updatedAt">;
   classroom: Pick<TClassroom, "identifier" | "shortIdentifier"> & {
     yearName: TStudyYear["yearName"];
