@@ -1,6 +1,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { format, isValid } from "date-fns";
+import { Link } from "react-router";
 import { TypographySmall } from "@/renderer/components/ui/typography";
+import { APP_ROUTES } from "@/renderer/constants";
 import type {
   ClassroomEnrollment,
   User,
@@ -17,14 +19,14 @@ const TIME_FORMAT = "HH:mm";
 
 /**
  * Définition des colonnes pour le tableau d'historique des inscriptions.
- * Configuration stricte des types et gestion défensive des données.
+ * Configuration stricte des types, sémantique HTML valide et gestion défensive.
  */
 export const enrollmentHistoryColumns: ColumnDef<EnrollmentHistoryItem>[] = [
   {
     accessorKey: "student.fullName",
     header: "Nom, Postnom et Prénom",
     cell: ({ getValue }) => (
-      <TypographySmall className="font-medium text-foreground">
+      <TypographySmall className="font-medium text-foreground ml-2">
         {String(getValue() ?? "N/A")}
       </TypographySmall>
     ),
@@ -33,11 +35,19 @@ export const enrollmentHistoryColumns: ColumnDef<EnrollmentHistoryItem>[] = [
   {
     accessorKey: "classroom.shortIdentifier",
     header: "Classe",
-    cell: ({ getValue }) => (
-      <TypographySmall className="font-mono text-sm text-muted-foreground">
-        {String(getValue() ?? "N/A")}
-      </TypographySmall>
-    ),
+    cell: ({ getValue, row }) => {
+      // Déstructuration plus propre et lisible pour un dev senior
+      const { classroomId } = row.original;
+
+      return (
+        <Link
+          to={APP_ROUTES.CLASSROOMS.DETAIL(classroomId)}
+          className="font-mono text-sm text-muted-foreground hover:underline hover:text-primary transition-colors"
+        >
+          {String(getValue() ?? "N/A")}
+        </Link>
+      );
+    },
   },
   {
     accessorKey: "studentCode",
@@ -64,15 +74,12 @@ export const enrollmentHistoryColumns: ColumnDef<EnrollmentHistoryItem>[] = [
       }
 
       return (
-        <div className="flex flex-col gap-0.5">
-          <TypographySmall className="text-xs font-medium text-foreground">
-            {format(date, DATE_FORMAT)}
-            {"   "}
-            <TypographySmall className="text-muted-foreground-soft sm:text-muted-foreground">
-              à {format(date, TIME_FORMAT)}
-            </TypographySmall>
-          </TypographySmall>
-        </div>
+        <TypographySmall className="text-xs font-medium text-foreground inline-flex items-center gap-1.5">
+          <span>{format(date, DATE_FORMAT)}</span>
+          <span className="text-[11px] font-normal text-muted-foreground/80 sm:text-muted-foreground">
+            à {format(date, TIME_FORMAT)}
+          </span>
+        </TypographySmall>
       );
     },
     enableColumnFilter: false,
