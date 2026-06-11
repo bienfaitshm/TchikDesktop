@@ -13,12 +13,21 @@ import {
   UserFilterSchema,
   UserCreateSchema,
   UserUpdateSchema,
+  SchoolYearSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
 import { UserRoutes } from "../../routes-constant";
 
 const UserIdSchema = UserSchema.pick({ userId: true }).required();
 type UserId = z.infer<typeof UserIdSchema>;
+
+export const searchSchoolYearSchema = SchoolYearSchema.partial({
+  yearId: true,
+}).extend({
+  name: z.string().trim().min(1, "Le nom est requis"),
+});
+
+export type SearchSchoolYearParams = z.infer<typeof searchSchoolYearSchema>;
 
 export class GetUsers extends AbstractEndpoint<any> {
   route = UserRoutes.ALL;
@@ -30,6 +39,19 @@ export class GetUsers extends AbstractEndpoint<any> {
 
   protected handle({ params }: IpcRequest<unknown, UserFilter>) {
     return userRepository.findMany(params);
+  }
+}
+
+export class GetSearchUsers extends AbstractEndpoint<any> {
+  route = UserRoutes.SEARCH;
+  method = HttpMethod.GET;
+  validationErrorMessage?: string | undefined = undefined;
+  schemas: ValidationSchemas = {
+    params: searchSchoolYearSchema,
+  };
+
+  protected handle({ params }: IpcRequest<unknown, SearchSchoolYearParams>) {
+    return userRepository.searchUser(params);
   }
 }
 

@@ -1,4 +1,4 @@
-export { EnrollmentHistoricsColumns } from "./columns.enrollment-history";
+export { enrollmentHistoryColumns } from "./columns.enrollment-history";
 export { SchoolColumns } from "./columns.school";
 export { StudentColumns } from "./columns.students";
 export { StudyYearColumns } from "./columns.study-years";

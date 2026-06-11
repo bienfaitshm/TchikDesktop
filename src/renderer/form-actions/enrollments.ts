@@ -12,7 +12,7 @@ import type {
   EnrollmentCreate as EnrolementData,
   EnrollmentQuickCreate,
 } from "@/packages/@core/data-access/schema-validations";
-import type { BaseFormProps } from "./base-form";
+import type { BaseFormProps } from "./types";
 
 interface UseEnrolementConfig<T = EnrolementData> {
   mutationKeys?: unknown[];

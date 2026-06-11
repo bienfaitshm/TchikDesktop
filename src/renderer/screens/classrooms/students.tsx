@@ -31,7 +31,7 @@ import {
 import {
   DeleteEnrollmentDialog,
   UpdateEnrollmentDialog,
-} from "@/renderer/dialog-actions/enrolement.dialog-actions";
+} from "@/renderer/dialog-actions/enrollment.dialog-actions";
 import { UpdateStudentDialog } from "@/renderer/dialog-actions/student.dialog-action";
 
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";

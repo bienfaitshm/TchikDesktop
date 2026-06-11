@@ -15,6 +15,19 @@ export function useGetUsers(params?: UserFilter) {
   });
 }
 
+export function useGetSearchUsers(search: {
+  name?: string;
+  yearId?: string;
+  schoolId: string;
+}) {
+  return useQuery({
+    queryKey: ["GET_SEARCH_USERS", search],
+    queryFn: () => users.searchUser(search),
+    enabled: Boolean(search.name?.trim()),
+    placeholderData: (previousData) => previousData,
+  });
+}
+
 export function useCreateUser() {
   return useMutation({
     mutationKey: ["CREATE_USER"],

@@ -12,19 +12,9 @@ import {
 import { Button } from "@/renderer/components/ui/button";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import {
-  QuickEnrollmentForm,
-  type QuickEnrollmentFormData,
-} from "@/renderer/components/form/quick-enrolement-form";
-import {
   EnrollmentForm,
   type EnrollmentFormData,
-} from "@/renderer/components/form/enrollment-form";
-import {
-  useCreateEnrollmentForm,
-  useUpdateEnrollmentForm,
-  useDeleteEnrollmentForm,
-  useCreateQuickEnrollmentForm,
-} from "@/renderer/components/form/enrollment-form.actions";
+} from "@/renderer/components/form";
 import {
   ConfirmDeleteDialog,
   useConfirm,
@@ -33,6 +23,14 @@ import {
   useGetClassroomAsOptions,
   useGetUsersAsOptions,
 } from "@/renderer/hooks/data-as-options";
+
+import {
+  useCreateEnrollmentForm,
+  useUpdateEnrollmentForm,
+  useDeleteEnrollmentForm,
+  useCreateQuickEnrollmentForm,
+} from "@/renderer/form-actions/enrollments";
+
 import { USER_ROLE_ENUM as ROLE } from "@/packages/@core/data-access/db/enum";
 import { BaseFormConfig } from "./base.dialog-actions";
 
@@ -41,11 +39,6 @@ type SchoolYearId = { schoolId: string; yearId: string };
 type CreateEnrollmentDialogProps = {
   children: React.ReactNode;
   defaultValues?: Partial<EnrollmentFormData>;
-};
-
-type QuickCreateEnrollmentDialogProps = {
-  children: React.ReactNode;
-  defaultValues?: Partial<QuickEnrollmentFormData>;
 };
 
 type UpdateEnrollmentDialogProps = {
@@ -65,65 +58,13 @@ interface DeleteEnrollmentDialogProps {
 }
 
 /**
- * Dialogue : Inscription Rapide (Quick Create)
- */
-export const QuickCreateEnrollmentDialog: React.FC<
-  QuickCreateEnrollmentDialogProps & SchoolYearId & BaseFormConfig
-> = ({ children, defaultValues, schoolId, yearId, ...config }) => {
-  const { formId, onSubmit, isSubmitting } =
-    useCreateQuickEnrollmentForm(config);
-  const classrooms = useGetClassroomAsOptions({ where: { schoolId, yearId } });
-  return (
-    <Dialog modal>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent
-        className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]"
-        onPointerDownOutside={(e) => isSubmitting && e.preventDefault()}
-        onEscapeKeyDown={(e) => isSubmitting && e.preventDefault()}
-      >
-        <DialogHeader>
-          <DialogTitle>Nouvelle Inscription Rapide</DialogTitle>
-          <DialogDescription>
-            Identifiez l'élève et sa classe pour un enrôlement immédiat.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="py-4">
-          <QuickEnrollmentForm
-            formId={formId}
-            onSubmit={onSubmit}
-            initialValues={defaultValues}
-            classrooms={classrooms}
-          />
-        </div>
-
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost" disabled={isSubmitting}>
-              Annuler
-            </Button>
-          </DialogClose>
-          <ButtonLoader
-            form={formId}
-            type="submit"
-            isLoading={isSubmitting}
-            aria-label="Confirmer l'inscription rapide"
-          >
-            Inscrire l'élève
-          </ButtonLoader>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-/**
  * Dialogue : Inscription Complète (Create)
  */
 export const CreateEnrollmentDialog: React.FC<
   CreateEnrollmentDialogProps & SchoolYearId & BaseFormConfig
 > = ({ children, defaultValues, schoolId, yearId, ...config }) => {
-  const { formId, onSubmit, isSubmitting } = useCreateEnrollmentForm(config);
+  const { formId, onSubmit, isSubmitting } =
+    useCreateQuickEnrollmentForm(config);
   const classrooms = useGetClassroomAsOptions({ where: { schoolId, yearId } });
   const students = useGetUsersAsOptions(
     { where: { schoolId, role: ROLE.STUDENT } },
@@ -136,6 +77,8 @@ export const CreateEnrollmentDialog: React.FC<
         className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]"
         onPointerDownOutside={(e) => isSubmitting && e.preventDefault()}
         onEscapeKeyDown={(e) => isSubmitting && e.preventDefault()}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle>Dossier d'Inscription</DialogTitle>

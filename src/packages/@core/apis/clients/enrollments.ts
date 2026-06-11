@@ -1,18 +1,25 @@
 import { IpcClient } from "@/packages/electron-ipc-rest";
 import {
   EnrollmentQuickCreate,
-  Enrollment,
   EnrollmentCreate,
   EnrollmentUpdate,
   EnrollmentFilter,
 } from "@/packages/@core/data-access/schema-validations";
+import type {
+  ClassroomEnrollment,
+  User,
+  Classroom,
+} from "@/packages/@core/data-access/db/schemas";
 import { EnrollementRoutes } from "../routes-constant";
 
 /**
  * type représentant la structure des données d'une salle des inscriptions (Enrollement).
  * Remplace 'unknown' par les propriétés réelles de votre Enrollement.
  */
-export type EnrollementData = Enrollment;
+export type EnrollementData = ClassroomEnrollment & {
+  student: User & { fullName?: string };
+  classroom: Classroom;
+};
 
 /**
  * Type définissant les paramètres de requête pour les listes.

@@ -27,6 +27,17 @@ export type UserApi = Readonly<{
   fetchUsers(params?: UserQueryParams): Promise<UserData[]>;
 
   /**
+   * Récupère toutes les salles de classe, éventuellement filtrées par des paramètres.
+   * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
+   * @returns Une promesse résolue avec la liste des UserData.
+   */
+  searchUser(params: {
+    name?: string;
+    yearId?: string;
+    schoolId: string;
+  }): Promise<UserData[]>;
+
+  /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
    * @param userId L'identifiant unique de la salle de classe.
    * @returns Une promesse résolue avec l'objet UserData.
@@ -68,6 +79,10 @@ export function createUserApis(ipcClient: IpcClient): UserApi {
   return {
     fetchUsers(params) {
       // Utilisation du 'params' Usernel de l'appel pour les filtres/pagination
+      return ipcClient.get(UserRoutes.ALL, { params });
+    },
+
+    searchUser(params: { name?: string; yearId?: string; schoolId: string }) {
       return ipcClient.get(UserRoutes.ALL, { params });
     },
 

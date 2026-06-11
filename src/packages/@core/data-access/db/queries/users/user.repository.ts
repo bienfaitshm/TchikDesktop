@@ -1,4 +1,5 @@
-import { getTableColumns, sql } from "drizzle-orm";
+import { getTableColumns, sql, or, ilike, eq } from "drizzle-orm";
+
 import { getLogger } from "@/packages/logger";
 import {
   users,
@@ -8,6 +9,8 @@ import {
 } from "@/packages/@core/data-access/db/schemas";
 import { db } from "@/packages/@core/data-access/db/config";
 import { BaseRepository, type LibSqlClient } from "../base-repository";
+
+const LIMIT_SEARCH_VALUE = 10;
 
 const USER_DEFAULT_SORT: FindManyOptions<TableUser> = {
   orderBy: [
@@ -19,8 +22,12 @@ const USER_DEFAULT_SORT: FindManyOptions<TableUser> = {
 
 export class UserRepository extends BaseRepository<TableUser, LibSqlClient> {
   static readonly fullNameSql = sql<string>`
-    trim(${users.lastName} || ' ' || COALESCE(${users.middleName} || ' ', '') || ${users.firstName})
-  `.as("fullName");
+  concat_ws(' ', 
+    nullif(trim(${users.lastName}), ''), 
+    nullif(trim(${users.middleName}), ''), 
+    nullif(trim(${users.firstName}), '')
+  )
+`.as("fullName");
 
   /**
    * Retourne les colonnes sélectionnables de l'utilisateur sans le mot de passe.
@@ -45,11 +52,25 @@ export class UserRepository extends BaseRepository<TableUser, LibSqlClient> {
     });
   }
 
-  protected override getQuerySet(): any {
-    return this.db
+  protected override getQuerySet(tx?: LibSqlClient): any {
+    return this.getClient(tx)
       .select(UserRepository.getVisibleColumns())
       .from(this.table)
       .$dynamic();
+  }
+
+  async searchUser({ name, schoolId }: { name: string; schoolId: string }) {
+    const searchPattern = `%${name}%`;
+    return this.getQuerySet()
+      .where(
+        eq(this.table.schoolId, schoolId),
+        or(
+          ilike(this.table.firstName, searchPattern),
+          ilike(this.table.middleName, searchPattern),
+          ilike(this.table.lastName, searchPattern),
+        ),
+      )
+      .limit(LIMIT_SEARCH_VALUE);
   }
 
   /**
