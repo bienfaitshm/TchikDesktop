@@ -7,11 +7,15 @@ import { ChevronLeft, DoorOpen } from "lucide-react";
 import {
   SidebarFlatList,
   SidebarItem,
+  SidebarItemMedia,
+  SidebarItemContent,
+  SidebarItemTitle,
+  SidebarItemDescription,
 } from "@/renderer/components/sidebar-menus";
 import { Button } from "@/renderer/components/ui/button";
 import { useGetSessionRoomsStatus } from "@/renderer/libs/queries/seating";
 import { cn } from "@/renderer/utils";
-
+import { APP_ROUTES } from "@/renderer/constants";
 interface LocalRoomStatus {
   localroomId: string;
   roomName: string;
@@ -53,21 +57,50 @@ export const LocalroomSidebar: React.FC = () => {
       renderItem={(room) => {
         const isCritical = room.occupancyRate >= 90;
         const isActive = room.localroomId === localroomId;
-        // const isFull = room.occupancyRate >= 100;
 
         return (
           <SidebarItem
             key={room.localroomId}
             isActive={isActive}
             asChild
-            className="h-auto py-2"
+            className="h-12 py-2"
+            data-critical={isCritical ? "true" : undefined}
           >
-            <RoomNavLink
-              isActive={isActive}
-              room={room}
-              isCritical={isCritical}
-              sessionId={sessionId}
-            />
+            <NavLink
+              to={APP_ROUTES.SEATING.ASSIGNMENT(
+                sessionId as string,
+                room.localroomId,
+              )}
+            >
+              <SidebarItemMedia
+                className={cn(
+                  "p-1.5 size-8 rounded-md bg-background border transition-colors",
+                  "group-aria-[current=page]:border-primary/40 group-aria-[current=page]:bg-primary/5",
+                  isCritical &&
+                    "border-destructive/20 bg-destructive/5 text-destructive group-aria-[current=page]:text-destructive",
+                )}
+              >
+                <DoorOpen className="size-4" />
+              </SidebarItemMedia>
+
+              <SidebarItemContent>
+                <SidebarItemTitle className="text-xs font-semibold">
+                  {room.roomName}
+                </SidebarItemTitle>
+                <SidebarItemDescription className="font-medium uppercase tracking-wider">
+                  Capacité:{" "}
+                  <span className="font-bold text-foreground/80">
+                    {room.maxCapacity}
+                  </span>
+                  {isCritical && (
+                    <span className="sr-only">
+                      {" "}
+                      (Attention : capacité critique)
+                    </span>
+                  )}
+                </SidebarItemDescription>
+              </SidebarItemContent>
+            </NavLink>
           </SidebarItem>
         );
       }}
@@ -76,48 +109,3 @@ export const LocalroomSidebar: React.FC = () => {
 };
 
 LocalroomSidebar.displayName = "LocalroomSidebar";
-
-const RoomNavLink = ({ sessionId, room, isCritical, isActive }) => {
-  return (
-    <NavLink
-      to={`/seating/${sessionId}/${room.localroomId}`}
-      className={cn(
-        "group flex flex-col gap-1.5 p-2 rounded-lg transition-colors hover:bg-accent",
-        isActive && "bg-accent",
-      )}
-    >
-      <div className="flex items-center gap-3 overflow-hidden">
-        {/* Container Icône */}
-        <div
-          className={cn(
-            "p-2 rounded-md bg-background border transition-colors",
-            "group-data-[state=active]:border-primary/40 group-data-[state=active]:bg-primary/5",
-            isCritical && "border-destructive/20 bg-destructive/5",
-          )}
-        >
-          <DoorOpen
-            className={cn(
-              "h-4 w-4 transition-colors",
-              isCritical
-                ? "text-destructive"
-                : "text-muted-foreground group-data-[state=active]:text-primary",
-            )}
-          />
-        </div>
-
-        {/* Textes */}
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <span className={cn("text-sm font-semibold truncate leading-none")}>
-            {room.roomName}
-          </span>
-          <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-            Capacité: <span className="font-bold">{room.maxCapacity}</span>
-            {isCritical && (
-              <span className="sr-only"> (Attention : capacité critique)</span>
-            )}
-          </span>
-        </div>
-      </div>
-    </NavLink>
-  );
-};

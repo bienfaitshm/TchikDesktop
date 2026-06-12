@@ -8,20 +8,20 @@ import {
 } from "@/renderer/components/ui/resizable";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { cn } from "@/renderer/utils";
-import type { ImperativePanelGroupHandle } from "react-resizable-panels";
 
-interface SidebarContainerProps
-  extends React.ComponentPropsWithoutRef<typeof ResizablePanelGroup> {
+type ResizablePanelGroupProps = React.ComponentProps<
+  typeof ResizablePanelGroup
+>;
+type ResizablePanelProps = React.ComponentProps<typeof ResizablePanel>;
+
+interface SidebarContainerProps extends ResizablePanelGroupProps {
   sidebar: React.ReactNode;
-  sidebarProps?: React.ComponentPropsWithoutRef<typeof ResizablePanel>;
-  mainProps?: React.ComponentPropsWithoutRef<typeof ResizablePanel>;
+  sidebarProps?: Partial<ResizablePanelProps>;
+  mainProps?: Partial<ResizablePanelProps>;
 }
 
-/**
- * Skeleton dédié à la sidebar pour éviter de polluer le composant principal.
- */
 const SidebarSkeleton = () => (
-  <div className="p-6 space-y-6 animate-pulse" aria-hidden="true">
+  <div className="h-full p-6 space-y-6 animate-pulse" aria-hidden="true">
     <div className="h-8 w-8 bg-muted rounded-lg" />
     <div className="h-10 w-full bg-muted rounded-md" />
     <div className="space-y-3">
@@ -34,23 +34,32 @@ const SidebarSkeleton = () => (
 );
 
 export const SidebarContainer = React.forwardRef<
-  ImperativePanelGroupHandle,
+  React.ComponentRef<typeof ResizablePanelGroup>,
   SidebarContainerProps
 >(
   (
-    { sidebar, children, className, sidebarProps, mainProps, ...props },
-    ref,
+    {
+      sidebar,
+      children,
+      className,
+      sidebarProps,
+      mainProps,
+      orientation = "horizontal",
+      ...props
+    },
+    _,
   ) => {
     return (
       <ResizablePanelGroup
-        ref={ref}
+        orientation={orientation}
         className={cn("h-full items-stretch", className)}
         {...props}
       >
+        {/* Panneau de la Sidebar */}
         <ResizablePanel
-          defaultSize={20}
-          minSize={15}
-          maxSize={30}
+          defaultSize="20%"
+          minSize="15%"
+          maxSize="30%"
           {...sidebarProps}
           className={cn(
             "h-full bg-sidebar/50 backdrop-blur-xs",
@@ -60,13 +69,15 @@ export const SidebarContainer = React.forwardRef<
           <Suspense fallback={<SidebarSkeleton />}>{sidebar}</Suspense>
         </ResizablePanel>
 
+        {/* Poignée de redimensionnement (Gère les interactions clavier + souris) */}
         <ResizableHandle
           withHandle
           className="bg-border/50 hover:bg-primary/20 transition-colors"
         />
 
+        {/* Panneau du contenu Principal */}
         <ResizablePanel
-          defaultSize={80}
+          defaultSize="80%"
           {...mainProps}
           className={cn("flex flex-col", mainProps?.className)}
         >

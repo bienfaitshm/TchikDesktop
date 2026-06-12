@@ -1,4 +1,5 @@
 import { ThemeProvider } from "@/renderer/providers/theme";
+import { TooltipProvider } from "@/renderer/components/ui/tooltip";
 import Router from "@/renderer/screens/router";
 import QuerieProvider from "@/renderer/libs/queries/providers";
 import { Toaster } from "@/renderer/components/ui/sonner";
@@ -10,15 +11,19 @@ function App(): JSX.Element {
   return (
     <QuerieProvider>
       <ThemeProvider>
-        <SuspenseErrorBoundary fallbackRender={({ error, resetErrorBoundary }) => <ErrorPage error={error} onRetry={resetErrorBoundary} />}>
-          <Router />
-          <Toaster position="top-center" />
-        </SuspenseErrorBoundary>
+        <TooltipProvider>
+          <SuspenseErrorBoundary
+            fallbackRender={({ error, resetErrorBoundary }) => (
+              <ErrorPage error={error} onRetry={resetErrorBoundary} />
+            )}
+          >
+            <Router />
+            <Toaster position="top-center" />
+          </SuspenseErrorBoundary>
+        </TooltipProvider>
       </ThemeProvider>
     </QuerieProvider>
   );
-
-
 }
 
 export default App;

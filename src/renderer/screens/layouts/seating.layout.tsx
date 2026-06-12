@@ -13,6 +13,15 @@ import { Skeleton } from "@/renderer/components/ui/skeleton";
 import { Button } from "@/renderer/components/ui/button";
 import { useInvalidateSeatingCache } from "@/renderer/dialog-actions/seating-generator/hooks";
 
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/renderer/components/ui/empty";
+
 export interface SeatingLayoutContext {
   schoolId: string;
   yearId: string;
@@ -29,7 +38,7 @@ export const SeatingSessionLayout: React.FC = () => {
 
   if (!sessionId) {
     return (
-      <p className="text-destructive p-4">
+      <p className="text-destructive p-4" role="alert">
         Erreur : Session ID introuvable dans l'URL.
       </p>
     );
@@ -71,7 +80,7 @@ export const SeatingSessionLayout: React.FC = () => {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 h-full">
-      <SidebarContainer direction="horizontal" sidebar={<LocalroomSidebar />}>
+      <SidebarContainer sidebar={<LocalroomSidebar />}>
         <Outlet
           context={
             {
@@ -87,9 +96,14 @@ export const SeatingSessionLayout: React.FC = () => {
   );
 };
 
-export const EmptyMessage: React.FC<
-  React.PropsWithChildren<{ sessionName?: string }>
-> = ({ children, sessionName }) => {
+interface EmptyMessageProps extends React.PropsWithChildren {
+  sessionName?: string;
+}
+
+export const EmptyMessage: React.FC<EmptyMessageProps> = ({
+  children,
+  sessionName,
+}) => {
   const navigate = useNavigate();
 
   return (
@@ -98,7 +112,7 @@ export const EmptyMessage: React.FC<
         <Button
           variant="outline"
           size="icon"
-          className="size-11 shrink-0 rounded-xl shadow-xs hover:bg-accent"
+          className="size-11 shrink-0 rounded-xl"
           onClick={() => navigate(-1)}
         >
           <ChevronLeft className="size-5" />
@@ -106,7 +120,7 @@ export const EmptyMessage: React.FC<
         </Button>
 
         <div className="space-y-1">
-          <h1 className="text-lg font-extrabold tracking-tight sm:text-xl lg:text-xl">
+          <h1 className="text-lg font-extrabold tracking-tight sm:text-xl">
             {sessionName}
           </h1>
           <p className="text-sm text-muted-foreground leading-none">
@@ -114,29 +128,33 @@ export const EmptyMessage: React.FC<
           </p>
         </div>
       </header>
-      <div className="flex flex-col items-center justify-center min-h-[65vh] border-2 border-dashed rounded-4xl bg-muted/5 mt-4 transition-colors hover:bg-muted/10">
-        <div className="relative mb-6">
-          <div className="absolute -inset-4 rounded-full bg-primary/10 blur-2xl animate-pulse" />
-          <div className="relative bg-background border shadow-xs p-6 rounded-3xl">
-            <Wand2 className="size-12 text-primary" />
-          </div>
-        </div>
 
-        <h3 className="text-2xl font-semibold tracking-tight">
-          Plan de salle vide
-        </h3>
-        <p className="text-muted-foreground max-w-sm text-center mt-3 leading-relaxed">
-          Organisez vos candidats en quelques clics. Utilisez le générateur pour
-          assigner automatiquement les places.
-        </p>
+      <Empty className="min-h-[65vh] border-2 border-dashed rounded-4xl bg-muted/5 transition-colors hover:bg-muted/10 mt-4 flex flex-col items-center justify-center">
+        <EmptyHeader className="flex flex-col items-center text-center">
+          <EmptyMedia variant="icon" className="relative mb-6">
+            <div className="absolute -inset-4 rounded-full bg-primary/10 blur-2xl animate-pulse" />
+            <div className="relative bg-background border shadow-xs p-6 rounded-3xl">
+              <Wand2 className="size-12 text-primary" />
+            </div>
+          </EmptyMedia>
 
-        <div className="mt-10 flex flex-col items-center gap-4">
+          <EmptyTitle className="text-2xl font-semibold tracking-tight">
+            Plan de salle vide
+          </EmptyTitle>
+
+          <EmptyDescription className="max-w-sm text-center mt-3 leading-relaxed text-muted-foreground">
+            Organisez vos candidats en quelques clics. Utilisez le générateur
+            pour assigner automatiquement les places.
+          </EmptyDescription>
+        </EmptyHeader>
+
+        <EmptyContent className="mt-10 flex flex-col items-center gap-4">
           {children}
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
             Action requise pour continuer
           </p>
-        </div>
-      </div>
+        </EmptyContent>
+      </Empty>
     </div>
   );
 };
