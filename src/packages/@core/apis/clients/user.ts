@@ -83,7 +83,7 @@ export function createUserApis(ipcClient: IpcClient): UserApi {
     },
 
     searchUser(params: { name?: string; yearId?: string; schoolId: string }) {
-      return ipcClient.get(UserRoutes.ALL, { params });
+      return ipcClient.get(UserRoutes.SEARCH, { params });
     },
 
     fetchUserById(userId) {

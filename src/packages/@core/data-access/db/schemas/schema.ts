@@ -17,7 +17,13 @@ import {
   generateNumericEnrollmentCode,
   generateProvisionalUsername,
 } from "../utils";
-import { primaryKeyId, enumColumn, timestamps } from "../drizzle-fields";
+import {
+  primaryKeyId,
+  enumColumn,
+  timestamps,
+  foreignKeyId,
+  timestampColumn,
+} from "../drizzle-fields";
 
 type AsUpdatePayload<T, PK extends keyof T> = Partial<
   Omit<T, PK | "createdAt" | "updatedAt">
@@ -59,16 +65,20 @@ export const users = sqliteTable(
     role: enumColumn("role", USER_ROLE_ENUM)
       .notNull()
       .default(USER_ROLE_ENUM.STUDENT),
-    birthDate: text("birth_date"),
+    birthDate: timestampColumn("birth_date"),
     birthPlace: text("birth_place"),
-    schoolId: text("school_id")
-      .notNull()
-      .references(() => schools.schoolId, { onDelete: "cascade" }),
+    schoolId: foreignKeyId("school_id", {
+      ref: () => schools.schoolId,
+      actions: { onDelete: "cascade" },
+    }),
     ...timestamps,
   },
   (table) => [
     index("users_school_idx").on(table.schoolId),
     index("users_role_idx").on(table.role),
+    index("users_school_last_name_idx").on(table.schoolId, table.lastName),
+    index("users_school_middle_name_idx").on(table.schoolId, table.middleName),
+    index("users_school_first_name_idx").on(table.schoolId, table.firstName),
   ],
 );
 
@@ -103,8 +113,8 @@ export const studyYears = sqliteTable(
   {
     yearId: primaryKeyId("year_id"),
     yearName: text("year_name").notNull(),
-    startDate: integer("start_date", { mode: "timestamp" }).notNull(),
-    endDate: integer("end_date", { mode: "timestamp" }).notNull(),
+    startDate: timestampColumn("start_date"),
+    endDate: timestampColumn("end_date"),
     schoolId: text("school_id")
       .notNull()
       .references(() => schools.schoolId, { onDelete: "cascade" }),
@@ -149,6 +159,14 @@ export const classrooms = sqliteTable(
   (table) => [
     index("classrooms_school_idx").on(table.schoolId),
     index("classrooms_year_idx").on(table.yearId),
+    index("classrooms_school_indentifier_idx").on(
+      table.schoolId,
+      table.identifier,
+    ),
+    index("classrooms_school_short_indentifier_idx").on(
+      table.schoolId,
+      table.shortIdentifier,
+    ),
   ],
 );
 

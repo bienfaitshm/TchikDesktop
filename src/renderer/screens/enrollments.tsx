@@ -22,7 +22,7 @@ type SchoolYearId = { schoolId: string; yearId: string };
 /**
  * Composant de table avec gestion des données réelles
  */
-const EnrollmentHistoryTable: React.FC<SchoolYearId> = ({
+export const EnrollmentHistoryTable: React.FC<SchoolYearId> = ({
   schoolId,
   yearId,
 }) => {
@@ -40,7 +40,7 @@ const EnrollmentHistoryTable: React.FC<SchoolYearId> = ({
       <DataTable
         columns={enrollmentHistoryColumns}
         data={enrollments}
-        keyExtractor={(row) => row.enrollmentId}
+        keyExtractor={(row) => `${row.enrollmentId}${row.student.userId}`}
       >
         <DataTableContent>
           <DataContentHead />

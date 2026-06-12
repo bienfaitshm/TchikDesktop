@@ -81,9 +81,10 @@ export const ComboboxSearch = React.forwardRef<
         itemToStringValue={(item: ComboboxOption) => item.label}
         onValueChange={(item) => {
           onChange?.(item ? item.value : "");
+          console.log("OnCHANGE", item);
         }}
       >
-        <div className="relative flex items-center w-full">
+        <div className="relative flex items-center w-full mx-2">
           <ComboboxInput
             className="w-full pr-10"
             placeholder={searchPlaceholder}
@@ -105,9 +106,6 @@ export const ComboboxSearch = React.forwardRef<
             "w-full min-w-[200px] max-h-60 overflow-y-auto p-1",
             className,
           )}
-          onInteractOutside={(event) => {
-            event.preventDefault();
-          }}
         >
           {!isLoading && filteredOptions.length === 0 && (
             <ComboboxEmpty className="py-6 text-center text-sm text-muted-foreground">
@@ -120,7 +118,6 @@ export const ComboboxSearch = React.forwardRef<
               <ComboboxItem key={option.value} value={option.value}>
                 <Item size="xs" className="p-0 w-full">
                   <ItemContent className="w-full overflow-hidden">
-                    {/* truncate ou line-clamp évite que les textes longs ne cassent le layout */}
                     <ItemTitle className="truncate block w-full">
                       {option.label}
                     </ItemTitle>

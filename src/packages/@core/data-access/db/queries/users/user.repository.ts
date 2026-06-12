@@ -1,5 +1,4 @@
-import { getTableColumns, sql, or, ilike, eq } from "drizzle-orm";
-
+import { getTableColumns, sql, or, like, eq, and } from "drizzle-orm";
 import { getLogger } from "@/packages/logger";
 import {
   users,
@@ -8,6 +7,8 @@ import {
   type FindManyOptions,
 } from "@/packages/@core/data-access/db/schemas";
 import { db } from "@/packages/@core/data-access/db/config";
+import { hashPassword } from "@/packages/@core/data-access/db/crypt";
+import { applyQueryOptions } from "@/packages/@core/data-access/db/queries/drizzle-builder";
 import { BaseRepository, type LibSqlClient } from "../base-repository";
 
 const LIMIT_SEARCH_VALUE = 10;
@@ -22,16 +23,15 @@ const USER_DEFAULT_SORT: FindManyOptions<TableUser> = {
 
 export class UserRepository extends BaseRepository<TableUser, LibSqlClient> {
   static readonly fullNameSql = sql<string>`
-  concat_ws(' ', 
-    nullif(trim(${users.lastName}), ''), 
-    nullif(trim(${users.middleName}), ''), 
-    nullif(trim(${users.firstName}), '')
-  )
-`.as("fullName");
+    trim(
+      coalesce(nullif(trim(${users.lastName}), ''), '') || ' ' ||
+      coalesce(nullif(trim(${users.middleName}), ''), '') || ' ' ||
+      coalesce(nullif(trim(${users.firstName}), ''), '')
+    )
+  `.as("fullName");
 
   /**
    * Retourne les colonnes sélectionnables de l'utilisateur sans le mot de passe.
-   * Changé en méthode classique static () pour une meilleure DX et évolutivité.
    */
   static getVisibleColumns() {
     const { password, ...userFields } = getTableColumns(users);
@@ -60,26 +60,31 @@ export class UserRepository extends BaseRepository<TableUser, LibSqlClient> {
   }
 
   async searchUser({ name, schoolId }: { name: string; schoolId: string }) {
-    const searchPattern = `%${name}%`;
-    return this.getQuerySet()
+    const cleanName = name.trim();
+    if (!cleanName) return [];
+
+    const searchPattern = `%${cleanName.toLowerCase()}%`;
+    const queryset = this.getQuerySet()
       .where(
-        eq(this.table.schoolId, schoolId),
-        or(
-          ilike(this.table.firstName, searchPattern),
-          ilike(this.table.middleName, searchPattern),
-          ilike(this.table.lastName, searchPattern),
+        and(
+          eq(this.table.schoolId, schoolId),
+          or(
+            like(sql`lower(${this.table.lastName})`, searchPattern),
+            like(sql`lower(${this.table.middleName})`, searchPattern),
+            like(sql`lower(${this.table.firstName})`, searchPattern),
+          ),
         ),
       )
-      .limit(LIMIT_SEARCH_VALUE);
+      .limit(LIMIT_SEARCH_VALUE)
+      .$dynamic();
+    return applyQueryOptions(queryset, this.table, USER_DEFAULT_SORT);
   }
 
   /**
    * Crée un utilisateur en injectant un hash de mot de passe temporaire ou par défaut.
    */
   async createUser(value: Omit<InsertUser, "password">, tx?: LibSqlClient) {
-    // Dans un vrai flux de production, ce mot de passe devrait être hashé de manière asynchrone en amont
-    const passwordHash = "DEFAULT_HASH_PASSWORD";
-
+    const passwordHash = await hashPassword("0000");
     return this.create({ ...value, password: passwordHash }, tx);
   }
 }
