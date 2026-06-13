@@ -15,10 +15,17 @@ import { DataMappers } from "./data-mappers";
 import type {
   IClassroomFormParams,
   ISeatingSessionFormParams,
+  ILocalRoomFormParams,
 } from "./field-factories.types";
 import { mapFiltersToSelectOptions } from "./utils";
 
 type FileTypeFieldConfig = Readonly<Partial<FormFieldDef>>;
+
+// Définition locale pour éviter d'importer tout le namespace Electron si inutile
+interface AppFileFilter {
+  extensions: string[];
+  name: string;
+}
 
 interface FieldFactoryError extends Error {
   code: "FETCH_ERROR" | "MAPPING_ERROR" | "VALIDATION_ERROR";
@@ -50,7 +57,7 @@ export const createSectionField = async (
 };
 
 export const createFileTypeField = async (
-  fileFilters: readonly Electron.FileFilter[],
+  fileFilters: readonly AppFileFilter[],
   overrides?: FileTypeFieldConfig,
 ): Promise<FormFieldDef> => {
   const options = mapFiltersToSelectOptions(fileFilters);
@@ -101,18 +108,12 @@ export const createClassroomField = async (
       where: { schoolId, yearId },
     });
 
-    if (!classrooms.length) {
-      throw new FieldCreationError(
-        "VALIDATION_ERROR",
-        "classroom",
-        "No classrooms found for the given criteria",
-      );
-    }
-
     const options = DataMappers.classroomsToOptions(classrooms);
+    const [defaultClass = options[0]?.value] = ensureStringArray(classId);
 
     return ClassroomFieldFactory.create({
       options,
+      defaultValue: defaultClass,
       colSpan: 4,
       ...config,
     });
@@ -128,7 +129,7 @@ export const createClassroomField = async (
 };
 
 export const createLocalroomField = async (
-  params: Readonly<IClassroomFormParams & FileTypeFieldConfig>,
+  params: Readonly<ILocalRoomFormParams & FileTypeFieldConfig>,
 ): Promise<FormFieldDef> => {
   try {
     const { schoolId, ...config } = params;
@@ -136,14 +137,6 @@ export const createLocalroomField = async (
     const localrooms = await localRoomRepository.findMany({
       where: { schoolId },
     });
-
-    if (!localrooms.length) {
-      throw new FieldCreationError(
-        "VALIDATION_ERROR",
-        "localroom",
-        "No localrooms found for the given criteria",
-      );
-    }
 
     const options = DataMappers.localroomsToOptions(localrooms);
 
@@ -164,9 +157,12 @@ export const createLocalroomField = async (
 };
 
 export const composeFields = async (
-  ...fieldCreators: readonly (Promise<FormFieldDef> | FormFieldDef)[]
+  ...fieldCreators: readonly (() => Promise<FormFieldDef> | FormFieldDef)[]
 ): Promise<readonly FormFieldDef[]> => {
-  const results = await Promise.allSettled(fieldCreators);
+  const promises = fieldCreators.map((creator) =>
+    typeof creator === "function" ? creator() : creator,
+  );
+  const results = await Promise.allSettled(promises);
 
   const errors = results
     .filter((r): r is PromiseRejectedResult => r.status === "rejected")

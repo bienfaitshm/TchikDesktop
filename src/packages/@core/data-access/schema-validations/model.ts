@@ -270,53 +270,42 @@ const BaseStudentSchema = UserCreateSchema.omit({
   password: true,
   username: true,
   schoolId: true,
+}).default({
+  lastName: "",
+  middleName: "",
+  firstName: "",
+  role: USER_ROLE_ENUM.STUDENT,
+  birthDate: undefined,
+  gender: USER_GENDER_ENUM.MALE,
+  birthPlace: "Lubumbashi",
 });
 
-export const EnrollmentQuickCreateSchema = EnrollmentCreateSchema.merge(
-  z.object({
-    isInSystem: z.boolean().default(false),
-    studentId: z.string().optional(),
-    student: BaseStudentSchema.optional(),
-  }),
-).superRefine((data, ctx) => {
-  const { isInSystem, studentId, student } = data;
-
-  if (isInSystem) {
-    if (!studentId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
+export const EnrollmentQuickCreateSchema = EnrollmentCreateSchema.and(
+  z.discriminatedUnion("isInSystem", [
+    // Cas 1 : L'élève est déjà dans le système
+    z.object({
+      isInSystem: z.literal(true),
+      studentId: z.string({
+        required_error:
           "L'identifiant `studentId` est obligatoire lorsque l'élève est déjà référencé dans le système.",
-        path: ["studentId"],
-      });
-    }
-    if (student) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
+      }),
+      student: z.undefined({
+        invalid_type_error:
           "Le bloc de données `student` ne doit pas être fourni lorsque l'élève existe déjà.",
-        path: ["student"],
-      });
-    }
-  } else {
-    if (!student) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
-          "Le bloc de données de l'élève `student` est requis pour créer son profil utilisateur.",
-        path: ["student"],
-      });
-    }
-    if (studentId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
+      }),
+    }),
+
+    // Cas 2 : L'élève n'est pas dans le système
+    z.object({
+      isInSystem: z.literal(false).default(false),
+      studentId: z.undefined({
+        invalid_type_error:
           "L'identifiant `studentId` doit être omis lors d'une nouvelle inscription rapide.",
-        path: ["studentId"],
-      });
-    }
-  }
-});
+      }),
+      student: BaseStudentSchema, // Requis ici, plus besoin d'optional()
+    }),
+  ]),
+);
 
 export type EnrollmentQuickCreate = z.infer<typeof EnrollmentQuickCreateSchema>;
 

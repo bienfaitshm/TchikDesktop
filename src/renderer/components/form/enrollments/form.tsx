@@ -31,16 +31,7 @@ import { Label } from "@/renderer/components/ui/label";
 export const DEFAULT_QUICK_ENROLLMENT_VALUES: Partial<EnrollmentFormData> = {
   classroomId: "",
   isNewStudent: false,
-  isInSystem: false,
-  student: {
-    lastName: "",
-    middleName: "",
-    firstName: "",
-    role: USER_ROLE_ENUM.STUDENT,
-    birthDate: undefined,
-    gender: USER_GENDER_ENUM.MALE,
-    birthPlace: "Lubumbashi",
-  },
+  isInSystem: true,
 };
 
 interface QuickEnrollmentFormProps {
