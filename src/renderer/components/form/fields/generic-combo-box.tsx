@@ -102,13 +102,19 @@ function GenericComboBoxInner<T>(
           contentClassName,
         )}
         align="start"
+        onCloseAutoFocus={(e) => e.preventDefault()}
       >
         <Command className="flex flex-col space-y-2">
           <CommandInput
             placeholder={searchPlaceholder}
             className="h-8 text-xs border-none focus-visible:ring-0 shadow-none"
           />
-          <CommandList className="max-h-[240px] overflow-y-auto scrollbar-thin">
+          <CommandList
+            className="max-h-[240px] overflow-y-auto scrollbar-thin"
+            onWheel={(e) => {
+              e.stopPropagation();
+            }}
+          >
             <CommandEmpty className="py-6 text-center text-xs text-muted-foreground italic">
               {emptyMessage}
             </CommandEmpty>

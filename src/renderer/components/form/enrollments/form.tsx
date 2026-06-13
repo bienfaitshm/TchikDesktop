@@ -20,13 +20,13 @@ import {
   USER_ROLE_ENUM,
 } from "@/packages/@core/data-access/db/enum";
 import { EnrollmentQuickCreateSchema } from "@/packages/@core/data-access/schema-validations";
-import { Combobox } from "@/renderer/components/ui/combobox";
+import { GenericComboBox } from "@/renderer/components/form/fields/generic-combo-box";
 import { StudentSeniorityStatusSelect } from "../fields/student-seriority-statut";
 import { BaseFormProps, useZodForm } from "../base-form";
 import { StudentFormFields } from "./form.student";
 import { SelectExistStudent } from "./form.select-student";
 import type { EnrollmentFormData } from "./types";
-import { Label } from "../../ui/label";
+import { Label } from "@/renderer/components/ui/label";
 
 export const DEFAULT_QUICK_ENROLLMENT_VALUES: Partial<EnrollmentFormData> = {
   classroomId: "",
@@ -46,10 +46,8 @@ export const DEFAULT_QUICK_ENROLLMENT_VALUES: Partial<EnrollmentFormData> = {
 interface QuickEnrollmentFormProps {
   isUpdate?: boolean;
   classrooms?: { value: string; label: string }[];
-  students?: { value: string; label: string }[];
 }
 
-// Configuration de la micro-animation (courbe fluide et rapide, typée UX moderne)
 const fadeVariants: Variants = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } },
@@ -58,14 +56,7 @@ const fadeVariants: Variants = {
 
 export const EnrollmentForm: React.FC<
   BaseFormProps<EnrollmentFormData> & QuickEnrollmentFormProps
-> = ({
-  formId,
-  onSubmit,
-  initialValues,
-  isUpdate,
-  classrooms = [],
-  students = [],
-}) => {
+> = ({ formId, onSubmit, initialValues, isUpdate, classrooms = [] }) => {
   const form = useZodForm({
     schema: EnrollmentQuickCreateSchema,
     defaultValues: {
@@ -89,8 +80,9 @@ export const EnrollmentForm: React.FC<
             <FormItem className="flex flex-col mb-4">
               <FormLabel>Classe de destination</FormLabel>
               <FormControl>
-                <Combobox
+                <GenericComboBox
                   {...field}
+                  onChangeValue={(val) => field.onChange(val)}
                   options={classrooms}
                   placeholder="Sélectionner la classe"
                   className="w-full"
