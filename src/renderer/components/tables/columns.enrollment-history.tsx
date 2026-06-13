@@ -26,7 +26,7 @@ export const enrollmentHistoryColumns: ColumnDef<EnrollmentHistoryItem>[] = [
     accessorKey: "student.fullName",
     header: "Nom, Postnom et Prénom",
     cell: ({ getValue }) => (
-      <TypographySmall className="font-medium text-foreground ml-2">
+      <TypographySmall className="text-foreground text-sm">
         {String(getValue() ?? "N/A")}
       </TypographySmall>
     ),
@@ -36,7 +36,6 @@ export const enrollmentHistoryColumns: ColumnDef<EnrollmentHistoryItem>[] = [
     accessorKey: "classroom.shortIdentifier",
     header: "Classe",
     cell: ({ getValue, row }) => {
-      // Déstructuration plus propre et lisible pour un dev senior
       const { classroomId } = row.original;
 
       return (

@@ -4,7 +4,6 @@ import * as React from "react";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
@@ -23,6 +22,7 @@ import {
   useFilterCheckBoxInput,
   type FilterOption,
 } from "./multi-select-input.utils";
+import { ScrollArea } from "../../ui/scroll-area";
 
 export interface MultiSelectProps extends Omit<
   React.ComponentPropsWithoutRef<typeof Button>,
@@ -125,47 +125,49 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
             </div>
 
             <CommandList className="max-h-[240px] overflow-y-auto scrollbar-thin p-1 flex flex-col">
-              <CommandGroup>
-                {filteredOptions.map((option) => {
-                  const isSelected = selectedSet.has(option.value);
-                  const checkboxId = `select-${name}-${option.value}`;
+              <ScrollArea className="h-full">
+                <CommandGroup>
+                  {filteredOptions.map((option) => {
+                    const isSelected = selectedSet.has(option.value);
+                    const checkboxId = `select-${name}-${option.value}`;
 
-                  return (
-                    <CommandItem
-                      key={option.value}
-                      value={option.label}
-                      onSelect={() => {
-                        // Inverse l'état de sélection au clic sur la ligne entière
-                        handleCheckedChange(!isSelected, option.value);
-                      }}
-                      data-slot="multiselect-item"
-                      data-state={isSelected ? "selected" : "unselected"}
-                      className={cn(
-                        "flex items-center gap-2.5 px-2 py-1.5 rounded-sm cursor-pointer text-xs transition-colors",
-                        "data-[state=selected]:bg-accent/40 text-foreground",
-                      )}
-                    >
-                      <Checkbox
-                        id={checkboxId}
-                        checked={isSelected}
-                        onCheckedChange={(checked) =>
-                          handleCheckedChange(!!checked, option.value)
-                        }
-                        className="shrink-0pointer-events-none" // Désactive les events sur le carré pour laisser le CommandItem piloter le clic
-                      />
-                      <Label
-                        htmlFor={checkboxId}
-                        className="flex-1 font-normal cursor-pointer text-xs truncate py-0.5 pointer-events-none"
+                    return (
+                      <CommandItem
+                        key={option.value}
+                        value={option.label}
+                        onSelect={() => {
+                          // Inverse l'état de sélection au clic sur la ligne entière
+                          handleCheckedChange(!isSelected, option.value);
+                        }}
+                        data-slot="multiselect-item"
+                        data-state={isSelected ? "selected" : "unselected"}
+                        className={cn(
+                          "flex items-center gap-2.5 px-2 py-1.5 rounded-sm cursor-pointer text-xs transition-colors",
+                          "data-[state=selected]:bg-accent/40 text-foreground",
+                        )}
                       >
-                        {option.label}
-                      </Label>
-                      {isSelected && (
-                        <Check className="size-3.5 text-primary shrink-0 animate-in fade-in zoom-in-75 duration-100" />
-                      )}
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
+                        <Checkbox
+                          id={checkboxId}
+                          checked={isSelected}
+                          onCheckedChange={(checked) =>
+                            handleCheckedChange(!!checked, option.value)
+                          }
+                          className="shrink-0 pointer-events-none"
+                        />
+                        <Label
+                          htmlFor={checkboxId}
+                          className="flex-1 font-normal cursor-pointer text-xs truncate py-0.5 pointer-events-none"
+                        >
+                          {option.label}
+                        </Label>
+                        {isSelected && (
+                          <Check className="size-3.5 text-primary shrink-0 animate-in fade-in zoom-in-75 duration-100" />
+                        )}
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </ScrollArea>
             </CommandList>
 
             {/* Actions de groupe en bas (Esprit v4 harmonisé) */}

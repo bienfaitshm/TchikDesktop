@@ -11,7 +11,7 @@ import {
 import {
   ComboboxSearch,
   type ComboboxSearchProps,
-} from "@/renderer/components/ui/combobox.search";
+} from "@/renderer/components/form/fields/generic-search-combo-box";
 import type { EnrollmentFormData, SelectExistStudentProps } from "./types";
 import { useSearchUsers } from "@/renderer/hooks/users";
 
@@ -32,7 +32,7 @@ const SearchStudentField: React.FC<
       onSearchChange={onSearchValue}
       search={searchQuery}
       aria-required="true"
-      className="lg:w-[850px] md:w-[600px]"
+      contentClassName="w-full lg:w-[935px] md:w-[700px]"
     />
   );
 };
@@ -57,7 +57,7 @@ export const SelectExistStudent: React.FC<SelectExistStudentProps> = ({
             <FormControl>
               <SearchStudentField
                 {...field}
-                disable={isSubmitting}
+                disabled={isSubmitting}
                 schoolId={schoolId}
                 yearId={yearId}
               />

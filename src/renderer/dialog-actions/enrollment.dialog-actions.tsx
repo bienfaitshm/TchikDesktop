@@ -25,7 +25,6 @@ import {
 } from "@/renderer/hooks/data-as-options";
 
 import {
-  useCreateEnrollmentForm,
   useUpdateEnrollmentForm,
   useDeleteEnrollmentForm,
   useCreateQuickEnrollmentForm,
@@ -74,7 +73,7 @@ export const CreateEnrollmentDialog: React.FC<
     <Dialog modal>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
-        className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]"
+        className="sm:max-w-[500px] md:max-w-[900px] lg:max-w-[1000px] p-8"
         onPointerDownOutside={(e) => isSubmitting && e.preventDefault()}
         onEscapeKeyDown={(e) => isSubmitting && e.preventDefault()}
         onOpenAutoFocus={(e) => e.preventDefault()}
@@ -98,7 +97,7 @@ export const CreateEnrollmentDialog: React.FC<
           />
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="bg-transparent gap-4">
           <DialogClose asChild>
             <Button variant="ghost" disabled={isSubmitting}>
               Annuler
