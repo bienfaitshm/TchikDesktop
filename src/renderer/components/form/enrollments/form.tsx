@@ -15,10 +15,7 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@/renderer/components/ui/radio-group";
-import {
-  USER_GENDER_ENUM,
-  USER_ROLE_ENUM,
-} from "@/packages/@core/data-access/db/enum";
+import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/enum";
 import { EnrollmentQuickCreateSchema } from "@/packages/@core/data-access/schema-validations";
 import { GenericComboBox } from "@/renderer/components/form/fields/generic-combo-box";
 import { StudentSeniorityStatusSelect } from "../fields/student-seriority-statut";
@@ -32,6 +29,7 @@ export const DEFAULT_QUICK_ENROLLMENT_VALUES: Partial<EnrollmentFormData> = {
   classroomId: "",
   isNewStudent: false,
   isInSystem: true,
+  status: STUDENT_STATUS_ENUM.ACTIVE,
 };
 
 interface QuickEnrollmentFormProps {
@@ -162,7 +160,7 @@ export const EnrollmentForm: React.FC<
         */}
         <motion.div
           layout
-          className="mt-10 overflow-hidden h-56"
+          className="mt-10 overflow-hidden h-60"
           aria-disabled={!isUpdate}
         >
           <AnimatePresence mode="wait">

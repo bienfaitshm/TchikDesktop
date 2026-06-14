@@ -43,18 +43,20 @@ export class EnrollmentService {
     return await this.clientDb.transaction(async (tx) => {
       let targetStudentId = payload.studentId;
 
-      if (!payload.isInSystem && payload.student) {
+      if (payload.student) {
         const newUser = await this.userRepo.createUser(
           {
-            ...payload.student,
+            lastName: payload.student.lastName,
+            middleName: payload.student.middleName,
             schoolId: payload.schoolId,
-          } as InsertUser,
+          },
           tx,
         );
 
         targetStudentId = newUser.userId;
       }
 
+      // Sécurité subsidiaire (Triggers si l'ID n'a pas pu être généré ou récupéré)
       if (!targetStudentId) {
         throw new Error(
           "Student ID unique requis pour finaliser l'inscription.",

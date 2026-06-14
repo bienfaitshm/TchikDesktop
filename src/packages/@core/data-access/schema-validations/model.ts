@@ -108,7 +108,7 @@ export type Classroom = z.infer<typeof ClassroomSchema>;
 
 export const EnrollmentSchema = z.object({
   enrollmentId: z.string().describe("Identifiant unique de l'inscription"),
-  classroomId: z.string().describe("Clé étrangère vers la classe"),
+  classroomId: z.string().nonempty().describe("Clé étrangère vers la classe"),
   studentId: z.string().describe("Clé étrangère vers l'étudiant (User)"),
   status: ZSTUDENT_STATUS_ENUM.describe(
     "Statut de l'étudiant dans cette classe",
@@ -280,32 +280,36 @@ const BaseStudentSchema = UserCreateSchema.omit({
   birthPlace: "Lubumbashi",
 });
 
-export const EnrollmentQuickCreateSchema = EnrollmentCreateSchema.and(
-  z.discriminatedUnion("isInSystem", [
-    // Cas 1 : L'élève est déjà dans le système
-    z.object({
-      isInSystem: z.literal(true),
-      studentId: z.string({
-        required_error:
-          "L'identifiant `studentId` est obligatoire lorsque l'élève est déjà référencé dans le système.",
-      }),
-      student: z.undefined({
-        invalid_type_error:
-          "Le bloc de données `student` ne doit pas être fourni lorsque l'élève existe déjà.",
-      }),
-    }),
+// 1. On retire 'studentId' du schéma de base pour éviter qu'il ne force sa présence à la racine
+const BaseEnrollmentSchemaWithoutStudent = EnrollmentCreateSchema.omit({
+  studentId: true,
+});
 
-    // Cas 2 : L'élève n'est pas dans le système
-    z.object({
-      isInSystem: z.literal(false).default(false),
-      studentId: z.undefined({
-        invalid_type_error:
-          "L'identifiant `studentId` doit être omis lors d'une nouvelle inscription rapide.",
+// 2. On construit le schéma final en y greffant notre union dynamique
+export const EnrollmentQuickCreateSchema =
+  BaseEnrollmentSchemaWithoutStudent.and(
+    z.union([
+      // Cas A : L'élève existe déjà (on fournit l'ID)
+      z.object({
+        isInSystem: z.literal(true).catch(true),
+        studentId: z.string({
+          required_error:
+            "L'identifiant `studentId` est obligatoire lorsque l'élève est déjà référencé dans le système.",
+        }),
+        student: z
+          .any()
+          .transform(() => undefined)
+          .optional(),
       }),
-      student: BaseStudentSchema, // Requis ici, plus besoin d'optional()
-    }),
-  ]),
-);
+
+      // Cas B : Nouvel élève (on remplit le bloc student, pas de studentId)
+      z.object({
+        isInSystem: z.literal(false).catch(false),
+        studentId: z.undefined().optional(),
+        student: BaseStudentSchema, // Ton schéma de validation de l'élève (nom, prénom, etc.)
+      }),
+    ]),
+  );
 
 export type EnrollmentQuickCreate = z.infer<typeof EnrollmentQuickCreateSchema>;
 
