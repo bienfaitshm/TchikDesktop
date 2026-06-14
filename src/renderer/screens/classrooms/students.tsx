@@ -21,7 +21,7 @@ import {
   StudentColumns,
   TEnrolement,
 } from "@/renderer/components/tables/columns.students";
-import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
+import { useGetEnrollments } from "@/renderer/libs/queries/enrollments";
 import {
   ActionContainer,
   ActionTileDelete,

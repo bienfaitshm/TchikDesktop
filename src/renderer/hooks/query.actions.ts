@@ -1,17 +1,15 @@
-import {
-  TEnrolementAttributes,
-  TEnrolementQuickCreate,
-} from "@/packages/@core/data-access/schema-validations";
-import { useCreateQuickEnrolement } from "@/renderer/libs/queries/enrolement";
+import type { EnrollmentQuickCreate } from "@/packages/@core/data-access/schema-validations";
+import type { ClassroomEnrollment } from "@/packages/@core/data-access/db/schemas";
+import { useCreateQuickEnrollment } from "@/renderer/libs/queries/enrollments";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { useCallback } from "react";
 
 export const useQuickEnrollement = (params?: {
-  onSuccess?(data: TEnrolementAttributes): void;
+  onSuccess?(data: ClassroomEnrollment): void;
 }) => {
-  const quickEnrolementMutation = useCreateQuickEnrolement();
+  const quickEnrolementMutation = useCreateQuickEnrollment();
 
-  const onSubmit = useCallback((value: TEnrolementQuickCreate) => {
+  const onSubmit = useCallback((value: EnrollmentQuickCreate) => {
     quickEnrolementMutation.mutate(
       value,
       createMutationCallbacksWithNotifications({

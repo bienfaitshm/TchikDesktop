@@ -34,7 +34,7 @@ import { getSectionLabel } from "@/packages/@core/data-access/db/options";
 import {
   useGetEnrollmentById,
   useUpdateEnrollment,
-} from "@/renderer/libs/queries/enrolement";
+} from "@/renderer/libs/queries/enrollments";
 import { useUserManagement } from "@/renderer/hooks/query.mangements";
 import { useGetClassroomAsOptions } from "@/renderer/hooks/data-as-options";
 import { Suspense } from "@/renderer/libs/queries/suspense";
