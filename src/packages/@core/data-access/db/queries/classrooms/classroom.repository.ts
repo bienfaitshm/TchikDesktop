@@ -10,10 +10,15 @@ import {
   type TableClassroom,
   type TableClassroomEnrollment,
   type TableSeatingAssignment,
+  type Classroom,
+  type Option,
+  type StudyYear,
 } from "@/packages/@core/data-access/db/schemas/schema";
 import { BaseRepository, LibSqlClient } from "../base-repository";
 import { extractQueryPayload } from "../drizzle-builder";
 import type { FindManyOptions } from "../../schemas/types";
+
+export type ClassroomDTO = Classroom & { studyYear: StudyYear; option: Option };
 
 interface GetClassroomsOptions {
   classroomOptions?: Partial<FindManyOptions<TableClassroom>>;

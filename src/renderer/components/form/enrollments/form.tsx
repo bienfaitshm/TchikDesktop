@@ -15,7 +15,10 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@/renderer/components/ui/radio-group";
-import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/enum";
+import {
+  STUDENT_STATUS_ENUM,
+  USER_GENDER_ENUM,
+} from "@/packages/@core/data-access/db/enum";
 import { EnrollmentQuickCreateSchema } from "@/packages/@core/data-access/schema-validations";
 import { GenericComboBox } from "@/renderer/components/form/fields/generic-combo-box";
 import { StudentSeniorityStatusSelect } from "../fields/student-seriority-statut";
@@ -28,8 +31,16 @@ import { Label } from "@/renderer/components/ui/label";
 export const DEFAULT_QUICK_ENROLLMENT_VALUES: Partial<EnrollmentFormData> = {
   classroomId: "",
   isNewStudent: false,
-  isInSystem: true,
+  isInSystem: false,
   status: STUDENT_STATUS_ENUM.ACTIVE,
+  student: {
+    lastName: "",
+    middleName: "",
+    birthPlace: "",
+    firstName: "",
+    gender: USER_GENDER_ENUM.MALE,
+    birthDate: new Date(),
+  },
 };
 
 interface QuickEnrollmentFormProps {
@@ -51,6 +62,10 @@ export const EnrollmentForm: React.FC<
     defaultValues: {
       ...DEFAULT_QUICK_ENROLLMENT_VALUES,
       ...initialValues,
+      isInSystem:
+        initialValues?.isInSystem ??
+        DEFAULT_QUICK_ENROLLMENT_VALUES.isInSystem ??
+        true,
     } as EnrollmentFormData,
     onSubmit,
   });
@@ -60,6 +75,19 @@ export const EnrollmentForm: React.FC<
 
   return (
     <Form {...form}>
+      <button
+        type="button"
+        onClick={() =>
+          console.log(
+            "Valeurs actuelles de RHF :",
+            form.getValues(),
+            "Erreurs :",
+            form.formState.errors,
+          )
+        }
+      >
+        Debug RHF
+      </button>
       <form id={formId} onSubmit={form.submit} aria-label="Inscription rapide">
         {/* Section Affectation Académique */}
         <FormField
@@ -114,7 +142,7 @@ export const EnrollmentForm: React.FC<
           <FormField
             control={form.control}
             name="isInSystem"
-            disabled={!isUpdate}
+            disabled={isUpdate}
             render={({ field }) => (
               <FormItem className="flex flex-col justify-between">
                 <div className="space-y-0.5">

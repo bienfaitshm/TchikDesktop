@@ -266,50 +266,36 @@ export const SeatingAssignmentCreateSchema = SeatingAssignmentSchema.omit({
 export const SeatingAssignmentUpdateSchema =
   SeatingAssignmentCreateSchema.partial();
 
+// Ton Student de base
 const BaseStudentSchema = UserCreateSchema.omit({
   password: true,
   username: true,
   schoolId: true,
-}).default({
-  lastName: "",
-  middleName: "",
-  firstName: "",
-  role: USER_ROLE_ENUM.STUDENT,
-  birthDate: undefined,
-  gender: USER_GENDER_ENUM.MALE,
-  birthPlace: "Lubumbashi",
+  role: true,
 });
 
-// 1. On retire 'studentId' du schéma de base pour éviter qu'il ne force sa présence à la racine
 const BaseEnrollmentSchemaWithoutStudent = EnrollmentCreateSchema.omit({
   studentId: true,
 });
 
-// 2. On construit le schéma final en y greffant notre union dynamique
-export const EnrollmentQuickCreateSchema =
-  BaseEnrollmentSchemaWithoutStudent.and(
-    z.union([
-      // Cas A : L'élève existe déjà (on fournit l'ID)
-      z.object({
-        isInSystem: z.literal(true).catch(true),
-        studentId: z.string({
-          required_error:
-            "L'identifiant `studentId` est obligatoire lorsque l'élève est déjà référencé dans le système.",
-        }),
-        student: z
-          .any()
-          .transform(() => undefined)
-          .optional(),
-      }),
+export const EnrollmentQuickCreateSchema = z.discriminatedUnion("isInSystem", [
+  // Cas A : L'élève existe déjà
+  BaseEnrollmentSchemaWithoutStudent.extend({
+    isInSystem: z.preprocess((val) => String(val) === "true", z.literal(true)),
+    studentId: z.string({
+      required_error:
+        "L'identifiant `studentId` est obligatoire lorsque l'élève existe.",
+    }),
+    student: z.preprocess((_) => undefined, z.undefined().optional()),
+  }),
 
-      // Cas B : Nouvel élève (on remplit le bloc student, pas de studentId)
-      z.object({
-        isInSystem: z.literal(false).catch(false),
-        studentId: z.undefined().optional(),
-        student: BaseStudentSchema, // Ton schéma de validation de l'élève (nom, prénom, etc.)
-      }),
-    ]),
-  );
+  // Cas B : Nouvel élève
+  BaseEnrollmentSchemaWithoutStudent.extend({
+    isInSystem: z.preprocess((val) => String(val) === "true", z.literal(false)),
+    studentId: z.preprocess(() => undefined, z.undefined().optional()),
+    student: BaseStudentSchema,
+  }),
+]);
 
 export type EnrollmentQuickCreate = z.infer<typeof EnrollmentQuickCreateSchema>;
 

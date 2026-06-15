@@ -1,4 +1,4 @@
-import { IpcClient } from "@/packages/electron-ipc-rest";
+import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import { DocumentMetadata } from "@/packages/electron-data-exporter";
 import {} from "@/packages/@core/data-access/schema-validations";
 import { DocumentExportRoutes } from "../routes-constant";

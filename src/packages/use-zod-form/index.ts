@@ -18,8 +18,9 @@ import {
  * Props étendues de useForm.
  * On exclut 'resolver' car on l'injecte nous-mêmes via le schéma.
  */
-export interface UseZodFormProps<TSchema extends z.ZodType<any, any>>
-  extends Omit<UseFormProps<z.infer<TSchema>>, "resolver"> {
+export interface UseZodFormProps<
+  TSchema extends z.ZodType<any, any>,
+> extends Omit<UseFormProps<z.infer<TSchema>>, "resolver"> {
   /**
    * Le schéma de validation Zod.
    * Accepte ZodObject, ZodEffects (refine), etc.
@@ -36,8 +37,9 @@ export interface UseZodFormProps<TSchema extends z.ZodType<any, any>>
 /**
  * Type de retour combinant les méthodes de RHF et notre handler custom.
  */
-export interface UseZodFormReturn<TSchema extends z.ZodType<any, any>>
-  extends UseFormReturn<z.infer<TSchema>> {
+export interface UseZodFormReturn<
+  TSchema extends z.ZodType<any, any>,
+> extends UseFormReturn<z.infer<TSchema>> {
   /**
    * Fonction de soumission wrapper qui exécute la validation
    * et appelle la prop onSubmit si elle est définie.
@@ -84,7 +86,7 @@ export function useZodForm<TSchema extends z.ZodType<any, any>>({
         onSubmit(data);
       }
     }),
-    [methods.handleSubmit, onSubmit]
+    [methods.handleSubmit, onSubmit],
   );
 
   return {

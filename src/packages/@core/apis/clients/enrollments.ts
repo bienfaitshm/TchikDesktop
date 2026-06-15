@@ -1,4 +1,4 @@
-import { IpcClient } from "@/packages/electron-ipc-rest";
+import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import {
   EnrollmentQuickCreate,
   EnrollmentCreate,

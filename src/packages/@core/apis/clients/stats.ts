@@ -1,4 +1,4 @@
-import { IpcClient } from "@/packages/electron-ipc-rest";
+import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import { StatsRoutes } from "../routes-constant";
 import { TStatsFilter } from "@/packages/@core/data-access/schema-validations";
 import type {

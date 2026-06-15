@@ -1,4 +1,4 @@
-import { IpcClient } from "@/packages/electron-ipc-rest";
+import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import type {
   ClassroomCreate,
   ClassroomFilter,
@@ -6,7 +6,7 @@ import type {
   Classroom,
 } from "@/packages/@core/data-access/schema-validations";
 
-import type { ClassroomDTO } from "@/packages/@core/data-access/db/queries";
+import type { ClassroomDTO } from "@/packages/@core/data-access/db/queries/classrooms";
 import { ClassroomRoutes } from "../routes-constant";
 
 /**

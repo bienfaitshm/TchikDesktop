@@ -1,12 +1,10 @@
 import { app, shell, BrowserWindow } from "electron";
 import path from "node:path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-
 import { dbManager } from "@/packages/@core/data-access/db";
 import { getLogger } from "@/packages/logger";
-
 import { apiGateway, ipcServer } from "@/main/apps";
-import { registerContextMenuListener } from "@/main/context-menus";
+import { initializeTextModifiers } from "@/main/features/text-transformation";
 import { setupDevelopmentEnvironment } from "@/main/electron-dev-extension";
 import { updateInit } from "@/main/update";
 import { getAppIcon } from "@/main/utils";
@@ -51,7 +49,7 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
 
   mainLogger.info("Fenêtre principale créée avec les options par défaut.");
 
-  registerContextMenuListener(mainWindow);
+  initializeTextModifiers(mainWindow);
 
   mainWindow.once("ready-to-show", () => {
     mainLogger.info("Fenêtre prête à être affichée.");

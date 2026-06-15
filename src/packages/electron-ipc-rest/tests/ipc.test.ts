@@ -3,7 +3,8 @@
  * @description Suite de tests unitaires pour l'abstraction IPC.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { IpcServer, IpcClient } from "../ipc";
+import { IpcServer } from "../ipc";
+import { IpcClient } from "../ipc.client";
 import { HttpMethod, HttpStatus } from "../constant";
 import type { IpcMainInvokeEvent } from "electron";
 import { HttpException } from "../utils";

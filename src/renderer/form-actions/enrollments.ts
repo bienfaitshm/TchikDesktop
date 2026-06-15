@@ -54,6 +54,7 @@ export function useCreateQuickEnrollmentForm(
   const createQuickEnrolement: BaseFormProps<EnrollmentQuickCreate>["onSubmit"] =
     useCallback(
       (data, helpers) => {
+        console.log("createQuickEnrolement", data);
         const studentName = [data?.student?.firstName, data?.student?.lastName]
           .filter(Boolean)
           .join(" ");

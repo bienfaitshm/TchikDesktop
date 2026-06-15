@@ -4,8 +4,6 @@ import {
   type UserRepository,
   userRepository,
 } from "@/packages/@core/data-access/db/queries/users";
-import type { InsertUser } from "@/packages/@core/data-access/db/schemas";
-
 import { EnrollmentRepository } from "./enrollment.repository";
 
 export class EnrollmentService {

@@ -1,8 +1,7 @@
 import { ipcMain } from "electron";
-import { createLazyIpcServer } from "@/packages/electron-ipc-rest";
-
+import { IpcServer } from "@/packages/electron-ipc-rest";
 import { getLogger } from "@/packages/logger";
 
-export const ipcServer = createLazyIpcServer(ipcMain, {
+export const ipcServer = new IpcServer(ipcMain, {
   logger: getLogger("IPC Server"),
 });
