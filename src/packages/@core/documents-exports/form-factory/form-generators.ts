@@ -18,10 +18,10 @@ import type {
   ILocalRoomFormParams,
 } from "./field-factories.types";
 import { mapFiltersToSelectOptions } from "./utils";
+import type { SelectOption } from "@/packages/dynamic-form/type";
 
 type FileTypeFieldConfig = Readonly<Partial<FormFieldDef>>;
 
-// Définition locale pour éviter d'importer tout le namespace Electron si inutile
 interface AppFileFilter {
   extensions: string[];
   name: string;
@@ -43,11 +43,32 @@ class FieldCreationError extends Error implements FieldFactoryError {
   }
 }
 
-const ensureStringArray = (
-  value: string | readonly string[] | undefined,
-): readonly string[] => {
+/**
+ * Utilitaire pour extraire proprement les IDs sous forme de tableau de chaînes
+ */
+const normalizeToArray = (value: unknown): string[] => {
   if (value == null) return [];
-  return Array.isArray(value) ? value : [value as string];
+  if (Array.isArray(value)) return value.map(String);
+  return [String(value)];
+};
+
+/**
+ * Gère dynamiquement le type de defaultValue selon la propriété 'multiple'
+ */
+const determineDefaultValue = (
+  providedId: unknown,
+  options: readonly SelectOption[],
+  multiple?: boolean,
+): FormFieldDef["defaultValue"] => {
+  const normalized = normalizeToArray(providedId);
+  const fallback = options[0]?.value ? [options[0].value] : [];
+  const baseValues = normalized.length > 0 ? normalized : fallback;
+
+  if (multiple) {
+    return baseValues;
+  }
+
+  return baseValues[0];
 };
 
 export const createSectionField = async (
@@ -61,7 +82,11 @@ export const createFileTypeField = async (
   overrides?: FileTypeFieldConfig,
 ): Promise<FormFieldDef> => {
   const options = mapFiltersToSelectOptions(fileFilters);
-  const defaultValue = options[0]?.value ?? "";
+  const defaultValue = determineDefaultValue(
+    overrides?.defaultValue,
+    options,
+    overrides?.multiple,
+  );
 
   return FileTypeFieldFactory.create({
     options,
@@ -81,11 +106,15 @@ export const createSessionField = async (
     });
 
     const options = DataMappers.sessionsToOptions(sessions);
-    const [defaultSession = options[0]?.value] = ensureStringArray(sessionId);
+    const defaultValue = determineDefaultValue(
+      sessionId,
+      options,
+      config.multiple,
+    );
 
     return SeatingSessionFieldFactory.create({
       options,
-      defaultValue: defaultSession,
+      defaultValue,
       colSpan: 6,
       ...config,
     });
@@ -109,11 +138,15 @@ export const createClassroomField = async (
     });
 
     const options = DataMappers.classroomsToOptions(classrooms);
-    const [defaultClass = options[0]?.value] = ensureStringArray(classId);
+    const defaultValue = determineDefaultValue(
+      classId,
+      options,
+      config.multiple,
+    );
 
     return ClassroomFieldFactory.create({
       options,
-      defaultValue: defaultClass,
+      defaultValue,
       colSpan: 4,
       ...config,
     });
@@ -139,9 +172,15 @@ export const createLocalroomField = async (
     });
 
     const options = DataMappers.localroomsToOptions(localrooms);
+    const defaultValue = determineDefaultValue(
+      config.defaultValue,
+      options,
+      config.multiple,
+    );
 
     return LocalRoomsFieldFactory.create({
       options,
+      defaultValue,
       colSpan: 4,
       ...config,
     });
