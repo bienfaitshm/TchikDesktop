@@ -52,6 +52,7 @@ export function useZodForm<TFieldValues extends FieldValues>({
   const form = useForm({
     schema: schema,
     defaultValues: mergedDefaultValues,
+    shouldUnregister: false,
   });
 
   const submit = useMemo(() => {

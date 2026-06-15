@@ -1,24 +1,29 @@
-// relations.ts
 import { relations } from "drizzle-orm";
 import {
   schools,
   users,
   options,
   studyYears,
-  classRooms,
-  classroomEnrolements,
-  classroomEnrolementActions,
-  localRooms,
+  classrooms,
+  classroomEnrollments,
+  classroomEnrollmentActions,
+  localrooms,
   seatingSessions,
   seatingAssignments,
 } from "./schema";
+
+// ==========================================
+// --- IDENTITY & CORE RELATIONS ---
+// ==========================================
 
 export const schoolsRelations = relations(schools, ({ many }) => ({
   users: many(users),
   options: many(options),
   studyYears: many(studyYears),
-  classRooms: many(classRooms),
-  enrolements: many(classroomEnrolements),
+  classrooms: many(classrooms),
+  enrollments: many(classroomEnrollments),
+  localrooms: many(localrooms),
+  seatingSessions: many(seatingSessions),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -26,7 +31,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.schoolId],
     references: [schools.schoolId],
   }),
-  enrolements: many(classroomEnrolements),
+  enrollments: many(classroomEnrollments),
 }));
 
 export const optionsRelations = relations(options, ({ one, many }) => ({
@@ -34,7 +39,7 @@ export const optionsRelations = relations(options, ({ one, many }) => ({
     fields: [options.schoolId],
     references: [schools.schoolId],
   }),
-  classRooms: many(classRooms),
+  classrooms: many(classrooms),
 }));
 
 export const studyYearsRelations = relations(studyYears, ({ one, many }) => ({
@@ -42,70 +47,91 @@ export const studyYearsRelations = relations(studyYears, ({ one, many }) => ({
     fields: [studyYears.schoolId],
     references: [schools.schoolId],
   }),
-  classRooms: many(classRooms),
-  enrolements: many(classroomEnrolements),
+  classrooms: many(classrooms),
+  enrollments: many(classroomEnrollments),
+  seatingSessions: many(seatingSessions),
 }));
 
-export const classRoomsRelations = relations(classRooms, ({ one, many }) => ({
+// ==========================================
+// --- ACADEMIC RELATIONS ---
+// ==========================================
+
+export const classroomsRelations = relations(classrooms, ({ one, many }) => ({
   school: one(schools, {
-    fields: [classRooms.schoolId],
+    fields: [classrooms.schoolId],
     references: [schools.schoolId],
   }),
   year: one(studyYears, {
-    fields: [classRooms.yearId],
+    fields: [classrooms.yearId],
     references: [studyYears.yearId],
   }),
   option: one(options, {
-    fields: [classRooms.optionId],
+    fields: [classrooms.optionId],
     references: [options.optionId],
   }),
-  enrolements: many(classroomEnrolements),
+  enrollments: many(classroomEnrollments),
 }));
 
-export const enrolementsRelations = relations(
-  classroomEnrolements,
+export const classroomEnrollmentsRelations = relations(
+  classroomEnrollments,
   ({ one, many }) => ({
     student: one(users, {
-      fields: [classroomEnrolements.studentId],
+      fields: [classroomEnrollments.studentId],
       references: [users.userId],
     }),
-    classRoom: one(classRooms, {
-      fields: [classroomEnrolements.classroomId],
-      references: [classRooms.classId],
+    classroom: one(classrooms, {
+      fields: [classroomEnrollments.classroomId],
+      references: [classrooms.classId],
     }),
     school: one(schools, {
-      fields: [classroomEnrolements.schoolId],
+      fields: [classroomEnrollments.schoolId],
       references: [schools.schoolId],
     }),
     year: one(studyYears, {
-      fields: [classroomEnrolements.yearId],
+      fields: [classroomEnrollments.yearId],
       references: [studyYears.yearId],
     }),
-    actions: many(classroomEnrolementActions),
+    actions: many(classroomEnrollmentActions),
     seatingAssignments: many(seatingAssignments),
   }),
 );
 
-export const enrolementActionsRelations = relations(
-  classroomEnrolementActions,
+export const classroomEnrollmentActionsRelations = relations(
+  classroomEnrollmentActions,
   ({ one }) => ({
-    enrolement: one(classroomEnrolements, {
-      fields: [classroomEnrolementActions.enrolementId],
-      references: [classroomEnrolements.enrolementId],
+    enrollment: one(classroomEnrollments, {
+      fields: [classroomEnrollmentActions.enrollmentId],
+      references: [classroomEnrollments.enrollmentId],
     }),
   }),
 );
 
+// ==========================================
+// --- SEATING (PLACEMENT) RELATIONS ---
+// ==========================================
+
+export const localroomsRelations = relations(localrooms, ({ one, many }) => ({
+  school: one(schools, {
+    fields: [localrooms.schoolId],
+    references: [schools.schoolId],
+  }),
+  assignments: many(seatingAssignments),
+}));
+
 export const seatingSessionsRelations = relations(
   seatingSessions,
-  ({ many }) => ({
+  ({ one, many }) => ({
+    school: one(schools, {
+      fields: [seatingSessions.schoolId],
+      references: [schools.schoolId],
+    }),
+    year: one(studyYears, {
+      fields: [seatingSessions.yearId],
+      references: [studyYears.yearId],
+    }),
     assignments: many(seatingAssignments),
   }),
 );
-
-export const localRoomsRelations = relations(localRooms, ({ many }) => ({
-  assignments: many(seatingAssignments),
-}));
 
 export const seatingAssignmentsRelations = relations(
   seatingAssignments,
@@ -114,13 +140,13 @@ export const seatingAssignmentsRelations = relations(
       fields: [seatingAssignments.sessionId],
       references: [seatingSessions.sessionId],
     }),
-    localRoom: one(localRooms, {
-      fields: [seatingAssignments.localRoomId],
-      references: [localRooms.localRoomId],
+    localroom: one(localrooms, {
+      fields: [seatingAssignments.localroomId],
+      references: [localrooms.localroomId],
     }),
-    enrolement: one(classroomEnrolements, {
-      fields: [seatingAssignments.enrolementId],
-      references: [classroomEnrolements.enrolementId],
+    enrollment: one(classroomEnrollments, {
+      fields: [seatingAssignments.enrollmentId],
+      references: [classroomEnrollments.enrollmentId],
     }),
   }),
 );

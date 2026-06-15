@@ -1,11 +1,11 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { classroom } from "@/renderer/libs/apis";
-import {
-  TClassroomCreate,
-  TClassroomFilter,
-  TClassroomUpdate,
+import type {
+  ClassroomCreate,
+  ClassroomFilter,
+  ClassroomUpdate,
 } from "@/packages/@core/data-access/schema-validations";
-import { TQueryUpdate } from "./type";
+import type { TQueryUpdate } from "./type";
 
 export const GET_CLASSROOMS_KEY = "GET_CLASSROOMS";
 
@@ -13,7 +13,7 @@ export const GET_CLASSROOMS_KEY = "GET_CLASSROOMS";
  * @function useGetClassrooms
  * @description Hook to fetch all classrooms for a given school, optionally filtered by year.
  */
-export function useGetClassrooms(params?: TClassroomFilter) {
+export function useGetClassrooms(params?: ClassroomFilter) {
   const queryKey = [GET_CLASSROOMS_KEY, params];
   const query = useSuspenseQuery({
     queryKey,
@@ -36,7 +36,7 @@ export function useGetClassroomById(classroomId: string) {
 export function useCreateClassroom() {
   return useMutation({
     mutationKey: ["CREATE_CLASSROOM"],
-    mutationFn: (data: TClassroomCreate) => classroom.createClassroom(data),
+    mutationFn: (data: ClassroomCreate) => classroom.createClassroom(data),
   });
 }
 
@@ -47,7 +47,7 @@ export function useCreateClassroom() {
 export function useUpdateClassroom() {
   return useMutation({
     mutationKey: ["UPDATE_CLASSROOM"],
-    mutationFn: ({ data, id }: TQueryUpdate<TClassroomUpdate>) =>
+    mutationFn: ({ data, id }: TQueryUpdate<ClassroomUpdate>) =>
       classroom.updateClassroom(id, data),
   });
 }

@@ -1,7 +1,7 @@
 import {
-  schoolService,
-  seatingSessionService,
-  groupByLocalRoom,
+  schoolRepository,
+  seatingSessionRepository,
+  SeatingSessionMapper,
 } from "@/packages/@core/data-access/db/queries";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 
@@ -13,7 +13,7 @@ type SeatingResolverParams = {
   nDays: number;
 };
 
-export class SeatingSessionDataResolver {
+export class SeatingPresenceSessionDataResolver {
   /**
    * Résout les données nécessaires pour la vue de placement.
    */
@@ -30,13 +30,15 @@ export class SeatingSessionDataResolver {
     }
     const days = Array.from({ length: nDays }, (_, i) => i);
     const [school, sessionData] = await Promise.all([
-      schoolService.fetchSchoolInfo(schoolId, yearId),
-      seatingSessionService.getSessionWithAssignments(sessionId),
+      schoolRepository.fetchSchoolInfo(schoolId, yearId),
+      seatingSessionRepository.getSessionWithAssignments(sessionId),
     ]);
 
     return {
       school,
-      assignment: sessionData ? groupByLocalRoom(sessionData) : [],
+      assignment: sessionData
+        ? SeatingSessionMapper.groupByLocalRoom(sessionData)
+        : [],
       days,
     };
   }

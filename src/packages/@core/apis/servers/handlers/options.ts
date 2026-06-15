@@ -1,5 +1,5 @@
 import z from "zod";
-import { optionService } from "@/packages/@core/data-access/db/queries";
+import { optionRepository } from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcRequest,
@@ -9,15 +9,15 @@ import {
   OptionFilterSchema,
   OptionCreateSchema,
   OptionUpdateSchema,
-  OptionAttributesSchema,
-  type TOptionCreate,
-  type TOptionUpdate,
-  type TOptionFilter,
+  OptionSchema,
+  type OptionCreate,
+  type OptionUpdate,
+  type OptionFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
 import { OptionRoutes } from "../../routes-constant";
 
-const OptionIdSchema = OptionAttributesSchema.pick({ optionId: true });
+const OptionIdSchema = OptionSchema.pick({ optionId: true });
 
 type OptionId = z.infer<typeof OptionIdSchema>;
 
@@ -29,10 +29,8 @@ export class GetOptions extends AbstractEndpoint<any> {
     params: OptionFilterSchema,
   };
 
-  protected handle({
-    params,
-  }: IpcRequest<any, TOptionFilter>): Promise<unknown> {
-    return optionService.findMany(params);
+  protected handle({ params }: IpcRequest<any, OptionFilter>) {
+    return optionRepository.findMany(params);
   }
 }
 
@@ -44,8 +42,8 @@ export class PostOption extends AbstractEndpoint<any> {
     body: OptionCreateSchema,
   };
 
-  protected handle({ body }: IpcRequest<TOptionCreate, any>): Promise<unknown> {
-    return optionService.create(body);
+  protected handle({ body }: IpcRequest<OptionCreate, any>) {
+    return optionRepository.create(body);
   }
 }
 
@@ -57,8 +55,8 @@ export class GetOption extends AbstractEndpoint<any> {
     params: OptionIdSchema,
   };
 
-  protected handle({ params }: IpcRequest<any, OptionId>): Promise<unknown> {
-    return optionService.findById(params.optionId);
+  protected handle({ params }: IpcRequest<any, OptionId>) {
+    return optionRepository.findById(params.optionId);
   }
 }
 
@@ -71,11 +69,8 @@ export class UpdateOption extends AbstractEndpoint<any> {
     body: OptionUpdateSchema,
   };
 
-  protected handle({
-    params,
-    body,
-  }: IpcRequest<TOptionUpdate, OptionId>): Promise<unknown> {
-    return optionService.update(params.optionId, body);
+  protected handle({ params, body }: IpcRequest<OptionUpdate, OptionId>) {
+    return optionRepository.update(params.optionId, body);
   }
 }
 
@@ -87,7 +82,7 @@ export class DeleteOption extends AbstractEndpoint<any> {
     params: OptionIdSchema,
   };
 
-  protected handle({ params }: IpcRequest<any, OptionId>): Promise<unknown> {
-    return optionService.delete(params.optionId);
+  protected handle({ params }: IpcRequest<any, OptionId>) {
+    return optionRepository.delete(params.optionId);
   }
 }

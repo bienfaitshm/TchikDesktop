@@ -21,7 +21,7 @@ import {
   StudentColumns,
   TEnrolement,
 } from "@/renderer/components/tables/columns.students";
-import { useGetEnrollments } from "@/renderer/libs/queries/enrolement";
+import { useGetEnrollments } from "@/renderer/libs/queries/enrollments";
 import {
   ActionContainer,
   ActionTileDelete,
@@ -31,7 +31,7 @@ import {
 import {
   DeleteEnrollmentDialog,
   UpdateEnrollmentDialog,
-} from "@/renderer/dialog-actions/enrolement.dialog-actions";
+} from "@/renderer/dialog-actions/enrollment.dialog-actions";
 import { UpdateStudentDialog } from "@/renderer/dialog-actions/student.dialog-action";
 
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";

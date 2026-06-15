@@ -1,15 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import { UserPlus, Zap } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { Button } from "@/renderer/components/ui/button";
 import { useGetClassroomById } from "@/renderer/libs/queries/classroom";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
-import {
-  CreateEnrollmentDialog,
-  QuickCreateEnrollmentDialog,
-} from "@/renderer/dialog-actions/enrolement.dialog-actions";
-import { Separator } from "@/renderer/components/ui/separator";
+import { CreateEnrollmentDialog } from "@/renderer/dialog-actions/enrollment.dialog-actions";
 export const ClassroomHeader = ({
   classId,
   schoolId,
@@ -41,23 +37,6 @@ export const ClassroomHeader = ({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <QuickCreateEnrollmentDialog
-            schoolId={schoolId}
-            yearId={yearId}
-            defaultValues={defaultValues}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-2 hover:bg-background shadow-none"
-            >
-              <Zap className="h-4 w-4 text-amber-500 fill-amber-500" />
-              <span>Ajout rapide d’élève</span>
-            </Button>
-          </QuickCreateEnrollmentDialog>
-
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
           <CreateEnrollmentDialog
             schoolId={schoolId}
             yearId={yearId}

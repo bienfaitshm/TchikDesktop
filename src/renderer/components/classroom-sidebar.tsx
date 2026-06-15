@@ -1,15 +1,22 @@
 "use client";
+
 import { NavLink, useNavigate, useParams } from "react-router";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/renderer/components/ui/button";
 import { useClassroomSidebar } from "@/renderer/components/classroom-sidebar.hooks";
 import { ClassroomSidebarHeader } from "@/renderer/components/classroom-sidebar.header";
 import { SidebarSectionList } from "@/renderer/components/sidebar-section-menus";
-import { SidebarItem } from "@/renderer/components/sidebar-menus";
-import type { TClassroom } from "@/packages/@core/data-access/db/schemas/types";
+import {
+  SidebarItem,
+  SidebarItemMedia,
+  SidebarItemContent,
+  SidebarItemTitle,
+} from "@/renderer/components/sidebar-menus";
+import { APP_ROUTES } from "@/renderer/constants";
+import type { Classroom } from "@/packages/@core/data-access/db/schemas";
 
 interface ClassroomSidebarProps {
-  classrooms: TClassroom[];
+  classrooms: Classroom[];
 }
 
 export const ClassroomSidebar = ({ classrooms }: ClassroomSidebarProps) => {
@@ -57,18 +64,25 @@ export const ClassroomSidebar = ({ classrooms }: ClassroomSidebarProps) => {
           />
         </div>
       }
-      renderItem={(classroom) => (
-        <SidebarItem
-          isActive={classroom.classId === classroomId}
-          key={classroom.classId}
-          asChild
-        >
-          <NavLink to={`/classrooms/${classroom.classId}/students`}>
-            <div className="size-1.5 shrink-0 rounded-full bg-current opacity-20" />
-            <span className="truncate">{classroom.identifier}</span>
-          </NavLink>
-        </SidebarItem>
-      )}
+      renderItem={(classroom) => {
+        const isActive = classroom.classId === classroomId;
+
+        return (
+          <SidebarItem key={classroom.classId} isActive={isActive} asChild>
+            <NavLink to={APP_ROUTES.CLASSROOMS.STUDENTS(classroom.classId)}>
+              {/* Le point indicateur passe dans le Media */}
+              <SidebarItemMedia className="justify-start size-3">
+                <div className="size-1.5 rounded-full bg-current opacity-20 group-aria-[current=page]:opacity-100 transition-opacity" />
+              </SidebarItemMedia>
+
+              {/* Le texte est enveloppé proprement */}
+              <SidebarItemContent>
+                <SidebarItemTitle>{classroom.identifier}</SidebarItemTitle>
+              </SidebarItemContent>
+            </NavLink>
+          </SidebarItem>
+        );
+      }}
     />
   );
 };

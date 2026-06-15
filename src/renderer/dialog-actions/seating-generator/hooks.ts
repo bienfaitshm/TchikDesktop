@@ -81,7 +81,7 @@ export const useRoomOptions = (schoolId?: string, yearId?: string) => {
       })),
       localRoomOptions: localRooms.map((l) => ({
         label: l.name,
-        value: l.localRoomId,
+        value: l.localroomId,
       })),
     }),
     [classRooms, localRooms],
@@ -108,7 +108,6 @@ export const useSaveSeatingAssignment = (config: SaveSeatingConfig) => {
         data,
         config.sessionId,
       );
-      console.log(seatingData);
       mutate(
         { data: seatingData, params: extraParams },
         createMutationCallbacksWithNotifications({

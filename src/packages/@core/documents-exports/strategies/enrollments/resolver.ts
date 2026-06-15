@@ -1,5 +1,5 @@
 import {
-  schoolService,
+  schoolRepository,
   classroomService,
 } from "@/packages/@core/data-access/db/queries";
 
@@ -27,7 +27,7 @@ export class EnrollmentDataResolver {
 
     try {
       const [school, classrooms] = await Promise.all([
-        schoolService.fetchSchoolInfo(schoolId, yearId),
+        schoolRepository.fetchSchoolInfo(schoolId, yearId),
         classroomService.getClassroomsWithStudents({
           classroomOptions: {
             where: {

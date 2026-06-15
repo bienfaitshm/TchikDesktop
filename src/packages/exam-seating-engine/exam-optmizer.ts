@@ -81,6 +81,19 @@ export class ExamOptimizer {
       .sort((a, b) => a.roomName.localeCompare(b.roomName));
   }
 
+  private groupStudentByClass<T extends Student>(
+    students: T[],
+  ): Record<string, T[]> {
+    const groups: Record<string, T[]> = {};
+    for (const student of students) {
+      if (!groups[student.classId]) {
+        groups[student.classId] = [];
+      }
+      groups[student.classId].push(student);
+    }
+    return groups;
+  }
+
   /**
    * Groupe, mélange aléatoirement et entrelace les étudiants pour maximiser
    * la distance physique entre les membres d'une même classe.
@@ -88,29 +101,35 @@ export class ExamOptimizer {
    * @returns Une liste linéaire d'étudiants entrelacés.
    */
   private interleaveStudents<T extends Student>(students: T[]): T[] {
-    const groups: Record<string, T[]> = {};
+    if (students.length === 0) return [];
 
-    for (const student of students) {
-      if (!groups[student.classId]) groups[student.classId] = [];
-      groups[student.classId].push(student);
-    }
+    // 1. Groupement des étudiants par classe
+    const groups: Record<string, T[]> = this.groupStudentByClass(students);
 
-    const classIds = Object.keys(groups);
-    let maxStudentsInClass = 0;
-
-    for (const key of classIds) {
-      groups[key] = shuffleArray(groups[key]);
-      if (groups[key].length > maxStudentsInClass) {
-        maxStudentsInClass = groups[key].length;
-      }
-    }
+    // 2. Mélange initial de chaque classe (Copie pour éviter les mutations)
+    const classLists: T[][] = Object.values(groups).map((group) =>
+      shuffleArray([...group]),
+    );
 
     const result: T[] = [];
 
-    for (let i = 0; i < maxStudentsInClass; i++) {
-      for (const classId of classIds) {
-        if (groups[classId][i]) {
-          result.push(groups[classId][i]);
+    // 3. Entrelacement dynamique en utilisant des files
+    // On boucle tant qu'il reste des listes de classes non vides
+    while (classLists.length > 0) {
+      // Optionnel : On peut mélanger classLists ici si on veut que l'ordre des classes change à chaque round
+
+      for (let i = classLists.length - 1; i >= 0; i--) {
+        const currentClass = classLists[i];
+
+        // On prend le premier étudiant de la classe (O(1) conceptuel ici, ou .pop() pour du vrai O(1))
+        const student = currentClass.shift();
+        if (student) {
+          result.push(student);
+        }
+
+        // Si la classe est vide, on la supprime pour ne plus boucler dessus au prochain tour
+        if (currentClass.length === 0) {
+          classLists.splice(i, 1);
         }
       }
     }

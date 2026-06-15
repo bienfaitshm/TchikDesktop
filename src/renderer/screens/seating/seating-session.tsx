@@ -4,7 +4,7 @@ import * as React from "react";
 import { Plus } from "lucide-react";
 import { Link } from "react-router";
 
-import type { TSeatingSessionAttributes as TSeatingSession } from "@/packages/@core/data-access/schema-validations/types";
+import type { SeatingSession } from "@/packages/@core/data-access/db/schemas";
 import { useGetSeatingSessions } from "@/renderer/libs/queries/seating";
 
 import { Button } from "@/renderer/components/ui/button";
@@ -47,7 +47,7 @@ interface SessionRowActionsProps extends Pick<
   SeatingSessionDialogProps,
   "queryKeysToInvalidate"
 > {
-  session: TSeatingSession;
+  session: SeatingSession;
 }
 
 /**
@@ -136,7 +136,7 @@ export const SeatingPage = () => {
           </section>
         }
       >
-        <DataTable<TSeatingSession>
+        <DataTable<SeatingSession>
           data={sessions}
           columns={columns}
           keyExtractor={(item) => item.sessionId}
@@ -161,7 +161,7 @@ export const SeatingPage = () => {
           >
             <DataTableContent>
               <DataContentHead />
-              <DataContentBody<TSeatingSession>>
+              <DataContentBody<SeatingSession>>
                 {({ row }) => (
                   <ExpandableRow
                     row={row as any}

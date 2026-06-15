@@ -1,6 +1,6 @@
 import type {
-  TClassroomFilter,
-  TUserFilter,
+  ClassroomFilter,
+  UserFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { useMemo } from "react";
 import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
@@ -8,102 +8,82 @@ import { useGetUsers } from "@/renderer/libs/queries/account";
 import { useGetOptions } from "@/renderer/libs/queries/option";
 import { useAvailableExports } from "@/renderer/libs/queries/document-export";
 
-/**
- * Définit les options de formatage pour la conversion de données en options de sélection.
- */
-interface DataToOptionConverterOptions {
-  /**
-   * Spécifie le format du libellé de l'option :
-   * - 'long': utilise uniquement la désignation longue (ex: 'Première Année').
-   * - 'short': utilise uniquement la désignation courte (ex: '1A').
-   * - 'both': (par défaut) combine les deux désignations (ex: 'Première Année (1A)').
-   */
+// 1. Conventions de nommage claires et types stricts
+export interface DataToOptionOptions {
   labelFormat?: "short" | "long" | "both";
 }
 
-/**
- * Type générique pour une option de sélection standard.
- */
-type Option = {
+export interface DefaultOption {
   value: string;
   label: string;
-};
+}
 
-/**
- * Type générique pour un élément de donnée, assurant qu'il peut être indexé par clé.
- */
-type DataItem = { [key: string]: any };
-
-/**
- * Hook générique pour convertir une liste de données en un tableau d'options de sélection.
- * Cela permet de réutiliser la logique de mappage et de formatage des libellés.
- *
- * @template T L'interface des objets de données dans le tableau d'entrée.
- * @param {object} args Les arguments pour la conversion.
- * @param {T[]} args.data Le tableau de données à convertir.
- * @param {keyof T} args.valueKey La clé de l'objet de données à utiliser comme valeur de l'option.
- * @param {keyof T} args.labelKeyLong La clé de l'objet de données pour le libellé long.
- * @param {keyof T} args.labelKeyShort La clé de l'objet de données pour le libellé court.
- * @param {DataToOptionConverterOptions} [args.options] Options de formatage du libellé.
- * @returns {Option[]} Un tableau d'objets { value: string, label: string }.
- */
-export function useDataToOptions<T extends DataItem>({
-  data,
-  valueKey,
-  labelKeyLong,
-  labelKeyShort,
-  options = { labelFormat: "both" },
-}: {
+// Interface des arguments du hook (plus lisible que le inline)
+export interface UseDataToOptionsArgs<
+  T,
+  R extends DefaultOption = DefaultOption,
+> {
   data: T[];
   valueKey: keyof T;
   labelKeyLong: keyof T;
   labelKeyShort: keyof T;
-  options?: DataToOptionConverterOptions;
-}): Option[] {
-  return useMemo(() => {
-    if (!data || data.length === 0) {
-      return [];
-    }
-    return data.map((item) => {
-      const longLabel = String(item[labelKeyLong] || "");
-      const shortLabel = String(item[labelKeyShort] || "");
-      let labelText = "";
-
-      switch (options.labelFormat) {
-        case "long":
-          labelText = longLabel;
-          break;
-        case "short":
-          labelText = shortLabel;
-          break;
-        case "both":
-        default:
-          labelText =
-            longLabel && shortLabel
-              ? `${longLabel} (${shortLabel})`
-              : longLabel || shortLabel || "N/A";
-          break;
-      }
-
-      return {
-        value: String(item[valueKey]),
-        label: labelText,
-      };
-    });
-  }, [data, valueKey, labelKeyLong, labelKeyShort, options.labelFormat]);
+  options?: DataToOptionOptions;
+  transformOption?: (baseOption: DefaultOption, originalItem: T) => R;
 }
 
+// Valeur par défaut extraite pour éviter les recréations d'objets au render
+const DEFAULT_OPTIONS: DataToOptionOptions = { labelFormat: "both" };
+
+export function useDataToOptions<T, R extends DefaultOption = DefaultOption>({
+  data,
+  valueKey,
+  labelKeyLong,
+  labelKeyShort,
+  options = DEFAULT_OPTIONS,
+  transformOption,
+}: UseDataToOptionsArgs<T, R>): R[] {
+  return useMemo(() => {
+    if (!data?.length) return [];
+
+    const { labelFormat } = options;
+
+    return data.map((item): R => {
+      const longLabel = String(item[labelKeyLong] ?? "");
+      const shortLabel = String(item[labelKeyShort] ?? "");
+
+      const labelFormatters = {
+        long: longLabel,
+        short: shortLabel,
+        both:
+          longLabel && shortLabel
+            ? `${longLabel} (${shortLabel})`
+            : longLabel || shortLabel || "N/A",
+      };
+
+      const baseOption: DefaultOption = {
+        value: String(item[valueKey] ?? ""),
+        label: labelFormatters[labelFormat ?? "both"] || "N/A",
+      };
+
+      if (transformOption) {
+        return transformOption(baseOption, item);
+      }
+
+      return baseOption as unknown as R;
+    });
+  }, [data, valueKey, labelKeyLong, labelKeyShort, options]);
+}
 /**
  * Hook pour récupérer les classes et les convertir en un tableau d'options de sélection.
  *
- * @param {TClassroomFilter} params Les paramètres pour filtrer les classes.
- * @param {DataToOptionConverterOptions} [options] Options de formatage du libellé.
+ * @param {ClassroomFilter} params Les paramètres pour filtrer les classes.
+ * @param {DataToOptionOptions} [options] Options de formatage du libellé.
  * @returns {Option[]} Un tableau d'options de classe.
  */
 export function useGetClassroomAsOptions(
-  params: TClassroomFilter,
-  options?: DataToOptionConverterOptions,
-): Option[] {
+  params: ClassroomFilter,
+  options?: DataToOptionOptions,
+): DefaultOption[] {
   const { data: classrooms = [] } = useGetClassrooms(params);
 
   return useDataToOptions({
@@ -123,7 +103,7 @@ export function useGetClassroomAsOptions(
  */
 export function useGetOptionAsOptions(
   schoolId: string,
-  options?: DataToOptionConverterOptions,
+  options?: DataToOptionOptions,
 ) {
   const { data: dataOptions = [] } = useGetOptions({ where: { schoolId } });
   const _options = useDataToOptions({
@@ -140,15 +120,14 @@ export function useGetOptionAsOptions(
 }
 
 export function useGetUsersAsOptions(
-  params: TUserFilter,
-  options?: DataToOptionConverterOptions,
-): Option[] {
+  params: UserFilter,
+  options?: DataToOptionOptions,
+): DefaultOption[] {
   const { data: users = [] } = useGetUsers(params);
-  console.log("users", users);
   return useDataToOptions({
     data: users,
     valueKey: "userId",
-    labelKeyLong: "fullName",
+    labelKeyLong: "fullName" as any,
     labelKeyShort: "lastName",
     options,
   });

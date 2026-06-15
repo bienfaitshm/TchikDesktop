@@ -1,4 +1,4 @@
-import type { TSeatingAssignmentCreate } from "@/packages/@core/data-access/schema-validations";
+import type { SeatingAssignmentCreate } from "@/packages/@core/data-access/schema-validations";
 
 export type Gender = "F" | "M";
 export interface Classroom {
@@ -47,13 +47,13 @@ export type StudentSeating = {
 export const formatRoomsToSeatingAssignments = (
   rooms: RoomState[],
   sessionId: string,
-): TSeatingAssignmentCreate[] => {
+): SeatingAssignmentCreate[] => {
   return Object.values(rooms).flatMap((room) =>
     room.seatingPlan
       .filter((seat) => seat.student !== null)
       .map((seat) => ({
-        localRoomId: room.roomId,
-        enrolementId: seat.student!.id,
+        localroomId: room.roomId,
+        enrollmentId: seat.student!.id,
         sessionId,
         rowPosition: seat.row,
         columnPosition: seat.column,

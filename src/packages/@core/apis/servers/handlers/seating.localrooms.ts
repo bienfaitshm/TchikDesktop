@@ -1,5 +1,5 @@
 import z from "zod";
-import { localRoomService } from "@/packages/@core/data-access/db/queries/seating-queries";
+import { localRoomRepository } from "@/packages/@core/data-access/db/queries/seatings";
 import {
   HttpMethod,
   IpcRequest,
@@ -8,27 +8,29 @@ import {
 import { AbstractEndpoint } from "../abstract";
 import { LocalRoomRoutes } from "../../routes-constant";
 import {
-  LocalRoomUpdateSchema,
-  LocalRoomFilterSchema,
-  LocalRoomCreateSchema,
-  LocalRoomAttributesSchema,
-  type TLocalRoomCreate,
-  type TLocalRoomUpdate,
-  type TLocalRoomFilter,
+  LocalroomUpdateSchema,
+  LocalroomFilterSchema,
+  LocalroomCreateSchema,
+  LocalroomSchema,
+  type LocalroomCreate,
+  type LocalroomUpdate,
+  type LocalroomFilter,
 } from "@/packages/@core/data-access/schema-validations";
 
-const LocalRoomIdSchema = LocalRoomAttributesSchema.pick({ localRoomId: true });
+const LocalRoomIdSchema = LocalroomSchema.pick({
+  localroomId: true,
+}).required();
 type TLocalRoomIdSchema = z.infer<typeof LocalRoomIdSchema>;
 
 /** Récupère la liste des locaux filtrée (généralement par schoolId). */
 export class GetLocalRooms extends AbstractEndpoint<any> {
   route = LocalRoomRoutes.ALL;
   method = HttpMethod.GET;
-  schemas: ValidationSchemas = { params: LocalRoomFilterSchema };
+  schemas: ValidationSchemas = { params: LocalroomFilterSchema };
   protected handle({
     params,
-  }: IpcRequest<unknown, TLocalRoomFilter>): Promise<unknown> {
-    return localRoomService.findMany(params as any);
+  }: IpcRequest<unknown, LocalroomFilter>): Promise<unknown> {
+    return localRoomRepository.findMany(params as any);
   }
 }
 
@@ -39,7 +41,7 @@ export class GetLocalRoom extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<unknown, TLocalRoomIdSchema>): Promise<unknown> {
-    return localRoomService.findById(params.localRoomId);
+    return localRoomRepository.findById(params.localroomId);
   }
 }
 
@@ -47,9 +49,9 @@ export class GetLocalRoom extends AbstractEndpoint<any> {
 export class CreateLocalRoom extends AbstractEndpoint<any> {
   route = LocalRoomRoutes.ALL;
   method = HttpMethod.POST;
-  schemas: ValidationSchemas = { body: LocalRoomCreateSchema };
-  protected handle({ body }: IpcRequest<TLocalRoomCreate>): Promise<unknown> {
-    return localRoomService.create(body);
+  schemas: ValidationSchemas = { body: LocalroomCreateSchema };
+  protected handle({ body }: IpcRequest<LocalroomCreate>): Promise<unknown> {
+    return localRoomRepository.create(body);
   }
 }
 
@@ -59,13 +61,13 @@ export class UpdateLocalRoom extends AbstractEndpoint<any> {
   method = HttpMethod.PUT;
   schemas: ValidationSchemas = {
     params: LocalRoomIdSchema,
-    body: LocalRoomUpdateSchema,
+    body: LocalroomUpdateSchema,
   };
   protected handle({
     params,
     body,
-  }: IpcRequest<TLocalRoomUpdate, TLocalRoomIdSchema>): Promise<unknown> {
-    return localRoomService.update(params.localRoomId, body);
+  }: IpcRequest<LocalroomUpdate, TLocalRoomIdSchema>): Promise<unknown> {
+    return localRoomRepository.update(params.localroomId, body);
   }
 }
 
@@ -77,6 +79,6 @@ export class DeleteLocalRoom extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<undefined, TLocalRoomIdSchema>): Promise<unknown> {
-    return localRoomService.delete(params.localRoomId);
+    return localRoomRepository.delete(params.localroomId);
   }
 }

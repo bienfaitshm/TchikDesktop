@@ -1,20 +1,20 @@
-import { IpcClient } from "@/packages/electron-ipc-rest";
+import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import type {
   TClassroom,
   TUser,
 } from "@/packages/@core/data-access/db/schemas/types";
 import type {
-  TLocalRoomAttributes,
-  TLocalRoomFilter,
-  TLocalRoomCreate,
-  TLocalRoomUpdate,
-  TSeatingSessionAttributes,
-  TSeatingSessionCreate,
-  TSeatingAssignmentCreate,
-  TSeatingAssignmentAttributes,
-  TSeatingSessionFilter,
+  Localroom,
+  LocalroomFilter,
+  LocalroomCreate,
+  LocalroomUpdate,
+  SeatingSession,
+  SeatingSessionCreate,
+  SeatingAssignmentCreate,
+  SeatingAssignment,
+  SeatingSessionFilter,
   SeatingGenerator,
-  TSchoolYear,
+  SchoolYear,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   LocalRoomRoutes,
@@ -22,8 +22,8 @@ import {
   SeatingAssignmentRoutes,
 } from "../routes-constant";
 
-export type LocalRoomData = TLocalRoomAttributes;
-export type SeatingSessionData = TSeatingSessionAttributes;
+export type LocalroomData = Localroom;
+export type SeatingSessionData = SeatingSession;
 /**
  * Ajoute l'état d'assignation à un type de base.
  */
@@ -33,7 +33,7 @@ export type WithAssignment<T> = T & {
 
 /** Interface pour les résultats de statut d'occupation des salles */
 export type RoomStatusData = {
-  localRoomId: string;
+  localroomId: string;
   roomName: string;
   maxCapacity: number;
   assignedCount: number;
@@ -68,49 +68,47 @@ export type BulkAssignParams = {
 
 export type SeatingApi = Readonly<{
   // --- Local Rooms ---
-  fetchLocalRooms(params?: TLocalRoomFilter): Promise<LocalRoomData[]>;
-  fetchLocalRoomById(localRoomId: string): Promise<LocalRoomData>;
-  createLocalRoom(data: TLocalRoomCreate): Promise<LocalRoomData>;
-  updateLocalRoom(
-    localRoomId: string,
-    data: TLocalRoomUpdate,
-  ): Promise<LocalRoomData>;
-  deleteLocalRoom(localRoomId: string): Promise<void>;
+  fetchLocalrooms(params?: LocalroomFilter): Promise<LocalroomData[]>;
+  fetchLocalroomById(localroomId: string): Promise<LocalroomData>;
+  createLocalroom(data: LocalroomCreate): Promise<LocalroomData>;
+  updateLocalroom(
+    localroomId: string,
+    data: LocalroomUpdate,
+  ): Promise<LocalroomData>;
+  deleteLocalroom(localroomId: string): Promise<void>;
 
   // --- Seating Sessions ---
   fetchSessions(
-    filters?: TSeatingSessionFilter,
-  ): Promise<WithAssignment<TSeatingSessionAttributes>[]>;
-  fetchSessionById(
-    sessionId: string,
-  ): Promise<WithAssignment<TSeatingSessionAttributes>>;
-  createSession(data: TSeatingSessionCreate): Promise<SeatingSessionData>;
+    filters?: SeatingSessionFilter,
+  ): Promise<WithAssignment<SeatingSession>[]>;
+  fetchSessionById(sessionId: string): Promise<WithAssignment<SeatingSession>>;
+  createSession(data: SeatingSessionCreate): Promise<SeatingSessionData>;
   updateSession(
     sessionId: string,
-    data: Partial<TSeatingSessionCreate>,
+    data: Partial<SeatingSessionCreate>,
   ): Promise<SeatingSessionData>;
   deleteSession(sessionId: string): Promise<void>;
   fetchSessionRoomsStatus(sessionId: string): Promise<RoomStatusData[]>;
   getSessionWithAssignments(sessionId: string): Promise<any>;
 
   // --- Seating Assignments ---
-  generateSeating(data: SeatingGenerator & TSchoolYear): Promise<any>;
+  generateSeating(data: SeatingGenerator & SchoolYear): Promise<any>;
   fetchRoomLayout(
     sessionId: string,
-    localRoomId: string,
+    localroomId: string,
   ): Promise<Assignment[]>;
   bulkAssign(
-    assignments: TSeatingAssignmentCreate[],
+    assignments: SeatingAssignmentCreate[],
     params: BulkAssignParams,
-  ): Promise<TSeatingAssignmentAttributes[]>;
+  ): Promise<SeatingAssignment[]>;
   rebuildAssign(
     sessionId: string,
-    assignments: TSeatingAssignmentCreate[],
-  ): Promise<TSeatingAssignmentAttributes[]>;
+    assignments: SeatingAssignmentCreate[],
+  ): Promise<SeatingAssignment[]>;
   fetchUnassignedStudents(sessionId: string, yearId: string): Promise<any[]>;
   clearRoomAssignments(
     sessionId: string,
-    localRoomId: string,
+    localroomId: string,
   ): Promise<{ success: boolean }>;
   findStudentSeat(sessionId: string, enrolementId: string): Promise<any>;
 }>;
@@ -121,26 +119,26 @@ export type SeatingApi = Readonly<{
 export function createSeatingApis(ipcClient: IpcClient): SeatingApi {
   return {
     // --- Local Rooms ---
-    fetchLocalRooms(params) {
+    fetchLocalrooms(params) {
       return ipcClient.get(LocalRoomRoutes.ALL, { params });
     },
 
-    fetchLocalRoomById(localRoomId) {
-      return ipcClient.get(LocalRoomRoutes.DETAIL, { params: { localRoomId } });
+    fetchLocalroomById(localroomId) {
+      return ipcClient.get(LocalRoomRoutes.DETAIL, { params: { localroomId } });
     },
-    createLocalRoom(data) {
+    createLocalroom(data) {
       return ipcClient.post(LocalRoomRoutes.ALL, data);
     },
 
-    updateLocalRoom(localRoomId, data) {
+    updateLocalroom(localroomId, data) {
       return ipcClient.put(LocalRoomRoutes.DETAIL, data, {
-        params: { localRoomId },
+        params: { localroomId },
       });
     },
 
-    deleteLocalRoom(localRoomId) {
+    deleteLocalroom(localroomId) {
       return ipcClient.delete(LocalRoomRoutes.DETAIL, {
-        params: { localRoomId },
+        params: { localroomId },
       });
     },
 
@@ -186,9 +184,9 @@ export function createSeatingApis(ipcClient: IpcClient): SeatingApi {
     generateSeating(data) {
       return ipcClient.post(SeatingAssignmentRoutes.GENERATING, data);
     },
-    fetchRoomLayout(sessionId, localRoomId) {
+    fetchRoomLayout(sessionId, localroomId) {
       return ipcClient.get(SeatingAssignmentRoutes.LAYOUT, {
-        params: { sessionId, localRoomId },
+        params: { sessionId, localroomId },
       });
     },
 
@@ -211,9 +209,9 @@ export function createSeatingApis(ipcClient: IpcClient): SeatingApi {
       });
     },
 
-    clearRoomAssignments(sessionId, localRoomId) {
+    clearRoomAssignments(sessionId, localroomId) {
       return ipcClient.delete(SeatingAssignmentRoutes.CLEAR_ROOM, {
-        params: { sessionId, localRoomId },
+        params: { sessionId, localroomId },
       });
     },
 

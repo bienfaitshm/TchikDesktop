@@ -20,6 +20,7 @@ const initializerLogger = getLogger("IPC Server");
 const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   // users
   user.GetUsers,
+  user.GetSearchUsers,
   user.GetUser,
   user.PostUser,
   user.UpdateUser,

@@ -1,7 +1,7 @@
 import {
-  schoolService,
-  seatingSessionService,
-  groupByLocalRoom,
+  schoolRepository,
+  seatingSessionRepository,
+  SeatingSessionMapper,
 } from "@/packages/@core/data-access/db/queries";
 
 type SeatingResolverParams = {
@@ -26,13 +26,15 @@ export class SeatingSessionDataResolver {
     }
 
     const [school, sessionData] = await Promise.all([
-      schoolService.fetchSchoolInfo(schoolId, yearId),
-      seatingSessionService.getSessionWithAssignments(sessionId),
+      schoolRepository.fetchSchoolInfo(schoolId, yearId),
+      seatingSessionRepository.getSessionWithAssignments(sessionId),
     ]);
 
     return {
       school,
-      assignment: sessionData ? groupByLocalRoom(sessionData) : [],
+      assignment: sessionData
+        ? SeatingSessionMapper.groupByLocalRoom(sessionData)
+        : [],
     };
   }
 }

@@ -1,13 +1,13 @@
-import { IpcClient } from "@/packages/electron-ipc-rest";
+import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import {
-  TSchoolAttributes,
-  TSchoolCreate,
-  TSchoolFilter,
-  TSchoolUpdate,
-  TStudyYearAttributes,
-  TStudyYearCreate,
-  TStudyYearUpdate,
-  TStudyYearFilter,
+  School,
+  SchoolCreate,
+  SchoolFilter,
+  SchoolUpdate,
+  StudyYear,
+  StudyYearCreate,
+  StudyYearUpdate,
+  StudyYearFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { SchoolRoutes, StudyYearRoutes } from "../routes-constant";
 
@@ -33,34 +33,31 @@ export type SchoolApi = Readonly<{
   /**
    * Récupère toutes les salles de classe, éventuellement filtrées par des paramètres.
    * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
-   * @returns Une promesse résolue avec la liste des TSchoolAttributes.
+   * @returns Une promesse résolue avec la liste des School.
    */
-  fetchSchools(params?: TSchoolFilter): Promise<TSchoolAttributes[]>;
+  fetchSchools(params?: SchoolFilter): Promise<School[]>;
 
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
    * @param schoolId L'identifiant unique de la salle de classe.
-   * @returns Une promesse résolue avec l'objet TSchoolAttributes.
+   * @returns Une promesse résolue avec l'objet School.
    */
-  fetchSchoolById(schoolId: string): Promise<TSchoolAttributes>;
+  fetchSchoolById(schoolId: string): Promise<School>;
 
   /**
    * Crée une nouvelle salle de classe.
    * @param data L'objet de données nécessaire pour créer la salle de classe.
-   * @returns Une promesse résolue avec l'objet TSchoolAttributes nouvellement créé.
+   * @returns Une promesse résolue avec l'objet School nouvellement créé.
    */
-  createSchool(data: TSchoolCreate): Promise<TSchoolAttributes>;
+  createSchool(data: SchoolCreate): Promise<School>;
 
   /**
    * Met à jour une salle de classe existante.
    * @param schoolId L'identifiant unique de la salle de classe à mettre à jour.
-   * @param data Les champs partiels de TSchoolAttributes à modifier.
-   * @returns Une promesse résolue avec l'objet TSchoolAttributes mis à jour.
+   * @param data Les champs partiels de School à modifier.
+   * @returns Une promesse résolue avec l'objet School mis à jour.
    */
-  updateSchool(
-    schoolId: string,
-    data: TSchoolUpdate
-  ): Promise<TSchoolAttributes>;
+  updateSchool(schoolId: string, data: SchoolUpdate): Promise<School>;
 
   /**
    * Supprime une salle de classe par son ID.
@@ -72,23 +69,23 @@ export type SchoolApi = Readonly<{
   /**
    * Récupère toutes les salles de classe, éventuellement filtrées par des paramètres.
    * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
-   * @returns Une promesse résolue avec la liste des TStudyYearAttributes.
+   * @returns Une promesse résolue avec la liste des StudyYear.
    */
-  fetchStudyYears(params?: TStudyYearFilter): Promise<TStudyYearAttributes[]>;
+  fetchStudyYears(params?: StudyYearFilter): Promise<StudyYear[]>;
 
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
    * @param schoolId L'identifiant unique de la salle de classe.
-   * @returns Une promesse résolue avec l'objet TSchoolAttributes.
+   * @returns Une promesse résolue avec l'objet School.
    */
-  fetchStudyYearById(yearId: string): Promise<TStudyYearAttributes>;
+  fetchStudyYearById(yearId: string): Promise<StudyYear>;
 
   /**
    * Crée une nouvelle salle de classe.
    * @param data L'objet de données nécessaire pour créer la salle de classe.
    * @returns Une promesse résolue avec l'objet SchoolData nouvellement créé.
    */
-  createStudyYear(data: TStudyYearCreate): Promise<TStudyYearAttributes>;
+  createStudyYear(data: StudyYearCreate): Promise<StudyYear>;
 
   /**
    * Met à jour une salle de classe existante.
@@ -96,7 +93,7 @@ export type SchoolApi = Readonly<{
    * @param data Les champs partiels de SchoolData à modifier.
    * @returns Une promesse résolue avec l'objet SchoolData mis à jour.
    */
-  updateStudyYear(yearId: string, data: TStudyYearUpdate): Promise<SchoolData>;
+  updateStudyYear(yearId: string, data: StudyYearUpdate): Promise<SchoolData>;
 
   /**
    * Supprime une salle de classe par son ID.

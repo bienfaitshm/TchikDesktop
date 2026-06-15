@@ -4,12 +4,13 @@ import {
   users,
   options,
   studyYears,
-  classRooms,
-  classroomEnrolements,
-  classroomEnrolementActions,
-  localRooms,
+  classrooms,
+  classroomEnrollments,
+  classroomEnrollmentActions,
+  localrooms,
   seatingSessions,
   seatingAssignments,
+  type ClassroomEnrollment,
 } from "./schema";
 import { SQLiteTableWithColumns } from "drizzle-orm/sqlite-core";
 
@@ -29,17 +30,17 @@ export type TStudyYear = InferSelectModel<typeof studyYears>;
 export type TStudyYearInsert = InferInsertModel<typeof studyYears>;
 export type TStudyYearUpdate = Partial<Omit<TStudyYearInsert, "yearId">>;
 
-export type TClassroom = InferSelectModel<typeof classRooms>;
-export type TClassroomInsert = InferInsertModel<typeof classRooms>;
+export type TClassroom = InferSelectModel<typeof classrooms>;
+export type TClassroomInsert = InferInsertModel<typeof classrooms>;
 export type TClassroomUpdate = Partial<Omit<TClassroomInsert, "classId">>;
 
-export type TEnrolement = InferSelectModel<typeof classroomEnrolements>;
-export type TEnrolementInsert = InferInsertModel<typeof classroomEnrolements>;
+export type TEnrolement = InferSelectModel<typeof classroomEnrollments>;
+export type TEnrolementInsert = InferInsertModel<typeof classroomEnrollments>;
 export type TEnrolementUpdate = Partial<
   Omit<TEnrolementInsert, "enrolementId" | "studentId" | "classroomId">
 >;
 
-export type TEnrolementDetails = TEnrolement & {
+export type EnrolementDetails = ClassroomEnrollment & {
   student: Omit<TUser, "password" | "createdAt" | "updatedAt">;
   classroom: Pick<TClassroom, "identifier" | "shortIdentifier"> & {
     yearName: TStudyYear["yearName"];
@@ -47,14 +48,14 @@ export type TEnrolementDetails = TEnrolement & {
 };
 
 export type TEnrolementAction = InferSelectModel<
-  typeof classroomEnrolementActions
+  typeof classroomEnrollmentActions
 >;
 export type TEnrolementActionInsert = InferInsertModel<
-  typeof classroomEnrolementActions
+  typeof classroomEnrollmentActions
 >;
 
-export type TLocalRoom = InferSelectModel<typeof localRooms>;
-export type TLocalRoomInsert = InferInsertModel<typeof localRooms>;
+export type TLocalRoom = InferSelectModel<typeof localrooms>;
+export type TLocalRoomInsert = InferInsertModel<typeof localrooms>;
 export type TLocalRoomUpdate = Partial<TLocalRoomInsert>;
 
 export type TSeatingSession = InferSelectModel<typeof seatingSessions>;

@@ -13,7 +13,7 @@ export const SECTION_ENUM_TRANSLATIONS: Record<SECTION_ENUM, string> = {
 export enum USER_ROLE_ENUM {
   STAFF = "STAFF",
   PROMOTER = "PROMOTER",
-  ADMIN = "ADMINISTRATOR",
+  ADMIN = "ADMIN", // Standardisé : Clé === Valeur
   STUDENT = "STUDENT",
 }
 
@@ -50,29 +50,30 @@ export const MUTATION_ACTION_ENUM_TRANSLATIONS: Record<
 };
 
 export enum STUDENT_STATUS_ENUM {
-  EN_COURS = "EN_COURS",
-  ABANDON = "ABANDON",
-  EXCLUT = "EXCLUT",
+  ACTIVE = "ACTIVE", // Corrigé : Au lieu de EN_COURS
+  DROPOUT = "DROPOUT", // Corrigé : Au lieu de ABANDON
+  EXPELLED = "EXPELLED", // Corrigé : Au lieu de EXCLUT (qui prenait un 't' par erreur)
 }
 
 export const STUDENT_STATUS_ENUM_TRANSLATIONS: Record<
   STUDENT_STATUS_ENUM,
   string
 > = {
-  [STUDENT_STATUS_ENUM.EN_COURS]: "Actif",
-  [STUDENT_STATUS_ENUM.ABANDON]: "Abandon",
-  [STUDENT_STATUS_ENUM.EXCLUT]: "Exclu",
+  [STUDENT_STATUS_ENUM.ACTIVE]: "Actif",
+  [STUDENT_STATUS_ENUM.DROPOUT]: "Abandon",
+  [STUDENT_STATUS_ENUM.EXPELLED]: "Exclu",
 };
 
-export enum ENROLEMENT_ACTION_ENUM {
+// Corrigé : ENROLLMENT avec deux 'L' pour correspondre au schéma
+export enum ENROLLMENT_ACTION_ENUM {
   STUDENT_STATUS = "STUDENT_STATUS",
-  STUDENT_TRANSFERT = "STUDENT_TRANSFERT",
+  STUDENT_TRANSFER = "STUDENT_TRANSFER", // Corrigé : TRANSFER au lieu de TRANSFERT
 }
 
-export const ENROLEMENT_ACTION_ENUM_TRANSLATIONS: Record<
-  ENROLEMENT_ACTION_ENUM,
+export const ENROLLMENT_ACTION_ENUM_TRANSLATIONS: Record<
+  ENROLLMENT_ACTION_ENUM,
   string
 > = {
-  [ENROLEMENT_ACTION_ENUM.STUDENT_STATUS]: "Statut de l'élève",
-  [ENROLEMENT_ACTION_ENUM.STUDENT_TRANSFERT]: "Transfert de l'élève",
+  [ENROLLMENT_ACTION_ENUM.STUDENT_STATUS]: "Statut de l'élève",
+  [ENROLLMENT_ACTION_ENUM.STUDENT_TRANSFER]: "Transfert de l'élève",
 };

@@ -1,119 +1,135 @@
-import React from 'react';
-import { Zap, UserPlus, History } from 'lucide-react';
-
-import { Button } from '@/renderer/components/ui/button';
-import { TypographyP } from '@/renderer/components/ui/typography';
+import { UserPlus, History } from "lucide-react";
 import {
-    DataTable,
-    DataContentHead,
-    DataTableContent,
-    DataContentBody,
-    DataTablePagination
-} from '@/renderer/components/tables';
-import { EnrollmentHistoricsColumns } from '@/renderer/components/tables/columns.enrollment-history';
-import { Suspense } from '@/renderer/libs/queries/suspense';
+  Empty,
+  EmptyContent,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/renderer/components/ui/empty";
+import { Button } from "@/renderer/components/ui/button";
 import {
-    QuickCreateEnrollmentDialog,
-    CreateEnrollmentDialog
-} from '@/renderer/dialog-actions/enrolement.dialog-actions';
-import { useGetEnrollments } from '@/renderer/libs/queries/enrolement';
-import { Skeleton } from '@/renderer/components/ui/skeleton';
-import { useSchoolContext } from '../hooks/app-config-router';
+  DataTable,
+  DataContentHead,
+  DataTableContent,
+  DataContentBody,
+  DataTablePagination,
+} from "@/renderer/components/tables";
+import { enrollmentHistoryColumns } from "@/renderer/components/tables/columns";
+import { CreateEnrollmentDialog } from "@/renderer/dialog-actions/enrollment.dialog-actions";
+import { useGetEnrollments } from "@/renderer/libs/queries/enrollments";
+import { useSchoolContext } from "@/renderer/hooks/app-config-router";
+import type { EnrollementData } from "@/packages/@core/apis/clients";
 
+interface SchoolYearProps {
+  schoolId: string;
+  yearId: string;
+}
 
-type SchoolYearId = { schoolId: string; yearId: string };
+interface EnrollmentHistoryProps extends SchoolYearProps {
+  enrollments?: EnrollementData[];
+}
 
+export const EnrollmentHistory = ({
+  schoolId,
+  yearId,
+  enrollments = [],
+}: EnrollmentHistoryProps) => {
+  return (
+    <div className="w-full">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 mt-10">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight">
+            Historique des Inscriptions
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Consultez et gérez l'historique des inscriptions pour l'année
+            scolaire en cours.
+          </p>
+        </div>
 
+        <div className="flex flex-wrap items-center gap-3">
+          <CreateEnrollmentDialog
+            schoolId={schoolId}
+            yearId={yearId}
+            defaultValues={{ schoolId, yearId }}
+          >
+            <Button className="gap-2 shadow-xs">
+              <UserPlus className="h-4 w-4" />
+              <span>Inscription Complète</span>
+            </Button>
+          </CreateEnrollmentDialog>
+        </div>
+      </header>
 
-
-/**
- * Composant de table avec gestion des données réelles
- */
-const EnrollmentHistoryTable: React.FC<SchoolYearId> = ({ schoolId, yearId }) => {
-    // Appel réel des données
-    const { data = [] } = useGetEnrollments({
-        where: { schoolId, yearId }
-    });
-    console.log(data)
-
-    return (
-        <section aria-labelledby="table-title">
-            <h2 id="table-title" className="sr-only">Liste des inscriptions</h2>
-            <DataTable
-                columns={EnrollmentHistoricsColumns}
-                data={[]}
-                keyExtractor={(row) => row.id ?? `${row.enrolementId}`}
-            >
-                {/* {className="bg-muted/50"} */}
-                <DataTableContent>
-                    <DataContentHead />
-                    <DataContentBody />
-                </DataTableContent>
-                <DataTablePagination />
-            </DataTable>
-
-            {data.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <History className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                    <TypographyP className="text-muted-foreground">
-                        Aucun historique d'inscription trouvé pour cette période.
-                    </TypographyP>
-                </div>
-            )}
-        </section>
-    );
+      <main>
+        <DataTable
+          columns={enrollmentHistoryColumns}
+          data={enrollments}
+          keyExtractor={(row) => `${row.enrollmentId}-${row.student.userId}`}
+        >
+          <DataTableContent>
+            <DataContentHead />
+            <DataContentBody />
+          </DataTableContent>
+          <DataTablePagination />
+        </DataTable>
+      </main>
+    </div>
+  );
 };
 
-/**
- * Skeleton pour un chargement élégant
- */
-const TableSkeleton = () => (
-    <div className="space-y-3">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-20 w-full" />
+export const EmptyEnrollmentHistory = ({
+  schoolId,
+  yearId,
+}: SchoolYearProps) => {
+  return (
+    <div className="h-[50vh] flex justify-center items-centerw-full">
+      <Empty>
+        <EmptyContent>
+          <EmptyHeader>
+            <EmptyMedia>
+              <History className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            </EmptyMedia>
+          </EmptyHeader>
+          <EmptyTitle className="mb-4 text-center">
+            Aucun historique d'inscription trouvé pour cette période.
+          </EmptyTitle>
+          <CreateEnrollmentDialog
+            schoolId={schoolId}
+            yearId={yearId}
+            defaultValues={{ schoolId, yearId }}
+          >
+            <Button className="gap-2 shadow-xs mx-auto">
+              <UserPlus className="h-4 w-4" />
+              <span>Inscrivez votre premier élève de l'année</span>
+            </Button>
+          </CreateEnrollmentDialog>
+        </EmptyContent>
+      </Empty>
     </div>
-);
+  );
+};
 
 export const EnrollmentPage = () => {
-    const { schoolId, yearId } = useSchoolContext();
-    const defaultValues = { schoolId, yearId };
+  const { schoolId, yearId } = useSchoolContext();
 
-    return (
-        <div className="container mx-auto max-w-(--breakpoint-xl) py-10 px-4 sm:px-4">
-            {/* Header avec Actions Groupées */}
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 mt-10">
-                <div className="space-y-1">
-                    <h1 className="text-2xl font-bold tracking-tight">Gestion des Inscriptions</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Consultez et gérez l'historique des enrôlements pour l'année scolaire en cours.
-                    </p>
-                </div>
+  const { data: enrollments = [] } = useGetEnrollments({
+    where: { schoolId, yearId },
+    limit: 20,
+    orderBy: [{ column: "createdAt", order: "desc" }],
+  });
 
-                <div className="flex flex-wrap items-center gap-3">
-                    {/* Inscription Rapide : Style "Accent" pour l'urgence/vitesse */}
-                    <QuickCreateEnrollmentDialog schoolId={schoolId} yearId={yearId} defaultValues={defaultValues}>
-                        <Button variant="outline" className="gap-2 border-primary/20 hover:bg-primary/5">
-                            <Zap className="h-4 w-4" />
-                            <span>Inscription Rapide</span>
-                        </Button>
-                    </QuickCreateEnrollmentDialog>
-
-                    {/* Inscription Complète : Bouton Principal */}
-                    <CreateEnrollmentDialog schoolId={schoolId} yearId={yearId} defaultValues={{ schoolId, yearId }}>
-                        <Button className="gap-2 shadow-xs">
-                            <UserPlus className="h-4 w-4" />
-                            <span>Inscription Complète</span>
-                        </Button>
-                    </CreateEnrollmentDialog>
-                </div>
-            </header>
-
-            <main>
-                <Suspense fallback={<TableSkeleton />}>
-                    <EnrollmentHistoryTable schoolId={schoolId} yearId={yearId} />
-                </Suspense>
-            </main>
-        </div>
-    );
+  return (
+    <div className="container mx-auto max-w-7xl py-10 px-4">
+      {enrollments.length > 0 ? (
+        <EnrollmentHistory
+          yearId={yearId}
+          schoolId={schoolId}
+          enrollments={enrollments}
+        />
+      ) : (
+        <EmptyEnrollmentHistory yearId={yearId} schoolId={schoolId} />
+      )}
+    </div>
+  );
 };

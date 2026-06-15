@@ -1,18 +1,18 @@
-import { IpcClient } from "@/packages/electron-ipc-rest";
+import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import {
-  TUserAttributes,
-  TUserFilter,
-  TUserCreate,
-  TUserUpdate,
+  User,
+  UserFilter,
+  UserCreate,
+  UserUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import { UserRoutes } from "../routes-constant";
 
-export type UserData = TUserAttributes;
+export type UserData = User;
 
 /**
  * Type définissant les paramètres de requête pour les listes.
  */
-export type UserQueryParams = TUserFilter;
+export type UserQueryParams = UserFilter;
 
 /**
  * Type de l'objet API retourné. Le 'as const' garantit que toutes les propriétés
@@ -27,6 +27,17 @@ export type UserApi = Readonly<{
   fetchUsers(params?: UserQueryParams): Promise<UserData[]>;
 
   /**
+   * Récupère toutes les salles de classe, éventuellement filtrées par des paramètres.
+   * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
+   * @returns Une promesse résolue avec la liste des UserData.
+   */
+  searchUser(params: {
+    name?: string;
+    yearId?: string;
+    schoolId: string;
+  }): Promise<UserData[]>;
+
+  /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
    * @param userId L'identifiant unique de la salle de classe.
    * @returns Une promesse résolue avec l'objet UserData.
@@ -38,7 +49,7 @@ export type UserApi = Readonly<{
    * @param data L'objet de données nécessaire pour créer la salle de classe.
    * @returns Une promesse résolue avec l'objet UserData nouvellement créé.
    */
-  createUser(data: TUserCreate): Promise<UserData>;
+  createUser(data: UserCreate): Promise<UserData>;
 
   /**
    * Met à jour une salle de classe existante.
@@ -46,7 +57,7 @@ export type UserApi = Readonly<{
    * @param data Les champs partiels de UserData à modifier.
    * @returns Une promesse résolue avec l'objet UserData mis à jour.
    */
-  updateUser(userId: string, data: TUserUpdate): Promise<UserData>;
+  updateUser(userId: string, data: UserUpdate): Promise<UserData>;
 
   /**
    * Supprime une salle de classe par son ID.
@@ -69,6 +80,10 @@ export function createUserApis(ipcClient: IpcClient): UserApi {
     fetchUsers(params) {
       // Utilisation du 'params' Usernel de l'appel pour les filtres/pagination
       return ipcClient.get(UserRoutes.ALL, { params });
+    },
+
+    searchUser(params: { name?: string; yearId?: string; schoolId: string }) {
+      return ipcClient.get(UserRoutes.SEARCH, { params });
     },
 
     fetchUserById(userId) {

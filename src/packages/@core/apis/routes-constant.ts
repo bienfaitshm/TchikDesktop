@@ -8,6 +8,7 @@
 export const UserRoutes = {
   ALL: "users",
   DETAIL: "users/:userId",
+  SEARCH: "users/search",
 } as const;
 
 /**

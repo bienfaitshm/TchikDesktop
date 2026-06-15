@@ -1,114 +1,86 @@
-import type { TEnrolement, TWithUser } from "@/commons/types/services"
-import type { ColumnDef } from "@tanstack/react-table"
-import { TypographySmall } from "@/renderer/components/ui/typography"
-import { Checkbox } from "@/renderer/components/ui/checkbox"
-import { format } from "date-fns" // Ajout d'une librairie pour formater les dates
+import type { ColumnDef } from "@tanstack/react-table";
+import { format, isValid } from "date-fns";
+import { Link } from "react-router";
+import { TypographySmall } from "@/renderer/components/ui/typography";
+import { APP_ROUTES } from "@/renderer/constants";
+import type {
+  ClassroomEnrollment,
+  User,
+  Classroom,
+} from "@/packages/@core/data-access/db/schemas";
 
-// Type pour les données de la table
-type EnrollmentData = TWithUser<TEnrolement>
+export interface EnrollmentHistoryItem extends ClassroomEnrollment {
+  student: User & { fullName?: string };
+  classroom: Classroom;
+}
+
+const DATE_FORMAT = "dd/MM/yyyy";
+const TIME_FORMAT = "HH:mm";
 
 /**
- * Définit les colonnes pour le tableau d'historique des inscriptions.
- * Utilise des conventions de nommage claires et des composants réutilisables.
+ * Définition des colonnes pour le tableau d'historique des inscriptions.
+ * Configuration stricte des types, sémantique HTML valide et gestion défensive.
  */
-export const EnrollmentHistoricsColumns: ColumnDef<EnrollmentData>[] = [
-    // ------------------------------------
-    // Colonne de sélection (Checkbox)
-    // ------------------------------------
-    {
-        id: "select",
-        header: ({ table }) => (
-            <div className="flex items-center justify-center">
-                <Checkbox
-                    checked={
-                        table.getIsAllPageRowsSelected() ||
-                        (table.getIsSomePageRowsSelected() && "indeterminate")
-                    }
-                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                    aria-label="Sélectionner tout"
-                />
-            </div>
-        ),
-        cell: ({ row }) => (
-            <div className="flex items-center justify-center">
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label="Sélectionner la ligne"
-                />
-            </div>
-        ),
-        enableSorting: false,
-        enableHiding: false,
-    },
+export const enrollmentHistoryColumns: ColumnDef<EnrollmentHistoryItem>[] = [
+  {
+    accessorKey: "student.fullName",
+    header: "Nom, Postnom et Prénom",
+    cell: ({ getValue }) => (
+      <TypographySmall className="text-foreground text-sm">
+        {String(getValue() ?? "N/A")}
+      </TypographySmall>
+    ),
+    enableHiding: false,
+  },
+  {
+    accessorKey: "classroom.shortIdentifier",
+    header: "Classe",
+    cell: ({ getValue, row }) => {
+      const { classroomId } = row.original;
 
-    // ------------------------------------
-    // Colonne Nom Complet
-    // ------------------------------------
-    {
-        accessorKey: "User.fullname", // Utilisation de la clé d'accès imbriquée
-        header: "Nom, Postnom et Prénom",
-        cell: ({ row }) => (
-            <TypographySmall className="font-medium text-foreground">
-                {row.original.User.fullname}
-            </TypographySmall>
-        ),
-        enableSorting: true,
-        enableHiding: false, // Garder ce champ toujours visible
-        enableColumnFilter: true, // Laissez la possibilité de filtrer
+      return (
+        <Link
+          to={APP_ROUTES.CLASSROOMS.DETAIL(classroomId)}
+          className="font-mono text-sm text-muted-foreground hover:underline hover:text-primary transition-colors"
+        >
+          {String(getValue() ?? "N/A")}
+        </Link>
+      );
     },
+  },
+  {
+    accessorKey: "studentCode",
+    header: "Code",
+    cell: ({ getValue }) => (
+      <TypographySmall className="font-bold text-primary">
+        {String(getValue() ?? "-")}
+      </TypographySmall>
+    ),
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Date d'Inscription",
+    cell: ({ getValue }) => {
+      const rawDate = getValue();
+      const date = rawDate ? new Date(rawDate as string | number | Date) : null;
 
-    // ------------------------------------
-    // Colonne Classe (via classroomId)
-    // ------------------------------------
-    {
-        accessorKey: "classroomId",
-        header: "Classe",
-        cell: ({ row }) => (
-            <TypographySmall className="text-sm font-mono text-muted-foreground">
-                {row.original.classroomId}
-            </TypographySmall>
-        ),
-        enableSorting: true,
-        enableHiding: true,
-        enableColumnFilter: true,
+      if (!date || !isValid(date)) {
+        return (
+          <TypographySmall className="text-xs font-medium text-destructive">
+            Date invalide
+          </TypographySmall>
+        );
+      }
+
+      return (
+        <TypographySmall className="text-xs font-medium text-foreground inline-flex items-center gap-1.5">
+          <span>{format(date, DATE_FORMAT)}</span>
+          <span className="text-[11px] font-normal text-muted-foreground/80 sm:text-muted-foreground">
+            à {format(date, TIME_FORMAT)}
+          </span>
+        </TypographySmall>
+      );
     },
-
-    // ------------------------------------
-    // Colonne Code d'inscription
-    // ------------------------------------
-    {
-        accessorKey: "code",
-        header: "Code",
-        cell: ({ row }) => (
-            <TypographySmall className="font-bold text-primary">
-                {row.original.code}
-            </TypographySmall>
-        ),
-        enableSorting: true,
-        enableHiding: true,
-        enableColumnFilter: true,
-    },
-
-    // ------------------------------------
-    // Colonne Date d'inscription
-    // ------------------------------------
-    {
-        accessorKey: "createdAt", // Assumer que la date est dans `createdAt` ou une clé similaire
-        header: "Date d'Inscription",
-        cell: ({ row }: any) => {
-            // Assumer que 'createdAt' est une chaîne de date valide (ex: ISO string)
-            const date = new Date(row.original.createdAt)
-
-            return (
-                <TypographySmall className="text-xs text-muted-foreground">
-                    {/* Formater la date en jj/MM/aaaa (ou autre format souhaité) */}
-                    {format(date, 'dd/MM/yyyy')}
-                </TypographySmall>
-            )
-        },
-        enableSorting: true,
-        enableHiding: true,
-        enableColumnFilter: false, // Souvent complexe de filtrer sur une date formatée
-    },
-]
+    enableColumnFilter: false,
+  },
+];

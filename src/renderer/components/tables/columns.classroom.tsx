@@ -1,14 +1,17 @@
-import type { TClassroomAttributes as TClassroom } from "@/packages/@core/data-access/schema-validations";
+import type { Classroom } from "@/packages/@core/data-access/schema-validations";
 import type { ColumnDef } from "@tanstack/react-table";
 import { TypographySmall } from "@/renderer/components/ui/typography";
 import { SectionBadge } from "@/renderer/components/section-badge";
+import { DataTableColumnHeader } from "./data-table.column-header";
 
 export const classroomColumns: ColumnDef<
-  TClassroom & { optionName?: string }
+  Classroom & { optionName?: string }
 >[] = [
   {
     accessorKey: "identifier",
-    header: "Nom complet",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Nom complet" />
+    ),
     cell: ({ row }) => {
       return (
         <TypographySmall className="font-medium text-foreground">

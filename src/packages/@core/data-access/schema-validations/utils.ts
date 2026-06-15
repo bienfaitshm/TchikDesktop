@@ -1,7 +1,7 @@
 import z from "zod";
 
 /**
- * 🛠️ Crée un schéma Zod basé sur une énumération native (`nativeEnum`).
+ * Crée un schéma Zod basé sur une énumération native (`nativeEnum`).
  * * Cette fonction utilitaire permet de définir rapidement la validation d'un champ d'énumération
  * en s'assurant que le message d'erreur est personnalisé pour une meilleure UX.
  *
@@ -16,12 +16,11 @@ import z from "zod";
  */
 export function createZodEnum<TEnum extends z.EnumLike>(
   _enum: TEnum,
-  message?: string
+  message?: string,
 ): z.ZodNativeEnum<TEnum> {
   const defaultMessage = "Valeur d'énumération non valide.";
 
   return z.nativeEnum(_enum, {
-    // Si un message est fourni, on personnalise errorMap pour l'utiliser.
     errorMap: message
       ? () => ({ message })
       : () => ({ message: defaultMessage }),

@@ -1,43 +1,64 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Check, ChevronsUpDown, Search, X } from "lucide-react"
-import { Button } from "@/renderer/components/ui/button"
+import * as React from "react";
+import { Check, ChevronsUpDown, X } from "lucide-react";
+import {
+  Command,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/renderer/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/renderer/components/ui/popover"
-import { Checkbox } from "@/renderer/components/ui/checkbox"
-import { Label } from "@/renderer/components/ui/label"
-import { Input } from "@/renderer/components/ui/input"
-import { cn } from "@/renderer/utils"
-import { useFilterCheckBoxInput, type FilterOption } from "./multi-select-input.utils"
+} from "@/renderer/components/ui/popover";
+import { Button } from "@/renderer/components/ui/button";
+import { Checkbox } from "@/renderer/components/ui/checkbox";
+import { Label } from "@/renderer/components/ui/label";
+import { cn } from "@/renderer/utils";
+import {
+  useFilterCheckBoxInput,
+  type FilterOption,
+} from "./multi-select-input.utils";
+import { ScrollArea } from "../../ui/scroll-area";
 
-export interface MultiSelectProps
-  extends Omit<React.ComponentPropsWithoutRef<typeof Button>, "value" | "onChange"> {
-  name: string
-  placeholder?: string
-  options?: FilterOption[]
-  value?: string[]
-  onChange?(values: string[]): void
-  labelPlural?: string
+export interface MultiSelectProps extends Omit<
+  React.ComponentPropsWithoutRef<typeof Button>,
+  "value" | "onChange"
+> {
+  name: string;
+  placeholder?: string;
+  options?: FilterOption[];
+  value?: string[];
+  onChange?(values: string[]): void;
+  labelPlural?: string;
+  searchPlaceholder?: string;
+  emptyMessage?: string;
+  contentClassName?: string;
 }
 
 const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
-  ({
-    options = [],
-    name,
-    value = [],
-    placeholder = "Sélectionner...",
-    onChange,
-    className,
-    labelPlural,
-    ...props
-  }, ref) => {
+  (
+    {
+      options = [],
+      name,
+      value = [],
+      placeholder = "Sélectionner...",
+      searchPlaceholder = "Rechercher...",
+      emptyMessage = "Aucun résultat.",
+      onChange,
+      className,
+      contentClassName,
+      labelPlural,
+      ...props
+    },
+    ref,
+  ) => {
+    const [open, setOpen] = React.useState(false);
+
     const {
-      open,
-      setOpen,
       searchTerm,
       setSearchTerm,
       filteredOptions,
@@ -46,14 +67,14 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
       toggleAllFiltered,
       handleCheckedChange,
       areAllFilteredSelected,
-      selectedSet
+      selectedSet,
     } = useFilterCheckBoxInput({
       options,
       onChange,
       placeholder,
       value,
-      labelPlural: labelPlural || name
-    })
+      labelPlural: labelPlural || name,
+    });
 
     return (
       <Popover open={open} onOpenChange={setOpen}>
@@ -63,116 +84,126 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            aria-haspopup="listbox"
-            className={cn("w-full justify-between font-normal h-9 px-3", className)}
+            className={cn(
+              "w-full justify-between font-normal h-9 px-3",
+              className,
+            )}
             {...props}
           >
-            <span className="truncate text-xs font-medium text-left">
+            <div className="flex-1 truncate text-left text-xs font-medium">
               {getButtonText()}
-            </span>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </div>
+            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-(--radix-popover-trigger-width) min-w-[280px] p-0 shadow-md"
+          className={cn(
+            "w-[--radix-popover-trigger-width] min-w-[280px] p-0 shadow-md",
+            contentClassName,
+          )}
           align="start"
-          onCloseAutoFocus={(e) => e.preventDefault()}
         >
-          <div className="flex items-center px-3 border-b bg-background sticky top-0 z-10">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-40" />
-            <Input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Rechercher..."
-              className={cn(
-                "flex w-full bg-transparent py-3 text-xs outline-hidden placeholder:text-xs placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
-                "h-8 text-xs border-0 border-none shadow-none focus:ring-0 focus:outline-hidden focus-visible:ring-0 focus-visible:ring-offset-0"
+          <Command className="flex flex-col" shouldFilter={false}>
+            <div className="flex items-center px-1 pb-2 border-b  w-full">
+              <CommandInput
+                placeholder={searchPlaceholder}
+                value={searchTerm}
+                onValueChange={setSearchTerm}
+                className="h-9 w-full text-xs border-none focus-visible:ring-0 shadow-none flex-1"
+              />
+              {searchTerm && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-6 shrink-0 rounded-sm mr-2"
+                  onClick={() => setSearchTerm("")}
+                >
+                  <X className="size-3" />
+                </Button>
               )}
-            />
-            {searchTerm && (
+            </div>
+
+            <CommandList className="max-h-[240px] overflow-y-auto scrollbar-thin p-1 flex flex-col">
+              <ScrollArea className="h-full">
+                <CommandGroup>
+                  {filteredOptions.map((option) => {
+                    const isSelected = selectedSet.has(option.value);
+                    const checkboxId = `select-${name}-${option.value}`;
+
+                    return (
+                      <CommandItem
+                        key={option.value}
+                        value={option.label}
+                        onSelect={() => {
+                          // Inverse l'état de sélection au clic sur la ligne entière
+                          handleCheckedChange(!isSelected, option.value);
+                        }}
+                        data-slot="multiselect-item"
+                        data-state={isSelected ? "selected" : "unselected"}
+                        className={cn(
+                          "flex items-center gap-2.5 px-2 py-1.5 rounded-sm cursor-pointer text-xs transition-colors",
+                          "data-[state=selected]:bg-accent/40 text-foreground",
+                        )}
+                      >
+                        <Checkbox
+                          id={checkboxId}
+                          checked={isSelected}
+                          onCheckedChange={(checked) =>
+                            handleCheckedChange(!!checked, option.value)
+                          }
+                          className="shrink-0 pointer-events-none"
+                        />
+                        <Label
+                          htmlFor={checkboxId}
+                          className="flex-1 font-normal cursor-pointer text-xs truncate py-0.5 pointer-events-none"
+                        >
+                          {option.label}
+                        </Label>
+                        {isSelected && (
+                          <Check className="size-3.5 text-primary shrink-0 animate-in fade-in zoom-in-75 duration-100" />
+                        )}
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </ScrollArea>
+            </CommandList>
+
+            {/* Actions de groupe en bas (Esprit v4 harmonisé) */}
+            <div className="border-t bg-muted/40 p-2 flex items-center justify-between gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={filteredOptions.length === 0}
+                className="h-7 px-2 text-xs flex-1 shadow-2xs font-medium"
+                onClick={(e) => {
+                  e.preventDefault();
+                  toggleAllFiltered();
+                }}
+              >
+                {areAllFilteredSelected ? "Tout décocher" : "Tout cocher"}
+              </Button>
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={() => setSearchTerm("")}
+                size="sm"
+                disabled={value.length === 0}
+                className="h-7 px-2 text-xs flex-1 text-destructive hover:text-destructive hover:bg-destructive/10 font-medium"
+                onClick={(e) => {
+                  e.preventDefault();
+                  clearSelection();
+                }}
               >
-                <X className="h-3 w-3" />
+                Réinitialiser ({value.length})
               </Button>
-            )}
-          </div>
-
-          <div
-            role="listbox"
-            className="max-h-[240px] overflow-y-auto p-1 overflow-x-hidden"
-          >
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((option) => {
-                const isSelected = selectedSet.has(option.value)
-                const checkboxId = `select-${name}-${option.value}`
-
-                return (
-                  <div
-                    key={option.value}
-                    className={cn(
-                      "group flex items-center space-x-2 px-2 py-1.5 rounded-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-                      isSelected && "bg-accent/40"
-                    )}
-                  >
-                    <Checkbox
-                      id={checkboxId}
-                      checked={isSelected}
-                      onCheckedChange={(checked) => handleCheckedChange(!!checked, option.value)}
-                    />
-                    <Label
-                      htmlFor={checkboxId}
-                      className="flex-1 font-normal cursor-pointer text-xs py-0.5"
-                    >
-                      {option.label}
-                    </Label>
-                    {isSelected && <Check className="h-3 w-3 text-primary" />}
-                  </div>
-                )
-              })
-            ) : (
-              <div className="py-6 text-center text-xs text-muted-foreground">
-                Aucun résultat pour <span className="font-semibold italic">"{searchTerm}"</span>
-              </div>
-            )}
-          </div>
-
-          <div className="border-t bg-muted/30 p-2 flex items-center justify-between gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              disabled={filteredOptions.length === 0}
-              className="h-7 px-2 text-xs flex-1"
-              onClick={(e) => {
-                e.preventDefault()
-                toggleAllFiltered()
-              }}
-            >
-              {areAllFilteredSelected ? "Tout décocher" : "Tout cocher"}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={value.length === 0}
-              className="h-7 px-2 text-xs flex-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={(e) => {
-                e.preventDefault()
-                clearSelection()
-              }}
-            >
-              Réinitialiser ({value.length})
-            </Button>
-          </div>
+            </div>
+          </Command>
         </PopoverContent>
       </Popover>
-    )
-  }
-)
+    );
+  },
+);
 
-MultiSelect.displayName = "MultiSelect"
+MultiSelect.displayName = "MultiSelect";
 
-export { MultiSelect }
+export { MultiSelect };

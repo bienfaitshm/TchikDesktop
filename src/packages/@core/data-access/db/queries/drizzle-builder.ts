@@ -199,22 +199,22 @@ function buildOrderByClauses<T extends SQLiteTable>(
 export function applyQueryOptions<
   TQuery extends AnySQLiteSelect,
   T extends SQLiteTable,
->(query: TQuery, table: T, options: FindManyOptions<T>): TQuery {
+>(query: TQuery, table: T, options?: FindManyOptions<T>): TQuery {
   const conditions: SQL[] = [];
 
-  if (options.where) {
+  if (options?.where) {
     conditions.push(...buildWhereConditions(table, options.where));
   }
 
-  if (options.whereIn) {
+  if (options?.whereIn) {
     conditions.push(...buildWhereInConditions(table, options.whereIn));
   }
 
-  if (options.search) {
+  if (options?.search) {
     conditions.push(...buildSearchConditions(table, options.search));
   }
 
-  if (options.or && options.or.length > 0) {
+  if (options?.or && options.or.length > 0) {
     const orCondition = buildOrConditions(table, options.or);
     if (orCondition) conditions.push(orCondition);
   }
@@ -224,21 +224,20 @@ export function applyQueryOptions<
     query.where(combinedCondition);
   }
 
-  if (options.orderBy && options.orderBy.length > 0) {
+  if (options?.orderBy && options.orderBy.length > 0) {
     const sortOrders = buildOrderByClauses(table, options.orderBy);
     if (sortOrders.length > 0) {
       query.orderBy(...sortOrders);
     }
   }
 
-  // --- PAGINATION SÉCURISÉE (Anti-DoS) ---
   const limit = Math.max(
     1,
-    Math.min(options.limit ?? DEFAULT_MAX_LIMIT, DEFAULT_MAX_LIMIT),
+    Math.min(options?.limit ?? DEFAULT_MAX_LIMIT, DEFAULT_MAX_LIMIT),
   );
   query.limit(limit);
 
-  if (options.offset !== undefined) {
+  if (options?.offset !== undefined) {
     const offset = Math.max(0, Math.min(options.offset, DEFAULT_MAX_OFFSET));
     query.offset(offset);
   }

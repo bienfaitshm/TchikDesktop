@@ -1,247 +1,88 @@
 import { z } from "zod";
 import {
-  // Schémas d'Attributs (Lecture DB)
-  SchoolAttributesSchema,
-  UserAttributesSchema,
-  OptionAttributesSchema,
-  StudyYearAttributesSchema,
-  ClassroomAttributesSchema,
-  EnrolementAttributesSchema,
-  EnrolementActionAttributesSchema,
-
-  // Schémas de Création (Body POST)
-  SchoolCreateSchema, // Renommé de CreationSchema
-  UserCreateSchema,
-  OptionCreateSchema,
-  StudyYearCreateSchema,
-  ClassroomCreateSchema,
-  EnrolementCreateSchema,
-  EnrolementQuickCreateSchema,
-  EnrolementActionCreateSchema,
-
-  // Schémas de Mise à Jour (Body PUT/PATCH)
+  SchoolCreateSchema,
   SchoolUpdateSchema,
+  UserCreateSchema,
   UserUpdateSchema,
+  OptionCreateSchema,
   OptionUpdateSchema,
+  StudyYearCreateSchema,
   StudyYearUpdateSchema,
+  ClassroomCreateSchema,
   ClassroomUpdateSchema,
-  EnrolementUpdateSchema,
+  EnrollmentCreateSchema,
+  EnrollmentUpdateSchema,
+  EnrollmentActionCreateSchema,
+  LocalroomCreateSchema,
+  LocalroomUpdateSchema,
+  SeatingSessionCreateSchema,
+  SeatingSessionUpdateSchema,
+  SeatingAssignmentCreateSchema,
+  SeatingAssignmentUpdateSchema,
+  BulkSeatingAssignmentSchema,
 } from "./model";
 
 import {
-  BulkSeatingAssignmentSchema,
-  LocalRoomAttributesSchema,
-  LocalRoomCreateSchema,
-  LocalRoomUpdateSchema,
-  SeatingAssignmentAttributesSchema,
-  SeatingAssignmentCreateSchema,
-  SeatingAssignmentUpdateSchema,
-  SeatingSessionAttributesSchema,
-  SeatingSessionCreateSchema,
-  SeatingSessionUpdateSchema,
-} from "./model.seatings";
-
-import {
-  // Schémas de Filtre (Query Params)
-  SchoolYearSchema,
   SchoolFilterSchema,
   UserFilterSchema,
   OptionFilterSchema,
   StudyYearFilterSchema,
   ClassroomFilterSchema,
-  EnrolementFilterSchema,
-  EnrolementActionFilterSchema,
+  EnrollmentFilterSchema,
+  EnrollmentActionFilterSchema,
+  LocalroomFilterSchema,
+  SeatingSessionFilterSchema,
+  SeatingAssignmentFilterSchema,
+  SeatingStatsFilterSchema,
   StatsFilterSchema,
 } from "./filters";
 
-import {
-  LocalRoomFilterSchema,
-  SeatingAssignmentFilterSchema,
-  SeatingSessionFilterSchema,
-  SeatingStatsFilterSchema,
-} from "./filters.seatings";
-
-// =============================================================================
-// I. TYPES DE DONNÉES COMPLETS (Lecture DB)
-// =============================================================================
-
-export type TSchoolYearSchemaAttibutes = z.infer<typeof SchoolYearSchema>;
-export type TSchoolYear = TSchoolYearSchemaAttibutes;
-
-/** Type des attributs complets d'une École (lecture depuis la DB) */
-export type TSchoolAttributes = z.infer<typeof SchoolAttributesSchema>;
-
-/** Type des attributs complets d'un Utilisateur (lecture depuis la DB) */
-export type TUserAttributes = z.infer<typeof UserAttributesSchema>;
-
-/** Type des attributs complets d'une Option (lecture depuis la DB) */
-export type TOptionAttributes = z.infer<typeof OptionAttributesSchema>;
-
-/** Type des attributs complets d'une Année Scolaire (lecture depuis la DB) */
-export type TStudyYearAttributes = z.infer<typeof StudyYearAttributesSchema>;
-
-/** Type des attributs complets d'une Classe (lecture depuis la DB) */
-export type TClassroomAttributes = z.infer<typeof ClassroomAttributesSchema>;
-
-/** Type des attributs complets d'une Inscription (lecture depuis la DB) */
-export type TEnrolementAttributes = z.infer<typeof EnrolementAttributesSchema>;
-
-/** Type des attributs complets d'une Action d'Inscription (lecture depuis la DB) */
-export type TEnrolementActionAttributes = z.infer<
-  typeof EnrolementActionAttributesSchema
+export type SchoolCreate = z.infer<typeof SchoolCreateSchema>;
+export type UserCreate = z.infer<typeof UserCreateSchema>;
+export type OptionCreate = z.infer<typeof OptionCreateSchema>;
+export type StudyYearCreate = z.infer<typeof StudyYearCreateSchema>;
+export type ClassroomCreate = z.infer<typeof ClassroomCreateSchema>;
+export type EnrollmentCreate = z.infer<typeof EnrollmentCreateSchema>;
+export type EnrollmentActionCreate = z.infer<
+  typeof EnrollmentActionCreateSchema
 >;
 
-// =============================================================================
-// II. TYPES DE CRÉATION (Body POST)
-// =============================================================================
+export type SchoolUpdate = z.infer<typeof SchoolUpdateSchema>;
+export type UserUpdate = z.infer<typeof UserUpdateSchema>;
+export type OptionUpdate = z.infer<typeof OptionUpdateSchema>;
+export type StudyYearUpdate = z.infer<typeof StudyYearUpdateSchema>;
+export type ClassroomUpdate = z.infer<typeof ClassroomUpdateSchema>;
+export type EnrollmentUpdate = z.infer<typeof EnrollmentUpdateSchema>;
 
-/** Type des données requises pour créer une École (Body de requête) */
-export type TSchoolCreate = z.infer<typeof SchoolCreateSchema>;
-
-/** Type des données requises pour créer un Utilisateur (Body de requête) */
-export type TUserCreate = z.infer<typeof UserCreateSchema>;
-
-/** Type des données requises pour créer une Option (Body de requête) */
-export type TOptionCreate = z.infer<typeof OptionCreateSchema>;
-
-/** Type des données requises pour créer une Année Scolaire (Body de requête) */
-export type TStudyYearCreate = z.infer<typeof StudyYearCreateSchema>;
-
-/** Type des données requises pour créer une Classe (Body de requête) */
-export type TClassroomCreate = z.infer<typeof ClassroomCreateSchema>;
-
-/** Type des données requises pour créer une Inscription (Body de requête) */
-export type TEnrolementCreate = z.infer<typeof EnrolementCreateSchema>;
-
-/** Type des données requises pour créer une Inscription (Body de requête) */
-export type TEnrolementQuickCreate = z.infer<
-  typeof EnrolementQuickCreateSchema
+export type SchoolFilter = z.infer<typeof SchoolFilterSchema>;
+export type UserFilter = z.infer<typeof UserFilterSchema>;
+export type OptionFilter = z.infer<typeof OptionFilterSchema>;
+export type StudyYearFilter = z.infer<typeof StudyYearFilterSchema>;
+export type ClassroomFilter = z.infer<typeof ClassroomFilterSchema>;
+export type EnrollmentFilter = z.infer<typeof EnrollmentFilterSchema>;
+export type EnrollmentActionFilter = z.infer<
+  typeof EnrollmentActionFilterSchema
 >;
-
-/** Type des données requises pour créer une Action d'Inscription (Body de requête) */
-export type TEnrolementActionCreate = z.infer<
-  typeof EnrolementActionCreateSchema
->;
-
-// =============================================================================
-// III. TYPES DE MISE À JOUR (Body PUT/PATCH)
-// =============================================================================
-
-/** Type des données optionnelles pour mettre à jour une École (Body de requête) */
-export type TSchoolUpdate = z.infer<typeof SchoolUpdateSchema>;
-
-/** Type des données optionnelles pour mettre à jour un Utilisateur (Body de requête) */
-export type TUserUpdate = z.infer<typeof UserUpdateSchema>;
-
-/** Type des données optionnelles pour mettre à jour une Option (Body de requête) */
-export type TOptionUpdate = z.infer<typeof OptionUpdateSchema>;
-
-/** Type des données optionnelles pour mettre à jour une Année Scolaire (Body de requête) */
-export type TStudyYearUpdate = z.infer<typeof StudyYearUpdateSchema>;
-
-/** Type des données optionnelles pour mettre à jour une Classe (Body de requête) */
-export type TClassroomUpdate = z.infer<typeof ClassroomUpdateSchema>;
-
-/** Type des données optionnelles pour mettre à jour une Inscription (Body de requête) */
-export type TEnrolementUpdate = z.infer<typeof EnrolementUpdateSchema>;
-
-// =============================================================================
-// IV. TYPES DE FILTRE (Query Params)
-// =============================================================================
-
-/** Type pour filtrer les Écoles (Query Params, incluant pagination/tri) */
-export type TSchoolFilter = z.infer<typeof SchoolFilterSchema>;
-
-/** Type pour filtrer les Utilisateurs (Query Params, incluant pagination/tri) */
-export type TUserFilter = z.infer<typeof UserFilterSchema>;
-
-/** Type pour filtrer les Options (Query Params, incluant pagination/tri) */
-export type TOptionFilter = z.infer<typeof OptionFilterSchema>;
-
-/** Type pour filtrer les Années Scolaires (Query Params, incluant pagination/tri) */
-export type TStudyYearFilter = z.infer<typeof StudyYearFilterSchema>;
-
-/** Type pour filtrer les Classes (Query Params, incluant pagination/tri) */
-export type TClassroomFilter = z.infer<typeof ClassroomFilterSchema>;
-
-/** Type pour filtrer les Inscriptions (Query Params, incluant pagination/tri) */
-export type TEnrolementFilter = z.infer<typeof EnrolementFilterSchema>;
-
-/** Type pour filtrer l'Historique d'Inscriptions (Query Params, incluant pagination/tri) */
-export type TEnrolementActionFilter = z.infer<
-  typeof EnrolementActionFilterSchema
->;
-
 export type TStatsFilter = z.infer<typeof StatsFilterSchema>;
 
-// ... (tes imports et types précédents)
-
-// =============================================================================
-// V. TYPES SEATING - DONNÉES COMPLETS (Lecture DB)
-// =============================================================================
-
-/** Type des attributs complets d'un Local (Salle) */
-export type TLocalRoomAttributes = z.infer<typeof LocalRoomAttributesSchema>;
-
-/** Type des attributs complets d'une Session de placement */
-export type TSeatingSessionAttributes = z.infer<
-  typeof SeatingSessionAttributesSchema
-> & { hasAssignments?: boolean };
-
-/** Type des attributs complets d'une Assignation de place */
-export type TSeatingAssignmentAttributes = z.infer<
-  typeof SeatingAssignmentAttributesSchema
->;
-
-// =============================================================================
-// VI. TYPES SEATING - CRÉATION (Body POST)
-// =============================================================================
-
-/** Type pour créer un Local */
-export type TLocalRoomCreate = z.infer<typeof LocalRoomCreateSchema>;
-
-/** Type pour créer une Session de placement */
-export type TSeatingSessionCreate = z.infer<typeof SeatingSessionCreateSchema>;
-
-/** Type pour créer une assignation individuelle */
-export type TSeatingAssignmentCreate = z.infer<
+export type LocalroomCreate = z.infer<typeof LocalroomCreateSchema>;
+export type SeatingSessionCreate = z.infer<typeof SeatingSessionCreateSchema>;
+export type SeatingAssignmentCreate = z.infer<
   typeof SeatingAssignmentCreateSchema
 >;
-
-/** Type pour le placement en masse (Bulk) d'une salle entière */
 export type TBulkSeatingAssignment = z.infer<
   typeof BulkSeatingAssignmentSchema
 >;
 
-// =============================================================================
-// VII. TYPES SEATING - MISE À JOUR (Body PUT/PATCH)
-// =============================================================================
-
-/** Type pour mettre à jour un Local (partiel) */
-export type TLocalRoomUpdate = z.infer<typeof LocalRoomUpdateSchema>;
-
-/** Type pour mettre à jour une Session (partiel) */
-export type TSeatingSessionUpdate = z.infer<typeof SeatingSessionUpdateSchema>;
-
-/** Type pour mettre à jour une assignation (ex: changer de place) */
-export type TSeatingAssignmentUpdate = z.infer<
+export type LocalroomUpdate = z.infer<typeof LocalroomUpdateSchema>;
+export type SeatingSessionUpdate = z.infer<typeof SeatingSessionUpdateSchema>;
+export type SeatingAssignmentUpdate = z.infer<
   typeof SeatingAssignmentUpdateSchema
 >;
 
-// =============================================================================
-// VIII. TYPES SEATING - FILTRE (Query Params)
-// =============================================================================
-
-/** Filtres pour les Locaux (avec pagination/tri) */
-export type TLocalRoomFilter = z.infer<typeof LocalRoomFilterSchema>;
-
-/** Filtres pour les Sessions de placement (avec pagination/tri) */
-export type TSeatingSessionFilter = z.infer<typeof SeatingSessionFilterSchema>;
-
-/** Filtres pour les Assignations (ex: voir tout un local ou toute une session) */
-export type TSeatingAssignmentFilter = z.infer<
+export type LocalroomFilter = z.infer<typeof LocalroomFilterSchema>;
+export type SeatingSessionFilter = z.infer<typeof SeatingSessionFilterSchema>;
+export type SeatingAssignmentFilter = z.infer<
   typeof SeatingAssignmentFilterSchema
 >;
-
-/** Filtres pour les statistiques de placement */
 export type TSeatingStatsFilter = z.infer<typeof SeatingStatsFilterSchema>;

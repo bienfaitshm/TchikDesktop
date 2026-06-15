@@ -1,76 +1,75 @@
 import z from "zod";
-import { enrolementService } from "@/packages/@core/data-access/db/queries";
+import {
+  enrollmentService,
+  enrollmentRepository,
+} from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcRequest,
   ValidationSchemas,
 } from "@/packages/electron-ipc-rest";
 import {
-  EnrolementCreateSchema,
-  EnrolementFilterSchema,
-  EnrolementUpdateSchema,
-  EnrolementQuickCreateSchema,
-  EnrolementAttributesSchema,
-  type TEnrolementUpdate,
-  type TEnrolementCreate,
-  type TEnrolementFilter,
-  type TEnrolementQuickCreate,
+  EnrollmentCreateSchema,
+  EnrollmentFilterSchema,
+  EnrollmentUpdateSchema,
+  EnrollmentQuickCreateSchema,
+  EnrollmentSchema,
+  type EnrollmentUpdate,
+  type EnrollmentCreate,
+  type EnrollmentFilter,
+  type EnrollmentQuickCreate,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
 import { EnrollementRoutes } from "../../routes-constant";
 
-const EnrollementIdSchema = EnrolementAttributesSchema.pick({
-  enrolementId: true,
+const EnrollementIdSchema = EnrollmentSchema.pick({
+  enrollmentId: true,
 });
 type EnrollementId = z.infer<typeof EnrollementIdSchema>;
 export class GetEnrollements extends AbstractEndpoint<any> {
   route = EnrollementRoutes.ALL;
   method = HttpMethod.GET;
-  //   validationErrorMessage?: string | undefined = undefined;
   schemas: ValidationSchemas = {
-    params: EnrolementFilterSchema,
+    params: EnrollmentFilterSchema,
   };
   protected handle({
     params,
-  }: IpcRequest<unknown, TEnrolementFilter>): Promise<unknown> {
-    return enrolementService.findMany(params);
+  }: IpcRequest<unknown, EnrollmentFilter>): Promise<unknown> {
+    return enrollmentRepository.findMany(params);
   }
 }
 
 export class PostEnrollement extends AbstractEndpoint<any> {
   route = EnrollementRoutes.ALL;
   method = HttpMethod.POST;
-  //   validationErrorMessage?: string | undefined = undefined;
   schemas: ValidationSchemas = {
-    body: EnrolementCreateSchema,
+    body: EnrollmentCreateSchema,
   };
 
   protected handle({
     body,
-  }: IpcRequest<TEnrolementCreate, unknown>): Promise<unknown> {
-    return enrolementService.create(body);
+  }: IpcRequest<EnrollmentCreate, unknown>): Promise<unknown> {
+    return enrollmentRepository.create(body);
   }
 }
 
 export class PostQuickEnrollement extends AbstractEndpoint<any> {
   route = EnrollementRoutes.QUICK_ENROLLEMENT;
   method = HttpMethod.POST;
-  //   validationErrorMessage?: string | undefined = undefined;
   schemas: ValidationSchemas = {
-    body: EnrolementQuickCreateSchema,
+    body: EnrollmentQuickCreateSchema,
   };
 
   protected handle({
     body,
-  }: IpcRequest<TEnrolementQuickCreate, unknown>): Promise<unknown> {
-    return enrolementService.quickCreate(body);
+  }: IpcRequest<EnrollmentQuickCreate, unknown>): Promise<unknown> {
+    return enrollmentService.quickCreate(body);
   }
 }
 
 export class GetEnrollement extends AbstractEndpoint<any> {
   route = EnrollementRoutes.DETAIL;
   method = HttpMethod.GET;
-  //   validationErrorMessage?: string | undefined = undefined;
   schemas: ValidationSchemas = {
     params: EnrollementIdSchema,
   };
@@ -78,31 +77,29 @@ export class GetEnrollement extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<unknown, EnrollementId>): Promise<unknown> {
-    return enrolementService.findById(params.enrolementId);
+    return enrollmentRepository.findById(params.enrollmentId);
   }
 }
 
 export class UpdateEnrollement extends AbstractEndpoint<any> {
   route = EnrollementRoutes.DETAIL;
   method = HttpMethod.PUT;
-  //   validationErrorMessage?: string | undefined = undefined;
   schemas: ValidationSchemas = {
     params: EnrollementIdSchema,
-    body: EnrolementUpdateSchema,
+    body: EnrollmentUpdateSchema,
   };
 
   protected handle({
     params,
     body,
-  }: IpcRequest<TEnrolementUpdate, EnrollementId>): Promise<unknown> {
-    return enrolementService.update(params.enrolementId, body);
+  }: IpcRequest<EnrollmentUpdate, EnrollementId>): Promise<unknown> {
+    return enrollmentRepository.update(params.enrollmentId, body);
   }
 }
 
 export class DeleteEnrollement extends AbstractEndpoint<any> {
   route = EnrollementRoutes.DETAIL;
   method = HttpMethod.DELETE;
-  //   validationErrorMessage?: string | undefined = undefined;
   schemas: ValidationSchemas = {
     params: EnrollementIdSchema,
   };
@@ -110,6 +107,6 @@ export class DeleteEnrollement extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<unknown, EnrollementId>): Promise<unknown> {
-    return enrolementService.delete(params.enrolementId);
+    return enrollmentRepository.delete(params.enrollmentId);
   }
 }

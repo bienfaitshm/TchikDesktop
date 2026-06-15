@@ -19,5 +19,5 @@ import { ipcServer } from "./config.ipc.server";
  */
 export const apiGateway = new EndpointRegistrar(
   ipcServer,
-  instantiatedHandlers
+  instantiatedHandlers,
 );

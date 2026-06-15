@@ -37,15 +37,8 @@ export const StudentLayout = () => {
   );
 
   return (
-    <div className="h-full w-full overflow-hidden bg-background">
-      <SidebarContainer
-        direction="horizontal"
-        sidebar={sidebarContent}
-        sidebarProps={{
-          defaultSize: 20,
-          minSize: 15,
-        }}
-      >
+    <div className="h-full w-full overflow-hidden">
+      <SidebarContainer sidebar={sidebarContent}>
         <PageShell
           maxWidth="2xl"
           header={

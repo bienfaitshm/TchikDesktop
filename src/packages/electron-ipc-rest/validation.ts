@@ -3,137 +3,110 @@
  * @description Middleware de validation de schéma utilisant Zod.
  * Assure l'intégrité des données entrant dans les handlers IPC.
  */
-
-import { z, type ZodTypeAny } from "zod";
+import { z } from "zod";
 import { HttpStatus } from "./constant";
-import type { IpcRequest, RequestHandler } from "./ipc"; // Assurez-vous que RequestHandler est exporté de ipc.ts
+import type { IpcRequest, RequestHandler } from "./ipc";
 import { HttpException } from "./utils";
 
-// --- Types & Interfaces ---
-
-export interface ValidationSchemas {
-  body?: ZodTypeAny;
-  params?: ZodTypeAny;
-  headers?: ZodTypeAny;
+export interface ValidationSchemas<
+  TBody extends z.ZodTypeAny = z.ZodTypeAny,
+  TParams extends z.ZodTypeAny = z.ZodTypeAny,
+  THeaders extends z.ZodTypeAny = z.ZodTypeAny,
+> {
+  body?: TBody;
+  params?: TParams;
+  headers?: THeaders;
 }
 
-/**
- * Options de configuration pour le validateur.
- */
-interface ValidatorOptions {
-  schemas: ValidationSchemas;
-  /** Message d'erreur global si la validation échoue. */
+interface ValidatorOptions<
+  TBody extends z.ZodTypeAny = z.ZodTypeAny,
+  TParams extends z.ZodTypeAny = z.ZodTypeAny,
+  THeaders extends z.ZodTypeAny = z.ZodTypeAny,
+> {
+  schemas: ValidationSchemas<TBody, TParams, THeaders>;
   errorMessage?: string;
 }
 
-/**
- * Helper interne pour standardiser les erreurs de validation.
- */
 interface ValidationErrorDetail {
   location: "body" | "params" | "headers";
   path: string;
   message: string;
 }
 
-// --- Implementation ---
-
-/**
- * Valide une section spécifique de la requête (Body, Params ou Headers).
- * @param schema Le schéma Zod.
- * @param data Les données à valider.
- * @param location L'emplacement des données (pour le rapport d'erreur).
- * @param errors Le tableau mutable où accumuler les erreurs.
- * @returns Les données validées (transformées) ou undefined.
- */
-function validateSection(
-  schema: ZodTypeAny | undefined,
-  data: unknown,
-  location: ValidationErrorDetail["location"],
-  errors: ValidationErrorDetail[]
-): any {
-  if (!schema) return data;
-
-  const result = schema.safeParse(data);
-
-  if (!result.success) {
-    result.error.issues.forEach((issue) => {
-      errors.push({
-        location,
-        path: issue.path.join("."), // Format "user.address.street"
-        message: issue.message,
-      });
-    });
-    return undefined;
-  }
-
-  return result.data;
-}
-
-/**
- * @function createValidatedHandler
- * @description Higher-Order Function (HOF) qui enveloppe un handler IPC avec une couche de validation Zod.
- * Applique strictement les schémas et rejette la requête avant même qu'elle n'atteigne la logique métier.
- *
- * @example
- * const createUser = createValidatedHandler(
- * async (req) => { return db.save(req.body); },
- * { schemas: { body: UserSchema } }
- * );
- */
+// 2. createValidatedHandler devient le seul point d'entrée et extrait les types directement des schémas passés en option
 export function createValidatedHandler<
-  S extends ValidationSchemas,
-  TBody = S["body"] extends ZodTypeAny ? z.infer<S["body"]> : unknown,
-  TParams = S["params"] extends ZodTypeAny
-    ? z.infer<S["params"]>
-    : Record<string, unknown>,
+  TBodySchema extends z.ZodTypeAny,
+  TParamsSchema extends z.ZodTypeAny,
+  THeadersSchema extends z.ZodTypeAny,
 >(
-  handler: RequestHandler<any, TBody, TParams>,
-  options: ValidatorOptions
-): RequestHandler<any, any, any> {
-  // Retourne un handler générique pour l'enregistrement
-
+  options: ValidatorOptions<TBodySchema, TParamsSchema, THeadersSchema>,
+  handler: RequestHandler<
+    any,
+    z.output<TBodySchema>,
+    z.output<TParamsSchema>,
+    z.output<THeadersSchema>
+  >,
+): RequestHandler<any, any, any, any> {
   const { schemas, errorMessage = "Validation Failed" } = options;
 
   return async (req: IpcRequest) => {
     const errors: ValidationErrorDetail[] = [];
 
-    // 1. Validation & Transformation (sans mutation de req original)
-    const validatedBody = validateSection(
-      schemas.body,
-      req.body,
-      "body",
-      errors
-    );
-    const validatedParams = validateSection(
-      schemas.params,
-      req.params,
-      "params",
-      errors
-    );
-    const validatedHeaders = validateSection(
-      schemas.headers,
-      req.headers,
-      "headers",
-      errors
-    );
+    const safeData = {
+      body: req.body,
+      params: req.params,
+      headers: req.headers,
+    };
 
-    // 2. Gestion des erreurs agrégées
+    const validate = (
+      schema: z.ZodTypeAny | undefined,
+      data: unknown,
+      location: ValidationErrorDetail["location"],
+    ) => {
+      if (!schema) return data;
+
+      console.log("VALIDATION", JSON.stringify(data, null, 4));
+      const result = schema.safeParse(data);
+      if (!result.success) {
+        result.error.issues.forEach((issue) => {
+          const safeMessage =
+            location === "headers"
+              ? "Invalid header value or format"
+              : issue.message;
+
+          errors.push({
+            location,
+            path: issue.path.join("."),
+            message: safeMessage,
+          });
+        });
+        return data;
+      }
+      return result.data;
+    };
+
+    safeData.body = validate(schemas.body, req.body, "body");
+    safeData.params = validate(schemas.params, req.params, "params");
+    safeData.headers = validate(schemas.headers, req.headers, "headers");
+
     if (errors.length > 0) {
       throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST, {
         issues: errors,
       });
     }
 
-    // 3. Création d'un contexte de requête sécurisé (Immuabilité)
-    // On remplace les données brutes par les données typées/transformées par Zod
-    const safeReq: IpcRequest<TBody, TParams> = {
+    // Ici, le typage est garanti par Zod et l'inférence de la fonction
+    const safeReq: IpcRequest<
+      z.output<TBodySchema>,
+      z.output<TParamsSchema>,
+      z.output<THeadersSchema>
+    > = {
       ...req,
-      body: validatedBody,
-      params: validatedParams,
-      headers: validatedHeaders ?? req.headers,
+      body: safeData.body,
+      params: safeData.params,
+      headers: safeData.headers,
     };
 
-    // 4. Exécution du handler métier
     return handler(safeReq);
   };
 }

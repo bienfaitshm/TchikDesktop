@@ -1,13 +1,13 @@
 import z from "zod";
-import { classroomService } from "@/packages/@core/data-access/db/queries";
+import { classroomRepository } from "@/packages/@core/data-access/db/queries";
 import {
-  ClassroomAttributesSchema,
+  ClassroomSchema,
   ClassroomCreateSchema,
   ClassroomUpdateSchema,
   ClassroomFilterSchema,
-  TClassroomFilter,
-  TClassroomCreate,
-  TClassroomUpdate,
+  ClassroomFilter,
+  ClassroomCreate,
+  ClassroomUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -17,7 +17,7 @@ import {
 import { AbstractEndpoint } from "../abstract";
 import { ClassroomRoutes } from "../../routes-constant";
 
-const ClassIdSchema = ClassroomAttributesSchema.pick({ classId: true });
+const ClassIdSchema = ClassroomSchema.pick({ classId: true });
 
 type ClassId = z.infer<typeof ClassIdSchema>;
 
@@ -31,8 +31,8 @@ export class GetClassrooms extends AbstractEndpoint<any> {
 
   protected handle({
     params,
-  }: IpcRequest<any, TClassroomFilter>): Promise<unknown> {
-    return classroomService.findManyExtended(params);
+  }: IpcRequest<any, ClassroomFilter>): Promise<unknown> {
+    return classroomRepository.findMany(params);
   }
 }
 
@@ -46,8 +46,10 @@ export class GetClassroomsWithEnrollments extends AbstractEndpoint<any> {
 
   protected handle({
     params,
-  }: IpcRequest<any, TClassroomFilter>): Promise<unknown> {
-    return classroomService.findWithEnrollments(params);
+  }: IpcRequest<any, ClassroomFilter>): Promise<unknown> {
+    return classroomRepository.findClassroomsWithStudents({
+      classroomOptions: params,
+    });
   }
 }
 
@@ -61,8 +63,8 @@ export class PostClassroom extends AbstractEndpoint<any> {
 
   protected handle({
     body,
-  }: IpcRequest<TClassroomCreate, any>): Promise<unknown> {
-    return classroomService.create(body);
+  }: IpcRequest<ClassroomCreate, any>): Promise<unknown> {
+    return classroomRepository.create(body);
   }
 }
 
@@ -74,7 +76,7 @@ export class GetClassroom extends AbstractEndpoint<any> {
     params: ClassIdSchema,
   };
   protected handle({ params }: IpcRequest<any, ClassId>): Promise<unknown> {
-    return classroomService.findById(params.classId);
+    return classroomRepository.findById(params.classId);
   }
 }
 
@@ -90,8 +92,8 @@ export class UpdateClassroom extends AbstractEndpoint<any> {
   protected handle({
     params,
     body,
-  }: IpcRequest<TClassroomUpdate, ClassId>): Promise<unknown> {
-    return classroomService.update(params.classId, body);
+  }: IpcRequest<ClassroomUpdate, ClassId>): Promise<unknown> {
+    return classroomRepository.update(params.classId, body);
   }
 }
 
@@ -104,6 +106,6 @@ export class DeleteClassroom extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, ClassId>): Promise<unknown> {
-    return classroomService.delete(params.classId);
+    return classroomRepository.delete(params.classId);
   }
 }

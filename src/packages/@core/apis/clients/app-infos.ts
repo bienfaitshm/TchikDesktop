@@ -1,4 +1,4 @@
-import { IpcClient } from "@/packages/electron-ipc-rest";
+import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import type { SystemInformation } from "@/packages/@core/apis/servers/apps-infos";
 import { AppInfosRoutes } from "../routes-constant";
 

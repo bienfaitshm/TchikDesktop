@@ -6,16 +6,12 @@ import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
 import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 import {
-  ClassroomIds,
-  ShoolRouteIds,
-} from "@/packages/@core/data-access/data-system-access";
-import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
 import { extensions } from "@/packages/@core/documents-exports/extensions/seating-presence";
 import { createSeatingPresenceExportForm } from "./form";
-import { SeatingSessionDataResolver } from "./resolver";
+import { SeatingPresenceSessionDataResolver } from "./resolver";
 
 type ExportPayload = {
   schoolId: string;
@@ -36,11 +32,6 @@ export class SeatingPresenceExportStrategy extends AbstractExportStrategy<
 
   public readonly validationSchema = SchoolYearSchema;
 
-  public readonly dataSourceDefinition = {
-    classrooms: ClassroomIds.findAllClassroomsWithEnrollment,
-    school: ShoolRouteIds.findSchoolById,
-  } as const;
-
   constructor() {
     super({
       extensions,
@@ -60,6 +51,6 @@ export class SeatingPresenceExportStrategy extends AbstractExportStrategy<
   public override async resolveData(
     contextParams: ExportPayload,
   ): Promise<any> {
-    return SeatingSessionDataResolver.resolveData(contextParams);
+    return SeatingPresenceSessionDataResolver.resolveData(contextParams);
   }
 }

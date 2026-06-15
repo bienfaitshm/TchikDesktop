@@ -1,10 +1,9 @@
 import z from "zod";
 import {
-  localRoomService,
-  seatingAssignmentService,
-} from "@/packages/@core/data-access/db/queries/seating-queries";
-import { getLogger } from "@/packages/logger";
-import { enrolementService } from "@/packages/@core/data-access/db/queries/enrolement.query";
+  seatingAssignmentRepository,
+  seatingSessionService,
+} from "@/packages/@core/data-access/db/queries/seatings";
+
 import {
   HttpMethod,
   IpcRequest,
@@ -16,14 +15,12 @@ import {
   BulkSeatingAssignmentSchema,
   type TBulkSeatingAssignment,
   type SeatingGenerator,
-  type TSchoolYear,
+  type SchoolYear,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
 import { SeatingAssignmentRoutes } from "../../routes-constant";
-import { SeatingService } from "../services/seating.service";
 
 /** Genere le mise en place */
-
 export class GenerateSeating extends AbstractEndpoint<any> {
   route = SeatingAssignmentRoutes.GENERATING;
   method = HttpMethod.POST;
@@ -32,13 +29,8 @@ export class GenerateSeating extends AbstractEndpoint<any> {
   };
   protected handle({
     body,
-  }: IpcRequest<SeatingGenerator & TSchoolYear>): Promise<unknown> {
-    const seating = new SeatingService(
-      localRoomService,
-      enrolementService,
-      getLogger("SeatingService"),
-    );
-    return seating.generate(body);
+  }: IpcRequest<SeatingGenerator & SchoolYear>): Promise<unknown> {
+    return seatingSessionService.generate(body);
   }
 }
 
@@ -49,18 +41,18 @@ export class GetRoomLayout extends AbstractEndpoint<any> {
   schemas: ValidationSchemas = {
     params: z.object({
       sessionId: z.string(),
-      localRoomId: z.string(),
+      localroomId: z.string(),
     }),
   };
   protected handle({
     params,
   }: IpcRequest<
     unknown,
-    { sessionId: string; localRoomId: string }
+    { sessionId: string; localroomId: string }
   >): Promise<unknown> {
-    return seatingAssignmentService.getRoomLayout(
+    return seatingAssignmentRepository.getRoomLayout(
       params.sessionId,
-      params.localRoomId,
+      params.localroomId,
     );
   }
 }
@@ -71,7 +63,7 @@ export class BulkAssignStudents extends AbstractEndpoint<any> {
   method = HttpMethod.POST;
   schemas: ValidationSchemas = {};
   protected handle({ body }: IpcRequest<any>): Promise<unknown> {
-    return seatingAssignmentService.bulkAssign(body);
+    return seatingAssignmentRepository.bulkAssign(body);
   }
 }
 
@@ -84,7 +76,10 @@ export class RebuildAssignments extends AbstractEndpoint<any> {
   protected handle({
     body: { sessionId, assignments },
   }: IpcRequest<TBulkSeatingAssignment>): Promise<unknown> {
-    return seatingAssignmentService.rebuildAssignments(sessionId, assignments);
+    return seatingAssignmentRepository.rebuildAssignments(
+      sessionId,
+      assignments,
+    );
   }
 }
 
@@ -104,7 +99,7 @@ export class GetUnassignedStudents extends AbstractEndpoint<any> {
     unknown,
     { sessionId: string; yearId: string }
   >): Promise<unknown> {
-    return seatingAssignmentService.getUnassignedStudents(
+    return seatingAssignmentRepository.getUnassignedStudents(
       params.sessionId,
       params.yearId,
     );
@@ -118,15 +113,15 @@ export class ClearRoomAssignments extends AbstractEndpoint<any> {
   schemas: ValidationSchemas = {
     body: z.object({
       sessionId: z.string(),
-      localRoomId: z.string(),
+      localroomId: z.string(),
     }),
   };
   protected async handle({
     body,
-  }: IpcRequest<{ sessionId: string; localRoomId: string }>): Promise<unknown> {
-    const success = await seatingAssignmentService.clearRoomAssignments(
+  }: IpcRequest<{ sessionId: string; localroomId: string }>): Promise<unknown> {
+    const success = await seatingAssignmentRepository.clearRoomAssignments(
       body.sessionId,
-      body.localRoomId,
+      body.localroomId,
     );
     return { success };
   }
@@ -148,7 +143,7 @@ export class FindStudentSeat extends AbstractEndpoint<any> {
     unknown,
     { sessionId: string; enrolementId: string }
   >): Promise<unknown> {
-    return seatingAssignmentService.findStudentSeat(
+    return seatingAssignmentRepository.findStudentSeat(
       params.sessionId,
       params.enrolementId,
     );
