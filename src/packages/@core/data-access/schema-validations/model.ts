@@ -211,6 +211,7 @@ export const UserCreateSchema = UserSchema.omit({
   userId: true,
   createdAt: true,
   updatedAt: true,
+  username: true,
 }).extend({
   password: z.string().min(6).max(255),
 });
@@ -266,13 +267,13 @@ export const SeatingAssignmentCreateSchema = SeatingAssignmentSchema.omit({
 export const SeatingAssignmentUpdateSchema =
   SeatingAssignmentCreateSchema.partial();
 
-// Ton Student de base
-const BaseStudentSchema = UserCreateSchema.omit({
+export const BaseStudentSchema = UserCreateSchema.omit({
   password: true,
-  username: true,
   schoolId: true,
   role: true,
 });
+
+export type BaseStudent = z.infer<typeof BaseStudentSchema>;
 
 const BaseEnrollmentSchemaWithoutStudent = EnrollmentCreateSchema.omit({
   studentId: true,
