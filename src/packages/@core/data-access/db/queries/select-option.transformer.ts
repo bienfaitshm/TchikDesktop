@@ -54,7 +54,7 @@ export class SelectOptionTransformer {
       labelKeyLong,
       labelKeyShort,
       labelFormat = this.DEFAULT_FORMAT,
-      transform,
+      transform = (option, item) => ({ ...option, ...item }),
     } = config;
 
     const longLabel = String(item[labelKeyLong] ?? "").trim();
@@ -64,7 +64,7 @@ export class SelectOptionTransformer {
     const label = this.formatLabel(longLabel, shortLabel, labelFormat);
     const baseOption: SelectOption = { value, label };
 
-    return transform ? transform(baseOption, item) : (baseOption as R);
+    return transform ? (transform(baseOption, item) as R) : (baseOption as R);
   }
 
   private static formatLabel(

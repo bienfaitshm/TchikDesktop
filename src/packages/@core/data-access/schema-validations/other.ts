@@ -22,3 +22,16 @@ export const seatingGeneratorSchema = z.object({
 });
 
 export type SeatingGenerator = z.infer<typeof seatingGeneratorSchema>;
+
+/**
+ * Crée un schéma Zod validant la structure SearchOptions de manière dynamique et typée.
+ * @param filtersSchema Un schéma Zod optionnel pour valider les filtres spécifiques à une entité.
+ */
+export function createSearchOptionsSchema<
+  T extends z.ZodTypeAny = z.ZodUnknown,
+>(filtersSchema?: T) {
+  return z.object({
+    search: z.string().trim().optional(),
+    filters: filtersSchema ? filtersSchema.optional() : z.unknown().optional(),
+  });
+}

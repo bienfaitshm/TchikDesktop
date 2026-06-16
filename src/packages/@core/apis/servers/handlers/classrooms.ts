@@ -1,5 +1,8 @@
 import z from "zod";
-import { classroomRepository } from "@/packages/@core/data-access/db/queries";
+import {
+  classroomRepository,
+  classroomService,
+} from "@/packages/@core/data-access/db/queries";
 import {
   ClassroomSchema,
   ClassroomCreateSchema,
@@ -8,6 +11,7 @@ import {
   ClassroomFilter,
   ClassroomCreate,
   ClassroomUpdate,
+  createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -18,8 +22,14 @@ import { AbstractEndpoint } from "../abstract";
 import { ClassroomRoutes } from "../../routes-constant";
 
 const ClassIdSchema = ClassroomSchema.pick({ classId: true });
-
 type ClassId = z.infer<typeof ClassIdSchema>;
+
+export const searchClassroomOptionsSchema = createSearchOptionsSchema(
+  ClassroomFilterSchema,
+);
+export type SearchClassroomOptionsParams = z.infer<
+  typeof searchClassroomOptionsSchema
+>;
 
 export class GetClassrooms extends AbstractEndpoint<any> {
   route = ClassroomRoutes.ALL;
@@ -33,6 +43,21 @@ export class GetClassrooms extends AbstractEndpoint<any> {
     params,
   }: IpcRequest<any, ClassroomFilter>): Promise<unknown> {
     return classroomRepository.findMany(params);
+  }
+}
+
+export class GetSearchClassrooms extends AbstractEndpoint<any> {
+  route = ClassroomRoutes.SEARCH;
+  method = HttpMethod.GET;
+  validationErrorMessage? = undefined;
+  schemas: ValidationSchemas = {
+    params: searchClassroomOptionsSchema,
+  };
+
+  protected handle({
+    params,
+  }: IpcRequest<unknown, SearchClassroomOptionsParams>) {
+    return classroomService.getOptions(params as any);
   }
 }
 

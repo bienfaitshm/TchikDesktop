@@ -1,6 +1,6 @@
 export * from "./classrooms";
 export * from "./enrollments";
-export * from "./option.repository";
+export * from "./options";
 export * from "./schools";
 export * from "./stat.query";
 export * from "./users";

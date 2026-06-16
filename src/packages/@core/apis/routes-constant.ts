@@ -17,6 +17,7 @@ export const UserRoutes = {
  */
 export const OptionRoutes = {
   ALL: "options",
+  SEARCH: "options/search",
   DETAIL: "options/:optionId",
 } as const;
 
@@ -25,6 +26,7 @@ export const OptionRoutes = {
  */
 export const SchoolRoutes = {
   ALL: "schools",
+  SEARCH: "schools/search",
   DETAIL: "schools/:schoolId",
 } as const;
 
@@ -33,6 +35,7 @@ export const SchoolRoutes = {
  */
 export const StudyYearRoutes = {
   ALL: "studyYear",
+  SEARCH: "studyYear/search",
   DETAIL: "studyYear/:yearId",
 } as const;
 
@@ -41,6 +44,7 @@ export const StudyYearRoutes = {
  */
 export const ClassroomRoutes = {
   ALL: "classrooms",
+  SEARCH: "classrooms/search",
   ALL_ENROLLMENT: "classrooms/enrollments",
   DETAIL: "classrooms/:classroomId",
 } as const;
@@ -51,10 +55,11 @@ export const ClassroomRoutes = {
  * un ID composite ou un ID simple pour la gestion d'une seule inscription.
  */
 export const EnrollementRoutes = {
-  ALL: "enrollements",
-  DETAIL: "enrollements/:enrollementId",
-  ALL_HISTORIES: "enrollements/histories",
-  QUICK_ENROLLEMENT: "enrollements/quick",
+  ALL: "enrollments",
+  SEARCH: "enrollments/search",
+  DETAIL: "enrollments/:enrollmentId",
+  ALL_HISTORIES: "enrollments/histories",
+  QUICK_ENROLLEMENT: "enrollments/quick",
 } as const;
 
 export const DocumentExportRoutes = {
@@ -87,6 +92,7 @@ export const AppInfosRoutes = {
  */
 export const LocalRoomRoutes = {
   ALL: "seating/rooms",
+  SEARCH: "seating/rooms/search",
   DETAIL: "seating/rooms/:id",
   CREATE: "seating/rooms/create",
 } as const;
@@ -96,6 +102,7 @@ export const LocalRoomRoutes = {
  */
 export const SeatingSessionRoutes = {
   ALL: "seating/sessions",
+  SEARCH: "seating/sessions/search",
   BY_YEAR: "seating/sessions/year/:yearId",
   DETAIL: "seating/sessions/:id",
   STATUS: "seating/sessions/:id/status", // Pour GetSessionRoomsStatus
