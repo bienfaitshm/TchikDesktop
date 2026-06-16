@@ -13,7 +13,8 @@ import {
   type Classroom,
   type Option,
   type StudyYear,
-} from "@/packages/@core/data-access/db/schemas/schema";
+  type FindManyOptions,
+} from "@/packages/@core/data-access/db/schemas";
 import {
   BaseRepository,
   LibSqlClient,
@@ -22,7 +23,6 @@ import {
   applyQueryOptions,
   extractQueryPayload,
 } from "@/packages/@core/data-access/db/queries/drizzle-builder";
-import type { FindManyOptions } from "@/packages/@core/data-access/db/schemas/types";
 import type {
   OptionProvider,
   SearchOptions,
@@ -30,7 +30,7 @@ import type {
 import { createSQLiteSearchFilter } from "../drizzle-utility";
 export type ClassroomDTO = Classroom & { studyYear: StudyYear; option: Option };
 
-type BaseClasrromFilters = Partial<FindManyOptions<TableClassroom>>;
+export type BaseClasrromFilters = Partial<FindManyOptions<TableClassroom>>;
 interface GetClassroomsOptions {
   classroomOptions?: BaseClasrromFilters;
   enrollmentOptions?: Partial<FindManyOptions<TableClassroomEnrollment>>;
