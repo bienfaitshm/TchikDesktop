@@ -2,6 +2,10 @@ import { eq, Table, type InferInsertModel } from "drizzle-orm";
 import type { LibSQLDatabase, LibSQLTransaction } from "drizzle-orm/libsql";
 import { applyQueryOptions, mergeQueryOptions } from "./drizzle-builder";
 import type { FindManyOptions } from "../schemas/types";
+import type {
+  AnySQLiteSelectQueryBuilder,
+  SQLiteSelectDynamic,
+} from "drizzle-orm/sqlite-core";
 
 type TableColumn<TTable extends Table> =
   TTable["_"]["columns"][keyof TTable["_"]["columns"]];
@@ -15,9 +19,9 @@ export interface ILogger {
  * Type d'infrastructure unifié.
  * Représente soit le client de base, soit la transaction active pour LibSQL.
  */
-export type LibSqlClient =
-  | LibSQLDatabase<Record<string, unknown>>
-  | LibSQLTransaction<any, any>;
+export type LibSqlClient<
+  TSchema extends Record<string, unknown> = Record<string, unknown>,
+> = LibSQLDatabase<TSchema> | LibSQLTransaction<any, any>;
 
 export interface IBaseRepositoryConfig<
   TTable extends Table,
@@ -71,12 +75,16 @@ export abstract class BaseRepository<
   /**
    * Génère le QuerySet de base pour les sélections.
    */
-  protected getQuerySet(tx?: LibSqlClient) {
+  protected getQuerySet<T extends AnySQLiteSelectQueryBuilder>(
+    tx?: LibSqlClient,
+  ): SQLiteSelectDynamic<T> {
     return this.getClient(tx).select().from(this.table).$dynamic();
   }
 
-  protected getDetailQuerySet(tx?: LibSqlClient) {
-    return this.getQuerySet(tx);
+  protected getDetailQuerySet<T extends AnySQLiteSelectQueryBuilder>(
+    tx?: LibSqlClient,
+  ) {
+    return this.getQuerySet<T>(tx);
   }
 
   async findMany(
