@@ -16,7 +16,6 @@ export class OptionService {
         labelKeyLong: "optionName",
         labelKeyShort: "optionShortName",
         labelFormat: "long",
-        transform: (option, item) => ({ ...option, ...item }),
       },
     );
   }

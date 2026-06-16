@@ -1,5 +1,8 @@
 import z from "zod";
-import { optionRepository } from "@/packages/@core/data-access/db/queries";
+import {
+  optionRepository,
+  optionService,
+} from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcRequest,
@@ -13,13 +16,19 @@ import {
   type OptionCreate,
   type OptionUpdate,
   type OptionFilter,
+  createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
+import type { SelectOption } from "@/packages/@core/data-access/db/queries/select-option.transformer";
 import { AbstractEndpoint } from "../abstract";
 import { OptionRoutes } from "../../routes-constant";
 
 const OptionIdSchema = OptionSchema.pick({ optionId: true });
 
 type OptionId = z.infer<typeof OptionIdSchema>;
+
+export const searchOptionsSchema =
+  createSearchOptionsSchema(OptionFilterSchema);
+export type SearchOptionsParams = z.infer<typeof searchOptionsSchema>;
 
 export class GetOptions extends AbstractEndpoint<any> {
   route = OptionRoutes.ALL;
@@ -31,6 +40,21 @@ export class GetOptions extends AbstractEndpoint<any> {
 
   protected handle({ params }: IpcRequest<any, OptionFilter>) {
     return optionRepository.findMany(params);
+  }
+}
+
+export class GetSearchOptions extends AbstractEndpoint<any> {
+  route = OptionRoutes.SEARCH;
+  method = HttpMethod.GET;
+  validationErrorMessage? = undefined;
+  schemas: ValidationSchemas = {
+    params: searchOptionsSchema,
+  };
+
+  protected handle({
+    params,
+  }: IpcRequest<unknown, SearchOptionsParams>): Promise<SelectOption[]> {
+    return optionService.getOptions(params as any);
   }
 }
 

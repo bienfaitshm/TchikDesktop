@@ -42,6 +42,7 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
 
   // options
   options.GetOptions,
+  options.GetSearchOptions,
   options.PostOption,
   options.GetOption,
   options.UpdateOption,
