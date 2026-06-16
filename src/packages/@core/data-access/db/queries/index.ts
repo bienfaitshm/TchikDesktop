@@ -5,3 +5,4 @@ export * from "./schools";
 export * from "./stat.query";
 export * from "./users";
 export * from "./seatings";
+export * from "./select-option.transformer";

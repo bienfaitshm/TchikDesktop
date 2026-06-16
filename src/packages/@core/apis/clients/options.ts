@@ -5,6 +5,11 @@ import {
   OptionCreate,
   OptionUpdate,
 } from "@/packages/@core/data-access/schema-validations";
+import type {
+  SearchOptions,
+  SelectOption,
+} from "@/packages/@core/data-access/db/queries";
+
 import { OptionRoutes } from "../routes-constant";
 
 /**
@@ -29,6 +34,10 @@ export type OptionApi = Readonly<{
    * @returns Une promesse résolue avec la liste des OptionData.
    */
   fetchOptions(params?: OptionQueryParams): Promise<OptionData[]>;
+
+  fetchAsOptions(
+    params?: SearchOptions<OptionQueryParams>,
+  ): Promise<(SelectOption | Option)[]>;
 
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
@@ -73,6 +82,10 @@ export function createOptionApis(ipcClient: IpcClient): OptionApi {
     fetchOptions(params) {
       // Utilisation du 'params' optionnel de l'appel pour les filtres/pagination
       return ipcClient.get(OptionRoutes.ALL, { params });
+    },
+
+    fetchAsOptions(params) {
+      return ipcClient.get(OptionRoutes.SEARCH, { params });
     },
 
     fetchOptionById(optionId) {

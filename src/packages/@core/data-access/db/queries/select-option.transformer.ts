@@ -5,9 +5,7 @@ export interface SelectOption {
   label: string;
 }
 
-export interface SearchOptions<
-  TFields extends Record<string, unknown> = Record<string, unknown>,
-> {
+export interface SearchOptions<TFields extends Record<string, unknown> = {}> {
   search?: string;
   filters?: TFields;
 }
