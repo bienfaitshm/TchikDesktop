@@ -11,6 +11,10 @@ import type {
 import type { ClassroomDTO } from "@/packages/@core/data-access/db/queries/classrooms";
 import { ClassroomRoutes } from "../routes-constant";
 
+export type SearchClassroomQueryParams = Partial<
+  SearchOptions<ClassroomFilter>
+>;
+
 /**
  * Type de l'objet API retourné. Le 'Readonly' garantit que toutes les propriétés
  * sont immuables pour le consommateur de cette API.
@@ -25,7 +29,7 @@ export type ClassroomApi = Readonly<{
    * Récupère les salles de classe formatées pour les composants de sélection (Select).
    */
   fetchAsOptions(
-    params?: SearchOptions<ClassroomFilter>,
+    params?: SearchClassroomQueryParams,
   ): Promise<(SelectOption | ClassroomDTO)[]>;
 
   /**

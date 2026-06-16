@@ -23,6 +23,7 @@ export type OptionData = Option;
  */
 export type OptionQueryParams = OptionFilter;
 
+export type SearchOptionQueryParams = Partial<SearchOptions<OptionQueryParams>>;
 /**
  * Type de l'objet API retourné. Le 'as const' garantit que toutes les propriétés
  * sont en lecture seule (readonly) pour le consommateur de cette API.
@@ -36,7 +37,7 @@ export type OptionApi = Readonly<{
   fetchOptions(params?: OptionQueryParams): Promise<OptionData[]>;
 
   fetchAsOptions(
-    params?: SearchOptions<OptionQueryParams>,
+    params?: SearchOptionQueryParams,
   ): Promise<(SelectOption | Option)[]>;
 
   /**

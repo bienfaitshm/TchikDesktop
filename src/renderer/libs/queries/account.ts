@@ -7,6 +7,7 @@ import type {
 } from "@/packages/@core/data-access/schema-validations";
 
 import { TQueryUpdate } from "./type";
+import type { SearchUserQueryParams } from "@/packages/@core/apis/clients";
 
 export function useGetUsers(params?: UserFilter) {
   return useQuery({
@@ -15,15 +16,10 @@ export function useGetUsers(params?: UserFilter) {
   });
 }
 
-export function useGetSearchUsers(search: {
-  name?: string;
-  yearId?: string;
-  schoolId: string;
-}) {
+export function useGetUsersAsOption(params?: SearchUserQueryParams) {
   return useQuery({
-    queryKey: ["GET_SEARCH_USERS", search],
-    queryFn: () => users.searchUser(search),
-    enabled: Boolean(search.name?.trim()),
+    queryKey: ["GET_SEARCH_USERS", params],
+    queryFn: () => users.fetchAsOptions(params),
     placeholderData: (previousData) => previousData,
   });
 }

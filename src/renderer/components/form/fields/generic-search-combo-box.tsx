@@ -40,6 +40,7 @@ export interface ComboboxSearchProps<T extends ObjectRecord = ObjectRecord> {
   disabled?: boolean;
   className?: string;
   contentClassName?: string;
+  selectedItem?: ComboboxOption<T>;
   renderTrigger?: (selected: ComboboxOption<T> | undefined) => React.ReactNode;
   renderItem?: (
     item: ComboboxOption<T>,
@@ -61,6 +62,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
     disabled = false,
     className,
     contentClassName,
+    selectedItem,
     renderTrigger,
     renderItem,
   }: ComboboxSearchProps<T>,
@@ -68,10 +70,32 @@ function ComboboxSearchInner<T extends ObjectRecord>(
 ) {
   const [open, setOpen] = React.useState(false);
 
-  const selectedOption = React.useMemo(
-    () => options.find((opt) => opt.value === value),
-    [value, options],
-  );
+  const [localSelectedOption, setLocalSelectedOption] = React.useState<
+    ComboboxOption<T> | undefined
+  >(undefined);
+
+  const selectedOption = React.useMemo(() => {
+    if (selectedItem) return selectedItem;
+
+    const found = options.find((opt) => opt.value === value);
+    if (found) {
+      return found;
+    }
+
+    if (localSelectedOption && localSelectedOption.value === value) {
+      return localSelectedOption;
+    }
+
+    return undefined;
+  }, [value, options, selectedItem, localSelectedOption]);
+
+  // Mettre à jour le cache interne dès qu'un élément valide est trouvé
+  React.useEffect(() => {
+    const found = options.find((opt) => opt.value === value);
+    if (found) {
+      setLocalSelectedOption(found);
+    }
+  }, [value, options]);
 
   const filteredOptions = React.useMemo(() => {
     if (onSearchChange || !search) return options;
@@ -83,6 +107,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
 
   const handleSelect = React.useCallback(
     (option: ComboboxOption<T>) => {
+      setLocalSelectedOption(option);
       onChange?.(option.value);
       setOpen(false);
     },
@@ -159,7 +184,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
               </div>
             )}
 
-            {!isLoading && (
+            {!isLoading && options.length === 0 && (
               <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
                 Aucun élément trouvé.
               </CommandEmpty>

@@ -1,27 +1,10 @@
 import React from "react";
-import { useGetSearchUsers } from "@/renderer/libs/queries/account";
-import { useDataToOptions, type DataToOptionOptions } from "./data-as-options";
+import { useGetUsersAsOption } from "@/renderer/libs/queries/account";
+import type { SearchUserQueryParams } from "@/packages/@core/apis/clients";
 import { useDebounce } from "./utils";
 
-type SearchUsersParams = { name?: string; yearId?: string; schoolId: string };
-
-export function useQuerySearchUsers(
-  value: SearchUsersParams,
-  config: DataToOptionOptions = { labelFormat: "long" },
-) {
-  const { data: users = [], isLoading } = useGetSearchUsers(value);
-  console.log("users", { users });
-  const options = useDataToOptions({
-    data: users,
-    valueKey: "userId",
-    labelKeyLong: "fullName" as any,
-    labelKeyShort: "lastName",
-    options: config,
-    transformOption: (baseOption, item) => ({
-      ...baseOption,
-      description: `sexe: ${item.gender}`,
-    }),
-  });
+export function useQuerySearchUsers(params?: SearchUserQueryParams) {
+  const { data: options = [], isLoading } = useGetUsersAsOption(params);
 
   return {
     options,
@@ -29,12 +12,14 @@ export function useQuerySearchUsers(
   };
 }
 
-export function useSearchUsers(params: SearchUsersParams) {
+export function useSearchUsers(
+  params?: Pick<SearchUserQueryParams, "filters">,
+) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { options, isLoading } = useQuerySearchUsers({
-    name: debouncedSearch,
-    ...params,
+    search: debouncedSearch,
+    filters: params?.filters,
   });
   return {
     searchQuery,

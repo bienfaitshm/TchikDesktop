@@ -19,6 +19,11 @@ export class UserService {
         labelKeyLong: "fullName",
         labelKeyShort: "lastName",
         labelFormat: "long",
+        transform: (option, item) => ({
+          ...option,
+          description: `sexe :${item.gender}`,
+          ...item,
+        }),
       },
     );
   }

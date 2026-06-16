@@ -20,6 +20,8 @@ export type UserData = User;
  */
 export type UserQueryParams = UserFilter;
 
+export type SearchUserQueryParams = Partial<SearchOptions<UserQueryParams>>;
+
 /**
  * Type de l'objet API retourné. Le 'as const' garantit que toutes les propriétés
  * sont en lecture seule (readonly) pour le consommateur de cette API.
@@ -33,7 +35,7 @@ export type UserApi = Readonly<{
   fetchUsers(params?: UserQueryParams): Promise<UserData[]>;
 
   fetchAsOptions(
-    params?: SearchOptions<UserQueryParams>,
+    params?: SearchUserQueryParams,
   ): Promise<(SelectOption | User)[]>;
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.

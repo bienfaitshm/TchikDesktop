@@ -3,6 +3,8 @@ import { CustomLogger } from "@/packages/logger";
 export interface SelectOption {
   value: string;
   label: string;
+  sublabel?: string;
+  description?: string;
 }
 
 export interface SearchOptions<TFields extends Record<string, unknown> = {}> {
