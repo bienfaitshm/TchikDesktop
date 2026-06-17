@@ -36,7 +36,7 @@ export type UserApi = Readonly<{
 
   fetchUserAsOptions(
     params?: SearchUserQueryParams,
-  ): Promise<(SelectOption | User)[]>;
+  ): Promise<(SelectOption & User)[]>;
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
    * @param userId L'identifiant unique de la salle de classe.

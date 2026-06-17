@@ -30,7 +30,7 @@ export type ClassroomApi = Readonly<{
    */
   fetchClassroomAsOptions(
     params?: SearchClassroomQueryParams,
-  ): Promise<(SelectOption | ClassroomDTO)[]>;
+  ): Promise<(SelectOption & ClassroomDTO)[]>;
 
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.

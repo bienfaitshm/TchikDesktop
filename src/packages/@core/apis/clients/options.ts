@@ -38,7 +38,7 @@ export type OptionApi = Readonly<{
 
   fetchAsOptions(
     params?: SearchOptionQueryParams,
-  ): Promise<(SelectOption | Option)[]>;
+  ): Promise<(SelectOption & Option)[]>;
 
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
