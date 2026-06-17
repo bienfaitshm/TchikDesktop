@@ -82,6 +82,7 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
 
   // --- SEATING : Local Rooms ---
   seatings.GetLocalRooms,
+  seatings.GetSearchLocalRooms,
   seatings.GetLocalRoom,
   seatings.CreateLocalRoom,
   seatings.UpdateLocalRoom,

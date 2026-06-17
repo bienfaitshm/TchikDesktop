@@ -1,10 +1,6 @@
 import { useCallback } from "react";
 import { withNotifications } from "@/renderer/libs/notifications";
-import {
-  useCreateOption,
-  useDeleteOption,
-  useUpdateOption,
-} from "@/renderer/libs/queries/option";
+import { useCreateOption, useDeleteOption, useUpdateOption } from "./option";
 import type {
   Option,
   OptionCreate,

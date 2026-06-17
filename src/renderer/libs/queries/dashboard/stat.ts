@@ -2,67 +2,77 @@ import { useSuspenseQueries } from "@tanstack/react-query";
 import { stats as apis } from "@/renderer/libs/apis";
 import type { TStatsFilter } from "@/packages/@core/data-access/schema-validations";
 
-/**
- * 1. Pour toute l'ecole (garcon et fille; total d'eleve inscrit)
- * 2. pour toute l'ecole (liste des sections avec le nombre d'eleve inscrit)
- * 3. Pour chaque section (liste de classe avec le nombre de file et garcons inscrit)
- * 4. pour la section secondaire (liste d'option avec le nombre d'eleve inscrit)
- * 5. Pour une classe (le nombre de file et garcons inscrit)
- * 6. Pour une classe (le nombre de file et garcons pour chaque statut d'inscription ex. ENCOURS, ABANDON)
- * 7. Historique d'inscriptions pour une ecole, l'annee scolaire ou une classe
- * @returns
- */
+export const statsKeys = {
+  all: ["stats"] as const,
+  summary: (schoolId: string, yearId: string) =>
+    [...statsKeys.all, "summary", { schoolId, yearId }] as const,
+  status: (schoolId: string, yearId: string) =>
+    [...statsKeys.all, "status", { schoolId, yearId }] as const,
+  gender: (schoolId: string) =>
+    [...statsKeys.all, "gender", { schoolId }] as const,
+  class: (schoolId: string, yearId: string) =>
+    [...statsKeys.all, "class", { schoolId, yearId }] as const,
+  option: (schoolId: string, yearId: string) =>
+    [...statsKeys.all, "option", { schoolId, yearId }] as const,
+  retention: (schoolId: string, yearId: string) =>
+    [...statsKeys.all, "retention", { schoolId, yearId }] as const,
+} as const;
 
 /**
  * Hook synchronisé pour récupérer l'ensemble des analytics du dashboard.
- * Utilise le mode Suspense pour garantir que les données sont prêtes avant le rendu.
- * * @param {TStatsFilter} params - L'ID de l'école et de l'année scolaire active.
+ * Utilise le mode Suspense pour garantir la parallélisation et la préparation des données.
  */
-export const useDashboardStatistics = (params: TStatsFilter) => {
+export function useDashboardStatistics(params: TStatsFilter) {
   const { schoolId, yearId } = params;
+  // const isEnabled = Boolean(schoolId && yearId);
 
-  const [
-    { data: summary },
-    { data: statusDistribution },
-    { data: genderDistribution },
-    { data: studentsByClass },
-    { data: studentsByOption },
-    { data: retentionData },
-  ] = useSuspenseQueries({
+  const results = useSuspenseQueries({
     queries: [
       {
-        queryKey: ["stats", "summary", schoolId, yearId],
+        queryKey: statsKeys.summary(schoolId, yearId),
         queryFn: () => apis.fetchSummary({ schoolId, yearId }),
+        staleTime: 1000 * 60 * 5,
       },
       {
-        queryKey: ["stats", "status", schoolId, yearId],
+        queryKey: statsKeys.status(schoolId, yearId),
         queryFn: () => apis.fetchByStatus({ schoolId, yearId }),
+        staleTime: 1000 * 60 * 5,
       },
       {
-        queryKey: ["stats", "gender", schoolId],
+        queryKey: statsKeys.gender(schoolId),
         queryFn: () => apis.fetchByGender(schoolId),
+        staleTime: 1000 * 60 * 10,
       },
       {
-        queryKey: ["stats", "class", schoolId, yearId],
+        queryKey: statsKeys.class(schoolId, yearId),
         queryFn: () => apis.fetchByClass({ schoolId, yearId }),
+        staleTime: 1000 * 60 * 5,
       },
       {
-        queryKey: ["stats", "option", schoolId, yearId],
+        queryKey: statsKeys.option(schoolId, yearId),
         queryFn: () => apis.fetchByOption({ schoolId, yearId }),
+        staleTime: 1000 * 60 * 5,
       },
       {
-        queryKey: ["stats", "retention", schoolId, yearId],
+        queryKey: statsKeys.retention(schoolId, yearId),
         queryFn: () => apis.fetchRetention({ schoolId, yearId }),
+        staleTime: 1000 * 60 * 5,
       },
     ],
   });
 
+  /**
+   * Performance Senior : On évite la déstructuration brute de tableau à la volée.
+   * On extrait les données de manière stable. Si une seule requête change,
+   * seules les propriétés associées changeront de référence mémoire.
+   */
   return {
-    summary, // { total, active, excluded }
-    statusDistribution, // ChartDataPoint[]
-    genderDistribution, // ChartDataPoint[]
-    studentsByClass, // ClassStatsDTO[]
-    studentsByOption, // ChartDataPoint[]
-    retentionData, // ChartDataPoint[]
+    summary: results[0].data,
+    statusDistribution: results[1].data,
+    genderDistribution: results[2].data,
+    studentsByClass: results[3].data,
+    studentsByOption: results[4].data,
+    retentionData: results[5].data,
+    isRefetching: results.some((r) => r.isFetching),
   };
-};
+}
