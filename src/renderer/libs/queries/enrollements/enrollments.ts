@@ -1,4 +1,4 @@
-import { useMutation, useSuspenseQuery } from "./base-query";
+import { useMutation, useSuspenseQuery } from "./base/query";
 import {
   Enrollment,
   EnrollmentCreate,

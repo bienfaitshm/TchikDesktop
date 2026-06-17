@@ -1,15 +1,15 @@
-import { useMutation, useSuspenseQuery } from "./base-query";
+import { useMutation, useSuspenseQuery } from "./base/query";
 import { option } from "@/renderer/libs/apis";
 import type {
-  TOptionFilter,
-  TOptionUpdate,
-  TOptionCreate,
+  OptionFilter,
+  OptionUpdate,
+  OptionCreate,
 } from "@/packages/@core/data-access/schema-validations";
 import { TQueryUpdate } from "./type";
 
 export const optionKeys = {
   all: ["options"] as const,
-  lists: (params?: TOptionFilter) =>
+  lists: (params?: OptionFilter) =>
     [...optionKeys.all, "list", { params }] as const,
   details: () => [...optionKeys.all, "detail"] as const,
   detail: (id: string) => [...optionKeys.details(), id] as const,
@@ -19,7 +19,7 @@ export const optionKeys = {
  * @function useGetOptions
  * @description Hook to fetch all options
  */
-export function useGetOptions(params?: TOptionFilter) {
+export function useGetOptions(params?: OptionFilter) {
   return useSuspenseQuery({
     queryKey: optionKeys.lists(params),
     queryFn: () => option.fetchOptions(params),
@@ -44,7 +44,7 @@ export function useGetOptionById(optionId: string) {
 export function useCreateOption() {
   return useMutation({
     mutationKey: [...optionKeys.all, "create"],
-    mutationFn: (data: TOptionCreate) => option.createOption(data),
+    mutationFn: (data: OptionCreate) => option.createOption(data),
   });
 }
 
@@ -55,7 +55,7 @@ export function useCreateOption() {
 export function useUpdateOption() {
   return useMutation({
     mutationKey: [...optionKeys.all, "update"],
-    mutationFn: ({ data, id }: TQueryUpdate<TOptionUpdate>) =>
+    mutationFn: ({ data, id }: TQueryUpdate<OptionUpdate>) =>
       option.updateOption(id, data),
   });
 }
