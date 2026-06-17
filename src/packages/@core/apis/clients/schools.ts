@@ -93,7 +93,7 @@ export type SchoolApi = Readonly<{
    * @param data Les champs partiels de SchoolData à modifier.
    * @returns Une promesse résolue avec l'objet SchoolData mis à jour.
    */
-  updateStudyYear(yearId: string, data: StudyYearUpdate): Promise<SchoolData>;
+  updateStudyYear(yearId: string, data: StudyYearUpdate): Promise<StudyYear>;
 
   /**
    * Supprime une salle de classe par son ID.

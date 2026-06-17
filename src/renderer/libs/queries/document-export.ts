@@ -4,7 +4,7 @@ import { exportDocuments } from "@/renderer/libs/apis";
 /**
  * Type utilitaire pour représenter un objet de paramètres générique.
  */
-type ExportParams = Record<string, unknown>;
+export type ExportParams = Record<string, unknown>;
 
 /**
  * Structure des données requises pour lancer une exportation.

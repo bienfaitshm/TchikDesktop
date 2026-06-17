@@ -1,14 +1,11 @@
 import { useCallback } from "react";
-import { withNotifications } from "@/renderer/libs/notifications";
-import {
-  useCreateUser,
-  useDeleteUser,
-  useUpdateUser,
-} from "@/renderer/libs/queries/account";
+import { useCreateSchool, useDeleteSchool, useUpdateSchool } from "./school";
 import type {
-  UserCreate,
-  UserUpdate,
+  School,
+  SchoolCreate,
+  SchoolUpdate,
 } from "@/packages/@core/data-access/schema-validations";
+import { withNotifications } from "@/renderer/libs/notifications";
 import {
   type BaseFormProps,
   type BaseMutationConfig,
@@ -16,27 +13,27 @@ import {
   useFormBase,
 } from "../base";
 
-export type UserFormConfig = BaseMutationConfig<any>;
+export type SchoolFormConfig = BaseMutationConfig<School>;
 
 /**
- * Hook pour l'INSCRIPTION (Création) d'un élève.
+ * Hook pour la CRÉATION d'un établissement.
  */
-export function useCreateUserForm(config?: UserFormConfig) {
+export function useCreateSchoolForm(config?: SchoolFormConfig) {
   const { formId, notifyAndInvalidate } = useFormBase(config);
-  const mutation = useCreateUser();
+  const mutation = useCreateSchool();
 
-  const onSubmit: BaseFormProps<UserCreate>["onSubmit"] = useCallback(
+  const onSubmit: BaseFormProps<SchoolCreate>["onSubmit"] = useCallback(
     (data, helpers) => {
       mutation.mutate(
         data,
         withNotifications({
           notifications: {
             success: {
-              title: "Élève inscrit !",
-              description: `L'élève '${data.lastName} ${data.firstName}' a été ajouté avec succès.`,
+              title: "Établissement créé !",
+              description: `L'établissement '${data.name}' a été ajouté avec succès.`,
             },
             error: {
-              title: "Erreur d'inscription",
+              title: "Échec de la création.",
             },
           },
           onSuccess: (res) => {
@@ -57,13 +54,13 @@ export function useCreateUserForm(config?: UserFormConfig) {
 }
 
 /**
- * Hook pour la MISE À JOUR du dossier élève.
+ * Hook pour la MISE À JOUR d'un établissement.
  */
-export function useUpdateUserForm(config?: UserFormConfig) {
+export function useUpdateSchoolForm(config?: SchoolFormConfig) {
   const { formId, notifyAndInvalidate } = useFormBase(config);
-  const mutation = useUpdateUser();
+  const mutation = useUpdateSchool();
 
-  const onSubmit: BaseFormProps<QueryUpdatePayload<UserUpdate>>["onSubmit"] =
+  const onSubmit: BaseFormProps<QueryUpdatePayload<SchoolUpdate>>["onSubmit"] =
     useCallback(
       ({ data, id }, helpers) => {
         mutation.mutate(
@@ -71,11 +68,11 @@ export function useUpdateUserForm(config?: UserFormConfig) {
           withNotifications({
             notifications: {
               success: {
-                title: "Dossier mis à jour",
-                description: `Les informations de '${data.lastName}' ont été modifiées.`,
+                title: "Établissement mis à jour !",
+                description: `Les modifications pour '${data.name}' ont été enregistrées.`,
               },
               error: {
-                title: "Modification échouée",
+                title: "Échec de la mise à jour.",
               },
             },
             onSuccess: (res) => {
@@ -96,26 +93,28 @@ export function useUpdateUserForm(config?: UserFormConfig) {
 }
 
 /**
- * Hook pour la DÉSINCRIPTION (Suppression) d'un élève.
+ * Hook pour la SUPPRESSION d'un établissement.
  */
-export function useDeleteUserForm(config?: BaseMutationConfig<void>) {
+export function useDeleteSchoolForm(config?: BaseMutationConfig<void>) {
   const { notifyAndInvalidate } = useFormBase(config);
-  const mutation = useDeleteUser();
+  const mutation = useDeleteSchool();
 
-  const deleteUser = useCallback(
-    (userId: string, userName?: string) => {
+  const deleteSchool = useCallback(
+    (schoolId: string, schoolName?: string) => {
       mutation.mutate(
-        userId,
+        schoolId,
         withNotifications({
           notifications: {
             success: {
-              title: "Élève supprimé",
-              description: userName
-                ? `Le profil de '${userName}' a été retiré de la base.`
-                : "L'élève a été supprimé.",
+              title: "Établissement supprimé",
+              description: schoolName
+                ? `L'établissement '${schoolName}' a été définitivement retiré.`
+                : "L'établissement a été supprimé avec succès.",
             },
             error: {
-              title: "Erreur de désinscription",
+              title: "Erreur de suppression",
+              description:
+                "Impossible de supprimer l'établissement. Vérifiez s'il est lié à d'autres données.",
             },
           },
           onSuccess: () => {
@@ -128,7 +127,7 @@ export function useDeleteUserForm(config?: BaseMutationConfig<void>) {
   );
 
   return {
-    deleteUser,
+    deleteSchool,
     isDeleting: mutation.isPending,
   };
 }

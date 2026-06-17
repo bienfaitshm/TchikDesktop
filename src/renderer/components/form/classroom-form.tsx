@@ -19,11 +19,6 @@ import {
   SelectValue,
 } from "@/renderer/components/ui/select";
 import { ButtonAi } from "@/renderer/components/buttons/button-ai";
-import {
-  useClassroomForm,
-  type ClassroomFormData,
-  type TSuggestion,
-} from "../../libs/queries/classrooms/utils";
 import type { BaseFormProps } from "./base-form";
 
 /**
