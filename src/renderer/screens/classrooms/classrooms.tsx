@@ -1,7 +1,7 @@
 "use client";
 
 import type { Classroom } from "@/packages/@core/data-access/schema-validations";
-import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
+import { useGetClassrooms } from "@/renderer/libs/queries/classrooms";
 import React, { useMemo } from "react";
 import {
   DataTable,

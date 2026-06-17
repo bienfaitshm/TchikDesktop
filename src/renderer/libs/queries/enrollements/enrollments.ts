@@ -1,19 +1,48 @@
-import { useMutation, useSuspenseQuery } from "./base/query";
+import { useMutation, useSuspenseQuery } from "../base/query";
 import {
-  Enrollment,
-  EnrollmentCreate,
-  EnrollmentQuickCreate,
-  EnrollmentUpdate,
-  EnrollmentFilter,
+  type Enrollment,
+  type EnrollmentCreate,
+  type EnrollmentQuickCreate,
+  type EnrollmentUpdate,
+  type EnrollmentFilter,
 } from "@/packages/@core/data-access/schema-validations";
-import { enrollement } from "@/renderer/libs/apis";
-import { TQueryUpdate } from "./type";
-import type { UseSuspenseQueryOptions } from "@tanstack/react-query";
+import { enrollment as enrollmentApi } from "@/renderer/libs/apis";
+import type { QueryUpdatePayload } from "../base";
+import type {
+  UseSuspenseQueryOptions,
+  UseMutationOptions,
+} from "@tanstack/react-query";
 
-export function useGetEnrollments(params?: EnrollmentFilter) {
+/**
+ * 1. Query Key Factory
+ * Centralise et structure toutes les clés de cache pour TanStack Query.
+ */
+export const enrollmentKeys = {
+  all: ["enrollments"] as const,
+  lists: (params?: EnrollmentFilter) =>
+    [...enrollmentKeys.all, "list", { params }] as const,
+  details: () => [...enrollmentKeys.all, "detail"] as const,
+  detail: (id: string) => [...enrollmentKeys.details(), id] as const,
+  mutations: {
+    create: () => [...enrollmentKeys.all, "create"] as const,
+    quickCreate: () => [...enrollmentKeys.all, "quick-create"] as const,
+    update: () => [...enrollmentKeys.all, "update"] as const,
+    delete: () => [...enrollmentKeys.all, "delete"] as const,
+  },
+} as const;
+
+/**
+ * 2. Hooks de Lecture (Queries)
+ */
+
+export function useGetEnrollments(
+  params?: EnrollmentFilter,
+  options?: Partial<UseSuspenseQueryOptions<Enrollment[]>>,
+) {
   return useSuspenseQuery({
-    queryKey: ["GET_ENROLLMENTS", params],
-    queryFn: () => enrollement.fetchEnrollements(params),
+    queryKey: enrollmentKeys.lists(params),
+    queryFn: () => enrollmentApi.fetchEnrollments(params),
+    ...options,
   });
 }
 
@@ -22,40 +51,59 @@ export function useGetEnrollmentById(
   options?: Partial<UseSuspenseQueryOptions<Enrollment>>,
 ) {
   return useSuspenseQuery({
-    queryKey: ["GET_ENROLLMENT", enrollmentId],
-    queryFn: () => enrollement.fetchEnrollementById(enrollmentId),
+    queryKey: enrollmentKeys.detail(enrollmentId),
+    queryFn: () => enrollmentApi.fetchEnrollmentById(enrollmentId),
     ...options,
   });
 }
 
-export function useCreateEnrollment() {
+/**
+ * 3. Hooks d'Écriture (Mutations)
+ */
+
+export function useCreateEnrollment(
+  options?: Partial<UseMutationOptions<Enrollment, Error, EnrollmentCreate>>,
+) {
   return useMutation({
-    mutationKey: ["CREATE_ENROLLMENT"],
-    mutationFn: (data: EnrollmentCreate) => enrollement.createEnrollement(data),
+    mutationKey: enrollmentKeys.mutations.create(),
+    mutationFn: (data: EnrollmentCreate) =>
+      enrollmentApi.createEnrollment(data),
+    ...options,
   });
 }
 
-//
-
-export function useCreateQuickEnrollment() {
+export function useCreateQuickEnrollment(
+  options?: Partial<
+    UseMutationOptions<Enrollment, Error, EnrollmentQuickCreate>
+  >,
+) {
   return useMutation({
-    mutationKey: ["QUICK_ENROLLMENT"],
+    mutationKey: enrollmentKeys.mutations.quickCreate(),
     mutationFn: (data: EnrollmentQuickCreate) =>
-      enrollement.createQuickEnrollement(data),
+      enrollmentApi.createQuickEnrollment(data),
+    ...options,
   });
 }
 
-export function useUpdateEnrollment() {
+export function useUpdateEnrollment(
+  options?: Partial<
+    UseMutationOptions<Enrollment, Error, QueryUpdatePayload<EnrollmentUpdate>>
+  >,
+) {
   return useMutation({
-    mutationKey: ["UPDATE_ENROLLMENT"],
-    mutationFn: ({ data, id }: TQueryUpdate<EnrollmentUpdate>) =>
-      enrollement.updateEnrollement(id, data),
+    mutationKey: enrollmentKeys.mutations.update(),
+    mutationFn: ({ data, id }: QueryUpdatePayload<EnrollmentUpdate>) =>
+      enrollmentApi.updateEnrollment(id, data),
+    ...options,
   });
 }
 
-export function useDeleteEnrollment() {
+export function useDeleteEnrollment(
+  options?: Partial<UseMutationOptions<void, Error, string>>,
+) {
   return useMutation({
-    mutationKey: ["DELETE_ENROLLMENT"],
-    mutationFn: (id: string) => enrollement.deleteEnrollement(id),
+    mutationKey: enrollmentKeys.mutations.delete(),
+    mutationFn: (id: string) => enrollmentApi.deleteEnrollment(id),
+    ...options,
   });
 }

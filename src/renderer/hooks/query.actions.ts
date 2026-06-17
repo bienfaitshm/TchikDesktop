@@ -1,6 +1,6 @@
 import type { EnrollmentQuickCreate } from "@/packages/@core/data-access/schema-validations";
 import type { ClassroomEnrollment } from "@/packages/@core/data-access/db/schemas";
-import { useCreateQuickEnrollment } from "@/renderer/libs/queries/enrollments";
+import { useCreateQuickEnrollment } from "@/renderer/libs/queries/enrollements/enrollments";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import { useCallback } from "react";
 

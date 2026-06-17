@@ -28,7 +28,7 @@ export type ClassroomApi = Readonly<{
   /**
    * Récupère les salles de classe formatées pour les composants de sélection (Select).
    */
-  fetchAsOptions(
+  fetchClassroomAsOptions(
     params?: SearchClassroomQueryParams,
   ): Promise<(SelectOption | ClassroomDTO)[]>;
 
@@ -68,7 +68,7 @@ export function createClassroomApis(ipcClient: IpcClient): ClassroomApi {
       return ipcClient.get(ClassroomRoutes.ALL, { params });
     },
 
-    fetchAsOptions(params) {
+    fetchClassroomAsOptions(params) {
       return ipcClient.get(ClassroomRoutes.SEARCH, {
         params,
       });

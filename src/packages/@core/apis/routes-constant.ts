@@ -54,12 +54,12 @@ export const ClassroomRoutes = {
  * NOTE: L'inscription est souvent une ressource complexe, elle pourrait nécessiter
  * un ID composite ou un ID simple pour la gestion d'une seule inscription.
  */
-export const EnrollementRoutes = {
+export const EnrollmentRoutes = {
   ALL: "enrollments",
   SEARCH: "enrollments/search",
   DETAIL: "enrollments/:enrollmentId",
   ALL_HISTORIES: "enrollments/histories",
-  QUICK_ENROLLEMENT: "enrollments/quick",
+  QUICK_ENROLLMENT: "enrollments/quick",
 } as const;
 
 export const DocumentExportRoutes = {
@@ -130,7 +130,7 @@ export const IpcRoutes = {
   OPTIONS: OptionRoutes,
   SCHOOLS: SchoolRoutes,
   CLASSROOMS: ClassroomRoutes,
-  ENROLLEMENTS: EnrollementRoutes,
+  ENROLLEMENTS: EnrollmentRoutes,
   STUDY_YEAR: StudyYearRoutes,
   DOCUMENT_EXPORT: DocumentExportRoutes,
   STATS: StatsRoutes,

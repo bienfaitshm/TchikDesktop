@@ -1,36 +1,45 @@
 import type { MutationKey, UseMutationResult } from "@tanstack/react-query";
-import type { DefaultValues, FieldValues } from "react-hook-form";
+import type { DefaultValues, FieldValues, UseFormReset } from "react-hook-form";
 
-export type QueryUpdate<TData> = { id: string; data: Partial<TData> };
-export type QueryCreateParams<TData, TParams> = {
-  params: TParams;
-  data: TData;
+export type QueryUpdatePayload<TData, TId = string> = {
+  id: TId;
+  data: Partial<TData>;
 };
 
-export type FormSubmitHelpers<TFieldValues extends FieldValues> = {
-  reset?: (values?: DefaultValues<TFieldValues>) => void;
-};
+export type QueryCreatePayload<
+  TData,
+  TParams = undefined,
+> = TParams extends undefined
+  ? { data: TData }
+  : { params: TParams; data: TData };
+
+export interface FormSubmitHelpers<TFieldValues extends FieldValues> {
+  reset: UseFormReset<TFieldValues>;
+}
 
 export type FormSubmitHandler<TFieldValues extends FieldValues> = (
   data: TFieldValues,
   helpers: FormSubmitHelpers<TFieldValues>,
 ) => void | Promise<void>;
 
-export type BaseFormProps<TFieldValues extends FieldValues> = {
+export interface BaseFormProps<TFieldValues extends FieldValues> {
   formId?: string;
-  initialValues?: DefaultValues<TFieldValues>;
-  onSubmit?: FormSubmitHandler<TFieldValues>;
-};
+  defaultValues?: DefaultValues<TFieldValues>;
+  onSubmit: FormSubmitHandler<TFieldValues>;
+}
 
-export type MutationResult<TData, TError, TVariables, TOnMutateResult> =
-  UseMutationResult<TData, TError, TVariables, TOnMutateResult> & {
-    mutationKey?: MutationKey;
-  };
+export interface MutationMetadata {
+  mutationKey?: MutationKey;
+}
 
-export type BaseMutationConfig<
-  T extends Record<string, unknown> = {},
-  TResult extends Record<string, unknown> = {},
-> = T & {
-  mutationKeys?: MutationKey;
-  onSuccess?(dataResult: TResult): void;
-};
+export type EnhancedMutationResult<
+  TData = unknown,
+  TError = Error,
+  TVariables = void,
+  TContext = unknown,
+> = UseMutationResult<TData, TError, TVariables, TContext> & MutationMetadata;
+
+export interface BaseMutationConfig<TData = unknown> {
+  mutationKey?: MutationKey;
+  onSuccess?: (data: TData) => void | Promise<void>;
+}

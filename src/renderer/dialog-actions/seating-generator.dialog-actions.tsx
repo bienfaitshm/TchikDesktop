@@ -12,7 +12,7 @@ import {
 import ButtonGenerator from "@/renderer/components/buttons/button-generator";
 import { SeatingGeneratorForm } from "@/renderer/components/form/seating-generator-form";
 import { Button } from "@/renderer/components/ui/button";
-import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
+import { useGetClassrooms } from "@/renderer/libs/queries/classrooms";
 import { useGetLocalRooms } from "@/renderer/libs/queries/seating";
 
 type SeatingData = {

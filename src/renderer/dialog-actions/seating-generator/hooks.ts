@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, useRef, useId } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
+import { useGetClassrooms } from "@/renderer/libs/queries/classrooms";
 import {
   useGenerateSeating,
   useGetLocalRooms,

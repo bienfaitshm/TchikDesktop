@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Outlet, useParams } from "react-router";
-import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
+import { useGetClassrooms } from "@/renderer/libs/queries/classrooms/classroom";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { ClassroomSidebar } from "@/renderer/components/classroom-sidebar";
 import { PageShell } from "./page-shell.layout";

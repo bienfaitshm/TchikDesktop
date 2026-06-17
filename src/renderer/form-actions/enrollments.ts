@@ -6,7 +6,7 @@ import {
   useCreateQuickEnrollment,
   useUpdateEnrollment,
   useDeleteEnrollment,
-} from "@/renderer/libs/queries/enrollments";
+} from "@/renderer/libs/queries/enrollements/enrollments";
 import { TQueryUpdate } from "@/renderer/libs/queries/type";
 import type {
   EnrollmentCreate as EnrolementData,

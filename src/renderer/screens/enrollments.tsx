@@ -16,7 +16,7 @@ import {
 } from "@/renderer/components/tables";
 import { enrollmentHistoryColumns } from "@/renderer/components/tables/columns";
 import { CreateEnrollmentDialog } from "@/renderer/dialog-actions/enrollment.dialog-actions";
-import { useGetEnrollments } from "@/renderer/libs/queries/enrollments";
+import { useGetEnrollments } from "@/renderer/libs/queries/enrollements";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import type { EnrollementData } from "@/packages/@core/apis/clients";
 

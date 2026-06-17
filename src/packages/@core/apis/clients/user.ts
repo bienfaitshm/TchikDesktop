@@ -34,7 +34,7 @@ export type UserApi = Readonly<{
    */
   fetchUsers(params?: UserQueryParams): Promise<UserData[]>;
 
-  fetchAsOptions(
+  fetchUserAsOptions(
     params?: SearchUserQueryParams,
   ): Promise<(SelectOption | User)[]>;
   /**
@@ -82,7 +82,7 @@ export function createUserApis(ipcClient: IpcClient): UserApi {
       return ipcClient.get(UserRoutes.ALL, { params });
     },
 
-    fetchAsOptions(params) {
+    fetchUserAsOptions(params) {
       return ipcClient.get(UserRoutes.SEARCH, { params });
     },
 

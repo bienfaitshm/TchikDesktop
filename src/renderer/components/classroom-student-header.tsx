@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { UserPlus } from "lucide-react";
 import { Button } from "@/renderer/components/ui/button";
-import { useGetClassroomById } from "@/renderer/libs/queries/classroom";
+import { useGetClassroomById } from "@/renderer/libs/queries/classrooms";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
 import { CreateEnrollmentDialog } from "@/renderer/dialog-actions/enrollment.dialog-actions";
 export const ClassroomHeader = ({

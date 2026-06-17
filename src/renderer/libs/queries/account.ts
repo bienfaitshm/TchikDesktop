@@ -1,11 +1,11 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { users } from "@/renderer/libs/apis";
 import type {
+  User,
   UserCreate,
   UserUpdate,
   UserFilter,
 } from "@/packages/@core/data-access/schema-validations";
-
 import { TQueryUpdate } from "./type";
 import type { SearchUserQueryParams } from "@/packages/@core/apis/clients";
 
@@ -34,7 +34,7 @@ export function useCreateUser() {
 export function useUpdateUser() {
   return useMutation({
     mutationKey: ["UPDATE_USER"],
-    mutationFn: ({ id, data }: TQueryUpdate<UserUpdate>) =>
+    mutationFn: ({ id, data }: QueryUpdate<UserUpdate>) =>
       users.updateUser(id, data),
   });
 }

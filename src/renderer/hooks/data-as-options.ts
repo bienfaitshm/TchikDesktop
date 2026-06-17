@@ -3,7 +3,7 @@ import type {
   UserFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { useMemo } from "react";
-import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
+import { useGetClassrooms } from "@/renderer/libs/queries/classrooms/classroom";
 import { useGetUsers } from "@/renderer/libs/queries/account";
 import { useGetOptions } from "@/renderer/libs/queries/option";
 import { useAvailableExports } from "@/renderer/libs/queries/document-export";
