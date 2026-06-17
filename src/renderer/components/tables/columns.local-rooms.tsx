@@ -1,10 +1,10 @@
-import type { TLocalRoomAttributes as TLocalRoom } from "@/packages/@core/data-access/schema-validations";
 import type { ColumnDef } from "@tanstack/react-table";
 import { TypographySmall } from "@/renderer/components/ui/typography";
 import { Badge } from "@/renderer/components/ui/badge";
 import { LayoutGrid, Users } from "lucide-react";
+import type { Localroom } from "@/packages/@core/data-access/db/schemas";
 
-export const localRoomColumns: ColumnDef<TLocalRoom>[] = [
+export const localRoomColumns: ColumnDef<Localroom>[] = [
   {
     accessorKey: "name",
     header: "Nom du local",

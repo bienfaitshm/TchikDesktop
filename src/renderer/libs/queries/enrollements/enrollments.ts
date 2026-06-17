@@ -7,11 +7,13 @@ import {
   type EnrollmentFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { enrollment as enrollmentApi } from "@/renderer/libs/apis";
+
 import type { QueryUpdatePayload } from "../base";
 import type {
   UseSuspenseQueryOptions,
   UseMutationOptions,
 } from "@tanstack/react-query";
+import type { EnrollmentData } from "@/packages/@core/apis/clients";
 
 /**
  * 1. Query Key Factory
@@ -37,7 +39,7 @@ export const enrollmentKeys = {
 
 export function useGetEnrollments(
   params?: EnrollmentFilter,
-  options?: Partial<UseSuspenseQueryOptions<Enrollment[]>>,
+  options?: Partial<UseSuspenseQueryOptions<EnrollmentData[]>>,
 ) {
   return useSuspenseQuery({
     queryKey: enrollmentKeys.lists(params),

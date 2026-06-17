@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Button } from "@/renderer/components/ui/button";
 import { Plus } from "lucide-react";
-import { useGetStudyYears } from "@/renderer/libs/queries/school"; // Ou ton dossier spécifique study-year
+import { useGetStudyYears } from "@/renderer/libs/queries/study-years";
 import type { TStudyYear } from "@/packages/@core/data-access/db/schemas/types";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
@@ -16,7 +16,7 @@ import {
 } from "@/renderer/components/tables/data-table";
 import {
   enhanceColumnsExpandable,
-  StudyYearColumns,
+  studyYearColumns,
 } from "@/renderer/components/tables/columns";
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import {
@@ -93,7 +93,7 @@ export const StudyYearsPage = () => {
       >
         <DataTable<TStudyYear>
           data={studyYears}
-          columns={enhanceColumnsExpandable(StudyYearColumns)}
+          columns={enhanceColumnsExpandable(studyYearColumns)}
           keyExtractor={(item) => item.yearId}
         >
           <DataTableToolbar searchColumn="yearName" />

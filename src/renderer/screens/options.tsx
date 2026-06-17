@@ -2,10 +2,8 @@
 
 import * as React from "react";
 import { Plus } from "lucide-react";
-
-import type { TOptionAttributes as TOption } from "@/packages/@core/data-access/schema-validations";
-import { useGetOptions } from "@/renderer/libs/queries/option";
-
+import { useGetOptions } from "@/renderer/libs/queries/options";
+import type { Option } from "@/packages/@core/data-access/db/schemas";
 import { Button } from "@/renderer/components/ui/button";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
@@ -48,7 +46,7 @@ interface OptionRowActionsProps extends Pick<
   OptionDialogProps,
   "queryKeysToInvalidate"
 > {
-  option: TOption;
+  option: Option;
 }
 
 /**
@@ -125,7 +123,7 @@ export const OptionPage = () => {
           </section>
         }
       >
-        <DataTable<TOption>
+        <DataTable<Option>
           data={options}
           columns={columns}
           keyExtractor={(item) => item.optionId}
@@ -150,7 +148,7 @@ export const OptionPage = () => {
           >
             <DataTableContent>
               <DataContentHead />
-              <DataContentBody<TOption>>
+              <DataContentBody<Option>>
                 {({ row }) => (
                   <ExpandableRow
                     row={row as any}

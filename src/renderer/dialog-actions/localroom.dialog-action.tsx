@@ -17,7 +17,7 @@ import {
   useDeleteLocalRoomForm,
   useUpdateLocalRoomForm,
   type LocalRoomFormConfig,
-} from "@/renderer/components/form/seatings/local-rooms-form.actions";
+} from "@/renderer/libs/queries/seatings/local-rooms.actions";
 import {
   ConfirmDeleteDialog,
   useConfirm,

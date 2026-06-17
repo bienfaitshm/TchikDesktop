@@ -1,6 +1,5 @@
 import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import {
-  School,
   SchoolCreate,
   SchoolFilter,
   SchoolUpdate,
@@ -9,6 +8,7 @@ import {
   StudyYearUpdate,
   StudyYearFilter,
 } from "@/packages/@core/data-access/schema-validations";
+import type { School } from "@/packages/@core/data-access/db/schemas";
 import { SchoolRoutes, StudyYearRoutes } from "../routes-constant";
 
 /**

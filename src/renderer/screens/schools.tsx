@@ -1,8 +1,8 @@
 import React, { useMemo } from "react";
 import { Button } from "@/renderer/components/ui/button";
 import { Plus } from "lucide-react";
-import { useGetSchools } from "@/renderer/libs/queries/school";
-import type { TSchool } from "@/packages/@core/data-access/db/schemas/types";
+import { useGetSchools } from "@/renderer/libs/queries/schools";
+import type { School } from "@/packages/@core/data-access/db/schemas";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 
@@ -16,7 +16,7 @@ import {
 } from "@/renderer/components/tables/data-table";
 import {
   enhanceColumnsExpandable,
-  SchoolColumns,
+  schoolColumns,
 } from "@/renderer/components/tables/columns";
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import {
@@ -39,7 +39,7 @@ import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
  * Actions de ligne mémoïsées.
  * On utilise les props cohérentes : schoolId et schoolName.
  */
-const SchoolRowActions = React.memo(({ school }: { school: TSchool }) => {
+const SchoolRowActions = React.memo(({ school }: { school: School }) => {
   const initialData = useMemo(() => ({ ...school }), [school.schoolId]);
 
   return (
@@ -90,9 +90,9 @@ export const SchoolsPage = () => {
           </section>
         }
       >
-        <DataTable<TSchool>
+        <DataTable<School>
           data={schools}
-          columns={enhanceColumnsExpandable(SchoolColumns)}
+          columns={enhanceColumnsExpandable(schoolColumns)}
           keyExtractor={(item) => item.schoolId}
         >
           <DataTableToolbar searchColumn="name" />
@@ -109,7 +109,7 @@ export const SchoolsPage = () => {
           >
             <DataTableContent>
               <DataContentHead />
-              <DataContentBody<TSchool>>
+              <DataContentBody<School>>
                 {({ row }) => (
                   <ExpandableRow
                     row={row as Row<unknown>}

@@ -4,7 +4,7 @@ import React from "react";
 import { Badge } from "@/renderer/components/ui/badge";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { CheckCircle, MinusCircle } from "lucide-react";
-import type { TSchool } from "@/packages/@core/data-access/db/schemas/types";
+import type { School } from "@/packages/@core/data-access/db/schemas";
 import { DataTableColumnHeader } from "./data-table.column-header";
 
 const SchoolStatusBadge: React.FC<{ schoolId: string }> = ({ schoolId }) => {
@@ -26,7 +26,7 @@ const SchoolStatusBadge: React.FC<{ schoolId: string }> = ({ schoolId }) => {
   );
 };
 
-export const SchoolColumns: ColumnDef<TSchool>[] = [
+export const schoolColumns: ColumnDef<School>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (

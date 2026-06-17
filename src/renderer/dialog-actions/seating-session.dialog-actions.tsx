@@ -20,7 +20,7 @@ import {
   useDeleteSeatingSessionForm,
   useUpdateSeatingSessionForm,
   type SeatingSessionFormConfig,
-} from "@/renderer/components/form/seatings/seating-session-form.actions";
+} from "@/renderer/libs/queries/seatings/seating-session.actions";
 import {
   ConfirmDeleteDialog,
   useConfirm,

@@ -34,9 +34,7 @@ import { cn } from "@/renderer/utils";
 // Custom chart components
 import { ChartPie } from "../components/charts/pie";
 import { BarChart } from "../components/charts/bars";
-import { InteractivePieChart } from "../components/charts/pie-interactive";
-
-import { useDashboardStatistics } from "../libs/queries/stats";
+import { useDashboardStatistics } from "@/renderer/libs/queries/dashboard";
 import { useSchoolContext } from "../hooks/app-config-router";
 import type { ChartConfig } from "@/renderer/components/ui/chart";
 
