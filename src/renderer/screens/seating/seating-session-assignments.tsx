@@ -4,7 +4,7 @@ import { Row } from "@tanstack/react-table";
 import {
   useGetLocalRoomById,
   useGetRoomLayout,
-} from "@/renderer/libs/queries/seating";
+} from "@/renderer/libs/queries/seatings";
 import {
   DataTable,
   DataContentBody,

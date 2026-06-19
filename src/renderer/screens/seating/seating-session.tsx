@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 import { Link } from "react-router";
 
 import type { SeatingSession } from "@/packages/@core/data-access/db/schemas";
-import { useGetSeatingSessions } from "@/renderer/libs/queries/seating";
+import { useGetSeatingSessions } from "@/renderer/libs/queries/seatings";
 
 import { Button } from "@/renderer/components/ui/button";
 import { Suspense } from "@/renderer/libs/queries/suspense";
@@ -45,7 +45,7 @@ const columns = enhanceColumnsExpandable(seatingSessionColumns);
 
 interface SessionRowActionsProps extends Pick<
   SeatingSessionDialogProps,
-  "queryKeysToInvalidate"
+  "mutationKey"
 > {
   session: SeatingSession;
 }
@@ -54,7 +54,7 @@ interface SessionRowActionsProps extends Pick<
  * @description Actions de ligne.
  */
 const SessionRowActions = React.memo(
-  ({ session, queryKeysToInvalidate }: SessionRowActionsProps) => {
+  ({ session, mutationKey }: SessionRowActionsProps) => {
     return (
       <ActionContainer className="lg:grid-cols-4">
         {/* Redirection vers le détail de la session */}
@@ -66,7 +66,7 @@ const SessionRowActions = React.memo(
         <UpdateSeatingSessionDialog
           seatingSessionId={session.sessionId}
           defaultValues={session}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
         >
           <ActionTileEdit />
         </UpdateSeatingSessionDialog>
@@ -74,7 +74,7 @@ const SessionRowActions = React.memo(
         {/* Duplication */}
         <CreateSeatingSessionDialog
           defaultValues={session}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
         >
           <ActionTileCopy />
         </CreateSeatingSessionDialog>
@@ -83,7 +83,7 @@ const SessionRowActions = React.memo(
         <DeleteSeatingSessionDialog
           seatingSessionId={session.sessionId}
           seatingSessionName={session.sessionName}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
         >
           <ActionTileDelete />
         </DeleteSeatingSessionDialog>
@@ -97,10 +97,9 @@ SessionRowActions.displayName = "SessionRowActions";
 export const SeatingPage = () => {
   const { schoolId, yearId } = useSchoolContext();
 
-  const { data: rawSessions, queryKey: queryKeysToInvalidate } =
-    useGetSeatingSessions({
-      where: { schoolId, yearId },
-    });
+  const { data: rawSessions, queryKey: mutationKey } = useGetSeatingSessions({
+    where: { schoolId, yearId },
+  });
   const sessions = React.useMemo(() => rawSessions ?? [], [rawSessions]);
   const sessionIds = React.useMemo(
     () => (rawSessions ?? []).map((session) => session.sessionId),
@@ -123,7 +122,7 @@ export const SeatingPage = () => {
             </header>
             <CreateSeatingSessionDialog
               defaultValues={{ schoolId, yearId }}
-              queryKeysToInvalidate={queryKeysToInvalidate}
+              mutationKey={mutationKey}
             >
               <Button
                 size="sm"
@@ -168,7 +167,7 @@ export const SeatingPage = () => {
                     renderDetail={
                       <SessionRowActions
                         session={row.original}
-                        queryKeysToInvalidate={queryKeysToInvalidate}
+                        mutationKey={mutationKey}
                       />
                     }
                   />

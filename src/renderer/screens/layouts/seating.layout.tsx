@@ -6,7 +6,7 @@ import { ChevronLeft, Wand2 } from "lucide-react";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import { SeatingGeneratorDialog } from "@/renderer/dialog-actions/seating-generator";
-import { useGetSeatingSessionById } from "@/renderer/libs/queries/seating";
+import { useGetSeatingSessionById } from "@/renderer/libs/queries/seatings";
 import { SidebarContainer } from "@/renderer/components/sidebar-container";
 import { LocalroomSidebar } from "@/renderer/components/localroom-sidebar";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
