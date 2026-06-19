@@ -1,135 +1,133 @@
-import React, { useCallback } from "react"
-import { 
-    Dialog, DialogClose, DialogContent, DialogFooter, 
-    DialogDescription, DialogHeader, DialogTitle, DialogTrigger 
-} from "@/renderer/components/ui/dialog"
-import { Button } from "@/renderer/components/ui/button"
-import { ButtonLoader } from "@/renderer/components/form/button-loader"
-import { SchoolForm, type SchoolFormData } from "@/renderer/components/form/school-form"
-import { useCreateSchoolForm, useUpdateSchoolForm, useDeleteSchoolForm } from "@/renderer/components/form/school-form.actions"
-import { ConfirmDeleteDialog, useConfirm } from "@/renderer/components/dialog/dialog-delete"
+import * as React from "react";
+import { DialogForm } from "@/renderer/components/dialog/form";
+import {
+  ConfirmDeleteDialog,
+  useAsyncConfirm,
+} from "@/renderer/components/dialog/confirm-delete";
+import { useConfirm } from "@/renderer/hooks/use-confirm";
+import { cloneElementWithProps } from "@/renderer/utils/react";
+import {
+  SchoolForm,
+  type SchoolFormData,
+} from "@/renderer/components/form/school-form";
+import {
+  useCreateSchoolForm,
+  useUpdateSchoolForm,
+  useDeleteSchoolForm,
+} from "@/renderer/libs/queries/schools";
 
-
+/* ==========================================================================
+   1. CRÉATION
+   ========================================================================== */
 type CreateSchoolDialogProps = {
-    children: React.ReactNode
-    defaultValues?: Partial<SchoolFormData>
-}
+  children: React.ReactNode;
+  defaultValues?: Partial<SchoolFormData>;
+};
 
-export const CreateSchoolDialog: React.FC<CreateSchoolDialogProps> = ({ children, defaultValues }) => {
-    const { formId, onSubmit, isLoading } = useCreateSchoolForm()
+export const CreateSchoolDialog: React.FC<CreateSchoolDialogProps> = ({
+  children,
+  defaultValues,
+}) => {
+  const { formId, onSubmit, isSubmitting } = useCreateSchoolForm();
 
-    return (
-        <Dialog>
-            <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
-                <DialogHeader>
-                    <DialogTitle>Nouvel établissement</DialogTitle>
-                    <DialogDescription>
-                        Renseignez les détails pour configurer votre établissement scolaire.
-                    </DialogDescription>
-                </DialogHeader>
+  return (
+    <DialogForm
+      trigger={children}
+      title="Nouvel établissement"
+      description="Renseignez les détails pour configurer votre établissement scolaire."
+      formId={formId}
+      isLoading={isSubmitting}
+    >
+      <SchoolForm
+        formId={formId}
+        onSubmit={onSubmit}
+        defaultValues={defaultValues}
+      />
+    </DialogForm>
+  );
+};
 
-                <SchoolForm
-                    formId={formId}
-                    onSubmit={onSubmit}
-                    initialValues={defaultValues}
-                />
-
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="ghost">Annuler</Button>
-                    </DialogClose>
-                    <ButtonLoader form={formId} type="submit" isLoading={isLoading}>
-                        Créer l'établissement
-                    </ButtonLoader>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
-}
-
-/**
- * DIALOG DE MISE À JOUR
- */
+/* ==========================================================================
+   2. MODIFICATION
+   ========================================================================== */
 type UpdateSchoolDialogProps = {
-    children: React.ReactNode
-    schoolId: string
-    initialData?: Partial<SchoolFormData>
-}
+  children: React.ReactNode;
+  schoolId: string;
+  initialData?: Partial<SchoolFormData>;
+};
 
-export const UpdateSchoolDialog: React.FC<UpdateSchoolDialogProps> = ({ initialData, schoolId, children }) => {
-    const { formId, isLoading, onSubmit } = useUpdateSchoolForm()
+export const UpdateSchoolDialog: React.FC<UpdateSchoolDialogProps> = ({
+  initialData,
+  schoolId,
+  children,
+}) => {
+  const { formId, isSubmitting, onSubmit } = useUpdateSchoolForm();
 
-    return (
-        <Dialog>
-            <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
-                <DialogHeader>
-                    <DialogTitle>Modifier l'établissement</DialogTitle>
-                    <DialogDescription>
-                        Mettez à jour les informations de {initialData?.name || "l'établissement"}.
-                    </DialogDescription>
-                </DialogHeader>
+  return (
+    <DialogForm
+      trigger={children}
+      title="Modifier l'établissement"
+      description={`Mettez à jour les informations de ${initialData?.name || "l'établissement"}.`}
+      formId={formId}
+      isLoading={isSubmitting}
+    >
+      <SchoolForm
+        formId={formId}
+        onSubmit={(data, helpers) => onSubmit({ id: schoolId, data }, helpers)}
+        defaultValues={initialData}
+      />
+    </DialogForm>
+  );
+};
 
-                <SchoolForm
-                    formId={formId}
-                    onSubmit={(data) => onSubmit({ id: schoolId, data })}
-                    initialValues={initialData}
-                />
-
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="ghost">Annuler</Button>
-                    </DialogClose>
-                    <ButtonLoader form={formId} type="submit" isLoading={isLoading}>
-                        Enregistrer les modifications
-                    </ButtonLoader>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
-}
-
-
+/* ==========================================================================
+   3. SUPPRESSION
+   ========================================================================== */
 interface DeleteSchoolDialogProps {
-    children: (props: { onOpen: () => void; isLoading: boolean }) => React.ReactNode
-    schoolId: string
-    schoolName: string
+  children: React.ReactNode;
+  schoolId: string;
+  schoolName: string;
 }
 
 export const DeleteSchoolDialog: React.FC<DeleteSchoolDialogProps> = ({
-    children,
-    schoolId,
-    schoolName,
+  children,
+  schoolId,
+  schoolName,
 }) => {
-    const { isOpen, onOpen, onClose } = useConfirm<string>()
+  const { isOpen, onOpen, onClose } = useConfirm<string>();
 
-    const { onSubmit: deleteSchool, isLoading } = useDeleteSchoolForm({
-        onSuccess: onClose,
-    })
+  const { deleteSchool, isDeleting } = useDeleteSchoolForm({
+    onSuccess: onClose,
+  });
 
-    const handleConfirm = useCallback(async () => {
-        await deleteSchool(schoolId, schoolName)
-    }, [schoolId, schoolName, deleteSchool])
+  const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
+    id: schoolId,
+    onOpenConfirm: onOpen,
+    onCloseConfirm: onClose,
+    onConfirmAction: deleteSchool,
+    actionArgs: [schoolName],
+    errorMessage: "Erreur lors de la suppression de l'établissement:",
+  });
 
-    return (
-        <>
-            <ConfirmDeleteDialog
-                item={schoolId}
-                isOpen={isOpen}
-                onClose={onClose}
-                onConfirm={handleConfirm}
-                isLoading={isLoading}
-                title="Supprimer l'établissement"
-                description="Attention : cette action est irréversible. Toutes les données liées (élèves, classes, années) seront impactées."
-                itemName={schoolName}
-            />
-            {children({
-                onOpen: () => onOpen(schoolId),
-                isLoading: isLoading
-            })}
-        </>
-    )
-}
+  return (
+    <>
+      <ConfirmDeleteDialog
+        id={schoolId}
+        isOpen={isOpen}
+        onClose={onClose}
+        onConfirm={handleConfirm}
+        isPending={isDeleting}
+        title="Supprimer l'établissement"
+        description="Attention : cette action est irréversible. Toutes les données liées (élèves, classes, années) seront définitivement supprimées."
+        itemName={schoolName}
+      />
 
-DeleteSchoolDialog.displayName = "DeleteSchoolDialog"
+      {cloneElementWithProps(children, {
+        onClick: handleTriggerClick,
+        disabled: isDeleting,
+      })}
+    </>
+  );
+};
+
+DeleteSchoolDialog.displayName = "DeleteSchoolDialog";

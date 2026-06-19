@@ -1,28 +1,19 @@
-import React, { useState, useCallback } from "react";
+import * as React from "react";
+import { DialogForm } from "@/renderer/components/dialog/form";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/renderer/components/ui/dialog";
-import { Button } from "@/renderer/components/ui/button";
-import { ButtonLoader } from "@/renderer/components/form/button-loader";
+  ConfirmDeleteDialog,
+  useAsyncConfirm,
+} from "@/renderer/components/dialog/confirm-delete";
+import { cloneElementWithProps } from "@/renderer/utils/react";
 import { LocalRoomForm } from "@/renderer/components/form/seatings/local-rooms-form";
 import {
   useCreateLocalRoomForm,
   useDeleteLocalRoomForm,
   useUpdateLocalRoomForm,
   type LocalRoomFormConfig,
-} from "@/renderer/libs/queries/seatings/local-rooms.actions";
-import {
-  ConfirmDeleteDialog,
-  useConfirm,
-} from "@/renderer/components/dialog/dialog-delete";
-import type { TLocalRoomCreate as LocalRoomFormData } from "@/packages/@core/data-access/schema-validations";
+  type LocalRoomFormData,
+} from "@/renderer/libs/queries/seatings";
+import { useConfirm } from "@/renderer/hooks/use-confirm";
 
 export type LocalRoomDialogProps<TExtraProps extends Record<string, any> = {}> =
   React.PropsWithChildren<
@@ -32,103 +23,70 @@ export type LocalRoomDialogProps<TExtraProps extends Record<string, any> = {}> =
       }
   >;
 
+/* ==========================================================================
+   1. CRÉATION
+   ========================================================================== */
 export const CreateLocalRoomDialog: React.FC<LocalRoomDialogProps> = ({
   children,
   defaultValues,
   ...config
 }) => {
-  const [open, setOpen] = useState(false);
-
-  const { formId, onSubmit, isCreating } = useCreateLocalRoomForm({
-    ...config,
-    onSuccess: (data) => {
-      config.onSuccess?.(data);
-      setOpen(false);
-    },
-  });
+  const { formId, onSubmit, isSubmitting } = useCreateLocalRoomForm(config);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
-        <DialogHeader>
-          <DialogTitle>Créer un local</DialogTitle>
-          <DialogDescription>
-            Configurez un nouveau local physique (salle, amphithéâtre) pour
-            organiser vos sessions de placement.
-          </DialogDescription>
-        </DialogHeader>
-
-        <LocalRoomForm
-          formId={formId}
-          onSubmit={onSubmit}
-          initialValues={defaultValues}
-        />
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <DialogClose asChild>
-            <Button variant="ghost">Annuler</Button>
-          </DialogClose>
-          <ButtonLoader form={formId} type="submit" isLoading={isCreating}>
-            Enregistrer le local
-          </ButtonLoader>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DialogForm
+      trigger={children}
+      title="Créer un local"
+      description="Configurez un nouveau local physique (salle, amphithéâtre) pour organiser vos sessions de placement."
+      formId={formId}
+      isLoading={isSubmitting}
+    >
+      <LocalRoomForm
+        formId={formId}
+        onSubmit={onSubmit}
+        defaultValues={defaultValues}
+      />
+    </DialogForm>
   );
 };
 
+/* ==========================================================================
+   2. MODIFICATION
+   ========================================================================== */
 interface UpdateLocalRoomProps {
-  localRoomId: string;
+  localroomId: string;
 }
 
 export const UpdateLocalRoomDialog: React.FC<
   LocalRoomDialogProps<UpdateLocalRoomProps>
-> = ({ defaultValues, localRoomId, children, ...config }) => {
-  const [open, setOpen] = useState(false);
-
-  const { formId, isUpdating, onSubmit } = useUpdateLocalRoomForm({
+> = ({ defaultValues, localroomId, children, ...config }) => {
+  const { formId, isSubmitting, onSubmit } = useUpdateLocalRoomForm({
     ...config,
-    localRoomId,
-    onSuccess: (data) => {
-      config.onSuccess?.(data);
-      setOpen(false);
-    },
+    localroomId,
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
-        <DialogHeader>
-          <DialogTitle>
-            Modifier le local : {defaultValues?.name ?? ""}
-          </DialogTitle>
-          <DialogDescription>
-            Modifiez la capacité ou les dimensions du local. Ces changements
-            affecteront les futurs placements.
-          </DialogDescription>
-        </DialogHeader>
-
-        <LocalRoomForm
-          formId={formId}
-          onSubmit={onSubmit}
-          initialValues={defaultValues}
-        />
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <DialogClose asChild>
-            <Button variant="ghost">Annuler</Button>
-          </DialogClose>
-          <ButtonLoader form={formId} type="submit" isLoading={isUpdating}>
-            Mettre à jour
-          </ButtonLoader>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DialogForm
+      trigger={children}
+      title={`Modifier le local : ${defaultValues?.name ?? ""}`}
+      description="Modifiez la capacité ou les dimensions du local. Ces changements affecteront les futurs placements."
+      formId={formId}
+      isLoading={isSubmitting}
+    >
+      <LocalRoomForm
+        formId={formId}
+        onSubmit={(value, helpers) =>
+          onSubmit?.({ id: localroomId, data: value }, helpers as any)
+        }
+        defaultValues={defaultValues}
+      />
+    </DialogForm>
   );
 };
 
+/* ==========================================================================
+   3. SUPPRESSION
+   ========================================================================== */
 interface DeleteLocalRoomProps {
   localRoomId: string;
   roomName: string;
@@ -147,41 +105,32 @@ export const DeleteLocalRoomDialog: React.FC<
     },
   });
 
-  const handleConfirm = useCallback(async () => {
-    try {
-      await deleteLocalRoom(localRoomId, roomName);
-    } catch (error) {
-      console.error("Erreur lors de la suppression du local:", error);
-    }
-  }, [localRoomId, roomName, deleteLocalRoom]);
-
-  const handleTriggerClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      onOpen(localRoomId);
-    },
-    [onOpen, localRoomId],
-  );
+  const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
+    id: localRoomId,
+    onOpenConfirm: onOpen,
+    onCloseConfirm: onClose,
+    onConfirmAction: deleteLocalRoom,
+    actionArgs: [roomName],
+    errorMessage: "Erreur lors de la suppression du local:",
+  });
 
   return (
     <>
       <ConfirmDeleteDialog
-        item={localRoomId}
+        id={localRoomId}
         isOpen={isOpen}
         onClose={onClose}
         onConfirm={handleConfirm}
-        isLoading={isDeleting}
+        isPending={isDeleting}
         title="Supprimer le local"
         description="Attention : la suppression de ce local annulera toutes les assignations de places qui lui sont liées dans les sessions actives."
         itemName={roomName}
       />
 
-      {React.isValidElement(children)
-        ? React.cloneElement(children as React.ReactElement<any>, {
-            onClick: handleTriggerClick,
-            disabled: isDeleting,
-          })
-        : children}
+      {cloneElementWithProps(children, {
+        onClick: handleTriggerClick,
+        disabled: isDeleting,
+      })}
     </>
   );
 };

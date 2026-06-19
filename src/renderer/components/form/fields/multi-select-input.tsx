@@ -31,7 +31,7 @@ export interface MultiSelectProps extends Omit<
   name: string;
   placeholder?: string;
   options?: FilterOption[];
-  value?: string[];
+  value?: (string | undefined)[];
   onChange?(values: string[]): void;
   labelPlural?: string;
   searchPlaceholder?: string;

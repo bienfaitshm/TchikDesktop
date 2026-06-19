@@ -1,16 +1,11 @@
-import React, { useCallback } from "react";
+import * as React from "react";
+import { DialogForm } from "@/renderer/components/dialog/form";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/renderer/components/ui/dialog";
-import { Button } from "@/renderer/components/ui/button";
-import { ButtonLoader } from "@/renderer/components/form/button-loader";
+  ConfirmDeleteDialog,
+  useAsyncConfirm,
+} from "@/renderer/components/dialog/confirm-delete";
+import { useConfirm } from "@/renderer/hooks/use-confirm";
+import { cloneElementWithProps } from "@/renderer/utils/react";
 import {
   OptionForm,
   type OptionFormData,
@@ -20,11 +15,7 @@ import {
   useUpdateOptionForm,
   useDeleteOptionForm,
   type OptionFormConfig,
-} from "@/renderer/components/form/option-form.actions";
-import {
-  ConfirmDeleteDialog,
-  useConfirm,
-} from "@/renderer/components/dialog/dialog-delete";
+} from "@/renderer/libs/queries/options";
 
 export type OptionDialogProps<TExtraProps extends Record<string, any> = {}> =
   React.PropsWithChildren<
@@ -34,89 +25,66 @@ export type OptionDialogProps<TExtraProps extends Record<string, any> = {}> =
       }
   >;
 
+/* ==========================================================================
+   1. CRÉATION
+   ========================================================================== */
+
 export const CreateOptionDialog: React.FC<OptionDialogProps> = ({
   children,
   defaultValues,
   ...config
 }) => {
-  const { formId, createOption, isCreating } = useCreateOptionForm(config);
+  const { formId, onSubmit, isSubmitting } = useCreateOptionForm(config);
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
-        <DialogHeader>
-          <DialogTitle>Créer une filière</DialogTitle>
-          <DialogDescription>
-            Remplissez les informations ci-dessous pour ajouter une nouvelle
-            filière à votre établissement.
-          </DialogDescription>
-        </DialogHeader>
-
-        <OptionForm
-          formId={formId}
-          onSubmit={createOption}
-          initialValues={defaultValues}
-        />
-
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">Annuler</Button>
-          </DialogClose>
-          <ButtonLoader form={formId} type="submit" isLoading={isCreating}>
-            Enregistrer
-          </ButtonLoader>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DialogForm
+      trigger={children}
+      title="Créer une filière"
+      description="Remplissez les informations ci-dessous pour ajouter une nouvelle filière à votre établissement."
+      formId={formId}
+      isLoading={isSubmitting}
+    >
+      <OptionForm
+        formId={formId}
+        onSubmit={onSubmit}
+        defaultValues={defaultValues}
+      />
+    </DialogForm>
   );
 };
+
+/* ==========================================================================
+   2. MODIFICATION
+   ========================================================================== */
+interface UpdateOptionProps {
+  optionId: string;
+}
 
 export const UpdateOptionDialog: React.FC<
-  OptionDialogProps<{ optionId: string }>
+  OptionDialogProps<UpdateOptionProps>
 > = ({ defaultValues, optionId, children, ...config }) => {
-  const { formId, isUpdating, updateOption } = useUpdateOptionForm(config);
-
-  const handleSubmit = useCallback(
-    async (data: OptionFormData, helpers: { reset: () => void }) => {
-      await updateOption({ id: optionId, data }, helpers);
-    },
-    [optionId, updateOption],
-  );
+  const { formId, isSubmitting, onSubmit } = useUpdateOptionForm(config);
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
-        <DialogHeader>
-          <DialogTitle>
-            Modifier la filière : {defaultValues?.optionName ?? ""}
-          </DialogTitle>
-          <DialogDescription>
-            Modifiez les détails de la filière. Les changements seront appliqués
-            immédiatement.
-          </DialogDescription>
-        </DialogHeader>
-
-        <OptionForm
-          formId={formId}
-          onSubmit={handleSubmit}
-          initialValues={defaultValues}
-        />
-
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">Annuler</Button>
-          </DialogClose>
-          <ButtonLoader form={formId} type="submit" isLoading={isUpdating}>
-            Mettre à jour
-          </ButtonLoader>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DialogForm
+      trigger={children}
+      title={`Modifier la filière : ${defaultValues?.optionName ?? ""}`}
+      description="Modifiez les détails de la filière. Les changements seront appliqués immédiatement."
+      formId={formId}
+      isLoading={isSubmitting}
+    >
+      <OptionForm
+        formId={formId}
+        onSubmit={onSubmit}
+        defaultValues={defaultValues}
+      />
+    </DialogForm>
   );
 };
 
+/* ==========================================================================
+   3. SUPPRESSION
+   ========================================================================== */
 interface DeleteOptionProps {
   optionId: string;
   optionName: string;
@@ -129,40 +97,38 @@ export const DeleteOptionDialog: React.FC<
 
   const { deleteOption, isDeleting } = useDeleteOptionForm({
     ...config,
-    onSuccess: onClose,
+    onSuccess: (id) => {
+      config.onSuccess?.(id as any);
+      onClose();
+    },
   });
 
-  const handleConfirm = useCallback(async () => {
-    await deleteOption(optionId, optionName);
-  }, [optionId, optionName, deleteOption]);
-
-  const handleTriggerClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      onOpen(optionId);
-    },
-    [onOpen, optionId],
-  );
+  const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
+    id: optionId,
+    onOpenConfirm: onOpen,
+    onCloseConfirm: onClose,
+    onConfirmAction: deleteOption,
+    actionArgs: [optionName],
+    errorMessage: "Erreur lors de la suppression de la filière:",
+  });
 
   return (
     <>
       <ConfirmDeleteDialog
-        item={optionId}
+        id={optionId}
         isOpen={isOpen}
         onClose={onClose}
         onConfirm={handleConfirm}
-        isLoading={isDeleting}
+        isPending={isDeleting}
         title="Supprimer la filière"
         description="Attention : tous les documents et données associés à cette filière seront définitivement supprimés."
         itemName={optionName}
       />
 
-      {React.isValidElement(children)
-        ? React.cloneElement(children as React.ReactElement<any>, {
-            onClick: handleTriggerClick,
-            disabled: isDeleting,
-          })
-        : children}
+      {cloneElementWithProps(children, {
+        onClick: handleTriggerClick,
+        disabled: isDeleting,
+      })}
     </>
   );
 };

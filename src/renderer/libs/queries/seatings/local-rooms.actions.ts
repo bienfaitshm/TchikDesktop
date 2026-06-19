@@ -17,6 +17,7 @@ import {
   useFormBase,
 } from "../base";
 
+export type LocalRoomFormData = LocalroomCreate;
 export type LocalRoomFormConfig = BaseMutationConfig<Localroom>;
 
 /**
@@ -58,14 +59,14 @@ export function useCreateLocalRoomForm(config?: LocalRoomFormConfig) {
 }
 
 interface UpdateLocalRoomConfig extends BaseMutationConfig<Localroom> {
-  localRoomId: string;
+  localroomId: string;
 }
 
 /**
  * Hook pour la MISE À JOUR d'une salle physique (local).
  */
 export function useUpdateLocalRoomForm({
-  localRoomId,
+  localroomId,
   ...config
 }: UpdateLocalRoomConfig) {
   const { formId, notifyAndInvalidate } = useFormBase(config);
@@ -76,7 +77,7 @@ export function useUpdateLocalRoomForm({
   >["onSubmit"] = useCallback(
     ({ data, id }, helpers) => {
       mutation.mutate(
-        { data, id: id ?? localRoomId },
+        { data, id: id ?? localroomId },
         withNotifications({
           notifications: {
             success: {
@@ -94,7 +95,7 @@ export function useUpdateLocalRoomForm({
         }),
       );
     },
-    [localRoomId, mutation, notifyAndInvalidate],
+    [localroomId, mutation, notifyAndInvalidate],
   );
 
   return {
@@ -112,9 +113,9 @@ export function useDeleteLocalRoomForm(config?: BaseMutationConfig<void>) {
   const mutation = useDeleteLocalRoom();
 
   const deleteLocalRoom = useCallback(
-    async (localRoomId: string, roomName?: string) => {
+    async (localroomId: string, roomName?: string) => {
       return mutation.mutateAsync(
-        localRoomId,
+        localroomId,
         withNotifications({
           notifications: {
             success: {

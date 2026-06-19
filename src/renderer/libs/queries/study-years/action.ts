@@ -17,6 +17,8 @@ import {
   useFormBase,
 } from "../base";
 
+export type SchoolFormData = StudyYearCreate;
+
 export type StudyYearFormConfig = BaseMutationConfig<StudyYear>;
 
 /**

@@ -1,40 +1,55 @@
 import { useCallback, useId, useMemo } from "react";
-import type {
-  DefaultValues,
-  FieldValues,
-  UseFormReturn,
-} from "react-hook-form";
-import { ZodSchema } from "zod";
-import { useZodForm as useForm } from "@/packages/use-zod-form";
+import type { DefaultValues, FieldValues, UseFormReset } from "react-hook-form";
+import {
+  useZodForm as useForm,
+  UseZodFormReturn,
+} from "@/packages/use-zod-form";
 import { type QueryKey, useQueryClient } from "@tanstack/react-query";
 
-export type FormSubmitHelpers<TFieldValues extends FieldValues> = {
-  reset: (values?: DefaultValues<TFieldValues>) => void;
+import type { MutationKey, UseMutationResult } from "@tanstack/react-query";
+
+export type QueryUpdatePayload<TData, TId = string> = {
+  id: TId;
+  data: Partial<TData>;
 };
+
+export type QueryCreatePayload<
+  TData,
+  TParams = undefined,
+> = TParams extends undefined
+  ? { data: TData }
+  : { params: TParams; data: TData };
+
+export interface FormSubmitHelpers<TFieldValues extends FieldValues> {
+  reset: UseFormReset<TFieldValues>;
+}
 
 export type FormSubmitHandler<TFieldValues extends FieldValues> = (
   data: TFieldValues,
   helpers: FormSubmitHelpers<TFieldValues>,
 ) => void | Promise<void>;
 
-export type BaseFormProps<TFieldValues extends FieldValues> = {
+export interface BaseFormProps<TFieldValues extends FieldValues> {
   formId?: string;
-  initialValues?: DefaultValues<TFieldValues>;
-  onSubmit?: FormSubmitHandler<TFieldValues>;
-};
-
-export interface UseZodFormConfig<TFieldValues extends FieldValues> {
-  schema: ZodSchema<TFieldValues>;
-  defaultValues: DefaultValues<TFieldValues>;
-  initialValues?: DefaultValues<TFieldValues>;
-  onSubmit?: FormSubmitHandler<TFieldValues>;
+  defaultValues?: DefaultValues<TFieldValues>;
+  onSubmit: FormSubmitHandler<TFieldValues>;
 }
 
-export type UseZodFormReturn<TFieldValues extends FieldValues> =
-  UseFormReturn<TFieldValues> & {
-    submit: (e?: React.BaseSyntheticEvent) => Promise<void>;
-    isSubmitting: boolean;
-  };
+export interface MutationMetadata {
+  mutationKey?: MutationKey;
+}
+
+export type EnhancedMutationResult<
+  TData = unknown,
+  TError = Error,
+  TVariables = void,
+  TContext = unknown,
+> = UseMutationResult<TData, TError, TVariables, TContext> & MutationMetadata;
+
+export interface BaseMutationConfig<TData = unknown> {
+  mutationKey?: MutationKey;
+  onSuccess?: (data: TData) => void | Promise<void>;
+}
 
 export function useZodForm<TFieldValues extends FieldValues>({
   schema,

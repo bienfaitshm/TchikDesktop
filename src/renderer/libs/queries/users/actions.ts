@@ -4,7 +4,7 @@ import {
   useCreateUser,
   useDeleteUser,
   useUpdateUser,
-} from "@/renderer/libs/queries/account";
+} from "@/renderer/libs/queries/users";
 import type {
   UserCreate,
   UserUpdate,

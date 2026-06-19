@@ -1,148 +1,162 @@
 import React from "react";
 import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/renderer/components/ui/form";
 import { Input } from "@/renderer/components/ui/input";
-import { SchoolCreateSchema, type TSchoolCreate } from "@/packages/@core/data-access/schema-validations";
-import { BaseFormProps, useZodForm } from "./base-form";
+import {
+  SchoolCreateSchema,
+  type SchoolCreate,
+} from "@/packages/@core/data-access/schema-validations";
+import {
+  type BaseFormProps,
+  useZodForm,
+  mergeDefaultValues,
+} from "@/renderer/libs/forms";
 import { Loader2 } from "lucide-react";
 
-export type SchoolFormData = TSchoolCreate;
+export type SchoolFormData = SchoolCreate;
 
 const DEFAULT_SCHOOL_VALUES: SchoolFormData = {
-    name: "",
-    adress: "",
-    town: "Lubumbashi",
-    logo: undefined
+  name: "",
+  address: "",
+  town: "Lubumbashi",
+  logo: undefined,
 };
 
 /**
  * Formulaire de configuration de l'établissement scolaire.
  */
 export const SchoolForm: React.FC<BaseFormProps<SchoolFormData>> = ({
-    formId,
-    onSubmit,
-    initialValues = {}
+  formId,
+  onSubmit,
+  defaultValues,
 }) => {
+  const form = useZodForm({
+    schema: SchoolCreateSchema,
+    defaultValues: mergeDefaultValues(defaultValues, DEFAULT_SCHOOL_VALUES),
+    onSubmit,
+  });
 
+  const isSubmitting = form.isSubmitting;
 
+  return (
+    <Form {...form}>
+      <form
+        id={formId}
+        className="space-y-8"
+        onSubmit={form.submit}
+        aria-label="Configuration de l'établissement scolaire"
+        noValidate
+      >
+        {/* Section : Informations Générales */}
+        <section className="space-y-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-1 font-bold text-muted-foreground">
+                  Nom officiel de l'école
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Ex: Complexe Scolaire MASOMO"
+                    autoComplete="organization"
+                    className="h-11 focus-visible:ring-primary/50"
+                    disabled={isSubmitting}
+                    aria-required="true"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Saisissez le nom complet tel qu'il doit apparaître sur les
+                  bulletins et rapports.
+                </FormDescription>
+                <FormMessage className="font-medium" />
+              </FormItem>
+            )}
+          />
+        </section>
 
-    const form = useZodForm({
-        schema: SchoolCreateSchema,
-        defaultValues: DEFAULT_SCHOOL_VALUES,
-        initialValues,
-        onSubmit: onSubmit
-    });
+        {/* Section : Localisation avec Fieldset pour l'accessibilité */}
+        <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-lg border text-muted-foreground">
+          <legend className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4 px-2">
+            Localisation Géographique
+          </legend>
 
-    const isSubmitting = form.isSubmitting;
+          <FormField
+            control={form.control}
+            name="town"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-semibold">Ville</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Ex: Lubumbashi"
+                    autoComplete="address-level2"
+                    disabled={isSubmitting}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-    return (
-        <Form {...form}>
-            <form
-                id={formId}
-                className="space-y-8"
-                onSubmit={form.submit}
-                aria-label="Configuration de l'établissement scolaire"
-                noValidate
-            >
-                {/* Section : Informations Générales */}
-                <section className="space-y-6">
-                    <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="flex items-center gap-1 font-bold text-muted-foreground">
-                                    Nom officiel de l'école
-                                    <span className="text-destructive" aria-hidden="true">*</span>
-                                </FormLabel>
-                                <FormControl>
-                                    <Input
-                                        placeholder="Ex: Complexe Scolaire MASOMO"
-                                        autoComplete="organization"
-                                        className="h-11 focus-visible:ring-primary/50"
-                                        disabled={isSubmitting}
-                                        aria-required="true"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormDescription>
-                                    Saisissez le nom complet tel qu'il doit apparaître sur les bulletins et rapports.
-                                </FormDescription>
-                                <FormMessage className="font-medium" />
-                            </FormItem>
-                        )}
-                    />
-                </section>
+          <FormField
+            control={form.control}
+            name="adress"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-semibold">
+                  Adresse physique
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Ex: 12, Avenue des Écoles, Q/Golf"
+                    autoComplete="street-address"
+                    disabled={isSubmitting}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </fieldset>
 
-                {/* Section : Localisation avec Fieldset pour l'accessibilité */}
-                <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-lg border text-muted-foreground">
-                    <legend className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4 px-2">
-                        Localisation Géographique
-                    </legend>
+        {/* Gestion des erreurs globales (Root) */}
+        {form.formState.errors.root && (
+          <div
+            role="alert"
+            className="p-3 text-sm font-medium text-destructive bg-destructive/10 rounded-md"
+          >
+            {form.formState.errors.root.message}
+          </div>
+        )}
 
-                    <FormField
-                        control={form.control}
-                        name="town"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="font-semibold">Ville</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        {...field}
-                                        placeholder="Ex: Lubumbashi"
-                                        autoComplete="address-level2"
-                                        disabled={isSubmitting}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="adress"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="font-semibold">Adresse physique</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        {...field}
-                                        placeholder="Ex: 12, Avenue des Écoles, Q/Golf"
-                                        autoComplete="street-address"
-                                        disabled={isSubmitting}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </fieldset>
-
-                {/* Gestion des erreurs globales (Root) */}
-                {form.formState.errors.root && (
-                    <div role="alert" className="p-3 text-sm font-medium text-destructive bg-destructive/10 rounded-md">
-                        {form.formState.errors.root.message}
-                    </div>
-                )}
-
-                {/* Optionnel : Indicateur visuel de chargement si le bouton est à l'extérieur */}
-                {isSubmitting && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground animate-pulse" aria-live="polite">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Traitement en cours...
-                    </div>
-                )}
-            </form>
-        </Form>
-    );
+        {/* Optionnel : Indicateur visuel de chargement si le bouton est à l'extérieur */}
+        {isSubmitting && (
+          <div
+            className="flex items-center gap-2 text-sm text-muted-foreground animate-pulse"
+            aria-live="polite"
+          >
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Traitement en cours...
+          </div>
+        )}
+      </form>
+    </Form>
+  );
 };
 
 SchoolForm.displayName = "SchoolForm";

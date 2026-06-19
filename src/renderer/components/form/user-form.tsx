@@ -18,7 +18,11 @@ import { USER_GENDER_ENUM as USER_GENDER } from "@/packages/@core/data-access/db
 import { Input } from "@/renderer/components/ui/input";
 import { GenderInput } from "./fields/gender";
 import { DateInput } from "./fields/date";
-import { BaseFormProps, useZodForm } from "./base-form";
+import {
+  type BaseFormProps,
+  useZodForm,
+  mergeDefaultValues,
+} from "@/renderer/libs/forms";
 import { GENDER_OPTIONS } from "@/packages/@core/data-access/db/options";
 
 export type UserCreateFormData = BaseStudent;
@@ -42,11 +46,10 @@ export interface BaseUserFormHandle {}
  */
 export const BaseUserForm: React.FC<
   BaseFormProps<UserCreateFormData> & UserCreateSchemaFormProps
-> = ({ onSubmit, formId, initialValues = {} }) => {
+> = ({ onSubmit, formId, defaultValues }) => {
   const form = useZodForm<UserCreateFormData>({
     schema: BaseStudentSchema,
-    initialValues,
-    defaultValues: DEFAULT_VALUES,
+    defaultValues: mergeDefaultValues(defaultValues, DEFAULT_VALUES),
     onSubmit,
   });
 
