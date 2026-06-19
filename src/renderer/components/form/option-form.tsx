@@ -82,7 +82,7 @@ export const OptionForm: React.FC<BaseFormProps<OptionFormData>> = ({
   defaultValues,
   onSubmit,
 }) => {
-  const form = useZodForm({
+  const form = useZodForm<OptionFormData>({
     schema: OptionCreateSchema,
     defaultValues: mergeDefaultValues(defaultValues, DEFAULT_OPTION_VALUES),
     onSubmit,

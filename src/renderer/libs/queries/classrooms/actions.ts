@@ -1,11 +1,21 @@
 import { useCallback, useMemo } from "react";
+import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
+import {
+  getSectionLabel,
+  SECTION_OPTIONS,
+} from "@/packages/@core/data-access/db/options";
 import { withNotifications } from "@/renderer/libs/notifications";
 import {
   useCreateClassroom,
   useUpdateClassroom,
   useDeleteClassroom,
 } from "./classroom";
-import { createClassroomSuggestion } from "./utils";
+import {
+  createClassroomSuggestion,
+  getPrefixIdentifier,
+  createSuggestion,
+  type TSuggestion,
+} from "./utils";
 import type {
   Classroom,
   ClassroomCreate,
@@ -19,8 +29,17 @@ import {
 } from "../base";
 import { useSearchOptions } from "../options";
 
+const NONE_VALUES = ["undefined", "null"];
+
 export type ClassroomFormData = ClassroomCreate;
 export type ClassroomFormConfig = BaseMutationConfig<Classroom>;
+
+function createSectionSuggestion(indentifier: string, section) {
+  const prefix = getPrefixIdentifier(indentifier);
+  const sectionLabel = getSectionLabel(section);
+
+  return createSuggestion(sectionLabel, sectionLabel.substring(0, 1), prefix);
+}
 
 /**
  * Hook d'infrastructure interne (Privé à ce fichier)
@@ -31,16 +50,29 @@ function useBaseClassroomForm(schoolId: string) {
   const search = useSearchOptions({ filters: searchFilters });
 
   const generateSuggestion = useCallback(
-    (optionId: string, currentName: string) => {
-      if (!search.options) return null;
-      return createClassroomSuggestion(search.options, optionId, currentName);
+    (
+      identifier: string,
+      optionId?: string,
+      section?: SECTION_ENUM,
+    ): TSuggestion | null => {
+      console.log("===>", { identifier, optionId, section });
+      if (!search.options || !optionId || NONE_VALUES.includes(optionId)) {
+        return createSectionSuggestion(identifier, section);
+      }
+      return createClassroomSuggestion(search.options, optionId, identifier);
     },
     [search.options],
   );
 
   return {
-    searchOptions: search.options,
-    isSearchingOptions: search.isSearching,
+    searchOption: {
+      ...search,
+      options: [
+        { label: "Tronc commun (Aucune option)", value: "none" },
+        ...search.options,
+      ],
+    },
+    sectionOptions: SECTION_OPTIONS,
     generateSuggestion,
   };
 }

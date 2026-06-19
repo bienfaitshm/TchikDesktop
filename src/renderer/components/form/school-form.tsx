@@ -37,7 +37,7 @@ export const SchoolForm: React.FC<BaseFormProps<SchoolFormData>> = ({
   onSubmit,
   defaultValues,
 }) => {
-  const form = useZodForm({
+  const form = useZodForm<SchoolFormData>({
     schema: SchoolCreateSchema,
     defaultValues: mergeDefaultValues(defaultValues, DEFAULT_SCHOOL_VALUES),
     onSubmit,
@@ -114,7 +114,7 @@ export const SchoolForm: React.FC<BaseFormProps<SchoolFormData>> = ({
 
           <FormField
             control={form.control}
-            name="adress"
+            name="address"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="font-semibold">

@@ -1,12 +1,14 @@
 import { useCallback, useState, useRef } from "react";
+import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
 import type { UseZodFormReturn } from "@/packages/use-zod-form";
 import type { ClassroomCreateSchema } from "@/packages/@core/data-access/schema-validations";
 import type { TSuggestion } from "./utils";
 
 interface UseClassroomSuggestionOptions {
   onGenerateSuggestion?: (
-    optionId: string,
     identifier: string,
+    optionId?: string,
+    section?: SECTION_ENUM,
   ) => TSuggestion | null | Promise<TSuggestion | null>;
 }
 
@@ -20,10 +22,12 @@ export function useGenerateClassroomSuggestion(
 
   const handleGenerate = useCallback(
     async (form: UseZodFormReturn<typeof ClassroomCreateSchema>) => {
-      const { identifier, optionId } = form.getValues();
+      const { identifier, optionId, section } = form.getValues();
 
-      if (!identifier || !optionId) {
-        await form.trigger(["identifier", "optionId"]);
+      console.log("------------------", { identifier, optionId, section });
+
+      if (!identifier) {
+        await form.trigger(["identifier"]);
         return;
       }
 
@@ -31,8 +35,9 @@ export function useGenerateClassroomSuggestion(
         setIsGenerating(true);
 
         const suggestion = await optionsRef.current.onGenerateSuggestion?.(
-          String(optionId),
           identifier,
+          String(optionId),
+          section,
         );
 
         if (suggestion) {

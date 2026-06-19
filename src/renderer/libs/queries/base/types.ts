@@ -1,6 +1,11 @@
 import type { MutationKey, UseMutationResult } from "@tanstack/react-query";
 import type { DefaultValues, FieldValues, UseFormReset } from "react-hook-form";
 
+export type Option = {
+  value: string;
+  label: string;
+};
+
 export type QueryUpdatePayload<TData, TId = string> = {
   id: TId;
   data: Partial<TData>;
@@ -42,4 +47,11 @@ export type EnhancedMutationResult<
 export interface BaseMutationConfig<TData = unknown> {
   mutationKey?: MutationKey;
   onSuccess?: (data: TData) => void | Promise<void>;
+}
+
+export interface SearchOption<T extends Option = Option> {
+  searchQuery: string;
+  options: T[];
+  isSearching: boolean;
+  setSearchQuery(value: string): void;
 }

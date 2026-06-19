@@ -1,5 +1,4 @@
 import React from "react";
-import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
 import {
   ClassroomCreate,
@@ -16,22 +15,17 @@ import {
 } from "@/renderer/components/ui/form";
 import { Input } from "@/renderer/components/ui/input";
 import { Loader2 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/renderer/components/ui/select";
 import { ButtonAi } from "@/renderer/components/buttons/button-ai";
+import { SelectInput } from "@/renderer/components/form/fields/select-input";
 import {
   type BaseFormProps,
   mergeDefaultValues,
   useZodForm,
 } from "@/renderer/libs/forms";
-import { TSuggestion } from "@/renderer/libs/queries/classrooms";
 import { UseZodFormReturn } from "@/packages/use-zod-form";
 import { z } from "zod";
+import { ComboboxSearch } from "@/renderer/components/form/fields/generic-search-combo-box";
+import { SearchOption } from "@/renderer/libs/queries/base";
 
 const DEFAULT_VALUES: Partial<ClassroomCreate> = {
   identifier: "",
@@ -41,36 +35,9 @@ const DEFAULT_VALUES: Partial<ClassroomCreate> = {
   yearId: "",
 };
 
-/**
- * OptionsSelect optimisé avec support ARIA
- */
-function OptionsSelect({
-  options,
-  placeholder,
-}: {
-  options: { label: string; value: string }[];
-  placeholder?: string;
-}) {
-  return (
-    <>
-      <FormControl>
-        <SelectTrigger aria-label={placeholder}>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-      </FormControl>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </>
-  );
-}
-
 type ClassroomProps = {
-  options?: { label: string; value: string }[];
+  searchOption?: SearchOption;
+  sectionOptions?: { label: string; value: string }[];
   onGenerateSuggestion?(
     form: UseZodFormReturn<z.ZodType<ClassroomCreate>>,
   ): void;
@@ -83,19 +50,17 @@ export const ClassroomForm: React.FC<
   formId,
   onSubmit,
   onGenerateSuggestion,
-  options = [],
+  searchOption,
+  sectionOptions = [],
   defaultValues,
   isGenerating,
 }) => {
-  const form = useZodForm({
+  const form = useZodForm<ClassroomCreate>({
     schema: ClassroomCreateSchema,
     defaultValues: mergeDefaultValues(defaultValues, DEFAULT_VALUES),
     onSubmit,
   });
 
-  const handleGenerate = React.useCallback(() => {
-    onGenerateSuggestion?.(form);
-  }, [onGenerateSuggestion, form]);
   return (
     <Form {...form}>
       <form
@@ -104,6 +69,50 @@ export const ClassroomForm: React.FC<
         className="space-y-6"
         aria-label="Formulaire de création de classe"
       >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="section"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-semibold">
+                  Niveau d'enseignement / Sections
+                </FormLabel>
+                <FormControl>
+                  <SelectInput options={sectionOptions} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="optionId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-semibold">
+                  Option / Filière
+                </FormLabel>
+                <FormControl>
+                  <ComboboxSearch
+                    onChange={(val) =>
+                      field.onChange(val === "none" ? null : val)
+                    }
+                    value={field.value ?? "none"}
+                    options={searchOption?.options}
+                    onSearchChange={searchOption?.setSearchQuery}
+                    isLoading={searchOption?.isSearching}
+                    search={searchOption?.searchQuery}
+                    searchPlaceholder="Recherer une options... Ex. HP"
+                    placeholder="Choisir une option..."
+                  />
+                </FormControl>
+
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         {/* Champ Identifiant avec Bouton AI intégré proprement */}
         <FormField
           control={form.control}
@@ -117,7 +126,7 @@ export const ClassroomForm: React.FC<
                 <ButtonAi
                   type="button"
                   disabled={isGenerating}
-                  onClick={handleGenerate}
+                  onClick={() => onGenerateSuggestion?.(form)}
                   aria-busy={isGenerating}
                   title="Générer une suggestion via IA"
                 />
@@ -158,54 +167,6 @@ export const ClassroomForm: React.FC<
             </FormItem>
           )}
         />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="optionId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="font-semibold">
-                  Option / Filière
-                </FormLabel>
-                <Select
-                  onValueChange={(val) =>
-                    field.onChange(val === "none" ? null : val)
-                  }
-                  value={field.value ?? "none"}
-                >
-                  <OptionsSelect
-                    options={[
-                      { label: "Tronc commun (Aucune option)", value: "none" },
-                      ...options,
-                    ]}
-                    placeholder="Choisir une option..."
-                  />
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="section"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="font-semibold">
-                  Niveau d'enseignement / Sections
-                </FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <OptionsSelect
-                    options={SECTION_OPTIONS}
-                    placeholder="Sélectionner le niveau..."
-                  />
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
       </form>
     </Form>
   );

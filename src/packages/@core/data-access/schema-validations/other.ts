@@ -17,8 +17,7 @@ export const seatingGeneratorSchema = z.object({
       required_error: "Le ratio est requis",
     })
     .min(0, "Le ratio ne peut pas être inférieur à 0%")
-    .max(100, "Le ratio ne peut pas dépasser 100%")
-    .default(100),
+    .max(100, "Le ratio ne peut pas dépasser 100%"),
 });
 
 export type SeatingGenerator = z.infer<typeof seatingGeneratorSchema>;

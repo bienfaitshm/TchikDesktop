@@ -69,21 +69,62 @@ export const getFrenchOrdinalPrefix = (
     : "Inconnu";
 };
 
+/**
+ * Crée une suggestion de base en combinant un préfixe et les noms.
+ */
+export function createSuggestion(
+  name: string,
+  shortName: string,
+  prefix: string,
+): TSuggestion {
+  return {
+    name: `${prefix} ${name}`.trim(),
+    shortName: `${prefix} ${shortName}`.trim(),
+  };
+}
+
+/**
+ * Récupère une suggestion brute à partir d'une liste d'options et d'un ID.
+ */
+export function getOptionSuggestion<T extends Option>(
+  options: T[],
+  optionId: string,
+): TSuggestion | null {
+  const selectedOption = options.find(
+    (option) => String(option.optionId) === String(optionId),
+  );
+
+  if (!selectedOption) return null;
+
+  return {
+    name: selectedOption.optionName,
+    shortName: selectedOption.optionShortName,
+  };
+}
+
+export function getPrefixIdentifier(identifier: string): string {
+  const ordinalPrefix = getFrenchOrdinalPrefix(identifier);
+  const displayPrefix =
+    ordinalPrefix === "Inconnu" ? identifier : ordinalPrefix;
+  return displayPrefix;
+}
+
+/**
+ * Crée une suggestion spécifique pour une classe en enrichissant l'option d'un préfixe ordinal.
+ */
 export function createClassroomSuggestion<T extends Option>(
   options: T[],
   optionId: string,
   identifier: string,
 ): TSuggestion | null {
-  const selectedOption = options.find(
-    (o) => String(o.optionId) === String(optionId),
+  const optionSuggestion = getOptionSuggestion(options, optionId);
+  if (!optionSuggestion) return null;
+
+  const displayPrefix = getPrefixIdentifier(identifier);
+
+  return createSuggestion(
+    optionSuggestion.name,
+    optionSuggestion.shortName,
+    displayPrefix,
   );
-  if (!selectedOption) return null;
-
-  const prefix = getFrenchOrdinalPrefix(identifier);
-  const resolvedPrefix = prefix === "Inconnu" ? identifier : prefix;
-
-  return {
-    name: `${resolvedPrefix} ${selectedOption.optionName}`.trim(),
-    shortName: `${resolvedPrefix} ${selectedOption.optionShortName}`.trim(),
-  };
 }

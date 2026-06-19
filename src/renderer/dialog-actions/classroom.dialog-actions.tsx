@@ -33,8 +33,14 @@ interface CreateClassroomProps {
 export const ClassroomDialogCreateForm: React.FC<
   ClassroomDialogProps<CreateClassroomProps>
 > = ({ schoolId, children, defaultValues, ...config }) => {
-  const { formId, generateSuggestion, searchOptions, isSubmitting, onSubmit } =
-    useCreateClassroomForm(schoolId, config);
+  const {
+    formId,
+    generateSuggestion,
+    searchOption,
+    sectionOptions,
+    isSubmitting,
+    onSubmit,
+  } = useCreateClassroomForm(schoolId, config);
   const { handleGenerate, isGenerating } = useGenerateClassroomSuggestion({
     onGenerateSuggestion: generateSuggestion,
   });
@@ -52,7 +58,8 @@ export const ClassroomDialogCreateForm: React.FC<
         onSubmit={onSubmit}
         isGenerating={isGenerating}
         onGenerateSuggestion={handleGenerate}
-        options={searchOptions}
+        searchOption={searchOption}
+        sectionOptions={sectionOptions}
         defaultValues={defaultValues}
       />
     </DialogForm>
@@ -70,12 +77,18 @@ interface UpdateClassroomProps {
 export const ClassroomDialogUpdateForm: React.FC<
   ClassroomDialogProps<UpdateClassroomProps>
 > = ({ defaultValues, classId, schoolId, children, ...config }) => {
-  const { formId, isSubmitting, onSubmit, searchOptions, generateSuggestion } =
-    useUpdateClassroomForm({
-      ...config,
-      schoolId,
-      classroomId: classId,
-    });
+  const {
+    formId,
+    isSubmitting,
+    onSubmit,
+    searchOption,
+    sectionOptions,
+    generateSuggestion,
+  } = useUpdateClassroomForm({
+    ...config,
+    schoolId,
+    classroomId: classId,
+  });
 
   const { handleGenerate, isGenerating } = useGenerateClassroomSuggestion({
     onGenerateSuggestion: generateSuggestion,
@@ -96,7 +109,8 @@ export const ClassroomDialogUpdateForm: React.FC<
         }
         isGenerating={isGenerating}
         onGenerateSuggestion={handleGenerate}
-        options={searchOptions}
+        searchOption={searchOption}
+        sectionOptions={sectionOptions}
         defaultValues={defaultValues}
       />
     </DialogForm>

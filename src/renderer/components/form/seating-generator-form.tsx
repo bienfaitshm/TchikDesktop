@@ -46,7 +46,7 @@ export const SeatingGeneratorForm = ({
   classRoomOptions = [],
   localRoomOptions = [],
 }: SeatingGeneratorFormProps) => {
-  const form = useZodForm({
+  const form = useZodForm<SeatingGenerator>({
     schema: seatingGeneratorSchema,
     defaultValues: mergeDefaultValues(defaultValues, DEFAULT_VALUES),
     onSubmit,

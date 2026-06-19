@@ -89,7 +89,6 @@ function ComboboxSearchInner<T extends ObjectRecord>(
     return undefined;
   }, [value, options, selectedItem, localSelectedOption]);
 
-  // Mettre à jour le cache interne dès qu'un élément valide est trouvé
   React.useEffect(() => {
     const found = options.find((opt) => opt.value === value);
     if (found) {
@@ -155,7 +154,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
 
       <PopoverContent
         className={cn(
-          "w-[var(--radix-popover-trigger-width)] min-w-[280px] p-0 shadow-md",
+          "w-(--radix-popover-trigger-width) min-w-70 p-0 shadow-md",
           contentClassName,
         )}
         align="start"
@@ -172,7 +171,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
             className="h-8 text-xs border-none focus-visible:ring-0 shadow-none"
           />
           <CommandList
-            className="max-h-[240px] overflow-y-auto scrollbar-thin"
+            className="max-h-60 overflow-y-auto scrollbar-thin"
             onWheel={(e) => {
               e.stopPropagation();
             }}

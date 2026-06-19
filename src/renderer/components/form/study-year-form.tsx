@@ -39,7 +39,7 @@ export const StudyYearForm: React.FC<BaseFormProps<StudyYearFormData>> = ({
   defaultValues,
   onSubmit,
 }) => {
-  const form = useZodForm({
+  const form = useZodForm<StudyYearFormData>({
     schema: StudyYearCreateSchema,
     defaultValues: mergeDefaultValues(defaultValues, DEFAULT_VALUES),
     onSubmit,

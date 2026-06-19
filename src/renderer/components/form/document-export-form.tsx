@@ -64,7 +64,6 @@ export function ExportFormContent({
           className="h-12"
           contentClassName="w-full sm:w-[850px]"
           renderTrigger={(selected) => (
-            // L'ajout clé est ici : w-full et min-w-0
             <div className="flex flex-col items-start gap-0.5 overflow-hidden text-left w-full min-w-0">
               <span className="font-medium text-sm text-wrap">
                 {selected ? selected.data?.title : "Choisir un modèle..."}
@@ -93,7 +92,7 @@ export function ExportFormContent({
 
       {/* 2. Formulaire Dynamique (Filtres/Paramètres) */}
       <section
-        className="relative min-h-[100px] transition-all duration-300"
+        className="relative min-h-25 transition-all duration-300"
         aria-busy={isPending}
       >
         {!selectedDocKey ? (
