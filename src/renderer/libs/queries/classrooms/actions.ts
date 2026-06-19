@@ -55,7 +55,6 @@ function useBaseClassroomForm(schoolId: string) {
       optionId?: string,
       section?: SECTION_ENUM,
     ): TSuggestion | null => {
-      console.log("===>", { identifier, optionId, section });
       if (!search.options || !optionId || NONE_VALUES.includes(optionId)) {
         return createSectionSuggestion(identifier, section);
       }

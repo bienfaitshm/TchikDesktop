@@ -24,8 +24,6 @@ export function useGenerateClassroomSuggestion(
     async (form: UseZodFormReturn<typeof ClassroomCreateSchema>) => {
       const { identifier, optionId, section } = form.getValues();
 
-      console.log("------------------", { identifier, optionId, section });
-
       if (!identifier) {
         await form.trigger(["identifier"]);
         return;
