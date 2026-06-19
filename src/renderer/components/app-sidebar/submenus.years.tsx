@@ -10,7 +10,7 @@ import {
   useConfigActions,
   useConfigStore,
 } from "@/renderer/libs/stores/app-store";
-import { useGetStudyYears } from "@/renderer/libs/queries/school";
+import { useGetStudyYears } from "@/renderer/libs/queries/study-years";
 import { formatDate } from "@/packages/times";
 import { MenubarLinkAction, MenuSelect, SubMenuSelect } from "./submenu-select";
 import { APP_ROUTES } from "@/renderer/constants";

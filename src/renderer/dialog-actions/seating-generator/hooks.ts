@@ -6,7 +6,7 @@ import {
   useGetLocalRooms,
   useRebuildAssignStudents,
   seatingKeys,
-} from "@/renderer/libs/queries/seating";
+} from "@/renderer/libs/queries/seatings";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import type { BulkAssignParams } from "@/packages/@core/apis/clients";
 import {

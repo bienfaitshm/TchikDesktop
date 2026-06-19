@@ -9,7 +9,7 @@ import {
   useConfigActions,
   useConfigStore,
 } from "@/renderer/libs/stores/app-store";
-import { useGetSchools } from "@/renderer/libs/queries/school";
+import { useGetSchools } from "@/renderer/libs/queries/schools";
 import { APP_ROUTES } from "@/renderer/constants";
 import { MenuSelect, MenubarLinkAction, SubMenuSelect } from "./submenu-select";
 
@@ -40,7 +40,7 @@ export function SchoolSubMenus() {
         getItemProps={(school) => ({
           id: school.schoolId,
           label: school.name,
-          subLabel: school.adress,
+          subLabel: school.address,
         })}
         selectedValue={currentSchool?.schoolId}
         emptyMessage="Aucune école enregistrée"

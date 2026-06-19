@@ -14,7 +14,7 @@ import {
   DialogClose,
 } from "@/renderer/components/ui/dialog";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
-import { useDocumentExportManager } from "@/renderer/components/form/document-export-form.actions";
+import { useDocumentExportManager } from "@/renderer/libs/queries/document-export";
 import { ExportFormContent } from "@/renderer/components/form/document-export-form";
 
 type WithSchoolAndYearId<T> = T & { schoolId: string; yearId?: string };

@@ -23,6 +23,7 @@ export class SeatingSessionMapper {
       ]
         .filter(Boolean)
         .join(" "),
+      ...enrollment.student,
       classId: enrollment.classroomId,
       classroom: enrollment.classroom,
     };

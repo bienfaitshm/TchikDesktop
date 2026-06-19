@@ -1,10 +1,10 @@
 import React from "react";
-import { useGetUsersAsOption } from "@/renderer/libs/queries/account";
+import { useGetUsersAsOptions } from "@/renderer/libs/queries/users";
 import type { SearchUserQueryParams } from "@/packages/@core/apis/clients";
 import { useDebounce } from "./utils";
 
 export function useQuerySearchUsers(params?: SearchUserQueryParams) {
-  const { data: options = [], isLoading } = useGetUsersAsOption(params);
+  const { data: options = [], isLoading } = useGetUsersAsOptions(params);
 
   return {
     options,

@@ -13,7 +13,7 @@ import {
   SidebarItemDescription,
 } from "@/renderer/components/sidebar-menus";
 import { Button } from "@/renderer/components/ui/button";
-import { useGetSessionRoomsStatus } from "@/renderer/libs/queries/seating";
+import { useGetSessionRoomsStatus } from "@/renderer/libs/queries/seatings";
 import { cn } from "@/renderer/utils";
 import { APP_ROUTES } from "@/renderer/constants";
 interface LocalRoomStatus {
