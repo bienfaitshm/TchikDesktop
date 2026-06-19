@@ -1,5 +1,10 @@
 import React from "react";
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
+import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
+import {
+  ClassroomCreate,
+  ClassroomCreateSchema,
+} from "@/packages/@core/data-access/schema-validations";
 import {
   Form,
   FormControl,
@@ -19,7 +24,22 @@ import {
   SelectValue,
 } from "@/renderer/components/ui/select";
 import { ButtonAi } from "@/renderer/components/buttons/button-ai";
-import type { BaseFormProps } from "./base-form";
+import {
+  type BaseFormProps,
+  mergeDefaultValues,
+  useZodForm,
+} from "@/renderer/libs/forms";
+import { TSuggestion } from "@/renderer/libs/queries/classrooms";
+import { UseZodFormReturn } from "@/packages/use-zod-form";
+import { z } from "zod";
+
+const DEFAULT_VALUES: Partial<ClassroomCreate> = {
+  identifier: "",
+  shortIdentifier: "",
+  schoolId: "",
+  section: SECTION_ENUM.SECONDARY,
+  yearId: "",
+};
 
 /**
  * OptionsSelect optimisé avec support ARIA
@@ -51,22 +71,31 @@ function OptionsSelect({
 
 type ClassroomProps = {
   options?: { label: string; value: string }[];
-  onGenerateSuggestion?(optionId: string, name: string): TSuggestion | null;
+  onGenerateSuggestion?(
+    form: UseZodFormReturn<z.ZodType<ClassroomCreate>>,
+  ): void;
+  isGenerating?: boolean;
 };
+
 export const ClassroomForm: React.FC<
-  BaseFormProps<ClassroomFormData> & ClassroomProps
+  BaseFormProps<ClassroomCreate> & ClassroomProps
 > = ({
   formId,
   onSubmit,
   onGenerateSuggestion,
-  initialValues = {},
   options = [],
+  defaultValues,
+  isGenerating,
 }) => {
-  const { form, handleGenerate, isGenerating } = useClassroomForm({
-    initialValues,
-    onGenerateSuggestion,
+  const form = useZodForm({
+    schema: ClassroomCreateSchema,
+    defaultValues: mergeDefaultValues(defaultValues, DEFAULT_VALUES),
     onSubmit,
   });
+
+  const handleGenerate = React.useCallback(() => {
+    onGenerateSuggestion?.(form);
+  }, [onGenerateSuggestion, form]);
   return (
     <Form {...form}>
       <form

@@ -10,6 +10,7 @@ import {
   useCreateClassroomForm,
   useUpdateClassroomForm,
   useDeleteClassroomForm,
+  useGenerateClassroomSuggestion,
   type ClassroomFormConfig,
   type ClassroomFormData,
 } from "@/renderer/libs/queries/classrooms";
@@ -34,6 +35,9 @@ export const ClassroomDialogCreateForm: React.FC<
 > = ({ schoolId, children, defaultValues, ...config }) => {
   const { formId, generateSuggestion, searchOptions, isSubmitting, onSubmit } =
     useCreateClassroomForm(schoolId, config);
+  const { handleGenerate, isGenerating } = useGenerateClassroomSuggestion({
+    onGenerateSuggestion: generateSuggestion,
+  });
 
   return (
     <DialogForm
@@ -46,7 +50,8 @@ export const ClassroomDialogCreateForm: React.FC<
       <ClassroomForm
         formId={formId}
         onSubmit={onSubmit}
-        onGenerateSuggestion={generateSuggestion}
+        isGenerating={isGenerating}
+        onGenerateSuggestion={handleGenerate}
         options={searchOptions}
         defaultValues={defaultValues}
       />
@@ -72,6 +77,10 @@ export const ClassroomDialogUpdateForm: React.FC<
       classroomId: classId,
     });
 
+  const { handleGenerate, isGenerating } = useGenerateClassroomSuggestion({
+    onGenerateSuggestion: generateSuggestion,
+  });
+
   return (
     <DialogForm
       trigger={children}
@@ -82,8 +91,11 @@ export const ClassroomDialogUpdateForm: React.FC<
     >
       <ClassroomForm
         formId={formId}
-        onSubmit={onSubmit}
-        onGenerateSuggestion={generateSuggestion}
+        onSubmit={(data, helpers) =>
+          onSubmit?.({ id: classId, data }, helpers as any)
+        }
+        isGenerating={isGenerating}
+        onGenerateSuggestion={handleGenerate}
         options={searchOptions}
         defaultValues={defaultValues}
       />
