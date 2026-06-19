@@ -37,7 +37,6 @@ export const SeatingSessionAssignmentPage = () => {
     sessionId: string;
   }>();
   const { data: localroom } = useGetLocalRoomById(localroomId as string);
-  console.log("DDDDDD", { localroom, localroomId });
   const { data: layoutAssignments = [] } = useGetRoomLayout(
     sessionId!,
     localroomId!,
@@ -111,7 +110,6 @@ const TableSkeleton = () => (
 );
 
 export const RoomHeaderInfo = ({ localroom, layoutAssignments }) => {
-  console.log(localroom);
   const occupancyRate =
     (layoutAssignments.length / localroom.maxCapacity) * 100;
 

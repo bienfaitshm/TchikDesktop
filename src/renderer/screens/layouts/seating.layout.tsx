@@ -51,7 +51,7 @@ export const SeatingSessionLayout: React.FC = () => {
     return (
       <PageShell maxWidth="full" header={<Skeleton className="h-14 w-full" />}>
         <div className="p-6">
-          <Skeleton className="h-[500px] w-full rounded-3xl" />
+          <Skeleton className="h-125 w-full rounded-3xl" />
         </div>
       </PageShell>
     );

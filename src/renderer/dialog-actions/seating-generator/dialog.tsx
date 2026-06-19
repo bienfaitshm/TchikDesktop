@@ -109,7 +109,7 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
               </div>
             </div>
 
-            <section className="min-h-[400px]">
+            <section className="min-h-100">
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                 <SeatingDisplayContent
                   hasAssignments={props.hasAssignments!}
@@ -140,7 +140,7 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
               isLoading={isGenerating}
               hasGenerated={showContent}
               disabled={isSaving}
-              className="min-w-[160px]"
+              className="min-w-40"
             />
 
             {hasData && (
@@ -149,7 +149,7 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
                 isLoading={isSaving}
                 variant="default"
                 isLoadingText="Enregistrement..."
-                className="min-w-[180px] bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all active:scale-95"
+                className="min-w-45 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all active:scale-95"
               >
                 Confirmer l'attribution
               </ButtonLoader>

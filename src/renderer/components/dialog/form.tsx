@@ -40,22 +40,24 @@ export const DialogForm: React.FC<DialogFormProps> = ({
   );
 
   return (
-    <Dialog open={open} onOpenChange={isLoading ? undefined : setOpen}>
+    <Dialog
+      modal={false}
+      open={open}
+      onOpenChange={isLoading ? undefined : setOpen}
+    >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-
       <DialogContent
-        className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]"
+        className="sm:max-w-125 md:max-w-175 lg:max-w-225"
         onPointerDownOutside={handleContentInteract}
         onEscapeKeyDown={handleContentInteract}
       >
-        <DialogHeader>
+        <DialogHeader className="mt-5 mx-2">
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
 
-        <div className="py-4">{children}</div>
-
-        <DialogFooter className="gap-2 sm:gap-0">
+        <div className="py-4 mx-2">{children}</div>
+        <DialogFooter className="gap-5 mp-2 pb-5 sm:gap-4">
           <DialogClose asChild>
             <Button variant="ghost" disabled={isLoading}>
               Annuler

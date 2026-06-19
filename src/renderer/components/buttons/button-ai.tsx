@@ -9,7 +9,7 @@ export const ButtonAi: React.FC<ButtonProps> = (props) => {
       type="button"
       size="icon"
       variant="ghost"
-      className="size-7"
+      className="size-8 bg-primary/40 animate-pulse"
       {...props}
     >
       <LucideBrainCircuit className="size-5" />

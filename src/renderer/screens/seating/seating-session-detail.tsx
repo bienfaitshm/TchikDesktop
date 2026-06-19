@@ -11,7 +11,7 @@ export const SeatingSessionDetailPage = () => {
         </div>
       </div>
 
-      <div className="max-w-[420px] space-y-2">
+      <div className="max-w-105 space-y-2">
         <h2 className="text-xl font-semibold tracking-tight text-foreground">
           Sélectionnez un local
         </h2>
