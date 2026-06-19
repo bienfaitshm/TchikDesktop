@@ -1,6 +1,6 @@
 "use client";
 
-import type { Classroom } from "@/packages/@core/data-access/schema-validations";
+import type { ClassroomDTO } from "@/packages/@core/data-access/db/queries";
 import { useGetClassrooms } from "@/renderer/libs/queries/classrooms";
 import React, { useMemo } from "react";
 import {
@@ -44,9 +44,9 @@ const columns = enhanceColumnsExpandable(classroomColumns);
 
 interface ClassroomRowActionsProps extends Pick<
   ClassroomDialogProps,
-  "queryKeysToInvalidate"
+  "mutationKey"
 > {
-  classroom: Classroom;
+  classroom: ClassroomDTO;
   schoolId: string;
   yearId: string;
 }
@@ -55,7 +55,7 @@ interface ClassroomRowActionsProps extends Pick<
  * @description Actions de ligne
  */
 const ClassroomRowActions: React.FC<ClassroomRowActionsProps> = React.memo(
-  ({ classroom, schoolId, yearId, queryKeysToInvalidate }) => {
+  ({ classroom, schoolId, yearId, mutationKey }) => {
     const defaultValues = useMemo(
       () => ({ ...classroom, yearId }),
       [classroom, yearId],
@@ -76,7 +76,7 @@ const ClassroomRowActions: React.FC<ClassroomRowActionsProps> = React.memo(
           classId={classroom.classId}
           schoolId={schoolId}
           defaultValues={defaultValues}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
         >
           <ActionTileEdit />
         </ClassroomDialogUpdateForm>
@@ -85,7 +85,7 @@ const ClassroomRowActions: React.FC<ClassroomRowActionsProps> = React.memo(
         <ClassroomDialogCreateForm
           schoolId={schoolId}
           defaultValues={defaultValues}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
         >
           <ActionTileCopy />
         </ClassroomDialogCreateForm>
@@ -94,7 +94,7 @@ const ClassroomRowActions: React.FC<ClassroomRowActionsProps> = React.memo(
         <ClassroomDialogDeleteForm
           classId={classroom.classId}
           identifier={classroom.identifier}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
         >
           <ActionTileDelete />
         </ClassroomDialogDeleteForm>
@@ -109,10 +109,9 @@ export const ClassroomPage = () => {
   const { schoolId, yearId } = useSchoolContext();
   const { options } = useGetOptionAsOptions(schoolId);
 
-  const { data: classrooms = [], queryKey: queryKeysToInvalidate } =
-    useGetClassrooms({
-      where: { schoolId, yearId },
-    });
+  const { data: classrooms = [], queryKey: mutationKey } = useGetClassrooms({
+    where: { schoolId, yearId },
+  });
 
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
@@ -132,7 +131,7 @@ export const ClassroomPage = () => {
             <ClassroomDialogCreateForm
               schoolId={schoolId}
               defaultValues={{ yearId, schoolId }}
-              queryKeysToInvalidate={queryKeysToInvalidate}
+              mutationKey={mutationKey}
             >
               <Button size="sm" className="rounded-full shadow-xs">
                 <Plus className="size-4 mr-2" />
@@ -142,7 +141,7 @@ export const ClassroomPage = () => {
           </section>
         }
       >
-        <DataTable<Classroom>
+        <DataTable<ClassroomDTO>
           data={classrooms}
           columns={columns}
           keyExtractor={(item) => item.classId}
@@ -167,7 +166,7 @@ export const ClassroomPage = () => {
           >
             <DataTableContent>
               <DataContentHead />
-              <DataContentBody<Classroom>>
+              <DataContentBody<ClassroomDTO>>
                 {({ row }) => (
                   <ExpandableRow
                     row={row as any}
@@ -176,7 +175,7 @@ export const ClassroomPage = () => {
                         classroom={row.original}
                         schoolId={schoolId}
                         yearId={yearId}
-                        queryKeysToInvalidate={queryKeysToInvalidate}
+                        mutationKey={mutationKey}
                       />
                     }
                   />

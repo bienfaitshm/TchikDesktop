@@ -10,6 +10,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandShortcut,
 } from "@/renderer/components/ui/command";
 import {
   Popover,
@@ -221,7 +222,9 @@ function ComboboxSearchInner<T extends ObjectRecord>(
                         </div>
                       )}
                       {isSelected && (
-                        <Check className="h-4 w-4 text-primary shrink-0" />
+                        <CommandShortcut>
+                          <Check className="h-4 w-4 text-primary shrink-0" />
+                        </CommandShortcut>
                       )}
                     </CommandItem>
                   );

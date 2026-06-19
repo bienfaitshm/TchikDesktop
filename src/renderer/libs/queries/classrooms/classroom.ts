@@ -41,7 +41,7 @@ export const classroomKeys = {
 
 export function useGetClassrooms(
   params?: ClassroomFilter,
-  options?: Partial<UseSuspenseQueryOptions<Classroom[]>>,
+  options?: Partial<UseSuspenseQueryOptions<ClassroomDTO[]>>,
 ) {
   return useSuspenseQuery({
     queryKey: classroomKeys.lists(params),
