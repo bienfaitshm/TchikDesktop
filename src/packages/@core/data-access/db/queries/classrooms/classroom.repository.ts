@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, getTableColumns } from "drizzle-orm";
 import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
@@ -28,7 +28,11 @@ import type {
   SearchOptions,
 } from "@/packages/@core/data-access/db/queries/select-option.transformer";
 import { createSQLiteSearchFilter } from "../drizzle-utility";
-export type ClassroomDTO = Classroom & { studyYear: StudyYear; option: Option };
+
+export type ClassroomDTO = Classroom & {
+  studyYear: StudyYear;
+  option: Option | null;
+};
 
 export type BaseClasrromFilters = Partial<FindManyOptions<TableClassroom>>;
 interface GetClassroomsOptions {
@@ -61,7 +65,11 @@ export class ClassroomRepository
 
   protected override getQuerySet(tx?: LibSqlClient) {
     return this.getClient(tx)
-      .select()
+      .select({
+        ...getTableColumns(this.table),
+        studyYear: getTableColumns(studyYears),
+        option: getTableColumns(options),
+      })
       .from(this.table)
       .innerJoin(studyYears, eq(classrooms.yearId, studyYears.yearId))
       .leftJoin(options, eq(classrooms.optionId, options.optionId))
@@ -92,7 +100,7 @@ export class ClassroomRepository
         query,
         this.table,
         filters,
-      )) as unknown as ClassroomDTO[];
+      )) as ClassroomDTO[];
     } catch (error) {
       this.logError("fetchOptions", error, { filters, search });
       throw new Error("Erreur lors de la récupération des options de classes.");
