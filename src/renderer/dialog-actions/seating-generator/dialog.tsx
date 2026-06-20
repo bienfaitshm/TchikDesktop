@@ -17,7 +17,7 @@ import { Separator } from "@/renderer/components/ui/separator";
 
 import ButtonGenerator from "@/renderer/components/buttons/button-generator";
 import { SeatingGeneratorForm } from "@/renderer/components/form/seating-generator-form";
-import { ButtonLoader } from "@/renderer/components/form/button-loader";
+import { LoadingButton } from "@/renderer/components/buttons/button-loading";
 import { SeatingDisplayContent } from "./content";
 
 import { cn } from "@/renderer/utils";
@@ -49,7 +49,7 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
   const showContent = hasData || props.hasAssignments;
 
   return (
-    <Dialog modal={false} open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog modal open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <ButtonGenerator isLoading={isGenerating} hasGenerated={showContent} />
       </DialogTrigger>
@@ -74,8 +74,12 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
             </div>
           </div>
         </DialogHeader>
-
-        <ScrollArea className="flex-1 bg-slate-50/50 dark:bg-background/50">
+        <ScrollArea
+          className="flex-1 h-[70%] bg-slate-50/50 dark:bg-background/50"
+          // onWheel={(e) => {
+          //   e.stopPropagation();
+          // }}
+        >
           <div className="mx-auto p-8 space-y-12">
             <section
               className={cn(
@@ -122,7 +126,7 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
           </div>
         </ScrollArea>
 
-        <DialogFooter className="px-8 py-4 border-t bg-background space-x-10">
+        <DialogFooter className="px-10 pb-10 gap-5 sm:gap-4">
           <DialogClose asChild>
             <Button
               variant="ghost"
@@ -144,15 +148,15 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
             />
 
             {hasData && (
-              <ButtonLoader
+              <LoadingButton
                 onClick={handleSave}
-                isLoading={isSaving}
+                loading={isSaving}
                 variant="default"
-                isLoadingText="Enregistrement..."
-                className="min-w-45 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all active:scale-95"
+                loadingText="Enregistrement..."
+                className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all active:scale-95"
               >
                 Confirmer l'attribution
-              </ButtonLoader>
+              </LoadingButton>
             )}
           </div>
         </DialogFooter>

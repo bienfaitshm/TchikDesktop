@@ -144,6 +144,7 @@ export const SeatingGeneratorForm = ({
                     placeholder="Sélectionnez les locaux..."
                     disabled={isSubmitting}
                     aria-describedby={localDescriptionId}
+                    className="w-full"
                   />
                 </FormControl>
                 <FormDescription id={localDescriptionId}>
