@@ -3,9 +3,6 @@ import { Button } from "@/renderer/components/ui/button";
 import { Plus } from "lucide-react";
 import { useGetSchools } from "@/renderer/libs/queries/schools";
 import type { School } from "@/packages/@core/data-access/db/schemas";
-import { Suspense } from "@/renderer/libs/queries/suspense";
-import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
-
 import {
   DataTable,
   DataContentBody,
@@ -13,6 +10,9 @@ import {
   DataTableContent,
   DataTablePagination,
   DataTableToolbar,
+  FilteredTableToolbarContainer,
+  SearchTableToolbar,
+  DataTableColumnToggle,
 } from "@/renderer/components/tables/data-table";
 import {
   enhanceColumnsExpandable,
@@ -30,45 +30,61 @@ import {
   CreateSchoolDialog,
   DeleteSchoolDialog,
   UpdateSchoolDialog,
+  type CreateSchoolDialogProps,
 } from "@/renderer/dialog-actions/school.dialog-actions";
 
 import type { Row } from "@tanstack/react-table";
 import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 
+interface RowActionsProps extends Pick<CreateSchoolDialogProps, "mutationKey"> {
+  school: School;
+}
+
 /**
  * Actions de ligne mémoïsées.
  * On utilise les props cohérentes : schoolId et schoolName.
  */
-const SchoolRowActions = React.memo(({ school }: { school: School }) => {
-  const initialData = useMemo(() => ({ ...school }), [school.schoolId]);
+const SchoolRowActions = React.memo(
+  ({ school, mutationKey }: RowActionsProps) => {
+    const initialData = useMemo(() => ({ ...school }), [school.schoolId]);
 
-  return (
-    <ActionContainer className="lg:grid-cols-3">
-      <UpdateSchoolDialog schoolId={school.schoolId} initialData={initialData}>
-        <ActionTileEdit />
-      </UpdateSchoolDialog>
+    return (
+      <ActionContainer className="lg:grid-cols-3">
+        <UpdateSchoolDialog
+          mutationKey={mutationKey}
+          schoolId={school.schoolId}
+          defaultValues={initialData}
+        >
+          <ActionTileEdit />
+        </UpdateSchoolDialog>
 
-      <CreateSchoolDialog defaultValues={initialData}>
-        <ActionTileCopy />
-      </CreateSchoolDialog>
+        <CreateSchoolDialog
+          mutationKey={mutationKey}
+          defaultValues={initialData}
+        >
+          <ActionTileCopy />
+        </CreateSchoolDialog>
 
-      <DeleteSchoolDialog schoolId={school.schoolId} schoolName={school.name}>
-        {({ isLoading, onOpen }) => (
-          <ActionTileDelete onClick={onOpen} disabled={isLoading} />
-        )}
-      </DeleteSchoolDialog>
-    </ActionContainer>
-  );
-});
+        <DeleteSchoolDialog
+          mutationKey={mutationKey}
+          schoolId={school.schoolId}
+          schoolName={school.name}
+        >
+          <ActionTileDelete />
+        </DeleteSchoolDialog>
+      </ActionContainer>
+    );
+  },
+);
 SchoolRowActions.displayName = "SchoolRowActions";
 
 export const SchoolsPage = () => {
-  const { data: schools = [] } = useGetSchools();
+  const { data: schools = [], queryKey: mutationKey } = useGetSchools();
 
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
       <PageShell
-        maxWidth="2xl"
+        maxWidth="xl"
         header={
           <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4 ">
             <header className="space-y-1">
@@ -79,14 +95,6 @@ export const SchoolsPage = () => {
                 Visualisez et administrez la liste des écoles enregistrées.
               </p>
             </header>
-
-            {/* Changé CreateOptionDialog en CreateSchoolDialog */}
-            <CreateSchoolDialog>
-              <Button size="sm" className="rounded-full shadow-xs">
-                <Plus className="size-4" />
-                <span>Ajouter une école</span>
-              </Button>
-            </CreateSchoolDialog>
           </section>
         }
       >
@@ -95,32 +103,38 @@ export const SchoolsPage = () => {
           columns={enhanceColumnsExpandable(schoolColumns)}
           keyExtractor={(item) => item.schoolId}
         >
-          <DataTableToolbar searchColumn="name" />
+          <DataTableToolbar>
+            <FilteredTableToolbarContainer>
+              <SearchTableToolbar searchColumn="name" placeholder="Recherche" />
+            </FilteredTableToolbarContainer>
+            <div className="flex items-center gap-4">
+              <DataTableColumnToggle />
+              <CreateSchoolDialog mutationKey={mutationKey}>
+                <Button size="sm" className="rounded-full shadow-xs">
+                  <Plus className="size-4" />
+                  <span>Ajouter une école</span>
+                </Button>
+              </CreateSchoolDialog>
+            </div>
+          </DataTableToolbar>
 
-          <Suspense
-            fallback={
-              <div className="flex h-64 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/10">
-                <LoadingSpinner className="text-primary" />
-                <p className="text-sm text-muted-foreground animate-pulse">
-                  Chargement des établissements...
-                </p>
-              </div>
-            }
-          >
-            <DataTableContent>
-              <DataContentHead />
-              <DataContentBody<School>>
-                {({ row }) => (
-                  <ExpandableRow
-                    row={row as Row<unknown>}
-                    renderDetail={<SchoolRowActions school={row.original} />}
-                  />
-                )}
-              </DataContentBody>
-            </DataTableContent>
-
-            <DataTablePagination />
-          </Suspense>
+          <DataTableContent>
+            <DataContentHead />
+            <DataContentBody<School>>
+              {({ row }) => (
+                <ExpandableRow
+                  row={row as Row<unknown>}
+                  renderDetail={
+                    <SchoolRowActions
+                      mutationKey={mutationKey}
+                      school={row.original}
+                    />
+                  }
+                />
+              )}
+            </DataContentBody>
+          </DataTableContent>
+          <DataTablePagination />
         </DataTable>
       </PageShell>
     </div>

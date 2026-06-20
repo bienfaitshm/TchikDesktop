@@ -13,6 +13,9 @@ import {
   DataTableContent,
   DataTablePagination,
   DataTableToolbar,
+  FilteredTableToolbarContainer,
+  SearchTableToolbar,
+  DataTableColumnToggle,
 } from "@/renderer/components/tables/data-table";
 import {
   enhanceColumnsExpandable,
@@ -30,47 +33,66 @@ import {
   CreateStudyYearDialog,
   DeleteStudyYearDialog,
   UpdateStudyYearDialog,
+  type CreateStudyYearDialogProps,
 } from "@/renderer/dialog-actions/study-year.dialog-actions";
 
 import type { Row } from "@tanstack/react-table";
 import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
+import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 
+interface RowActionsProps extends Pick<
+  CreateStudyYearDialogProps,
+  "mutationKey"
+> {
+  year: TStudyYear;
+}
 /**
  * Actions de ligne mémoïsées pour la performance.
  */
-const StudyYearRowActions = React.memo(({ year }: { year: TStudyYear }) => {
-  const initialData = useMemo(() => ({ ...year }), [year.yearId]);
+const StudyYearRowActions = React.memo(
+  ({ year, mutationKey }: RowActionsProps) => {
+    const defaultValues = useMemo(() => ({ ...year }), [year.yearId]);
 
-  return (
-    <ActionContainer className="lg:grid-cols-3">
-      <UpdateStudyYearDialog
-        studyYearId={year.yearId}
-        initialData={initialData}
-      >
-        <ActionTileEdit />
-      </UpdateStudyYearDialog>
+    return (
+      <ActionContainer className="lg:grid-cols-3">
+        <UpdateStudyYearDialog
+          mutationKey={mutationKey}
+          studyYearId={year.yearId}
+          defaultValues={defaultValues}
+        >
+          <ActionTileEdit />
+        </UpdateStudyYearDialog>
 
-      <CreateStudyYearDialog defaultValues={initialData}>
-        <ActionTileCopy />
-      </CreateStudyYearDialog>
+        <CreateStudyYearDialog
+          mutationKey={mutationKey}
+          defaultValues={defaultValues}
+        >
+          <ActionTileCopy />
+        </CreateStudyYearDialog>
 
-      <DeleteStudyYearDialog studyYearId={year.yearId} yearName={year.yearName}>
-        {({ isLoading, onOpen }) => (
-          <ActionTileDelete onClick={onOpen} disabled={isLoading} />
-        )}
-      </DeleteStudyYearDialog>
-    </ActionContainer>
-  );
-});
+        <DeleteStudyYearDialog
+          studyYearId={year.yearId}
+          yearName={year.yearName}
+          mutationKey={mutationKey}
+        >
+          <ActionTileDelete />
+        </DeleteStudyYearDialog>
+      </ActionContainer>
+    );
+  },
+);
 StudyYearRowActions.displayName = "StudyYearRowActions";
 
 export const StudyYearsPage = () => {
-  const { data: studyYears = [] } = useGetStudyYears();
+  const { schoolId } = useSchoolContext();
+  const { data: studyYears = [], queryKey: mutationKey } = useGetStudyYears({
+    where: { schoolId },
+  });
 
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
       <PageShell
-        maxWidth="2xl"
+        maxWidth="xl"
         header={
           <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
             <header className="space-y-1">
@@ -81,13 +103,6 @@ export const StudyYearsPage = () => {
                 Gérez les périodes académiques de votre établissement.
               </p>
             </header>
-
-            <CreateStudyYearDialog>
-              <Button size="sm" className="rounded-full shadow-xs">
-                <Plus className="size-4" />
-                <span>Nouvelle année</span>
-              </Button>
-            </CreateStudyYearDialog>
           </section>
         }
       >
@@ -96,7 +111,26 @@ export const StudyYearsPage = () => {
           columns={enhanceColumnsExpandable(studyYearColumns)}
           keyExtractor={(item) => item.yearId}
         >
-          <DataTableToolbar searchColumn="yearName" />
+          <DataTableToolbar>
+            <FilteredTableToolbarContainer>
+              <SearchTableToolbar
+                searchColumn="yearName"
+                placeholder="Recherche..."
+              />
+            </FilteredTableToolbarContainer>
+            <div className="flex items-center gap-4">
+              <DataTableColumnToggle />
+              <CreateStudyYearDialog
+                mutationKey={mutationKey}
+                defaultValues={{ schoolId }}
+              >
+                <Button size="sm" className="rounded-full shadow-xs">
+                  <Plus className="size-4" />
+                  <span>Nouvelle année</span>
+                </Button>
+              </CreateStudyYearDialog>
+            </div>
+          </DataTableToolbar>
 
           <Suspense
             fallback={
@@ -114,7 +148,12 @@ export const StudyYearsPage = () => {
                 {({ row }) => (
                   <ExpandableRow
                     row={row as Row<unknown>}
-                    renderDetail={<StudyYearRowActions year={row.original} />}
+                    renderDetail={
+                      <StudyYearRowActions
+                        mutationKey={mutationKey}
+                        year={row.original}
+                      />
+                    }
                   />
                 )}
               </DataContentBody>

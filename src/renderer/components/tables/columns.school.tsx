@@ -30,23 +30,35 @@ export const schoolColumns: ColumnDef<School>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Nom" />
+      <DataTableColumnHeader column={column} title="Nom complet" />
     ),
-    cell: ({ row }) => {
-      return <TypographySmall>{row.original.name}</TypographySmall>;
+    cell: ({ getValue }) => {
+      return (
+        <TypographySmall className="text-foreground max-w-20">
+          {getValue<string>()}
+        </TypographySmall>
+      );
     },
+    enableSorting: true,
     enableHiding: false,
+    enableColumnFilter: true,
   },
   {
-    accessorKey: "ville",
+    accessorKey: "town",
     header: "Ville",
-    cell: ({ row }) => <TypographySmall>{row.original.town}</TypographySmall>,
+    cell: ({ getValue }) => (
+      <TypographySmall className="text-muted-foreground">
+        {getValue<string>()}
+      </TypographySmall>
+    ),
   },
   {
     accessorKey: "address",
     header: "Adresse",
-    cell: ({ row }) => (
-      <TypographySmall>{row.original.address}</TypographySmall>
+    cell: ({ getValue }) => (
+      <TypographySmall className="text-muted-foreground">
+        {getValue<string>()}
+      </TypographySmall>
     ),
   },
   {

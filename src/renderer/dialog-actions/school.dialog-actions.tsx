@@ -14,21 +14,28 @@ import {
   useCreateSchoolForm,
   useUpdateSchoolForm,
   useDeleteSchoolForm,
+  type SchoolFormConfig,
 } from "@/renderer/libs/queries/schools";
 
 /* ==========================================================================
    1. CRÉATION
    ========================================================================== */
-type CreateSchoolDialogProps = {
-  children: React.ReactNode;
-  defaultValues?: Partial<SchoolFormData>;
-};
+
+export type CreateSchoolDialogProps<
+  TExtraProps extends Record<string, any> = {},
+> = React.PropsWithChildren<
+  TExtraProps &
+    SchoolFormConfig & {
+      defaultValues?: Partial<SchoolFormData>;
+    }
+>;
 
 export const CreateSchoolDialog: React.FC<CreateSchoolDialogProps> = ({
   children,
   defaultValues,
+  ...config
 }) => {
-  const { formId, onSubmit, isSubmitting } = useCreateSchoolForm();
+  const { formId, onSubmit, isSubmitting } = useCreateSchoolForm(config);
 
   return (
     <DialogForm
@@ -51,30 +58,28 @@ export const CreateSchoolDialog: React.FC<CreateSchoolDialogProps> = ({
    2. MODIFICATION
    ========================================================================== */
 type UpdateSchoolDialogProps = {
-  children: React.ReactNode;
   schoolId: string;
-  initialData?: Partial<SchoolFormData>;
 };
 
-export const UpdateSchoolDialog: React.FC<UpdateSchoolDialogProps> = ({
-  initialData,
-  schoolId,
-  children,
-}) => {
-  const { formId, isSubmitting, onSubmit } = useUpdateSchoolForm();
+export const UpdateSchoolDialog: React.FC<
+  UpdateSchoolDialogProps & CreateSchoolDialogProps
+> = ({ schoolId, children, defaultValues, ...config }) => {
+  const { formId, isSubmitting, onSubmit } = useUpdateSchoolForm(config);
 
   return (
     <DialogForm
       trigger={children}
       title="Modifier l'établissement"
-      description={`Mettez à jour les informations de ${initialData?.name || "l'établissement"}.`}
+      description={`Mettez à jour les informations de ${defaultValues?.name || "l'établissement"}.`}
       formId={formId}
       isLoading={isSubmitting}
     >
       <SchoolForm
         formId={formId}
-        onSubmit={(data, helpers) => onSubmit({ id: schoolId, data }, helpers)}
-        defaultValues={initialData}
+        onSubmit={(data, helpers) =>
+          onSubmit({ id: schoolId, data }, helpers as any)
+        }
+        defaultValues={defaultValues}
       />
     </DialogForm>
   );
@@ -89,15 +94,14 @@ interface DeleteSchoolDialogProps {
   schoolName: string;
 }
 
-export const DeleteSchoolDialog: React.FC<DeleteSchoolDialogProps> = ({
-  children,
-  schoolId,
-  schoolName,
-}) => {
+export const DeleteSchoolDialog: React.FC<
+  DeleteSchoolDialogProps & SchoolFormConfig
+> = ({ children, schoolId, schoolName, ...config }) => {
   const { isOpen, onOpen, onClose } = useConfirm<string>();
 
   const { deleteSchool, isDeleting } = useDeleteSchoolForm({
-    onSuccess: onClose,
+    ...config,
+    onSuccess: () => onClose(),
   });
 
   const { handleConfirm, handleTriggerClick } = useAsyncConfirm({

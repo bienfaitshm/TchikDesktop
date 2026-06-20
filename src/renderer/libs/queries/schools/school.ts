@@ -1,11 +1,11 @@
 import { useMutation, useSuspenseQuery } from "../base";
 import { school as schoolApi } from "@/renderer/libs/apis";
 import type {
-  School,
   SchoolCreate,
   SchoolUpdate,
   SchoolFilter,
 } from "@/packages/@core/data-access/schema-validations";
+import type { School } from "@/packages/@core/data-access/db/schemas";
 import type { QueryUpdatePayload } from "../base";
 import type {
   UseSuspenseQueryOptions,

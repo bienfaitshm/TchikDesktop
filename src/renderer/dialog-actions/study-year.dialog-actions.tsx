@@ -14,22 +14,28 @@ import {
   useCreateStudyYearForm,
   useUpdateStudyYearForm,
   useDeleteStudyYearForm,
-  type SchoolFormData,
+  type StudyYearFormConfig,
 } from "@/renderer/libs/queries/study-years";
 
 /* ==========================================================================
    1. CRÉATION
    ========================================================================== */
-type CreateStudyYearDialogProps = {
-  children: React.ReactNode;
-  defaultValues?: Partial<StudyYearFormData>;
-};
+
+export type CreateStudyYearDialogProps<
+  TExtraProps extends Record<string, any> = {},
+> = React.PropsWithChildren<
+  TExtraProps &
+    StudyYearFormConfig & {
+      defaultValues?: Partial<StudyYearFormData>;
+    }
+>;
 
 export const CreateStudyYearDialog: React.FC<CreateStudyYearDialogProps> = ({
   children,
   defaultValues,
+  ...config
 }) => {
-  const { formId, onSubmit, isSubmitting } = useCreateStudyYearForm();
+  const { formId, onSubmit, isSubmitting } = useCreateStudyYearForm(config);
 
   return (
     <DialogForm
@@ -52,17 +58,13 @@ export const CreateStudyYearDialog: React.FC<CreateStudyYearDialogProps> = ({
    2. MODIFICATION
    ========================================================================== */
 type UpdateStudyYearDialogProps = {
-  children: React.ReactNode;
   studyYearId: string;
-  initialData?: Partial<SchoolFormData>;
 };
 
-export const UpdateStudyYearDialog: React.FC<UpdateStudyYearDialogProps> = ({
-  initialData,
-  studyYearId,
-  children,
-}) => {
-  const { formId, isSubmitting, onSubmit } = useUpdateStudyYearForm();
+export const UpdateStudyYearDialog: React.FC<
+  UpdateStudyYearDialogProps & CreateStudyYearDialogProps
+> = ({ studyYearId, children, defaultValues, ...config }) => {
+  const { formId, isSubmitting, onSubmit } = useUpdateStudyYearForm(config);
 
   return (
     <DialogForm
@@ -75,9 +77,9 @@ export const UpdateStudyYearDialog: React.FC<UpdateStudyYearDialogProps> = ({
       <StudyYearForm
         formId={formId}
         onSubmit={(data, helpers) =>
-          onSubmit?.({ id: studyYearId, data }, helpers)
+          onSubmit?.({ id: studyYearId, data }, helpers as any)
         }
-        defaultValues={initialData}
+        defaultValues={defaultValues}
       />
     </DialogForm>
   );
@@ -97,15 +99,14 @@ interface DeleteStudyYearDialogProps {
   yearName: string;
 }
 
-export const DeleteStudyYearDialog: React.FC<DeleteStudyYearDialogProps> = ({
-  children,
-  studyYearId,
-  yearName,
-}) => {
+export const DeleteStudyYearDialog: React.FC<
+  DeleteStudyYearDialogProps & StudyYearFormConfig
+> = ({ children, studyYearId, yearName, ...config }) => {
   const { isOpen, onOpen, onClose } = useConfirm<string>();
 
   const { deleteStudyYear, isDeleting } = useDeleteStudyYearForm({
-    onSuccess: onClose,
+    ...config,
+    onSuccess: () => onClose(),
   });
 
   const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
