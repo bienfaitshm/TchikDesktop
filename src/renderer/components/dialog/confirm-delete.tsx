@@ -86,10 +86,10 @@ export const ConfirmDialog = React.forwardRef<
       >
         <AlertDialogContent
           ref={ref}
-          className={cn("max-w-[400px] gap-6 p-6", className)}
+          className={cn("gap-6", className)}
           {...props}
         >
-          <AlertDialogHeader className="flex flex-col items-center gap-4 text-center sm:text-center">
+          <AlertDialogHeader className="p-4 flex flex-row items-center gap-6 text-center sm:text-center">
             {/* Conteneur de l'icône */}
             <div
               className={cn(
@@ -115,10 +115,7 @@ export const ConfirmDialog = React.forwardRef<
 
           <AlertDialogFooter className="sm:justify-end gap-2">
             <AlertDialogCancel asChild disabled={isPending}>
-              <Button
-                variant="outline"
-                className="w-full sm:w-auto min-w-[80px]"
-              >
+              <Button variant="outline" className="w-full sm:w-auto min-w-20">
                 {cancelText}
               </Button>
             </AlertDialogCancel>
@@ -130,7 +127,7 @@ export const ConfirmDialog = React.forwardRef<
             >
               <Button
                 variant={variantStyles.btnVariant}
-                className="w-full sm:w-auto min-w-[100px]"
+                className="w-full sm:w-auto min-w-25"
               >
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isPending ? "Chargement..." : confirmText}

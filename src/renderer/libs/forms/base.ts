@@ -119,8 +119,8 @@ const isObject = (item: any): item is Record<string, any> => {
  * Les valeurs initiales écrasent les valeurs par défaut.
  */
 export function mergeDefaultValues<T extends Record<string, any>>(
-  defaultValues: Partial<T> | undefined,
   initialValues: Partial<T> | undefined,
+  defaultValues: Partial<T> | undefined,
 ): Partial<T> {
   return {
     ...defaultValues,

@@ -84,7 +84,7 @@ const ClassroomRowActions: React.FC<ClassroomRowActionsProps> = React.memo(
         {/* Duplication */}
         <ClassroomDialogCreateForm
           schoolId={schoolId}
-          defaultValues={defaultValues}
+          defaultValues={{ schoolId, yearId }}
           mutationKey={mutationKey}
         >
           <ActionTileCopy />

@@ -4,6 +4,7 @@ import { TypographySmall } from "@/renderer/components/ui/typography";
 import { SectionBadge } from "@/renderer/components/section-badge";
 import { DataTableColumnHeader } from "./data-table.column-header";
 import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
+import { getSectionLabel } from "@/packages/@core/data-access/db/options";
 
 export const classroomColumns: ColumnDef<ClassroomDTO>[] = [
   {
@@ -43,13 +44,19 @@ export const classroomColumns: ColumnDef<ClassroomDTO>[] = [
     enableColumnFilter: true,
   },
   {
-    accessorKey: "optionId",
+    accessorKey: "option.optionName",
     header: "Option",
     enableHiding: true,
-    cell: ({ row }) => (
-      <TypographySmall className="text-muted-foreground">
-        {row.original?.option?.optionName}
-      </TypographySmall>
-    ),
+    cell: ({ getValue, row: { getValue: getRowValue } }) => {
+      const section = getRowValue<SECTION_ENUM>("section");
+      return (
+        <TypographySmall className="text-muted-foreground">
+          {String(
+            getValue() ??
+              `Aucune option pour la section ${section ? getSectionLabel(section) : "N/A"}`,
+          )}
+        </TypographySmall>
+      );
+    },
   },
 ];

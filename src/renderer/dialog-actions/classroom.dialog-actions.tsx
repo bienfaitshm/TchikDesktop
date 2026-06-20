@@ -156,7 +156,7 @@ export const ClassroomDialogDeleteForm: React.FC<
         onConfirm={handleConfirm}
         isPending={isDeleting}
         title="Supprimer la salle de classe"
-        description="Tous les documents, membres et emplois du temps associés seront définitivement retirés de la base de données."
+        description="Tous les documents, membres et emplois du temps associés seront définitivement suprimés."
         itemName={identifier}
       />
 
