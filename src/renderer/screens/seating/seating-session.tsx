@@ -6,12 +6,10 @@ import { Link } from "react-router";
 
 import type { SeatingSession } from "@/packages/@core/data-access/db/schemas";
 import { useGetSeatingSessions } from "@/renderer/libs/queries/seatings";
-
 import { Button } from "@/renderer/components/ui/button";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
-import { ButtonDialogDocumentExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 
 import {
@@ -21,6 +19,9 @@ import {
   DataTableContent,
   DataTablePagination,
   DataTableToolbar,
+  DataTableColumnToggle,
+  FilteredTableToolbarContainer,
+  SearchTableToolbar,
 } from "@/renderer/components/tables/data-table";
 import {
   seatingSessionColumns,
@@ -97,19 +98,14 @@ SessionRowActions.displayName = "SessionRowActions";
 export const SeatingPage = () => {
   const { schoolId, yearId } = useSchoolContext();
 
-  const { data: rawSessions, queryKey: mutationKey } = useGetSeatingSessions({
+  const { data: sessions, queryKey: mutationKey } = useGetSeatingSessions({
     where: { schoolId, yearId },
   });
-  const sessions = React.useMemo(() => rawSessions ?? [], [rawSessions]);
-  const sessionIds = React.useMemo(
-    () => (rawSessions ?? []).map((session) => session.sessionId),
-    [rawSessions],
-  );
 
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
       <PageShell
-        maxWidth="2xl"
+        maxWidth="xl"
         header={
           <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
             <header className="space-y-1">
@@ -120,18 +116,6 @@ export const SeatingPage = () => {
                 Organisez les plans de salle et la répartition des candidats.
               </p>
             </header>
-            <CreateSeatingSessionDialog
-              defaultValues={{ schoolId, yearId }}
-              mutationKey={mutationKey}
-            >
-              <Button
-                size="sm"
-                className="rounded-full shadow-xs bg-primary hover:bg-primary/90"
-              >
-                <Plus className="mr-2 size-4" />
-                Nouvelle session
-              </Button>
-            </CreateSeatingSessionDialog>
           </section>
         }
       >
@@ -140,12 +124,33 @@ export const SeatingPage = () => {
           columns={columns}
           keyExtractor={(item) => item.sessionId}
         >
-          <DataTableToolbar searchColumn="sessionName">
-            <ButtonDialogDocumentExport
-              schoolId={schoolId}
-              yearId={yearId}
-              defaultValues={{ sessionId: sessionIds }}
-            />
+          <DataTableToolbar>
+            <FilteredTableToolbarContainer>
+              <SearchTableToolbar
+                searchColumn="sessionName"
+                placeholder="Recherche"
+              />
+              {/* <TableFacetedFilterItem
+                title="Section"
+                columnId="section"
+                options={SECTION_OPTIONS}
+              /> */}
+            </FilteredTableToolbarContainer>
+            <div className="flex items-center gap-4">
+              <DataTableColumnToggle />
+              <CreateSeatingSessionDialog
+                defaultValues={{ schoolId, yearId }}
+                mutationKey={mutationKey}
+              >
+                <Button
+                  size="sm"
+                  className="rounded-full shadow-xs bg-primary hover:bg-primary/90"
+                >
+                  <Plus className="mr-2 size-4" />
+                  Nouvelle session
+                </Button>
+              </CreateSeatingSessionDialog>
+            </div>
           </DataTableToolbar>
 
           <Suspense

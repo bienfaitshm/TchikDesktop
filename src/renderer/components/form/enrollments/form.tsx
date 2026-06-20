@@ -22,7 +22,11 @@ import {
 import { EnrollmentQuickCreateSchema } from "@/packages/@core/data-access/schema-validations";
 import { GenericComboBox } from "@/renderer/components/form/fields/generic-combo-box";
 import { StudentSeniorityStatusSelect } from "../fields/student-seriority-statut";
-import { BaseFormProps, useZodForm } from "../base-form";
+import {
+  type BaseFormProps,
+  useZodForm,
+  mergeDefaultValuesDeep,
+} from "@/renderer/libs/forms";
 import { StudentFormFields } from "./form.student";
 import { SelectExistStudent } from "./form.select-student";
 import type { EnrollmentFormData } from "./types";
@@ -56,17 +60,13 @@ const fadeVariants: Variants = {
 
 export const EnrollmentForm: React.FC<
   BaseFormProps<EnrollmentFormData> & QuickEnrollmentFormProps
-> = ({ formId, onSubmit, initialValues, isUpdate, classrooms = [] }) => {
-  const form = useZodForm({
+> = ({ formId, onSubmit, defaultValues, isUpdate, classrooms = [] }) => {
+  const form = useZodForm<EnrollmentFormData>({
     schema: EnrollmentQuickCreateSchema,
-    defaultValues: {
-      ...DEFAULT_QUICK_ENROLLMENT_VALUES,
-      ...initialValues,
-      isInSystem:
-        initialValues?.isInSystem ??
-        DEFAULT_QUICK_ENROLLMENT_VALUES.isInSystem ??
-        true,
-    } as EnrollmentFormData,
+    defaultValues: mergeDefaultValuesDeep(
+      defaultValues,
+      DEFAULT_QUICK_ENROLLMENT_VALUES,
+    ),
     onSubmit,
   });
 
@@ -75,19 +75,6 @@ export const EnrollmentForm: React.FC<
 
   return (
     <Form {...form}>
-      <button
-        type="button"
-        onClick={() =>
-          console.log(
-            "Valeurs actuelles de RHF :",
-            form.getValues(),
-            "Erreurs :",
-            form.formState.errors,
-          )
-        }
-      >
-        Debug RHF
-      </button>
       <form id={formId} onSubmit={form.submit} aria-label="Inscription rapide">
         {/* Section Affectation Académique */}
         <FormField
@@ -204,8 +191,8 @@ export const EnrollmentForm: React.FC<
                 <Label>Rechercher l'élève existant</Label>
                 <div className="my-4" />
                 <SelectExistStudent
-                  schoolId={initialValues?.schoolId as string}
-                  yearId={initialValues?.yearId}
+                  schoolId={defaultValues?.schoolId as string}
+                  yearId={defaultValues?.yearId}
                 />
               </motion.div>
             ) : (

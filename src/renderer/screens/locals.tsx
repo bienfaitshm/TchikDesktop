@@ -14,6 +14,8 @@ import {
   DataTableContent,
   DataTablePagination,
   DataTableToolbar,
+  SearchTableToolbar,
+  DataTableColumnToggle,
 } from "@/renderer/components/tables/data-table";
 import {
   localRoomColumns,
@@ -55,7 +57,7 @@ const LocalRoomRowActions: React.FC<LocalRoomRowActionsProps> = React.memo(
       <ActionContainer className="md:grid-cols-3">
         {/* Modification : Alignement des props de initialData vers defaultValues */}
         <UpdateLocalRoomDialog
-          localRoomId={room.localroomId}
+          localroomId={room.localroomId}
           defaultValues={room}
           mutationKey={mutationKey}
         >
@@ -93,7 +95,7 @@ export const LocalRoomPage = () => {
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
       <PageShell
-        maxWidth="2xl"
+        maxWidth="xl"
         header={
           <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
             <header className="flex flex-col gap-1">
@@ -106,16 +108,6 @@ export const LocalRoomPage = () => {
                 Administrez les salles physiques, laboratoires et amphithéâtres.
               </p>
             </header>
-
-            <CreateLocalRoomDialog
-              defaultValues={{ schoolId }}
-              mutationKey={mutationKey}
-            >
-              <Button size="sm" className="rounded-full shadow-xs">
-                <Plus className="size-4 mr-2" />
-                <span>Ajouter un local</span>
-              </Button>
-            </CreateLocalRoomDialog>
           </section>
         }
       >
@@ -124,7 +116,25 @@ export const LocalRoomPage = () => {
           columns={columns}
           keyExtractor={(item) => item.localroomId}
         >
-          <DataTableToolbar searchColumn="name" />
+          <DataTableToolbar>
+            <SearchTableToolbar
+              searchColumn="name"
+              placeholder="Recherche Ex. Local 1"
+            />
+
+            <div className="flex items-center gap-4">
+              <DataTableColumnToggle />
+              <CreateLocalRoomDialog
+                defaultValues={{ schoolId }}
+                mutationKey={mutationKey}
+              >
+                <Button size="sm" className="rounded-full shadow-xs">
+                  <Plus className="size-4 mr-2" />
+                  <span>Ajouter un local</span>
+                </Button>
+              </CreateLocalRoomDialog>
+            </div>
+          </DataTableToolbar>
 
           <Suspense
             fallback={

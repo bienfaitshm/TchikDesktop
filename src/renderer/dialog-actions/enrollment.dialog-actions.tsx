@@ -69,6 +69,7 @@ export const CreateEnrollmentDialog: React.FC<
   //   { where: { schoolId, role: ROLE.STUDENT } },
   //   { labelFormat: "long" },
   // );
+
   return (
     <Dialog modal>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -91,7 +92,7 @@ export const CreateEnrollmentDialog: React.FC<
           <EnrollmentForm
             formId={formId}
             onSubmit={onSubmit}
-            initialValues={defaultValues}
+            defaultValues={defaultValues}
             classrooms={classrooms}
           />
         </div>
@@ -157,7 +158,6 @@ export const UpdateEnrollmentDialog: React.FC<
 
         <div className="py-4">
           <EnrollmentForm
-            type="update"
             formId={formId}
             onSubmit={(data, helpers) =>
               onSubmit({ id: enrollmentId, data }, helpers)

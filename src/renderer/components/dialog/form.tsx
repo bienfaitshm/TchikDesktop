@@ -41,7 +41,7 @@ export const DialogForm: React.FC<DialogFormProps> = ({
 
   return (
     <Dialog
-      modal={false}
+      modal={true}
       open={open}
       onOpenChange={isLoading ? undefined : setOpen}
     >

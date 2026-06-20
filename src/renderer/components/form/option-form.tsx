@@ -106,18 +106,13 @@ export const OptionForm: React.FC<BaseFormProps<OptionFormData>> = ({
             name="optionName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center gap-2 font-bold text-base">
-                  Nom de l'option / filière
-                  <span className="text-destructive" aria-hidden="true">
-                    *
-                  </span>
-                </FormLabel>
+                <FormLabel>Nom de l'option / filière</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
                     disabled={isSubmitting}
                     placeholder="Ex: Pédagogie Générale ou Commerciale & Gestion"
-                    className="h-11 focus-visible:ring-primary/50"
+                    className="focus-visible:ring-primary/50"
                     aria-required="true"
                   />
                 </FormControl>
@@ -137,9 +132,7 @@ export const OptionForm: React.FC<BaseFormProps<OptionFormData>> = ({
               name="optionShortName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-2 font-semibold">
-                    Code (Abréviation)
-                  </FormLabel>
+                  <FormLabel>Abréviation</FormLabel>
                   <FormControl>
                     <Input
                       {...field}

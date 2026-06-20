@@ -20,29 +20,30 @@ import type { ComponentProps, ComponentPropsWithoutRef } from "react";
  * @returns {React.ForwardRefExoticComponent<React.PropsWithoutRef<React.ComponentProps<T>> & React.RefAttributes<HTMLElementTagNameMap[T]>>} Un composant React "forwardRef".
  */
 function createTypographyComponent<T extends keyof HTMLElementTagNameMap>(
-    Component: T,
-    defaultClassNames: string,
-    displayName: string,
+  Component: T,
+  defaultClassNames: string,
+  displayName: string,
 ) {
+  type ComponentPropsToOmitRef = ComponentPropsWithoutRef<T>;
 
-    type ComponentPropsToOmitRef = ComponentPropsWithoutRef<T>;
-
-    const TypographyComponent = forwardRef<HTMLElementTagNameMap[T], ComponentPropsToOmitRef>(
-        ({ className, ...props }, ref) => {
-            return (
-                <Component
-                    className={cn(defaultClassNames, className)}
-                    ref={ref}
-                    {...(props as ComponentProps<T>)}
-                />
-            );
-        },
+  const TypographyComponent = forwardRef<
+    HTMLElementTagNameMap[T],
+    ComponentPropsToOmitRef
+  >(({ className, ...props }, ref) => {
+    return (
+      <Component
+        className={cn(defaultClassNames, className)}
+        ref={ref}
+        {...(props as ComponentProps<T>)}
+      />
     );
+  });
 
-    TypographyComponent.displayName = displayName;
-    return TypographyComponent as React.ForwardRefExoticComponent<
-        React.PropsWithoutRef<ComponentProps<T>> & React.RefAttributes<HTMLElementTagNameMap[T]>
-    >;
+  TypographyComponent.displayName = displayName;
+  return TypographyComponent as React.ForwardRefExoticComponent<
+    React.PropsWithoutRef<ComponentProps<T>> &
+      React.RefAttributes<HTMLElementTagNameMap[T]>
+  >;
 }
 
 /**
@@ -56,9 +57,9 @@ function createTypographyComponent<T extends keyof HTMLElementTagNameMap>(
  * <TypographyH1 className="text-blue-600">Bienvenue sur notre application</TypographyH1>
  */
 const TypographyH1 = createTypographyComponent(
-    "h1",
-    "scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl pb-4 mb-6 leading-tight",
-    "TypographyH1",
+  "h1",
+  "scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl pb-4 mb-6 leading-tight",
+  "TypographyH1",
 );
 
 /**
@@ -71,9 +72,9 @@ const TypographyH1 = createTypographyComponent(
  * <TypographyH2>À propos de nous</TypographyH2>
  */
 const TypographyH2 = createTypographyComponent(
-    "h2",
-    "scroll-m-20 text-3xl font-semibold tracking-tight pb-3 mb-5 first:mt-0 leading-snug",
-    "TypographyH2",
+  "h2",
+  "scroll-m-20 text-3xl font-semibold tracking-tight pb-3 mb-5 first:mt-0 leading-snug",
+  "TypographyH2",
 );
 
 /**
@@ -85,9 +86,9 @@ const TypographyH2 = createTypographyComponent(
  * <TypographyH3>Nos services</TypographyH3>
  */
 const TypographyH3 = createTypographyComponent(
-    "h3",
-    "scroll-m-20 text-2xl font-semibold tracking-tight mb-4 leading-normal",
-    "TypographyH3",
+  "h3",
+  "scroll-m-20 text-2xl font-semibold tracking-tight mb-4 leading-normal",
+  "TypographyH3",
 );
 
 /**
@@ -99,9 +100,9 @@ const TypographyH3 = createTypographyComponent(
  * <TypographyH4>Détails du produit</TypographyH4>
  */
 const TypographyH4 = createTypographyComponent(
-    "h4",
-    "scroll-m-20 text-xl font-medium tracking-tight mb-3 leading-snug",
-    "TypographyH4",
+  "h4",
+  "scroll-m-20 text-xl font-medium tracking-tight mb-3 leading-snug",
+  "TypographyH4",
 );
 
 /**
@@ -114,9 +115,9 @@ const TypographyH4 = createTypographyComponent(
  * <TypographyP>Ceci est un paragraphe standard de texte pour votre contenu.</TypographyP>
  */
 const TypographyP = createTypographyComponent(
-    "p",
-    "leading-relaxed mb-4 text-gray-700 dark:text-gray-300",
-    "TypographyP",
+  "p",
+  "leading-relaxed mb-4 text-gray-700 dark:text-gray-300",
+  "TypographyP",
 );
 
 /**
@@ -129,9 +130,9 @@ const TypographyP = createTypographyComponent(
  * <TypographyLead>Découvrez comment nous pouvons transformer votre expérience.</TypographyLead>
  */
 const TypographyLead = createTypographyComponent(
-    "p",
-    "text-xl text-muted-foreground mb-8 max-w-prose leading-relaxed font-normal",
-    "TypographyLead",
+  "p",
+  "text-xl text-muted-foreground mb-8 max-w-prose leading-relaxed font-normal",
+  "TypographyLead",
 );
 
 /**
@@ -143,9 +144,9 @@ const TypographyLead = createTypographyComponent(
  * <TypographyLarge>50% de réduction aujourd'hui !</TypographyLarge>
  */
 const TypographyLarge = createTypographyComponent(
-    "div",
-    "text-lg font-semibold mb-2",
-    "TypographyLarge",
+  "div",
+  "text-lg font-semibold mb-2",
+  "TypographyLarge",
 );
 
 /**
@@ -158,9 +159,9 @@ const TypographyLarge = createTypographyComponent(
  * <TypographySmall>Conditions générales applicables.</TypographySmall>
  */
 const TypographySmall = createTypographyComponent(
-    "small",
-    "text-sm font-medium leading-none text-gray-500 dark:text-gray-400",
-    "TypographySmall",
+  "small",
+  "text-sm font-medium leading-none",
+  "TypographySmall",
 );
 
 /**
@@ -172,19 +173,19 @@ const TypographySmall = createTypographyComponent(
  * <TypographyMuted>Ceci est une note discrète pour le contexte.</TypographyMuted>
  */
 const TypographyMuted = createTypographyComponent(
-    "p",
-    "text-sm text-muted-foreground italic",
-    "TypographyMuted",
+  "p",
+  "text-sm text-muted-foreground italic",
+  "TypographyMuted",
 );
 
 export {
-    TypographyH1,
-    TypographyH2,
-    TypographyH3,
-    TypographyH4,
-    TypographyP,
-    TypographyLead,
-    TypographyLarge,
-    TypographyMuted,
-    TypographySmall,
+  TypographyH1,
+  TypographyH2,
+  TypographyH3,
+  TypographyH4,
+  TypographyP,
+  TypographyLead,
+  TypographyLarge,
+  TypographyMuted,
+  TypographySmall,
 };

@@ -133,8 +133,8 @@ export function mergeDefaultValues<T extends Record<string, any>>(
  * de sous-propriétés dans les formulaires complexes.
  */
 export function mergeDefaultValuesDeep<T extends Record<string, any>>(
-  defaultValues: Partial<T> | undefined,
   initialValues: Partial<T> | undefined,
+  defaultValues: Partial<T> | undefined,
 ): Partial<T> {
   if (!defaultValues) return initialValues ?? {};
   if (!initialValues) return defaultValues ?? {};
