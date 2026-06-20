@@ -19,7 +19,7 @@ const LoadingButton = React.forwardRef<HTMLButtonElement, LoadingButtonProps>(
       <Button
         ref={ref}
         disabled={loading || disabled}
-        className={cn("relative gap-2 min-w-[7rem]", className)}
+        className={cn("relative gap-2 min-w-28", className)}
         {...props}
       >
         {loading && (
