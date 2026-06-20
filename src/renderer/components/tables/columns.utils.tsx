@@ -38,7 +38,7 @@ export function enhanceColumnsExpandable<T>(columns: ColumnDef<T>[]) {
       id: "actions",
       cell: () => (
         <Tooltip>
-          <TooltipTrigger>
+          <TooltipTrigger asChild>
             <ExpandableTrigger />
           </TooltipTrigger>
           <TooltipContent side="right" align="center">

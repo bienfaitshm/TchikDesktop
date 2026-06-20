@@ -11,6 +11,9 @@ import {
   DataTablePagination,
   DataTableToolbar,
   TableFacetedFilterItem,
+  FilteredTableToolbarContainer,
+  SearchTableToolbar,
+  DataTableColumnToggle,
 } from "@/renderer/components/tables/data-table";
 import { Button } from "@/renderer/components/ui/button";
 import {
@@ -116,7 +119,7 @@ export const ClassroomPage = () => {
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
       <PageShell
-        maxWidth="2xl"
+        maxWidth="xl"
         header={
           <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
             <header className="space-y-1">
@@ -127,17 +130,6 @@ export const ClassroomPage = () => {
                 Administrez les salles.
               </p>
             </header>
-
-            <ClassroomDialogCreateForm
-              schoolId={schoolId}
-              defaultValues={{ yearId, schoolId }}
-              mutationKey={mutationKey}
-            >
-              <Button size="sm" className="rounded-full shadow-xs">
-                <Plus className="size-4 mr-2" />
-                <span>Ajouter une classe</span>
-              </Button>
-            </ClassroomDialogCreateForm>
           </section>
         }
       >
@@ -146,17 +138,36 @@ export const ClassroomPage = () => {
           columns={columns}
           keyExtractor={(item) => item.classId}
         >
-          <DataTableToolbar searchColumn="identifier">
-            <TableFacetedFilterItem
-              title="Section"
-              columnId="section"
-              options={SECTION_OPTIONS}
-            />
-            <TableFacetedFilterItem
-              title="Option"
-              columnId="optionId"
-              options={options}
-            />
+          <DataTableToolbar>
+            <FilteredTableToolbarContainer>
+              <SearchTableToolbar
+                searchColumn="identifier"
+                placeholder="Recherche Ex. 1er MA"
+              />
+              <TableFacetedFilterItem
+                title="Section"
+                columnId="section"
+                options={SECTION_OPTIONS}
+              />
+              <TableFacetedFilterItem
+                title="Option"
+                columnId="option_optionName"
+                options={options}
+              />
+            </FilteredTableToolbarContainer>
+            <div className="flex items-center gap-4">
+              <DataTableColumnToggle />
+              <ClassroomDialogCreateForm
+                schoolId={schoolId}
+                defaultValues={{ yearId, schoolId }}
+                mutationKey={mutationKey}
+              >
+                <Button size="sm" className="rounded-full shadow-xs">
+                  <Plus className="size-4 mr-2" />
+                  <span>Ajouter une classe</span>
+                </Button>
+              </ClassroomDialogCreateForm>
+            </div>
           </DataTableToolbar>
 
           <Suspense

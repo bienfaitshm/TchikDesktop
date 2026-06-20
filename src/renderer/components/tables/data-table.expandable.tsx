@@ -38,12 +38,13 @@ const useExpandable = () => {
  */
 export const ExpandableTrigger = React.forwardRef<
   HTMLButtonElement,
-  HTMLMotionProps<"button">
->(({ className }, ref) => {
+  React.ComponentProps<"button">
+>(({ className, ...props }, ref) => {
   const { isExpanded, toggle } = useExpandable();
 
   return (
     <Button
+      {...props}
       ref={ref}
       variant="ghost"
       size="xs"

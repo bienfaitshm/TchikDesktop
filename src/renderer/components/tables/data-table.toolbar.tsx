@@ -10,8 +10,9 @@ import { cn } from "@/renderer/utils";
 
 import { TableColumnVisibility } from "./data-table.column-visibility";
 
-interface TableToolbarProps<TData>
-  extends React.HTMLAttributes<HTMLDivElement> {
+interface TableToolbarProps<
+  TData,
+> extends React.HTMLAttributes<HTMLDivElement> {
   table: Table<TData>;
   searchColumn?: string;
   searchPlaceholder?: string;
@@ -43,7 +44,7 @@ export function TableToolbar<TData>({
             onChange={(event) =>
               table.getColumn(searchColumn)?.setFilterValue(event.target.value)
             }
-            className="h-9 w-[150px] lg:w-[250px]"
+            className="h-9 w-37.5 lg:w-62.5"
           />
         )}
 
