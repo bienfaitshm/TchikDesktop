@@ -9,6 +9,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandShortcut,
 } from "@/renderer/components/ui/command";
 import {
   Popover,
@@ -137,7 +138,11 @@ function GenericComboBoxInner<T>(
                     <div className="flex-1 truncate font-normal">
                       {renderItem ? renderItem(item, isSelected) : item.label}
                     </div>
-                    {isSelected && <Check className="h-3 w-3 text-primary" />}
+                    {isSelected && (
+                      <CommandShortcut>
+                        <Check className="h-3 w-3 text-primary" />
+                      </CommandShortcut>
+                    )}
                   </CommandItem>
                 );
               })}

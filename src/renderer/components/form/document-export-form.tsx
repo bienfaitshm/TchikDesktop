@@ -62,7 +62,6 @@ export function ExportFormContent({
           value={selectedDocKey}
           onChangeValue={onDocumentChange}
           className="h-12"
-          contentClassName="w-full sm:w-[850px]"
           renderTrigger={(selected) => (
             <div className="flex flex-col items-start gap-0.5 overflow-hidden text-left w-full min-w-0">
               <span className="font-medium text-sm text-wrap">

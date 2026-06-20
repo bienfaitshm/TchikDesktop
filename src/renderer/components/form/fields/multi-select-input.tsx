@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { ChevronsUpDown, X } from "lucide-react";
 import {
   Command,
   CommandGroup,
@@ -18,11 +18,11 @@ import { Button } from "@/renderer/components/ui/button";
 import { Checkbox } from "@/renderer/components/ui/checkbox";
 import { Label } from "@/renderer/components/ui/label";
 import { cn } from "@/renderer/utils";
+import { ScrollArea } from "@/renderer/components/ui/scroll-area";
 import {
   useFilterCheckBoxInput,
   type FilterOption,
 } from "./multi-select-input.utils";
-import { ScrollArea } from "../../ui/scroll-area";
 
 export interface MultiSelectProps extends Omit<
   React.ComponentPropsWithoutRef<typeof Button>,
@@ -99,7 +99,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
 
         <PopoverContent
           className={cn(
-            "w-[--radix-popover-trigger-width] min-w-[280px] p-0 shadow-md",
+            "w-[--radix-popover-trigger-width] min-w-70 p-0 shadow-md",
             contentClassName,
           )}
           align="start"
@@ -124,7 +124,12 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
               )}
             </div>
 
-            <CommandList className="max-h-[240px] overflow-y-auto scrollbar-thin p-1 flex flex-col">
+            <CommandList
+              className="max-h-60 overflow-y-auto scrollbar-thin p-1 flex flex-col"
+              onWheel={(e) => {
+                e.stopPropagation();
+              }}
+            >
               <ScrollArea className="h-full">
                 <CommandGroup>
                   {filteredOptions.map((option) => {
@@ -136,7 +141,6 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                         key={option.value}
                         value={option.label}
                         onSelect={() => {
-                          // Inverse l'état de sélection au clic sur la ligne entière
                           handleCheckedChange(!isSelected, option.value);
                         }}
                         data-slot="multiselect-item"
@@ -160,9 +164,6 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                         >
                           {option.label}
                         </Label>
-                        {isSelected && (
-                          <Check className="size-3.5 text-primary shrink-0 animate-in fade-in zoom-in-75 duration-100" />
-                        )}
                       </CommandItem>
                     );
                   })}

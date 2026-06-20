@@ -70,7 +70,12 @@ export const createSeatingBadgeExportForm = async (
     createFileTypeField(fileTypeFilters, { colSpan: fileTypeColSpan }),
     createSessionField({ colSpan: sessionColSpan, schoolId, yearId }),
     createSectionField({ colSpan: sectionColSpan }),
-    createClassroomField({ schoolId, yearId, colSpan: classroomColSpan }),
+    createClassroomField({
+      schoolId,
+      yearId,
+      colSpan: classroomColSpan,
+      multiple: true,
+    }),
   );
 };
 

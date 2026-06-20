@@ -13,9 +13,9 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/renderer/components/ui/dialog";
-import { ButtonLoader } from "@/renderer/components/form/button-loader";
 import { useDocumentExportManager } from "@/renderer/libs/queries/document-export";
 import { ExportFormContent } from "@/renderer/components/form/document-export-form";
+import { LoadingButton } from "@/renderer/components/buttons/button-loading";
 
 type WithSchoolAndYearId<T> = T & { schoolId: string; yearId?: string };
 
@@ -73,12 +73,11 @@ export const DialogDataExport: React.FC<
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange} modal={false}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange} modal>
       <DialogTrigger asChild>{buttonTrigger}</DialogTrigger>
-
-      <DialogContent className="sm:max-w-[700px] lg:max-w-[900px] gap-0 p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-185 lg:max-w-255 gap-0 p-0 overflow-hidden">
         <div className="p-6">
-          <DialogHeader className="mb-6">
+          <DialogHeader className="mt-5 mx-2">
             <DialogTitle className="text-2xl">
               Exportation de documents
             </DialogTitle>
@@ -88,17 +87,19 @@ export const DialogDataExport: React.FC<
           </DialogHeader>
 
           {/* Contenu principal du formulaire */}
-          <ExportFormContent
-            formId={formManager.formId}
-            isPending={isExporting}
-            docOptions={formManager.docOptions}
-            selectedDocKey={formManager.selectedDocKey}
-            dynamicFields={formManager.dynamicFields}
-            onDocumentChange={formManager.handleDocumentChange}
-            onSubmit={({ data }) =>
-              formManager.onSubmit(data, { schoolId, yearId })
-            }
-          />
+          <div className="py-4 mx-2">
+            <ExportFormContent
+              formId={formManager.formId}
+              isPending={isExporting}
+              docOptions={formManager.docOptions}
+              selectedDocKey={formManager.selectedDocKey}
+              dynamicFields={formManager.dynamicFields}
+              onDocumentChange={formManager.handleDocumentChange}
+              onSubmit={({ data }) =>
+                formManager.onSubmit(data, { schoolId, yearId })
+              }
+            />
+          </div>
 
           {/* Feedback visuel lors de l'exportation */}
           {isExporting && (
@@ -108,22 +109,21 @@ export const DialogDataExport: React.FC<
           )}
         </div>
 
-        <DialogFooter className="bg-muted/50 p-4 gap-2 border-t">
+        <DialogFooter className="px-10 pb-10 gap-5 sm:gap-4">
           <DialogClose asChild>
             <Button variant="ghost" disabled={isExporting}>
               Annuler
             </Button>
           </DialogClose>
 
-          <ButtonLoader
+          <LoadingButton
             form={formId}
             type="submit"
-            isLoading={isExporting}
+            loading={isExporting}
             disabled={isExporting || !formManager.selectedDocKey}
-            className="min-w-[140px]"
           >
             Générer le fichier
-          </ButtonLoader>
+          </LoadingButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
