@@ -9,7 +9,7 @@ import { setupDevelopmentEnvironment } from "@/main/electron-dev-extension";
 import { updateInit } from "@/main/update";
 import { getAppIcon } from "@/main/utils";
 import { handleFatalError } from "./error-handler";
-
+import "@/main/apps/system-infos";
 const mainLogger = getLogger("MainProcess");
 
 const createMainWindow = async (): Promise<BrowserWindow> => {

@@ -1,16 +1,13 @@
 "use client";
 
 import { Outlet, useLocation, Link } from "react-router";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/renderer/components/ui/resizable";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { PageShell } from "./page-shell.layout";
 import { cn } from "@/renderer/utils";
 import { User, Settings2, Bell, LifeBuoy, Info, Code2 } from "lucide-react";
+
+import { SidebarContainer } from "@/renderer/components/sidebar-container";
 
 /**
  * Configuration des items du menu (doit correspondre à tes routes)
@@ -33,14 +30,8 @@ export const SettingLayout = () => {
 
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden border-t">
-      <ResizablePanelGroup className="h-full items-stretch">
-        {/* PANNEAU LATÉRAL : NAVIGATION */}
-        <ResizablePanel
-          defaultSize={20}
-          minSize={15}
-          maxSize={25}
-          className="h-full bg-muted/30 backdrop-blur-xs"
-        >
+      <SidebarContainer
+        sidebar={
           <div className="flex flex-col h-full">
             <div className="p-6">
               <h2 className="text-lg font-semibold tracking-tight">Réglages</h2>
@@ -78,29 +69,24 @@ export const SettingLayout = () => {
               </Suspense>
             </nav>
           </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle className="bg-border/50" />
-
-        {/* PANNEAU PRINCIPAL : CONTENU */}
-        <ResizablePanel defaultSize={80}>
-          <PageShell
-            maxWidth="2xl"
-            header={
-              <div className="flex flex-col gap-1">
-                <h1 className="text-2xl font-bold tracking-tight">
-                  {activeTitle}
-                </h1>
-                <div className="h-1 w-10 bg-primary rounded-full" />
-              </div>
-            }
-          >
-            <div className="py-6">
-              <Outlet context={{ schoolId, yearId }} />
+        }
+      >
+        <PageShell
+          maxWidth="xl"
+          header={
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl font-bold tracking-tight">
+                {activeTitle}
+              </h1>
+              <div className="h-1 w-10 bg-primary rounded-full" />
             </div>
-          </PageShell>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+          }
+        >
+          <div className="py-6">
+            <Outlet context={{ schoolId, yearId }} />
+          </div>
+        </PageShell>
+      </SidebarContainer>
     </div>
   );
 };

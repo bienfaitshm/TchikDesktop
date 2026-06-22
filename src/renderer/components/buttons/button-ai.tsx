@@ -9,10 +9,14 @@ export const ButtonAi: React.FC<ButtonProps> = (props) => {
       type="button"
       size="icon"
       variant="ghost"
-      className="size-8 animate-pulse"
+      className="size-8 relative"
       {...props}
     >
-      <LucideBrainCircuit className="size-5" />
+      {/* L'effet de Ping en arrière-plan */}
+      <LucideBrainCircuit className="size-5 animate-ping absolute opacity-75 text-primary" />
+
+      {/* L'icône principale au premier plan */}
+      <LucideBrainCircuit className="size-5 relative z-10" />
     </Button>
   );
 };

@@ -25,6 +25,11 @@ const electronAPI = {
       ipcRenderer.removeAllListeners(channel);
     },
   },
+  getAppVersion: () => ipcRenderer.invoke("get-app-version"),
+  shell: {
+    openExternal: (url: string) =>
+      ipcRenderer.invoke("open-external-link", url),
+  },
 };
 
 const customUpdaterAPI = {
