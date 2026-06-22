@@ -35,6 +35,12 @@ export interface EnrollmentStatsByYear {
   male: number;
 }
 
+export interface StatsSummary {
+  total: number;
+  active: number;
+  excluded: number;
+}
+
 /**
  * Exécute une agrégation `COUNT` groupée par une colonne.
  * Applique les filtres passés et traduit éventuellement les clés de groupe via `labelMapping`.
