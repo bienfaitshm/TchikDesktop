@@ -41,7 +41,7 @@ import {
   UpdateSeatingSessionDialog,
   type SeatingSessionDialogProps,
 } from "@/renderer/dialog-actions/seating-session.dialog-actions";
-
+import { APP_ROUTES } from "@/renderer/constants";
 const columns = enhanceColumnsExpandable(seatingSessionColumns);
 
 interface SessionRowActionsProps extends Pick<
@@ -57,9 +57,12 @@ interface SessionRowActionsProps extends Pick<
 const SessionRowActions = React.memo(
   ({ session, mutationKey }: SessionRowActionsProps) => {
     return (
-      <ActionContainer className="lg:grid-cols-4">
+      <ActionContainer className="justify-end">
         {/* Redirection vers le détail de la session */}
-        <Link to={`/seating/${session.sessionId}`} className="contents">
+        <Link
+          to={APP_ROUTES.SEATING.SESSION(session.sessionId)}
+          className="contents"
+        >
           <ActionTileDetail />
         </Link>
 

@@ -54,7 +54,7 @@ interface LocalRoomRowActionsProps extends Pick<
 const LocalRoomRowActions: React.FC<LocalRoomRowActionsProps> = React.memo(
   ({ room, mutationKey }) => {
     return (
-      <ActionContainer className="md:grid-cols-3">
+      <ActionContainer className="justify-end">
         {/* Modification : Alignement des props de initialData vers defaultValues */}
         <UpdateLocalRoomDialog
           localroomId={room.localroomId}

@@ -79,14 +79,14 @@ export function SidebarSectionList<TData>({
   }, [sections, renderItem, emptyTitle, isEmpty]);
 
   return (
-    <div className={cn("flex flex-col h-full bg-sidebar", className)}>
+    <div className={cn("flex flex-col h-full overflow-y-hidden", className)}>
       {listHeaderComponent && (
         <header className="shrink-0 p-4 border-b bg-background/50 backdrop-blur-md z-5">
           {listHeaderComponent}
         </header>
       )}
 
-      <ScrollArea className="flex-1 h-full">{content}</ScrollArea>
+      <ScrollArea className="flex-1 min-h-0">{content}</ScrollArea>
     </div>
   );
 }

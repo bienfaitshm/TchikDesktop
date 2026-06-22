@@ -89,7 +89,7 @@ export function DataTable<T>({
 export function DataTableContent({ children }: { children?: React.ReactNode }) {
   const ctx = useDataTableContext();
   return (
-    <div className="overflow-hidden rounded-lg border">
+    <div className="overflow-hidden rounded-lg border scrollbar-thin">
       <DndContext
         collisionDetection={closestCenter}
         modifiers={[restrictToVerticalAxis]}

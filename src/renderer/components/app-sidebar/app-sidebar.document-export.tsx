@@ -1,17 +1,19 @@
 "use client";
 
-import { Download } from "lucide-react"; // Remplacement de Upload par Download (plus logique pour un export)
+import { Download } from "lucide-react";
 import {
-  SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/renderer/components/ui/sidebar";
-
 import { cn } from "@/renderer/utils";
 import { ButtonExport } from "@/renderer/components/buttons/button-export";
 import { DialogDataExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
+import {
+  Menubar,
+  MenubarMenu,
+  MenubarTrigger,
+} from "@/renderer/components/ui/menubar";
 
 interface SidebarExportDocumentProps {
   className?: string;
@@ -21,38 +23,42 @@ export function SidebarExportDocument({
   className,
 }: SidebarExportDocumentProps) {
   const { schoolId, yearId } = useCurrentConfig();
-  const { open } = useSidebar();
 
   if (!schoolId) return null;
 
   return (
-    <SidebarMenu className={className}>
-      <SidebarMenuItem className="px-2 py-1.5 transition-all duration-300">
-        {!open ? (
-          <DialogDataExport
-            schoolId={schoolId}
-            yearId={yearId}
-            buttonTrigger={
-              <SidebarMenuButton
-                size="lg"
-                className="w-full justify-center group transition-all duration-300 dynamic-tailwind-classes"
-                tooltip="Exporter les données ou documents"
-              >
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg shadow-xs transition-all duration-300 group-hover:scale-105 group-hover:bg-sidebar-primary/90">
-                  <Download className="size-4 transition-transform group-hover:-translate-y-0.5" />
-                </div>
-              </SidebarMenuButton>
-            }
-          />
-        ) : (
+    <SidebarMenuItem className={cn("list-none", className)}>
+      <Menubar className="h-auto border-none bg-transparent p-0 shadow-none">
+        <MenubarMenu>
+          <div className="hidden group-data-[state=collapsed]:block w-full">
+            <DialogDataExport
+              schoolId={schoolId}
+              yearId={yearId}
+              buttonTrigger={
+                <MenubarTrigger asChild>
+                  <SidebarMenuButton
+                    size="lg"
+                    tooltip="Exporter les données ou documents"
+                    className="w-full justify-center"
+                  >
+                    <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg shadow-sm transition-all duration-200 group-hover:scale-105">
+                      <Download className="size-4 transition-transform group-hover:-translate-y-0.5" />
+                    </div>
+                  </SidebarMenuButton>
+                </MenubarTrigger>
+              }
+            />
+          </div>
+
           <div
             className={cn(
-              "w-full rounded-xl border border-sidebar-border bg-sidebar-accent/30 p-3 backdrop-blur-xs shadow-xs",
-              "animate-in fade-in-50 slide-in-from-left-2 duration-200 ease-out",
+              "w-full rounded-xl border border-sidebar-border bg-sidebar-accent/20 p-3 shadow-xs transition-all duration-200",
+              "group-data-[state=collapsed]:hidden",
+              "animate-in fade-in-40 slide-in-from-left-3 duration-200 ease-out",
             )}
           >
-            <div className="flex flex-col gap-0.5 mb-3">
-              <span className="text-sm font-semibold text-sidebar-foreground/90 flex items-center gap-1.5">
+            <div className="mb-3 flex flex-col gap-0.5 select-none">
+              <span className="text-sm font-semibold text-sidebar-foreground/90">
                 Exportation
               </span>
               <p className="text-xs text-muted-foreground leading-normal">
@@ -60,17 +66,18 @@ export function SidebarExportDocument({
               </p>
             </div>
 
-            {/* Bouton principal propre */}
             <DialogDataExport
               schoolId={schoolId}
               yearId={yearId}
               buttonTrigger={
-                <ButtonExport className="w-full justify-center shadow-2xs" />
+                <MenubarTrigger asChild>
+                  <ButtonExport className="w-full justify-center shadow-xs" />
+                </MenubarTrigger>
               }
             />
           </div>
-        )}
-      </SidebarMenuItem>
-    </SidebarMenu>
+        </MenubarMenu>
+      </Menubar>
+    </SidebarMenuItem>
   );
 }

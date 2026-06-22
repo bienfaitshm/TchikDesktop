@@ -42,7 +42,7 @@ import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 import { useGetOptionAsOptions } from "@/renderer/hooks/data-as-options";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
-
+import { APP_ROUTES } from "@/renderer/constants";
 const columns = enhanceColumnsExpandable(classroomColumns);
 
 interface ClassroomRowActionsProps extends Pick<
@@ -65,10 +65,10 @@ const ClassroomRowActions: React.FC<ClassroomRowActionsProps> = React.memo(
     );
 
     return (
-      <ActionContainer>
+      <ActionContainer className="justify-end">
         {/* Navigation vers le détail des étudiants */}
         <Link
-          to={`/classrooms/${classroom.classId}/students`}
+          to={APP_ROUTES.CLASSROOMS.STUDENTS(classroom.classId)}
           className="contents"
         >
           <ActionTileDetail />

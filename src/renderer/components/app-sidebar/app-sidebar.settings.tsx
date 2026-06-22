@@ -34,7 +34,7 @@ import { APP_ROUTES } from "@/renderer/constants";
 import { ThemeMenuItem } from "./app-sidebar.theme";
 
 export type Option = {
-  label?: string; // Optionnel car le sous-menu Theme embarque sa propre configuration
+  label?: string;
   href?: string;
   icon?: LucideIcon;
   hasSeparatorAfter?: boolean;
@@ -60,7 +60,7 @@ const SETTINGS_OPTIONS: Option[] = [
   },
   {
     hasSubMenus: true,
-    subMenus: <ThemeMenuItem />, // Le composant gère sa propre icône et son label dynamiquement
+    subMenus: <ThemeMenuItem />,
     hasSeparatorAfter: true,
   },
 
@@ -115,7 +115,7 @@ export const SidebarSettingsButton = () => {
           </MenubarTrigger>
 
           <MenubarContent
-            className="w-(--radix-menubar-trigger-width) min-w-[350px]"
+            className="w-(--radix-menubar-trigger-width) min-w-87.5"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={8}

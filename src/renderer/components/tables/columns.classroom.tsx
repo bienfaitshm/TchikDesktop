@@ -5,6 +5,8 @@ import { SectionBadge } from "@/renderer/components/section-badge";
 import { DataTableColumnHeader } from "./data-table.column-header";
 import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
 import { getSectionLabel } from "@/packages/@core/data-access/db/options";
+import { APP_ROUTES } from "@/renderer/constants";
+import { Link } from "react-router";
 
 export const classroomColumns: ColumnDef<ClassroomDTO>[] = [
   {
@@ -12,11 +14,21 @@ export const classroomColumns: ColumnDef<ClassroomDTO>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Nom complet" />
     ),
-    cell: ({ getValue }) => {
+    cell: ({
+      getValue,
+      row: {
+        original: { classId },
+      },
+    }) => {
       return (
-        <TypographySmall className="text-foreground max-w-20">
-          {getValue<string>()}
-        </TypographySmall>
+        <Link
+          to={APP_ROUTES.CLASSROOMS.STUDENTS(classId)}
+          className="hover:underline"
+        >
+          <TypographySmall className="text-foreground max-w-20">
+            {getValue<string>()}
+          </TypographySmall>
+        </Link>
       );
     },
     enableSorting: true,

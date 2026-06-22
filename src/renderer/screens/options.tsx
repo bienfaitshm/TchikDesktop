@@ -52,7 +52,7 @@ interface OptionRowActionsProps extends Pick<OptionDialogProps, "mutationKey"> {
 const OptionRowActions = React.memo(
   ({ option, mutationKey }: OptionRowActionsProps) => {
     return (
-      <ActionContainer className="lg:grid-cols-3">
+      <ActionContainer>
         {/* Modification */}
         <UpdateOptionDialog
           mutationKey={mutationKey}
