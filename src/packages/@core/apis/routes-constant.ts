@@ -72,15 +72,16 @@ export const DocumentExportRoutes = {
  * Permet de récupérer les données agrégées pour les graphiques et KPI.
  */
 export const StatsRoutes = {
-  // Global & KPI (Total étudiants, ratio, etc.)
   SUMMARY: "stats/summary",
 
   STUDENTS_BY_STATUS: "stats/students/status",
   STUDENTS_BY_GENDER: "stats/students/gender",
   STUDENTS_BY_CLASS: "stats/students/class",
   STUDENTS_BY_OPTION: "stats/students/option",
+  TOTAL_STUDENTS: "stats/students/total",
 
   RETENTION: "stats/retention",
+  ENROLLMENTS_BY_YEAR: "stats/enrollments/by-year",
 } as const;
 
 export const AppInfosRoutes = {
@@ -105,8 +106,8 @@ export const SeatingSessionRoutes = {
   SEARCH: "seating/sessions/search",
   BY_YEAR: "seating/sessions/year/:yearId",
   DETAIL: "seating/sessions/:id",
-  STATUS: "seating/sessions/:id/status", // Pour GetSessionRoomsStatus
-  FULL_DETAILS: "seating/sessions/:id/full", // Pour GetFullSessionDetails
+  STATUS: "seating/sessions/:id/status",
+  FULL_DETAILS: "seating/sessions/:id/full",
   CREATE: "seating/sessions/create",
 } as const;
 
@@ -136,7 +137,6 @@ export const IpcRoutes = {
   STATS: StatsRoutes,
   APP_INFOS: AppInfosRoutes,
   USERS: UserRoutes,
-  // --- Nouveaux modules Seating ---
   LOCAL_ROOMS: LocalRoomRoutes,
   SEATING_SESSIONS: SeatingSessionRoutes,
   SEATING_ASSIGNMENTS: SeatingAssignmentRoutes,

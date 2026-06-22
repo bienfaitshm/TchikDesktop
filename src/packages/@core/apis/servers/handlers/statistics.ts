@@ -116,3 +116,37 @@ export class GetStatsRetention extends AbstractEndpoint<any> {
     return StatsService.getRetentionMetrics(params.schoolId, params.yearId);
   }
 }
+
+/**
+ * Endpoint pour obtenir le nombre total d'élèves
+ */
+export class GetTotalStudents extends AbstractEndpoint<any> {
+  route = StatsRoutes.TOTAL_STUDENTS;
+  method = HttpMethod.GET;
+  schemas: ValidationSchemas = {
+    params: StatsFilterSchema,
+  };
+
+  protected handle({
+    params,
+  }: IpcRequest<any, TStatsFilter>): Promise<unknown> {
+    return StatsService.getTotalStudents(params.schoolId, params.yearId);
+  }
+}
+
+/**
+ * Endpoint pour la répartition des inscriptions par année (avec détails H/F)
+ */
+export class GetEnrollmentsByYear extends AbstractEndpoint<any> {
+  route = StatsRoutes.ENROLLMENTS_BY_YEAR;
+  method = HttpMethod.GET;
+  schemas: ValidationSchemas = {
+    params: StatsFilterSchema.pick({ schoolId: true }),
+  };
+
+  protected handle({
+    params,
+  }: IpcRequest<any, { schoolId: string }>): Promise<unknown> {
+    return StatsService.getEnrollmentStatsByYear(params.schoolId);
+  }
+}

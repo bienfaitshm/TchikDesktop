@@ -72,6 +72,8 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   stats.GetStatsByStatus,
   stats.GetStatsRetention,
   stats.GetStatsSummary,
+  stats.GetEnrollmentsByYear,
+  stats.GetTotalStudents,
 
   // export data
   exportDocument.ExportDocuments,
