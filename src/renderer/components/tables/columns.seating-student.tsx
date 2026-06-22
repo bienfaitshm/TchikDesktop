@@ -17,7 +17,7 @@ export const seatingStudentColumns: ColumnDef<StudentSeating>[] = [
   {
     accessorKey: "fullName",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Étudiant" />
+      <DataTableColumnHeader column={column} title="Éleve" />
     ),
     cell: ({ row }) => (
       <div className="flex flex-col">
@@ -27,12 +27,12 @@ export const seatingStudentColumns: ColumnDef<StudentSeating>[] = [
         {/* On peut ajouter un sous-texte ici si besoin, ex: ID étudiant */}
       </div>
     ),
+    enableHiding: false,
+    enableSorting: true,
   },
   {
     accessorKey: "gender",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Genre" />
-    ),
+    header: "Genre",
     cell: ({ row }) => {
       const gender = row.original.gender;
       return gender ? (
@@ -41,17 +41,24 @@ export const seatingStudentColumns: ColumnDef<StudentSeating>[] = [
         <span className="text-muted-foreground/50">-</span>
       );
     },
+    enableHiding: true,
+    enableSorting: true,
   },
   {
     accessorKey: "identifier",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Classe" />
-    ),
-    cell: ({ row }) => (
+    header: "Classe",
+    cell: ({ getValue }) => (
       <Badge variant="secondary" className="font-normal capitalize">
-        {row.original.identifier}
+        {getValue<string>()}
       </Badge>
     ),
+    filterFn: (row, _, filterValue: string[]) => {
+      if (!filterValue || filterValue.length === 0) return true;
+      const classroomId = row.original.classroomId;
+      return filterValue.includes(classroomId);
+    },
+    enableHiding: false,
+    enableSorting: true,
   },
   {
     id: "seat",
@@ -82,5 +89,7 @@ export const seatingStudentColumns: ColumnDef<StudentSeating>[] = [
         </div>
       );
     },
+    enableHiding: true,
+    enableSorting: true,
   },
 ];

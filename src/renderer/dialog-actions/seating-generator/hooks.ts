@@ -237,3 +237,14 @@ export const useInvalidateSeatingCache = () => {
 
   return invalidate;
 };
+
+export const useHideFormConfig = () => {
+  const [isClosed, setIsClosed] = useState<boolean>(false);
+
+  const toggle = useCallback(() => setIsClosed((prev) => !prev), []);
+
+  return {
+    isClosed,
+    toggle,
+  };
+};
