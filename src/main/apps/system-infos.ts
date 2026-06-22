@@ -29,6 +29,35 @@ ipcMain.handle("open-external-link", async (_, url: string) => {
 });
 
 /**
+ * Ouvre un fichier ou un dossier local via le chemin fourni en utilisant l'application par défaut de l'OS.
+ * @param filePath Le chemin absolu du fichier ou du dossier.
+ * @returns Un objet indiquant le succès ou le message d'erreur retourné par le système.
+ */
+ipcMain.handle("open-file-path", async (_, filePath: string) => {
+  try {
+    if (!filePath) {
+      return { success: false, error: "Le chemin du fichier est vide." };
+    }
+
+    // shell.openPath retourne une chaîne vide "" si tout s'est bien passé,
+    // sinon elle retourne un message d'erreur décrivant le problème.
+    const errorMessage = await shell.openPath(filePath);
+
+    if (errorMessage) {
+      console.error(
+        `Erreur système lors de l'ouverture du fichier : ${errorMessage}`,
+      );
+      return { success: false, error: errorMessage };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Erreur critique lors de l'ouverture du chemin :", error);
+    return { success: false, error: error?.message || "Erreur inconnue" };
+  }
+});
+
+/**
  * Indique si l’application tourne en mode développement (true) ou en production (false).
  */
 ipcMain.handle("is-mode-dev", () => {

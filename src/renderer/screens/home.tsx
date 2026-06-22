@@ -6,10 +6,10 @@ import { ScrollArea } from "../components/ui/scroll-area";
 
 export const HomePage = () => {
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden bg-background">
-      <ScrollArea className="h-full w-full">
+    <ScrollArea className="h-full w-full">
+      <div className="relative flex h-full w-full flex-col overflow-hidden bg-background container max-w-7xl">
         <DashBoardPage />
-      </ScrollArea>
-    </div>
+      </div>
+    </ScrollArea>
   );
 };
