@@ -41,9 +41,9 @@ import { Button } from "../ui/button";
 import { X } from "lucide-react";
 
 type ContextTable<T> = {
-  dndId: string;
-  dndSensors: SensorDescriptor<SensorOptions>[];
-  handleRowDragEnd: (event: DragEndEvent) => void;
+  dndId?: string;
+  dndSensors?: SensorDescriptor<SensorOptions>[];
+  handleRowDragEnd?: (event: DragEndEvent) => void;
   tableInstance: TanstackTable<T>;
   columns: ColumnDef<T>[];
   rowIds: UniqueIdentifier[];

@@ -90,7 +90,10 @@ export function TableFacetedFilter<TData, TValue>({
       <PopoverContent className="w-100 p-0" align="start">
         <Command>
           <CommandInput placeholder={title} />
-          <CommandList className="space-y-2 max-h-80 mt-4">
+          <CommandList
+            className="space-y-2 max-h-80 mt-4"
+            onWheel={(e) => e.stopPropagation()}
+          >
             <CommandEmpty>Aucun résultat.</CommandEmpty>
             <CommandGroup className="max-h-60 overflow-y-auto scrollbar-thin">
               {options.map((option) => {

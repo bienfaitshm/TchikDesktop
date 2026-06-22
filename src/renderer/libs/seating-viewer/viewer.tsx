@@ -28,7 +28,7 @@ import {
   ItemTitle,
 } from "@/renderer/components/ui/item";
 
-import { getStudentPlacementDetails, RoomState } from "./utils";
+import { getStudentPlacementDetails, RoomState, StudentSeating } from "./utils";
 import { Separator } from "@/renderer/components/ui/separator";
 import { cn } from "@/renderer/utils";
 import { GENDER_OPTIONS } from "@/packages/@core/data-access/db/options";
@@ -65,7 +65,7 @@ export const SeatingViewer: React.FC<SeatingViewerProps> = ({
       className="flex flex-col md:flex-row w-full min-h-150 gap-6"
     >
       {/* SIDEBAR NAVIGATION */}
-      <aside className="w-full md:w-72 flex flex-col gap-4">
+      <aside className="w-full md:w-64 flex flex-col gap-4">
         <div className="px-2 py-1">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">
             Locaux de l'examen
@@ -175,10 +175,10 @@ export const SeatingViewTable: React.FC<SeatingViewTableProps> = ({
   classroomOptions = [],
 }) => {
   return (
-    <DataTable<any>
+    <DataTable<StudentSeating>
       data={getStudentPlacementDetails(room?.seatingPlan ?? [])}
       columns={enhanceColumnsExpandable(seatingStudentColumns)}
-      keyExtractor={(item) => item.schoolId}
+      keyExtractor={(item) => `${item.fullName}${item.classroomId}`}
     >
       <DataTableToolbar>
         <FilteredTableToolbarContainer>
@@ -193,7 +193,7 @@ export const SeatingViewTable: React.FC<SeatingViewTableProps> = ({
           />
           <TableFacetedFilterItem
             title="Classe"
-            columnId="identifier"
+            columnId="classroomId"
             options={classroomOptions}
           />
         </FilteredTableToolbarContainer>

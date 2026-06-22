@@ -45,18 +45,17 @@ export const seatingStudentColumns: ColumnDef<StudentSeating>[] = [
     enableSorting: true,
   },
   {
-    accessorKey: "identifier",
+    accessorKey: "classroomId",
     header: "Classe",
-    cell: ({ getValue }) => (
+    cell: ({
+      row: {
+        original: { identifier },
+      },
+    }) => (
       <Badge variant="secondary" className="font-normal capitalize">
-        {getValue<string>()}
+        {identifier}
       </Badge>
     ),
-    filterFn: (row, _, filterValue: string[]) => {
-      if (!filterValue || filterValue.length === 0) return true;
-      const classroomId = row.original.classroomId;
-      return filterValue.includes(classroomId);
-    },
     enableHiding: false,
     enableSorting: true,
   },
@@ -66,6 +65,12 @@ export const seatingStudentColumns: ColumnDef<StudentSeating>[] = [
       <DataTableColumnHeader column={column} title="Emplacement" />
     ),
     accessorFn: (row) => `${row.row}-${row.column}`,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original;
+      const b = rowB.original;
+      if (a.row !== b.row) return a.row - b.row;
+      return a.column - b.column;
+    },
     cell: ({ row }) => {
       const { row: r, column: c } = row.original;
       return (
