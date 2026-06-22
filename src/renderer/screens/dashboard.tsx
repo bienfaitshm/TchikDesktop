@@ -42,13 +42,14 @@ export const DashBoardPage = () => {
     studentsByOption,
     totalStudents,
     retentionData,
+    enrollmentsByYear,
+    enrollmentHistories,
   } = useDashboardStatistics({ schoolId, yearId });
 
   const rentetion = useMemo(
     () => toLabelValueRecord(retentionData),
     [JSON.stringify(retentionData)],
   );
-  console.log("summary", summary, retentionData);
 
   return (
     <div className="min-h-screen bg-background/50 text-foreground p-6 lg:p-10 max-w-400 mx-auto w-full space-y-8 animate-fade-in">
@@ -64,7 +65,10 @@ export const DashBoardPage = () => {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <PromotionVolumeSection data={studentsByClass ?? []} />
+        <PromotionVolumeSection
+          studentsByClass={studentsByClass}
+          enrollmentsByYear={enrollmentsByYear}
+        />
         <SystemPanel genderData={genderDistribution ?? []} />
       </div>
 
@@ -73,6 +77,7 @@ export const DashBoardPage = () => {
       <ActivityTabs
         statusDistribution={statusDistribution ?? []}
         genderDistribution={genderDistribution ?? []}
+        enrollmentHistories={enrollmentHistories}
       />
     </div>
   );

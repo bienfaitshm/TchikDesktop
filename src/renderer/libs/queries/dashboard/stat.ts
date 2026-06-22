@@ -1,6 +1,6 @@
 import { useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
 import type { UseSuspenseQueryOptions } from "@tanstack/react-query";
-import { stats as apis } from "@/renderer/libs/apis";
+import { stats as apis, enrollment } from "@/renderer/libs/apis";
 import type { TStatsFilter } from "@/packages/@core/data-access/schema-validations";
 import type {
   ChartDataPoint,
@@ -27,6 +27,11 @@ export const statsKeys = {
     [...statsKeys.all, "totalStudents", { schoolId, yearId }] as const,
   enrollmentsByYear: (schoolId: string) =>
     [...statsKeys.all, "enrollmentsByYear", { schoolId }] as const,
+  enrollmentHistory: (schoolId: string, yearId: string) => [
+    ...statsKeys.all,
+    "histories",
+    { schoolId, yearId },
+  ],
 } as const;
 
 /**
@@ -78,6 +83,17 @@ export function useDashboardStatistics(params: TStatsFilter) {
         queryFn: () => apis.fetchEnrollmentsByYear(schoolId),
         staleTime: 1000 * 60 * 10,
       },
+
+      {
+        queryKey: statsKeys.enrollmentHistory(schoolId, yearId),
+        queryFn: () =>
+          enrollment.fetchEnrollments({
+            where: { yearId, schoolId },
+            orderBy: [{ column: "createdAt", order: "desc" }],
+            limit: 5,
+          }),
+        staleTime: 1000 * 60 * 10,
+      },
     ],
   });
 
@@ -90,6 +106,7 @@ export function useDashboardStatistics(params: TStatsFilter) {
     retentionData: results[5].data,
     totalStudents: results[6].data,
     enrollmentsByYear: results[7].data,
+    enrollmentHistories: results[8].data,
     isRefetching: results.some((r) => r.isFetching),
   };
 }

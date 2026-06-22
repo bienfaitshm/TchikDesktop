@@ -24,3 +24,18 @@ export const STATUS_CONFIG = {
   exclu: { label: "Exclus", color: "var(--color-destructive)" },
   abandon: { label: "Abandons", color: "var(--color-secondary)" },
 } satisfies ChartConfig;
+
+export const enrollmentChartConfig = {
+  total: {
+    label: "Total",
+    color: "var(--chart-1)",
+  },
+  female: {
+    label: "Filles",
+    color: "var(--chart-2)",
+  },
+  male: {
+    label: "Garçons",
+    color: "var(--chart-3)",
+  },
+} satisfies ChartConfig;

@@ -6,7 +6,7 @@ import {
   options,
   studyYears,
 } from "@/packages/@core/data-access/db/schemas/schema";
-import { eq, and, sql, count, SQL } from "drizzle-orm";
+import { eq, and, sql, count, SQL, asc } from "drizzle-orm";
 import type { SQLiteTable, SQLiteColumn } from "drizzle-orm/sqlite-core";
 import { getLogger } from "@/packages/logger";
 import {
@@ -118,15 +118,18 @@ export namespace EnrollmentStats {
           female: sql<number>`COUNT(CASE WHEN ${users.gender} = ${USER_GENDER_ENUM.FEMALE} THEN 1 END)`,
           male: sql<number>`COUNT(CASE WHEN ${users.gender} = ${USER_GENDER_ENUM.MALE} THEN 1 END)`,
         })
-        .from(classroomEnrollments)
-        .innerJoin(
-          studyYears,
-          eq(classroomEnrollments.yearId, studyYears.yearId),
+        .from(studyYears)
+        .leftJoin(
+          classroomEnrollments,
+          and(
+            eq(studyYears.yearId, classroomEnrollments.yearId),
+            eq(classroomEnrollments.schoolId, schoolId),
+          ),
         )
-        .innerJoin(users, eq(classroomEnrollments.studentId, users.userId))
-        .where(eq(classroomEnrollments.schoolId, schoolId))
+        .leftJoin(users, eq(classroomEnrollments.studentId, users.userId))
+        .where(eq(studyYears.schoolId, schoolId))
         .groupBy(studyYears.yearId)
-        .orderBy(studyYears.startDate);
+        .orderBy(asc(studyYears.startDate));
 
       return results.map((row) => ({
         ...row,
