@@ -39,6 +39,7 @@ export interface StatsSummary {
   total: number;
   active: number;
   excluded: number;
+  dropout: number;
 }
 
 /**
@@ -348,12 +349,13 @@ export namespace KpiStats {
   export async function getQuickKpis(
     schoolId: string,
     yearId: string,
-  ): Promise<{ total: number; active: number; excluded: number }> {
+  ): Promise<StatsSummary> {
     try {
       const [result] = await db
         .select({
           total: count(),
           active: sql<number>`COUNT(CASE WHEN ${classroomEnrollments.status} = ${STUDENT_STATUS_ENUM.ACTIVE} THEN 1 END)`,
+          dropout: sql<number>`COUNT(CASE WHEN ${classroomEnrollments.status} = ${STUDENT_STATUS_ENUM.DROPOUT} THEN 1 END)`,
           excluded: sql<number>`COUNT(CASE WHEN ${classroomEnrollments.status} = ${STUDENT_STATUS_ENUM.EXPELLED} THEN 1 END)`,
         })
         .from(classroomEnrollments)
@@ -368,10 +370,11 @@ export namespace KpiStats {
         total: result?.total ?? 0,
         active: result?.active ?? 0,
         excluded: result?.excluded ?? 0,
+        dropout: result?.dropout ?? 0,
       };
     } catch (error) {
       logger.error("KpiStats.getQuickKpis failed", error as Error);
-      return { total: 0, active: 0, excluded: 0 };
+      return { total: 0, active: 0, excluded: 0, dropout: 0 };
     }
   }
 }

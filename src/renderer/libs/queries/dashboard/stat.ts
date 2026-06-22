@@ -81,11 +81,6 @@ export function useDashboardStatistics(params: TStatsFilter) {
     ],
   });
 
-  /**
-   * Performance Senior : On évite la déstructuration brute de tableau à la volée.
-   * On extrait les données de manière stable. Si une seule requête change,
-   * seules les propriétés associées changeront de référence mémoire.
-   */
   return {
     summary: results[0].data,
     statusDistribution: results[1].data,

@@ -64,7 +64,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({}) => {
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground max-w-3xl leading-relaxed">
             Fini le travail manuel <b>Tchik</b> génère et sécurise
-            automatiquement vos listes d'examens en local. Gagnez du temps,
+            automatiquement vos documents en local. Gagnez du temps,
             concentrez-vous sur l'essentiel.
           </p>
         </div>

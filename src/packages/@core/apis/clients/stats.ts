@@ -5,16 +5,12 @@ import type {
   ChartDataPoint,
   ClassStatsDTO,
   EnrollmentStatsByYear,
+  StatsSummary,
 } from "@/packages/@core/data-access/db/queries";
 
 /**
  * Interface représentant les KPIs rapides pour les cartes de résumé.
  */
-export interface StatsSummary {
-  total: number;
-  active: number;
-  excluded: number;
-}
 
 /**
  * API Client pour la récupération des données analytiques.
