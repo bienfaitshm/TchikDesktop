@@ -61,7 +61,7 @@ export const StudyYearCreationForm: React.FC = () => {
     <div>
       <StudyYearForm
         formId={formId}
-        initialValues={{ schoolId: currentSchoolId }}
+        defaultValues={{ schoolId: currentSchoolId }}
         onSubmit={onSubmit}
       />
       <div className="flex justify-end pt-4">
