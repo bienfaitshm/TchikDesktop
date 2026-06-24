@@ -107,4 +107,6 @@ export interface IFileSystem {
    * @param content Contenu binaire ou texte à persister.
    */
   persistToDisk(path: string, content: RawFileContent): Promise<void>;
+
+  getFileName(path: string): Promise<string>;
 }

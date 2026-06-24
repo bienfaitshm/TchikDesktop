@@ -144,9 +144,10 @@ export class DataExport {
       log.info("Fichier sauvegardé avec succès.");
 
       // 7. Post-traitement (hooks)
-      this.handlePostExport(strategyId, savePath, contextParams);
+      const exportName = await this.fileSystem.getFileName(savePath);
+      this.handlePostExport(strategyId, savePath, exportName, contextParams);
 
-      return { success: true, data: savePath };
+      return { success: true, data: exportName };
     } catch (error) {
       log.error("Erreur critique dans le pipeline d'export.", error as Error);
       this.notify(false, error as ServiceError);
@@ -181,21 +182,19 @@ export class DataExport {
   private handlePostExport(
     strategyId: string,
     filePath: string,
+    exportName: string,
     contextParams: ContextParams & { schoolId?: string },
   ): void {
-    // Notification de succès
     this.notify(true, filePath);
 
-    // Ouverture du fichier (si configuré)
     if (this.config?.onOpenFile) {
       this.config.onOpenFile(filePath);
     }
 
-    // Sauvegarde dans l'historique (si configuré)
     this.config?.saveHistoryExport?.({
       exportKey: strategyId,
-      exportName: filePath,
-      fileType: contextParams.fileType,
+      exportName,
+      fileType: contextParams.fileType ?? "Unkown File Type",
       filePath,
       schoolId: contextParams.schoolId,
     });
