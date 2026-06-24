@@ -78,12 +78,14 @@ function buildSheet(
         text: (school.name ?? "").toUpperCase(),
         style: {
           height: 24,
+          alignment: { horizontal: "center" },
           font: { color: { argb: "FF222222" }, bold: true, size: 13 },
         },
       },
       {
-        text: `${school.adress ?? ""}, ${school.town ?? ""}`,
+        text: `${school.address ?? ""}, ${school.town ?? ""}`,
         style: {
+          alignment: { horizontal: "center" },
           height: 22,
           font: { color: { argb: "FF333333" }, bold: false, size: 11 },
         },
@@ -92,6 +94,7 @@ function buildSheet(
         text: `LISTES DES ÉLÈVES INSCRITS | ${shortIdentifier} | ${school.studyYear?.yearName ?? ""}`,
         style: {
           height: 24,
+          alignment: { horizontal: "center" },
           font: { color: { argb: PRIMARY_COLOR }, bold: true, size: 12 },
         },
       },
