@@ -17,12 +17,14 @@ import {
 } from "@/renderer/screens/config";
 import {
   AboutPage,
-  AccountPage,
+  // AccountPage,
   DeveloperPage,
   HelpPage,
   SettingsPage,
-  NotificationPage,
+  // NotificationPage,
 } from "@/renderer/screens/settings";
+import WorkInProgressPage from "@/renderer/components/work-in-progess-page";
+
 import { EnrollmentPage } from "@/renderer/screens/enrollments";
 import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms";
 
@@ -97,11 +99,14 @@ export default function RouterProvider(): JSX.Element {
               path={ROUTES.SETTINGS.DEVELOPER}
               element={<DeveloperPage />}
             />
-            <Route path={ROUTES.SETTINGS.ACCOUNT} element={<AccountPage />} />
+            <Route
+              path={ROUTES.SETTINGS.ACCOUNT}
+              element={<WorkInProgressPage />}
+            />
             <Route path={ROUTES.SETTINGS.ABOUT} element={<AboutPage />} />
             <Route
               path={ROUTES.SETTINGS.NOTIFICATIONS}
-              element={<NotificationPage />}
+              element={<WorkInProgressPage />}
             />
           </Route>
         </Route>

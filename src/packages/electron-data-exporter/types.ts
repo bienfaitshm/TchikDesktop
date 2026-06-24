@@ -53,7 +53,7 @@ export interface DocumentMetadata<TField = unknown> {
   readonly extensions: FileFilter[];
   readonly title: string;
   readonly description: string;
-  readonly fields?: TField[];
+  readonly fields?: readonly TField[];
 }
 
 /**

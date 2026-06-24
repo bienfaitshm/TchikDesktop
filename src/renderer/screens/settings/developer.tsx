@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -76,6 +76,7 @@ export const DeveloperPage = () => {
               </p>
             </div>
             <Switch
+              disabled
               id="dev-mode"
               checked={isDevMode}
               onCheckedChange={setIsDevMode}

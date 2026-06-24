@@ -6,6 +6,7 @@
 
 import { DataExport } from "@/packages/electron-data-exporter";
 import { ElectronFileSystem } from "@/packages/electron-file-system";
+import { openFile } from "@/packages/electron-utility";
 import { registeredStrategies } from "./strategies";
 
 /**
@@ -19,7 +20,9 @@ const fileSystem = new ElectronFileSystem();
  * 2. Instance principale du service d'exportation (Singleton).
  * Ce service orchestre le workflow : Validation -> Choix chemin -> Fetch -> Build -> Write.
  */
-export const documentExport = new DataExport(registeredStrategies, fileSystem);
+export const documentExport = new DataExport(registeredStrategies, fileSystem, {
+  onOpenFile: openFile,
+});
 
 /**
  * 3. Exportation des types et constantes pour la consommation externe.
