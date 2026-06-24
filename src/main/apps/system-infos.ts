@@ -1,7 +1,12 @@
 import { app, ipcMain, shell, screen } from "electron";
 import { is } from "@electron-toolkit/utils";
 import { getSystemInformation } from "@/main/features/apps-infos";
+import { dbManager } from "@/packages/@core/data-access/db";
 import * as os from "os";
+
+ipcMain.handle("get-db-backup-files", () => {
+  return dbManager.getBackDBFiles();
+});
 
 /**
  * Récupère la version de l’application (celle définie dans le fichier package.json).

@@ -80,6 +80,7 @@ export interface SystemInformation {
 declare global {
   interface Window {
     electron: ElectronAPI & {
+      getBackupDbFiles: () => Promise<{ name: string; time: number }[]>;
       getAppVersion: () => Promise<string>;
       shell: {
         openExternal: (url: string) => Promise<boolean>;

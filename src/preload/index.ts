@@ -5,6 +5,9 @@ const electronAPI = {
   // Référence directe à ipcRenderer (si besoin d'accès avancé)
   ipcRenderer: customIpcRenderer,
 
+  getBackupDbFiles: (): Promise<{ name: string; time: number }[]> =>
+    ipcRenderer.invoke("get-db-backup-files"),
+
   /**
    * Récupère la version de l'application.
    * @returns {string} Version (ex: "1.2.3")

@@ -11,6 +11,8 @@ import { ActivityTabs } from "@/renderer/containers/dashboard/activity-tabs";
 import type { ChartDataPoint } from "@/packages/@core/data-access/db/queries";
 import { useMemo } from "react";
 
+const dbFilePromise = window.electron.getBackupDbFiles() ?? [];
+
 /**
  * Transforme un tableau de points de données graphiques en un objet clé-valeur
  * indexé par le label. Utile pour un accès direct aux valeurs par catégorie.
@@ -69,7 +71,10 @@ export const DashBoardPage = () => {
           studentsByClass={studentsByClass}
           enrollmentsByYear={enrollmentsByYear}
         />
-        <SystemPanel genderData={genderDistribution ?? []} />
+        <SystemPanel
+          genderData={genderDistribution ?? []}
+          dbFilesPromise={dbFilePromise}
+        />
       </div>
 
       <OptionsChartSection data={studentsByOption ?? []} />

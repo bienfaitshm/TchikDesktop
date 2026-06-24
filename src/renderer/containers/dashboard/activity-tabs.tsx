@@ -15,6 +15,7 @@ import type {
   ChartDataPoint,
   EnrollmentTDO,
 } from "@/packages/@core/data-access/db/queries";
+import { formatRelativeTime } from "@/packages/times";
 
 const STATUS_CONFIG = {
   active: { label: "Actifs", color: "var(--color-primary)" },
@@ -98,17 +99,6 @@ interface RecentActivitiesProps {
 export const RecentActivities = ({
   enrollmentHistories = [],
 }: RecentActivitiesProps) => {
-  // Formateur pour donner un rendu propre à la date de l'inscription
-  const formatDate = (dateInput: string | Date) => {
-    const date = new Date(dateInput);
-    if (isNaN(date.getTime())) return String(dateInput);
-
-    return date.toLocaleDateString("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   if (enrollmentHistories.length === 0) {
     return (
       <Card className="border-border/60 bg-card/40 backdrop-blur-xs p-8 text-center text-xs text-muted-foreground">
@@ -145,7 +135,7 @@ export const RecentActivities = ({
               {/* Droite : Date & Statut du type d'élève */}
               <div className="flex items-center gap-4 text-right">
                 <span className="text-[11px] text-muted-foreground font-mono hidden sm:block">
-                  Le {formatDate(createdAt)}
+                  {formatRelativeTime(createdAt)}
                 </span>
 
                 <Badge
