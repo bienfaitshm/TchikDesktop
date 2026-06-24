@@ -65,6 +65,14 @@ export const UpdateOptionDialog: React.FC<
 > = ({ defaultValues, optionId, children, ...config }) => {
   const { formId, isSubmitting, onSubmit } = useUpdateOptionForm(config);
 
+  const handleSubmit = React.useCallback(
+    (data, helpers) =>
+      onSubmit(
+        { id: optionId, data },
+        { reset: (updatedData) => helpers.reset(updatedData) },
+      ),
+    [onSubmit, optionId],
+  );
   return (
     <DialogForm
       trigger={children}
@@ -75,7 +83,7 @@ export const UpdateOptionDialog: React.FC<
     >
       <OptionForm
         formId={formId}
-        onSubmit={onSubmit}
+        onSubmit={handleSubmit}
         defaultValues={defaultValues}
       />
     </DialogForm>

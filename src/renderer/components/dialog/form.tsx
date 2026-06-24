@@ -18,6 +18,7 @@ export interface DialogFormProps extends React.PropsWithChildren {
   description?: string;
   formId?: string;
   isLoading?: boolean;
+  submitText?: string;
 }
 
 export const DialogForm: React.FC<DialogFormProps> = ({
@@ -26,6 +27,7 @@ export const DialogForm: React.FC<DialogFormProps> = ({
   description,
   formId,
   isLoading = false,
+  submitText = "Enregistrer",
   children,
 }) => {
   const [open, setOpen] = React.useState(false);
@@ -64,7 +66,7 @@ export const DialogForm: React.FC<DialogFormProps> = ({
             </Button>
           </DialogClose>
           <LoadingButton form={formId} type="submit" loading={isLoading}>
-            Enregistrer
+            {submitText}
           </LoadingButton>
         </DialogFooter>
       </DialogContent>

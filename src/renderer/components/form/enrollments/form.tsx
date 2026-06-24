@@ -58,7 +58,7 @@ const fadeVariants: Variants = {
   exit: { opacity: 0, y: -10, transition: { duration: 0.15, ease: "easeIn" } },
 };
 
-export const EnrollmentForm: React.FC<
+export const QuickEnrollmentForm: React.FC<
   BaseFormProps<EnrollmentFormData> & QuickEnrollmentFormProps
 > = ({ formId, onSubmit, defaultValues, isUpdate, classrooms = [] }) => {
   const form = useZodForm<EnrollmentFormData>({
@@ -216,4 +216,4 @@ export const EnrollmentForm: React.FC<
   );
 };
 
-EnrollmentForm.displayName = "EnrollmentForm";
+QuickEnrollmentForm.displayName = "QuickEnrollmentForm";

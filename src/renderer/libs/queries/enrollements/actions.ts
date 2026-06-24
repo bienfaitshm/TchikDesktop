@@ -21,6 +21,7 @@ import {
   useFormBase,
 } from "../base";
 
+export type EnrollmentFormConfig = BaseMutationConfig<Enrollment>;
 /**
  * Interface partagée pour les filtres contextuels des formulaires d'inscription
  */

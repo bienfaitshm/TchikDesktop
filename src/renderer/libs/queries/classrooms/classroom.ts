@@ -52,7 +52,7 @@ export function useGetClassrooms(
 
 export function useGetClassroomAsOptions(
   params?: SearchClassroomQueryParams,
-  options?: Partial<UseSuspenseQueryOptions<(SelectOption | ClassroomDTO)[]>>,
+  options?: Partial<UseSuspenseQueryOptions<(SelectOption & ClassroomDTO)[]>>,
 ) {
   return useSuspenseQuery({
     queryKey: classroomKeys.options(params),
