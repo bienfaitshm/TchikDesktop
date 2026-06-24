@@ -42,9 +42,15 @@ export function AboutPage() {
                 {appVersion}
               </Badge>
             </div>
-            <p className="text-muted-foreground text-md max-w-xl">
-              La solution open source qui transforme la gestion administrative
-              des établissements scolaires.
+            <p className="text-muted-foreground text-md max-w-xl text-justify">
+              Tchik est la solution open source qui réinvente la gestion
+              administrative scolaire. Conçue pour les non-experts, elle
+              automatise les tâches chronophages comme la préparation des
+              examens, la génération des listes d'émargement et la création de
+              documents officiels. Sécurisée en local et sans dépendance
+              internet, Tchik réduit les erreurs, simplifie votre quotidien et
+              vous offre une liberté totale sur vos données. Gagnez en
+              efficacité, sans formation technique.
             </p>
 
             {/* Liens et Actions de support */}
@@ -97,7 +103,7 @@ export function AboutPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <p className="text-lg font-bold">Bienfait Shm</p>
+              <p className="text-lg font-bold">Bienfait Shomari</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Développeur principal passionné par la création d'outils
                 durables, libres et centrés sur l'humain pour l'éducation.
@@ -120,10 +126,10 @@ export function AboutPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm space-y-1 font-mono text-muted-foreground">
-              <div>• Electron</div>
-              <div>• React & TypeScript</div>
-              <div>• Tailwind CSS v4</div>
-              <div>• shadcn/ui components</div>
+              <div>Electron</div>
+              <div>React & TypeScript</div>
+              <div>Tailwind CSS v4</div>
+              <div>Shadcn/ui components</div>
             </CardContent>
           </Card>
         </div>
