@@ -10,6 +10,7 @@ import {
   DOCUMENT_EXTENSION,
   getFileDescription,
 } from "@/packages/file-extension";
+import { formatDate } from "@/packages/times";
 import type { RawFileContent, ServiceResult, ContextParams } from "./types";
 
 export interface TMeta<TFormField = unknown> {
@@ -252,6 +253,6 @@ export abstract class AbstractExportStrategy<
   }
 
   private generateDateSuffix(): string {
-    return new Date().toISOString().split("T")[0];
+    return formatDate(new Date(), "dd_MM_yyyy_ss");
   }
 }
