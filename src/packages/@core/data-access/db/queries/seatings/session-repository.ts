@@ -15,10 +15,6 @@ const SESSION_SORT: FindManyOptions<typeof seatingSessions> = {
   orderBy: [{ column: "sessionName", order: "asc" }],
 };
 
-// ==========================================
-// REPOSITORY (Single Responsibility: Data Access Only)
-// ==========================================
-
 export class SeatingSessionRepository extends BaseRepository<
   typeof seatingSessions,
   TDataBase
@@ -96,12 +92,11 @@ export class SeatingSessionRepository extends BaseRepository<
         with: {
           assignments: {
             with: {
-              localRoom: true,
+              localroom: true,
               enrollment: {
-                // Correction de la typo enrolement -> enrollment pour matcher la DB
                 with: {
                   student: true,
-                  classRoom: true,
+                  classroom: true,
                 },
               },
             },
@@ -111,7 +106,6 @@ export class SeatingSessionRepository extends BaseRepository<
 
       if (!sessionDetails) return null;
 
-      // Cast nécessaire suite au mapping relationnel de Drizzle
       const typedSession =
         sessionDetails as unknown as SeatingSessionWithAssignment;
 
@@ -123,7 +117,6 @@ export class SeatingSessionRepository extends BaseRepository<
 
       return typedSession;
     } catch (error) {
-      // Suppression du console.log redondant pour la prod
       this.logError("getSessionWithAssignments", error, { sessionId });
       throw error;
     }

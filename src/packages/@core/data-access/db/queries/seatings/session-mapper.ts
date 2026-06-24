@@ -46,17 +46,18 @@ export class SeatingSessionMapper {
   ): SeatingSessionGrouped {
     const grouped = sessionData.assignments.reduce(
       (acc, assignment) => {
-        const { localroomId, localRoom, enrollment } = assignment;
+        const { localroomId, localroom, enrollment } = assignment;
 
         if (!acc[localroomId]) {
           acc[localroomId] = {
-            ...localRoom,
+            ...localroom,
             students: [],
           };
         }
 
         const studentWithFormattedName: Assignment = {
           ...assignment,
+          seat: `${assignment.rowPosition}-${assignment.columnPosition}`,
           enrollment: {
             ...enrollment,
             student: withFullName(enrollment.student),
