@@ -1,25 +1,32 @@
 import { Student, Room, RoomReport, OccupiedSeat } from "./types";
+import { Classroom, interleaveStudents } from "./interleave";
 import { shuffleArray } from "./utils";
 
+/**
+ * Moteur d'optimisation pour la répartition des étudiants dans les salles d'examen.
+ * Applique une stratégie d'entrelacement pour maximiser la distance entre étudiants
+ * d'une même classe (anti-triche) et gère le taux d'occupation cible.
+ */
 export class ExamOptimizer {
   private readonly comfortRatio: number;
 
   /**
-   * Initialise le moteur d'optimisation.
-   * @param comfortRatio - Ratio de confort cible (défaut: 0.8 pour 80% d'occupation).
+   * @param comfortRatio - Ratio d'occupation cible (ex: 0.8 pour 80%). Gère le confort et l'espace.
    */
   constructor(comfortRatio: number = 0.8) {
     this.comfortRatio = comfortRatio;
   }
 
   /**
-   * Génère un plan de salle optimisé et anti-triche.
-   * Remplit les salles de manière séquentielle en respectant le comfortRatio.
-   * * @param students - Liste des étudiants à placer.
-   * @param rooms - Salles disponibles.
-   * @param defaultColumnsPerRoom - Largeur de matrice par défaut si la salle ne la précise pas.
-   * @returns Un tableau de rapports détaillés par salle.
-   * @throws Error si la capacité totale est insuffisante.
+   * Génère un plan de salle optimisé, uniformément réparti et anti-triche.
+   * Remplit les salles de manière séquentielle (Round-Robin) en respectant d'abord le ratio de confort,
+   * puis bascule sur la capacité maximale brute si nécessaire.
+   * * @template T - Le type d'objet Étudiant, étendant l'interface de base Student.
+   * @param students - Liste globale des étudiants à placer.
+   * @param rooms - Liste des salles d'examen disponibles.
+   * @param defaultColumnsPerRoom - Nombre de colonnes par défaut pour la disposition matricielle.
+   * @returns Un tableau de rapports détaillés par salle, trié par nom de salle.
+   * @throws {Error} Si la capacité totale brute de toutes les salles est insuffisante.
    */
   public generateSeatingPlan<T extends Student>(
     students: T[],
@@ -31,45 +38,51 @@ export class ExamOptimizer {
     const shuffledStudents = [...this.interleaveStudents(students)];
     const activeRooms = this.selectOptimalRooms(rooms, students.length);
 
+    // Initialisation de la table d'allocation des étudiants par identifiant de salle
     const allocations = new Map<string, T[]>(
-      activeRooms.map((r) => [r.id, []]),
+      activeRooms.map((room) => [room.id, []]),
     );
 
-    let currentRoomIdx = 0;
+    let currentRoomIndex = 0;
 
     for (const student of shuffledStudents) {
-      let found = false;
+      let isPlaced = false;
+
+      // Passe 1 : Répartition sous le seuil du ratio de confort (stratégie optimale)
       for (let i = 0; i < activeRooms.length; i++) {
-        const idx = (currentRoomIdx + i) % activeRooms.length;
-        const room = activeRooms[idx];
-        const currentAlloc = allocations.get(room.id)!;
+        const index = (currentRoomIndex + i) % activeRooms.length;
+        const room = activeRooms[index];
+        const currentAllocation = allocations.get(room.id)!;
 
         if (
-          currentAlloc.length < Math.floor(room.maxCapacity * this.comfortRatio)
+          currentAllocation.length <
+          Math.floor(room.maxCapacity * this.comfortRatio)
         ) {
-          currentAlloc.push(student);
-          currentRoomIdx = (idx + 1) % activeRooms.length;
-          found = true;
+          currentAllocation.push(student);
+          currentRoomIndex = (index + 1) % activeRooms.length;
+          isPlaced = true;
           break;
         }
       }
 
-      if (!found) {
+      // Passe 2 : Repli (Fallback) - Remplissage jusqu'à la capacité maximale brute si nécessaire
+      if (!isPlaced) {
         for (let i = 0; i < activeRooms.length; i++) {
-          const idx = (currentRoomIdx + i) % activeRooms.length;
-          const room = activeRooms[idx];
-          const currentAlloc = allocations.get(room.id)!;
+          const index = (currentRoomIndex + i) % activeRooms.length;
+          const room = activeRooms[index];
+          const currentAllocation = allocations.get(room.id)!;
 
-          if (currentAlloc.length < room.maxCapacity) {
-            currentAlloc.push(student);
-            currentRoomIdx = (idx + 1) % activeRooms.length;
-            found = true;
+          if (currentAllocation.length < room.maxCapacity) {
+            currentAllocation.push(student);
+            currentRoomIndex = (index + 1) % activeRooms.length;
+            isPlaced = true;
             break;
           }
         }
       }
     }
 
+    // Génération et formatage des rapports finaux
     return activeRooms
       .map((room) =>
         this.buildRoomReport(
@@ -81,6 +94,9 @@ export class ExamOptimizer {
       .sort((a, b) => a.roomName.localeCompare(b.roomName));
   }
 
+  /**
+   * Regroupe les étudiants sous forme de dictionnaire indexé par l'identifiant de leur classe.
+   */
   private groupStudentByClass<T extends Student>(
     students: T[],
   ): Record<string, T[]> {
@@ -95,55 +111,28 @@ export class ExamOptimizer {
   }
 
   /**
-   * Groupe, mélange aléatoirement et entrelace les étudiants pour maximiser
-   * la distance physique entre les membres d'une même classe.
-   * * @param students - Liste globale des étudiants.
-   * @returns Une liste linéaire d'étudiants entrelacés.
+   * Mélange aléatoirement les étudiants au sein de leurs classes respectives,
+   * puis applique l'algorithme d'entrelacement pour éviter la proximité directe de camarades.
    */
   private interleaveStudents<T extends Student>(students: T[]): T[] {
     if (students.length === 0) return [];
 
-    // 1. Groupement des étudiants par classe
-    const groups: Record<string, T[]> = this.groupStudentByClass(students);
+    const groups = this.groupStudentByClass(students);
 
-    // 2. Mélange initial de chaque classe (Copie pour éviter les mutations)
-    const classLists: T[][] = Object.values(groups).map((group) =>
-      shuffleArray([...group]),
+    const classroomLists: Classroom<T>[] = Object.entries(groups).map(
+      ([name, classStudents]) => ({
+        name,
+        students: shuffleArray([...classStudents]),
+      }),
     );
 
-    const result: T[] = [];
-
-    // 3. Entrelacement dynamique en utilisant des files
-    // On boucle tant qu'il reste des listes de classes non vides
-    while (classLists.length > 0) {
-      // Optionnel : On peut mélanger classLists ici si on veut que l'ordre des classes change à chaque round
-
-      for (let i = classLists.length - 1; i >= 0; i--) {
-        const currentClass = classLists[i];
-
-        // On prend le premier étudiant de la classe (O(1) conceptuel ici, ou .pop() pour du vrai O(1))
-        const student = currentClass.shift();
-        if (student) {
-          result.push(student);
-        }
-
-        // Si la classe est vide, on la supprime pour ne plus boucler dessus au prochain tour
-        if (currentClass.length === 0) {
-          classLists.splice(i, 1);
-        }
-      }
-    }
-
-    return result;
+    return interleaveStudents<T>(classroomLists);
   }
 
   /**
-   * Sélectionne les salles en utilisant la capacité de confort comme métrique.
-   * On trie par capacité décroissante pour minimiser le nombre de salles (et donc de surveillants).
-   * * @param rooms - Liste des salles disponibles.
-   * @param totalStudentsNeeded - Nombre total d'étudiants à placer.
-   * @returns Un sous-ensemble de salles suffisant pour respecter le comfortRatio.
-   * @throws Error si même à 100% de capacité, on ne peut pas loger tout le monde.
+   * Sélectionne le sous-ensemble minimal de salles nécessaires pour accueillir tout le monde.
+   * Trie par capacité décroissante pour optimiser l'occupation et minimiser le besoin en surveillants.
+   * * @throws {Error} Si la capacité brute cumulée est inférieure au nombre d'étudiants.
    */
   private selectOptimalRooms(
     rooms: Room[],
@@ -152,8 +141,8 @@ export class ExamOptimizer {
     const sortedRooms = [...rooms].sort(
       (a, b) => b.maxCapacity - a.maxCapacity,
     );
-
     const selectedRooms: Room[] = [];
+
     let currentComfortCapacity = 0;
     let currentRawCapacity = 0;
 
@@ -170,9 +159,10 @@ export class ExamOptimizer {
       }
     }
 
+    // Si le mode confort ne suffit pas, on vérifie si ça passe en mode brut (100% de capacité)
     if (currentRawCapacity < totalStudentsNeeded) {
       throw new Error(
-        `Capacité insuffisante : requis ${totalStudentsNeeded}, disponible ${currentRawCapacity}`,
+        `Capacité totale insuffisante : requis ${totalStudentsNeeded}, disponible maximale ${currentRawCapacity}`,
       );
     }
 
@@ -180,7 +170,7 @@ export class ExamOptimizer {
   }
 
   /**
-   * Formate les données d'une salle avec le placement matriciel des étudiants.
+   * Construit le rapport final d'une salle en plaçant les étudiants sous forme de matrice (lignes/colonnes).
    */
   private buildRoomReport<T extends Student>(
     room: Room,
