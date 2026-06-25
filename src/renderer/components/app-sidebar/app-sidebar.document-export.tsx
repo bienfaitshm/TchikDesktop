@@ -71,7 +71,7 @@ export function SidebarExportDocument({
               yearId={yearId}
               buttonTrigger={
                 <MenubarTrigger asChild>
-                  <ButtonExport className="w-full justify-center shadow-xs" />
+                  <ButtonExport className="w-full justify-center shadow-xs hover:bg-sidebar-primary hover:text-sidebar-primary-foreground cursor-pointer" />
                 </MenubarTrigger>
               }
             />
