@@ -7,10 +7,18 @@ import {
   classrooms,
   studyYears,
   type TableClassroomEnrollment,
+  type ClassroomEnrollment,
+  type User,
+  type Classroom,
 } from "@/packages/@core/data-access/db/schemas/schema";
 import type { FindManyOptions } from "@/packages/@core/data-access/db/schemas/types";
 import { BaseRepository } from "../base-repository";
 import { UserRepository } from "../users/";
+
+export type EnrollmentTDO = ClassroomEnrollment & {
+  student: User & { fullName?: string };
+  classroom: Classroom;
+};
 
 const ENROLLMENT_DEFAULT_SORT: FindManyOptions<TableClassroomEnrollment> = {
   orderBy: [],

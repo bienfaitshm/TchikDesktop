@@ -21,6 +21,11 @@ import {
   SeatingSessionRoutes,
   SeatingAssignmentRoutes,
 } from "../routes-constant";
+import type { SearchOptions } from "@/packages/@core/data-access/db/queries";
+
+export type SearchLocalRoomQueryParams = Partial<
+  SearchOptions<LocalroomFilter>
+>;
 
 export type LocalroomData = Localroom;
 export type SeatingSessionData = SeatingSession;
@@ -69,6 +74,9 @@ export type BulkAssignParams = {
 export type SeatingApi = Readonly<{
   // --- Local Rooms ---
   fetchLocalrooms(params?: LocalroomFilter): Promise<LocalroomData[]>;
+  fetchLocalroomsAsOptions(
+    params?: SearchLocalRoomQueryParams,
+  ): Promise<LocalroomData[]>;
   fetchLocalroomById(localroomId: string): Promise<LocalroomData>;
   createLocalroom(data: LocalroomCreate): Promise<LocalroomData>;
   updateLocalroom(
@@ -121,6 +129,9 @@ export function createSeatingApis(ipcClient: IpcClient): SeatingApi {
     // --- Local Rooms ---
     fetchLocalrooms(params) {
       return ipcClient.get(LocalRoomRoutes.ALL, { params });
+    },
+    fetchLocalroomsAsOptions(params) {
+      return ipcClient.get(LocalRoomRoutes.SEARCH, { params });
     },
 
     fetchLocalroomById(localroomId) {

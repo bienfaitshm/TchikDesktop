@@ -1,93 +1,72 @@
 "use client";
 
-import { useCallback } from "react";
-import { z } from "zod";
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   useForm,
-  UseFormProps,
-  UseFormReturn,
-  SubmitHandler,
+  type UseFormProps,
+  type UseFormReturn,
+  type SubmitHandler,
 } from "react-hook-form";
-
-// -----------------------------------------------------------------------------
-// Types
-// -----------------------------------------------------------------------------
+import type { z } from "zod";
 
 /**
- * Props étendues de useForm.
- * On exclut 'resolver' car on l'injecte nous-mêmes via le schéma.
+ * Props étendues de useForm basées directement sur la forme du schéma Zod.
  */
 export interface UseZodFormProps<
-  TSchema extends z.ZodType<any, any>,
-> extends Omit<UseFormProps<z.infer<TSchema>>, "resolver"> {
+  TSchema extends z.ZodType<any, any, any>,
+> extends Omit<UseFormProps<z.output<TSchema>>, "resolver"> {
   /**
-   * Le schéma de validation Zod.
-   * Accepte ZodObject, ZodEffects (refine), etc.
+   * Le schéma de validation Zod (ZodObject, ZodEffects, etc.).
    */
   schema: TSchema;
 
   /**
-   * Handler optionnel pour la soumission valide.
-   * Permet d'encapsuler la logique de soumission directement dans le hook.
+   * Handler de soumission typé automatiquement selon le schéma Zod.
    */
-  onSubmit?: SubmitHandler<z.infer<TSchema>>;
+  onSubmit?: SubmitHandler<z.output<TSchema>>;
 }
 
 /**
- * Type de retour combinant les méthodes de RHF et notre handler custom.
+ * Type de retour combinant les méthodes de RHF et notre handler de soumission.
  */
 export interface UseZodFormReturn<
-  TSchema extends z.ZodType<any, any>,
-> extends UseFormReturn<z.infer<TSchema>> {
+  TSchema extends z.ZodType<any, any, any>,
+> extends UseFormReturn<z.output<TSchema>> {
   /**
-   * Fonction de soumission wrapper qui exécute la validation
-   * et appelle la prop onSubmit si elle est définie.
+   * Fonction de soumission qui encapsule handleSubmit de RHF.
    */
   submit: (e?: React.BaseSyntheticEvent) => Promise<void>;
 }
 
-// -----------------------------------------------------------------------------
-// Hook Implementation
-// -----------------------------------------------------------------------------
-
 /**
- * Wrapper professionnel autour de react-hook-form et zod.
- * Simplifie l'intégration du resolver et offre une meilleure inférence de types.
+ * Wrapper de production combinant react-hook-form et zod avec une inférence stricte.
+ * Le schéma Zod est la source unique de vérité pour le typage.
  *
- * @template TSchema - Le type du schéma Zod.
- * @param {UseZodFormProps<TSchema>} props - Les options de configuration.
- * @returns {UseZodFormReturn<TSchema>} L'instance du formulaire et le handler de soumission.
- *
- * @example
- * const schema = z.object({ name: z.string().min(2) });
- * const { register, submit, formState } = useZodForm({
- * schema,
- * onSubmit: (data) => console.log(data),
- * });
+ * @template TSchema - Le schéma Zod hérité.
  */
-export function useZodForm<TSchema extends z.ZodType<any, any>>({
+export function useZodForm<TSchema extends z.ZodType<any, any, any>>({
   schema,
   onSubmit,
   mode = "onSubmit",
   ...formProps
 }: UseZodFormProps<TSchema>): UseZodFormReturn<TSchema> {
-  // Initialisation du formulaire avec le resolver Zod
-  const methods = useForm<z.infer<TSchema>>({
+  const methods = useForm<z.output<TSchema>>({
+    ...formProps,
     resolver: zodResolver(schema),
     mode,
-    ...formProps,
   });
 
-  // Mémorisation du handler pour éviter des re-render inutiles si passé en prop
-  const submit = useCallback(
-    methods.handleSubmit((data) => {
-      if (onSubmit) {
-        onSubmit(data);
+  const onSubmitRef = React.useRef(onSubmit);
+  onSubmitRef.current = onSubmit;
+
+  const submit = React.useMemo(() => {
+    return methods.handleSubmit(async (data, event) => {
+      if (onSubmitRef.current) {
+        await onSubmitRef.current(data, event);
       }
-    }),
-    [methods.handleSubmit, onSubmit],
-  );
+    });
+  }, [methods.handleSubmit]);
 
   return {
     ...methods,

@@ -20,10 +20,8 @@ import {
 } from "@/renderer/components/ui/form";
 import { Input } from "@/renderer/components/ui/input";
 import { Separator } from "@/renderer/components/ui/separator";
-import {
-  BaseFormProps,
-  useZodForm,
-} from "@/renderer/components/form/base-form";
+import { mergeDefaultValues, useZodForm } from "@/renderer/libs/forms";
+import type { BaseFormProps } from "@/renderer/libs/queries/base";
 
 export type LocalFormData = LocalroomCreate;
 
@@ -37,13 +35,12 @@ const DEFAULT_ROOM_VALUES: LocalFormData = {
 
 export const LocalRoomForm: React.FC<BaseFormProps<LocalFormData>> = ({
   formId,
-  initialValues,
   onSubmit,
+  defaultValues,
 }) => {
   const form = useZodForm({
     schema: LocalroomCreateSchema,
-    initialValues,
-    defaultValues: DEFAULT_ROOM_VALUES,
+    defaultValues: mergeDefaultValues(defaultValues, DEFAULT_ROOM_VALUES),
     onSubmit,
   });
 

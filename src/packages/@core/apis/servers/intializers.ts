@@ -42,6 +42,7 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
 
   // options
   options.GetOptions,
+  options.GetSearchOptions,
   options.PostOption,
   options.GetOption,
   options.UpdateOption,
@@ -49,6 +50,7 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
 
   // classrooms
   classrooms.GetClassrooms,
+  classrooms.GetSearchClassrooms,
   classrooms.GetClassroomsWithEnrollments,
   classrooms.PostClassroom,
   classrooms.GetClassroom,
@@ -70,6 +72,8 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   stats.GetStatsByStatus,
   stats.GetStatsRetention,
   stats.GetStatsSummary,
+  stats.GetEnrollmentsByYear,
+  stats.GetTotalStudents,
 
   // export data
   exportDocument.ExportDocuments,
@@ -80,6 +84,7 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
 
   // --- SEATING : Local Rooms ---
   seatings.GetLocalRooms,
+  seatings.GetSearchLocalRooms,
   seatings.GetLocalRoom,
   seatings.CreateLocalRoom,
   seatings.UpdateLocalRoom,

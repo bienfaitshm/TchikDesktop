@@ -22,7 +22,9 @@ export interface EndpointDefinition {
  *
  * @template S La structure des schémas de validation (Body, Params, Headers).
  */
-export abstract class AbstractEndpoint<S extends ValidationSchemas> {
+export abstract class AbstractEndpoint<
+  S extends ValidationSchemas = ValidationSchemas,
+> {
   /**
    * La route IPC sur laquelle cet endpoint écoute.
    */

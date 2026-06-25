@@ -196,12 +196,9 @@ export const createLocalroomField = async (
 };
 
 export const composeFields = async (
-  ...fieldCreators: readonly (() => Promise<FormFieldDef> | FormFieldDef)[]
+  ...fieldCreators: readonly (Promise<FormFieldDef> | FormFieldDef)[]
 ): Promise<readonly FormFieldDef[]> => {
-  const promises = fieldCreators.map((creator) =>
-    typeof creator === "function" ? creator() : creator,
-  );
-  const results = await Promise.allSettled(promises);
+  const results = await Promise.allSettled(fieldCreators);
 
   const errors = results
     .filter((r): r is PromiseRejectedResult => r.status === "rejected")

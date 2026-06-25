@@ -1,6 +1,7 @@
+import type { USER_GENDER_ENUM } from "@/packages/@core/data-access/db/enum";
 import type { SeatingAssignmentCreate } from "@/packages/@core/data-access/schema-validations";
 
-export type Gender = "F" | "M";
+export type Gender = USER_GENDER_ENUM;
 export interface Classroom {
   identifier: string;
   optionId: string;

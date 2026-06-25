@@ -7,7 +7,7 @@
 
 <img align="right" width="110" src="https://raw.githubusercontent.com/bienfaitshm/TchikDesktop/refs/heads/main/resources/icon.png">
 
-**Tchik** est la solution open source qui transforme la gestion administrative des établissements scolaires. Dites adieu aux fichiers Excel complexes, aux erreurs de saisie et à la dépendance aux logiciels propriétaires coûteux. Avec Tchik, reprenez le contrôle de vos données tout en automatisant vos tâches répétitives en un clic.
+**Tchik** est la solution open source qui réinvente la gestion administrative scolaire. Conçue pour les non-experts, elle automatise les tâches chronophages comme la préparation des examens, la génération des listes d'émargement et la création de documents officiels. Sécurisée en local et sans dépendance internet, Tchik réduit les erreurs, simplifie votre quotidien et vous offre une liberté totale sur vos données. Gagnez en efficacité, sans formation technique.
 
 ## Téléchargement
 

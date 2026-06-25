@@ -3,10 +3,10 @@ import type {
   UserFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { useMemo } from "react";
-import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
-import { useGetUsers } from "@/renderer/libs/queries/account";
-import { useGetOptions } from "@/renderer/libs/queries/option";
-import { useAvailableExports } from "@/renderer/libs/queries/document-export";
+import { useGetClassrooms } from "@/renderer/libs/queries/classrooms/classroom";
+import { useGetUsers } from "@/renderer/libs/queries/users";
+import { useGetOptions } from "@/renderer/libs/queries/options";
+import { useAvailableExports } from "@/renderer/libs/queries/document-export/document-export";
 
 // 1. Conventions de nommage claires et types stricts
 export interface DataToOptionOptions {

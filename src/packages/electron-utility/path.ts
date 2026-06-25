@@ -1,4 +1,4 @@
-import { app } from "electron";
+import { app, shell } from "electron";
 import path from "node:path";
 import fs from "node:fs";
 
@@ -42,4 +42,24 @@ export const getUserDataPath = (
   }
 
   return path.join(baseDir, subPath);
+};
+
+export const openFile = async (filePath: string) => {
+  try {
+    if (!filePath) {
+      return { success: false, error: "Le chemin du fichier est vide." };
+    }
+    const errorMessage = await shell.openPath(filePath);
+    if (errorMessage) {
+      console.error(
+        `Erreur système lors de l'ouverture du fichier : ${errorMessage}`,
+      );
+      return { success: false, error: errorMessage };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Erreur critique lors de l'ouverture du chemin :", error);
+    return { success: false, error: error?.message || "Erreur inconnue" };
+  }
 };

@@ -20,14 +20,14 @@ import {
   type EnrollmentQuickCreate,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "../abstract";
-import { EnrollementRoutes } from "../../routes-constant";
+import { EnrollmentRoutes } from "../../routes-constant";
 
 const EnrollementIdSchema = EnrollmentSchema.pick({
   enrollmentId: true,
 });
 type EnrollementId = z.infer<typeof EnrollementIdSchema>;
 export class GetEnrollements extends AbstractEndpoint<any> {
-  route = EnrollementRoutes.ALL;
+  route = EnrollmentRoutes.ALL;
   method = HttpMethod.GET;
   schemas: ValidationSchemas = {
     params: EnrollmentFilterSchema,
@@ -40,7 +40,7 @@ export class GetEnrollements extends AbstractEndpoint<any> {
 }
 
 export class PostEnrollement extends AbstractEndpoint<any> {
-  route = EnrollementRoutes.ALL;
+  route = EnrollmentRoutes.ALL;
   method = HttpMethod.POST;
   schemas: ValidationSchemas = {
     body: EnrollmentCreateSchema,
@@ -54,7 +54,7 @@ export class PostEnrollement extends AbstractEndpoint<any> {
 }
 
 export class PostQuickEnrollement extends AbstractEndpoint<any> {
-  route = EnrollementRoutes.QUICK_ENROLLEMENT;
+  route = EnrollmentRoutes.QUICK_ENROLLMENT;
   method = HttpMethod.POST;
   schemas: ValidationSchemas = {
     body: EnrollmentQuickCreateSchema,
@@ -68,7 +68,7 @@ export class PostQuickEnrollement extends AbstractEndpoint<any> {
 }
 
 export class GetEnrollement extends AbstractEndpoint<any> {
-  route = EnrollementRoutes.DETAIL;
+  route = EnrollmentRoutes.DETAIL;
   method = HttpMethod.GET;
   schemas: ValidationSchemas = {
     params: EnrollementIdSchema,
@@ -82,7 +82,7 @@ export class GetEnrollement extends AbstractEndpoint<any> {
 }
 
 export class UpdateEnrollement extends AbstractEndpoint<any> {
-  route = EnrollementRoutes.DETAIL;
+  route = EnrollmentRoutes.DETAIL;
   method = HttpMethod.PUT;
   schemas: ValidationSchemas = {
     params: EnrollementIdSchema,
@@ -98,7 +98,7 @@ export class UpdateEnrollement extends AbstractEndpoint<any> {
 }
 
 export class DeleteEnrollement extends AbstractEndpoint<any> {
-  route = EnrollementRoutes.DETAIL;
+  route = EnrollmentRoutes.DETAIL;
   method = HttpMethod.DELETE;
   schemas: ValidationSchemas = {
     params: EnrollementIdSchema,

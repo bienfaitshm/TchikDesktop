@@ -4,7 +4,7 @@ import React from "react";
 import { Badge } from "@/renderer/components/ui/badge";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { CheckCircle, MinusCircle } from "lucide-react";
-import type { TSchool } from "@/packages/@core/data-access/db/schemas/types";
+import type { School } from "@/packages/@core/data-access/db/schemas";
 import { DataTableColumnHeader } from "./data-table.column-header";
 
 const SchoolStatusBadge: React.FC<{ schoolId: string }> = ({ schoolId }) => {
@@ -26,27 +26,39 @@ const SchoolStatusBadge: React.FC<{ schoolId: string }> = ({ schoolId }) => {
   );
 };
 
-export const SchoolColumns: ColumnDef<TSchool>[] = [
+export const schoolColumns: ColumnDef<School>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Nom" />
+      <DataTableColumnHeader column={column} title="Nom complet" />
     ),
-    cell: ({ row }) => {
-      return <TypographySmall>{row.original.name}</TypographySmall>;
+    cell: ({ getValue }) => {
+      return (
+        <TypographySmall className="text-foreground max-w-20">
+          {getValue<string>()}
+        </TypographySmall>
+      );
     },
+    enableSorting: true,
     enableHiding: false,
+    enableColumnFilter: true,
   },
   {
-    accessorKey: "ville",
+    accessorKey: "town",
     header: "Ville",
-    cell: ({ row }) => <TypographySmall>{row.original.town}</TypographySmall>,
+    cell: ({ getValue }) => (
+      <TypographySmall className="text-muted-foreground">
+        {getValue<string>()}
+      </TypographySmall>
+    ),
   },
   {
     accessorKey: "address",
     header: "Adresse",
-    cell: ({ row }) => (
-      <TypographySmall>{row.original.address}</TypographySmall>
+    cell: ({ getValue }) => (
+      <TypographySmall className="text-muted-foreground">
+        {getValue<string>()}
+      </TypographySmall>
     ),
   },
   {

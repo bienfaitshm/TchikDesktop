@@ -2,10 +2,8 @@
 
 import React, { useMemo } from "react";
 import { Plus } from "lucide-react";
-
-import type { TLocalRoomAttributes as TLocalRoom } from "@/packages/@core/data-access/schema-validations";
-import { useGetLocalRooms } from "@/renderer/libs/queries/seating";
-
+import { useGetLocalRooms } from "@/renderer/libs/queries/seatings";
+import type { Localroom } from "@/packages/@core/data-access/db/schemas";
 import { Button } from "@/renderer/components/ui/button";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 
@@ -16,6 +14,8 @@ import {
   DataTableContent,
   DataTablePagination,
   DataTableToolbar,
+  SearchTableToolbar,
+  DataTableColumnToggle,
 } from "@/renderer/components/tables/data-table";
 import {
   localRoomColumns,
@@ -42,9 +42,9 @@ const columns = enhanceColumnsExpandable(localRoomColumns);
 
 interface LocalRoomRowActionsProps extends Pick<
   LocalRoomDialogProps,
-  "queryKeysToInvalidate"
+  "mutationKey"
 > {
-  room: TLocalRoom;
+  room: Localroom;
 }
 
 /**
@@ -52,31 +52,28 @@ interface LocalRoomRowActionsProps extends Pick<
  * Mémoïsé pour empêcher les recalculs lors du filtrage ou du scroll de la DataTable.
  */
 const LocalRoomRowActions: React.FC<LocalRoomRowActionsProps> = React.memo(
-  ({ room, queryKeysToInvalidate }) => {
+  ({ room, mutationKey }) => {
     return (
-      <ActionContainer className="md:grid-cols-3">
+      <ActionContainer className="justify-end">
         {/* Modification : Alignement des props de initialData vers defaultValues */}
         <UpdateLocalRoomDialog
-          localRoomId={room.localRoomId}
+          localroomId={room.localroomId}
           defaultValues={room}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
         >
           <ActionTileEdit />
         </UpdateLocalRoomDialog>
 
         {/* Duplication pour créer rapidement une salle similaire */}
-        <CreateLocalRoomDialog
-          defaultValues={room}
-          queryKeysToInvalidate={queryKeysToInvalidate}
-        >
+        <CreateLocalRoomDialog defaultValues={room} mutationKey={mutationKey}>
           <ActionTileCopy />
         </CreateLocalRoomDialog>
 
         {/* Suppression du local : Remplacement du Render Props par un clone direct */}
         <DeleteLocalRoomDialog
-          localRoomId={room.localRoomId}
+          localRoomId={room.localroomId}
           roomName={room.name}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
         >
           <ActionTileDelete />
         </DeleteLocalRoomDialog>
@@ -90,14 +87,15 @@ LocalRoomRowActions.displayName = "LocalRoomRowActions";
 export const LocalRoomPage = () => {
   const { schoolId } = useSchoolContext();
 
-  const { data: rawLocalRooms, queryKey: queryKeysToInvalidate } =
-    useGetLocalRooms({ where: { schoolId } });
+  const { data: rawLocalRooms, queryKey: mutationKey } = useGetLocalRooms({
+    where: { schoolId },
+  });
   const localRooms = useMemo(() => rawLocalRooms ?? [], [rawLocalRooms]);
 
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
       <PageShell
-        maxWidth="2xl"
+        maxWidth="xl"
         header={
           <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
             <header className="flex flex-col gap-1">
@@ -110,25 +108,33 @@ export const LocalRoomPage = () => {
                 Administrez les salles physiques, laboratoires et amphithéâtres.
               </p>
             </header>
-
-            <CreateLocalRoomDialog
-              defaultValues={{ schoolId }}
-              queryKeysToInvalidate={queryKeysToInvalidate}
-            >
-              <Button size="sm" className="rounded-full shadow-xs">
-                <Plus className="size-4 mr-2" />
-                <span>Ajouter un local</span>
-              </Button>
-            </CreateLocalRoomDialog>
           </section>
         }
       >
-        <DataTable<TLocalRoom>
+        <DataTable<Localroom>
           data={localRooms}
           columns={columns}
-          keyExtractor={(item) => item.localRoomId}
+          keyExtractor={(item) => item.localroomId}
         >
-          <DataTableToolbar searchColumn="name" />
+          <DataTableToolbar>
+            <SearchTableToolbar
+              searchColumn="name"
+              placeholder="Recherche Ex. Local 1"
+            />
+
+            <div className="flex items-center gap-4">
+              <DataTableColumnToggle />
+              <CreateLocalRoomDialog
+                defaultValues={{ schoolId }}
+                mutationKey={mutationKey}
+              >
+                <Button size="sm" className="rounded-full shadow-xs">
+                  <Plus className="size-4 mr-2" />
+                  <span>Ajouter un local</span>
+                </Button>
+              </CreateLocalRoomDialog>
+            </div>
+          </DataTableToolbar>
 
           <Suspense
             fallback={
@@ -137,14 +143,14 @@ export const LocalRoomPage = () => {
           >
             <DataTableContent>
               <DataContentHead />
-              <DataContentBody<TLocalRoom>>
+              <DataContentBody<Localroom>>
                 {({ row }) => (
                   <ExpandableRow
                     row={row as any}
                     renderDetail={
                       <LocalRoomRowActions
                         room={row.original}
-                        queryKeysToInvalidate={queryKeysToInvalidate}
+                        mutationKey={mutationKey}
                       />
                     }
                   />

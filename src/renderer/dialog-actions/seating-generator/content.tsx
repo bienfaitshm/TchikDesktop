@@ -13,6 +13,7 @@ interface SeatingDisplayContentProps {
   hasData: boolean;
   hasAssignments: boolean;
   generatedRooms: RoomState[];
+  classroomOptions?: { label: string; value: string }[];
 }
 
 export const SeatingDisplayContent = ({
@@ -20,11 +21,11 @@ export const SeatingDisplayContent = ({
   hasData,
   hasAssignments,
   generatedRooms,
+  classroomOptions,
 }: SeatingDisplayContentProps) => {
-  // 1. État de chargement
   if (isGenerating) {
     return (
-      <div className="h-[400px] flex flex-col items-center justify-center rounded-xl border border-dashed bg-background/50 animate-pulse text-center p-6">
+      <div className="h-100 flex flex-col items-center justify-center rounded-xl border border-dashed bg-background/50 animate-pulse text-center p-6">
         <Loader2 className="h-8 w-8 animate-spin text-primary/60 mb-4" />
         <p className="text-sm font-medium text-muted-foreground">
           Optimisation du plan de salle...
@@ -33,7 +34,6 @@ export const SeatingDisplayContent = ({
     );
   }
 
-  // 2. État : Données fraîchement générées (Preview)
   if (hasData) {
     return (
       <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -47,15 +47,17 @@ export const SeatingDisplayContent = ({
           </AlertTitle>
           <AlertDescription className="text-amber-700/80 dark:text-amber-500/80 text-xs">
             Ces placements ne sont pas encore enregistrés. Cliquez sur
-            "Confirmer l'attribution" pour valider.
+            <b> Confirmer l'attribution </b> pour valider.
           </AlertDescription>
         </Alert>
-        <SeatingViewer rooms={generatedRooms} />
+        <SeatingViewer
+          rooms={generatedRooms}
+          classroomOptions={classroomOptions}
+        />
       </div>
     );
   }
 
-  // 3. État : Déjà généré en base (Stable)
   if (hasAssignments) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-8 rounded-xl border bg-emerald-50/30 dark:bg-emerald-950/10 border-emerald-100 dark:border-emerald-900/50 text-center animate-in zoom-in-95 duration-300">
@@ -74,9 +76,8 @@ export const SeatingDisplayContent = ({
     );
   }
 
-  // 4. État initial : Rien
   return (
-    <div className="h-[300px] flex flex-col items-center justify-center rounded-xl border border-dashed bg-muted/20 text-center p-8">
+    <div className="h-75 flex flex-col items-center justify-center rounded-xl border border-dashed bg-muted/20 text-center p-8">
       <div className="bg-background size-12 flex items-center justify-center rounded-full mb-4 shadow-xs border">
         <RockingChair className="size-5 text-muted-foreground" />
       </div>

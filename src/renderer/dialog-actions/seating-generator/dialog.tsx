@@ -1,6 +1,7 @@
 "use client";
-import { Sparkles } from "lucide-react";
-
+import React from "react";
+import { Sparkles, Eye, EyeOff } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
   DialogClose,
@@ -14,17 +15,98 @@ import {
 import { ScrollArea } from "@/renderer/components/ui/scroll-area";
 import { Button } from "@/renderer/components/ui/button";
 import { Separator } from "@/renderer/components/ui/separator";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/renderer/components/ui/tooltip";
 
 import ButtonGenerator from "@/renderer/components/buttons/button-generator";
 import { SeatingGeneratorForm } from "@/renderer/components/form/seating-generator-form";
-import { ButtonLoader } from "@/renderer/components/form/button-loader";
+import { LoadingButton } from "@/renderer/components/buttons/button-loading";
 import { SeatingDisplayContent } from "./content";
 
 import { cn } from "@/renderer/utils";
 import {
   useSeatingGeneratorManager,
+  useHideFormConfig,
   type UseSeatingGeneratorManagerProps,
 } from "./hooks";
+
+interface EyeToggleProps {
+  onToggle?: () => void;
+  isClosed?: boolean;
+}
+
+export const EyeToggle = ({ isClosed = false, onToggle }: EyeToggleProps) => {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          size="icon-sm"
+          variant="ghost"
+          onClick={onToggle}
+          aria-label={
+            isClosed ? "Ouvrir la configuration" : "Fermer la configuration"
+          }
+        >
+          {isClosed ? <EyeOff /> : <Eye />}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        {isClosed
+          ? "Ouvrir le formulaire de configuration"
+          : "Fermer le formulaire de configuration"}
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
+const FormConfig: React.FC<
+  React.ComponentProps<typeof SeatingGeneratorForm>
+> = (props) => {
+  const { isClosed, toggle } = useHideFormConfig();
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="flex items-center justify-center size-6 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+            1
+          </span>
+          <h3 className="font-semibold">Paramètres de configuration</h3>
+        </div>
+        <EyeToggle isClosed={isClosed} onToggle={toggle} />
+      </div>
+      <AnimatePresence initial={false}>
+        {!isClosed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{
+              height: "auto",
+              opacity: 1,
+              transition: {
+                height: { duration: 0.3, ease: "easeOut" },
+                opacity: { duration: 0.2, delay: 0.1 },
+              },
+            }}
+            exit={{
+              height: 0,
+              opacity: 0,
+              transition: {
+                height: { duration: 0.2, ease: "easeIn" },
+                opacity: { duration: 0.1 },
+              },
+            }}
+            className="overflow-hidden"
+          >
+            <SeatingGeneratorForm {...props} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 interface SeatingGeneratorDialogProps extends UseSeatingGeneratorManagerProps {
   hasAssignments?: boolean;
@@ -49,7 +131,7 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
   const showContent = hasData || props.hasAssignments;
 
   return (
-    <Dialog modal={false} open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog modal open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <ButtonGenerator isLoading={isGenerating} hasGenerated={showContent} />
       </DialogTrigger>
@@ -74,23 +156,15 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
             </div>
           </div>
         </DialogHeader>
-
-        <ScrollArea className="flex-1 bg-slate-50/50 dark:bg-background/50">
-          <div className="mx-auto p-8 space-y-12">
+        <ScrollArea className="flex-1 h-[70%] bg-slate-50/50 dark:bg-background/50">
+          <div className="mx-auto px-8 py-4 space-y-6">
             <section
               className={cn(
-                "bg-background rounded-xl border p-6 shadow-xs transition-opacity",
+                "bg-background rounded-xl border py-2 px-4 shadow-xs transition-opacity",
                 isBusy && "opacity-50 pointer-events-none",
               )}
             >
-              <div className="flex items-center gap-2 mb-6">
-                <span className="flex items-center justify-center size-6 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                  1
-                </span>
-                <h3 className="font-semibold">Paramètres de configuration</h3>
-              </div>
-
-              <SeatingGeneratorForm
+              <FormConfig
                 formId={formId}
                 classRoomOptions={classRoomOptions}
                 localRoomOptions={localRoomOptions}
@@ -109,20 +183,21 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
               </div>
             </div>
 
-            <section className="min-h-[400px]">
+            <section className="min-h-100">
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                 <SeatingDisplayContent
                   hasAssignments={props.hasAssignments!}
                   isGenerating={isGenerating}
                   hasData={hasData}
                   generatedRooms={generatedRooms}
+                  classroomOptions={classRoomOptions}
                 />
               </div>
             </section>
           </div>
         </ScrollArea>
 
-        <DialogFooter className="px-8 py-4 border-t bg-background space-x-10">
+        <DialogFooter className="px-10 pb-10 gap-5 sm:gap-4">
           <DialogClose asChild>
             <Button
               variant="ghost"
@@ -140,19 +215,19 @@ export const SeatingGeneratorDialog = (props: SeatingGeneratorDialogProps) => {
               isLoading={isGenerating}
               hasGenerated={showContent}
               disabled={isSaving}
-              className="min-w-[160px]"
+              className="min-w-40"
             />
 
             {hasData && (
-              <ButtonLoader
+              <LoadingButton
                 onClick={handleSave}
-                isLoading={isSaving}
+                loading={isSaving}
                 variant="default"
-                isLoadingText="Enregistrement..."
-                className="min-w-[180px] bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all active:scale-95"
+                loadingText="Enregistrement..."
+                className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all active:scale-95"
               >
                 Confirmer l'attribution
-              </ButtonLoader>
+              </LoadingButton>
             )}
           </div>
         </DialogFooter>

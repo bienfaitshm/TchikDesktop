@@ -17,7 +17,7 @@ export const seatingStudentColumns: ColumnDef<StudentSeating>[] = [
   {
     accessorKey: "fullName",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Étudiant" />
+      <DataTableColumnHeader column={column} title="Éleve" />
     ),
     cell: ({ row }) => (
       <div className="flex flex-col">
@@ -27,12 +27,12 @@ export const seatingStudentColumns: ColumnDef<StudentSeating>[] = [
         {/* On peut ajouter un sous-texte ici si besoin, ex: ID étudiant */}
       </div>
     ),
+    enableHiding: false,
+    enableSorting: true,
   },
   {
     accessorKey: "gender",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Genre" />
-    ),
+    header: "Genre",
     cell: ({ row }) => {
       const gender = row.original.gender;
       return gender ? (
@@ -41,17 +41,23 @@ export const seatingStudentColumns: ColumnDef<StudentSeating>[] = [
         <span className="text-muted-foreground/50">-</span>
       );
     },
+    enableHiding: true,
+    enableSorting: true,
   },
   {
-    accessorKey: "identifier",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Classe" />
-    ),
-    cell: ({ row }) => (
+    accessorKey: "classroomId",
+    header: "Classe",
+    cell: ({
+      row: {
+        original: { identifier },
+      },
+    }) => (
       <Badge variant="secondary" className="font-normal capitalize">
-        {row.original.identifier}
+        {identifier}
       </Badge>
     ),
+    enableHiding: false,
+    enableSorting: true,
   },
   {
     id: "seat",
@@ -59,6 +65,12 @@ export const seatingStudentColumns: ColumnDef<StudentSeating>[] = [
       <DataTableColumnHeader column={column} title="Emplacement" />
     ),
     accessorFn: (row) => `${row.row}-${row.column}`,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original;
+      const b = rowB.original;
+      if (a.row !== b.row) return a.row - b.row;
+      return a.column - b.column;
+    },
     cell: ({ row }) => {
       const { row: r, column: c } = row.original;
       return (
@@ -82,5 +94,7 @@ export const seatingStudentColumns: ColumnDef<StudentSeating>[] = [
         </div>
       );
     },
+    enableHiding: true,
+    enableSorting: true,
   },
 ];

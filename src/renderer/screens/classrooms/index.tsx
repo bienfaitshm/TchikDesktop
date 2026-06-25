@@ -1,1 +1,1 @@
-export { ClassroomStudentsPage } from "./students"
+export { StudentPage } from "./students";

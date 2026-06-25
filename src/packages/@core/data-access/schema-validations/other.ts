@@ -17,8 +17,20 @@ export const seatingGeneratorSchema = z.object({
       required_error: "Le ratio est requis",
     })
     .min(0, "Le ratio ne peut pas être inférieur à 0%")
-    .max(100, "Le ratio ne peut pas dépasser 100%")
-    .default(100),
+    .max(100, "Le ratio ne peut pas dépasser 100%"),
 });
 
 export type SeatingGenerator = z.infer<typeof seatingGeneratorSchema>;
+
+/**
+ * Crée un schéma Zod validant la structure SearchOptions de manière dynamique et typée.
+ * @param filtersSchema Un schéma Zod optionnel pour valider les filtres spécifiques à une entité.
+ */
+export function createSearchOptionsSchema<
+  T extends z.ZodTypeAny = z.ZodUnknown,
+>(filtersSchema?: T) {
+  return z.object({
+    search: z.string().trim().optional(),
+    filters: filtersSchema ? filtersSchema.optional() : z.unknown().optional(),
+  });
+}

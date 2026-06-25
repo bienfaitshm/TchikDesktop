@@ -24,6 +24,7 @@ import {
   BaseFormProps,
   useZodForm,
 } from "@/renderer/components/form/base-form";
+import { mergeDefaultValues } from "@/renderer/libs/forms";
 
 export type SessionFormData = SeatingSessionCreate;
 
@@ -35,13 +36,12 @@ const DEFAULT_SESSION_VALUES: SessionFormData = {
 
 export const SeatingSessionForm: React.FC<BaseFormProps<SessionFormData>> = ({
   formId,
-  initialValues,
+  defaultValues,
   onSubmit,
 }) => {
   const form = useZodForm({
     schema: SeatingSessionCreateSchema,
-    initialValues,
-    defaultValues: DEFAULT_SESSION_VALUES,
+    defaultValues: mergeDefaultValues(defaultValues, DEFAULT_SESSION_VALUES),
     onSubmit,
   });
 

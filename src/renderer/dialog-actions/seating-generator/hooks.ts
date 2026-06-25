@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState, useRef, useId } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
+import { useGetClassrooms } from "@/renderer/libs/queries/classrooms";
 import {
   useGenerateSeating,
   useGetLocalRooms,
   useRebuildAssignStudents,
   seatingKeys,
-} from "@/renderer/libs/queries/seating";
+} from "@/renderer/libs/queries/seatings";
 import { createMutationCallbacksWithNotifications } from "@/renderer/utils/mutation-toast";
 import type { BulkAssignParams } from "@/packages/@core/apis/clients";
 import {
@@ -236,4 +236,15 @@ export const useInvalidateSeatingCache = () => {
   }, [queryClient, sessionId, localRoomId]);
 
   return invalidate;
+};
+
+export const useHideFormConfig = () => {
+  const [isClosed, setIsClosed] = useState<boolean>(false);
+
+  const toggle = useCallback(() => setIsClosed((prev) => !prev), []);
+
+  return {
+    isClosed,
+    toggle,
+  };
 };

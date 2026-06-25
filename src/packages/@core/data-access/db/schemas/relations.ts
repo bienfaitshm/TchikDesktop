@@ -10,6 +10,7 @@ import {
   localrooms,
   seatingSessions,
   seatingAssignments,
+  exportHistories,
 } from "./schema";
 
 // ==========================================
@@ -147,6 +148,20 @@ export const seatingAssignmentsRelations = relations(
     enrollment: one(classroomEnrollments, {
       fields: [seatingAssignments.enrollmentId],
       references: [classroomEnrollments.enrollmentId],
+    }),
+  }),
+);
+
+export const exportHistoriesRelations = relations(
+  exportHistories,
+  ({ one }) => ({
+    school: one(schools, {
+      fields: [exportHistories.schoolId],
+      references: [schools.schoolId],
+    }),
+    user: one(users, {
+      fields: [exportHistories.userId],
+      references: [users.userId],
     }),
   }),
 );

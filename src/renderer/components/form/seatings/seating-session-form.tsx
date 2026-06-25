@@ -9,7 +9,8 @@ import {
 } from "@/renderer/components/ui/form";
 import { Input } from "@/renderer/components/ui/input";
 import { SeatingSessionCreateSchema } from "@/packages/@core/data-access/schema-validations";
-import { type BaseFormProps, useZodForm } from "../base-form";
+import { useZodForm, mergeDefaultValues } from "@/renderer/libs/forms";
+import type { BaseFormProps } from "@/renderer/libs/queries/base";
 import { z } from "zod";
 export type SeatingSessionData = z.infer<typeof SeatingSessionCreateSchema>;
 
@@ -25,11 +26,10 @@ interface SeatingSessionProps {
 
 export const SeatingSessionForm: React.FC<
   BaseFormProps<SeatingSessionData> & SeatingSessionProps
-> = ({ formId, onSubmit, initialValues, className }) => {
+> = ({ formId, onSubmit, defaultValues, className }) => {
   const form = useZodForm({
     schema: SeatingSessionCreateSchema,
-    initialValues: initialValues,
-    defaultValues: DEFAULT_SESSION_VALUES,
+    defaultValues: mergeDefaultValues(defaultValues, DEFAULT_SESSION_VALUES),
     onSubmit,
   });
 

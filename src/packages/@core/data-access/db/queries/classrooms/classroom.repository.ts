@@ -13,15 +13,30 @@ import {
   type Classroom,
   type Option,
   type StudyYear,
-} from "@/packages/@core/data-access/db/schemas/schema";
-import { BaseRepository, LibSqlClient } from "../base-repository";
-import { extractQueryPayload } from "../drizzle-builder";
-import type { FindManyOptions } from "../../schemas/types";
+  type FindManyOptions,
+} from "@/packages/@core/data-access/db/schemas";
+import {
+  BaseRepository,
+  LibSqlClient,
+} from "@/packages/@core/data-access/db/queries/base-repository";
+import {
+  applyQueryOptions,
+  extractQueryPayload,
+} from "@/packages/@core/data-access/db/queries/drizzle-builder";
+import type {
+  OptionProvider,
+  SearchOptions,
+} from "@/packages/@core/data-access/db/queries/select-option.transformer";
+import { createSQLiteSearchFilter } from "../drizzle-utility";
 
-export type ClassroomDTO = Classroom & { studyYear: StudyYear; option: Option };
+export type ClassroomDTO = Classroom & {
+  studyYear: StudyYear;
+  option: Option | null;
+};
 
+export type BaseClasrromFilters = Partial<FindManyOptions<TableClassroom>>;
 interface GetClassroomsOptions {
-  classroomOptions?: Partial<FindManyOptions<TableClassroom>>;
+  classroomOptions?: BaseClasrromFilters;
   enrollmentOptions?: Partial<FindManyOptions<TableClassroomEnrollment>>;
   assignmentOptions?: Partial<FindManyOptions<TableSeatingAssignment>>;
 }
@@ -33,19 +48,10 @@ const CLASSROOM_DEFAULT_SORT: FindManyOptions<TableClassroom> = {
   ],
 };
 
-export class ClassroomRepository extends BaseRepository<
-  TableClassroom,
-  TDataBase
-> {
-  private readonly selection = {
-    ...getTableColumns(classrooms),
-    optionName: options.optionName,
-    optionShortName: options.optionShortName,
-    yearName: studyYears.yearName,
-    startDate: studyYears.startDate,
-    endDate: studyYears.endDate,
-  };
-
+export class ClassroomRepository
+  extends BaseRepository<TableClassroom, TDataBase, ClassroomDTO>
+  implements OptionProvider<ClassroomDTO>
+{
   constructor() {
     super({
       db,
@@ -57,14 +63,50 @@ export class ClassroomRepository extends BaseRepository<
     });
   }
 
-  override getQuerySet(tx?: LibSqlClient) {
+  protected override getQuerySet(tx?: LibSqlClient) {
     return this.getClient(tx)
-      .select(this.selection)
-      .from(classrooms)
+      .select({
+        ...getTableColumns(this.table),
+        studyYear: getTableColumns(studyYears),
+        option: getTableColumns(options),
+      })
+      .from(this.table)
       .innerJoin(studyYears, eq(classrooms.yearId, studyYears.yearId))
       .leftJoin(options, eq(classrooms.optionId, options.optionId))
       .$dynamic();
   }
+
+  /**
+   * Récupère les données de classes filtrées (compatible SQLite Case-Insensitive)
+   * ou les données par défaut si aucune recherche n'est fournie.
+   */
+  async fetchOptions({
+    filters,
+    search,
+  }: SearchOptions<BaseClasrromFilters> = {}): Promise<ClassroomDTO[]> {
+    try {
+      let query = this.getQuerySet();
+
+      const searchFilter = createSQLiteSearchFilter(
+        [classrooms.identifier, classrooms.shortIdentifier],
+        search,
+      );
+
+      if (searchFilter) {
+        query = query.where(searchFilter).limit(20);
+      }
+
+      return (await applyQueryOptions(
+        query,
+        this.table,
+        filters,
+      )) as ClassroomDTO[];
+    } catch (error) {
+      this.logError("fetchOptions", error, { filters, search });
+      throw new Error("Erreur lors de la récupération des options de classes.");
+    }
+  }
+
   /**
    * Récupère les classes avec les étudiants associés via Drizzle Relational API
    */

@@ -14,6 +14,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandShortcut,
   CommandSeparator,
 } from "@/renderer/components/ui/command";
 import {
@@ -43,13 +44,12 @@ export function TableFacetedFilter<TData, TValue>({
   className,
 }: TableFacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues();
-  // On récupère les valeurs filtrées en s'assurant qu'on travaille avec un Set pour la perf
   const selectedValues = new Set(column?.getFilterValue() as string[]);
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className={className}>
+        <Button variant="outline" size="sm" className={cn("h-9", className)}>
           <PlusCircle className="mr-2 h-4 w-4" />
           {title}
           {selectedValues?.size > 0 && (
@@ -87,12 +87,15 @@ export function TableFacetedFilter<TData, TValue>({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="start">
+      <PopoverContent className="w-100 p-0" align="start">
         <Command>
           <CommandInput placeholder={title} />
-          <CommandList>
+          <CommandList
+            className="space-y-2 max-h-80 mt-4"
+            onWheel={(e) => e.stopPropagation()}
+          >
             <CommandEmpty>Aucun résultat.</CommandEmpty>
-            <CommandGroup>
+            <CommandGroup className="max-h-60 overflow-y-auto scrollbar-thin">
               {options.map((option) => {
                 const isSelected = selectedValues.has(option.value);
                 const facetValue = facets?.get(option.value);
@@ -112,24 +115,28 @@ export function TableFacetedFilter<TData, TValue>({
                       );
                     }}
                   >
-                    <div
-                      className={cn(
-                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary transition-colors",
-                        isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : "opacity-50 [&_svg]:invisible",
-                      )}
-                    >
-                      <CheckIcon className="h-4 w-4" />
+                    <div className="flex flex-row items-center justify-between w-full">
+                      <div className="flex flex-row">
+                        <div
+                          className={cn(
+                            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary transition-colors",
+                            isSelected
+                              ? "bg-primary text-primary-foreground"
+                              : "opacity-50 [&_svg]:invisible",
+                          )}
+                        >
+                          <CheckIcon className="h-4 w-4" />
+                        </div>
+                        {option.icon && (
+                          <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                        )}
+                        <span className="truncate">{option.label}</span>
+                      </div>
                     </div>
-                    {option.icon && (
-                      <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                    )}
-                    <span className="truncate">{option.label}</span>
                     {facetValue !== undefined && (
-                      <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-[10px]">
+                      <CommandShortcut className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-[12px]">
                         {facetValue}
-                      </span>
+                      </CommandShortcut>
                     )}
                   </CommandItem>
                 );

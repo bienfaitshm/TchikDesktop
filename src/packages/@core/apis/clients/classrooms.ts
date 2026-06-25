@@ -3,53 +3,47 @@ import type {
   ClassroomCreate,
   ClassroomFilter,
   ClassroomUpdate,
-  Classroom,
 } from "@/packages/@core/data-access/schema-validations";
-
+import type {
+  SearchOptions,
+  SelectOption,
+} from "@/packages/@core/data-access/db/queries";
 import type { ClassroomDTO } from "@/packages/@core/data-access/db/queries/classrooms";
 import { ClassroomRoutes } from "../routes-constant";
 
-/**
- * Interface représentant la structure des données d'une salle de classe (Classroom).
- * Remplace 'unknown' par les propriétés réelles de votre Classroom.
- */
-export type ClassroomData = Classroom;
-/**
- * Type définissant les paramètres de requête pour les listes.
- */
-export type ClassroomQueryParams = Record<string, unknown>;
+export type SearchClassroomQueryParams = Partial<
+  SearchOptions<ClassroomFilter>
+>;
 
 /**
- * Type de l'objet API retourné. Le 'as const' garantit que toutes les propriétés
- * sont en lecture seule (readonly) pour le consommateur de cette API.
+ * Type de l'objet API retourné. Le 'Readonly' garantit que toutes les propriétés
+ * sont immuables pour le consommateur de cette API.
  */
 export type ClassroomApi = Readonly<{
   /**
-   * Récupère toutes les salles de classe, éventuellement filtrées par des paramètres.
-   * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
-   * @returns Une promesse résolue avec la liste des ClassroomDTO.
+   * Récupère toutes les salles de classe, éventuellement filtrées.
    */
   fetchClassrooms(params?: ClassroomFilter): Promise<ClassroomDTO[]>;
 
   /**
+   * Récupère les salles de classe formatées pour les composants de sélection (Select).
+   */
+  fetchClassroomAsOptions(
+    params?: SearchClassroomQueryParams,
+  ): Promise<(SelectOption & ClassroomDTO)[]>;
+
+  /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
-   * @param classroomId L'identifiant unique de la salle de classe.
-   * @returns Une promesse résolue avec l'objet ClassroomData.
    */
   fetchClassroomById(classroomId: string): Promise<ClassroomDTO>;
 
   /**
    * Crée une nouvelle salle de classe.
-   * @param data L'objet de données nécessaire pour créer la salle de classe.
-   * @returns Une promesse résolue avec l'objet ClassroomData nouvellement créé.
    */
-  createClassroom(data: ClassroomCreate): Promise<ClassroomData>;
+  createClassroom(data: ClassroomCreate): Promise<ClassroomDTO>;
 
   /**
    * Met à jour une salle de classe existante.
-   * @param classroomId L'identifiant unique de la salle de classe à mettre à jour.
-   * @param data Les champs partiels de ClassroomData à modifier.
-   * @returns Une promesse résolue avec l'objet ClassroomData mis à jour.
    */
   updateClassroom(
     classroomId: string,
@@ -58,8 +52,6 @@ export type ClassroomApi = Readonly<{
 
   /**
    * Supprime une salle de classe par son ID.
-   * @param classroomId L'identifiant unique de la salle de classe à supprimer.
-   * @returns Une promesse résolue une fois la suppression terminée (souvent avec un objet vide ou un statut de succès).
    */
   deleteClassroom(classroomId: string): Promise<void>;
 }>;
@@ -67,41 +59,41 @@ export type ClassroomApi = Readonly<{
 /**
  * Factory de services créant l'ensemble des méthodes API pour la gestion des salles de classe.
  *
- * Cette fonction utilise l'IpcClient fourni pour interagir avec les endpoints IPC.
- *
  * @param ipcClient Le client IPC (Inter-Process Communication) pour effectuer les requêtes.
- * @returns L'objet ClassroomApi contenant les méthodes de gestion des salles de classe.
+ * @returns L'objet ClassroomApi contenant les méthodes de gestion.
  */
 export function createClassroomApis(ipcClient: IpcClient): ClassroomApi {
   return {
     fetchClassrooms(params) {
-      // Utilisation du 'params' optionnel de l'appel pour les filtres/pagination
       return ipcClient.get(ClassroomRoutes.ALL, { params });
     },
 
-    fetchClassroomById(classId) {
+    fetchClassroomAsOptions(params) {
+      return ipcClient.get(ClassroomRoutes.SEARCH, {
+        params,
+      });
+    },
+
+    fetchClassroomById(classroomId) {
       return ipcClient.get(ClassroomRoutes.DETAIL, {
-        params: { classId },
+        params: { classId: classroomId }, // On garde 'classId' si c'est ce que l'IpcClient/Backend attend en clé
       });
     },
 
     createClassroom(data) {
-      // Envoi des données dans le corps de la requête POST
       return ipcClient.post(ClassroomRoutes.ALL, data);
     },
 
-    updateClassroom(classId, data) {
-      // Envoi du corps pour la mise à jour (PATCH ou PUT, ici PUT est utilisé)
+    updateClassroom(classroomId, data) {
       return ipcClient.put(ClassroomRoutes.DETAIL, data, {
-        params: { classId },
+        params: { classId: classroomId },
       });
     },
 
-    deleteClassroom(classId) {
-      // La suppression ne nécessite pas de corps de requête
+    deleteClassroom(classroomId) {
       return ipcClient.delete(ClassroomRoutes.DETAIL, {
-        params: { classId },
+        params: { classId: classroomId },
       });
     },
-  } as const;
+  };
 }

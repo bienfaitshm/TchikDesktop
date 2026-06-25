@@ -10,6 +10,7 @@ import {
   DOCUMENT_EXTENSION,
   getFileDescription,
 } from "@/packages/file-extension";
+import { formatDate } from "@/packages/times";
 import type { RawFileContent, ServiceResult, ContextParams } from "./types";
 
 export interface TMeta<TFormField = unknown> {
@@ -41,7 +42,7 @@ export abstract class AbstractExportExtension<
   public getExtensionFilter(): FileFilter & { description?: string } {
     return {
       name: getFileDescription(this.extension),
-      description: "",
+      description: this.description,
       extensions: [this.extension],
     };
   }
@@ -158,21 +159,6 @@ export abstract class AbstractExportStrategy<
     }
   }
 
-  public getSaveOptions(
-    targetExtension?: DOCUMENT_EXTENSION,
-  ): SaveDialogOptions {
-    const dateSuffix = this.generateDateSuffix();
-    const fileName = targetExtension
-      ? `${this.displayName}_${dateSuffix}.${targetExtension}`
-      : `${this.displayName}_${dateSuffix}`;
-
-    return {
-      title: `Exporter - ${this.displayName}`,
-      defaultPath: fileName,
-      filters: this.resolveFilters(targetExtension),
-    };
-  }
-
   private resolveFilters(targetExtension?: DOCUMENT_EXTENSION): FileFilter[] {
     if (!targetExtension) return this.extensionFilters;
 
@@ -251,7 +237,42 @@ export abstract class AbstractExportStrategy<
       .join("; ");
   }
 
+  /**
+   * Construit les options de dialogue de sauvegarde.
+   *
+   * @param targetExtension - Extension de fichier souhaitée (ex: "pdf", "xlsx").
+   * @returns Options prêtes pour `dialog.showSaveDialog`.
+   */
+  public getSaveOptions(
+    targetExtension?: DOCUMENT_EXTENSION,
+  ): SaveDialogOptions {
+    const sanitizedDisplayName = this.sanitizeFileName(this.displayName);
+    const dateSuffix = this.generateDateSuffix();
+    const baseName = `${sanitizedDisplayName}_${dateSuffix}`;
+    const defaultFileName = targetExtension
+      ? `${baseName}.${targetExtension}`
+      : baseName;
+
+    return {
+      title: `Exporter - ${this.displayName}`,
+      defaultPath: defaultFileName,
+      filters: this.resolveFilters(targetExtension),
+    };
+  }
+
+  /**
+   * Génère un suffixe horodaté unique pour éviter les collisions.
+   * Format : "dd_MM_yyyy_HHmmss" (ex: 21_10_2025_143025).
+   */
   private generateDateSuffix(): string {
-    return new Date().toISOString().split("T")[0];
+    return formatDate(new Date(), "dd_MM_yyyy_HHmmss");
+  }
+
+  /**
+   * Nettoie une chaîne pour servir de nom de fichier.
+   * Remplace les caractères interdits sous Windows et Unix par un underscore.
+   */
+  private sanitizeFileName(name: string): string {
+    return name.replace(/[<>:"/\\|?*]/g, "_").trim();
   }
 }

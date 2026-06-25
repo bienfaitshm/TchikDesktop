@@ -5,6 +5,12 @@ import {
   UserCreate,
   UserUpdate,
 } from "@/packages/@core/data-access/schema-validations";
+
+import type {
+  SearchOptions,
+  SelectOption,
+} from "@/packages/@core/data-access/db/queries";
+
 import { UserRoutes } from "../routes-constant";
 
 export type UserData = User;
@@ -13,6 +19,8 @@ export type UserData = User;
  * Type définissant les paramètres de requête pour les listes.
  */
 export type UserQueryParams = UserFilter;
+
+export type SearchUserQueryParams = Partial<SearchOptions<UserQueryParams>>;
 
 /**
  * Type de l'objet API retourné. Le 'as const' garantit que toutes les propriétés
@@ -26,17 +34,9 @@ export type UserApi = Readonly<{
    */
   fetchUsers(params?: UserQueryParams): Promise<UserData[]>;
 
-  /**
-   * Récupère toutes les salles de classe, éventuellement filtrées par des paramètres.
-   * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
-   * @returns Une promesse résolue avec la liste des UserData.
-   */
-  searchUser(params: {
-    name?: string;
-    yearId?: string;
-    schoolId: string;
-  }): Promise<UserData[]>;
-
+  fetchUserAsOptions(
+    params?: SearchUserQueryParams,
+  ): Promise<(SelectOption & User)[]>;
   /**
    * Récupère les détails d'une salle de classe spécifique par son ID.
    * @param userId L'identifiant unique de la salle de classe.
@@ -82,7 +82,7 @@ export function createUserApis(ipcClient: IpcClient): UserApi {
       return ipcClient.get(UserRoutes.ALL, { params });
     },
 
-    searchUser(params: { name?: string; yearId?: string; schoolId: string }) {
+    fetchUserAsOptions(params) {
       return ipcClient.get(UserRoutes.SEARCH, { params });
     },
 

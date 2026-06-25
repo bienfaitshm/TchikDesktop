@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useParams } from "react-router";
-import { Edit2, UserPen } from "lucide-react";
+import { Edit2, UserPen, UserPlus } from "lucide-react";
 
 import {
   GENDER_OPTIONS,
@@ -16,12 +16,15 @@ import {
   DataContentBody,
   DataTablePagination,
   DataTableToolbar,
+  FilteredTableToolbarContainer,
+  SearchTableToolbar,
+  DataTableColumnToggle,
 } from "@/renderer/components/tables";
 import {
   StudentColumns,
   TEnrolement,
 } from "@/renderer/components/tables/columns.students";
-import { useGetEnrollments } from "@/renderer/libs/queries/enrollments";
+import { useGetEnrollments } from "@/renderer/libs/queries/enrollements/enrollments";
 import {
   ActionContainer,
   ActionTileDelete,
@@ -29,6 +32,7 @@ import {
   ActionTile,
 } from "@/renderer/components/tables/data-table.action-tiles";
 import {
+  CreateEnrollmentDialog,
   DeleteEnrollmentDialog,
   UpdateEnrollmentDialog,
 } from "@/renderer/dialog-actions/enrollment.dialog-actions";
@@ -40,6 +44,7 @@ import type { BaseFormConfig } from "@/renderer/dialog-actions/base.dialog-actio
 
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { ButtonSheetStudentStat } from "@/renderer/components/sheets/students.stat";
+import { Button } from "@/renderer/components/ui/button";
 
 const enrolementStudentColumns = enhanceColumnsExpandable(StudentColumns);
 
@@ -104,7 +109,7 @@ const EnrollementActions = ({
 export const StudentPage = () => {
   const { schoolId, yearId } = useSchoolContext();
   const { classroomId } = useParams();
-  const { data: students = [], queryKey } = useGetEnrollments({
+  const { data: students = [], queryKey: mutationKey } = useGetEnrollments({
     where: { schoolId, yearId, classroomId: classroomId! },
   });
   // min-h-screen
@@ -115,21 +120,37 @@ export const StudentPage = () => {
         columns={enrolementStudentColumns}
         keyExtractor={(s: any) => s.enrolementId}
       >
-        <DataTableToolbar
-          searchColumn="student_fullName"
-          className="flex-wrap gap-4"
-        >
-          <ButtonSheetStudentStat students={[]} />
-          <TableFacetedFilterItem
-            columnId="student_gender"
-            title="Sexe"
-            options={GENDER_OPTIONS}
-          />
-          <TableFacetedFilterItem
-            columnId="status"
-            title="Statut"
-            options={STUDENT_STATUS_OPTIONS}
-          />
+        <DataTableToolbar>
+          <FilteredTableToolbarContainer>
+            <SearchTableToolbar
+              searchColumn="student_fullName"
+              placeholder="Recherche Ex. SHOMARI"
+            />
+            <ButtonSheetStudentStat students={[]} />
+            <TableFacetedFilterItem
+              columnId="student_gender"
+              title="Sexe"
+              options={GENDER_OPTIONS}
+            />
+            <TableFacetedFilterItem
+              columnId="status"
+              title="Statut"
+              options={STUDENT_STATUS_OPTIONS}
+            />
+          </FilteredTableToolbarContainer>
+          <div className="flex items-center gap-4">
+            <DataTableColumnToggle />
+            <CreateEnrollmentDialog
+              schoolId={schoolId}
+              yearId={yearId}
+              defaultValues={{ schoolId, yearId, classroomId }}
+            >
+              <Button size="sm" className="gap-2 shadow-xs">
+                <UserPlus className="h-4 w-4" />
+                <span>Nouvelle Inscription</span>
+              </Button>
+            </CreateEnrollmentDialog>
+          </div>
         </DataTableToolbar>
         <DataTableContent>
           <DataContentHead className="bg-muted/10" />
@@ -143,7 +164,7 @@ export const StudentPage = () => {
                     enrolement={row.original as any}
                     schoolId={schoolId}
                     yearId={yearId}
-                    options={{ mutationKeys: queryKey }}
+                    options={{ mutationKeys: mutationKey }}
                   />
                 }
               />

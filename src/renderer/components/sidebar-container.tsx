@@ -57,12 +57,12 @@ export const SidebarContainer = React.forwardRef<
       >
         {/* Panneau de la Sidebar */}
         <ResizablePanel
-          defaultSize="20%"
-          minSize="15%"
+          defaultSize="25%"
+          minSize="20%"
           maxSize="30%"
           {...sidebarProps}
           className={cn(
-            "h-full bg-sidebar/50 backdrop-blur-xs",
+            "bg-sidebar/50 backdrop-blur-xs overflow-y-hidden",
             sidebarProps?.className,
           )}
         >
@@ -77,7 +77,7 @@ export const SidebarContainer = React.forwardRef<
 
         {/* Panneau du contenu Principal */}
         <ResizablePanel
-          defaultSize="80%"
+          defaultSize="75%"
           {...mainProps}
           className={cn("flex flex-col", mainProps?.className)}
         >

@@ -9,6 +9,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandShortcut,
 } from "@/renderer/components/ui/command";
 import {
   Popover,
@@ -98,7 +99,7 @@ function GenericComboBoxInner<T>(
 
       <PopoverContent
         className={cn(
-          "w-(--radix-popover-trigger-width) min-w-[280px] p-0 shadow-md",
+          "w-(--radix-popover-trigger-width) min-w-70 p-0 shadow-md",
           contentClassName,
         )}
         align="start"
@@ -110,7 +111,7 @@ function GenericComboBoxInner<T>(
             className="h-8 text-xs border-none focus-visible:ring-0 shadow-none"
           />
           <CommandList
-            className="max-h-[240px] overflow-y-auto scrollbar-thin"
+            className="max-h-60 overflow-y-auto scrollbar-thin"
             onWheel={(e) => {
               e.stopPropagation();
             }}
@@ -137,7 +138,11 @@ function GenericComboBoxInner<T>(
                     <div className="flex-1 truncate font-normal">
                       {renderItem ? renderItem(item, isSelected) : item.label}
                     </div>
-                    {isSelected && <Check className="h-3 w-3 text-primary" />}
+                    {isSelected && (
+                      <CommandShortcut>
+                        <Check className="h-3 w-3 text-primary" />
+                      </CommandShortcut>
+                    )}
                   </CommandItem>
                 );
               })}

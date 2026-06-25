@@ -10,12 +10,13 @@ import {
 export type EnrollmentWithRelations = ClassroomEnrollment & {
   student: Student;
   ClassroomEnrollment;
-  classRoom: Classroom;
+  classroom: Classroom;
 };
 
 export type Assignment = SeatingAssignment & {
-  localRoom: Localroom;
+  localroom: Localroom;
   enrollment: EnrollmentWithRelations;
+  seat?: string;
 };
 
 export type SeatingSessionWithAssignment = SeatingSession & {

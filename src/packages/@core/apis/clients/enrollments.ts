@@ -10,13 +10,13 @@ import type {
   User,
   Classroom,
 } from "@/packages/@core/data-access/db/schemas";
-import { EnrollementRoutes } from "../routes-constant";
+import { EnrollmentRoutes } from "../routes-constant";
 
 /**
- * type représentant la structure des données d'une salle des inscriptions (Enrollement).
- * Remplace 'unknown' par les propriétés réelles de votre Enrollement.
+ * type représentant la structure des données d'une salle des inscriptions (Enrollment).
+ * Remplace 'unknown' par les propriétés réelles de votre Enrollment.
  */
-export type EnrollementData = ClassroomEnrollment & {
+export type EnrollmentData = ClassroomEnrollment & {
   student: User & { fullName?: string };
   classroom: Classroom;
 };
@@ -24,69 +24,67 @@ export type EnrollementData = ClassroomEnrollment & {
 /**
  * Type définissant les paramètres de requête pour les listes.
  */
-export type EnrollementQueryParams = EnrollmentFilter;
+export type EnrollmentQueryParams = EnrollmentFilter;
 
 /**
  * Type de l'objet API retourné. Le 'as const' garantit que toutes les propriétés
  * sont en lecture seule (readonly) pour le consommateur de cette API.
  */
-export type EnrollementApi = Readonly<{
+export type EnrollmentApi = Readonly<{
   /**
    * Récupère toutes les salles des inscriptions, éventuellement filtrées par des paramètres.
    * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
-   * @returns Une promesse résolue avec la liste des EnrollementData.
+   * @returns Une promesse résolue avec la liste des EnrollmentData.
    */
-  fetchEnrollements(
-    params?: EnrollementQueryParams,
-  ): Promise<EnrollementData[]>;
+  fetchEnrollments(params?: EnrollmentQueryParams): Promise<EnrollmentData[]>;
 
   /**
    * Récupère toutes les salles des inscriptions, éventuellement filtrées par des paramètres.
    * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
-   * @returns Une promesse résolue avec la liste des EnrollementData.
+   * @returns Une promesse résolue avec la liste des EnrollmentData.
    */
-  fetchEnrollementHistory(
-    params?: EnrollementQueryParams,
-  ): Promise<EnrollementData[]>;
+  fetchEnrollmentHistory(
+    params?: EnrollmentQueryParams,
+  ): Promise<EnrollmentData[]>;
 
   /**
    * Récupère les détails d'une salle des inscriptions spécifique par son ID.
    * @param enrolementId L'identifiant unique de la salle des inscriptions.
-   * @returns Une promesse résolue avec l'objet EnrollementData.
+   * @returns Une promesse résolue avec l'objet EnrollmentData.
    */
-  fetchEnrollementById(enrolementId: string): Promise<EnrollementData>;
+  fetchEnrollmentById(enrolementId: string): Promise<EnrollmentData>;
 
   /**
    * Crée une nouvelle salle des inscriptions.
    * @param data L'objet de données nécessaire pour créer la salle des inscriptions.
-   * @returns Une promesse résolue avec l'objet EnrollementData nouvellement créé.
+   * @returns Une promesse résolue avec l'objet EnrollmentData nouvellement créé.
    */
-  createEnrollement(data: EnrollmentCreate): Promise<EnrollementData>;
+  createEnrollment(data: EnrollmentCreate): Promise<EnrollmentData>;
 
   /**
    * Crée une nouvelle salle des inscriptions rapides.
    * @param data L'objet de données nécessaire pour créer la salle des inscriptions.
-   * @returns Une promesse résolue avec l'objet EnrollementData nouvellement créé.
+   * @returns Une promesse résolue avec l'objet EnrollmentData nouvellement créé.
    */
-  createQuickEnrollement(data: EnrollmentQuickCreate): Promise<EnrollementData>;
+  createQuickEnrollment(data: EnrollmentQuickCreate): Promise<EnrollmentData>;
 
   /**
    * Met à jour une salle des inscriptions existante.
    * @param enrolementId L'identifiant unique de la salle des inscriptions à mettre à jour.
-   * @param data Les champs partiels de EnrollementData à modifier.
-   * @returns Une promesse résolue avec l'objet EnrollementData mis à jour.
+   * @param data Les champs partiels de EnrollmentData à modifier.
+   * @returns Une promesse résolue avec l'objet EnrollmentData mis à jour.
    */
-  updateEnrollement(
+  updateEnrollment(
     enrolementId: string,
     data: EnrollmentUpdate,
-  ): Promise<EnrollementData>;
+  ): Promise<EnrollmentData>;
 
   /**
    * Supprime une salle des inscriptions par son ID.
    * @param enrolementId L'identifiant unique de la salle des inscriptions à supprimer.
    * @returns Une promesse résolue une fois la suppression terminée (souvent avec un objet vide ou un statut de succès).
    */
-  deleteEnrollement(enrolementId: string): Promise<void>;
+  deleteEnrollment(enrolementId: string): Promise<void>;
 }>;
 
 /**
@@ -95,46 +93,46 @@ export type EnrollementApi = Readonly<{
  * Cette fonction utilise l'IpcClient fourni pour interagir avec les endpoints IPC.
  *
  * @param ipcClient Le client IPC (Inter-Process Communication) pour effectuer les requêtes.
- * @returns L'objet EnrollementApi contenant les méthodes de gestion des salles des inscriptions.
+ * @returns L'objet EnrollmentApi contenant les méthodes de gestion des salles des inscriptions.
  */
-export function createEnrollementApis(ipcClient: IpcClient): EnrollementApi {
+export function createEnrollmentApis(ipcClient: IpcClient): EnrollmentApi {
   return {
-    fetchEnrollements(params) {
-      // Utilisation du 'params' Enrollementnel de l'appel pour les filtres/pagination
-      return ipcClient.get(EnrollementRoutes.ALL, { params });
+    fetchEnrollments(params) {
+      // Utilisation du 'params' Enrollmentnel de l'appel pour les filtres/pagination
+      return ipcClient.get(EnrollmentRoutes.ALL, { params });
     },
 
-    fetchEnrollementHistory(params) {
-      // Utilisation du 'params' Enrollementnel de l'appel pour les filtres/pagination
-      return ipcClient.get(EnrollementRoutes.ALL_HISTORIES, { params });
+    fetchEnrollmentHistory(params) {
+      // Utilisation du 'params' Enrollmentnel de l'appel pour les filtres/pagination
+      return ipcClient.get(EnrollmentRoutes.ALL_HISTORIES, { params });
     },
 
-    fetchEnrollementById(enrolementId) {
-      return ipcClient.get(EnrollementRoutes.DETAIL, {
+    fetchEnrollmentById(enrolementId) {
+      return ipcClient.get(EnrollmentRoutes.DETAIL, {
         params: { enrolementId },
       });
     },
 
-    createEnrollement(data) {
+    createEnrollment(data) {
       // Envoi des données dans le corps de la requête POST
-      return ipcClient.post(EnrollementRoutes.ALL, data);
+      return ipcClient.post(EnrollmentRoutes.ALL, data);
     },
 
-    createQuickEnrollement(data) {
+    createQuickEnrollment(data) {
       // Envoi des données dans le corps de la requête POST
-      return ipcClient.post(EnrollementRoutes.QUICK_ENROLLEMENT, data);
+      return ipcClient.post(EnrollmentRoutes.QUICK_ENROLLMENT, data);
     },
 
-    updateEnrollement(enrolementId, data) {
+    updateEnrollment(enrolementId, data) {
       // Envoi du corps pour la mise à jour (PATCH ou PUT, ici PUT est utilisé)
-      return ipcClient.put(EnrollementRoutes.DETAIL, data, {
+      return ipcClient.put(EnrollmentRoutes.DETAIL, data, {
         params: { enrolementId },
       });
     },
 
-    deleteEnrollement(enrolementId) {
+    deleteEnrollment(enrolementId) {
       // La suppression ne nécessite pas de corps de requête
-      return ipcClient.delete(EnrollementRoutes.DETAIL, {
+      return ipcClient.delete(EnrollmentRoutes.DETAIL, {
         params: { enrolementId },
       });
     },

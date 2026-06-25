@@ -1,28 +1,31 @@
-import type { TOptionAttributes as TOption } from "@/packages/@core/data-access/schema-validations";
+import type { Option } from "@/packages/@core/data-access/db/schemas";
 import type { ColumnDef } from "@tanstack/react-table";
 import { TypographySmall } from "@/renderer/components/ui/typography";
+import { DataTableColumnHeader } from "./data-table.column-header";
 
-export const optionColumns: ColumnDef<TOption>[] = [
+export const optionColumns: ColumnDef<Option>[] = [
   {
     accessorKey: "optionName",
-    header: "Nom Complet",
-    cell: ({ row }) => {
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Nom complet" />
+    ),
+    cell: ({ getValue }) => {
       return (
-        <TypographySmall className="font-medium text-foreground">
-          {row.original.optionName}
+        <TypographySmall className="text-sm">
+          {String(getValue() ?? "N/A")}
         </TypographySmall>
       );
     },
     enableSorting: true,
-    enableHiding: true,
+    enableHiding: false,
     enableColumnFilter: true,
   },
   {
     accessorKey: "optionShortName",
     header: "Nom Court",
-    cell: ({ row }) => (
-      <TypographySmall className="text-muted-foreground">
-        {row.original.optionShortName}
+    cell: ({ getValue }) => (
+      <TypographySmall className="text-foreground text-sm">
+        {String(getValue() ?? "N/A")}
       </TypographySmall>
     ),
     enableSorting: true,

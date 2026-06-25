@@ -1,30 +1,19 @@
-import React, { useState, useCallback } from "react";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/renderer/components/ui/dialog";
-import { Button } from "@/renderer/components/ui/button";
-import { ButtonLoader } from "@/renderer/components/form/button-loader";
-import {
-  ClassroomForm,
-  type ClassroomFormData,
-} from "@/renderer/components/form/classroom-form";
+import * as React from "react";
+import { DialogForm } from "@/renderer/components/dialog/form";
+import { ConfirmDeleteDialog } from "@/renderer/components/dialog/confirm-delete";
+import { useAsyncConfirm } from "@/renderer/components/dialog/confirm-delete";
+import { useConfirm } from "@/renderer/hooks/use-confirm";
+import { cloneElementWithProps } from "@/renderer/utils/react";
+import { ClassroomForm } from "@/renderer/components/form/classroom-form";
+
 import {
   useCreateClassroomForm,
   useUpdateClassroomForm,
   useDeleteClassroomForm,
+  useGenerateClassroomSuggestion,
   type ClassroomFormConfig,
-} from "@/renderer/components/form/classroom-form.actions";
-import {
-  ConfirmDeleteDialog,
-  useConfirm,
-} from "@/renderer/components/dialog/dialog-delete";
+  type ClassroomFormData,
+} from "@/renderer/libs/queries/classrooms";
 
 export type ClassroomDialogProps<TExtraProps extends Record<string, any> = {}> =
   React.PropsWithChildren<
@@ -34,6 +23,9 @@ export type ClassroomDialogProps<TExtraProps extends Record<string, any> = {}> =
       }
   >;
 
+/* ==========================================================================
+   1. CRÉATION
+   ========================================================================== */
 interface CreateClassroomProps {
   schoolId: string;
 }
@@ -41,50 +33,42 @@ interface CreateClassroomProps {
 export const ClassroomDialogCreateForm: React.FC<
   ClassroomDialogProps<CreateClassroomProps>
 > = ({ schoolId, children, defaultValues, ...config }) => {
-  const [open, setOpen] = useState(false);
-
-  const { formId, generateSuggestion, isCreating, onSubmit, selectItems } =
-    useCreateClassroomForm(schoolId, {
-      ...config,
-      onSuccess: (data) => {
-        config.onSuccess?.(data);
-        setOpen(false);
-      },
-    });
+  const {
+    formId,
+    generateSuggestion,
+    searchOption,
+    sectionOptions,
+    isSubmitting,
+    onSubmit,
+  } = useCreateClassroomForm(schoolId, config);
+  const { handleGenerate, isGenerating } = useGenerateClassroomSuggestion({
+    onGenerateSuggestion: generateSuggestion,
+  });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
-        <DialogHeader>
-          <DialogTitle>Créer une salle de classe</DialogTitle>
-          <DialogDescription>
-            Remplissez les informations ci-dessous pour ajouter une nouvelle
-            salle à votre établissement.
-          </DialogDescription>
-        </DialogHeader>
-
-        <ClassroomForm
-          formId={formId}
-          onSubmit={onSubmit}
-          onGenerateSuggestion={generateSuggestion}
-          options={selectItems}
-          initialValues={defaultValues}
-        />
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <DialogClose asChild>
-            <Button variant="ghost">Annuler</Button>
-          </DialogClose>
-          <ButtonLoader form={formId} type="submit" isLoading={isCreating}>
-            Enregistrer
-          </ButtonLoader>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DialogForm
+      trigger={children}
+      title="Créer une salle de classe"
+      description="Remplissez les informations ci-dessous pour ajouter une nouvelle salle à votre établissement."
+      formId={formId}
+      isLoading={isSubmitting}
+    >
+      <ClassroomForm
+        formId={formId}
+        onSubmit={onSubmit}
+        isGenerating={isGenerating}
+        onGenerateSuggestion={handleGenerate}
+        searchOption={searchOption}
+        sectionOptions={sectionOptions}
+        defaultValues={defaultValues}
+      />
+    </DialogForm>
   );
 };
 
+/* ==========================================================================
+   2. MODIFICATION
+   ========================================================================== */
 interface UpdateClassroomProps {
   schoolId: string;
   classId: string;
@@ -93,54 +77,49 @@ interface UpdateClassroomProps {
 export const ClassroomDialogUpdateForm: React.FC<
   ClassroomDialogProps<UpdateClassroomProps>
 > = ({ defaultValues, classId, schoolId, children, ...config }) => {
-  const [open, setOpen] = useState(false);
+  const {
+    formId,
+    isSubmitting,
+    onSubmit,
+    searchOption,
+    sectionOptions,
+    generateSuggestion,
+  } = useUpdateClassroomForm({
+    ...config,
+    schoolId,
+    classroomId: classId,
+  });
 
-  const { formId, isUpdating, onSubmit, selectItems, generateSuggestion } =
-    useUpdateClassroomForm({
-      ...config,
-      schoolId,
-      classroomId: classId,
-      onSuccess: (data) => {
-        config.onSuccess?.(data);
-        setOpen(false);
-      },
-    });
+  const { handleGenerate, isGenerating } = useGenerateClassroomSuggestion({
+    onGenerateSuggestion: generateSuggestion,
+  });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px]">
-        <DialogHeader>
-          <DialogTitle>
-            Modifier la salle : {defaultValues?.identifier ?? ""}
-          </DialogTitle>
-          <DialogDescription>
-            Modifiez les détails de la salle de classe. Les changements seront
-            appliqués immédiatement après l'enregistrement.
-          </DialogDescription>
-        </DialogHeader>
-
-        <ClassroomForm
-          formId={formId}
-          onSubmit={onSubmit}
-          onGenerateSuggestion={generateSuggestion}
-          options={selectItems}
-          initialValues={defaultValues}
-        />
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <DialogClose asChild>
-            <Button variant="ghost">Annuler</Button>
-          </DialogClose>
-          <ButtonLoader form={formId} type="submit" isLoading={isUpdating}>
-            Mettre à jour
-          </ButtonLoader>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DialogForm
+      trigger={children}
+      title={`Modifier la salle : ${defaultValues?.identifier ?? ""}`}
+      description="Modifiez les détails de la salle de classe. Les changements seront appliqués immédiatement après l'enregistrement."
+      formId={formId}
+      isLoading={isSubmitting}
+    >
+      <ClassroomForm
+        formId={formId}
+        onSubmit={(data, helpers) =>
+          onSubmit?.({ id: classId, data }, helpers as any)
+        }
+        isGenerating={isGenerating}
+        onGenerateSuggestion={handleGenerate}
+        searchOption={searchOption}
+        sectionOptions={sectionOptions}
+        defaultValues={defaultValues}
+      />
+    </DialogForm>
   );
 };
 
+/* ==========================================================================
+   3. SUPPRESSION
+   ========================================================================== */
 interface DeleteClassroomProps {
   classId: string;
   identifier: string;
@@ -159,41 +138,32 @@ export const ClassroomDialogDeleteForm: React.FC<
     },
   });
 
-  const handleConfirm = useCallback(async () => {
-    try {
-      await deleteClassroom(classId, identifier);
-    } catch (error) {
-      console.error("Erreur lors de la suppression de la salle:", error);
-    }
-  }, [classId, identifier, deleteClassroom]);
-
-  const handleTriggerClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      onOpen(classId);
-    },
-    [onOpen, classId],
-  );
+  const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
+    id: classId,
+    onOpenConfirm: onOpen,
+    onCloseConfirm: onClose,
+    onConfirmAction: deleteClassroom,
+    actionArgs: [identifier],
+    errorMessage: "Erreur lors de la suppression de la salle:",
+  });
 
   return (
     <>
       <ConfirmDeleteDialog
-        item={classId}
+        id={classId}
         isOpen={isOpen}
         onClose={onClose}
         onConfirm={handleConfirm}
-        isLoading={isDeleting}
+        isPending={isDeleting}
         title="Supprimer la salle de classe"
-        description="Tous les documents, membres et emplois du temps associés seront définitivement retirés de la base de données."
+        description="Tous les documents, membres et emplois du temps associés seront définitivement suprimés."
         itemName={identifier}
       />
 
-      {React.isValidElement(children)
-        ? React.cloneElement(children as React.ReactElement<any>, {
-            onClick: handleTriggerClick,
-            disabled: isDeleting,
-          })
-        : children}
+      {cloneElementWithProps(children, {
+        onClick: handleTriggerClick,
+        disabled: isDeleting,
+      })}
     </>
   );
 };

@@ -17,6 +17,7 @@ export const UserRoutes = {
  */
 export const OptionRoutes = {
   ALL: "options",
+  SEARCH: "options/search",
   DETAIL: "options/:optionId",
 } as const;
 
@@ -25,6 +26,7 @@ export const OptionRoutes = {
  */
 export const SchoolRoutes = {
   ALL: "schools",
+  SEARCH: "schools/search",
   DETAIL: "schools/:schoolId",
 } as const;
 
@@ -33,6 +35,7 @@ export const SchoolRoutes = {
  */
 export const StudyYearRoutes = {
   ALL: "studyYear",
+  SEARCH: "studyYear/search",
   DETAIL: "studyYear/:yearId",
 } as const;
 
@@ -41,6 +44,7 @@ export const StudyYearRoutes = {
  */
 export const ClassroomRoutes = {
   ALL: "classrooms",
+  SEARCH: "classrooms/search",
   ALL_ENROLLMENT: "classrooms/enrollments",
   DETAIL: "classrooms/:classroomId",
 } as const;
@@ -50,11 +54,12 @@ export const ClassroomRoutes = {
  * NOTE: L'inscription est souvent une ressource complexe, elle pourrait nécessiter
  * un ID composite ou un ID simple pour la gestion d'une seule inscription.
  */
-export const EnrollementRoutes = {
-  ALL: "enrollements",
-  DETAIL: "enrollements/:enrollementId",
-  ALL_HISTORIES: "enrollements/histories",
-  QUICK_ENROLLEMENT: "enrollements/quick",
+export const EnrollmentRoutes = {
+  ALL: "enrollments",
+  SEARCH: "enrollments/search",
+  DETAIL: "enrollments/:enrollmentId",
+  ALL_HISTORIES: "enrollments/histories",
+  QUICK_ENROLLMENT: "enrollments/quick",
 } as const;
 
 export const DocumentExportRoutes = {
@@ -67,15 +72,16 @@ export const DocumentExportRoutes = {
  * Permet de récupérer les données agrégées pour les graphiques et KPI.
  */
 export const StatsRoutes = {
-  // Global & KPI (Total étudiants, ratio, etc.)
   SUMMARY: "stats/summary",
 
   STUDENTS_BY_STATUS: "stats/students/status",
   STUDENTS_BY_GENDER: "stats/students/gender",
   STUDENTS_BY_CLASS: "stats/students/class",
   STUDENTS_BY_OPTION: "stats/students/option",
+  TOTAL_STUDENTS: "stats/students/total",
 
   RETENTION: "stats/retention",
+  ENROLLMENTS_BY_YEAR: "stats/enrollments/by-year",
 } as const;
 
 export const AppInfosRoutes = {
@@ -87,6 +93,7 @@ export const AppInfosRoutes = {
  */
 export const LocalRoomRoutes = {
   ALL: "seating/rooms",
+  SEARCH: "seating/rooms/search",
   DETAIL: "seating/rooms/:id",
   CREATE: "seating/rooms/create",
 } as const;
@@ -96,10 +103,11 @@ export const LocalRoomRoutes = {
  */
 export const SeatingSessionRoutes = {
   ALL: "seating/sessions",
+  SEARCH: "seating/sessions/search",
   BY_YEAR: "seating/sessions/year/:yearId",
   DETAIL: "seating/sessions/:id",
-  STATUS: "seating/sessions/:id/status", // Pour GetSessionRoomsStatus
-  FULL_DETAILS: "seating/sessions/:id/full", // Pour GetFullSessionDetails
+  STATUS: "seating/sessions/:id/status",
+  FULL_DETAILS: "seating/sessions/:id/full",
   CREATE: "seating/sessions/create",
 } as const;
 
@@ -123,13 +131,12 @@ export const IpcRoutes = {
   OPTIONS: OptionRoutes,
   SCHOOLS: SchoolRoutes,
   CLASSROOMS: ClassroomRoutes,
-  ENROLLEMENTS: EnrollementRoutes,
+  ENROLLEMENTS: EnrollmentRoutes,
   STUDY_YEAR: StudyYearRoutes,
   DOCUMENT_EXPORT: DocumentExportRoutes,
   STATS: StatsRoutes,
   APP_INFOS: AppInfosRoutes,
   USERS: UserRoutes,
-  // --- Nouveaux modules Seating ---
   LOCAL_ROOMS: LocalRoomRoutes,
   SEATING_SESSIONS: SeatingSessionRoutes,
   SEATING_ASSIGNMENTS: SeatingAssignmentRoutes,

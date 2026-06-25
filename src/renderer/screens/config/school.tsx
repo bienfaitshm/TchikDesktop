@@ -1,19 +1,21 @@
 import React from "react";
 import { TypographyH4 } from "@/renderer/components/ui/typography";
 import {
-    Table,
-    TableBody,
-    TableCaption,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/renderer/components/ui/table";
 import { Link } from "react-router";
-import { useGetSchools } from "@/renderer/libs/queries/school";
-import { SchoolCreationForm, useSchoolNavigationAndSelection } from "./school.new-school";
+import { useGetSchools } from "@/renderer/libs/queries/schools";
+import {
+  SchoolCreationForm,
+  useSchoolNavigationAndSelection,
+} from "./school.new-school";
 import { ConfigHeader } from "./config.header";
-
 
 /**
  * @component SchoolConfigPage
@@ -25,49 +27,55 @@ import { ConfigHeader } from "./config.header";
  */
 
 export const SchoolConfigPage: React.FC = () => {
-    const onSetSchool = useSchoolNavigationAndSelection();
-    const { data: schools } = useGetSchools();
-    if (schools.length === 0) {
-        return (
-            <div className="p-4">
-                <TypographyH4 className="mb-6 text-center md:text-left">
-                    Aucun établissement trouvé. Veuillez en créer un pour commencer.
-                </TypographyH4>
-                <SchoolCreationForm />
-            </div>
-        );
-    }
-
+  const onSetSchool = useSchoolNavigationAndSelection();
+  const { data: schools } = useGetSchools();
+  if (schools.length === 0) {
     return (
-        <div className="space-y-4">
-            <ConfigHeader title=" Veuillez choisir l'établissement sur lequel vous souhaitez travailler." />
-            <Table>
-                <TableCaption>
-                    Liste des établissements enregistrés. <Link className="text-blue-600 hover:underline text-sm" to="/configuration/school/new">Ajouter un nouvel établissement</Link>
-                </TableCaption>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className="w-[100px]">ID</TableHead>
-                        <TableHead className="w-[250px]">Nom de l'établissement</TableHead>
-                        <TableHead>Ville</TableHead>
-                        <TableHead className="text-right">Adresse physique</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {schools.map((school) => (
-                        <TableRow
-                            key={school.schoolId}
-                            className="cursor-pointer hover:bg-muted/50 transition-colors"
-                            onClick={() => onSetSchool(school)}
-                        >
-                            <TableCell className="font-medium">{school.schoolId}</TableCell>
-                            <TableCell>{school.name}</TableCell>
-                            <TableCell>{school.town}</TableCell>
-                            <TableCell className="text-right">{school.adress}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
+      <div className="p-4">
+        <TypographyH4 className="mb-6 text-center md:text-left">
+          Aucun établissement trouvé. Veuillez en créer un pour commencer.
+        </TypographyH4>
+        <SchoolCreationForm />
+      </div>
     );
+  }
+
+  return (
+    <div className="space-y-4">
+      <ConfigHeader title=" Veuillez choisir l'établissement sur lequel vous souhaitez travailler." />
+      <Table>
+        <TableCaption>
+          Liste des établissements enregistrés.{" "}
+          <Link
+            className="text-blue-600 hover:underline text-sm"
+            to="/configuration/school/new"
+          >
+            Ajouter un nouvel établissement
+          </Link>
+        </TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[100px]">ID</TableHead>
+            <TableHead className="w-[250px]">Nom de l'établissement</TableHead>
+            <TableHead>Ville</TableHead>
+            <TableHead className="text-right">Adresse physique</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {schools.map((school) => (
+            <TableRow
+              key={school.schoolId}
+              className="cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => onSetSchool(school)}
+            >
+              <TableCell className="font-medium">{school.schoolId}</TableCell>
+              <TableCell>{school.name}</TableCell>
+              <TableCell>{school.town}</TableCell>
+              <TableCell className="text-right">{school.address}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
 };

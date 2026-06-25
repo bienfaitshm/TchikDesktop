@@ -53,7 +53,7 @@ export interface DocumentMetadata<TField = unknown> {
   readonly extensions: FileFilter[];
   readonly title: string;
   readonly description: string;
-  readonly fields?: TField[];
+  readonly fields?: readonly TField[];
 }
 
 /**
@@ -107,4 +107,6 @@ export interface IFileSystem {
    * @param content Contenu binaire ou texte à persister.
    */
   persistToDisk(path: string, content: RawFileContent): Promise<void>;
+
+  getFileName(path: string): Promise<string>;
 }

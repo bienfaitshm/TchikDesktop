@@ -63,13 +63,16 @@ export const createCotationDocumentExportForm = async (
   };
 
   return composeFields(
-    createFileTypeField(fileTypeFilters, { colSpan: fileTypeColSpan }),
+    createFileTypeField(fileTypeFilters, {
+      colSpan: fileTypeColSpan,
+    }),
     createSectionField({ colSpan: sectionColSpan }),
     createClassroomField({
       schoolId,
       yearId,
       required: true,
       colSpan: classroomColSpan,
+      multiple: true,
     }),
   );
 };

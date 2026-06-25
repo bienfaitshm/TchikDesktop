@@ -31,9 +31,7 @@ export function TableColumnVisibility<TData>({
         .getAllColumns()
         .filter(
           (column) =>
-            typeof column.accessorFn !== "undefined" &&
-            column.getCanHide() &&
-            !column.columnDef.meta?.isInternal,
+            typeof column.accessorFn !== "undefined" && column.getCanHide(),
         ),
     [table],
   );
@@ -53,7 +51,7 @@ export function TableColumnVisibility<TData>({
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-[200px]">
+      <DropdownMenuContent align="end" className="w-50">
         <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Colonnes visibles
         </DropdownMenuLabel>

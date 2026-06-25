@@ -1,7 +1,7 @@
 "use client";
 
-import type { Classroom } from "@/packages/@core/data-access/schema-validations";
-import { useGetClassrooms } from "@/renderer/libs/queries/classroom";
+import type { ClassroomDTO } from "@/packages/@core/data-access/db/queries";
+import { useGetClassrooms } from "@/renderer/libs/queries/classrooms";
 import React, { useMemo } from "react";
 import {
   DataTable,
@@ -11,6 +11,9 @@ import {
   DataTablePagination,
   DataTableToolbar,
   TableFacetedFilterItem,
+  FilteredTableToolbarContainer,
+  SearchTableToolbar,
+  DataTableColumnToggle,
 } from "@/renderer/components/tables/data-table";
 import { Button } from "@/renderer/components/ui/button";
 import {
@@ -39,14 +42,14 @@ import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 import { useGetOptionAsOptions } from "@/renderer/hooks/data-as-options";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
-
+import { APP_ROUTES } from "@/renderer/constants";
 const columns = enhanceColumnsExpandable(classroomColumns);
 
 interface ClassroomRowActionsProps extends Pick<
   ClassroomDialogProps,
-  "queryKeysToInvalidate"
+  "mutationKey"
 > {
-  classroom: Classroom;
+  classroom: ClassroomDTO;
   schoolId: string;
   yearId: string;
 }
@@ -55,17 +58,17 @@ interface ClassroomRowActionsProps extends Pick<
  * @description Actions de ligne
  */
 const ClassroomRowActions: React.FC<ClassroomRowActionsProps> = React.memo(
-  ({ classroom, schoolId, yearId, queryKeysToInvalidate }) => {
+  ({ classroom, schoolId, yearId, mutationKey }) => {
     const defaultValues = useMemo(
       () => ({ ...classroom, yearId }),
       [classroom, yearId],
     );
 
     return (
-      <ActionContainer>
+      <ActionContainer className="justify-end">
         {/* Navigation vers le détail des étudiants */}
         <Link
-          to={`/classrooms/${classroom.classId}/students`}
+          to={APP_ROUTES.CLASSROOMS.STUDENTS(classroom.classId)}
           className="contents"
         >
           <ActionTileDetail />
@@ -76,7 +79,7 @@ const ClassroomRowActions: React.FC<ClassroomRowActionsProps> = React.memo(
           classId={classroom.classId}
           schoolId={schoolId}
           defaultValues={defaultValues}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
         >
           <ActionTileEdit />
         </ClassroomDialogUpdateForm>
@@ -84,8 +87,8 @@ const ClassroomRowActions: React.FC<ClassroomRowActionsProps> = React.memo(
         {/* Duplication */}
         <ClassroomDialogCreateForm
           schoolId={schoolId}
-          defaultValues={defaultValues}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          defaultValues={{ schoolId, yearId }}
+          mutationKey={mutationKey}
         >
           <ActionTileCopy />
         </ClassroomDialogCreateForm>
@@ -94,7 +97,7 @@ const ClassroomRowActions: React.FC<ClassroomRowActionsProps> = React.memo(
         <ClassroomDialogDeleteForm
           classId={classroom.classId}
           identifier={classroom.identifier}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
         >
           <ActionTileDelete />
         </ClassroomDialogDeleteForm>
@@ -109,15 +112,14 @@ export const ClassroomPage = () => {
   const { schoolId, yearId } = useSchoolContext();
   const { options } = useGetOptionAsOptions(schoolId);
 
-  const { data: classrooms = [], queryKey: queryKeysToInvalidate } =
-    useGetClassrooms({
-      where: { schoolId, yearId },
-    });
+  const { data: classrooms = [], queryKey: mutationKey } = useGetClassrooms({
+    where: { schoolId, yearId },
+  });
 
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
       <PageShell
-        maxWidth="2xl"
+        maxWidth="xl"
         header={
           <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
             <header className="space-y-1">
@@ -128,36 +130,44 @@ export const ClassroomPage = () => {
                 Administrez les salles.
               </p>
             </header>
-
-            <ClassroomDialogCreateForm
-              schoolId={schoolId}
-              defaultValues={{ yearId, schoolId }}
-              queryKeysToInvalidate={queryKeysToInvalidate}
-            >
-              <Button size="sm" className="rounded-full shadow-xs">
-                <Plus className="size-4 mr-2" />
-                <span>Ajouter une classe</span>
-              </Button>
-            </ClassroomDialogCreateForm>
           </section>
         }
       >
-        <DataTable<Classroom>
+        <DataTable<ClassroomDTO>
           data={classrooms}
           columns={columns}
           keyExtractor={(item) => item.classId}
         >
-          <DataTableToolbar searchColumn="identifier">
-            <TableFacetedFilterItem
-              title="Section"
-              columnId="section"
-              options={SECTION_OPTIONS}
-            />
-            <TableFacetedFilterItem
-              title="Option"
-              columnId="optionId"
-              options={options}
-            />
+          <DataTableToolbar>
+            <FilteredTableToolbarContainer>
+              <SearchTableToolbar
+                searchColumn="identifier"
+                placeholder="Recherche Ex. 1er MA"
+              />
+              <TableFacetedFilterItem
+                title="Section"
+                columnId="section"
+                options={SECTION_OPTIONS}
+              />
+              <TableFacetedFilterItem
+                title="Option"
+                columnId="option_optionName"
+                options={options}
+              />
+            </FilteredTableToolbarContainer>
+            <div className="flex items-center gap-4">
+              <DataTableColumnToggle />
+              <ClassroomDialogCreateForm
+                schoolId={schoolId}
+                defaultValues={{ yearId, schoolId }}
+                mutationKey={mutationKey}
+              >
+                <Button size="sm" className="rounded-full shadow-xs">
+                  <Plus className="size-4 mr-2" />
+                  <span>Ajouter une classe</span>
+                </Button>
+              </ClassroomDialogCreateForm>
+            </div>
           </DataTableToolbar>
 
           <Suspense
@@ -167,7 +177,7 @@ export const ClassroomPage = () => {
           >
             <DataTableContent>
               <DataContentHead />
-              <DataContentBody<Classroom>>
+              <DataContentBody<ClassroomDTO>>
                 {({ row }) => (
                   <ExpandableRow
                     row={row as any}
@@ -176,7 +186,7 @@ export const ClassroomPage = () => {
                         classroom={row.original}
                         schoolId={schoolId}
                         yearId={yearId}
-                        queryKeysToInvalidate={queryKeysToInvalidate}
+                        mutationKey={mutationKey}
                       />
                     }
                   />

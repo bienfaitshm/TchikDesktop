@@ -4,9 +4,11 @@ import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type {
-  TSchoolAttributes as TSchool,
-  TStudyYearAttributes as TStudyYear,
-} from "@/packages/@core/data-access/schema-validations";
+  School,
+  StudyYear,
+} from "@/packages/@core/data-access/db/schemas";
+
+import { api } from "@/renderer/libs/apis";
 
 const APP_STORE_NAME = "@app-configuration";
 
@@ -14,8 +16,8 @@ const APP_STORE_NAME = "@app-configuration";
  * Interface de l'état
  */
 interface ConfigurationState {
-  currentSchool: TSchool | null;
-  currentStudyYear: TStudyYear | null;
+  currentSchool: School | null;
+  currentStudyYear: StudyYear | null;
   _hasHydrated: boolean;
 }
 
@@ -23,8 +25,8 @@ interface ConfigurationState {
  * Interface des actions
  */
 interface ConfigurationActions {
-  setCurrentSchool: (school: TSchool | null) => void;
-  setCurrentStudyYear: (year: TStudyYear | null) => void;
+  setCurrentSchool: (school: School | null) => void;
+  setCurrentStudyYear: (year: StudyYear | null) => void;
   resetConfiguration: () => void;
   setHasHydrated: (state: boolean) => void;
 }
@@ -52,8 +54,37 @@ export const useConfigStore = create<ConfigurationStore>()(
     {
       name: APP_STORE_NAME,
       storage: createJSONStorage(() => localStorage),
-      onRehydrateStorage: () => (state) => {
-        state?.actions.setHasHydrated(true);
+
+      onRehydrateStorage: () => async (state) => {
+        if (!state) return;
+
+        const schoolId = state.currentSchool?.schoolId;
+        const yearId = state.currentStudyYear?.yearId;
+
+        if (schoolId && yearId) {
+          try {
+            const [freshSchool, freshStudyYear] = await Promise.all([
+              api.school.fetchSchoolById(schoolId),
+              api.school.fetchStudyYearById(yearId),
+            ]);
+
+            if (freshSchool && freshStudyYear) {
+              state.actions.setCurrentSchool(freshSchool);
+              state.actions.setCurrentStudyYear(freshStudyYear);
+            } else {
+              state.actions.resetConfiguration();
+            }
+          } catch (error) {
+            console.error(
+              "Erreur lors de la réhydratation de la configuration via l'API:",
+              error,
+            );
+            state.actions.resetConfiguration();
+          }
+        }
+
+        // On signale que le processus de réhydratation (y compris l'API) est terminé
+        state.actions.setHasHydrated(true);
       },
       partialize: (state) => ({
         currentSchool: state.currentSchool,

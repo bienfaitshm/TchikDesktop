@@ -15,6 +15,8 @@ import type {
   ClassroomWithEnrollements,
 } from "./type";
 
+const NO_SEAT_MESSAGE = "Aucune place trouvée";
+
 /**
  * Couleur d’en‑tête sobre, proche du bleu standard d’Excel.
  * Choisie pour un bon contraste avec le texte noir.
@@ -60,10 +62,7 @@ function buildSheet({
     columns: enrollmentColumns,
     data: enrollments,
 
-    rowMapper: (
-      { student, isNewStudent, studentCode, assignment: { localroom } },
-      idx,
-    ) => {
+    rowMapper: ({ student, isNewStudent, studentCode, assignment }, idx) => {
       return {
         index: idx + 1,
         lastName: utils.toUpperCase(student.lastName),
@@ -74,7 +73,7 @@ function buildSheet({
         birthDate: utils.formatDate(student.birthPlace ?? ""),
         status: utils.conditionalFormat(isNewStudent, "Nouveau", "Ancien"),
         studentCode,
-        seat: localroom.name,
+        seat: assignment?.localroom?.name ?? NO_SEAT_MESSAGE,
       };
     },
 

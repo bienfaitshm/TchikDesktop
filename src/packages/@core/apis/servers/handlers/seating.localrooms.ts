@@ -1,5 +1,9 @@
 import z from "zod";
-import { localRoomRepository } from "@/packages/@core/data-access/db/queries/seatings";
+import {
+  localRoomRepository,
+  localRoomService,
+  type SelectOption,
+} from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcRequest,
@@ -15,12 +19,18 @@ import {
   type LocalroomCreate,
   type LocalroomUpdate,
   type LocalroomFilter,
+  createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
 
 const LocalRoomIdSchema = LocalroomSchema.pick({
   localroomId: true,
 }).required();
 type TLocalRoomIdSchema = z.infer<typeof LocalRoomIdSchema>;
+
+export const searchLocalRoomSchema = createSearchOptionsSchema(
+  LocalroomFilterSchema,
+);
+export type SearchLocalRoomParams = z.infer<typeof searchLocalRoomSchema>;
 
 /** Récupère la liste des locaux filtrée (généralement par schoolId). */
 export class GetLocalRooms extends AbstractEndpoint<any> {
@@ -31,6 +41,21 @@ export class GetLocalRooms extends AbstractEndpoint<any> {
     params,
   }: IpcRequest<unknown, LocalroomFilter>): Promise<unknown> {
     return localRoomRepository.findMany(params as any);
+  }
+}
+
+export class GetSearchLocalRooms extends AbstractEndpoint<any> {
+  route = LocalRoomRoutes.SEARCH;
+  method = HttpMethod.GET;
+  validationErrorMessage? = undefined;
+  schemas: ValidationSchemas = {
+    params: searchLocalRoomSchema,
+  };
+
+  protected handle({
+    params,
+  }: IpcRequest<unknown, SearchLocalRoomParams>): Promise<SelectOption[]> {
+    return localRoomService.getOptions(params as any);
   }
 }
 

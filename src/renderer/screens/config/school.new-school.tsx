@@ -3,23 +3,21 @@ import { useNavigate } from "react-router";
 import { useConfigActions } from "@/renderer/libs/stores/app-store";
 import { SchoolForm } from "@/renderer/components/form/school-form";
 import { ButtonLoader } from "@/renderer/components/form/button-loader";
-import type { TSchoolAttributes } from "@/packages/@core/data-access/schema-validations";
-import { useCreateSchoolForm } from "@/renderer/components/form/school-form.actions";
+import type { School } from "@/packages/@core/data-access/db/schemas";
+import { useCreateSchoolForm } from "@/renderer/libs/queries/schools";
 import { ConfigHeader } from "./config.header";
 
-
-
 export const useSchoolNavigationAndSelection = () => {
-    const navigate = useNavigate();
-    const configActions = useConfigActions()
+  const navigate = useNavigate();
+  const configActions = useConfigActions();
 
-    return React.useCallback(
-        (school: TSchoolAttributes) => {
-            configActions.setCurrentSchool(school);
-            navigate(`/configuration/school-year`);
-        },
-        [configActions, navigate]
-    );
+  return React.useCallback(
+    (school: School) => {
+      configActions.setCurrentSchool(school);
+      navigate(`/configuration/school-year`);
+    },
+    [configActions, navigate],
+  );
 };
 
 /**
@@ -30,35 +28,38 @@ export const useSchoolNavigationAndSelection = () => {
  * @returns {JSX.Element} The school creation form.
  */
 export const SchoolCreationForm: React.FC = () => {
-    const setCurrentSchoolAndNavigate = useSchoolNavigationAndSelection();
-    const { mutation, formId, onSubmit } = useCreateSchoolForm({
-        onSuccess(data) {
-            setCurrentSchoolAndNavigate(data as TSchoolAttributes)
-        },
-    })
+  const setCurrentSchoolAndNavigate = useSchoolNavigationAndSelection();
+  const { isSubmitting, formId, onSubmit } = useCreateSchoolForm({
+    onSuccess(data) {
+      setCurrentSchoolAndNavigate(data as School);
+    },
+  });
 
-    return (
-        <div>
-            <SchoolForm formId={formId} onSubmit={onSubmit} />
-            <div className="flex justify-end pt-4">
-                <ButtonLoader
-                    type="submit"
-                    form={formId}
-                    isLoading={mutation.isPending}
-                    disabled={mutation.isPending}
-                >
-                    Enregistrer l'établissement
-                </ButtonLoader>
-            </div>
-        </div>
-    );
+  return (
+    <div>
+      <SchoolForm formId={formId} onSubmit={onSubmit} />
+      <div className="flex justify-end pt-4">
+        <ButtonLoader
+          type="submit"
+          form={formId}
+          isLoading={isSubmitting}
+          disabled={isSubmitting}
+        >
+          Enregistrer l'établissement
+        </ButtonLoader>
+      </div>
+    </div>
+  );
 };
 
 export const ConfigCreateSchoolPage: React.FC = () => {
-    return (
-        <div className="space-y-5">
-            <ConfigHeader showBackButton title="Creer l'établissement sur lequel vous souhaitez travailler." />
-            <SchoolCreationForm />
-        </div>
-    )
-}
+  return (
+    <div className="space-y-5">
+      <ConfigHeader
+        showBackButton
+        title="Creer l'établissement sur lequel vous souhaitez travailler."
+      />
+      <SchoolCreationForm />
+    </div>
+  );
+};

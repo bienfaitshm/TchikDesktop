@@ -2,14 +2,9 @@
 
 import * as React from "react";
 import { Plus } from "lucide-react";
-
-import type { TOptionAttributes as TOption } from "@/packages/@core/data-access/schema-validations";
-import { useGetOptions } from "@/renderer/libs/queries/option";
-
+import { useGetOptions } from "@/renderer/libs/queries/options";
+import type { Option } from "@/packages/@core/data-access/db/schemas";
 import { Button } from "@/renderer/components/ui/button";
-import { Suspense } from "@/renderer/libs/queries/suspense";
-import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
-
 import {
   DataTable,
   DataContentBody,
@@ -18,6 +13,9 @@ import {
   DataTablePagination,
   DataTableToolbar,
   TableFacetedFilterItem,
+  SearchTableToolbar,
+  FilteredTableToolbarContainer,
+  DataTableColumnToggle,
 } from "@/renderer/components/tables/data-table";
 import {
   optionColumns,
@@ -44,23 +42,20 @@ import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 
 const columns = enhanceColumnsExpandable(optionColumns);
 
-interface OptionRowActionsProps extends Pick<
-  OptionDialogProps,
-  "queryKeysToInvalidate"
-> {
-  option: TOption;
+interface OptionRowActionsProps extends Pick<OptionDialogProps, "mutationKey"> {
+  option: Option;
 }
 
 /**
  * @description Actions de ligne
  */
 const OptionRowActions = React.memo(
-  ({ option, queryKeysToInvalidate }: OptionRowActionsProps) => {
+  ({ option, mutationKey }: OptionRowActionsProps) => {
     return (
-      <ActionContainer className="lg:grid-cols-3">
+      <ActionContainer>
         {/* Modification */}
         <UpdateOptionDialog
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
           optionId={option.optionId}
           defaultValues={option}
         >
@@ -68,16 +63,13 @@ const OptionRowActions = React.memo(
         </UpdateOptionDialog>
 
         {/* Duplication */}
-        <CreateOptionDialog
-          queryKeysToInvalidate={queryKeysToInvalidate}
-          defaultValues={option}
-        >
+        <CreateOptionDialog mutationKey={mutationKey} defaultValues={option}>
           <ActionTileCopy />
         </CreateOptionDialog>
 
         {/* Suppression unifiée (Plus de Render Props obsolète !) */}
         <DeleteOptionDialog
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
           optionId={option.optionId}
           optionName={option.optionName}
         >
@@ -92,7 +84,7 @@ OptionRowActions.displayName = "OptionRowActions";
 
 export const OptionPage = () => {
   const { schoolId } = useSchoolContext();
-  const { data: rawOptions, queryKey: queryKeysToInvalidate } = useGetOptions({
+  const { data: rawOptions, queryKey: mutationKey } = useGetOptions({
     where: { schoolId },
   });
   const options = React.useMemo(() => rawOptions ?? [], [rawOptions]);
@@ -100,7 +92,7 @@ export const OptionPage = () => {
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
       <PageShell
-        maxWidth="2xl"
+        maxWidth="xl"
         header={
           <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4 ">
             <header className="space-y-1">
@@ -112,61 +104,59 @@ export const OptionPage = () => {
                 établissement.
               </p>
             </header>
-
-            <CreateOptionDialog
-              queryKeysToInvalidate={queryKeysToInvalidate}
-              defaultValues={{ schoolId }}
-            >
-              <Button size="sm" className="rounded-full shadow-xs">
-                <Plus className="mr-2 size-4" />
-                Ajouter une filière
-              </Button>
-            </CreateOptionDialog>
           </section>
         }
       >
-        <DataTable<TOption>
+        <DataTable<Option>
           data={options}
           columns={columns}
           keyExtractor={(item) => item.optionId}
         >
-          <DataTableToolbar searchColumn="optionName">
-            <TableFacetedFilterItem
-              title="Section"
-              columnId="section"
-              options={SECTION_OPTIONS}
-            />
+          <DataTableToolbar></DataTableToolbar>
+          <DataTableToolbar>
+            <FilteredTableToolbarContainer>
+              <SearchTableToolbar
+                searchColumn="optionName"
+                placeholder="Recherche Ex. HSC"
+              />
+              <TableFacetedFilterItem
+                title="Section"
+                columnId="section"
+                options={SECTION_OPTIONS}
+              />
+            </FilteredTableToolbarContainer>
+            <div className="flex items-center gap-4">
+              <DataTableColumnToggle />
+              <CreateOptionDialog
+                mutationKey={mutationKey}
+                defaultValues={{ schoolId }}
+              >
+                <Button size="sm" className="rounded-full shadow-xs">
+                  <Plus className="mr-2 size-4" />
+                  Ajouter une filière
+                </Button>
+              </CreateOptionDialog>
+            </div>
           </DataTableToolbar>
 
-          <Suspense
-            fallback={
-              <div className="flex h-64 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/10">
-                <LoadingSpinner className="text-primary" />
-                <p className="text-sm text-muted-foreground animate-pulse">
-                  Chargement des filières...
-                </p>
-              </div>
-            }
-          >
-            <DataTableContent>
-              <DataContentHead />
-              <DataContentBody<TOption>>
-                {({ row }) => (
-                  <ExpandableRow
-                    row={row as any}
-                    renderDetail={
-                      <OptionRowActions
-                        option={row.original}
-                        queryKeysToInvalidate={queryKeysToInvalidate}
-                      />
-                    }
-                  />
-                )}
-              </DataContentBody>
-            </DataTableContent>
+          <DataTableContent>
+            <DataContentHead />
+            <DataContentBody<Option>>
+              {({ row }) => (
+                <ExpandableRow
+                  row={row as any}
+                  renderDetail={
+                    <OptionRowActions
+                      option={row.original}
+                      mutationKey={mutationKey}
+                    />
+                  }
+                />
+              )}
+            </DataContentBody>
+          </DataTableContent>
 
-            <DataTablePagination />
-          </Suspense>
+          <DataTablePagination />
         </DataTable>
       </PageShell>
     </div>

@@ -1,10 +1,5 @@
-import { TypographyH1 } from "@/renderer/components/ui/typography";
+import WorkInProgressPage from "@/renderer/components/work-in-progess-page";
 
-
-export const SettingsPage = ()=>{
-    return (
-        <div>
-            <TypographyH1>Parametres</TypographyH1>
-        </div>
-    )
-}
+export const SettingsPage = () => {
+  return <WorkInProgressPage />;
+};

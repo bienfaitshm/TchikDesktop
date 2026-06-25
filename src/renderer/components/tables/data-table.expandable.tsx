@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { motion, AnimatePresence, HTMLMotionProps } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { flexRender, type Row } from "@tanstack/react-table";
-
+import { Button } from "@/renderer/components/ui/button";
 import { TableCell, TableRow } from "@/renderer/components/ui/table";
 import { cn } from "@/renderer/utils";
 
@@ -13,8 +13,9 @@ interface ExpandableContextValue {
   toggle: () => void;
 }
 
-interface ExpandableRowProps<TData>
-  extends React.HTMLAttributes<HTMLTableRowElement> {
+interface ExpandableRowProps<
+  TData,
+> extends React.HTMLAttributes<HTMLTableRowElement> {
   row: Row<TData>;
   renderDetail?: React.ReactNode;
   showDetailOnClick?: boolean;
@@ -36,24 +37,31 @@ const useExpandable = () => {
  * ExpandableRowTrigger: La flèche de rotation isolée
  */
 export const ExpandableTrigger = React.forwardRef<
-  HTMLDivElement,
-  HTMLMotionProps<"div">
+  HTMLButtonElement,
+  React.ComponentProps<"button">
 >(({ className, ...props }, ref) => {
-  const { isExpanded } = useExpandable();
+  const { isExpanded, toggle } = useExpandable();
 
   return (
-    <motion.div
-      ref={ref}
-      animate={{ rotate: isExpanded ? 180 : 0 }}
-      transition={{ type: "spring", stiffness: 260, damping: 20 }}
-      className={cn(
-        "inline-flex items-center justify-center text-muted-foreground",
-        className,
-      )}
+    <Button
       {...props}
+      ref={ref}
+      variant="ghost"
+      size="xs"
+      onClick={() => toggle()}
+      className={cn("cursor-pointer rounded-b-sm", className)}
     >
-      <ChevronDown className="h-4 w-4 transition-colors group-hover:text-foreground" />
-    </motion.div>
+      <motion.div
+        animate={{ rotate: isExpanded ? 180 : 0 }}
+        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+      >
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 rotate-none group-hover:text-foreground transition-all",
+          )}
+        />
+      </motion.div>
+    </Button>
   );
 });
 ExpandableTrigger.displayName = "ExpandableTrigger";
@@ -73,7 +81,7 @@ const ExpandableContent = ({
   return (
     <AnimatePresence initial={false}>
       {isExpanded && (
-        <TableRow className="border-none bg-muted/30 hover:bg-muted/30">
+        <TableRow className="border-none bg-muted/20">
           <TableCell colSpan={colSpan} className="p-0">
             <motion.div
               initial={{ height: 0, opacity: 0 }}
@@ -137,14 +145,11 @@ export const ExpandableRow = React.memo(
           data-state={row.getIsSelected() ? "selected" : undefined}
           aria-expanded={isExpanded}
           className={cn(
-            "group cursor-pointer transition-colors hover:bg-muted/50",
-            isExpanded && "bg-muted/50",
+            "group transition-colors hover:bg-muted/20",
+            isExpanded && "bg-muted/20",
             className,
           )}
-          onClick={(e) => {
-            showDetailOnClick && toggle();
-            onClick?.(e);
-          }}
+          onClick={onClick}
           {...props}
         >
           {row.getVisibleCells().map((cell) => (

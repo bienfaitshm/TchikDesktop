@@ -64,6 +64,19 @@ export class DatabaseManager {
     }
   }
 
+  public getDBName(): string {
+    return path.basename(DB_CONFIG.FILENAME, ".db");
+  }
+
+  /**
+   * Retourne la liste des fichiers de sauvegarde (triés par date, du plus ancien au plus récent).
+   */
+  public async getBackDBFiles(): Promise<
+    Array<{ name: string; time: number }>
+  > {
+    return this.getSortedBackupFiles();
+  }
+
   /**
    * Exécute une sauvegarde en copiant le fichier de la base de données.
    * @returns Le chemin du fichier de sauvegarde créé, ou undefined si échec.
@@ -83,14 +96,14 @@ export class DatabaseManager {
       await fs.mkdir(DB_CONFIG.BACKUP_DIR, { recursive: true });
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const dbBaseName = path.basename(DB_CONFIG.FILENAME, ".db");
+      const dbBaseName = this.getDBName();
       const backupFileName = `${dbBaseName}-${timestamp}.db`;
       const backupPath = path.join(DB_CONFIG.BACKUP_DIR, backupFileName);
 
       await fs.copyFile(dbPath, backupPath);
       dbLogger.info(`Sauvegarde réussie : ${backupPath}`);
 
-      await this.cleanupOldBackups(dbBaseName);
+      await this.cleanupOldBackups();
 
       return backupPath;
     } catch (error) {
@@ -102,26 +115,15 @@ export class DatabaseManager {
   /**
    * Nettoie les anciens fichiers de sauvegarde pour ne garder que MAX_BACKUPS.
    */
-  private async cleanupOldBackups(dbBaseName: string): Promise<void> {
+  private async cleanupOldBackups(): Promise<void> {
     try {
-      const files = await fs.readdir(DB_CONFIG.BACKUP_DIR);
-      const dbFiles = files.filter((f) => f.startsWith(dbBaseName));
+      const files = await this.getSortedBackupFiles();
 
-      if (dbFiles.length <= DB_CONFIG.MAX_BACKUPS) return;
+      if (files.length <= DB_CONFIG.MAX_BACKUPS) return;
 
-      const filesWithStats = await Promise.all(
-        dbFiles.map(async (file) => {
-          const filePath = path.join(DB_CONFIG.BACKUP_DIR, file);
-          const stat = await fs.stat(filePath);
-          return { name: file, time: stat.mtimeMs };
-        }),
-      );
-
-      filesWithStats.sort((a, b) => a.time - b.time);
-
-      const filesToDelete = filesWithStats.slice(
+      const filesToDelete = files.slice(
         0,
-        filesWithStats.length - DB_CONFIG.MAX_BACKUPS,
+        files.length - DB_CONFIG.MAX_BACKUPS,
       );
 
       await Promise.all(
@@ -136,6 +138,29 @@ export class DatabaseManager {
         error as Error,
       );
     }
+  }
+
+  /**
+   * Méthode privée factorisant la lecture, le filtrage et le tri des fichiers de sauvegarde.
+   * @returns Tableau trié par date (mtimeMs) des fichiers de backup, du plus ancien au plus récent.
+   */
+  private async getSortedBackupFiles(): Promise<
+    Array<{ name: string; time: number }>
+  > {
+    const dbBaseName = this.getDBName();
+    const files = await fs.readdir(DB_CONFIG.BACKUP_DIR);
+    const dbFiles = files.filter((f) => f.startsWith(dbBaseName));
+
+    const filesWithStats = await Promise.all(
+      dbFiles.map(async (file) => {
+        const filePath = path.join(DB_CONFIG.BACKUP_DIR, file);
+        const stat = await fs.stat(filePath);
+        return { name: file, time: stat.mtimeMs };
+      }),
+    );
+
+    filesWithStats.sort((a, b) => a.time - b.time);
+    return filesWithStats;
   }
 }
 

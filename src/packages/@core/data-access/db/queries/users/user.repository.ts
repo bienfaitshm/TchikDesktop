@@ -1,17 +1,29 @@
-import { getTableColumns, sql, or, like, eq, and } from "drizzle-orm";
+import { getTableColumns, sql } from "drizzle-orm";
 import { getLogger } from "@/packages/logger";
+import { db } from "@/packages/@core/data-access/db/config";
 import {
   users,
   type TableUser,
   type InsertUser,
+  type User,
   type FindManyOptions,
 } from "@/packages/@core/data-access/db/schemas";
-import { db } from "@/packages/@core/data-access/db/config";
 import { hashPassword } from "@/packages/@core/data-access/db/crypt";
-import { applyQueryOptions } from "@/packages/@core/data-access/db/queries/drizzle-builder";
+import {
+  applyQueryOptions,
+  mergeQueryOptions,
+} from "@/packages/@core/data-access/db/queries/drizzle-builder";
+import type {
+  OptionProvider,
+  SearchOptions,
+} from "@/packages/@core/data-access/db/queries/select-option.transformer";
+import { createSQLiteSearchFilter } from "../drizzle-utility";
 import { BaseRepository, type LibSqlClient } from "../base-repository";
 
-const LIMIT_SEARCH_VALUE = 10;
+export type UserDTO = { fullName?: string } & Omit<User, "password">;
+export type BaseUserFilters = Partial<FindManyOptions<TableUser>>;
+
+const DEFAULT_LIMIT_VALUE = 50;
 
 const USER_DEFAULT_SORT: FindManyOptions<TableUser> = {
   orderBy: [
@@ -21,7 +33,10 @@ const USER_DEFAULT_SORT: FindManyOptions<TableUser> = {
   ],
 };
 
-export class UserRepository extends BaseRepository<TableUser, LibSqlClient> {
+export class UserRepository
+  extends BaseRepository<TableUser, LibSqlClient>
+  implements OptionProvider<UserDTO>
+{
   static readonly fullNameSql = sql<string>`
     trim(
       coalesce(nullif(trim(${users.lastName}), ''), '') || ' ' ||
@@ -59,25 +74,49 @@ export class UserRepository extends BaseRepository<TableUser, LibSqlClient> {
       .$dynamic();
   }
 
-  async searchUser({ name, schoolId }: { name: string; schoolId: string }) {
-    const cleanName = name.trim();
-    if (!cleanName) return [];
+  /**
+   * Récupère les utilisateurs pour les composants Select / Combobox.
+   * Alterne intelligemment entre recherche textuelle filtrée et données par défaut.
+   */
+  async fetchOptions({
+    filters,
+    search,
+  }: SearchOptions<BaseUserFilters> = {}): Promise<UserDTO[]> {
+    try {
+      let query = this.getQuerySet();
 
-    const searchPattern = `%${cleanName.toLowerCase()}%`;
-    const queryset = this.getQuerySet()
-      .where(
-        and(
-          eq(this.table.schoolId, schoolId),
-          or(
-            like(sql`lower(${this.table.lastName})`, searchPattern),
-            like(sql`lower(${this.table.middleName})`, searchPattern),
-            like(sql`lower(${this.table.firstName})`, searchPattern),
-          ),
-        ),
-      )
-      .limit(LIMIT_SEARCH_VALUE)
-      .$dynamic();
-    return applyQueryOptions(queryset, this.table, USER_DEFAULT_SORT);
+      const searchFilter = createSQLiteSearchFilter(
+        [this.table.lastName, this.table.middleName, this.table.firstName],
+        search,
+      );
+
+      if (searchFilter) {
+        const mergedOptions = mergeQueryOptions(filters, USER_DEFAULT_SORT);
+        query = query.where(searchFilter);
+
+        return (await applyQueryOptions(
+          query,
+          this.table,
+          mergedOptions,
+        )) as unknown as UserDTO[];
+      }
+
+      const defaultOptions = mergeQueryOptions(
+        { limit: DEFAULT_LIMIT_VALUE, ...filters },
+        USER_DEFAULT_SORT,
+      );
+
+      return (await applyQueryOptions(
+        query,
+        this.table,
+        defaultOptions,
+      )) as unknown as UserDTO[];
+    } catch (error) {
+      this.logError("fetchOptions", error, { filters, search });
+      throw new Error(
+        "Erreur lors de la récupération des options d'utilisateurs.",
+      );
+    }
   }
 
   /**
@@ -88,5 +127,3 @@ export class UserRepository extends BaseRepository<TableUser, LibSqlClient> {
     return this.create({ ...value, password: passwordHash }, tx);
   }
 }
-
-export const userRepository = new UserRepository();

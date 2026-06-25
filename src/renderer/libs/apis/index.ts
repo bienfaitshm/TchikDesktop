@@ -5,7 +5,7 @@ import type { IpcRenderer } from "@electron-toolkit/preload";
 const API_REGISTRY = {
   users: apis.createUserApis,
   classroom: apis.createClassroomApis,
-  enrollement: apis.createEnrollementApis,
+  enrollment: apis.createEnrollmentApis,
   option: apis.createOptionApis,
   school: apis.createSchoolApis,
   stats: apis.createStatsApis,
@@ -70,7 +70,7 @@ export const api = createLazyAppClients(window.electron.ipcRenderer);
 
 export const {
   classroom,
-  enrollement,
+  enrollment,
   option,
   school,
   exportDocuments,

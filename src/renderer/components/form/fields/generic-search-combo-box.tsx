@@ -10,6 +10,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandShortcut,
 } from "@/renderer/components/ui/command";
 import {
   Popover,
@@ -40,6 +41,7 @@ export interface ComboboxSearchProps<T extends ObjectRecord = ObjectRecord> {
   disabled?: boolean;
   className?: string;
   contentClassName?: string;
+  selectedItem?: ComboboxOption<T>;
   renderTrigger?: (selected: ComboboxOption<T> | undefined) => React.ReactNode;
   renderItem?: (
     item: ComboboxOption<T>,
@@ -61,6 +63,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
     disabled = false,
     className,
     contentClassName,
+    selectedItem,
     renderTrigger,
     renderItem,
   }: ComboboxSearchProps<T>,
@@ -68,10 +71,31 @@ function ComboboxSearchInner<T extends ObjectRecord>(
 ) {
   const [open, setOpen] = React.useState(false);
 
-  const selectedOption = React.useMemo(
-    () => options.find((opt) => opt.value === value),
-    [value, options],
-  );
+  const [localSelectedOption, setLocalSelectedOption] = React.useState<
+    ComboboxOption<T> | undefined
+  >(undefined);
+
+  const selectedOption = React.useMemo(() => {
+    if (selectedItem) return selectedItem;
+
+    const found = options.find((opt) => opt.value === value);
+    if (found) {
+      return found;
+    }
+
+    if (localSelectedOption && localSelectedOption.value === value) {
+      return localSelectedOption;
+    }
+
+    return undefined;
+  }, [value, options, selectedItem, localSelectedOption]);
+
+  React.useEffect(() => {
+    const found = options.find((opt) => opt.value === value);
+    if (found) {
+      setLocalSelectedOption(found);
+    }
+  }, [value, options]);
 
   const filteredOptions = React.useMemo(() => {
     if (onSearchChange || !search) return options;
@@ -83,6 +107,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
 
   const handleSelect = React.useCallback(
     (option: ComboboxOption<T>) => {
+      setLocalSelectedOption(option);
       onChange?.(option.value);
       setOpen(false);
     },
@@ -130,7 +155,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
 
       <PopoverContent
         className={cn(
-          "w-[var(--radix-popover-trigger-width)] min-w-[280px] p-0 shadow-md",
+          "w-(--radix-popover-trigger-width) min-w-70 p-0 shadow-md",
           contentClassName,
         )}
         align="start"
@@ -147,7 +172,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
             className="h-8 text-xs border-none focus-visible:ring-0 shadow-none"
           />
           <CommandList
-            className="max-h-[240px] overflow-y-auto scrollbar-thin"
+            className="max-h-60 overflow-y-auto scrollbar-thin"
             onWheel={(e) => {
               e.stopPropagation();
             }}
@@ -159,7 +184,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
               </div>
             )}
 
-            {!isLoading && (
+            {!isLoading && options.length === 0 && (
               <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
                 Aucun élément trouvé.
               </CommandEmpty>
@@ -197,7 +222,9 @@ function ComboboxSearchInner<T extends ObjectRecord>(
                         </div>
                       )}
                       {isSelected && (
-                        <Check className="h-4 w-4 text-primary shrink-0" />
+                        <CommandShortcut>
+                          <Check className="h-4 w-4 text-primary shrink-0" />
+                        </CommandShortcut>
                       )}
                     </CommandItem>
                   );

@@ -1,7 +1,10 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/renderer/components/ui/badge"; // Plus adapté pour le statut
-import { DataTableColumnHeader } from "./data-table.column-header";
+import { Badge } from "@/renderer/components/ui/badge";
 import type { TSeatingSession } from "@/packages/@core/data-access/db/schemas/types";
+import { TypographySmall } from "@/renderer/components/ui/typography";
+import { DataTableColumnHeader } from "./data-table.column-header";
+import { Link } from "react-router";
+import { APP_ROUTES } from "@/renderer/constants";
 
 /**
  * On définit un type étendu propre pour la table.
@@ -14,35 +17,40 @@ export type SeatingSessionTableData = TSeatingSession & {
 export const seatingSessionColumns: ColumnDef<SeatingSessionTableData>[] = [
   {
     accessorKey: "sessionName",
-    // Utiliser le header personnalisé pour le tri
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Session" />
+      <DataTableColumnHeader column={column} title="Nom complet" />
     ),
-    cell: ({ row }) => (
-      <span className="max-w-[200px] truncate font-semibold">
-        {row.getValue("sessionName")}
-      </span>
-    ),
+    cell: ({ getValue, row: { original: session } }) => {
+      return (
+        <Link
+          to={APP_ROUTES.SEATING.SESSION(session.sessionId)}
+          className="hover:underline"
+        >
+          <TypographySmall className="text-foreground max-w-20">
+            {getValue<string>()}
+          </TypographySmall>
+        </Link>
+      );
+    },
+    enableSorting: true,
     enableHiding: false,
+    enableColumnFilter: true,
   },
   {
     accessorKey: "hasAssignments",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Statut" />
-    ),
+    header: "Statut",
     cell: ({ row }) => {
       const isAssigned = !!row.getValue("hasAssignments");
 
       return (
         <Badge
-          variant={isAssigned ? "success" : "outline-solid"}
+          variant={isAssigned ? "default" : "outline"}
           className={!isAssigned ? "text-muted-foreground italic" : ""}
         >
           {isAssigned ? "Assignée" : "À pourvoir"}
         </Badge>
       );
     },
-    // On peut filtrer sur ce statut
     filterFn: (row, id, value) => value.includes(row.getValue(id)),
   },
 ];

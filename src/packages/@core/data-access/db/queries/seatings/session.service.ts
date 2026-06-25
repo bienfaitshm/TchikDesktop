@@ -4,10 +4,10 @@ import { type CustomLogger, getLogger } from "@/packages/logger";
 import type { EnrollmentRepository } from "@/packages/@core/data-access/db/queries/enrollments";
 import { enrollmentRepository } from "@/packages/@core/data-access/db/queries/enrollments";
 import type { EnrolementDetails } from "@/packages/@core/data-access/db/schemas/types";
-
 import { parsePercentage } from "./utils";
 import { SeatingSessionMapper } from "./session-mapper";
-import { type LocalRoomRepository, localRoomRepository } from "./localrooms";
+import { type LocalRoomRepository } from "./localrooms";
+import { localRoomRepository } from "./localroom.service";
 
 export interface SeatingConfig {
   comfortRatio: number;

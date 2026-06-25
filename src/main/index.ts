@@ -9,7 +9,7 @@ import { setupDevelopmentEnvironment } from "@/main/electron-dev-extension";
 import { updateInit } from "@/main/update";
 import { getAppIcon } from "@/main/utils";
 import { handleFatalError } from "./error-handler";
-
+import "@/main/apps/system-infos";
 const mainLogger = getLogger("MainProcess");
 
 const createMainWindow = async (): Promise<BrowserWindow> => {
@@ -84,15 +84,14 @@ app.whenReady().then(async () => {
 
   mainLogger.info("Initialisation de la DATA...");
   // 1. Initialisation de la DATA en premier
-  await dbManager.initialize();
   await dbManager.performBackup();
+  await dbManager.initialize();
 
   mainLogger.info("Préparation des services...");
   // 2. Préparation des services
   apiGateway.registerEndpoints();
   ipcServer.listen();
 
-  await dbManager.performBackup();
   await setupDevelopmentEnvironment({ logger: mainLogger });
 
   const mainWindow = await createMainWindow();
@@ -122,7 +121,7 @@ app.on("window-all-closed", async () => {
     mainLogger.info(
       'Événement "window-all-closed": Fermeture de l\'application.',
     );
-    await dbManager.performBackup();
+    // await dbManager.performBackup();
     app.quit();
   }
 });

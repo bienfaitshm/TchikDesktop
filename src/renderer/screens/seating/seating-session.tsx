@@ -5,13 +5,11 @@ import { Plus } from "lucide-react";
 import { Link } from "react-router";
 
 import type { SeatingSession } from "@/packages/@core/data-access/db/schemas";
-import { useGetSeatingSessions } from "@/renderer/libs/queries/seating";
-
+import { useGetSeatingSessions } from "@/renderer/libs/queries/seatings";
 import { Button } from "@/renderer/components/ui/button";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
-import { ButtonDialogDocumentExport } from "@/renderer/dialog-actions/dialog-document-expoter-actions";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 
 import {
@@ -21,6 +19,9 @@ import {
   DataTableContent,
   DataTablePagination,
   DataTableToolbar,
+  DataTableColumnToggle,
+  FilteredTableToolbarContainer,
+  SearchTableToolbar,
 } from "@/renderer/components/tables/data-table";
 import {
   seatingSessionColumns,
@@ -40,12 +41,12 @@ import {
   UpdateSeatingSessionDialog,
   type SeatingSessionDialogProps,
 } from "@/renderer/dialog-actions/seating-session.dialog-actions";
-
+import { APP_ROUTES } from "@/renderer/constants";
 const columns = enhanceColumnsExpandable(seatingSessionColumns);
 
 interface SessionRowActionsProps extends Pick<
   SeatingSessionDialogProps,
-  "queryKeysToInvalidate"
+  "mutationKey"
 > {
   session: SeatingSession;
 }
@@ -54,11 +55,14 @@ interface SessionRowActionsProps extends Pick<
  * @description Actions de ligne.
  */
 const SessionRowActions = React.memo(
-  ({ session, queryKeysToInvalidate }: SessionRowActionsProps) => {
+  ({ session, mutationKey }: SessionRowActionsProps) => {
     return (
-      <ActionContainer className="lg:grid-cols-4">
+      <ActionContainer className="justify-end">
         {/* Redirection vers le détail de la session */}
-        <Link to={`/seating/${session.sessionId}`} className="contents">
+        <Link
+          to={APP_ROUTES.SEATING.SESSION(session.sessionId)}
+          className="contents"
+        >
           <ActionTileDetail />
         </Link>
 
@@ -66,7 +70,7 @@ const SessionRowActions = React.memo(
         <UpdateSeatingSessionDialog
           seatingSessionId={session.sessionId}
           defaultValues={session}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
         >
           <ActionTileEdit />
         </UpdateSeatingSessionDialog>
@@ -74,7 +78,7 @@ const SessionRowActions = React.memo(
         {/* Duplication */}
         <CreateSeatingSessionDialog
           defaultValues={session}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
         >
           <ActionTileCopy />
         </CreateSeatingSessionDialog>
@@ -83,7 +87,7 @@ const SessionRowActions = React.memo(
         <DeleteSeatingSessionDialog
           seatingSessionId={session.sessionId}
           seatingSessionName={session.sessionName}
-          queryKeysToInvalidate={queryKeysToInvalidate}
+          mutationKey={mutationKey}
         >
           <ActionTileDelete />
         </DeleteSeatingSessionDialog>
@@ -97,20 +101,14 @@ SessionRowActions.displayName = "SessionRowActions";
 export const SeatingPage = () => {
   const { schoolId, yearId } = useSchoolContext();
 
-  const { data: rawSessions, queryKey: queryKeysToInvalidate } =
-    useGetSeatingSessions({
-      where: { schoolId, yearId },
-    });
-  const sessions = React.useMemo(() => rawSessions ?? [], [rawSessions]);
-  const sessionIds = React.useMemo(
-    () => (rawSessions ?? []).map((session) => session.sessionId),
-    [rawSessions],
-  );
+  const { data: sessions, queryKey: mutationKey } = useGetSeatingSessions({
+    where: { schoolId, yearId },
+  });
 
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
       <PageShell
-        maxWidth="2xl"
+        maxWidth="xl"
         header={
           <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
             <header className="space-y-1">
@@ -121,18 +119,6 @@ export const SeatingPage = () => {
                 Organisez les plans de salle et la répartition des candidats.
               </p>
             </header>
-            <CreateSeatingSessionDialog
-              defaultValues={{ schoolId, yearId }}
-              queryKeysToInvalidate={queryKeysToInvalidate}
-            >
-              <Button
-                size="sm"
-                className="rounded-full shadow-xs bg-primary hover:bg-primary/90"
-              >
-                <Plus className="mr-2 size-4" />
-                Nouvelle session
-              </Button>
-            </CreateSeatingSessionDialog>
           </section>
         }
       >
@@ -141,12 +127,33 @@ export const SeatingPage = () => {
           columns={columns}
           keyExtractor={(item) => item.sessionId}
         >
-          <DataTableToolbar searchColumn="sessionName">
-            <ButtonDialogDocumentExport
-              schoolId={schoolId}
-              yearId={yearId}
-              defaultValues={{ sessionId: sessionIds }}
-            />
+          <DataTableToolbar>
+            <FilteredTableToolbarContainer>
+              <SearchTableToolbar
+                searchColumn="sessionName"
+                placeholder="Recherche"
+              />
+              {/* <TableFacetedFilterItem
+                title="Section"
+                columnId="section"
+                options={SECTION_OPTIONS}
+              /> */}
+            </FilteredTableToolbarContainer>
+            <div className="flex items-center gap-4">
+              <DataTableColumnToggle />
+              <CreateSeatingSessionDialog
+                defaultValues={{ schoolId, yearId }}
+                mutationKey={mutationKey}
+              >
+                <Button
+                  size="sm"
+                  className="rounded-full shadow-xs bg-primary hover:bg-primary/90"
+                >
+                  <Plus className="mr-2 size-4" />
+                  Nouvelle session
+                </Button>
+              </CreateSeatingSessionDialog>
+            </div>
           </DataTableToolbar>
 
           <Suspense
@@ -168,7 +175,7 @@ export const SeatingPage = () => {
                     renderDetail={
                       <SessionRowActions
                         session={row.original}
-                        queryKeysToInvalidate={queryKeysToInvalidate}
+                        mutationKey={mutationKey}
                       />
                     }
                   />

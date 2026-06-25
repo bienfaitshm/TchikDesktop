@@ -14,7 +14,11 @@ import {
 } from "@/packages/@core/data-access/schema-validations";
 import { MultiSelect } from "@/renderer/components/form/fields/multi-select-input";
 import { Input } from "@/renderer/components/ui/input";
-import { type BaseFormProps, useZodForm } from "./base-form";
+import {
+  type BaseFormProps,
+  useZodForm,
+  mergeDefaultValues,
+} from "@/renderer/libs/forms";
 import { cn } from "@/renderer/utils";
 
 export type SelectOption = {
@@ -37,15 +41,14 @@ const DEFAULT_VALUES: SeatingGenerator = {
 export const SeatingGeneratorForm = ({
   formId,
   onSubmit,
-  initialValues,
+  defaultValues,
   className,
   classRoomOptions = [],
   localRoomOptions = [],
 }: SeatingGeneratorFormProps) => {
-  const form = useZodForm({
+  const form = useZodForm<SeatingGenerator>({
     schema: seatingGeneratorSchema,
-    initialValues: initialValues,
-    defaultValues: DEFAULT_VALUES,
+    defaultValues: mergeDefaultValues(defaultValues, DEFAULT_VALUES),
     onSubmit,
   });
 
@@ -141,6 +144,7 @@ export const SeatingGeneratorForm = ({
                     placeholder="Sélectionnez les locaux..."
                     disabled={isSubmitting}
                     aria-describedby={localDescriptionId}
+                    className="w-full"
                   />
                 </FormControl>
                 <FormDescription id={localDescriptionId}>
