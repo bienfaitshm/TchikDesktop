@@ -49,10 +49,10 @@ export type EnrollmentApi = Readonly<{
 
   /**
    * Récupère les détails d'une salle des inscriptions spécifique par son ID.
-   * @param enrolementId L'identifiant unique de la salle des inscriptions.
+   * @param enrollmentId L'identifiant unique de la salle des inscriptions.
    * @returns Une promesse résolue avec l'objet EnrollmentData.
    */
-  fetchEnrollmentById(enrolementId: string): Promise<EnrollmentData>;
+  fetchEnrollmentById(enrollmentId: string): Promise<EnrollmentData>;
 
   /**
    * Crée une nouvelle salle des inscriptions.
@@ -70,21 +70,21 @@ export type EnrollmentApi = Readonly<{
 
   /**
    * Met à jour une salle des inscriptions existante.
-   * @param enrolementId L'identifiant unique de la salle des inscriptions à mettre à jour.
+   * @param enrollmentId L'identifiant unique de la salle des inscriptions à mettre à jour.
    * @param data Les champs partiels de EnrollmentData à modifier.
    * @returns Une promesse résolue avec l'objet EnrollmentData mis à jour.
    */
   updateEnrollment(
-    enrolementId: string,
+    enrollmentId: string,
     data: EnrollmentUpdate,
   ): Promise<EnrollmentData>;
 
   /**
    * Supprime une salle des inscriptions par son ID.
-   * @param enrolementId L'identifiant unique de la salle des inscriptions à supprimer.
+   * @param enrollmentId L'identifiant unique de la salle des inscriptions à supprimer.
    * @returns Une promesse résolue une fois la suppression terminée (souvent avec un objet vide ou un statut de succès).
    */
-  deleteEnrollment(enrolementId: string): Promise<void>;
+  deleteEnrollment(enrollmentId: string): Promise<void>;
 }>;
 
 /**
@@ -107,9 +107,9 @@ export function createEnrollmentApis(ipcClient: IpcClient): EnrollmentApi {
       return ipcClient.get(EnrollmentRoutes.ALL_HISTORIES, { params });
     },
 
-    fetchEnrollmentById(enrolementId) {
+    fetchEnrollmentById(enrollmentId) {
       return ipcClient.get(EnrollmentRoutes.DETAIL, {
-        params: { enrolementId },
+        params: { enrollmentId },
       });
     },
 
@@ -123,17 +123,17 @@ export function createEnrollmentApis(ipcClient: IpcClient): EnrollmentApi {
       return ipcClient.post(EnrollmentRoutes.QUICK_ENROLLMENT, data);
     },
 
-    updateEnrollment(enrolementId, data) {
+    updateEnrollment(enrollmentId, data) {
       // Envoi du corps pour la mise à jour (PATCH ou PUT, ici PUT est utilisé)
       return ipcClient.put(EnrollmentRoutes.DETAIL, data, {
-        params: { enrolementId },
+        params: { enrollmentId },
       });
     },
 
-    deleteEnrollment(enrolementId) {
+    deleteEnrollment(enrollmentId) {
       // La suppression ne nécessite pas de corps de requête
       return ipcClient.delete(EnrollmentRoutes.DETAIL, {
-        params: { enrolementId },
+        params: { enrollmentId },
       });
     },
   } as const;

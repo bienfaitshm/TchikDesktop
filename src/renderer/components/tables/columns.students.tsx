@@ -1,12 +1,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { GenderBadge } from "@/renderer/components/user-gender";
 import { StudentStatusBadge } from "@/renderer/components/student-status";
-import { Badge } from "@/renderer/components/ui/badge"; // Si tu as un composant Badge générique
-import { StudentAvatar } from "../student-avatar";
+import { StudentAvatar } from "@/renderer/components/student-avatar";
 import { DataTableColumnHeader } from "./data-table.column-header";
-
-// Composants de structure locaux pour standardiser l'UI des cellules (Esprit v4)
-// Tu peux aussi les exporter depuis un fichier partagé si tu as plusieurs tableaux.
 import {
   Item,
   ItemMedia,
@@ -15,22 +11,9 @@ import {
   ItemDescription,
 } from "@/renderer/components/ui/item";
 
-export type TEnrolement = {
-  enrolementId: string;
-  status: any;
-  isNewStudent: boolean;
-  studentCode: string;
-  studentId: string;
-  student: {
-    gender: any;
-    fullName: string;
-  };
-  classroom: {
-    shortIdentifier: string;
-  };
-};
+import type { EnrollmentTDO } from "@/packages/@core/data-access/db/queries";
 
-export const StudentColumns: ColumnDef<TEnrolement>[] = [
+export const studentColumns: ColumnDef<EnrollmentTDO>[] = [
   {
     accessorKey: "student.fullName",
     enableSorting: true,

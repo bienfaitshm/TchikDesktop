@@ -242,7 +242,6 @@ export const EnrollmentCreateSchema = EnrollmentSchema.omit({
 });
 export const EnrollmentUpdateSchema = EnrollmentCreateSchema.omit({
   studentId: true,
-  classroomId: true,
 }).partial();
 
 export const EnrollmentActionCreateSchema = EnrollmentActionSchema.omit({

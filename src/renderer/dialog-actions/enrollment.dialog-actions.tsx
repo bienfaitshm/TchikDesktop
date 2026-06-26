@@ -46,7 +46,7 @@ export const CreateEnrollmentDialog: React.FC<DialogProps> = ({
   ...config
 }) => {
   const { formId, onSubmit, isSubmitting, searchClassroom } =
-    useCreateQuickEnrollmentForm(config);
+    useCreateQuickEnrollmentForm(config, { schoolId, yearId });
 
   return (
     <DialogForm
@@ -87,7 +87,7 @@ export const UpdateEnrollmentDialog: React.FC<
   ...config
 }) => {
   const { formId, isSubmitting, onSubmit, searchClassroom } =
-    useUpdateEnrollmentForm(config);
+    useUpdateEnrollmentForm(config, { schoolId, yearId });
 
   const handleSubmit = React.useCallback(
     (data, helpers) =>

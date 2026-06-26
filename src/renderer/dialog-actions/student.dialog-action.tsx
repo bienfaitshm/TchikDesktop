@@ -6,35 +6,31 @@ import {
 } from "@/renderer/components/dialog/confirm-delete";
 import { useConfirm } from "@/renderer/hooks/use-confirm";
 import { cloneElementWithProps } from "@/renderer/utils/react";
-import {
-  BaseUserForm,
-  type UserCreateFormData,
-} from "@/renderer/components/form/user-form";
+import { BaseUserForm } from "@/renderer/components/form/user-form";
 import {
   useCreateUserForm,
   useUpdateUserForm,
   useDeleteUserForm,
+  type UserFormConfig,
 } from "@/renderer/libs/queries/users";
-import { type BaseFormConfig } from "./base.dialog-actions";
 import type { UserCreate } from "@/packages/@core/data-access/schema-validations";
 
-type CreateStudentDialogProps = {
-  children: React.ReactNode;
-  defaultValues?: Partial<UserCreate>;
-};
-
-type UpdateStudentDialogProps = {
-  children: React.ReactNode;
-  studentId: string;
-  initialData?: Partial<UserCreateFormData>;
-};
+export type DialogProps<TExtraProps extends Record<string, any> = {}> =
+  React.PropsWithChildren<
+    TExtraProps &
+      UserFormConfig & {
+        defaultValues?: Partial<UserCreate>;
+      }
+  >;
 
 /* ==========================================================================
    1. INSCRIPTION (CRÉATION)
    ========================================================================== */
-export const CreateStudentDialog: React.FC<
-  CreateStudentDialogProps & BaseFormConfig
-> = ({ children, defaultValues, ...config }) => {
+export const CreateStudentDialog: React.FC<DialogProps> = ({
+  children,
+  defaultValues,
+  ...config
+}) => {
   const { formId, onSubmit, isSubmitting } = useCreateUserForm(config);
 
   return (
@@ -54,22 +50,20 @@ export const CreateStudentDialog: React.FC<
   );
 };
 
-/* ==========================================================================
-   2. PROFIL (MODIFICATION)
-   ========================================================================== */
-export const UpdateStudentDialog: React.FC<
-  UpdateStudentDialogProps & BaseFormConfig
-> = ({ initialData, studentId, children, ...config }) => {
-  const { formId, isSubmitting, onSubmit } = useUpdateUserForm(config);
+type UpdateStudentDialogProps = {
+  studentId: string;
+  fullName?: string;
+};
 
-  const studentFullName = initialData
-    ? `${initialData.lastName ?? ""} ${initialData.firstName ?? ""}`.trim()
-    : "";
+export const UpdateStudentDialog: React.FC<
+  UpdateStudentDialogProps & DialogProps
+> = ({ defaultValues, studentId, fullName, children, ...config }) => {
+  const { formId, isSubmitting, onSubmit } = useUpdateUserForm(config);
 
   return (
     <DialogForm
       trigger={children}
-      title={`Modifier le profil : ${studentFullName}`}
+      title={`Modifier le profil ${fullName ? ` : ${fullName}` : ""}`}
       description="Mettez à jour les informations du dossier. Les modifications sont instantanées."
       formId={formId}
       isLoading={isSubmitting}
@@ -79,15 +73,12 @@ export const UpdateStudentDialog: React.FC<
         onSubmit={(data, helpers) =>
           onSubmit({ id: studentId, data }, helpers as any)
         }
-        defaultValues={initialData}
+        defaultValues={defaultValues}
       />
     </DialogForm>
   );
 };
 
-/* ==========================================================================
-   3. RADIATION (SUPPRESSION)
-   ========================================================================== */
 interface DeleteStudentDialogProps {
   children:
     | React.ReactNode
@@ -100,7 +91,7 @@ interface DeleteStudentDialogProps {
 }
 
 export const DeleteStudentDialog: React.FC<
-  DeleteStudentDialogProps & BaseFormConfig
+  DeleteStudentDialogProps & DialogProps
 > = ({ children, studentId, studentName, ...config }) => {
   const { isOpen, onOpen, onClose } = useConfirm<string>();
 
