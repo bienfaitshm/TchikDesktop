@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { useParams } from "react-router";
 import { Edit2, UserPen, UserPlus } from "lucide-react";
 
@@ -20,10 +20,7 @@ import {
   SearchTableToolbar,
   DataTableColumnToggle,
 } from "@/renderer/components/tables";
-import {
-  StudentColumns,
-  TEnrolement,
-} from "@/renderer/components/tables/columns.students";
+import { studentColumns } from "@/renderer/components/tables/columns.students";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrollements/enrollments";
 import {
   ActionContainer,
@@ -35,45 +32,38 @@ import {
   CreateEnrollmentDialog,
   DeleteEnrollmentDialog,
   UpdateEnrollmentDialog,
+  type DialogProps,
 } from "@/renderer/dialog-actions/enrollment.dialog-actions";
 import { UpdateStudentDialog } from "@/renderer/dialog-actions/student.dialog-action";
 
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import { enhanceColumnsExpandable } from "@/renderer/components/tables/columns";
-import type { BaseFormConfig } from "@/renderer/dialog-actions/base.dialog-actions";
-
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { ButtonSheetStudentStat } from "@/renderer/components/sheets/students.stat";
 import { Button } from "@/renderer/components/ui/button";
+import type { EnrollmentTDO } from "@/packages/@core/data-access/db/queries";
 
-const enrolementStudentColumns = enhanceColumnsExpandable(StudentColumns);
+const enrolementStudentColumns = enhanceColumnsExpandable(studentColumns);
 
-/** * ACTIONS : Rafraîchies avec un design plus compact
- */
-const EnrollementActions = ({
-  enrolement,
+type ActionProps = DialogProps & {
+  enrolement: EnrollmentTDO;
+};
+
+const EnrollementActions: React.FC<ActionProps> = ({
+  enrolement: enrollmentTDO,
   schoolId,
   yearId,
-  options,
-}: {
-  schoolId: string;
-  yearId: string;
-  options?: BaseFormConfig;
-  enrolement: TEnrolement;
+  mutationKey,
 }) => {
-  const { student, enrolementId, studentId, ...restValue } = enrolement;
-  const initialData = useMemo(
-    () => ({ ...restValue, schoolId, yearId, enrolementId }),
-    [restValue, schoolId, yearId, enrolementId],
-  );
+  const { student, classroom, ...enrollment } = enrollmentTDO;
 
   return (
     <ActionContainer>
       <ActionTileDetail />
       <UpdateStudentDialog
-        studentId={studentId}
-        initialData={student}
-        {...options}
+        studentId={student.userId}
+        mutationKey={mutationKey}
+        defaultValues={student}
       >
         <ActionTile
           icon={UserPen}
@@ -82,12 +72,12 @@ const EnrollementActions = ({
         />
       </UpdateStudentDialog>
       <UpdateEnrollmentDialog
-        initialData={initialData}
+        defaultValues={enrollment}
         fullName={student.fullName}
-        enrollmentId={enrolementId}
+        enrollmentId={enrollment.enrollmentId}
         schoolId={schoolId}
         yearId={yearId}
-        {...options}
+        mutationKey={mutationKey}
       >
         <ActionTile
           icon={Edit2}
@@ -96,11 +86,13 @@ const EnrollementActions = ({
         />
       </UpdateEnrollmentDialog>
       <DeleteEnrollmentDialog
-        enrollmentId={enrolementId}
-        studentName={student.fullName}
-        {...options}
+        studentName={student.fullName!}
+        enrollmentId={enrollment.enrollmentId}
+        schoolId={schoolId}
+        yearId={yearId}
+        mutationKey={mutationKey}
       >
-        {({ onOpen }) => <ActionTileDelete onClick={onOpen} />}
+        <ActionTileDelete />
       </DeleteEnrollmentDialog>
     </ActionContainer>
   );
@@ -164,7 +156,7 @@ export const StudentPage = () => {
                     enrolement={row.original as any}
                     schoolId={schoolId}
                     yearId={yearId}
-                    options={{ mutationKeys: mutationKey }}
+                    mutationKey={mutationKey}
                   />
                 }
               />

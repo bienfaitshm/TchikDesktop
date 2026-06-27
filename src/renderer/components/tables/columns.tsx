@@ -1,6 +1,6 @@
 export { enrollmentHistoryColumns } from "./columns.enrollment-history";
 export { schoolColumns } from "./columns.school";
-export { StudentColumns } from "./columns.students";
+export { studentColumns } from "./columns.students";
 export { studyYearColumns } from "./columns.study-years";
 
 export { localRoomColumns } from "./columns.local-rooms";

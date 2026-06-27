@@ -152,7 +152,9 @@ export function AboutPage() {
               ,{" "}
               <span className="font-semibold text-foreground">
                 Vanglodi Zengu
-              </span>{" "}
+              </span>
+              ,{" "}
+              <span className="font-semibold text-foreground">Hope Kyungu</span>{" "}
               et au{" "}
               <span className="font-semibold text-foreground">
                 Pasteur Sylvain Kilinda

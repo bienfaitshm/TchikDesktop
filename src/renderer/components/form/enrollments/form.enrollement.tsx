@@ -11,8 +11,9 @@ import {
   FormMessage,
 } from "@/renderer/components/ui/form";
 import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/enum";
+import { STUDENT_STATUS_OPTIONS } from "@/packages/@core/data-access/db/options";
 import { GenericComboBox } from "@/renderer/components/form/fields/generic-combo-box";
-import { StudentSeniorityStatusSelect } from "../fields/student-seriority-statut";
+import { StudentSeniorityStatusSelect } from "@/renderer/components/form/fields/student-seriority-statut";
 import {
   type BaseFormProps,
   useZodForm,
@@ -22,6 +23,7 @@ import {
   EnrollmentCreate,
   EnrollmentCreateSchema,
 } from "@/packages/@core/data-access/schema-validations";
+import { StudentStatus } from "../fields/student-status";
 
 export const DEFAULT_VALUES: Partial<EnrollmentCreate> = {
   classroomId: "",
@@ -67,6 +69,29 @@ export const EnrollmentForm: React.FC<
               </FormControl>
               <FormDescription>
                 L'élève sera assigné à cette classe pour l'année en cours.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Statud */}
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem className="flex flex-col mb-4">
+              <FormLabel>Statut de l'eleves</FormLabel>
+              <FormControl>
+                <StudentStatus
+                  {...field}
+                  options={STUDENT_STATUS_OPTIONS}
+                  className="w-full"
+                />
+              </FormControl>
+              <FormDescription>
+                le status de l'élève sera changé, par exemple l'exclusion ou
+                signaler l'abandon.
               </FormDescription>
               <FormMessage />
             </FormItem>

@@ -57,7 +57,7 @@ function buildEnrollmentSheet(
 
     rowMapper: (studentRecord, idx) => {
       const {
-        enrolement: { student, studentCode, classRoom },
+        enrollment: { student, studentCode, classroom },
         rowPosition,
         columnPosition,
       } = studentRecord;
@@ -69,7 +69,7 @@ function buildEnrollmentSheet(
         middleName: student.middleName,
         firstName: student.firstName,
         gender: student.gender,
-        className: classRoom.shortIdentifier,
+        className: classroom.shortIdentifier,
         code: studentCode,
         seat: `${rowPosition}‑${columnPosition}`,
       };

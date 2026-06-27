@@ -25,6 +25,7 @@ import { EnrollmentRoutes } from "../../routes-constant";
 const EnrollementIdSchema = EnrollmentSchema.pick({
   enrollmentId: true,
 });
+
 type EnrollementId = z.infer<typeof EnrollementIdSchema>;
 export class GetEnrollements extends AbstractEndpoint<any> {
   route = EnrollmentRoutes.ALL;

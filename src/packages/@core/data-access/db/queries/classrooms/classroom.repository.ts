@@ -21,6 +21,7 @@ import {
 } from "@/packages/@core/data-access/db/queries/base-repository";
 import {
   applyQueryOptions,
+  mergeQueryOptions,
   extractQueryPayload,
 } from "@/packages/@core/data-access/db/queries/drizzle-builder";
 import type {
@@ -99,7 +100,7 @@ export class ClassroomRepository
       return (await applyQueryOptions(
         query,
         this.table,
-        filters,
+        mergeQueryOptions(filters, CLASSROOM_DEFAULT_SORT),
       )) as ClassroomDTO[];
     } catch (error) {
       this.logError("fetchOptions", error, { filters, search });
@@ -116,7 +117,10 @@ export class ClassroomRepository
   }: GetClassroomsOptions = {}) {
     try {
       return await this.db.query.classrooms.findMany({
-        ...extractQueryPayload(this.table, classroomOptions),
+        ...extractQueryPayload(
+          this.table,
+          mergeQueryOptions(classroomOptions, CLASSROOM_DEFAULT_SORT),
+        ),
         with: {
           enrollments: {
             ...extractQueryPayload(classroomEnrollments, enrollmentOptions),
