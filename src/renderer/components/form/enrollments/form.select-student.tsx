@@ -8,38 +8,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/renderer/components/ui/form";
-import {
-  ComboboxSearch,
-  type ComboboxSearchProps,
-} from "@/renderer/components/form/fields/generic-search-combo-box";
+import { ComboboxSearch } from "@/renderer/components/form/fields/generic-search-combo-box";
 import type { EnrollmentFormData, SelectExistStudentProps } from "./types";
-import { useSearchUsers } from "@/renderer/hooks/users";
-
-const SearchStudentField: React.FC<
-  SelectExistStudentProps & ComboboxSearchProps
-> = ({ schoolId, yearId, ...props }) => {
-  const { options, isLoading, onSearchValue, searchQuery } = useSearchUsers({
-    schoolId,
-    yearId,
-  });
-  return (
-    <ComboboxSearch
-      {...props}
-      options={options}
-      placeholder="Rechercher un élève..."
-      searchPlaceholder="Saisissez le nom ou matricule/code..."
-      isLoading={isLoading}
-      onSearchChange={onSearchValue}
-      search={searchQuery}
-      aria-required="true"
-      contentClassName="w-full lg:w-[935px] md:w-[700px]"
-    />
-  );
-};
 
 export const SelectExistStudent: React.FC<SelectExistStudentProps> = ({
-  schoolId,
-  yearId,
+  students,
 }) => {
   const {
     control,
@@ -55,11 +28,16 @@ export const SelectExistStudent: React.FC<SelectExistStudentProps> = ({
           <FormItem className="flex flex-col">
             <FormLabel>Élève à inscrire</FormLabel>
             <FormControl>
-              <SearchStudentField
+              <ComboboxSearch
                 {...field}
                 disabled={isSubmitting}
-                schoolId={schoolId}
-                yearId={yearId}
+                options={students.options}
+                placeholder="Rechercher un élève..."
+                searchPlaceholder="Saisissez le nom ou matricule/code..."
+                isLoading={students.isSearching}
+                onSearchChange={students.setSearchQuery}
+                search={students.searchQuery}
+                aria-required="true"
               />
             </FormControl>
             <FormMessage />

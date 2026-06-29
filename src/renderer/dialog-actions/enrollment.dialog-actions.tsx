@@ -45,7 +45,7 @@ export const CreateEnrollmentDialog: React.FC<DialogProps> = ({
   yearId,
   ...config
 }) => {
-  const { formId, onSubmit, isSubmitting, searchClassroom } =
+  const { formId, onSubmit, isSubmitting, searchClassroom, searchUser } =
     useCreateQuickEnrollmentForm(config, { schoolId, yearId });
 
   return (
@@ -63,7 +63,8 @@ export const CreateEnrollmentDialog: React.FC<DialogProps> = ({
           formId={formId}
           onSubmit={onSubmit}
           defaultValues={defaultValues}
-          classrooms={searchClassroom.options}
+          classrooms={searchClassroom}
+          students={searchUser}
         />
       </div>
     </DialogForm>
