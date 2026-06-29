@@ -40,7 +40,7 @@ export const enrollmentHistoryColumns: ColumnDef<EnrollmentHistoryItem>[] = [
 
       return (
         <Link
-          to={APP_ROUTES.CLASSROOMS.DETAIL(classroomId)}
+          to={APP_ROUTES.CLASSROOMS.STUDENTS(classroomId)}
           className="font-mono text-sm text-muted-foreground hover:underline hover:text-primary transition-colors"
         >
           {String(getValue() ?? "N/A")}

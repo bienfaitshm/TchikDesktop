@@ -12,10 +12,17 @@ import {
 } from "@/renderer/components/ui/dialog";
 import { LoadingButton } from "@/renderer/components/buttons/button-loading";
 
-export interface DialogFormProps extends React.PropsWithChildren {
+type DialogChildrenRenderProps = {
+  onClose: () => void;
+};
+
+export interface DialogFormProps {
   trigger: React.ReactNode;
   title: string;
   description?: string;
+  children?:
+    | React.ReactNode
+    | ((props: DialogChildrenRenderProps) => React.ReactNode);
   formId?: string;
   isLoading?: boolean;
   submitText?: string;
@@ -32,11 +39,13 @@ export const DialogForm: React.FC<DialogFormProps> = ({
 }) => {
   const [open, setOpen] = React.useState(false);
 
+  const handleClose = React.useCallback(() => {
+    if (!isLoading) setOpen(false);
+  }, [isLoading]);
+
   const handleContentInteract = React.useCallback(
     (e: Event) => {
-      if (isLoading) {
-        e.preventDefault();
-      }
+      if (isLoading) e.preventDefault();
     },
     [isLoading],
   );
@@ -48,20 +57,30 @@ export const DialogForm: React.FC<DialogFormProps> = ({
       onOpenChange={isLoading ? undefined : setOpen}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
+
       <DialogContent
-        className="sm:max-w-125 md:max-w-175 lg:max-w-225"
+        className="sm:max-w-lg md:max-w-2xl lg:max-w-4xl flex flex-col max-h-[85vh]"
         onPointerDownOutside={handleContentInteract}
         onEscapeKeyDown={handleContentInteract}
       >
-        <DialogHeader className="mt-5 mx-2">
+        <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
 
-        <div className="py-4 mx-2">{children}</div>
-        <DialogFooter className="gap-5 mp-2 pb-5 sm:gap-4">
+        <div className="-mx-4 my-2 overflow-y-auto border-t border-border/60 px-4 py-4 max-h-[60vh] scrollbar-thin scrollbar-thumb-muted-foreground/20">
+          {typeof children === "function"
+            ? children({ onClose: handleClose })
+            : children}
+        </div>
+
+        <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost" disabled={isLoading}>
+            <Button
+              variant="outline"
+              disabled={isLoading}
+              onClick={handleClose}
+            >
               Annuler
             </Button>
           </DialogClose>

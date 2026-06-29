@@ -12,8 +12,9 @@ import { Input } from "@/renderer/components/ui/input";
 import { DateInput } from "@/renderer/components/form/fields/date";
 import { GenderInput } from "@/renderer/components/form/fields/gender";
 import type { EnrollmentFormData } from "./types";
+import React from "react";
 
-export const StudentFormFields = () => {
+export const StudentFormFields: React.FC = () => {
   const {
     control,
     formState: { isSubmitting },

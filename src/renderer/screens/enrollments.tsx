@@ -23,6 +23,7 @@ import type { EnrollmentData } from "@/packages/@core/apis/clients";
 interface SchoolYearProps {
   schoolId: string;
   yearId: string;
+  mutationKey?: readonly unknown[];
 }
 
 interface EnrollmentHistoryProps extends SchoolYearProps {
@@ -33,6 +34,7 @@ export const EnrollmentHistory = ({
   schoolId,
   yearId,
   enrollments = [],
+  mutationKey,
 }: EnrollmentHistoryProps) => {
   return (
     <div className="w-full">
@@ -52,6 +54,7 @@ export const EnrollmentHistory = ({
             schoolId={schoolId}
             yearId={yearId}
             defaultValues={{ schoolId, yearId }}
+            mutationKey={mutationKey}
           >
             <Button className="gap-2 shadow-xs">
               <UserPlus className="h-4 w-4" />
@@ -81,6 +84,7 @@ export const EnrollmentHistory = ({
 export const EmptyEnrollmentHistory = ({
   schoolId,
   yearId,
+  mutationKey,
 }: SchoolYearProps) => {
   return (
     <div className="h-[50vh] flex justify-center items-centerw-full">
@@ -98,6 +102,7 @@ export const EmptyEnrollmentHistory = ({
             schoolId={schoolId}
             yearId={yearId}
             defaultValues={{ schoolId, yearId }}
+            mutationKey={mutationKey}
           >
             <Button className="gap-2 shadow-xs mx-auto">
               <UserPlus className="h-4 w-4" />
@@ -112,8 +117,7 @@ export const EmptyEnrollmentHistory = ({
 
 export const EnrollmentPage = () => {
   const { schoolId, yearId } = useSchoolContext();
-
-  const { data: enrollments = [] } = useGetEnrollments({
+  const { data: enrollments = [], queryKey: mutationKey } = useGetEnrollments({
     where: { schoolId, yearId },
     limit: 20,
     orderBy: [{ column: "createdAt", order: "desc" }],
@@ -126,9 +130,14 @@ export const EnrollmentPage = () => {
           yearId={yearId}
           schoolId={schoolId}
           enrollments={enrollments}
+          mutationKey={mutationKey}
         />
       ) : (
-        <EmptyEnrollmentHistory yearId={yearId} schoolId={schoolId} />
+        <EmptyEnrollmentHistory
+          yearId={yearId}
+          schoolId={schoolId}
+          mutationKey={mutationKey}
+        />
       )}
     </div>
   );
