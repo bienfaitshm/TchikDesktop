@@ -9,4 +9,5 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "files.eol": "\n",
+  "js/ts.experimental.useTsgo": false
 }

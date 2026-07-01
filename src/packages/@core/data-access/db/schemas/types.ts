@@ -14,6 +14,9 @@ import {
 } from "./schema";
 import { SQLiteTableWithColumns } from "drizzle-orm/sqlite-core";
 
+export type AsUpdatePayload<T, K extends keyof T> = Partial<Omit<T, K>> &
+  Pick<T, K>;
+
 export type TSchool = InferSelectModel<typeof schools>;
 export type TSchoolInsert = InferInsertModel<typeof schools>;
 export type TSchoolUpdate = Partial<Omit<TSchoolInsert, "schoolId">>;

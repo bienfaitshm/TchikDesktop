@@ -36,9 +36,17 @@ export const primaryKeyId = (columnName: string) =>
  */
 export const foreignKeyId = (
   columnName: string,
-  { actions, ref }: ReferenceConfig,
+  {
+    actions,
+    ref,
+    type = "NOT_NULL",
+  }: ReferenceConfig & { type?: "NULL" | "NOT_NULL" },
 ) => {
-  return text(columnName).notNull().references(ref, actions);
+  let field = text(columnName);
+  if (type === "NOT_NULL") {
+    field = field.notNull();
+  }
+  return field.references(ref, actions);
 };
 
 /**
