@@ -58,7 +58,7 @@ export abstract class BaseRepository<
     this.logger = config.logger(`${config.entityName}Repository`);
   }
 
-  protected getClient(tx?: DrizzleClient): DrizzleClient {
+  public getClient(tx?: DrizzleClient): DrizzleClient {
     return tx ?? this.db;
   }
 

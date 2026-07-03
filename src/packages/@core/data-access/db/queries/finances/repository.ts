@@ -1,2 +1,2 @@
-export * from "./payment.repository";
-export * from "./repository.finance";
+export * from "./repository.billing-operations";
+export * from "./repository.core-entities";

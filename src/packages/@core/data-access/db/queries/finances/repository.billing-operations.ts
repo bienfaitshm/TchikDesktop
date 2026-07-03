@@ -12,11 +12,17 @@ import {
   type TableDailyExchangeRate,
   type FindManyOptions,
 } from "@/packages/@core/data-access/db/schemas";
+import { FEE_SCHEDULES_ENUM } from "@/packages/@core/data-access/db/options";
 import type {
   OptionProvider,
   SearchOptions,
 } from "@/packages/@core/data-access/db/queries/select-option.transformer";
-import { BaseRepository, type DrizzleClient } from "@/packages/drizzle-queries";
+import {
+  BaseRepository,
+  DatabaseError,
+  type DrizzleClient,
+} from "@/packages/drizzle-queries";
+import { and, eq, or, sql } from "drizzle-orm";
 
 /* =========================================================================
    3. FEE CONFIGURATION REPOSITORY
@@ -55,7 +61,53 @@ export class FeeConfigurationRepository
   ): Promise<FeeConfiguration[]> {
     return this.findForSelect(params);
   }
+
+  /**
+   * Trouver toutes les configurations applicables à une classe ou une option (XOR)
+   * Sécurisé contre les valeurs nulles en SQL
+   */
+  async findApplicableConfigurations(
+    ctx: {
+      schoolId: string;
+      yearId: string;
+      classroomId: string;
+      optionId: string | null;
+    },
+    tx: DrizzleClient = this.db,
+  ) {
+    try {
+      const client = this.getClient(tx);
+
+      /** Construction dynamique pour éviter les comparateurs '= NULL' bancals en SQL brut */
+      const targetCondition = ctx.optionId
+        ? or(
+            eq(feeConfigurations.classroomId, ctx.classroomId),
+            eq(feeConfigurations.optionId, ctx.optionId),
+          )
+        : eq(feeConfigurations.classroomId, ctx.classroomId);
+
+      return await client
+        .select()
+        .from(feeConfigurations)
+        .where(
+          and(
+            eq(feeConfigurations.schoolId, ctx.schoolId),
+            eq(feeConfigurations.yearId, ctx.yearId),
+            targetCondition,
+          ),
+        );
+    } catch (error) {
+      const dbError = DatabaseError.from(
+        error,
+        "Failed to find applicable fee configurations.",
+      );
+      this.logError("findApplicableConfigurations", dbError, ctx);
+      throw dbError;
+    }
+  }
 }
+
+export const feeConfigurationRepository = new FeeConfigurationRepository(db);
 
 /* =========================================================================
    4. FEE ASSIGNMENT REPOSITORY
@@ -83,7 +135,57 @@ export class FeeAssignmentRepository extends BaseRepository<
 
     this.searchFiltersColumns = [];
   }
+
+  /**
+   * Mettre à jour l'état d'avancement de la dette de l'élève (Garanti transactionnel)
+   */
+  async updateAssignmentProgress(
+    assignmentId: string,
+    amountConverted: number,
+    totalAmount: number,
+    tx: DrizzleClient = this.db,
+  ) {
+    try {
+      const client = this.getClient(tx);
+
+      const [current] = await client
+        .select({ amountPaid: feeAssignments.amountPaid })
+        .from(feeAssignments)
+        .where(eq(feeAssignments.assignmentId, assignmentId));
+
+      const newAmountPaid = (current?.amountPaid ?? 0) + amountConverted;
+      let newStatus = FEE_SCHEDULES_ENUM.PARTIAL;
+
+      if (newAmountPaid >= totalAmount) {
+        newStatus = FEE_SCHEDULES_ENUM.PAID;
+      } else if (newAmountPaid <= 0) {
+        newStatus = FEE_SCHEDULES_ENUM.UNPAID;
+      }
+
+      await client
+        .update(feeAssignments)
+        .set({
+          amountPaid: newAmountPaid,
+          status: newStatus as any,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        })
+        .where(eq(feeAssignments.assignmentId, assignmentId));
+    } catch (error) {
+      const dbError = DatabaseError.from(
+        error,
+        `Failed to update assignment progress for ID: ${assignmentId}`,
+      );
+      this.logError("updateAssignmentProgress", dbError, {
+        assignmentId,
+        amountConverted,
+        totalAmount,
+      });
+      throw dbError;
+    }
+  }
 }
+
+export const feeAssignmentRepository = new FeeAssignmentRepository(db);
 
 /* =========================================================================
    5. STUDENT PAYMENT REPOSITORY (Historique Comptable)
@@ -115,6 +217,8 @@ export class StudentPaymentRepository extends BaseRepository<
   }
 }
 
+export const studentPaymentRepository = new StudentPaymentRepository(db);
+
 /* =========================================================================
    6. DAILY EXCHANGE RATE REPOSITORY (Taux du jour)
    ========================================================================= */
@@ -141,7 +245,29 @@ export class DailyExchangeRateRepository extends BaseRepository<
       defaultSort: DAILY_EXCHANGE_RATE_DEFAULT_SORT,
     });
 
-    /** Permet de chercher un taux par sa chaîne de date ISO (ex: "2026-03-01") */
     this.searchFiltersColumns = [dailyExchangeRates.date];
   }
+
+  /**
+   * Obtenir le taux du jour le plus récent pour un couple de devises (Compatible Transaction)
+   */
+  async getLatestExchangeRate(
+    filters: DailyExchangeRateFilters,
+    tx: DrizzleClient = this.db,
+  ) {
+    try {
+      const [rate] = await this.findMany(filters, tx);
+
+      return rate;
+    } catch (error) {
+      const dbError = DatabaseError.from(
+        error,
+        "Failed to retrieve the latest exchange rate.",
+      );
+      this.logError("getLatestExchangeRate", dbError, filters);
+      throw dbError;
+    }
+  }
 }
+
+export const dailyExchangeRateRepository = new DailyExchangeRateRepository(db);

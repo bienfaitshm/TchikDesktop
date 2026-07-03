@@ -13,7 +13,12 @@ import type {
   OptionProvider,
   SearchOptions,
 } from "@/packages/@core/data-access/db/queries/select-option.transformer";
-import { BaseRepository, type DrizzleClient } from "@/packages/drizzle-queries";
+import {
+  BaseRepository,
+  DatabaseError,
+  type DrizzleClient,
+} from "@/packages/drizzle-queries";
+import { eq, sql } from "drizzle-orm";
 
 /* =========================================================================
    1. WALLET REPOSITORY
@@ -50,7 +55,35 @@ export class WalletRepository
   ): Promise<Wallet[]> {
     return this.findForSelect(params);
   }
+
+  /**
+   * Mettre à jour le solde d'un portefeuille (Incrémentation atomique sur la DB)
+   */
+  async incrementWalletBalance(
+    walletId: string,
+    amount: number,
+    tx: DrizzleClient = this.db,
+  ) {
+    try {
+      await this.getClient(tx)
+        .update(wallets)
+        .set({
+          currentBalance: sql`${wallets.currentBalance} + ${amount}`,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        })
+        .where(eq(wallets.walletId, walletId));
+    } catch (error) {
+      const dbError = DatabaseError.from(
+        error,
+        `Failed to increment balance for wallet ID: ${walletId}`,
+      );
+      this.logError("incrementWalletBalance", dbError, { walletId, amount });
+      throw dbError;
+    }
+  }
 }
+
+export const walletRepository = new WalletRepository(db);
 
 /* =========================================================================
    2. FEE TYPE REPOSITORY (Le manquant)
@@ -88,3 +121,5 @@ export class FeeTypeRepository
     return this.findForSelect(params);
   }
 }
+
+export const feeTypeRepository = new FeeTypeRepository(db);
