@@ -1,2 +1,2 @@
-export * from "./payment.repository";
+export * from "./repository";
 export * from "./payment.service";
