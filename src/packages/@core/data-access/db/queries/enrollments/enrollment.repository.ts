@@ -12,12 +12,19 @@ import {
   type Classroom,
 } from "@/packages/@core/data-access/db/schemas/schema";
 import type { FindManyOptions } from "@/packages/@core/data-access/db/schemas/types";
-import { BaseRepository } from "../base-repository";
-import { UserRepository } from "../users/";
+import {
+  BaseRepository,
+  DatabaseError,
+  type DynamicSelectQueryBuilder,
+} from "@/packages/drizzle-queries";
+import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/options";
+
+import { UserRepository } from "../users";
 
 export type EnrollmentTDO = ClassroomEnrollment & {
   student: User & { fullName?: string };
-  classroom: Classroom;
+  classroom: Omit<Classroom, "classId" | "schoolId">;
+  yearName: string;
 };
 
 const ENROLLMENT_DEFAULT_SORT: FindManyOptions<TableClassroomEnrollment> = {
@@ -26,7 +33,8 @@ const ENROLLMENT_DEFAULT_SORT: FindManyOptions<TableClassroomEnrollment> = {
 
 export class EnrollmentRepository extends BaseRepository<
   TableClassroomEnrollment,
-  TDataBase
+  TDataBase,
+  EnrollmentTDO
 > {
   constructor(database: TDataBase = db) {
     super({
@@ -39,87 +47,138 @@ export class EnrollmentRepository extends BaseRepository<
     });
   }
 
-  protected override getQuerySet(): any {
+  /**
+   * Surcharge propre du QuerySet de base pour inclure systématiquement les relations
+   */
+  protected override getQuerySet(tx?: TDataBase): DynamicSelectQueryBuilder {
     const { classId, schoolId, ...classFields } = getTableColumns(classrooms);
-    return this.db
+    const client = this.getClient(tx) as TDataBase;
+
+    return client
       .select({
-        ...getTableColumns(classroomEnrollments),
+        ...getTableColumns(this.table),
         student: UserRepository.getVisibleColumns(),
         classroom: classFields,
         yearName: studyYears.yearName,
       })
-      .from(classroomEnrollments)
-      .innerJoin(users, eq(classroomEnrollments.studentId, users.userId))
-      .innerJoin(
-        classrooms,
-        eq(classroomEnrollments.classroomId, classrooms.classId),
-      )
-      .innerJoin(studyYears, eq(classrooms.yearId, studyYears.yearId))
-      .$dynamic();
+      .from(this.table)
+      .innerJoin(users, eq(this.table.studentId, users.userId))
+      .innerJoin(classrooms, eq(this.table.classroomId, classrooms.classId))
+      .innerJoin(studyYears, eq(this.table.yearId, studyYears.yearId))
+      .$dynamic() as unknown as DynamicSelectQueryBuilder;
   }
 
-  async getDashboardMetrics(
-    ctx: { schoolId: string; yearId: string },
-    tx: TDataBase = this.db,
+  /**
+   * Récupère uniquement les inscriptions actives (allégées pour traitement lourd ou filtres internes)
+   */
+  async getActiveEnrollments(
+    filters: { schoolId: string; yearId: string },
+    tx?: TDataBase,
   ) {
     try {
-      const [results] = await tx
+      const client = this.getClient(tx) as TDataBase;
+      return await client
         .select({
-          total: count(),
-          news: sql<number>`count(case when ${classroomEnrollments.isNewStudent} = true then 1 end)`,
+          enrollmentId: this.table.enrollmentId,
+          classroomId: this.table.classroomId,
+          optionId: classrooms.optionId,
         })
-        .from(classroomEnrollments)
+        .from(this.table)
+        .innerJoin(classrooms, eq(this.table.classroomId, classrooms.classId))
         .where(
           and(
-            eq(classroomEnrollments.schoolId, ctx.schoolId),
-            eq(classroomEnrollments.yearId, ctx.yearId),
+            eq(this.table.schoolId, filters.schoolId),
+            eq(this.table.yearId, filters.yearId),
+            eq(this.table.status, STUDENT_STATUS_ENUM.ACTIVE),
+          ),
+        );
+    } catch (error) {
+      const dbError = DatabaseError.from(
+        error,
+        `Failed to fetch active enrollments for school ${filters.schoolId}`,
+      );
+      this.logError("getActiveEnrollments", dbError, filters);
+      throw dbError;
+    }
+  }
+
+  /**
+   * Métriques du Dashboard (Total élèves, Nouveaux, Anciens)
+   */
+  async getDashboardMetrics(
+    ctx: { schoolId: string; yearId: string },
+    tx?: TDataBase,
+  ) {
+    try {
+      const client = this.getClient(tx) as TDataBase;
+      const [results] = await client
+        .select({
+          total: count(),
+          news: sql<number>`count(case when ${this.table.isNewStudent} = 1 or ${this.table.isNewStudent} = true then 1 end)`,
+        })
+        .from(this.table)
+        .where(
+          and(
+            eq(this.table.schoolId, ctx.schoolId),
+            eq(this.table.yearId, ctx.yearId),
           ),
         );
 
       const total = Number(results?.total ?? 0);
       const news = Number(results?.news ?? 0);
 
-      return { total, news, oldStudents: total - news };
+      return {
+        total,
+        news,
+        oldStudents: total - news,
+      };
     } catch (error) {
-      this.logError("getDashboardMetrics", error, ctx);
-      throw new Error(
+      const dbError = DatabaseError.from(
+        error,
         "Impossible de récupérer les métriques du tableau de bord.",
       );
+      this.logError("getDashboardMetrics", dbError, ctx);
+      throw dbError;
     }
   }
 
+  /**
+   * Calcul des effectifs groupés par classe
+   */
   async getCountByClass(
     ctx: { schoolId: string; yearId: string },
-    tx: TDataBase = this.db,
+    tx?: TDataBase,
   ) {
     try {
-      return await tx
+      const client = this.getClient(tx) as TDataBase;
+      return await client
         .select({
-          classroomId: classroomEnrollments.classroomId,
+          classroomId: this.table.classroomId,
           label: classrooms.identifier,
           shortName: classrooms.shortIdentifier,
-          value: count(classroomEnrollments.studentId),
+          value: count(this.table.studentId),
         })
-        .from(classroomEnrollments)
-        .innerJoin(
-          classrooms,
-          eq(classroomEnrollments.classroomId, classrooms.classId),
-        )
+        .from(this.table)
+        .innerJoin(classrooms, eq(this.table.classroomId, classrooms.classId))
         .where(
           and(
-            eq(classroomEnrollments.schoolId, ctx.schoolId),
-            eq(classroomEnrollments.yearId, ctx.yearId),
+            eq(this.table.schoolId, ctx.schoolId),
+            eq(this.table.yearId, ctx.yearId),
           ),
         )
         .groupBy(
-          classroomEnrollments.classroomId,
+          this.table.classroomId,
           classrooms.identifier,
           classrooms.shortIdentifier,
         )
         .orderBy(classrooms.shortIdentifier);
     } catch (error) {
-      this.logError("getCountByClass", error, ctx);
-      throw new Error("Erreur lors du calcul des effectifs par classe.");
+      const dbError = DatabaseError.from(
+        error,
+        "Erreur lors du calcul des effectifs par classe.",
+      );
+      this.logError("getCountByClass", dbError, ctx);
+      throw dbError;
     }
   }
 }
