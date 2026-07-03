@@ -11,7 +11,7 @@ import {
   USER_GENDER_ENUM,
   USER_ROLE_ENUM,
   STUDENT_STATUS_ENUM,
-} from "../enum";
+} from "../options";
 import {
   generateNumericEnrollmentCode,
   generateProvisionalUsername,

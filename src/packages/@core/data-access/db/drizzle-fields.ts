@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { text, integer, type ReferenceConfig } from "drizzle-orm/sqlite-core";
 import { generateShortId } from "./utils";
 
@@ -51,12 +52,15 @@ export const foreignKeyId = (
 
 /**
  * Crée un champ de type Timestamp (stocké en INTEGER pour SQLite).
+ * Compatible avec les migrations de lignes existantes.
  */
 export const timestampColumn = (columnName: string) =>
   integer(columnName, { mode: "timestamp" })
     .notNull()
+    // 1. Donne une constante pure pour que SQLite accepte le ALTER TABLE
+    .default(new Date(0))
+    // 2. Génère la vraie date actuelle en JS lors de chaque INSERT futur
     .$defaultFn(() => new Date());
-
 /**
  * Mixin pour ajouter automatiquement les colonnes de suivi temporel.
  * Utilise le snake_case pour la base de données et le camelCase pour le code applicatif.

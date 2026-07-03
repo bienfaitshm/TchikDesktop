@@ -18,7 +18,7 @@ import {
   FEE_SCHEDULES_ENUM,
   CURRENCY_ENUM,
   PAYMENT_METHOD_ENUM,
-} from "../enum";
+} from "../options";
 import {
   primaryKeyId,
   foreignKeyId,
