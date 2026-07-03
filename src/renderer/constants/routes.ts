@@ -33,6 +33,9 @@ export const ROUTES = {
     STUDY_YEAR: "school-year",
     STUDY_YEAR_NEW: "school-year/new",
   },
+  FIN: {
+    DASHBOARD: "/dashboard",
+  },
 } as const;
 
 export const APP_ROUTES = {
@@ -73,6 +76,9 @@ export const APP_ROUTES = {
     SCHOOL_NEW: `${ROUTES.CONFIG.ROOT}/${ROUTES.CONFIG.SCHOOL_NEW}`,
     SCHOOL_YEAR: `${ROUTES.CONFIG.ROOT}/${ROUTES.CONFIG.STUDY_YEAR}`,
     SCHOOL_YEAR_NEW: `${ROUTES.CONFIG.ROOT}/${ROUTES.CONFIG.STUDY_YEAR_NEW}`,
+  },
+  FIN: {
+    DASHBOARD: ROUTES.FIN.DASHBOARD,
   },
 } as const;
 
