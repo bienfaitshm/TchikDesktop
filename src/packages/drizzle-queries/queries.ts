@@ -10,10 +10,11 @@ import { createSearchFilter } from "./utility";
 import { DatabaseError, RecordNotFoundError } from "./error";
 
 export interface DrizzleClient {
-  select(): any;
+  select(field?: any): any;
   insert(table: Table): any;
   update(table: Table): any;
   delete(table: Table): any;
+  query: any;
 }
 
 export interface ILogger {
@@ -58,17 +59,17 @@ export abstract class BaseRepository<
     this.logger = config.logger(`${config.entityName}Repository`);
   }
 
-  public getClient(tx?: DrizzleClient): DrizzleClient {
+  public getClient(tx?: TDb): TDb {
     return tx ?? this.db;
   }
 
-  protected getQuerySet(tx?: DrizzleClient): DynamicSelectQueryBuilder {
+  protected getQuerySet(tx?: TDb): DynamicSelectQueryBuilder {
     return this.getClient(tx).select().from(this.table).$dynamic();
   }
 
   async findMany(
     filters?: FindManyOptions<TTable>,
-    tx?: DrizzleClient,
+    tx?: TDb,
   ): Promise<TSelect[]> {
     try {
       const query = this.getQuerySet(tx);
@@ -85,10 +86,7 @@ export abstract class BaseRepository<
     }
   }
 
-  async findById(
-    id: string | number,
-    tx?: DrizzleClient,
-  ): Promise<TSelect | null> {
+  async findById(id: string | number, tx?: TDb): Promise<TSelect | null> {
     if (id === undefined || id === null) return null;
 
     try {
@@ -110,7 +108,7 @@ export abstract class BaseRepository<
     }
   }
 
-  async create(payload: TInsert, tx?: DrizzleClient): Promise<TSelect> {
+  async create(payload: TInsert, tx?: TDb): Promise<TSelect> {
     try {
       const [newRecord] = await this.getClient(tx)
         .insert(this.table)
@@ -130,7 +128,7 @@ export abstract class BaseRepository<
   async update(
     id: string | number,
     updates: TUpdate,
-    tx?: DrizzleClient,
+    tx?: TDb,
   ): Promise<TSelect | null> {
     if (id === undefined || id === null) return null;
 
@@ -155,7 +153,7 @@ export abstract class BaseRepository<
     }
   }
 
-  async delete(id: string | number, tx?: DrizzleClient): Promise<boolean> {
+  async delete(id: string | number, tx?: TDb): Promise<boolean> {
     if (id === undefined || id === null) return false;
 
     try {

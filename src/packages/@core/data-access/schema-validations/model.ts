@@ -94,7 +94,6 @@ export const ClassroomSchema = z.object({
     .max(10)
     .describe("Identifiant court (ex: 7ème S)"),
   section: ZSECTION_ENUM.describe("Section de la classe"),
-  yearId: z.string().describe("Clé étrangère vers l'année d'étude"),
   optionId: z
     .string()
     .nullable()

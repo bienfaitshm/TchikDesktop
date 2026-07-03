@@ -4,7 +4,6 @@ import { getLogger } from "@/packages/logger";
 import {
   classrooms,
   options,
-  studyYears,
   classroomEnrollments,
   seatingAssignments,
   type TableClassroom,
@@ -12,13 +11,10 @@ import {
   type TableSeatingAssignment,
   type Classroom,
   type Option,
-  type StudyYear,
   type FindManyOptions,
 } from "@/packages/@core/data-access/db/schemas";
-import {
-  BaseRepository,
-  LibSqlClient,
-} from "@/packages/@core/data-access/db/queries/base-repository";
+import { BaseRepository, DatabaseError } from "@/packages/drizzle-queries";
+
 import {
   applyQueryOptions,
   mergeQueryOptions,
@@ -31,13 +27,13 @@ import type {
 import { createSQLiteSearchFilter } from "../drizzle-utility";
 
 export type ClassroomDTO = Classroom & {
-  studyYear: StudyYear;
   option: Option | null;
 };
 
-export type BaseClasrromFilters = Partial<FindManyOptions<TableClassroom>>;
+export type BaseClassroomFilters = Partial<FindManyOptions<TableClassroom>>;
+
 interface GetClassroomsOptions {
-  classroomOptions?: BaseClasrromFilters;
+  classroomOptions?: BaseClassroomFilters;
   enrollmentOptions?: Partial<FindManyOptions<TableClassroomEnrollment>>;
   assignmentOptions?: Partial<FindManyOptions<TableSeatingAssignment>>;
 }
@@ -64,29 +60,26 @@ export class ClassroomRepository
     });
   }
 
-  protected override getQuerySet(tx?: LibSqlClient) {
+  protected override getQuerySet(tx?: TDataBase) {
     return this.getClient(tx)
       .select({
         ...getTableColumns(this.table),
-        studyYear: getTableColumns(studyYears),
         option: getTableColumns(options),
       })
       .from(this.table)
-      .innerJoin(studyYears, eq(classrooms.yearId, studyYears.yearId))
       .leftJoin(options, eq(classrooms.optionId, options.optionId))
       .$dynamic();
   }
 
   /**
    * Récupère les données de classes filtrées (compatible SQLite Case-Insensitive)
-   * ou les données par défaut si aucune recherche n'est fournie.
    */
-  async fetchOptions({
-    filters,
-    search,
-  }: SearchOptions<BaseClasrromFilters> = {}): Promise<ClassroomDTO[]> {
+  async fetchOptions(
+    { filters, search }: SearchOptions<BaseClassroomFilters> = {},
+    tx: TDataBase = this.db,
+  ): Promise<ClassroomDTO[]> {
     try {
-      let query = this.getQuerySet();
+      let query = this.getQuerySet(tx);
 
       const searchFilter = createSQLiteSearchFilter(
         [classrooms.identifier, classrooms.shortIdentifier],
@@ -103,20 +96,29 @@ export class ClassroomRepository
         mergeQueryOptions(filters, CLASSROOM_DEFAULT_SORT),
       )) as ClassroomDTO[];
     } catch (error) {
-      this.logError("fetchOptions", error, { filters, search });
-      throw new Error("Erreur lors de la récupération des options de classes.");
+      const dbError = DatabaseError.from(
+        error,
+        "Erreur lors de la récupération des options de classes.",
+      );
+      this.logError("fetchOptions", dbError, { filters, search });
+      throw dbError;
     }
   }
 
   /**
-   * Récupère les classes avec les étudiants associés via Drizzle Relational API
+   * Récupère les classes avec les étudiants associés via Drizzle Relational API (Compatible Transaction)
    */
-  async findClassroomsWithStudents({
-    classroomOptions = {},
-    enrollmentOptions = {},
-  }: GetClassroomsOptions = {}) {
+  async findClassroomsWithStudents(
+    {
+      classroomOptions = {},
+      enrollmentOptions = {},
+    }: GetClassroomsOptions = {},
+    tx: TDataBase = this.db,
+  ) {
     try {
-      return await this.db.query.classrooms.findMany({
+      const client = this.getClient(tx);
+
+      return await client.query.classrooms.findMany({
         ...extractQueryPayload(
           this.table,
           mergeQueryOptions(classroomOptions, CLASSROOM_DEFAULT_SORT),
@@ -129,23 +131,32 @@ export class ClassroomRepository
         },
       });
     } catch (error) {
-      this.logError("findClassroomsWithStudents", error, { classroomOptions });
-      throw new Error(
+      const dbError = DatabaseError.from(
+        error,
         "Erreur lors de la récupération des classes et de leurs étudiants.",
       );
+      this.logError("findClassroomsWithStudents", dbError, {
+        classroomOptions,
+      });
+      throw dbError;
     }
   }
 
   /**
-   * Récupère les classes, étudiants et assignations de places
+   * Récupère la structure complète : classes, étudiants et assignations de places (Compatible Transaction)
    */
-  async findClassroomsWithStudentAndAssignments({
-    classroomOptions = {},
-    enrollmentOptions = {},
-    assignmentOptions = {},
-  }: GetClassroomsOptions = {}) {
+  async findClassroomsWithStudentAndAssignments(
+    {
+      classroomOptions = {},
+      enrollmentOptions = {},
+      assignmentOptions = {},
+    }: GetClassroomsOptions = {},
+    tx: TDataBase = this.db,
+  ) {
     try {
-      return await this.db.query.classrooms.findMany({
+      const client = this.getClient(tx);
+
+      return await client.query.classrooms.findMany({
         ...extractQueryPayload(this.table, classroomOptions),
         with: {
           enrollments: {
@@ -161,12 +172,14 @@ export class ClassroomRepository
         },
       });
     } catch (error) {
-      this.logError("findClassroomsWithStudentAndAssignments", error, {
-        classroomOptions,
-      });
-      throw new Error(
+      const dbError = DatabaseError.from(
+        error,
         "Erreur lors de la récupération complète des assignations.",
       );
+      this.logError("findClassroomsWithStudentAndAssignments", dbError, {
+        classroomOptions,
+      });
+      throw dbError;
     }
   }
 }

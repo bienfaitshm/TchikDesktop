@@ -51,18 +51,14 @@ interface ClassroomRowActionsProps extends Pick<
 > {
   classroom: ClassroomDTO;
   schoolId: string;
-  yearId: string;
 }
 
 /**
  * @description Actions de ligne
  */
 const ClassroomRowActions: React.FC<ClassroomRowActionsProps> = React.memo(
-  ({ classroom, schoolId, yearId, mutationKey }) => {
-    const defaultValues = useMemo(
-      () => ({ ...classroom, yearId }),
-      [classroom, yearId],
-    );
+  ({ classroom, schoolId, mutationKey }) => {
+    const defaultValues = useMemo(() => ({ ...classroom }), [classroom]);
 
     return (
       <ActionContainer className="justify-end">
@@ -87,7 +83,7 @@ const ClassroomRowActions: React.FC<ClassroomRowActionsProps> = React.memo(
         {/* Duplication */}
         <ClassroomDialogCreateForm
           schoolId={schoolId}
-          defaultValues={{ schoolId, yearId }}
+          defaultValues={{ schoolId }}
           mutationKey={mutationKey}
         >
           <ActionTileCopy />
@@ -113,7 +109,7 @@ export const ClassroomPage = () => {
   const { options } = useGetOptionAsOptions(schoolId);
 
   const { data: classrooms = [], queryKey: mutationKey } = useGetClassrooms({
-    where: { schoolId, yearId },
+    where: { schoolId },
   });
 
   return (
@@ -159,7 +155,7 @@ export const ClassroomPage = () => {
               <DataTableColumnToggle />
               <ClassroomDialogCreateForm
                 schoolId={schoolId}
-                defaultValues={{ yearId, schoolId }}
+                defaultValues={{ schoolId }}
                 mutationKey={mutationKey}
               >
                 <Button size="sm" className="rounded-full shadow-xs">
