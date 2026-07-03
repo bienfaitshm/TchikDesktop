@@ -7,13 +7,12 @@ import {
   check,
 } from "drizzle-orm/sqlite-core";
 import { type InferSelectModel, type InferInsertModel, sql } from "drizzle-orm";
-
 import {
-  schools,
-  studyYears,
   classrooms,
   classroomEnrollments,
   options,
+  withYearAndSchoolIds,
+  withSchoolId,
 } from "./schema";
 import {
   FEE_SCHEDULES_ENUM,
@@ -38,10 +37,7 @@ export const wallets = sqliteTable(
       .notNull()
       .default(CURRENCY_ENUM.CDF),
     currentBalance: integer("current_balance").notNull().default(0),
-    schoolId: foreignKeyId("school_id", {
-      ref: () => schools.schoolId,
-      actions: { onDelete: "cascade" },
-    }),
+    ...withSchoolId,
     ...timestamps,
   },
   (table) => [index("wallets_school_idx").on(table.schoolId)],
@@ -62,14 +58,7 @@ export const feeTypes = sqliteTable(
       ref: () => wallets.walletId,
       actions: { onDelete: "cascade" },
     }),
-    yearId: foreignKeyId("year_id", {
-      ref: () => studyYears.yearId,
-      actions: { onDelete: "cascade" },
-    }),
-    schoolId: foreignKeyId("school_id", {
-      ref: () => schools.schoolId,
-      actions: { onDelete: "cascade" },
-    }),
+    ...withYearAndSchoolIds,
     ...timestamps,
   },
   (table) => [
@@ -81,7 +70,6 @@ export const feeTypes = sqliteTable(
   ],
 );
 
-// ---------- FEE TYPES ----------
 export type TableFeeType = typeof feeTypes;
 export type FeeType = InferSelectModel<TableFeeType>;
 export type InsertFeeType = InferInsertModel<TableFeeType>;
@@ -111,14 +99,7 @@ export const feeConfigurations = sqliteTable(
       ref: () => feeTypes.feeTypeId,
       actions: { onDelete: "cascade" },
     }),
-    yearId: foreignKeyId("year_id", {
-      ref: () => studyYears.yearId,
-      actions: { onDelete: "cascade" },
-    }),
-    schoolId: foreignKeyId("school_id", {
-      ref: () => schools.schoolId,
-      actions: { onDelete: "cascade" },
-    }),
+    ...withYearAndSchoolIds,
     ...timestamps,
   },
   (table) => [
@@ -201,7 +182,6 @@ export const studentPayments = sqliteTable(
   (table) => [index("payments_assignment_idx").on(table.assignmentId)],
 );
 
-// ---------- STUDENT PAYMENTS ----------
 export type TableStudentPayment = typeof studentPayments;
 export type StudentPayment = InferSelectModel<TableStudentPayment>;
 export type InsertStudentPayment = InferInsertModel<TableStudentPayment>;
@@ -219,14 +199,9 @@ export const dailyExchangeRates = sqliteTable(
 
     currencyFrom: enumColumn("currency_from", CURRENCY_ENUM).notNull(),
     currencyTo: enumColumn("currency_to", CURRENCY_ENUM).notNull(),
-
     rate: integer("rate").notNull(),
 
-    schoolId: foreignKeyId("school_id", {
-      ref: () => schools.schoolId,
-      actions: { onDelete: "cascade" },
-    }),
-
+    ...withSchoolId,
     ...timestamps,
   },
   (table) => [

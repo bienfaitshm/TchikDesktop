@@ -1,6 +1,11 @@
 import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
+import { eq, and, sql } from "drizzle-orm";
 import { PaymentRepository } from "./payment.repository";
-import { feeAssignments } from "@/packages/@core/data-access/db/schemas";
+import {
+  feeAssignments,
+  classroomEnrollments,
+  classrooms,
+} from "@/packages/@core/data-access/db/schemas";
 
 export class PaymentService {
   constructor(
@@ -15,6 +20,115 @@ export class PaymentService {
     if (!schoolId || !yearId) {
       throw new Error("Missing Context: schoolId and yearId are required.");
     }
+  }
+
+  /**
+   * TACHE DE FOND : Synchronisation globale et Idempotente des dettes d'une année
+   */
+  async syncAllStudentAssignments(filters: {
+    schoolId: string;
+    yearId: string;
+  }) {
+    if (!filters.schoolId || !filters.yearId) {
+      throw new Error("schoolId et yearId requis pour la synchronisation.");
+    }
+
+    // 1. Récupérer toutes les inscriptions de l'année avec les infos de classe/option
+    const activeEnrollments = await this.clientDb
+      .select({
+        enrollmentId: classroomEnrollments.enrollmentId,
+        classroomId: classroomEnrollments.classroomId,
+        optionId: classrooms.optionId,
+      })
+      .from(classroomEnrollments)
+      .innerJoin(
+        classrooms,
+        eq(classroomEnrollments.classroomId, classrooms.classId),
+      )
+      .where(
+        and(
+          eq(classroomEnrollments.schoolId, filters.schoolId),
+          eq(classroomEnrollments.yearId, filters.yearId),
+          eq(classroomEnrollments.status, "ACTIVE" as any),
+        ),
+      );
+
+    console.log(
+      `[Sync Background] Début du traitement pour ${activeEnrollments.length} élèves.`,
+    );
+
+    // 2. Traiter chaque élève de manière isolée dans une transaction
+    for (const enrollment of activeEnrollments) {
+      await this.clientDb.transaction(async (tx) => {
+        // Trouver toutes les configurations de frais applicables à cet élève (via sa classe ou son option)
+        const applicableConfigs =
+          await this.paymentRepo.findApplicableConfigurations(
+            {
+              schoolId: filters.schoolId,
+              yearId: filters.yearId,
+              classroomId: enrollment.classroomId,
+              optionId: enrollment.optionId,
+            },
+            tx,
+          );
+
+        for (const config of applicableConfigs) {
+          // Vérifier si cette assignation existe déjà pour l'élève
+          const [existingAssignment] = await tx
+            .select()
+            .from(feeAssignments)
+            .where(
+              and(
+                eq(feeAssignments.enrollmentId, enrollment.enrollmentId),
+                eq(feeAssignments.feeConfigId, config.feeConfigId),
+              ),
+            );
+
+          if (!existingAssignment) {
+            // --- ACTION A : CREATION (Frais configuré APRES l'inscription) ---
+            await tx.insert(feeAssignments).values({
+              enrollmentId: enrollment.enrollmentId,
+              feeConfigId: config.feeConfigId,
+              amountPaid: 0,
+              status: "UNPAID",
+            });
+            console.log(
+              `[Sync] Assignation créée pour l'élève ${enrollment.enrollmentId} - Frais: ${config.name}`,
+            );
+          } else {
+            // --- ACTION B : MISE À JOUR / RECALCUL DU STATUT ---
+            // Si le frais existait déjà, on réévalue son statut par rapport au montant total (au cas où le prix total totalAmount a été modifié entre temps)
+            let newStatus = "PARTIAL";
+            if (existingAssignment.amountPaid >= config.totalAmount) {
+              newStatus = "PAID";
+            } else if (existingAssignment.amountPaid <= 0) {
+              newStatus = "UNPAID";
+            }
+
+            // Si le statut calculé est différent du statut stocké, on met à jour
+            if (existingAssignment.status !== newStatus) {
+              await tx
+                .update(feeAssignments)
+                .set({
+                  status: newStatus as any,
+                  updatedAt: sql`CURRENT_TIMESTAMP`,
+                })
+                .where(
+                  eq(
+                    feeAssignments.assignmentId,
+                    existingAssignment.assignmentId,
+                  ),
+                );
+              console.log(
+                `[Sync] Statut mis à jour pour l'assignation ${existingAssignment.assignmentId} -> ${newStatus}`,
+              );
+            }
+          }
+        }
+      });
+    }
+
+    console.log(`[Sync Background] Synchronisation terminée avec succès.`);
   }
 
   /**

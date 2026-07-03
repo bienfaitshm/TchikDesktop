@@ -1,11 +1,14 @@
-import { eq, Table, type InferInsertModel } from "drizzle-orm";
+import { eq, type Table } from "drizzle-orm";
 import type { LibSQLDatabase, LibSQLTransaction } from "drizzle-orm/libsql";
 import { applyQueryOptions, mergeQueryOptions } from "./drizzle-builder";
 import type { FindManyOptions } from "../schemas/types";
 import type {
   AnySQLiteSelectQueryBuilder,
+  SQLiteColumn,
   SQLiteSelectDynamic,
 } from "drizzle-orm/sqlite-core";
+import type { SearchOptions } from "./select-option.transformer";
+import { createSQLiteSearchFilter } from "./drizzle-utility";
 
 type TableColumn<TTable extends Table> =
   TTable["_"]["columns"][keyof TTable["_"]["columns"]];
@@ -55,6 +58,8 @@ export abstract class BaseRepository<
   protected idColumn: TableColumn<TTable>;
   protected entityName: string;
   protected defaultSort: FindManyOptions<TTable> | undefined;
+  protected searchFiltersColumns: SQLiteColumn[] = [];
+  protected defaultLimit: number = 50;
 
   constructor(config: IBaseRepositoryConfig<TTable, TDb>) {
     this.db = config.db;
@@ -133,7 +138,7 @@ export abstract class BaseRepository<
     try {
       const [newRecord] = await this.getClient(tx)
         .insert(this.table)
-        .values(payload as InferInsertModel<typeof this.table>)
+        .values(payload as TTable["$inferInsert"])
         .returning();
       return newRecord as TSelect;
     } catch (error) {
@@ -181,6 +186,51 @@ export abstract class BaseRepository<
       throw new RepositoryError(`Deletion failed for ${this.entityName}.`, {
         cause: error,
       });
+    }
+  }
+
+  /**
+   * Récupère les utilisateurs pour les composants Select / Combobox.
+   * Alterne intelligemment entre recherche textuelle filtrée et données par défaut.
+   */
+  async fetchOptions({
+    filters,
+    search,
+  }: SearchOptions<Partial<FindManyOptions<TTable>>> = {}): Promise<TSelect[]> {
+    try {
+      let query = this.getQuerySet();
+
+      const searchFilter = createSQLiteSearchFilter(
+        this.searchFiltersColumns,
+        search,
+      );
+
+      if (searchFilter) {
+        const mergedOptions = mergeQueryOptions(filters, this.defaultSort);
+        query = query.where(searchFilter);
+
+        return (await applyQueryOptions(
+          query,
+          this.table,
+          mergedOptions,
+        )) as unknown as TSelect[];
+      }
+
+      const defaultOptions = mergeQueryOptions(
+        { limit: this.defaultLimit, ...filters },
+        this.defaultSort,
+      );
+
+      return (await applyQueryOptions(
+        query,
+        this.table,
+        defaultOptions,
+      )) as unknown as TSelect[];
+    } catch (error) {
+      this.logError("fetchOptions", error, { filters, search });
+      throw new Error(
+        "Erreur lors de la récupération des options d'utilisateurs.",
+      );
     }
   }
 

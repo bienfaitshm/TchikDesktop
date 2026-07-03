@@ -61,7 +61,7 @@ export class EnrollmentService {
         );
       }
 
-      return await this.enrollmentRepo.create(
+      const enrollment = await this.enrollmentRepo.create(
         {
           classroomId: payload.classroomId,
           schoolId: payload.schoolId,
@@ -72,6 +72,17 @@ export class EnrollmentService {
         },
         tx,
       );
+
+      // // APPEL DE L'ACTION DE PAIEMENT AUTOMATIQUE
+      // await this.paymentService.assignFeesToStudent({
+      //   schoolId: payload.schoolId,
+      //   yearId: payload.yearId,
+      //   enrollmentId: enrollment.enrollmentId,
+      //   classroomId: payload.classroomId,
+      //   optionId: payload.optionId ?? null // Passe l'option de la classe pour le XOR
+      // }, tx);
+
+      return enrollment;
     });
   }
 }

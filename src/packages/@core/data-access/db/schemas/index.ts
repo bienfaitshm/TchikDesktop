@@ -1,5 +1,5 @@
 export * from "./schema";
-export * from "./finance-schema";
+export * from "./schema.finance";
 export * from "./relations";
-export * from "./finance-relations";
+export * from "./relations.finance";
 export * from "./types";

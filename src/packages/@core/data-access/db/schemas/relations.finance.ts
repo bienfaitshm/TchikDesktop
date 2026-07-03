@@ -6,7 +6,7 @@ import {
   feeAssignments,
   studentPayments,
   dailyExchangeRates,
-} from "./finance-schema";
+} from "./schema.finance";
 import {
   schools,
   studyYears,
