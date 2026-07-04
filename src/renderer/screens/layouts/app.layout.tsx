@@ -3,18 +3,22 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/renderer/components/ui/sidebar";
-import { ApplicationSidebar } from "@/renderer/components/app-sidebar/app-sidebar";
+import {
+  ApplicationSidebar,
+  ApplicationSidebarProps,
+} from "@/renderer/components/app-sidebar/app-sidebar";
 import { Outlet } from "react-router";
 import { Separator } from "@/renderer/components/ui/separator";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 
-export function AppLayout() {
+type AppLayoutProps = ApplicationSidebarProps;
+export function AppLayout({ menus = [] }: AppLayoutProps) {
   const { schoolId, yearId } = useCurrentConfig();
   return (
     <SidebarProvider>
-      <ApplicationSidebar />
+      <ApplicationSidebar menus={menus} />
       <SidebarInset>
         <header className="bg-background/95 backdrop-blur-sm sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-4 transition-all">
           {/* Partie Gauche : Navigation */}

@@ -1,5 +1,13 @@
 import type { JSX } from "react";
-
+import {
+  Home,
+  LayoutDashboard,
+  GraduationCap,
+  School,
+  Clipboard,
+  List,
+  Banknote,
+} from "lucide-react";
 import { HashRouter as Router, Route, Routes } from "react-router";
 import * as Layout from "@/renderer/screens/layouts";
 import Launcher from "@/renderer/screens/launcher";
@@ -24,6 +32,15 @@ import {
   // NotificationPage,
 } from "@/renderer/screens/settings";
 import WorkInProgressPage from "@/renderer/components/work-in-progess-page";
+import {
+  SchoolFinanceDashboard,
+  ClassroomsFinPage,
+  FeeTypesPage,
+  PaymentsJournalPage,
+  PaymentsHistoryPage,
+  SchoolPaymentConfigPage,
+  SchoolWalletPage,
+} from "@/renderer/apps/finances";
 
 import { EnrollmentPage } from "@/renderer/screens/enrollments";
 import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms";
@@ -36,7 +53,46 @@ import {
   SeatingSessionAssignmentPage,
 } from "@/renderer/screens/seating";
 
+import { NotFoundPage } from "@/renderer/screens/not-found";
 import { ROUTES } from "@/renderer/constants";
+import type { NavSection } from "@/renderer/components/app-sidebar/app-sidebar";
+
+const NAVIGATION_MENUS: NavSection[] = [
+  {
+    label: "Application",
+    items: [
+      { name: "Accueil", url: ROUTES.HOME, icon: Home },
+      { name: "Finances", url: ROUTES.FIN.DASHBOARD, icon: Banknote },
+      { name: "Inscriptions", url: ROUTES.ENROLLMENTS, icon: Clipboard },
+      {
+        name: "Mise en place",
+        url: ROUTES.SEATING.ROOT,
+        icon: LayoutDashboard,
+      },
+    ],
+  },
+  {
+    label: "Écoles",
+    items: [
+      { name: "Classes", url: ROUTES.CLASSROOMS.ROOT, icon: School },
+      { name: "Locaux", url: ROUTES.LOCALS, icon: List },
+      { name: "Options", url: ROUTES.OPTIONS, icon: GraduationCap },
+    ],
+  },
+  {
+    label: "Finances",
+    items: [
+      { name: "Configuration", url: ROUTES.FIN.PAYMENT_CONFIG, icon: School },
+      { name: "Porte Feuilles", url: ROUTES.FIN.WALLET, icon: List },
+      { name: "Type de frais", url: ROUTES.FIN.FEE_TYPE, icon: List },
+      {
+        name: "Taux du jours",
+        url: ROUTES.FIN.EXCHANGE_RATES,
+        icon: GraduationCap,
+      },
+    ],
+  },
+];
 
 export default function RouterProvider(): JSX.Element {
   return (
@@ -48,13 +104,81 @@ export default function RouterProvider(): JSX.Element {
               redirectTo={ROUTES.CONFIG.ROOT}
               loader={<LoadingSpinner />}
             >
-              <Layout.AppLayout />
+              <Layout.AppLayout menus={NAVIGATION_MENUS} />
             </Layout.ConfigGuard>
           }
           errorElement={<Launcher />}
         >
           <Route index element={<HomePage />} />
           <Route path={ROUTES.ENROLLMENTS} element={<EnrollmentPage />} />
+          <Route
+            path={ROUTES.FIN.DASHBOARD}
+            element={<SchoolFinanceDashboard />}
+          />
+          {/* ========== FINANCES ========== */}
+          {/* 1. Portefeuilles (Wallets) */}
+          <Route path={ROUTES.FIN.WALLET}>
+            <Route index element={<SchoolWalletPage />} />
+            <Route path="new" element={<SchoolWalletPage />} />
+            <Route path=":walletId" element={<SchoolWalletPage />} />
+            <Route path=":walletId/edit" element={<SchoolWalletPage />} />
+          </Route>
+
+          {/* 2. Types de frais */}
+          <Route path={ROUTES.FIN.FEE_TYPE}>
+            <Route index element={<FeeTypesPage />} />
+            <Route path="new" element={<FeeTypesPage />} />
+            <Route path=":feeTypeId" element={<FeeTypesPage />} />
+            <Route path=":feeTypeId/edit" element={<FeeTypesPage />} />
+          </Route>
+
+          {/* 3. Configurations de frais */}
+          <Route path={ROUTES.FIN.PAYMENT_CONFIG}>
+            <Route index element={<SchoolPaymentConfigPage />} />
+            <Route path="new" element={<SchoolPaymentConfigPage />} />
+            <Route path=":feeConfigId" element={<SchoolPaymentConfigPage />} />
+            <Route
+              path=":feeConfigId/edit"
+              element={<SchoolPaymentConfigPage />}
+            />
+          </Route>
+
+          {/* 4. Gestion financière par classe */}
+          <Route path={ROUTES.FIN.CLASSROOMS}>
+            <Route index element={<ClassroomsFinPage />} />
+            <Route path=":classroomId">
+              <Route index element={<ClassroomsFinPage />} />
+              <Route path="assignments">
+                <Route index element={<ClassroomsFinPage />} />
+                <Route path="new" element={<ClassroomsFinPage />} />
+                <Route
+                  path=":assignmentId/edit"
+                  element={<ClassroomsFinPage />}
+                />
+              </Route>
+              <Route path="payments">
+                <Route index element={<ClassroomsFinPage />} />
+                <Route path=":paymentId" element={<ClassroomsFinPage />} />
+              </Route>
+            </Route>
+          </Route>
+
+          {/* 5. Historique global des paiements */}
+          <Route path={ROUTES.FIN.PAYMENTS}>
+            <Route index element={<PaymentsJournalPage />} />
+            <Route
+              path={ROUTES.FIN.PAYMENTS_HISTORIES}
+              element={<PaymentsHistoryPage />}
+            />
+            <Route path=":paymentId" element={<PaymentsJournalPage />} />
+          </Route>
+
+          {/* 6. Taux de change quotidiens */}
+          <Route path={ROUTES.FIN.EXCHANGE_RATES}>
+            <Route index element={<WorkInProgressPage />} />
+            <Route path="new" element={<WorkInProgressPage />} />
+            <Route path=":rateId/edit" element={<WorkInProgressPage />} />
+          </Route>
 
           {/* Seating */}
           <Route path={ROUTES.SEATING.ROOT}>
@@ -131,7 +255,7 @@ export default function RouterProvider(): JSX.Element {
           />
         </Route>
 
-        <Route path="*" element={<h2>404 Not Found</h2>} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
   );

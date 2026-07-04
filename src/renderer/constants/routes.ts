@@ -34,7 +34,14 @@ export const ROUTES = {
     STUDY_YEAR_NEW: "school-year/new",
   },
   FIN: {
-    DASHBOARD: "/dashboard",
+    DASHBOARD: "/fin/dashboard",
+    WALLET: "/fin/wallets",
+    PAYMENT_CONFIG: "/fin/config",
+    FEE_TYPE: "/fin/fee-types",
+    CLASSROOMS: "/fin/classrooms",
+    PAYMENTS: "/fin/payments",
+    PAYMENTS_HISTORIES: "histories",
+    EXCHANGE_RATES: "/fin/exchange-rates",
   },
 } as const;
 
@@ -79,6 +86,77 @@ export const APP_ROUTES = {
   },
   FIN: {
     DASHBOARD: ROUTES.FIN.DASHBOARD,
+
+    // --- Portefeuilles (wallets) ---
+    WALLETS: {
+      LIST: ROUTES.FIN.WALLET,
+      DETAIL: (walletId: string | number) => `${ROUTES.FIN.WALLET}/${walletId}`,
+      NEW: `${ROUTES.FIN.WALLET}/new`,
+      EDIT: (walletId: string | number) =>
+        `${ROUTES.FIN.WALLET}/${walletId}/edit`,
+    },
+
+    // --- Types de frais ---
+    FEE_TYPES: {
+      LIST: ROUTES.FIN.FEE_TYPE,
+      DETAIL: (feeTypeId: string | number) =>
+        `${ROUTES.FIN.FEE_TYPE}/${feeTypeId}`,
+      NEW: `${ROUTES.FIN.FEE_TYPE}/new`,
+      EDIT: (feeTypeId: string | number) =>
+        `${ROUTES.FIN.FEE_TYPE}/${feeTypeId}/edit`,
+    },
+
+    // --- Configurations de frais ---
+    PAYMENT_CONFIGS: {
+      LIST: ROUTES.FIN.PAYMENT_CONFIG,
+      DETAIL: (feeConfigId: string | number) =>
+        `${ROUTES.FIN.PAYMENT_CONFIG}/${feeConfigId}`,
+      NEW: `${ROUTES.FIN.PAYMENT_CONFIG}/new`,
+      EDIT: (feeConfigId: string | number) =>
+        `${ROUTES.FIN.PAYMENT_CONFIG}/${feeConfigId}/edit`,
+    },
+
+    // --- Gestion par classe (affectations + paiements) ---
+    CLASSROOMS: {
+      LIST: ROUTES.FIN.CLASSROOMS,
+      DETAIL: (classroomId: string | number) =>
+        `${ROUTES.FIN.CLASSROOMS}/${classroomId}`,
+
+      // Affectations des échéanciers aux élèves d’une classe
+      ASSIGNMENTS: (classroomId: string | number) =>
+        `${ROUTES.FIN.CLASSROOMS}/${classroomId}/assignments`,
+      ASSIGNMENT_NEW: (classroomId: string | number) =>
+        `${ROUTES.FIN.CLASSROOMS}/${classroomId}/assignments/new`,
+      ASSIGNMENT_EDIT: (
+        classroomId: string | number,
+        assignmentId: string | number,
+      ) =>
+        `${ROUTES.FIN.CLASSROOMS}/${classroomId}/assignments/${assignmentId}/edit`,
+
+      // Paiements effectués par les élèves d’une classe
+      PAYMENTS: (classroomId: string | number) =>
+        `${ROUTES.FIN.CLASSROOMS}/${classroomId}/payments`,
+      PAYMENT_DETAIL: (
+        classroomId: string | number,
+        paymentId: string | number,
+      ) => `${ROUTES.FIN.CLASSROOMS}/${classroomId}/payments/${paymentId}`,
+    },
+
+    // --- Historique global des paiements ---
+    PAYMENTS: {
+      LIST: ROUTES.FIN.PAYMENTS,
+      HISTORIES: `${ROUTES.FIN.PAYMENTS}/${ROUTES.FIN.PAYMENTS_HISTORIES}`,
+      DETAIL: (paymentId: string | number) =>
+        `${ROUTES.FIN.PAYMENTS}/${paymentId}`,
+    },
+
+    // --- Taux de change quotidiens ---
+    EXCHANGE_RATES: {
+      LIST: ROUTES.FIN.EXCHANGE_RATES,
+      NEW: `${ROUTES.FIN.EXCHANGE_RATES}/new`,
+      EDIT: (rateId: string | number) =>
+        `${ROUTES.FIN.EXCHANGE_RATES}/${rateId}/edit`,
+    },
   },
 } as const;
 
