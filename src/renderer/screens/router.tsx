@@ -2,15 +2,22 @@ import type { JSX } from "react";
 import {
   Home,
   LayoutDashboard,
-  GraduationCap,
-  School,
-  Clipboard,
-  List,
+  Building,
+  BookOpen,
+  Users,
+  Settings,
+  Wallet,
+  Receipt,
   Banknote,
+  UserPlus,
+  LayoutGrid,
+  Presentation,
+  School,
+  CircleDollarSign,
+  History,
 } from "lucide-react";
 import { HashRouter as Router, Route, Routes } from "react-router";
 
-// --- Imports des Layouts & Screens ---
 import * as Layout from "@/renderer/screens/layouts";
 import Launcher from "@/renderer/screens/launcher";
 import { HomePage } from "@/renderer/screens/home";
@@ -53,49 +60,60 @@ import {
 import { NotFoundPage } from "@/renderer/screens/not-found";
 
 import { ROUTES, APP_ROUTES } from "@/renderer/constants";
-import type { NavSection } from "@/renderer/components/app-sidebar/app-sidebar";
+import type {
+  NavSection,
+  NavItem,
+} from "@/renderer/components/app-sidebar/app-sidebar";
 
-const NAVIGATION_MENUS: NavSection[] = [
-  {
-    label: "Application",
-    items: [
-      { name: "Accueil", url: APP_ROUTES.HOME, icon: Home },
-      { name: "Finances", url: APP_ROUTES.FIN.DASHBOARD, icon: Banknote },
-      { name: "Inscriptions", url: APP_ROUTES.ENROLLMENTS, icon: Clipboard },
-      {
-        name: "Mise en place",
-        url: APP_ROUTES.SEATING.ROOT,
-        icon: LayoutDashboard,
-      },
-    ],
-  },
-  {
-    label: "Écoles",
-    items: [
-      { name: "Classes", url: APP_ROUTES.CLASSROOMS.ROOT, icon: School },
-      { name: "Locaux", url: APP_ROUTES.LOCALS, icon: List },
-      { name: "Options", url: APP_ROUTES.OPTIONS, icon: GraduationCap },
-    ],
-  },
-  {
-    label: "Finances",
-    items: [
-      {
-        name: "Configuration",
-        url: APP_ROUTES.FIN.PAYMENT_CONFIGS.LIST,
-        icon: School,
-      },
-      { name: "Porte Feuilles", url: APP_ROUTES.FIN.WALLETS.LIST, icon: List },
-      { name: "Type de frais", url: APP_ROUTES.FIN.FEE_TYPES.LIST, icon: List },
-      {
-        name: "Taux du jours",
-        url: APP_ROUTES.FIN.EXCHANGE_RATES.LIST,
-        icon: GraduationCap,
-      },
-    ],
-  },
+export const SCHOOL_SUB_MENUS: NavItem[] = [
+  { name: "Locaux", url: APP_ROUTES.LOCALS, icon: Building },
+  { name: "Filières & Options", url: APP_ROUTES.OPTIONS, icon: BookOpen },
+  { name: "Parents & Tuteurs", url: APP_ROUTES.CLASSROOMS.ROOT, icon: Users },
 ];
 
+export const FINANCES_SUB_MENUS: NavItem[] = [
+  { name: "Vue d'ensemble", url: ROUTES.FIN.ROOT, icon: LayoutDashboard },
+  {
+    name: "Historique des paiements",
+    url: APP_ROUTES.FIN.PAYMENTS.HISTORIES,
+    icon: History,
+  },
+  {
+    name: "Configuration",
+    url: APP_ROUTES.FIN.PAYMENT_CONFIGS.LIST,
+    icon: Settings,
+  },
+  { name: "Portefeuilles", url: APP_ROUTES.FIN.WALLETS.LIST, icon: Wallet },
+  { name: "Types de frais", url: APP_ROUTES.FIN.FEE_TYPES.LIST, icon: Receipt },
+];
+
+export const NAVIGATION_MENUS: NavSection[] = [
+  {
+    label: "Accès Rapide",
+    items: [
+      { name: "Accueil", url: APP_ROUTES.HOME, icon: Home },
+      { name: "Paiements", url: APP_ROUTES.FIN.DASHBOARD, icon: Banknote },
+      { name: "Inscriptions", url: APP_ROUTES.ENROLLMENTS, icon: UserPlus },
+      {
+        name: "Plan de classe",
+        url: APP_ROUTES.SEATING.ROOT,
+        icon: LayoutGrid,
+      },
+    ],
+  },
+  {
+    label: "Gestion de l'établissement",
+    items: [
+      { name: "Finances", url: ROUTES.FIN.ROOT, icon: CircleDollarSign },
+      {
+        name: "Salles de classe",
+        url: APP_ROUTES.CLASSROOMS.ROOT,
+        icon: Presentation,
+      },
+      { name: "Écoles", url: APP_ROUTES.CLASSROOMS.ROOT, icon: School },
+    ],
+  },
+] as const;
 export default function RouterProvider(): JSX.Element {
   return (
     <Router>
@@ -121,11 +139,11 @@ export default function RouterProvider(): JSX.Element {
           <Route path={ROUTES.LOCALS} element={<LocalRoomPage />} />
 
           {/* ========== FINANCES ========== */}
-          <Route path={ROUTES.FIN.ROOT}>
-            <Route
-              path={ROUTES.FIN.DASHBOARD}
-              element={<SchoolFinanceDashboard />}
-            />
+          <Route
+            path={ROUTES.FIN.ROOT}
+            element={<Layout.SubNavigationLayout items={FINANCES_SUB_MENUS} />}
+          >
+            <Route index element={<SchoolFinanceDashboard />} />
             {/* 1. Portefeuilles */}
             <Route path={ROUTES.FIN.WALLET}>
               <Route index element={<SchoolWalletPage />} />

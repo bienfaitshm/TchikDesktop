@@ -5,7 +5,7 @@ import { cn } from "@/renderer/utils";
 import { ScrollArea } from "@/renderer/components/ui/scroll-area";
 
 interface PageShellProps {
-  header: React.ReactNode;
+  header?: React.ReactNode;
   children: React.ReactNode;
   maxWidth?: "xl" | "2xl" | "full";
 }
@@ -40,9 +40,9 @@ export const PageShell = ({
   maxWidth = "2xl",
 }: PageShellProps) => {
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden bg-background">
-      <ScrollArea className="h-full w-full">
-        <div className="flex min-h-full flex-col">
+    <ScrollArea className="h-full w-full flex-1">
+      <div className="flex min-h-full flex-col">
+        {header && (
           <header className={cn("w-full pt-8 px-6")}>
             <div className={cn("mx-auto", MAX_WIDTH_CLASSES[maxWidth])}>
               <div className="px-2 flex w-full items-center justify-between">
@@ -50,18 +50,17 @@ export const PageShell = ({
               </div>
             </div>
           </header>
-
-          <main
-            className={cn(
-              "mx-auto w-full px-6 lg:px-10 lg:pt-5",
-              MAX_WIDTH_CLASSES[maxWidth],
-            )}
-          >
-            {children}
-          </main>
-        </div>
-      </ScrollArea>
-    </div>
+        )}
+        <main
+          className={cn(
+            "mx-auto w-full px-6 lg:px-10 lg:pt-5",
+            MAX_WIDTH_CLASSES[maxWidth],
+          )}
+        >
+          {children}
+        </main>
+      </div>
+    </ScrollArea>
   );
 };
 
