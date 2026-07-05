@@ -125,6 +125,60 @@ export const SeatingAssignmentRoutes = {
 } as const;
 
 /**
+ * Routes IPC pour la gestion des PORTEFEUILLES.
+ */
+export const WalletRoutes = {
+  ALL: "wallets",
+  SEARCH: "wallets/search",
+  DETAIL: "wallets/:walletId",
+} as const;
+
+/**
+ * Routes IPC pour la gestion des TYPES DE FRAIS.
+ */
+export const FeeTypeRoutes = {
+  ALL: "fee-types",
+  SEARCH: "fee-types/search",
+  DETAIL: "fee-types/:feeTypeId",
+} as const;
+
+/**
+ * Routes IPC pour la gestion des CONFIGURATIONS DE FRAIS.
+ */
+export const FeeConfigurationRoutes = {
+  ALL: "fee-configurations",
+  SEARCH: "fee-configurations/search",
+  DETAIL: "fee-configurations/:feeConfigId",
+} as const;
+
+/**
+ * Routes IPC pour la gestion des ATTRIBUTIONS (échéanciers élèves).
+ */
+export const FeeAssignmentRoutes = {
+  ALL: "fee-assignments",
+  SEARCH: "fee-assignments/search",
+  DETAIL: "fee-assignments/:assignmentId",
+} as const;
+
+/**
+ * Routes IPC pour la gestion des PAIEMENTS ÉLÈVES.
+ */
+export const StudentPaymentRoutes = {
+  ALL: "student-payments",
+  SEARCH: "student-payments/search",
+  DETAIL: "student-payments/:paymentId",
+} as const;
+
+/**
+ * Routes IPC pour la gestion des TAUX DE CHANGE QUOTIDIENS.
+ */
+export const DailyExchangeRateRoutes = {
+  ALL: "daily-exchange-rates",
+  SEARCH: "daily-exchange-rates/search",
+  DETAIL: "daily-exchange-rates/:rateId",
+} as const;
+
+/**
  * Export global mis à jour avec les nouveaux modules
  */
 export const IpcRoutes = {
@@ -140,4 +194,10 @@ export const IpcRoutes = {
   LOCAL_ROOMS: LocalRoomRoutes,
   SEATING_SESSIONS: SeatingSessionRoutes,
   SEATING_ASSIGNMENTS: SeatingAssignmentRoutes,
+  WALLETS: WalletRoutes,
+  FEE_TYPES: FeeTypeRoutes,
+  FEE_CONFIGURATIONS: FeeConfigurationRoutes,
+  FEE_ASSIGNMENTS: FeeAssignmentRoutes,
+  STUDENT_PAYMENTS: StudentPaymentRoutes,
+  DAILY_EXCHANGE_RATES: DailyExchangeRateRoutes,
 } as const;
