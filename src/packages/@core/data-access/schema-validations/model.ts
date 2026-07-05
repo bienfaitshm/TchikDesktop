@@ -5,7 +5,7 @@ import {
   USER_ROLE_ENUM,
   STUDENT_STATUS_ENUM,
   ENROLLMENT_ACTION_ENUM,
-} from "@/packages/@core/data-access/db/enum";
+} from "@/packages/@core/data-access/db/options";
 import { createZodEnum } from "./utils";
 
 export const ZSECTION_ENUM = createZodEnum(SECTION_ENUM);
