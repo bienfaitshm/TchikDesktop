@@ -3,7 +3,7 @@ import {
   IpcRequest,
   ValidationSchemas,
 } from "@/packages/electron-ipc-rest";
-import { AbstractEndpoint } from "@/packages/@core/apis/servers/abstract";
+import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { AppInfosRoutes } from "@/packages/@core/apis/routes-constant";
 import { getSystemInformation, type SystemInformation } from "./sys-info";
 

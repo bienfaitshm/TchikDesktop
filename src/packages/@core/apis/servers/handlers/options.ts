@@ -19,7 +19,7 @@ import {
   createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import type { SelectOption } from "@/packages/@core/data-access/db/queries/select-option.transformer";
-import { AbstractEndpoint } from "../abstract";
+import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { OptionRoutes } from "../../routes-constant";
 
 const OptionIdSchema = OptionSchema.pick({ optionId: true });

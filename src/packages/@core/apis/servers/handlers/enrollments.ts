@@ -19,7 +19,7 @@ import {
   type EnrollmentFilter,
   type EnrollmentQuickCreate,
 } from "@/packages/@core/data-access/schema-validations";
-import { AbstractEndpoint } from "../abstract";
+import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { EnrollmentRoutes } from "../../routes-constant";
 
 const EnrollementIdSchema = EnrollmentSchema.pick({

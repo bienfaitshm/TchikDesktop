@@ -33,6 +33,20 @@ interface ValidationErrorDetail {
   message: string;
 }
 
+/**
+ * Extrait le type TypeScript du Body à partir du schéma Zod fourni (ou unknown si absent).
+ */
+export type InferBody<S extends ValidationSchemas> =
+  S["body"] extends z.ZodTypeAny ? z.infer<S["body"]> : unknown;
+
+/**
+ * Extrait le type TypeScript des Params à partir du schéma Zod fourni (ou Record générique si absent).
+ */
+export type InferParams<S extends ValidationSchemas> =
+  S["params"] extends z.ZodTypeAny
+    ? z.infer<S["params"]>
+    : Record<string, unknown>;
+
 // 2. createValidatedHandler devient le seul point d'entrée et extrait les types directement des schémas passés en option
 export function createValidatedHandler<
   TBodySchema extends z.ZodTypeAny,

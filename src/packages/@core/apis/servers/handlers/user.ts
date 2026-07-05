@@ -22,7 +22,7 @@ import type {
   InsertUser,
   UpdateUser as UpUser,
 } from "@/packages/@core/data-access/db/schemas";
-import { AbstractEndpoint } from "../abstract";
+import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { UserRoutes } from "../../routes-constant";
 import type { SelectOption } from "@/packages/@core/data-access/db/queries/select-option.transformer";
 import type { UserDTO } from "@/packages/@core/data-access/db/queries/users";

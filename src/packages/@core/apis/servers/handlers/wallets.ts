@@ -12,7 +12,7 @@ import {
   IpcRequest,
   ValidationSchemas,
 } from "@/packages/electron-ipc-rest";
-import { AbstractEndpoint } from "../abstract";
+import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { WalletRoutes } from "../../routes-constant";
 
 const WalletIdSchema = WalletSchema.pick({ walletId: true });

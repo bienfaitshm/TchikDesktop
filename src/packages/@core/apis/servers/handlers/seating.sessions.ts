@@ -12,7 +12,7 @@ import {
   type SeatingSessionFilter,
   type SeatingSessionCreate,
 } from "@/packages/@core/data-access/schema-validations";
-import { AbstractEndpoint } from "../abstract";
+import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { SeatingSessionRoutes } from "../../routes-constant";
 
 const SeatingSessionIdSchema = SeatingSessionSchema.pick({

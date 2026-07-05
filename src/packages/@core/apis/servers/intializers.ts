@@ -3,8 +3,9 @@ import {
   instantiateClasses,
   ClassConstructor,
 } from "@/packages/handler-factory";
-import { AbstractEndpoint } from "./abstract";
+import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 
+import * as appInfos from "./apps-infos";
 import * as user from "./handlers/user";
 import * as schools from "./handlers/schools";
 import * as options from "./handlers/options";
@@ -13,7 +14,12 @@ import * as enrollments from "./handlers/enrollments";
 import * as stats from "./handlers/statistics";
 import * as exportDocument from "./handlers/document-exports";
 import * as seatings from "./handlers/seating";
-import * as appInfos from "./apps-infos";
+import * as feeAssignments from "./handlers/fee-assignments";
+import * as feeTypes from "./handlers/fee-types";
+import * as feeConfigurations from "./handlers/fee-configurations";
+import * as dailyExchangeRates from "./handlers/daily-exchange-rates";
+import * as wallets from "./handlers/wallets";
+import * as studentPayments from "./handlers/student-payments";
 
 const initializerLogger = getLogger("IPC Server");
 
@@ -106,8 +112,49 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   seatings.GetUnassignedStudents,
   seatings.ClearRoomAssignments,
   seatings.FindStudentSeat,
-
   seatings.GenerateSeating,
+
+  // --- FINANCE : Wallets ---
+  wallets.GetWallets,
+  wallets.PostWallet,
+  wallets.GetWallet,
+  wallets.UpdateWallet,
+  wallets.DeleteWallet,
+
+  // --- FINANCE : Fee Types ---
+  feeTypes.GetFeeTypes,
+  feeTypes.PostFeeType,
+  feeTypes.GetFeeType,
+  feeTypes.UpdateFeeType,
+  feeTypes.DeleteFeeType,
+
+  // --- FINANCE : Fee Configurations ---
+  feeConfigurations.GetFeeConfigurations,
+  feeConfigurations.PostFeeConfiguration,
+  feeConfigurations.GetFeeConfiguration,
+  feeConfigurations.UpdateFeeConfiguration,
+  feeConfigurations.DeleteFeeConfiguration,
+
+  // --- FINANCE : Fee Assignments ---
+  feeAssignments.GetFeeAssignments,
+  feeAssignments.PostFeeAssignment,
+  feeAssignments.GetFeeAssignment,
+  feeAssignments.UpdateFeeAssignment,
+  feeAssignments.DeleteFeeAssignment,
+
+  // --- FINANCE : Student Payments ---
+  studentPayments.GetStudentPayments,
+  studentPayments.PostStudentPayment,
+  studentPayments.GetStudentPayment,
+  studentPayments.UpdateStudentPayment,
+  studentPayments.DeleteStudentPayment,
+
+  // --- FINANCE : Daily Exchange Rates ---
+  dailyExchangeRates.GetDailyExchangeRates,
+  dailyExchangeRates.PostDailyExchangeRate,
+  dailyExchangeRates.GetDailyExchangeRate,
+  dailyExchangeRates.UpdateDailyExchangeRate,
+  dailyExchangeRates.DeleteDailyExchangeRate,
 ];
 
 export const instantiatedHandlers = instantiateClasses(

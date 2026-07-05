@@ -8,10 +8,10 @@ import {
 } from "@/packages/electron-ipc-rest";
 import {
   SchoolYearSchema,
-  type TSchoolYearSchemaAttibutes,
+  type SchoolYear,
 } from "@/packages/@core/data-access/schema-validations";
 import { documentExport } from "@/packages/@core/documents-exports";
-import { AbstractEndpoint } from "../abstract";
+import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { DocumentExportRoutes } from "../../routes-constant";
 
 export const defaultDocumentExportSchema = z.object({
@@ -32,7 +32,7 @@ export class GetInfosDocumentExports extends AbstractEndpoint<any> {
 
   protected async handle({
     params,
-  }: IpcRequest<unknown, TSchoolYearSchemaAttibutes>): Promise<unknown> {
+  }: IpcRequest<unknown, SchoolYear>): Promise<unknown> {
     return documentExport.getAvailableExports(params);
   }
 }
@@ -47,10 +47,7 @@ export class ExportDocuments extends AbstractEndpoint<any> {
   protected async handle({
     body: { documentType, data },
     params,
-  }: IpcRequest<
-    DocumentExportFormData,
-    TSchoolYearSchemaAttibutes
-  >): Promise<unknown> {
+  }: IpcRequest<DocumentExportFormData, SchoolYear>): Promise<unknown> {
     const response = await documentExport.executeExport(documentType, {
       ...data,
       schoolId: params.schoolId,

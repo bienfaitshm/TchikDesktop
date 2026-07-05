@@ -12,7 +12,7 @@ import {
   IpcRequest,
   ValidationSchemas,
 } from "@/packages/electron-ipc-rest";
-import { AbstractEndpoint } from "../abstract";
+import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { FeeTypeRoutes } from "../../routes-constant";
 
 const FeeTypeIdSchema = FeeTypeSchema.pick({ feeTypeId: true });

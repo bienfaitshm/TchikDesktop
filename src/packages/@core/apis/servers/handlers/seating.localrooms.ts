@@ -9,7 +9,7 @@ import {
   IpcRequest,
   ValidationSchemas,
 } from "@/packages/electron-ipc-rest";
-import { AbstractEndpoint } from "../abstract";
+import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { LocalRoomRoutes } from "../../routes-constant";
 import {
   LocalroomUpdateSchema,

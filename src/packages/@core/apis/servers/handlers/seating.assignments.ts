@@ -17,7 +17,7 @@ import {
   type SeatingGenerator,
   type SchoolYear,
 } from "@/packages/@core/data-access/schema-validations";
-import { AbstractEndpoint } from "../abstract";
+import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { SeatingAssignmentRoutes } from "../../routes-constant";
 
 /** Genere le mise en place */
