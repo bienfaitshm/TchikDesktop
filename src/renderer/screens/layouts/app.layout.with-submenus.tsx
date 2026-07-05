@@ -6,6 +6,8 @@ import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { SidebarContainer } from "@/renderer/components/sidebar-container";
 import { PageShell } from "./page-shell.layout";
 import { cn } from "@/renderer/utils";
+import { Suspense } from "@/renderer/libs/queries/suspense";
+import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 
 interface SubNavigationLayoutProps {
   /** Liste des éléments de la sous-navigation */
@@ -19,7 +21,7 @@ export const SubNavigationLayout = ({
   const { pathname } = useLocation();
 
   return (
-    <div className="flex w-full flex-1 overflow-hidden bg-background">
+    <div className="h-[calc(100vh-64px)] flex-1 overflow-hidden bg-background">
       <SidebarContainer
         sidebarProps={{
           defaultSize: "15%",
@@ -65,9 +67,17 @@ export const SubNavigationLayout = ({
       >
         {/* Contenu principal injecté via Outlet */}
         <PageShell maxWidth="xl">
-          <main className="py-6">
-            <Outlet context={{ schoolId, yearId }} />
-          </main>
+          <Suspense
+            fallback={
+              <div className="flex justify-center items-center h-full">
+                <LoadingSpinner />
+              </div>
+            }
+          >
+            <main className="py-6 flex-1 h-full w-full">
+              <Outlet context={{ schoolId, yearId }} />
+            </main>
+          </Suspense>
         </PageShell>
       </SidebarContainer>
     </div>

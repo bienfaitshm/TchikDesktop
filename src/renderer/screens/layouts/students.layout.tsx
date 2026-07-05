@@ -13,22 +13,19 @@ import { PageShell } from "./page-shell.layout";
 
 interface ClassroomSideNavProps {
   schoolId: string;
-  yearId: string;
 }
 
 /**
  * @component ClassroomSideNav
  * @description Nav latérale isolée pour optimiser les cycles de re-rendering de la liste.
  */
-const ClassroomSideNav = React.memo(
-  ({ schoolId, yearId }: ClassroomSideNavProps) => {
-    const { data: classrooms = [] } = useGetClassrooms({
-      where: { schoolId, yearId },
-    });
+const ClassroomSideNav = React.memo(({ schoolId }: ClassroomSideNavProps) => {
+  const { data: classrooms = [] } = useGetClassrooms({
+    where: { schoolId },
+  });
 
-    return <ClassroomSidebar classrooms={classrooms} />;
-  },
-);
+  return <ClassroomSidebar classrooms={classrooms} />;
+});
 ClassroomSideNav.displayName = "ClassroomSideNav";
 
 /**
@@ -91,9 +88,7 @@ export const StudentLayout = () => {
 
   return (
     <div className="h-full w-full overflow-hidden bg-background">
-      <SidebarContainer
-        sidebar={<ClassroomSideNav schoolId={schoolId} yearId={yearId} />}
-      >
+      <SidebarContainer sidebar={<ClassroomSideNav schoolId={schoolId} />}>
         <PageShell maxWidth="xl" header={renderHeader()}>
           {!classroom && classroomId && !isLoading ? (
             <div className="flex flex-col items-center justify-center h-[40vh] text-center p-6 border border-dashed rounded-xl border-border/60 bg-muted/5">
