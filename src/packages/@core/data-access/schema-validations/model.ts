@@ -372,5 +372,6 @@ export const withQueryOptions = <T extends z.ZodRawShape>(
       offset: z.coerce.number().int().nonnegative().default(0).optional(),
       orderBy: z.array(SortStepSchema).optional(),
     })
-    .describe("Options d'interrogations génériques normalisées.");
+    .describe("Options d'interrogations génériques normalisées.")
+    .partial();
 };

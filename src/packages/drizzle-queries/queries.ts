@@ -31,7 +31,7 @@ export interface IBaseRepositoryConfig<
   idColumn: AnyColumn;
   logger: (context: string) => ILogger;
   entityName: string;
-  defaultSort?: FindManyOptions<TTable>;
+  defaultSort?: FindManyOptions<TTable["$inferSelect"]>;
 }
 
 export abstract class BaseRepository<
@@ -46,7 +46,7 @@ export abstract class BaseRepository<
   protected table: TTable;
   protected idColumn: AnyColumn;
   protected entityName: string;
-  protected defaultSort: FindManyOptions<TTable> | undefined;
+  protected defaultSort: FindManyOptions<TTable["$inferSelect"]> | undefined;
   protected searchFiltersColumns: AnyColumn[] = [];
   protected defaultLimit: number = 50;
 
@@ -68,7 +68,7 @@ export abstract class BaseRepository<
   }
 
   async findMany(
-    filters?: FindManyOptions<TTable>,
+    filters?: FindManyOptions<TTable["$inferSelect"]>,
     tx?: TDb,
   ): Promise<TSelect[]> {
     try {
@@ -175,14 +175,17 @@ export abstract class BaseRepository<
   async findForSelect({
     filters,
     search,
-  }: SearchOptions<Partial<FindManyOptions<TTable>>> = {}): Promise<TSelect[]> {
+  }: SearchOptions<
+    Partial<FindManyOptions<TTable["$inferSelect"]>>
+  > = {}): Promise<TSelect[]> {
     try {
       const searchFilter = createSearchFilter(
         this.searchFiltersColumns,
         search,
       );
 
-      const effectiveFilters: Partial<FindManyOptions<TTable>> = { ...filters };
+      const effectiveFilters: Partial<FindManyOptions<TTable["$inferSelect"]>> =
+        { ...filters };
       if (!searchFilter) {
         effectiveFilters.limit = filters?.limit ?? this.defaultLimit;
       }

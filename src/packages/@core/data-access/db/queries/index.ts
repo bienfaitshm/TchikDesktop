@@ -7,3 +7,4 @@ export * from "./users";
 export * from "./seatings";
 export * from "./reports";
 export * from "./select-option.transformer";
+export * from "./finances";

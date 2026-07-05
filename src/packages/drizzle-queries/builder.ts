@@ -13,28 +13,11 @@ import {
   type SQL,
   AnyColumn,
 } from "drizzle-orm";
-
+import { FindManyOptions, ColumnKeys } from "./types";
 export const DEFAULT_MAX_LIMIT = 500;
 export const DEFAULT_MAX_OFFSET = 50000;
 
 export type InferSelect<T extends Table> = T["$inferSelect"];
-export type ColumnKeys<T extends Table> = keyof InferSelect<T> & string;
-export type TableColumns<T extends Table> = ReturnType<
-  typeof getTableColumns<T>
->;
-
-export interface FindManyOptions<T extends Table> {
-  where?: Partial<InferSelect<T>>;
-  whereIn?: Partial<Record<ColumnKeys<T>, InferSelect<T>[ColumnKeys<T>][]>>;
-  search?: Partial<Record<ColumnKeys<T>, string>>;
-  or?: Array<Partial<InferSelect<T>>>;
-  limit?: number;
-  offset?: number;
-  orderBy?: {
-    column: ColumnKeys<T>;
-    order: "asc" | "desc";
-  }[];
-}
 
 export interface DynamicSelectQueryBuilder {
   where(condition: SQL | undefined): DynamicSelectQueryBuilder;
@@ -71,7 +54,7 @@ export function buildWhereConditions<T extends Table>(
 
 export function buildWhereInConditions<T extends Table>(
   table: T,
-  whereIn: Partial<Record<ColumnKeys<T>, InferSelect<T>[ColumnKeys<T>][]>>,
+  whereIn: Partial<Record<ColumnKeys<InferSelect<T>>, unknown[]>>,
 ): SQL[] {
   const columns = getTableColumns(table);
   const validKeys = getValidColumnKeys(table);
@@ -91,7 +74,7 @@ export function buildWhereInConditions<T extends Table>(
 
 export function buildSearchConditions<T extends Table>(
   table: T,
-  search: Partial<Record<ColumnKeys<T>, string>>,
+  search: Partial<Record<ColumnKeys<InferSelect<T>>, string>>,
 ): SQL[] {
   const columns = getTableColumns(table);
   const validKeys = getValidColumnKeys(table);
@@ -148,7 +131,7 @@ export function buildOrderByClauses<T extends Table>(
       !validKeys.has(sort.column as string)
     )
       continue;
-    const column = columns[sort.column] as Column;
+    const column = columns[sort.column as string] as Column;
     sortOrders.push(sort.order === "desc" ? desc(column) : asc(column));
   }
 
@@ -161,7 +144,11 @@ export function buildOrderByClauses<T extends Table>(
 export function applyQueryOptions<
   TQuery extends DynamicSelectQueryBuilder,
   T extends Table,
->(query: TQuery, table: T, options?: FindManyOptions<T>): TQuery {
+>(
+  query: TQuery,
+  table: T,
+  options?: Partial<FindManyOptions<InferSelect<T>>>,
+): TQuery {
   const conditions: SQL[] = [];
 
   if (options?.where)
@@ -246,7 +233,7 @@ export function extractQueryPayload<
   };
 }
 
-export function mergeQueryOptions<T extends Table>(
+export function mergeQueryOptions<T extends {}>(
   options: FindManyOptions<T> = {},
   defaultOptions: FindManyOptions<T> = {},
 ): FindManyOptions<T> {

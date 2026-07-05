@@ -53,7 +53,7 @@ export const FeeTypeCreateSchema = FeeTypeSchema.omit({
 });
 export const FeeTypeUpdateSchema = FeeTypeCreateSchema.partial();
 
-const FeeConfigurationBase = z.object({
+export const FeeConfigurationBase = z.object({
   feeConfigId: z.string().describe("ID unique de la configuration (UUID)"),
   name: z.string().min(1).describe("Nom de la configuration"),
   totalAmount: z.coerce
@@ -70,8 +70,12 @@ const FeeConfigurationBase = z.object({
   ...timestampFields,
 });
 
-export const FeeConfigurationSchema = FeeConfigurationBase.superRefine(
-  (data, ctx) => {
+export const addFeeConfigurationRefine = <
+  T extends typeof FeeConfigurationBase,
+>(
+  schema: T,
+) => {
+  return schema.superRefine((data, ctx) => {
     const hasOption = data.optionId !== null;
     const hasClassroom = data.classroomId !== null;
 
@@ -102,8 +106,10 @@ export const FeeConfigurationSchema = FeeConfigurationBase.superRefine(
         path: ["classroomId"],
       });
     }
-  },
-);
+  });
+};
+export const FeeConfigurationSchema =
+  addFeeConfigurationRefine(FeeConfigurationBase);
 
 export type FeeConfiguration = z.infer<typeof FeeConfigurationSchema>;
 export const FeeConfigurationCreateSchema = FeeConfigurationBase.omit({
