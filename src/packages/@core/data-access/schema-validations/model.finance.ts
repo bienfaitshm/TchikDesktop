@@ -29,12 +29,16 @@ export const WalletSchema = z.object({
 });
 
 export type Wallet = z.infer<typeof WalletSchema>;
+
 export const WalletCreateSchema = WalletSchema.omit({
   walletId: true,
   createdAt: true,
   updatedAt: true,
 });
+export type WalletCreate = z.infer<typeof WalletCreateSchema>;
+
 export const WalletUpdateSchema = WalletCreateSchema.partial();
+export type WalletUpdate = z.infer<typeof WalletUpdateSchema>;
 
 export const FeeTypeSchema = z.object({
   feeTypeId: z.string().describe("ID unique du type de frais (UUID)"),
@@ -46,12 +50,16 @@ export const FeeTypeSchema = z.object({
 });
 
 export type FeeType = z.infer<typeof FeeTypeSchema>;
+
 export const FeeTypeCreateSchema = FeeTypeSchema.omit({
   feeTypeId: true,
   createdAt: true,
   updatedAt: true,
 });
+export type FeeTypeCreate = z.infer<typeof FeeTypeCreateSchema>;
+
 export const FeeTypeUpdateSchema = FeeTypeCreateSchema.partial();
+export type FeeTypeUpdate = z.infer<typeof FeeTypeUpdateSchema>;
 
 export const FeeConfigurationBase = z.object({
   feeConfigId: z.string().describe("ID unique de la configuration (UUID)"),
@@ -108,17 +116,26 @@ export const addFeeConfigurationRefine = <
     }
   });
 };
+
 export const FeeConfigurationSchema =
   addFeeConfigurationRefine(FeeConfigurationBase);
 
 export type FeeConfiguration = z.infer<typeof FeeConfigurationSchema>;
+
 export const FeeConfigurationCreateSchema = FeeConfigurationBase.omit({
   feeConfigId: true,
   createdAt: true,
   updatedAt: true,
 });
+export type FeeConfigurationCreate = z.infer<
+  typeof FeeConfigurationCreateSchema
+>;
+
 export const FeeConfigurationUpdateSchema =
   FeeConfigurationCreateSchema.partial();
+export type FeeConfigurationUpdate = z.infer<
+  typeof FeeConfigurationUpdateSchema
+>;
 
 export const FeeAssignmentSchema = z.object({
   assignmentId: z.string().describe("ID unique de l'attribution (UUID)"),
@@ -136,12 +153,16 @@ export const FeeAssignmentSchema = z.object({
 });
 
 export type FeeAssignment = z.infer<typeof FeeAssignmentSchema>;
+
 export const FeeAssignmentCreateSchema = FeeAssignmentSchema.omit({
   assignmentId: true,
   createdAt: true,
   updatedAt: true,
 });
+export type FeeAssignmentCreate = z.infer<typeof FeeAssignmentCreateSchema>;
+
 export const FeeAssignmentUpdateSchema = FeeAssignmentCreateSchema.partial();
+export type FeeAssignmentUpdate = z.infer<typeof FeeAssignmentUpdateSchema>;
 
 export const StudentPaymentSchema = z.object({
   paymentId: z.string().describe("ID unique du paiement (UUID)"),
@@ -172,12 +193,16 @@ export const StudentPaymentSchema = z.object({
 });
 
 export type StudentPayment = z.infer<typeof StudentPaymentSchema>;
+
 export const StudentPaymentCreateSchema = StudentPaymentSchema.omit({
   paymentId: true,
   createdAt: true,
   updatedAt: true,
 });
+export type StudentPaymentCreate = z.infer<typeof StudentPaymentCreateSchema>;
+
 export const StudentPaymentUpdateSchema = StudentPaymentCreateSchema.partial();
+export type StudentPaymentUpdate = z.infer<typeof StudentPaymentUpdateSchema>;
 
 export const DailyExchangeRateSchema = z.object({
   rateId: z.string().describe("ID unique du taux (UUID)"),
@@ -194,10 +219,18 @@ export const DailyExchangeRateSchema = z.object({
 });
 
 export type DailyExchangeRate = z.infer<typeof DailyExchangeRateSchema>;
+
 export const DailyExchangeRateCreateSchema = DailyExchangeRateSchema.omit({
   rateId: true,
   createdAt: true,
   updatedAt: true,
 });
+export type DailyExchangeRateCreate = z.infer<
+  typeof DailyExchangeRateCreateSchema
+>;
+
 export const DailyExchangeRateUpdateSchema =
   DailyExchangeRateCreateSchema.partial();
+export type DailyExchangeRateUpdate = z.infer<
+  typeof DailyExchangeRateUpdateSchema
+>;
