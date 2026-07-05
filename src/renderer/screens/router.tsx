@@ -15,6 +15,8 @@ import {
   School,
   CircleDollarSign,
   History,
+  Calendar,
+  GraduationCap,
 } from "lucide-react";
 import { HashRouter as Router, Route, Routes } from "react-router";
 
@@ -64,11 +66,27 @@ import type {
   NavSection,
   NavItem,
 } from "@/renderer/components/app-sidebar/app-sidebar";
+import { DashBoardPage } from "./dashboard";
 
 export const SCHOOL_SUB_MENUS: NavItem[] = [
-  { name: "Locaux", url: APP_ROUTES.LOCALS, icon: Building },
-  { name: "Filières & Options", url: APP_ROUTES.OPTIONS, icon: BookOpen },
-  { name: "Parents & Tuteurs", url: APP_ROUTES.CLASSROOMS.ROOT, icon: Users },
+  {
+    name: "Vue d'ensemble",
+    url: APP_ROUTES.SCHOOLS.ROOT,
+    icon: LayoutDashboard,
+  },
+  { name: "Locaux", url: APP_ROUTES.SCHOOLS.LOCALS, icon: Building },
+  {
+    name: "Filières & Options",
+    url: APP_ROUTES.SCHOOLS.OPTIONS,
+    icon: BookOpen,
+  },
+  { name: "Parents & Tuteurs", url: APP_ROUTES.SCHOOLS.TUTORS, icon: Users },
+  {
+    name: "Années scolaires",
+    url: APP_ROUTES.SCHOOLS.SCHOOL_YEARS,
+    icon: Calendar,
+  },
+  { name: "Écoles", url: APP_ROUTES.SCHOOLS.LIST, icon: GraduationCap },
 ];
 
 export const FINANCES_SUB_MENUS: NavItem[] = [
@@ -110,7 +128,7 @@ export const NAVIGATION_MENUS: NavSection[] = [
         url: APP_ROUTES.CLASSROOMS.ROOT,
         icon: Presentation,
       },
-      { name: "Écoles", url: APP_ROUTES.CLASSROOMS.ROOT, icon: School },
+      { name: "Écoles", url: APP_ROUTES.SCHOOLS.ROOT, icon: School },
     ],
   },
 ] as const;
@@ -133,10 +151,24 @@ export default function RouterProvider(): JSX.Element {
           <Route index element={<HomePage />} />
           <Route path={ROUTES.ENROLLMENTS} element={<EnrollmentPage />} />
 
-          <Route path={ROUTES.OPTIONS} element={<OptionPage />} />
-          <Route path={ROUTES.SCHOOLS} element={<SchoolsPage />} />
-          <Route path={ROUTES.STUDY_YEARS} element={<StudyYearsPage />} />
-          <Route path={ROUTES.LOCALS} element={<LocalRoomPage />} />
+          {/* ========== SCHOOL ========== */}
+          <Route
+            path={ROUTES.SCHOOLS.ROOT}
+            element={<Layout.SubNavigationLayout items={SCHOOL_SUB_MENUS} />}
+          >
+            <Route index element={<DashBoardPage />} />
+            <Route path={ROUTES.SCHOOLS.LIST} element={<SchoolsPage />} />
+            <Route path={ROUTES.SCHOOLS.OPTIONS} element={<OptionPage />} />
+            <Route
+              path={ROUTES.SCHOOLS.STUDY_YEARS}
+              element={<StudyYearsPage />}
+            />
+            <Route path={ROUTES.SCHOOLS.LOCALS} element={<LocalRoomPage />} />
+            <Route
+              path={ROUTES.SCHOOLS.TUTORS}
+              element={<WorkInProgressPage />}
+            />
+          </Route>
 
           {/* ========== FINANCES ========== */}
           <Route

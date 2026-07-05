@@ -1,11 +1,15 @@
 export const ROUTES = {
   HOME: "/",
   ENROLLMENTS: "/inscriptions",
-  OPTIONS: "/options",
-  LOCALS: "/locals",
-  STUDY_YEARS: "/school-years",
-  SCHOOLS: "/schools",
-
+  SCHOOLS: {
+    ROOT: "/schools",
+    OPTIONS: "options",
+    LOCALS: "locals",
+    STUDY_YEARS: "school-years",
+    LIST: "schools",
+    TUTORS: "tutors",
+    TEACHERS: "teachers",
+  },
   SEATING: {
     ROOT: "/seating",
     SESSION: ":sessionId",
@@ -66,10 +70,14 @@ export const ROUTES = {
 export const APP_ROUTES = {
   HOME: ROUTES.HOME,
   ENROLLMENTS: ROUTES.ENROLLMENTS,
-  OPTIONS: ROUTES.OPTIONS,
-  LOCALS: ROUTES.LOCALS,
-  SCHOOL_YEARS: ROUTES.STUDY_YEARS,
-  SCHOOLS: ROUTES.SCHOOLS,
+  SCHOOLS: {
+    LIST: `${ROUTES.SCHOOLS.ROOT}/${ROUTES.SCHOOLS.LIST}`,
+    ROOT: ROUTES.SCHOOLS.ROOT,
+    OPTIONS: `${ROUTES.SCHOOLS.ROOT}/${ROUTES.SCHOOLS.OPTIONS}`,
+    LOCALS: `${ROUTES.SCHOOLS.ROOT}/${ROUTES.SCHOOLS.LOCALS}`,
+    SCHOOL_YEARS: `${ROUTES.SCHOOLS.ROOT}/${ROUTES.SCHOOLS.STUDY_YEARS}`,
+    TUTORS: `${ROUTES.SCHOOLS.ROOT}/${ROUTES.SCHOOLS.TUTORS}`,
+  },
 
   SEATING: {
     ROOT: ROUTES.SEATING.ROOT,
