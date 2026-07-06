@@ -1,11 +1,11 @@
 import { useMutation, useSuspenseQuery } from "../base";
 import { feeType as feeTypeApi } from "@/renderer/libs/apis";
 import type {
-  FeeType,
   FeeTypeCreate,
   FeeTypeFilter,
   FeeTypeUpdate,
 } from "@/packages/@core/data-access/schema-validations";
+import type { FeeType } from "@/packages/@core/data-access/db/schemas";
 import type { TQueryUpdate } from "../type";
 import type { SelectOption } from "@/packages/@core/data-access/db/queries";
 import type { UseSuspenseQueryOptions } from "@tanstack/react-query";

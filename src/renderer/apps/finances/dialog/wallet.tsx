@@ -48,7 +48,7 @@ export const WalletDialogCreateForm: React.FC<
         formId={formId}
         onSubmit={onSubmit}
         currencyOptions={currencyOptions}
-        defaultValues={defaultValues}
+        defaultValues={{ ...defaultValues, schoolId }}
       />
     </DialogForm>
   );

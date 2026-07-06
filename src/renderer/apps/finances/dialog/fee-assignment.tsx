@@ -4,10 +4,9 @@ import {
   FeeBulkAssignmentForm,
   type FeeBulkAssignmentData,
 } from "@/renderer/apps/finances/forms/fee-bulk-assignment-form";
-import {
-  useCreateBulkFeeAssignment,
-  type BulkAssignmentConfig,
-} from "@/renderer/libs/queries/finances";
+import { useCreateBulkFeeAssignmentForm } from "@/renderer/libs/queries/finances";
+
+type BulkAssignmentConfig = any;
 
 export type FeeBulkAssignmentDialogProps = React.PropsWithChildren<
   BulkAssignmentConfig & {
@@ -26,7 +25,7 @@ export const FeeBulkAssignmentDialog: React.FC<
     optionSearch,
     isSubmitting,
     onSubmit,
-  } = useCreateBulkFeeAssignment(config);
+  } = useCreateBulkFeeAssignmentForm(config);
 
   return (
     <DialogForm

@@ -19,6 +19,9 @@ export type FeeAssignmentApi = Readonly<{
     assignmentId: string,
     data: FeeAssignmentUpdate,
   ): Promise<FeeAssignment>;
+  bulkCreateFeeAssignment(
+    data: FeeAssignmentCreate[],
+  ): Promise<FeeAssignment[]>;
   deleteFeeAssignment(assignmentId: string): Promise<void>;
 }>;
 
@@ -39,6 +42,9 @@ export function createFeeAssignmentApis(
     },
     createFeeAssignment(data) {
       return ipcClient.post(FeeAssignmentRoutes.ALL, data);
+    },
+    bulkCreateFeeAssignment(data) {
+      return ipcClient.post(FeeAssignmentRoutes.BULK, data);
     },
     updateFeeAssignment(assignmentId, data) {
       return ipcClient.put(FeeAssignmentRoutes.DETAIL, data, {

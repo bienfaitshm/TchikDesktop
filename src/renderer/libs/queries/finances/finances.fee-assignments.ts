@@ -13,6 +13,7 @@ import type {
   UseSuspenseQueryOptions,
 } from "@tanstack/react-query";
 
+type FeeBulkAssignmentData = any;
 export const feeAssignmentKeys = {
   all: ["fee-assignments"] as const,
   lists: (params?: FeeAssignmentFilter) =>
@@ -23,10 +24,15 @@ export const feeAssignmentKeys = {
   detail: (id: string) => [...feeAssignmentKeys.details(), id] as const,
   mutations: {
     create: () => [...feeAssignmentKeys.all, "create"] as const,
+    bulkCreate: () => [...feeAssignmentKeys.all, "bulk-create"] as const, // <-- NOUVELLE CLÉ COMPTABLE
     update: () => [...feeAssignmentKeys.all, "update"] as const,
     delete: () => [...feeAssignmentKeys.all, "delete"] as const,
   },
 } as const;
+
+/* =========================================================================
+   QUERIES (SUSPENSE)
+   ========================================================================= */
 
 export function useGetFeeAssignments(
   params?: FeeAssignmentFilter,
@@ -61,6 +67,10 @@ export function useGetFeeAssignmentById(
   });
 }
 
+/* =========================================================================
+   MUTATIONS
+   ========================================================================= */
+
 export function useCreateFeeAssignment(
   options?: Partial<
     UseMutationOptions<FeeAssignment, Error, FeeAssignmentCreate>
@@ -69,6 +79,19 @@ export function useCreateFeeAssignment(
   return useMutation({
     mutationKey: feeAssignmentKeys.mutations.create(),
     mutationFn: (data) => feeAssignmentApi.createFeeAssignment(data),
+    ...options,
+  });
+}
+
+/**
+ * Assigne collectivement des lignes de frais à un lot ciblé d'élèves
+ */
+export function useBulkCreateFeeAssignment(
+  options?: Partial<UseMutationOptions<void, Error, FeeBulkAssignmentData>>,
+) {
+  return useMutation({
+    mutationKey: feeAssignmentKeys.mutations.bulkCreate(),
+    mutationFn: (data) => feeAssignmentApi.bulkCreateFeeAssignment(data),
     ...options,
   });
 }

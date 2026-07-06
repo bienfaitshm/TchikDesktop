@@ -170,6 +170,7 @@ export const FeeConfigurationRoutes = {
  */
 export const FeeAssignmentRoutes = {
   ALL: "fee-assignments",
+  BULK: "fee-assignments/bulk",
   SEARCH: "fee-assignments/search",
   DETAIL: "fee-assignments/:assignmentId",
 } as const;

@@ -59,7 +59,7 @@ export const WalletForm: React.FC<
               <FormControl>
                 <Input
                   {...field}
-                  placeholder="Ex: Caisse Principale, Compte Rawbank USD"
+                  placeholder="Ex: Caisse Principale, Caisse minerval CDF"
                 />
               </FormControl>
               <FormDescription>

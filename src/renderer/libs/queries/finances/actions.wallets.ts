@@ -9,10 +9,11 @@ import type {
 } from "@/packages/@core/data-access/schema-validations";
 import type { BaseMutationConfig, QueryUpdatePayload } from "../base";
 import { useFormBase } from "../base";
+import { CURRENCY_OPTIONS } from "@/packages/@core/data-access/db/options";
 
 export function useCreateWalletForm(config?: BaseMutationConfig<Wallet>) {
   const mutation = useCreateWallet();
-  return useFormBaseNotify<WalletCreate, WalletCreate>({
+  const base = useFormBaseNotify<WalletCreate, WalletCreate>({
     mutation,
     config,
     getNotifications: () => ({
@@ -24,6 +25,7 @@ export function useCreateWalletForm(config?: BaseMutationConfig<Wallet>) {
     }),
     adaptData: (data) => data,
   });
+  return { ...base, currencyOptions: CURRENCY_OPTIONS };
 }
 
 export function useUpdateWalletForm(config?: BaseMutationConfig<Wallet>) {
