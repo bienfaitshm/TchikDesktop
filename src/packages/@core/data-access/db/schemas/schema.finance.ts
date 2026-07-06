@@ -102,7 +102,9 @@ export const feeConfigurations = sqliteTable(
     feeConfigId: primaryKeyId("fee_config_id"),
     name: text("name").notNull(),
     totalAmount: integer("total_amount").notNull(),
-    currency: text("currency").notNull().default("USD"),
+    currency: enumColumn("currency", CURRENCY_ENUM)
+      .notNull()
+      .default(CURRENCY_ENUM.CDF),
     section: enumColumn("section", SECTION_ENUM),
     optionId: foreignKeyId("option_id", {
       type: "NULL",
@@ -167,9 +169,10 @@ export const feeAssignments = sqliteTable(
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("enrollment_fee_config_unique_idx").on(
+    uniqueIndex("enrollment_fee_config_schedule_unique_idx").on(
       table.enrollmentId,
       table.feeConfigId,
+      table.scheduleId,
     ),
   ],
 );

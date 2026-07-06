@@ -41,12 +41,16 @@ export const feeTypesRelations = relations(feeTypes, ({ one, many }) => ({
   schedules: many(feeSchedules),
 }));
 
-export const feeSchedulesRelations = relations(feeSchedules, ({ one }) => ({
-  feeType: one(feeTypes, {
-    fields: [feeSchedules.feeTypeId],
-    references: [feeTypes.feeTypeId],
+export const feeSchedulesRelations = relations(
+  feeSchedules,
+  ({ one, many }) => ({
+    feeType: one(feeTypes, {
+      fields: [feeSchedules.feeTypeId],
+      references: [feeTypes.feeTypeId],
+    }),
+    assignments: many(feeAssignments),
   }),
-}));
+);
 
 export const feeConfigurationsRelations = relations(
   feeConfigurations,
