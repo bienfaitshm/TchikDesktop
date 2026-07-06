@@ -32,7 +32,6 @@ const DEFAULT_VALUES: Partial<ClassroomCreate> = {
   shortIdentifier: "",
   schoolId: "",
   section: SECTION_ENUM.SECONDARY,
-  yearId: "",
 };
 
 type ClassroomProps = {

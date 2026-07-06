@@ -1,109 +1,128 @@
-import { useMutation, useSuspenseQuery } from "../base";
-import { feeSchedule as scheduleApi } from "@/renderer/libs/apis";
+import { useCallback, useState } from "react";
+import {
+  useCreateFeeSchedule,
+  useUpdateFeeSchedule,
+  useDeleteFeeSchedule,
+  useGetFeeSchedulesAsOptions,
+} from "./finances";
+import { useFormBaseNotify, useFormBase } from "../base";
+import { withNotifications } from "@/renderer/libs/notifications";
 import type {
   FeeSchedule,
   FeeScheduleCreate,
-  FeeScheduleFilter,
   FeeScheduleUpdate,
 } from "@/packages/@core/data-access/schema-validations";
-import type { TQueryUpdate } from "../type";
-import type { SelectOption } from "@/packages/@core/data-access/db/queries";
-import type {
-  UseMutationOptions,
-  UseSuspenseQueryOptions,
-} from "@tanstack/react-query";
+import type { BaseMutationConfig, QueryUpdatePayload } from "../base";
 
-export const feeScheduleKeys = {
-  all: ["fee-schedules"] as const,
-  lists: (params?: FeeScheduleFilter) =>
-    [...feeScheduleKeys.all, "list", { params }] as const,
-  options: (params?: FeeScheduleFilter) =>
-    [...feeScheduleKeys.all, "options", { params }] as const,
-  byFeeType: (feeTypeId: string) =>
-    [...feeScheduleKeys.all, "by-fee-type", feeTypeId] as const,
-  details: () => [...feeScheduleKeys.all, "detail"] as const,
-  detail: (id: string) => [...feeScheduleKeys.details(), id] as const,
-  mutations: {
-    create: () => [...feeScheduleKeys.all, "create"] as const,
-    update: () => [...feeScheduleKeys.all, "update"] as const,
-    delete: () => [...feeScheduleKeys.all, "delete"] as const,
-  },
-} as const;
-
-export function useGetFeeSchedules(
-  params?: FeeScheduleFilter,
-  options?: Partial<UseSuspenseQueryOptions<FeeSchedule[]>>,
+/* ==========================================================================
+   1. HOOK CRÉATION ÉCHÉANCE (FEE SCHEDULE)
+   ========================================================================== */
+export function useCreateFeeScheduleForm(
+  config?: BaseMutationConfig<FeeSchedule>,
 ) {
-  return useSuspenseQuery({
-    queryKey: feeScheduleKeys.lists(params),
-    queryFn: () => scheduleApi.fetchFeeSchedules(params),
-    ...options,
+  const mutation = useCreateFeeSchedule();
+
+  // État local pour la recherche asynchrone du Type de Frais parent via le ComboboxSearch
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // On récupère les options filtrées (tu as aussi la possibilité d'utiliser ton hook dédié aux feeTypes ici)
+  const { data: options = [], isLoading: isSearching } =
+    useGetFeeSchedulesAsOptions();
+
+  const formBase = useFormBaseNotify<FeeScheduleCreate, FeeScheduleCreate>({
+    mutation,
+    config,
+    getNotifications: () => ({
+      success: {
+        title: "Échéance ajoutée",
+        description:
+          "La nouvelle tranche d'échéancier a été enregistrée avec succès.",
+      },
+      error: { title: "Erreur lors de la création de l'échéance." },
+    }),
+    adaptData: (data) => data,
   });
+
+  return {
+    ...formBase,
+    feeTypeSearch: {
+      searchQuery,
+      setSearchQuery,
+      isSearching,
+      options: options.map((opt) => ({ label: opt.label, value: opt.value })),
+    },
+  };
 }
 
-export function useGetFeeSchedulesAsOptions(
-  params?: FeeScheduleFilter,
-  options?: Partial<UseSuspenseQueryOptions<(SelectOption & FeeSchedule)[]>>,
+/* ==========================================================================
+   2. HOOK MODIFICATION ÉCHÉANCE (FEE SCHEDULE)
+   ========================================================================== */
+export function useUpdateFeeScheduleForm(
+  config?: BaseMutationConfig<FeeSchedule>,
 ) {
-  return useSuspenseQuery({
-    queryKey: feeScheduleKeys.options(params),
-    queryFn: () => scheduleApi.fetchFeeSchedulesAsOptions(params),
-    ...options,
+  const mutation = useUpdateFeeSchedule();
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data: options = [], isLoading: isSearching } =
+    useGetFeeSchedulesAsOptions();
+
+  const formBase = useFormBaseNotify<
+    QueryUpdatePayload<FeeScheduleUpdate>,
+    { data: FeeScheduleUpdate; id: string }
+  >({
+    mutation,
+    config,
+    getNotifications: () => ({
+      success: {
+        title: "Échéance mise à jour",
+        description: "Les détails de la tranche de paiement ont été modifiés.",
+      },
+      error: { title: "Échec de la mise à jour de l'échéance." },
+    }),
+    adaptData: ({ data, id }) => ({ data, id }),
   });
+
+  return {
+    ...formBase,
+    feeTypeSearch: {
+      searchQuery,
+      setSearchQuery,
+      isSearching,
+      options: options.map((opt) => ({ label: opt.label, value: opt.value })),
+    },
+  };
 }
 
-export function useGetFeeScheduleById(
-  scheduleId: string,
-  options?: Partial<UseSuspenseQueryOptions<FeeSchedule>>,
-) {
-  return useSuspenseQuery({
-    queryKey: feeScheduleKeys.detail(scheduleId),
-    queryFn: () => scheduleApi.fetchFeeScheduleById(scheduleId),
-    ...options,
-  });
-}
+/* ==========================================================================
+   3. HOOK SUPPRESSION ÉCHÉANCE (FEE SCHEDULE)
+   ========================================================================== */
+export function useDeleteFeeScheduleForm(config?: BaseMutationConfig<void>) {
+  const { notifyAndInvalidate } = useFormBase(config);
+  const mutation = useDeleteFeeSchedule();
 
-export function useGetFeeSchedulesByFeeType(
-  feeTypeId: string,
-  options?: Partial<UseSuspenseQueryOptions<FeeSchedule[]>>,
-) {
-  return useSuspenseQuery({
-    queryKey: feeScheduleKeys.byFeeType(feeTypeId),
-    queryFn: () => scheduleApi.fetchFeeSchedulesByFeeType(feeTypeId),
-    enabled: !!feeTypeId,
-    ...options,
-  });
-}
+  const deleteFeeSchedule = useCallback(
+    (scheduleId: string, installmentName?: string) => {
+      mutation.mutate(
+        scheduleId,
+        withNotifications({
+          notifications: {
+            success: {
+              title: "Échéance supprimée",
+              description: installmentName
+                ? `La tranche de versement "${installmentName}" a été retirée.`
+                : "La tranche d'échéance a été retirée.",
+            },
+          },
+          onSuccess: () => {
+            notifyAndInvalidate(undefined as void);
+          },
+        }),
+      );
+    },
+    [mutation, notifyAndInvalidate],
+  );
 
-export function useCreateFeeSchedule(
-  options?: Partial<UseMutationOptions<FeeSchedule, Error, FeeScheduleCreate>>,
-) {
-  return useMutation({
-    mutationKey: feeScheduleKeys.mutations.create(),
-    mutationFn: (data) => scheduleApi.createFeeSchedule(data),
-    ...options,
-  });
-}
-
-export function useUpdateFeeSchedule(
-  options?: Partial<
-    UseMutationOptions<FeeSchedule, Error, TQueryUpdate<FeeScheduleUpdate>>
-  >,
-) {
-  return useMutation({
-    mutationKey: feeScheduleKeys.mutations.update(),
-    mutationFn: ({ data, id }) => scheduleApi.updateFeeSchedule(id, data),
-    ...options,
-  });
-}
-
-export function useDeleteFeeSchedule(
-  options?: Partial<UseMutationOptions<void, Error, string>>,
-) {
-  return useMutation({
-    mutationKey: feeScheduleKeys.mutations.delete(),
-    mutationFn: (scheduleId: string) =>
-      scheduleApi.deleteFeeSchedule(scheduleId),
-    ...options,
-  });
+  return {
+    deleteFeeSchedule,
+    isDeleting: mutation.isPending,
+  };
 }
