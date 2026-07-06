@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   wallets,
   feeTypes,
+  feeSchedules,
   feeConfigurations,
   feeAssignments,
   studentPayments,
@@ -37,6 +38,14 @@ export const feeTypesRelations = relations(feeTypes, ({ one, many }) => ({
     references: [schools.schoolId],
   }),
   feeConfigurations: many(feeConfigurations),
+  schedules: many(feeSchedules),
+}));
+
+export const feeSchedulesRelations = relations(feeSchedules, ({ one }) => ({
+  feeType: one(feeTypes, {
+    fields: [feeSchedules.feeTypeId],
+    references: [feeTypes.feeTypeId],
+  }),
 }));
 
 export const feeConfigurationsRelations = relations(
@@ -76,6 +85,10 @@ export const feeAssignmentsRelations = relations(
     feeConfig: one(feeConfigurations, {
       fields: [feeAssignments.feeConfigId],
       references: [feeConfigurations.feeConfigId],
+    }),
+    schedule: one(feeSchedules, {
+      fields: [feeAssignments.scheduleId],
+      references: [feeSchedules.scheduleId],
     }),
     payments: many(studentPayments),
   }),

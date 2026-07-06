@@ -18,6 +18,7 @@ import {
   FEE_SCHEDULES_ENUM,
   CURRENCY_ENUM,
   PAYMENT_METHOD_ENUM,
+  SECTION_ENUM,
 } from "../options";
 import {
   primaryKeyId,
@@ -75,8 +76,26 @@ export type FeeType = InferSelectModel<TableFeeType>;
 export type InsertFeeType = InferInsertModel<TableFeeType>;
 export type UpdateFeeType = AsUpdatePayload<InsertFeeType, "feeTypeId">;
 
-// 3. Configuration des frais (montant, devise, cible)
-//    Une configuration cible OBLIGATOIREMENT soit une option, soit une classe (pas les deux).
+// 3. Échéancier de Paiement (Le découpage temporel par mois / par volée)
+export const feeSchedules = sqliteTable("fee_schedules", {
+  scheduleId: primaryKeyId("schedule_id"),
+  installmentName: text("installment_name").notNull(),
+  feeTypeId: foreignKeyId("fee_type_id", {
+    ref: () => feeTypes.feeTypeId,
+    actions: { onDelete: "cascade" },
+  }),
+  ...timestamps,
+});
+
+export type TableFeeSchedule = typeof feeSchedules;
+export type FeeSchedule = InferSelectModel<TableFeeSchedule>;
+export type InsertFeeSchedule = InferInsertModel<TableFeeSchedule>;
+export type UpdateFeeSchedule = AsUpdatePayload<
+  InsertFeeSchedule,
+  "scheduleId"
+>;
+
+// 4. Configuration des frais (montant, devise, cible)
 export const feeConfigurations = sqliteTable(
   "fee_configurations",
   {
@@ -84,6 +103,7 @@ export const feeConfigurations = sqliteTable(
     name: text("name").notNull(),
     totalAmount: integer("total_amount").notNull(),
     currency: text("currency").notNull().default("USD"),
+    section: enumColumn("section", SECTION_ENUM),
     optionId: foreignKeyId("option_id", {
       type: "NULL",
       ref: () => options.optionId,
@@ -94,7 +114,6 @@ export const feeConfigurations = sqliteTable(
       ref: () => classrooms.classId,
       actions: { onDelete: "cascade" },
     }),
-
     feeTypeId: foreignKeyId("fee_type_id", {
       ref: () => feeTypes.feeTypeId,
       actions: { onDelete: "cascade" },
@@ -104,8 +123,14 @@ export const feeConfigurations = sqliteTable(
   },
   (table) => [
     check(
-      "option_classroom_xor_check",
-      sql`(${table.optionId} IS NULL AND ${table.classroomId} IS NOT NULL) OR (${table.optionId} IS NOT NULL AND ${table.classroomId} IS NULL)`,
+      "exactly_one_target_check",
+      sql`
+        (${table.section} IS NOT NULL AND ${table.optionId} IS NULL AND ${table.classroomId} IS NULL)
+        OR
+        (${table.section} IS NULL AND ${table.optionId} IS NOT NULL AND ${table.classroomId} IS NULL)
+        OR
+        (${table.section} IS NULL AND ${table.optionId} IS NULL AND ${table.classroomId} IS NOT NULL)
+      `,
     ),
   ],
 );
@@ -129,6 +154,10 @@ export const feeAssignments = sqliteTable(
     }),
     feeConfigId: foreignKeyId("fee_config_id", {
       ref: () => feeConfigurations.feeConfigId,
+      actions: { onDelete: "cascade" },
+    }),
+    scheduleId: foreignKeyId("schedule_id", {
+      ref: () => feeSchedules.scheduleId,
       actions: { onDelete: "cascade" },
     }),
     amountPaid: integer("amount_paid").notNull().default(0),
@@ -164,7 +193,7 @@ export const studentPayments = sqliteTable(
     }),
 
     // Montant et devise remis physiquement
-    amountReceived: integer("amount_received").notNull(), // en centimes
+    amountReceived: integer("amount_received").notNull(),
     currencyReceived: enumColumn("currency_received", CURRENCY_ENUM)
       .notNull()
       .default(CURRENCY_ENUM.CDF),
@@ -175,7 +204,7 @@ export const studentPayments = sqliteTable(
     amountConverted: integer("amount_converted").notNull(),
 
     paymentMethod: enumColumn("payment_method", PAYMENT_METHOD_ENUM).notNull(),
-    transactionReference: text("transaction_reference"), // référence externe (M-Pesa, bordereau)
+    transactionReference: text("transaction_reference"),
 
     ...timestamps,
   },
