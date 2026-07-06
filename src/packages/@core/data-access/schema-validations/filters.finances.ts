@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   WalletSchema,
   FeeTypeSchema,
+  FeeScheduleSchema,
   FeeConfigurationBase,
   FeeAssignmentSchema,
   StudentPaymentSchema,
@@ -11,6 +12,7 @@ import { withQueryOptions } from "./model";
 
 export const WalletFilterSchema = withQueryOptions(WalletSchema);
 export const FeeTypeFilterSchema = withQueryOptions(FeeTypeSchema);
+export const FeeScheduleFilterSchema = withQueryOptions(FeeScheduleSchema);
 export const FeeConfigurationFilterSchema =
   withQueryOptions(FeeConfigurationBase);
 export const FeeAssignmentFilterSchema = withQueryOptions(FeeAssignmentSchema);
@@ -22,6 +24,7 @@ export const DailyExchangeRateFilterSchema = withQueryOptions(
 
 export type WalletFilter = z.infer<typeof WalletFilterSchema>;
 export type FeeTypeFilter = z.infer<typeof FeeTypeFilterSchema>;
+export type FeeScheduleFilter = z.infer<typeof FeeScheduleFilterSchema>;
 export type FeeConfigurationFilter = z.infer<
   typeof FeeConfigurationFilterSchema
 >;

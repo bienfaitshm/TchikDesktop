@@ -14,6 +14,7 @@ const API_REGISTRY = {
   seating: apis.createSeatingApis,
   wallet: apis.createWalletApis,
   feeType: apis.createFeeTypeApis,
+  feeSchedule: apis.createFeeScheduleApis,
   feeConfiguration: apis.createFeeConfigurationApis,
   feeAssignment: apis.createFeeAssignmentApis,
   studentPayment: apis.createStudentPaymentApis,
@@ -84,9 +85,9 @@ export const {
   appInfos,
   users,
   seating,
-  // Nouvelles APIs financières
   wallet,
   feeType,
+  feeSchedule,
   feeConfiguration,
   feeAssignment,
   studentPayment,

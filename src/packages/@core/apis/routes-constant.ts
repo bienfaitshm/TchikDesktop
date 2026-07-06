@@ -65,7 +65,7 @@ export const EnrollmentRoutes = {
 export const DocumentExportRoutes = {
   INFOS: "documents/infos",
   EXPORTS: "documents/exports",
-};
+} as const; // <-- Strict typage ajouté
 
 /**
  * Routes IPC pour les STATISTIQUES et ANALYTICS.
@@ -86,7 +86,7 @@ export const StatsRoutes = {
 
 export const AppInfosRoutes = {
   SYS_INFOS: "app-infos/sys-infos",
-};
+} as const; // <-- Strict typage ajouté
 
 /**
  * Routes IPC pour la gestion des LOCAUX (Salles physiques).
@@ -124,6 +124,10 @@ export const SeatingAssignmentRoutes = {
   CLEAR_ROOM: "seating/assignments/clear",
 } as const;
 
+/* =========================================================================
+   FINANCE MODULE ROUTES
+   ========================================================================= */
+
 /**
  * Routes IPC pour la gestion des PORTEFEUILLES.
  */
@@ -140,6 +144,16 @@ export const FeeTypeRoutes = {
   ALL: "fee-types",
   SEARCH: "fee-types/search",
   DETAIL: "fee-types/:feeTypeId",
+} as const;
+
+/**
+ * Routes IPC pour la gestion des ÉCHÉANCIERS
+ */
+export const FeeScheduleRoutes = {
+  ALL: "fee-schedules",
+  SEARCH: "fee-schedules/search",
+  DETAIL: "fee-schedules/:scheduleId",
+  BY_FEE_TYPE: "fee-schedules/fee-type/:feeTypeId",
 } as const;
 
 /**
@@ -196,6 +210,7 @@ export const IpcRoutes = {
   SEATING_ASSIGNMENTS: SeatingAssignmentRoutes,
   WALLETS: WalletRoutes,
   FEE_TYPES: FeeTypeRoutes,
+  FEE_SCHEDULES: FeeScheduleRoutes, // <-- AJOUTÉ AU REGISTRE CENTRAL
   FEE_CONFIGURATIONS: FeeConfigurationRoutes,
   FEE_ASSIGNMENTS: FeeAssignmentRoutes,
   STUDENT_PAYMENTS: StudentPaymentRoutes,

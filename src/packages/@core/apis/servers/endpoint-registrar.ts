@@ -1,6 +1,5 @@
-import { IpcServer } from "@/packages/electron-ipc-rest";
+import { IpcServer, AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { getLogger } from "@/packages/logger";
-import { AbstractEndpoint } from "./abstract";
 
 /**
  * @file endpoint-registrar.ts

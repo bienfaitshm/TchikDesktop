@@ -16,6 +16,7 @@ import * as exportDocument from "./handlers/document-exports";
 import * as seatings from "./handlers/seating";
 import * as feeAssignments from "./handlers/fee-assignments";
 import * as feeTypes from "./handlers/fee-types";
+import * as feeSchedules from "./handlers/fee-schedules"; // <-- AJOUT DU MODULE
 import * as feeConfigurations from "./handlers/fee-configurations";
 import * as dailyExchangeRates from "./handlers/daily-exchange-rates";
 import * as wallets from "./handlers/wallets";
@@ -127,6 +128,14 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   feeTypes.GetFeeType,
   feeTypes.UpdateFeeType,
   feeTypes.DeleteFeeType,
+
+  // --- FINANCE : Fee Schedules ---
+  feeSchedules.GetFeeSchedules,
+  feeSchedules.PostFeeSchedule,
+  feeSchedules.GetFeeSchedule,
+  feeSchedules.UpdateFeeSchedule,
+  feeSchedules.DeleteFeeSchedule,
+  feeSchedules.GetFeeSchedulesByFeeType,
 
   // --- FINANCE : Fee Configurations ---
   feeConfigurations.GetFeeConfigurations,
