@@ -24,7 +24,7 @@ export const SubNavigationLayout = ({
     <div className="h-[calc(100vh-64px)] flex-1 overflow-hidden bg-background">
       <SidebarContainer
         sidebarProps={{
-          defaultSize: "15%",
+          defaultSize: "17%",
         }}
         sidebar={
           <div className="flex h-full flex-col py-6">
@@ -66,7 +66,7 @@ export const SubNavigationLayout = ({
         }
       >
         {/* Contenu principal injecté via Outlet */}
-        <PageShell maxWidth="xl">
+        <PageShell maxWidth="2xl">
           <Suspense
             fallback={
               <div className="flex justify-center items-center h-full">
