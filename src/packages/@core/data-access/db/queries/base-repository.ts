@@ -134,18 +134,42 @@ export abstract class BaseRepository<
     }
   }
 
+  private async executeInsert(
+    payloads: TTable["$inferInsert"][],
+    tx?: LibSqlClient,
+  ): Promise<TSelect[]> {
+    return this.getClient(tx)
+      .insert(this.table)
+      .values(payloads)
+      .returning() as unknown as Promise<TSelect[]>;
+  }
+
   async create(payload: TInsert, tx?: LibSqlClient): Promise<TSelect> {
     try {
-      const [newRecord] = await this.getClient(tx)
-        .insert(this.table)
-        .values(payload as TTable["$inferInsert"])
-        .returning();
-      return newRecord as TSelect;
+      const [newRecord] = await this.executeInsert(
+        [payload as TTable["$inferInsert"]],
+        tx,
+      );
+      return newRecord;
     } catch (error) {
       this.logError("create", error, { payload });
       throw new RepositoryError(`Creation failed for ${this.entityName}.`, {
         cause: error,
       });
+    }
+  }
+
+  async bulkCreate(payload: TInsert[], tx?: LibSqlClient): Promise<TSelect[]> {
+    try {
+      return await this.executeInsert(payload as TTable["$inferInsert"][], tx);
+    } catch (error) {
+      this.logError("bulkCreate", error, { payload });
+      throw new RepositoryError(
+        `Bulk creation failed for ${this.entityName}.`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
