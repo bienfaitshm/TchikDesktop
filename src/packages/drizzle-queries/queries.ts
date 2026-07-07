@@ -126,6 +126,7 @@ export abstract class BaseRepository<
       );
       return newRecord;
     } catch (error) {
+      console.log("Error...", error);
       const dbError = DatabaseError.from(
         error,
         `Creation failed for ${this.entityName}.`,

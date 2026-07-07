@@ -164,7 +164,7 @@ export type UpdateClassroom = AsUpdatePayload<InsertClassroom, "classId">;
 export const withYearAndSchoolIds = {
   ...withSchoolId,
   yearId: foreignKeyId("year_id", {
-    ref: () => schools.schoolId,
+    ref: () => studyYears.yearId,
     actions: { onDelete: "cascade" },
   }),
 };
