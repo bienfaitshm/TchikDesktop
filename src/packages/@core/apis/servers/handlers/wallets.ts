@@ -1,11 +1,12 @@
 import z from "zod";
-import { walletRepository } from "@/packages/@core/data-access/db/queries";
+import { walletService } from "@/packages/@core/data-access/db/queries";
 import {
   WalletSchema,
   WalletCreateSchema,
   WalletUpdateSchema,
   WalletFilter,
   WalletFilterSchema,
+  createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -18,6 +19,12 @@ import { WalletRoutes } from "../../routes-constant";
 const WalletIdSchema = WalletSchema.pick({ walletId: true });
 type WalletId = z.infer<typeof WalletIdSchema>;
 
+export const searchWalletOptionsSchema =
+  createSearchOptionsSchema(WalletFilterSchema);
+export type SearchWalletOptionsParams = z.infer<
+  typeof searchWalletOptionsSchema
+>;
+
 export class GetWallets extends AbstractEndpoint<any> {
   route = WalletRoutes.ALL;
   method = HttpMethod.GET;
@@ -28,7 +35,21 @@ export class GetWallets extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, WalletFilter>): Promise<unknown> {
-    return walletRepository.findMany(params);
+    return walletService.findMany(params);
+  }
+}
+
+export class GetSearchWallets extends AbstractEndpoint<any> {
+  route = WalletRoutes.SEARCH;
+  method = HttpMethod.GET;
+  schemas: ValidationSchemas = {
+    params: searchWalletOptionsSchema,
+  };
+
+  protected handle({
+    params,
+  }: IpcRequest<any, SearchWalletOptionsParams>): Promise<unknown> {
+    return walletService.fetchOptions(params);
   }
 }
 
@@ -42,7 +63,7 @@ export class PostWallet extends AbstractEndpoint<any> {
   protected handle({
     body,
   }: IpcRequest<z.infer<typeof WalletCreateSchema>, any>): Promise<unknown> {
-    return walletRepository.create(body);
+    return walletService.create(body);
   }
 }
 
@@ -54,7 +75,7 @@ export class GetWallet extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, WalletId>): Promise<unknown> {
-    return walletRepository.findById(params.walletId);
+    return walletService.findById(params.walletId);
   }
 }
 
@@ -73,7 +94,7 @@ export class UpdateWallet extends AbstractEndpoint<any> {
     z.infer<typeof WalletUpdateSchema>,
     WalletId
   >): Promise<unknown> {
-    return walletRepository.update(params.walletId, body);
+    return walletService.update(params.walletId, body);
   }
 }
 
@@ -85,6 +106,6 @@ export class DeleteWallet extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, WalletId>): Promise<unknown> {
-    return walletRepository.delete(params.walletId);
+    return walletService.delete(params.walletId);
   }
 }

@@ -16,7 +16,7 @@ import * as exportDocument from "./handlers/document-exports";
 import * as seatings from "./handlers/seating";
 import * as feeAssignments from "./handlers/fee-assignments";
 import * as feeTypes from "./handlers/fee-types";
-import * as feeSchedules from "./handlers/fee-schedules"; // <-- AJOUT DU MODULE
+import * as feeSchedules from "./handlers/fee-schedules";
 import * as feeConfigurations from "./handlers/fee-configurations";
 import * as dailyExchangeRates from "./handlers/daily-exchange-rates";
 import * as wallets from "./handlers/wallets";
@@ -117,6 +117,7 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
 
   // --- FINANCE : Wallets ---
   wallets.GetWallets,
+  wallets.GetSearchWallets,
   wallets.PostWallet,
   wallets.GetWallet,
   wallets.UpdateWallet,
@@ -124,6 +125,7 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
 
   // --- FINANCE : Fee Types ---
   feeTypes.GetFeeTypes,
+  feeTypes.GetSearchFeeTypes,
   feeTypes.PostFeeType,
   feeTypes.GetFeeType,
   feeTypes.UpdateFeeType,
@@ -131,6 +133,7 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
 
   // --- FINANCE : Fee Schedules ---
   feeSchedules.GetFeeSchedules,
+  feeSchedules.GetSearchFeeSchedules,
   feeSchedules.PostFeeSchedule,
   feeSchedules.GetFeeSchedule,
   feeSchedules.UpdateFeeSchedule,

@@ -6,6 +6,7 @@ import {
   FeeTypeUpdateSchema,
   FeeTypeFilterSchema,
   type FeeTypeFilter,
+  createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -18,6 +19,12 @@ import { FeeTypeRoutes } from "../../routes-constant";
 const FeeTypeIdSchema = FeeTypeSchema.pick({ feeTypeId: true });
 type FeeTypeId = z.infer<typeof FeeTypeIdSchema>;
 
+export const searchFeeTypeOptionsSchema =
+  createSearchOptionsSchema(FeeTypeFilterSchema);
+export type SearchFeeTypeOptionsParams = z.infer<
+  typeof searchFeeTypeOptionsSchema
+>;
+
 export class GetFeeTypes extends AbstractEndpoint<any> {
   route = FeeTypeRoutes.ALL;
   method = HttpMethod.GET;
@@ -28,6 +35,20 @@ export class GetFeeTypes extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, FeeTypeFilter>): Promise<unknown> {
+    return feeTypeRepository.findMany(params);
+  }
+}
+
+export class GetSearchFeeTypes extends AbstractEndpoint<any> {
+  route = FeeTypeRoutes.SEARCH;
+  method = HttpMethod.GET;
+  schemas: ValidationSchemas = {
+    params: searchFeeTypeOptionsSchema,
+  };
+
+  protected handle({
+    params,
+  }: IpcRequest<any, SearchFeeTypeOptionsParams>): Promise<unknown> {
     return feeTypeRepository.findMany(params);
   }
 }

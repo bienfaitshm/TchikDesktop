@@ -1,11 +1,12 @@
 import z from "zod";
-import { feeScheduleRepository } from "@/packages/@core/data-access/db/queries";
+import { feeScheduleService } from "@/packages/@core/data-access/db/queries";
 import {
   FeeScheduleSchema,
   FeeScheduleCreateSchema,
   FeeScheduleUpdateSchema,
   FeeScheduleFilterSchema,
   type FeeScheduleFilter,
+  createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -21,9 +22,13 @@ type FeeScheduleId = z.infer<typeof FeeScheduleIdSchema>;
 const FeeTypeIdFilterSchema = FeeScheduleSchema.pick({ feeTypeId: true });
 type FeeTypeIdFilter = z.infer<typeof FeeTypeIdFilterSchema>;
 
-/* =========================================================================
-   1. GET ALL SCHEDULES (WITH FILTERS)
-   ========================================================================= */
+export const searchFeeScheduleOptionsSchema = createSearchOptionsSchema(
+  FeeScheduleFilterSchema,
+);
+export type SearchWalletOptionsParams = z.infer<
+  typeof searchFeeScheduleOptionsSchema
+>;
+
 export class GetFeeSchedules extends AbstractEndpoint<any> {
   route = FeeScheduleRoutes.ALL;
   method = HttpMethod.GET;
@@ -34,10 +39,23 @@ export class GetFeeSchedules extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, FeeScheduleFilter>): Promise<unknown> {
-    return feeScheduleRepository.findMany(params);
+    return feeScheduleService.findMany(params);
   }
 }
 
+export class GetSearchFeeSchedules extends AbstractEndpoint<any> {
+  route = FeeScheduleRoutes.SEARCH;
+  method = HttpMethod.GET;
+  schemas: ValidationSchemas = {
+    params: searchFeeScheduleOptionsSchema,
+  };
+
+  protected handle({
+    params,
+  }: IpcRequest<any, SearchWalletOptionsParams>): Promise<unknown> {
+    return feeScheduleService.getOptions(params);
+  }
+}
 /* =========================================================================
    2. POST / CREATE SCHEDULE
    ========================================================================= */
@@ -54,7 +72,7 @@ export class PostFeeSchedule extends AbstractEndpoint<any> {
     z.infer<typeof FeeScheduleCreateSchema>,
     any
   >): Promise<unknown> {
-    return feeScheduleRepository.create(body);
+    return feeScheduleService.create(body);
   }
 }
 
@@ -71,7 +89,7 @@ export class GetFeeSchedule extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, FeeScheduleId>): Promise<unknown> {
-    return feeScheduleRepository.findById(params.scheduleId);
+    return feeScheduleService.findById(params.scheduleId);
   }
 }
 
@@ -93,7 +111,7 @@ export class UpdateFeeSchedule extends AbstractEndpoint<any> {
     z.infer<typeof FeeScheduleUpdateSchema>,
     FeeScheduleId
   >): Promise<unknown> {
-    return feeScheduleRepository.update(params.scheduleId, body);
+    return feeScheduleService.update(params.scheduleId, body);
   }
 }
 
@@ -110,7 +128,7 @@ export class DeleteFeeSchedule extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, FeeScheduleId>): Promise<unknown> {
-    return feeScheduleRepository.delete(params.scheduleId);
+    return feeScheduleService.delete(params.scheduleId);
   }
 }
 
@@ -127,6 +145,6 @@ export class GetFeeSchedulesByFeeType extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, FeeTypeIdFilter>): Promise<unknown> {
-    return feeScheduleRepository.findByFeeType(params.feeTypeId);
+    return feeScheduleService.findByFeeType(params.feeTypeId);
   }
 }
