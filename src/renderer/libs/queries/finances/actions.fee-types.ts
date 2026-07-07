@@ -19,6 +19,7 @@ import type { FieldValues } from "react-hook-form";
 
 type SchoolId = Partial<Pick<FeeType, "schoolId">>;
 type HookActionsParams<T = FeeType> = SchoolId & BaseMutationConfig<T>;
+export type FeeTypeFormConfig<T = FeeType> = BaseMutationConfig<T>;
 
 const useBaseFeeType = <
   TFormData extends FieldValues,

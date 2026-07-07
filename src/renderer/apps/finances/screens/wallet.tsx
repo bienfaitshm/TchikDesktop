@@ -71,7 +71,7 @@ export default function WalletGrid({ wallets, schoolId }: WalletGridProps) {
 }
 
 export function SchoolWalletPage() {
-  const { schoolId } = useSchoolContext();
+  const { schoolId, yearId } = useSchoolContext();
   const { data: wallets } = useGetWallets({ where: { schoolId } });
   const { data: feeTypes } = useGetFeeTypes({ where: { schoolId } });
   return (
@@ -92,7 +92,10 @@ export function SchoolWalletPage() {
               <Plus className="w-4 h-4" /> Nouveau Portefeuille
             </Button>
           </WalletDialogCreateForm>
-          <FeeTypeDialogCreateForm>
+          <FeeTypeDialogCreateForm
+            schoolId={schoolId}
+            defaultValues={{ schoolId, yearId }}
+          >
             <Button
               size="sm"
               className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"

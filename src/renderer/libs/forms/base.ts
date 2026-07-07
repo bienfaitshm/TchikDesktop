@@ -19,10 +19,13 @@ export type FormSubmitHandler<TFieldValues extends FieldValues> = (
   helpers: FormSubmitHelpers<TFieldValues>,
 ) => void | Promise<void>;
 
-export interface BaseFormProps<TFieldValues extends FieldValues> {
+export interface BaseFormProps<
+  DefaultValue extends FieldValues,
+  TFormData extends FieldValues = {},
+> {
   formId?: string;
-  defaultValues?: DefaultValues<TFieldValues>;
-  onSubmit: FormSubmitHandler<TFieldValues>;
+  defaultValues?: DefaultValues<DefaultValue>;
+  onSubmit: FormSubmitHandler<TFormData>;
 }
 
 export interface MutationMetadata {

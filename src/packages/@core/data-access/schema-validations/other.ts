@@ -72,10 +72,9 @@ export function createBulkCreateSchema<T extends z.ZodTypeAny>(
     });
 }
 
-/**
- * Type utilitaire pro pour inférer automatiquement la structure du Bulk
- * Exemple d'usage : type ClassroomBulkInput = InferBulkCreate<typeof ClassroomCreateSchema>;
- */
-export type InferBulkCreate<T extends z.ZodTypeAny> = z.infer<
-  ReturnType<typeof createBulkCreateSchema<T>>
->;
+export type InferBulkCreate<T> = {
+  items: {
+    key: string;
+    value: T;
+  }[];
+};

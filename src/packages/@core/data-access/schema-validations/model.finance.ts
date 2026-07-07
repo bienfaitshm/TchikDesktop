@@ -27,7 +27,9 @@ export const WalletSchema = z.object({
     .int()
     .nonnegative()
     .describe("Solde actuel (en centimes)"),
-  schoolId: z.string().describe("École propriétaire"),
+  schoolId: z
+    .string({ required_error: "Selection L'ecole" })
+    .describe("École propriétaire"),
   ...timestampFields,
 });
 
@@ -49,9 +51,12 @@ export type WalletUpdate = z.infer<typeof WalletUpdateSchema>;
 export const FeeTypeSchema = z.object({
   feeTypeId: z.string().describe("ID unique du type de frais (UUID)"),
   name: z.string().min(1).describe("Nom du type de frais"),
-  walletId: z.string().describe("Portefeuille associé"),
-  yearId: z.string().describe("Année académique"),
-  schoolId: z.string().describe("École propriétaire"),
+  walletId: z
+    .string({ required_error: "Selectionnez le portefeuille" })
+    .min(1)
+    .describe("Portefeuille associé"),
+  yearId: z.string().min(1).describe("Année académique"),
+  schoolId: z.string().min(1).describe("École propriétaire"),
   ...timestampFields,
 });
 

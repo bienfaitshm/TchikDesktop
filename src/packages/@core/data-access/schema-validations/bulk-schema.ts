@@ -1,3 +1,4 @@
+import z from "zod";
 import {
   UserCreateSchema,
   OptionCreateSchema,
@@ -16,11 +17,13 @@ import { LocalroomCreateSchema } from "./model.seatings";
 import { type InferBulkCreate, createBulkCreateSchema } from "./other";
 
 export const UserBulkCreateSchema = createBulkCreateSchema(UserCreateSchema);
-export type UserBulkCreate = InferBulkCreate<typeof UserCreateSchema>;
+export type UserBulkCreate = InferBulkCreate<z.infer<typeof UserCreateSchema>>;
 
 export const OptionBulkCreateSchema =
   createBulkCreateSchema(OptionCreateSchema);
-export type OptionBulkCreate = InferBulkCreate<typeof OptionCreateSchema>;
+export type OptionBulkCreate = InferBulkCreate<
+  z.infer<typeof OptionCreateSchema>
+>;
 
 export const ClassroomBulkCreateSchema = createBulkCreateSchema(
   ClassroomCreateSchema,
@@ -40,7 +43,9 @@ export type WalletBulkCreate = InferBulkCreate<typeof WalletCreateSchema>;
 
 export const FeeTypeBulkCreateSchema =
   createBulkCreateSchema(FeeTypeCreateSchema);
-export type FeeTypeBulkCreate = InferBulkCreate<typeof FeeTypeCreateSchema>;
+export type FeeTypeBulkCreate = InferBulkCreate<
+  z.infer<typeof FeeTypeCreateSchema>
+>;
 
 export const FeeScheduleBulkCreateSchema = createBulkCreateSchema(
   FeeScheduleCreateSchema,

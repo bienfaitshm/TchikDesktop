@@ -6,39 +6,59 @@ import {
 } from "@/renderer/components/dialog/confirm-delete";
 import { useConfirm } from "@/renderer/hooks/use-confirm";
 import { cloneElementWithProps } from "@/renderer/utils/react";
-import { FeeTypeForm } from "@/renderer/apps/finances/forms/fee-type-form";
+import {
+  FeeTypeForm,
+  FeeTypeBulkForm,
+} from "@/renderer/apps/finances/forms/fee-type-form";
 
 import {
   useCreateFeeTypeForm,
+  useBulkCreateFeeTypeForm,
   useUpdateFeeTypeForm,
   useDeleteFeeTypeForm,
   type FeeTypeFormConfig,
-  type FeeTypeFormData,
 } from "@/renderer/libs/queries/finances";
+import type {
+  FeeTypeCreate,
+  FeeTypeBulkCreate,
+} from "@/packages/@core/data-access/schema-validations";
 
-export type FeeTypeDialogProps<TExtraProps extends Record<string, any> = {}> =
-  React.PropsWithChildren<
-    TExtraProps &
-      FeeTypeFormConfig & {
-        defaultValues?: Partial<FeeTypeFormData>;
-      }
-  >;
+import {
+  ButtonInsertMultipleToggle,
+  useButtonInsertToggle,
+} from "@/renderer/components/buttons/button-insert-multiple-toogle";
+
+export type FeeTypeDialogProps<
+  TExtraProps extends Record<string, any> = {},
+  DefaultValue = FeeTypeCreate,
+> = React.PropsWithChildren<
+  TExtraProps &
+    FeeTypeFormConfig & {
+      defaultValues?: Partial<DefaultValue>;
+    }
+>;
+
+type SchoolConfig = Pick<FeeTypeCreate, "schoolId">;
 
 /* ==========================================================================
    CREATE FEE TYPE
    ========================================================================== */
-interface CreateFeeTypeProps {
-  schoolId: string;
-  yearId: string;
-}
+interface CreateFeeTypeProps {}
 
 export const FeeTypeDialogCreateForm: React.FC<
-  FeeTypeDialogProps<CreateFeeTypeProps>
+  FeeTypeDialogProps<CreateFeeTypeProps & SchoolConfig>
 > = ({ schoolId, yearId, children, defaultValues, ...config }) => {
-  const { formId, walletSearch, isSubmitting, onSubmit } = useCreateFeeTypeForm(
-    { schoolId, yearId },
-    config,
-  );
+  // 1. Gestion de l'état d'affichage (Unitaire vs Bulk)
+  const { pressed, onPressedChange } = useButtonInsertToggle();
+
+  // 2. Initialisation inconditionnelle des deux formulaires (Règle des Hooks)
+  const bulkFormState = useBulkCreateFeeTypeForm({ schoolId, ...config });
+  const singleFormState = useCreateFeeTypeForm({ schoolId, ...config });
+
+  // 3. 🌟 STRATÉGIE SENIOR : Sélection dynamique de l'état du formulaire actif
+  const { formId, isSubmitting, onSubmit, options } = pressed
+    ? bulkFormState
+    : singleFormState;
 
   return (
     <DialogForm
@@ -48,16 +68,33 @@ export const FeeTypeDialogCreateForm: React.FC<
       formId={formId}
       isLoading={isSubmitting}
     >
-      <FeeTypeForm
-        formId={formId}
-        onSubmit={onSubmit}
-        walletSearch={walletSearch}
-        defaultValues={defaultValues}
+      {/* Bouton de bascule d'insertion */}
+      <ButtonInsertMultipleToggle
+        pressed={pressed}
+        onPressedChange={onPressedChange}
       />
+
+      {/* Rendu conditionnel du bon formulaire avec les données injectées du hook actif */}
+      {pressed ? (
+        <FeeTypeBulkForm
+          formId={formId}
+          onSubmit={onSubmit}
+          walletsOptions={options}
+          // defaultValues={defaultValues}
+        />
+      ) : (
+        <FeeTypeForm
+          formId={formId}
+          onSubmit={onSubmit}
+          walletsOptions={options}
+          defaultValues={defaultValues}
+        />
+      )}
     </DialogForm>
   );
 };
 
+FeeTypeDialogCreateForm.displayName = "FeeTypeDialogCreateForm";
 /* ==========================================================================
    UPDATE FEE TYPE
    ========================================================================== */
@@ -66,14 +103,12 @@ interface UpdateFeeTypeProps {
 }
 
 export const FeeTypeDialogUpdateForm: React.FC<
-  FeeTypeDialogProps<UpdateFeeTypeProps>
-> = ({ defaultValues, feeTypeId, children, ...config }) => {
-  const { formId, isSubmitting, onSubmit, walletSearch } = useUpdateFeeTypeForm(
-    {
-      ...config,
-      feeTypeId,
-    },
-  );
+  FeeTypeDialogProps<UpdateFeeTypeProps & SchoolConfig>
+> = ({ defaultValues, feeTypeId, schoolId, children, ...config }) => {
+  const { formId, isSubmitting, onSubmit, options } = useUpdateFeeTypeForm({
+    ...config,
+    schoolId,
+  });
 
   return (
     <DialogForm
@@ -88,7 +123,7 @@ export const FeeTypeDialogUpdateForm: React.FC<
         onSubmit={(data, helpers) =>
           onSubmit?.({ id: feeTypeId, data }, helpers as any)
         }
-        walletSearch={walletSearch}
+        walletsOptions={options}
         defaultValues={defaultValues}
       />
     </DialogForm>

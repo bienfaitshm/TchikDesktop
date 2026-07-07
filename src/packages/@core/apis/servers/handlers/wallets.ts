@@ -51,7 +51,7 @@ export class GetSearchWallets extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, SearchWalletOptionsParams>): Promise<unknown> {
-    return walletService.fetchOptions(params);
+    return walletService.getOptions(params);
   }
 }
 

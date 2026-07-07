@@ -1,37 +1,44 @@
 import React from "react";
-import { type Control, useFieldArray } from "react-hook-form";
+import {
+  type Control,
+  useFieldArray,
+  FieldPath,
+  FieldValues,
+} from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
 import { Form } from "@/renderer/components/ui/form";
 import { Button } from "@/renderer/components/ui/button";
 import { type BaseFormProps, useZodForm } from "@/renderer/libs/forms";
-import {
-  createBulkCreateSchema,
-  type InferBulkCreate,
-} from "@/packages/@core/data-access/schema-validations";
+import { createBulkCreateSchema } from "@/packages/@core/data-access/schema-validations";
 
-// On définit l'interface attendue par l'item de formulaire générique
-export interface BulkFormItemRenderProps<TFieldValues extends z.ZodTypeAny> {
-  /** Index de l'élément courant dans le tableau array */
+/**
+ * Structure globale du formulaire Bulk inferrée proprement.
+ */
+export type InferBulkCreate<T extends z.ZodTypeAny> = {
+  items: {
+    key: string;
+    value: z.infer<T>;
+  }[];
+};
+
+/**
+ * Props transmises à la fonction de rendu d'une ligne.
+ * On passe le contrôle racine typé et le préfixe strict pour garantir la fluidité de RHF.
+ */
+export interface BulkFormItemRenderProps<TItemSchema extends z.ZodTypeAny> {
   index: number;
-  /** Le nom préfixé à donner aux sous-champs de formulaire (ex: `items.${index}.value`) */
   namePrefix: `items.${number}.value`;
-  /** Le contrôle du formulaire pour les passer aux <FormField> */
-  control: Control<InferBulkCreate<TFieldValues>>;
-  /** Flag indiquant si le formulaire est en cours de soumission */
+  control: Control<InferBulkCreate<TItemSchema>>;
   disabled?: boolean;
 }
 
 interface GenericBulkFormProps<TItemSchema extends z.ZodTypeAny> {
-  /** Le schéma unitaire de création (ex: OptionCreateSchema) */
   itemSchema: TItemSchema;
-  /** Les valeurs par défaut unitaires d'une seule ligne vide (ex: DEFAULT_OPTION_VALUES) */
   itemDefaultValues: z.infer<TItemSchema>;
-  /** Fonction de rendu pour dessiner les inputs d'une seule ligne */
   renderFields: (
     props: BulkFormItemRenderProps<TItemSchema>,
   ) => React.ReactNode;
-  /** Libellé personnalisé pour le bouton d'ajout de ligne */
   addButtonLabel?: string;
 }
 
@@ -43,28 +50,32 @@ export function GenericBulkForm<TItemSchema extends z.ZodTypeAny>({
   defaultValues,
   renderFields,
   addButtonLabel = "Ajouter un élément",
-}: BaseFormProps<
-  z.infer<ReturnType<typeof createBulkCreateSchema<TItemSchema>>>
-> &
+}: BaseFormProps<InferBulkCreate<TItemSchema>> &
   GenericBulkFormProps<TItemSchema>) {
-  // 1. Instanciation dynamique du schéma Bulk global
+  // 1. Mémorisation du schéma global
   const bulkSchema = React.useMemo(
     () => createBulkCreateSchema(itemSchema),
     [itemSchema],
   );
 
-  const getInitialItemValue: () => InferBulkCreate<
-    typeof itemSchema
-  >["items"][0] = React.useCallback(
-    () => ({
+  // 2. Sauvegarde des valeurs par défaut dans un Ref (Pattern useLatest)
+  // Évite de casser la mémoisation si l'utilisateur passe un objet inline : itemDefaultValues={{}}
+  const latestItemDefaultValues = React.useRef(itemDefaultValues);
+  React.useEffect(() => {
+    latestItemDefaultValues.current = itemDefaultValues;
+  }, [itemDefaultValues]);
+
+  // Générateur d'item unitaire parfaitement stable
+  const getInitialItemValue = React.useCallback(
+    (): InferBulkCreate<TItemSchema>["items"][0] => ({
       key: crypto.randomUUID(),
-      value: itemDefaultValues,
+      value: latestItemDefaultValues.current,
     }),
-    [itemDefaultValues],
+    [],
   );
 
-  // 2. Initialisation du formulaire global
-  const form = useZodForm<InferBulkCreate<typeof itemSchema>>({
+  // 3. Initialisation du formulaire (on tape directement le schéma attendu)
+  const form = useZodForm<InferBulkCreate<TItemSchema>>({
     schema: bulkSchema,
     defaultValues: defaultValues ?? {
       items: [getInitialItemValue()],
@@ -72,9 +83,9 @@ export function GenericBulkForm<TItemSchema extends z.ZodTypeAny>({
     onSubmit,
   });
 
-  // 3. Gestion dynamique des lignes de tableau via useFieldArray
+  // 4. Gestion du tableau dynamique
   const { fields, append, remove } = useFieldArray<
-    InferBulkCreate<typeof itemSchema>
+    InferBulkCreate<TItemSchema>
   >({
     control: form.control,
     name: "items",
@@ -85,13 +96,12 @@ export function GenericBulkForm<TItemSchema extends z.ZodTypeAny>({
   return (
     <Form {...form}>
       <form id={formId} onSubmit={form.submit} className="space-y-6" noValidate>
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-4 pr-2 contain-intrinsic-size">
           {fields.map((field, index) => (
             <div
               key={field.id}
-              className="group relative flex items-start gap-4 p-4 border rounded-xl bg-card/50 hover:bg-accent/5 duration-150 animate-in fade-in slide-in-from-top-2"
+              className="group relative flex items-start gap-4 py-2 border-b duration-150 animate-in fade-in slide-in-from-top-2"
             >
-              {/* Conteneur de champs injecté dynamiquement */}
               <div className="flex-1">
                 {renderFields({
                   index,
@@ -101,7 +111,6 @@ export function GenericBulkForm<TItemSchema extends z.ZodTypeAny>({
                 })}
               </div>
 
-              {/* Bouton de retrait de ligne (Désactivé s'il ne reste qu'une seule ligne obligatoire) */}
               <Button
                 type="button"
                 variant="ghost"
@@ -117,8 +126,7 @@ export function GenericBulkForm<TItemSchema extends z.ZodTypeAny>({
           ))}
         </div>
 
-        {/* Pied de formulaire : Actions transversales */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
           <Button
             type="button"
             variant="outline"
@@ -130,7 +138,6 @@ export function GenericBulkForm<TItemSchema extends z.ZodTypeAny>({
             {addButtonLabel}
           </Button>
 
-          {/* Affichage centralisé des erreurs globales de structure (comme l'absence d'unicité des clés) */}
           {form.formState.errors.items?.root && (
             <p
               role="alert"
@@ -143,4 +150,16 @@ export function GenericBulkForm<TItemSchema extends z.ZodTypeAny>({
       </form>
     </Form>
   );
+}
+
+/**
+ * Concatène proprement le préfixe et le nom du champ avec un typage strict et fluide.
+ */
+export function getFormFieldName<
+  TFieldValues extends FieldValues,
+  TSubField extends string = string,
+>(defaultFieldName: TSubField, prefix?: string): FieldPath<TFieldValues> {
+  return (
+    prefix ? `${prefix}.${defaultFieldName}` : defaultFieldName
+  ) as FieldPath<TFieldValues>;
 }
