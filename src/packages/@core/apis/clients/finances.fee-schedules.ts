@@ -1,6 +1,7 @@
 import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import type {
   FeeScheduleCreate,
+  FeeScheduleBulkCreate,
   FeeScheduleUpdate,
   FeeScheduleFilter,
 } from "@/packages/@core/data-access/schema-validations";
@@ -16,6 +17,7 @@ export type FeeScheduleApi = Readonly<{
   fetchFeeScheduleById(scheduleId: string): Promise<FeeSchedule>;
   fetchFeeSchedulesByFeeType(feeTypeId: string): Promise<FeeSchedule[]>;
   createFeeSchedule(data: FeeScheduleCreate): Promise<FeeSchedule>;
+  bulkCreateFeeSchedule(data: FeeScheduleBulkCreate): Promise<FeeSchedule[]>;
   updateFeeSchedule(
     scheduleId: string,
     data: FeeScheduleUpdate,
@@ -43,6 +45,9 @@ export function createFeeScheduleApis(ipcClient: IpcClient): FeeScheduleApi {
     },
     createFeeSchedule(data) {
       return ipcClient.post(FeeScheduleRoutes.ALL, data);
+    },
+    bulkCreateFeeSchedule(data) {
+      return ipcClient.post(FeeScheduleRoutes.BULK, data);
     },
     updateFeeSchedule(scheduleId, data) {
       return ipcClient.put(FeeScheduleRoutes.DETAIL, data, {

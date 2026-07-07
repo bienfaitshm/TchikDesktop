@@ -1,6 +1,6 @@
 /**
  * @file routes-constant.ts
- * @description Centralise toutes les définitions de routes IPC (Main ↔ Renderer)
+ * @description Centralise toutes les définitions de routes IPC (Main - Renderer)
  * en utilisant une structure RESTful standardisée.
  * Ces constantes sont utilisées par IpcClient et IpcServer pour la communication.
  */
@@ -9,6 +9,7 @@ export const UserRoutes = {
   ALL: "users",
   DETAIL: "users/:userId",
   SEARCH: "users/search",
+  BULK: "users/bulk",
 } as const;
 
 /**
@@ -19,6 +20,7 @@ export const OptionRoutes = {
   ALL: "options",
   SEARCH: "options/search",
   DETAIL: "options/:optionId",
+  BULK: "options/bulk",
 } as const;
 
 /**
@@ -28,15 +30,17 @@ export const SchoolRoutes = {
   ALL: "schools",
   SEARCH: "schools/search",
   DETAIL: "schools/:schoolId",
+  BULK: "schools/bulk",
 } as const;
 
 /**
- * Routes IPC pour la gestion des SCHOOLS (Écoles).
+ * Routes IPC pour la gestion des STUDY YEARS (Années scolaires).
  */
 export const StudyYearRoutes = {
   ALL: "studyYear",
   SEARCH: "studyYear/search",
   DETAIL: "studyYear/:yearId",
+  BULK: "studyYear/bulk",
 } as const;
 
 /**
@@ -47,12 +51,11 @@ export const ClassroomRoutes = {
   SEARCH: "classrooms/search",
   ALL_ENROLLMENT: "classrooms/enrollments",
   DETAIL: "classrooms/:classroomId",
+  BULK: "classrooms/bulk",
 } as const;
 
 /**
  * Routes IPC pour la gestion de l'ENROLLEMENT (Inscription).
- * NOTE: L'inscription est souvent une ressource complexe, elle pourrait nécessiter
- * un ID composite ou un ID simple pour la gestion d'une seule inscription.
  */
 export const EnrollmentRoutes = {
   ALL: "enrollments",
@@ -60,12 +63,13 @@ export const EnrollmentRoutes = {
   DETAIL: "enrollments/:enrollmentId",
   ALL_HISTORIES: "enrollments/histories",
   QUICK_ENROLLMENT: "enrollments/quick",
+  BULK: "enrollments/bulk",
 } as const;
 
 export const DocumentExportRoutes = {
   INFOS: "documents/infos",
   EXPORTS: "documents/exports",
-} as const; // <-- Strict typage ajouté
+} as const;
 
 /**
  * Routes IPC pour les STATISTIQUES et ANALYTICS.
@@ -86,7 +90,7 @@ export const StatsRoutes = {
 
 export const AppInfosRoutes = {
   SYS_INFOS: "app-infos/sys-infos",
-} as const; // <-- Strict typage ajouté
+} as const;
 
 /**
  * Routes IPC pour la gestion des LOCAUX (Salles physiques).
@@ -96,6 +100,7 @@ export const LocalRoomRoutes = {
   SEARCH: "seating/rooms/search",
   DETAIL: "seating/rooms/:id",
   CREATE: "seating/rooms/create",
+  BULK: "seating/rooms/bulk",
 } as const;
 
 /**
@@ -109,10 +114,12 @@ export const SeatingSessionRoutes = {
   STATUS: "seating/sessions/:id/status",
   FULL_DETAILS: "seating/sessions/:id/full",
   CREATE: "seating/sessions/create",
+  BULK: "seating/sessions/bulk",
 } as const;
 
 /**
  * Routes IPC pour les ASSIGNATIONS (Le placement réel).
+ * (BULK déjà présent)
  */
 export const SeatingAssignmentRoutes = {
   GENERATING: "seating/generating",
@@ -135,6 +142,7 @@ export const WalletRoutes = {
   ALL: "wallets",
   SEARCH: "wallets/search",
   DETAIL: "wallets/:walletId",
+  BULK: "wallets/bulk",
 } as const;
 
 /**
@@ -144,6 +152,7 @@ export const FeeTypeRoutes = {
   ALL: "fee-types",
   SEARCH: "fee-types/search",
   DETAIL: "fee-types/:feeTypeId",
+  BULK: "fee-types/bulk",
 } as const;
 
 /**
@@ -154,6 +163,7 @@ export const FeeScheduleRoutes = {
   SEARCH: "fee-schedules/search",
   DETAIL: "fee-schedules/:scheduleId",
   BY_FEE_TYPE: "fee-schedules/fee-type/:feeTypeId",
+  BULK: "fee-schedules/bulk",
 } as const;
 
 /**
@@ -163,10 +173,12 @@ export const FeeConfigurationRoutes = {
   ALL: "fee-configurations",
   SEARCH: "fee-configurations/search",
   DETAIL: "fee-configurations/:feeConfigId",
+  BULK: "fee-configurations/bulk",
 } as const;
 
 /**
  * Routes IPC pour la gestion des ATTRIBUTIONS (échéanciers élèves).
+ * (BULK déjà présent)
  */
 export const FeeAssignmentRoutes = {
   ALL: "fee-assignments",
@@ -182,6 +194,7 @@ export const StudentPaymentRoutes = {
   ALL: "student-payments",
   SEARCH: "student-payments/search",
   DETAIL: "student-payments/:paymentId",
+  BULK: "student-payments/bulk",
 } as const;
 
 /**
@@ -191,6 +204,7 @@ export const DailyExchangeRateRoutes = {
   ALL: "daily-exchange-rates",
   SEARCH: "daily-exchange-rates/search",
   DETAIL: "daily-exchange-rates/:rateId",
+  BULK: "daily-exchange-rates/bulk",
 } as const;
 
 /**
@@ -211,7 +225,7 @@ export const IpcRoutes = {
   SEATING_ASSIGNMENTS: SeatingAssignmentRoutes,
   WALLETS: WalletRoutes,
   FEE_TYPES: FeeTypeRoutes,
-  FEE_SCHEDULES: FeeScheduleRoutes, // <-- AJOUTÉ AU REGISTRE CENTRAL
+  FEE_SCHEDULES: FeeScheduleRoutes,
   FEE_CONFIGURATIONS: FeeConfigurationRoutes,
   FEE_ASSIGNMENTS: FeeAssignmentRoutes,
   STUDENT_PAYMENTS: StudentPaymentRoutes,

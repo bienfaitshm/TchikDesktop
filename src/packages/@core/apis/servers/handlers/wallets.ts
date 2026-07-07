@@ -7,6 +7,8 @@ import {
   WalletFilter,
   WalletFilterSchema,
   createSearchOptionsSchema,
+  WalletBulkCreateSchema,
+  type WalletBulkCreate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -64,6 +66,20 @@ export class PostWallet extends AbstractEndpoint<any> {
     body,
   }: IpcRequest<z.infer<typeof WalletCreateSchema>, any>): Promise<unknown> {
     return walletService.create(body);
+  }
+}
+
+export class BulkPostWallet extends AbstractEndpoint<any> {
+  route = WalletRoutes.BULK;
+  method = HttpMethod.POST;
+  schemas: ValidationSchemas = {
+    body: WalletBulkCreateSchema,
+  };
+
+  protected handle({
+    body,
+  }: IpcRequest<WalletBulkCreate, any>): Promise<unknown> {
+    return walletService.bulkCreate(body.items.map((item) => item.value));
   }
 }
 

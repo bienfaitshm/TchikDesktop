@@ -1,6 +1,7 @@
 import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import type {
   FeeTypeCreate,
+  FeeTypeBulkCreate,
   FeeTypeUpdate,
   FeeTypeFilter,
 } from "@/packages/@core/data-access/schema-validations";
@@ -15,6 +16,7 @@ export type FeeTypeApi = Readonly<{
   ): Promise<(SelectOption & FeeType)[]>;
   fetchFeeTypeById(feeTypeId: string): Promise<FeeType>;
   createFeeType(data: FeeTypeCreate): Promise<FeeType>;
+  bulkCreateFeeType(data: FeeTypeBulkCreate): Promise<FeeType[]>;
   updateFeeType(feeTypeId: string, data: FeeTypeUpdate): Promise<FeeType>;
   deleteFeeType(feeTypeId: string): Promise<void>;
 }>;
@@ -34,6 +36,9 @@ export function createFeeTypeApis(ipcClient: IpcClient): FeeTypeApi {
     },
     createFeeType(data) {
       return ipcClient.post(FeeTypeRoutes.ALL, data);
+    },
+    bulkCreateFeeType(data) {
+      return ipcClient.post(FeeTypeRoutes.BULK, data);
     },
     updateFeeType(feeTypeId, data) {
       return ipcClient.put(FeeTypeRoutes.DETAIL, data, {

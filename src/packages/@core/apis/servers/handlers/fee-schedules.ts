@@ -7,6 +7,7 @@ import {
   FeeScheduleFilterSchema,
   type FeeScheduleFilter,
   createSearchOptionsSchema,
+  FeeScheduleBulkCreate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -56,9 +57,7 @@ export class GetSearchFeeSchedules extends AbstractEndpoint<any> {
     return feeScheduleService.getOptions(params);
   }
 }
-/* =========================================================================
-   2. POST / CREATE SCHEDULE
-   ========================================================================= */
+
 export class PostFeeSchedule extends AbstractEndpoint<any> {
   route = FeeScheduleRoutes.ALL;
   method = HttpMethod.POST;
@@ -73,6 +72,20 @@ export class PostFeeSchedule extends AbstractEndpoint<any> {
     any
   >): Promise<unknown> {
     return feeScheduleService.create(body);
+  }
+}
+
+export class BulkPostFeeSchedule extends AbstractEndpoint<any> {
+  route = FeeScheduleRoutes.BULK;
+  method = HttpMethod.POST;
+  schemas: ValidationSchemas = {
+    body: FeeScheduleCreateSchema,
+  };
+
+  protected handle({
+    body,
+  }: IpcRequest<FeeScheduleBulkCreate, any>): Promise<unknown> {
+    return feeScheduleService.bulkCreate(body.items.map((item) => item.value));
   }
 }
 

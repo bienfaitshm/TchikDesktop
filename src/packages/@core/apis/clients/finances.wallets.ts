@@ -1,6 +1,7 @@
 import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import type {
   WalletCreate,
+  WalletBulkCreate,
   WalletUpdate,
   WalletFilter,
 } from "@/packages/@core/data-access/schema-validations";
@@ -15,6 +16,7 @@ export type WalletApi = Readonly<{
   ): Promise<(SelectOption & Wallet)[]>;
   fetchWalletById(walletId: string): Promise<Wallet>;
   createWallet(data: WalletCreate): Promise<Wallet>;
+  bulkCreateWallet(data: WalletBulkCreate): Promise<Wallet[]>;
   updateWallet(walletId: string, data: WalletUpdate): Promise<Wallet>;
   deleteWallet(walletId: string): Promise<void>;
 }>;
@@ -34,6 +36,9 @@ export function createWalletApis(ipcClient: IpcClient): WalletApi {
     },
     createWallet(data) {
       return ipcClient.post(WalletRoutes.ALL, data);
+    },
+    bulkCreateWallet(data) {
+      return ipcClient.post(WalletRoutes.BULK, data);
     },
     updateWallet(walletId, data) {
       return ipcClient.put(WalletRoutes.DETAIL, data, {

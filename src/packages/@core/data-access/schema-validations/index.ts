@@ -4,3 +4,4 @@ export * from "./filters";
 export * from "./filters.finances";
 export * from "./other";
 export * from "./types";
+export * from "./bulk-schema";

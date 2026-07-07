@@ -1,5 +1,5 @@
 import z from "zod";
-import { feeTypeRepository } from "@/packages/@core/data-access/db/queries";
+import { feeTypeService } from "@/packages/@core/data-access/db/queries";
 import {
   FeeTypeSchema,
   FeeTypeCreateSchema,
@@ -7,6 +7,8 @@ import {
   FeeTypeFilterSchema,
   type FeeTypeFilter,
   createSearchOptionsSchema,
+  FeeTypeBulkCreateSchema,
+  type FeeTypeBulkCreate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -35,7 +37,7 @@ export class GetFeeTypes extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, FeeTypeFilter>): Promise<unknown> {
-    return feeTypeRepository.findMany(params);
+    return feeTypeService.findMany(params);
   }
 }
 
@@ -49,7 +51,7 @@ export class GetSearchFeeTypes extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, SearchFeeTypeOptionsParams>): Promise<unknown> {
-    return feeTypeRepository.findMany(params);
+    return feeTypeService.findMany(params);
   }
 }
 
@@ -63,7 +65,21 @@ export class PostFeeType extends AbstractEndpoint<any> {
   protected handle({
     body,
   }: IpcRequest<z.infer<typeof FeeTypeCreateSchema>, any>): Promise<unknown> {
-    return feeTypeRepository.create(body);
+    return feeTypeService.create(body);
+  }
+}
+
+export class BulkPostFeeType extends AbstractEndpoint<any> {
+  route = FeeTypeRoutes.BULK;
+  method = HttpMethod.POST;
+  schemas: ValidationSchemas = {
+    body: FeeTypeBulkCreateSchema,
+  };
+
+  protected handle({
+    body,
+  }: IpcRequest<FeeTypeBulkCreate, any>): Promise<unknown> {
+    return feeTypeService.bulkCreate(body.items.map((item) => item.value));
   }
 }
 
@@ -75,7 +91,7 @@ export class GetFeeType extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, FeeTypeId>): Promise<unknown> {
-    return feeTypeRepository.findById(params.feeTypeId);
+    return feeTypeService.findById(params.feeTypeId);
   }
 }
 
@@ -94,7 +110,7 @@ export class UpdateFeeType extends AbstractEndpoint<any> {
     z.infer<typeof FeeTypeUpdateSchema>,
     FeeTypeId
   >): Promise<unknown> {
-    return feeTypeRepository.update(params.feeTypeId, body);
+    return feeTypeService.update(params.feeTypeId, body);
   }
 }
 
@@ -106,6 +122,6 @@ export class DeleteFeeType extends AbstractEndpoint<any> {
   };
 
   protected handle({ params }: IpcRequest<any, FeeTypeId>): Promise<unknown> {
-    return feeTypeRepository.delete(params.feeTypeId);
+    return feeTypeService.delete(params.feeTypeId);
   }
 }
