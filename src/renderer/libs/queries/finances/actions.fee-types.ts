@@ -1,23 +1,42 @@
 import { useCallback } from "react";
 import {
   useCreateFeeType,
+  useBulkCreateFeeType,
   useUpdateFeeType,
   useDeleteFeeType,
+  useGetWalletAsOptions,
 } from "./finances";
-
-import { useFormBaseNotify } from "../base";
 import { withNotifications } from "@/renderer/libs/notifications";
 import type {
   FeeType,
   FeeTypeCreate,
+  FeeTypeBulkCreate,
   FeeTypeUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import type { BaseMutationConfig, QueryUpdatePayload } from "../base";
-import { useFormBase } from "../base";
+import { useFormBase, useFormBaseNotify, type UseBaseParams } from "../base";
+import type { FieldValues } from "react-hook-form";
 
-export function useCreateFeeTypeForm(config?: BaseMutationConfig<FeeType>) {
+type SchoolId = Partial<Pick<FeeType, "schoolId">>;
+type HookActionsParams<T = FeeType> = SchoolId & BaseMutationConfig<T>;
+
+const useBaseFeeType = <
+  TFormData extends FieldValues,
+  TMutateInput,
+  TReturnData = unknown,
+>({
+  schoolId,
+  ...params
+}: SchoolId & UseBaseParams<TFormData, TMutateInput, TReturnData>) => {
+  const { data: wallets } = useGetWalletAsOptions({ where: { schoolId } });
+  const form = useFormBaseNotify<TFormData, TMutateInput, TReturnData>(params);
+  return { options: wallets, ...form };
+};
+
+export function useCreateFeeTypeForm(config?: HookActionsParams) {
   const mutation = useCreateFeeType();
-  return useFormBaseNotify<FeeTypeCreate, FeeTypeCreate>({
+  return useBaseFeeType<FeeTypeCreate, FeeTypeCreate, FeeType>({
+    schoolId: config?.schoolId,
     mutation,
     config,
     getNotifications: () => ({
@@ -31,14 +50,35 @@ export function useCreateFeeTypeForm(config?: BaseMutationConfig<FeeType>) {
   });
 }
 
-export function useUpdateFeeTypeForm(config?: BaseMutationConfig<FeeType>) {
+export function useBulkCreateFeeTypeForm(
+  config?: HookActionsParams<FeeType[]>,
+) {
+  const mutation = useBulkCreateFeeType();
+  return useBaseFeeType<FeeTypeBulkCreate, FeeTypeBulkCreate, FeeType[]>({
+    mutation,
+    config,
+    schoolId: config?.schoolId,
+    getNotifications: () => ({
+      success: {
+        title: "Type de frais créés",
+        description: "Le nouveau type de frais ont été enregistrés.",
+      },
+      error: { title: "Erreur lors de la création des types de frais." },
+    }),
+    adaptData: (data) => data,
+  });
+}
+
+export function useUpdateFeeTypeForm(config?: HookActionsParams) {
   const mutation = useUpdateFeeType();
-  return useFormBaseNotify<
+  return useBaseFeeType<
     QueryUpdatePayload<FeeTypeUpdate>,
-    { data: FeeTypeUpdate; id: string }
+    { data: FeeTypeUpdate; id: string },
+    FeeType
   >({
     mutation,
     config,
+    schoolId: config?.schoolId,
     getNotifications: () => ({
       success: {
         title: "Type de frais mis à jour",

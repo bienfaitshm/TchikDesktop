@@ -74,7 +74,7 @@ export function useCreateFeeType(
   });
 }
 
-export function useBulkCreateWallet(
+export function useBulkCreateFeeType(
   options?: Partial<UseMutationOptions<FeeType[], any, FeeTypeBulkCreate>>,
 ) {
   return useMutation({

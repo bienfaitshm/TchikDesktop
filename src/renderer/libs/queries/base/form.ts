@@ -40,21 +40,29 @@ type NotificationConfig = {
   error: { title: string };
 };
 
-interface UseBaseParams<TFormData extends FieldValues, TMutateInput> {
+export interface UseBaseParams<
+  TFormData extends FieldValues,
+  TMutateInput,
+  TReturnData = unknown,
+> {
   mutation: UseMutationResult<any, any, TMutateInput, any>;
-  config?: BaseMutationConfig<TFormData>;
+  config?: BaseMutationConfig<TReturnData>;
   getNotifications: (data: TFormData) => NotificationConfig;
   adaptData: (formData: TFormData) => TMutateInput;
   onSuccess?: (data: any) => void;
 }
 
-export function useFormBaseNotify<TFormData extends FieldValues, TMutateInput>({
+export function useFormBaseNotify<
+  TFormData extends FieldValues,
+  TMutateInput,
+  TReturnData = unknown,
+>({
   mutation,
   config,
   getNotifications,
   adaptData,
   onSuccess,
-}: UseBaseParams<TFormData, TMutateInput>) {
+}: UseBaseParams<TFormData, TMutateInput, TReturnData>) {
   const { formId, notifyAndInvalidate } = useFormBase(config);
 
   const onSubmit: BaseFormProps<TFormData>["onSubmit"] = useCallback(
