@@ -128,7 +128,7 @@ export class FeeTypeRepository
 export const feeTypeRepository = new FeeTypeRepository(db);
 
 /* =========================================================================
-   3. FEE SCHEDULE REPOSITORY (Le nouveau venu)
+   3. FEE SCHEDULE REPOSITORY
    ========================================================================= */
 
 export type FeeScheduleOptionFilters = Partial<
