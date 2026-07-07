@@ -1,8 +1,8 @@
 import { useMutation, useSuspenseQuery } from "../base";
 import { wallet as walletApi } from "@/renderer/libs/apis";
 import type {
-  Wallet,
   WalletCreate,
+  WalletBulkCreate,
   WalletFilter,
   WalletUpdate,
 } from "@/packages/@core/data-access/schema-validations";
@@ -12,6 +12,7 @@ import type {
   UseSuspenseQueryOptions,
   UseMutationOptions,
 } from "@tanstack/react-query";
+import type { Wallet } from "@/packages/@core/data-access/db";
 
 export const walletKeys = {
   all: ["wallets"] as const,
@@ -23,6 +24,7 @@ export const walletKeys = {
   detail: (id: string) => [...walletKeys.details(), id] as const,
   mutations: {
     create: () => [...walletKeys.all, "create"] as const,
+    bulkCreate: () => [...walletKeys.all, "bulkCreate"] as const,
     update: () => [...walletKeys.all, "update"] as const,
     delete: () => [...walletKeys.all, "delete"] as const,
   },
@@ -67,6 +69,16 @@ export function useCreateWallet(
   return useMutation({
     mutationKey: walletKeys.mutations.create(),
     mutationFn: (data) => walletApi.createWallet(data),
+    ...options,
+  });
+}
+
+export function useBulkCreateWallet(
+  options?: Partial<UseMutationOptions<Wallet[], any, WalletBulkCreate>>,
+) {
+  return useMutation({
+    mutationKey: walletKeys.mutations.bulkCreate(),
+    mutationFn: (data) => walletApi.bulkCreateWallet(data),
     ...options,
   });
 }

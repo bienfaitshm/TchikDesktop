@@ -2,13 +2,17 @@ import { useMutation, useSuspenseQuery } from "../base";
 import { feeType as feeTypeApi } from "@/renderer/libs/apis";
 import type {
   FeeTypeCreate,
+  FeeTypeBulkCreate,
   FeeTypeFilter,
   FeeTypeUpdate,
 } from "@/packages/@core/data-access/schema-validations";
-import type { FeeType } from "@/packages/@core/data-access/db/schemas";
 import type { TQueryUpdate } from "../type";
 import type { SelectOption } from "@/packages/@core/data-access/db/queries";
-import type { UseSuspenseQueryOptions } from "@tanstack/react-query";
+import type {
+  UseMutationOptions,
+  UseSuspenseQueryOptions,
+} from "@tanstack/react-query";
+import type { FeeType } from "@/packages/@core/data-access/db";
 
 export const feeTypeKeys = {
   all: ["fee-types"] as const,
@@ -20,6 +24,8 @@ export const feeTypeKeys = {
   detail: (id: string) => [...feeTypeKeys.details(), id] as const,
   mutations: {
     create: () => [...feeTypeKeys.all, "create"] as const,
+    bulkCreate: () => [...feeTypeKeys.all, "bulkCreate"] as const,
+
     update: () => [...feeTypeKeys.all, "update"] as const,
     delete: () => [...feeTypeKeys.all, "delete"] as const,
   },
@@ -64,6 +70,16 @@ export function useCreateFeeType(
   return useMutation({
     mutationKey: feeTypeKeys.mutations.create(),
     mutationFn: (data) => feeTypeApi.createFeeType(data),
+    ...options,
+  });
+}
+
+export function useBulkCreateWallet(
+  options?: Partial<UseMutationOptions<FeeType[], any, FeeTypeBulkCreate>>,
+) {
+  return useMutation({
+    mutationKey: feeTypeKeys.mutations.bulkCreate(),
+    mutationFn: (data) => feeTypeApi.bulkCreateFeeType(data),
     ...options,
   });
 }

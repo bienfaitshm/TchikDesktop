@@ -1,8 +1,8 @@
 import { useMutation, useSuspenseQuery } from "../base";
 import { feeSchedule as scheduleApi } from "@/renderer/libs/apis";
 import type {
-  FeeSchedule,
   FeeScheduleCreate,
+  FeeScheduleBulkCreate,
   FeeScheduleFilter,
   FeeScheduleUpdate,
 } from "@/packages/@core/data-access/schema-validations";
@@ -12,6 +12,7 @@ import type {
   UseMutationOptions,
   UseSuspenseQueryOptions,
 } from "@tanstack/react-query";
+import type { FeeSchedule } from "@/packages/@core/data-access/db";
 
 /* =========================================================================
    FEE SCHEDULE QUERY KEYS
@@ -28,6 +29,7 @@ export const feeScheduleKeys = {
   detail: (id: string) => [...feeScheduleKeys.details(), id] as const,
   mutations: {
     create: () => [...feeScheduleKeys.all, "create"] as const,
+    bulkCreate: () => [...feeScheduleKeys.all, "bulkCreate"] as const,
     update: () => [...feeScheduleKeys.all, "update"] as const,
     delete: () => [...feeScheduleKeys.all, "delete"] as const,
   },
@@ -80,7 +82,6 @@ export function useGetFeeSchedulesByFeeType(
   return useSuspenseQuery({
     queryKey: feeScheduleKeys.byFeeType(feeTypeId),
     queryFn: () => scheduleApi.fetchFeeSchedulesByFeeType(feeTypeId),
-    enabled: !!feeTypeId,
     ...options,
   });
 }
@@ -95,6 +96,18 @@ export function useCreateFeeSchedule(
   return useMutation({
     mutationKey: feeScheduleKeys.mutations.create(),
     mutationFn: (data) => scheduleApi.createFeeSchedule(data),
+    ...options,
+  });
+}
+
+export function useBulkCreateFeeSchedule(
+  options?: Partial<
+    UseMutationOptions<FeeSchedule[], Error, FeeScheduleBulkCreate>
+  >,
+) {
+  return useMutation({
+    mutationKey: feeScheduleKeys.mutations.bulkCreate(),
+    mutationFn: (data) => scheduleApi.bulkCreateFeeSchedule(data),
     ...options,
   });
 }
