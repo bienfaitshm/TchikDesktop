@@ -20,16 +20,4 @@ export const feeTypeColumns: ColumnDef<FeeType>[] = [
     enableHiding: false,
     enableColumnFilter: true,
   },
-  {
-    accessorKey: "feeTypeId",
-    header: "ID Type de Frais",
-    cell: ({ getValue }) => (
-      <TypographySmall className="text-foreground text-sm">
-        {String(getValue() ?? "N/A")}
-      </TypographySmall>
-    ),
-    enableSorting: true,
-    enableHiding: true,
-    enableColumnFilter: true,
-  },
 ];

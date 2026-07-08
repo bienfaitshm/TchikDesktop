@@ -3,58 +3,38 @@ import {
   DataContentBody,
   DataContentHead,
   DataTable,
-  DataTableColumnToggle,
   DataTableContent,
   DataTablePagination,
-  DataTableToolbar,
-  FilteredTableToolbarContainer,
-  SearchTableToolbar,
-  TableFacetedFilterItem,
 } from "@/renderer/components/tables";
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import { feeTypeColumns } from "./fee-types.columns";
+import { enhanceColumnsExpandable } from "@/renderer/components/tables/columns";
+import React from "react";
+
+const columns = enhanceColumnsExpandable(feeTypeColumns);
 
 export type FeeTypeTableProps = {
   feeTypes?: FeeType[];
+  renderDetail?(feeType: FeeType): React.ReactNode;
 };
 export const FeeTypeTable: React.FC<FeeTypeTableProps> = ({
   feeTypes = [],
+  renderDetail,
 }) => {
   return (
     <div>
       <DataTable<FeeType>
         data={feeTypes}
-        columns={feeTypeColumns}
+        columns={columns}
         keyExtractor={(item) => item.feeTypeId}
       >
-        <DataTableToolbar></DataTableToolbar>
-        <DataTableToolbar>
-          <FilteredTableToolbarContainer>
-            <SearchTableToolbar
-              searchColumn="name"
-              placeholder="Ex. Minerval"
-            />
-            {/* <TableFacetedFilterItem
-                      title="Section"
-                      columnId="section"
-                      options={SECTION_OPTIONS}
-                    /> */}
-          </FilteredTableToolbarContainer>
-        </DataTableToolbar>
-
         <DataTableContent>
           <DataContentHead />
           <DataContentBody<FeeType>>
             {({ row }) => (
               <ExpandableRow
                 row={row as any}
-                renderDetail={
-                  // <OptionRowActions
-                  //   option={row.original}
-                  //   mutationKey={mutationKey}
-                  // />
-                  <></>
-                }
+                renderDetail={<>{renderDetail?.(row.original)}</>}
               />
             )}
           </DataContentBody>

@@ -51,7 +51,7 @@ export const FeeScheduleBulkCreateSchema = createBulkCreateSchema(
   FeeScheduleCreateSchema,
 );
 export type FeeScheduleBulkCreate = InferBulkCreate<
-  typeof FeeScheduleCreateSchema
+  z.infer<typeof FeeScheduleCreateSchema>
 >;
 
 export const DailyExchangeRateBulkCreateSchema = createBulkCreateSchema(

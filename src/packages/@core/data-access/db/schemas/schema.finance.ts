@@ -62,13 +62,7 @@ export const feeTypes = sqliteTable(
     ...withYearAndSchoolIds,
     ...timestamps,
   },
-  // (table) => [
-  //   uniqueIndex("fee_types_wallet_year_school_idx").on(
-  //     table.walletId,
-  //     table.yearId,
-  //     table.schoolId,
-  //   ),
-  // ],
+  (table) => [index("fee_type_school_idx").on(table.schoolId)],
 );
 
 export type TableFeeType = typeof feeTypes;

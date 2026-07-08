@@ -6,31 +6,39 @@ import {
 } from "@/renderer/components/dialog/confirm-delete";
 import { useConfirm } from "@/renderer/hooks/use-confirm";
 import { cloneElementWithProps } from "@/renderer/utils/react";
-import { FeeScheduleForm } from "@/renderer/apps/finances/forms/fee-schedule-form";
+import {
+  FeeScheduleBulkForm,
+  FeeScheduleForm,
+} from "@/renderer/apps/finances/forms/fee-schedule-form";
 import {
   useCreateFeeScheduleForm,
+  useBulkCreateFeeScheduleForm,
   useUpdateFeeScheduleForm,
   useDeleteFeeScheduleForm,
   type FeeScheduleFormConfig,
-  type FeeScheduleFormData,
 } from "@/renderer/libs/queries/finances";
+import {
+  ButtonInsertMultipleToggle,
+  useButtonInsertToggle,
+} from "@/renderer/components/buttons/button-insert-multiple-toogle";
+import type { FeeScheduleCreate } from "@/packages/@core/data-access/schema-validations";
 
 export type FeeScheduleDialogProps<
   TExtraProps extends Record<string, any> = {},
 > = React.PropsWithChildren<
   TExtraProps &
     FeeScheduleFormConfig & {
-      defaultValues?: Partial<FeeScheduleFormData>;
+      defaultValues?: Partial<FeeScheduleCreate>;
     }
 >;
 
 /* ==========================================================================
-   CREATE FEE SCHEDULE
+   CREATE FEE SCHEDULE (UNITAIRE)
    ========================================================================== */
 export const FeeScheduleDialogCreateForm: React.FC<
   FeeScheduleDialogProps<{}>
 > = ({ children, defaultValues, ...config }) => {
-  const { formId, feeTypeSearch, isSubmitting, onSubmit } =
+  const { formId, feeTypeOptions, isSubmitting, onSubmit } =
     useCreateFeeScheduleForm(config);
 
   return (
@@ -44,9 +52,65 @@ export const FeeScheduleDialogCreateForm: React.FC<
       <FeeScheduleForm
         formId={formId}
         onSubmit={onSubmit}
-        feeTypeSearch={feeTypeSearch}
+        feeTypeOptions={feeTypeOptions}
         defaultValues={defaultValues}
       />
+    </DialogForm>
+  );
+};
+
+/* ==========================================================================
+   CREATE MULTIPLE FEE SCHEDULES (DYNAMIC TOGGLE)
+   ========================================================================== */
+interface CreateBulkToggleProps {
+  schoolId: string;
+}
+
+export const FeeScheduleDialogBulkToggleForm: React.FC<
+  FeeScheduleDialogProps<CreateBulkToggleProps>
+> = ({ schoolId, children, defaultValues, ...config }) => {
+  // 1. Gestion de l'état de bascule (Unitaire vs Masse)
+  const { pressed, onPressedChange } = useButtonInsertToggle();
+
+  // 2. Initialisation inconditionnelle des hooks (Règle des Hooks respectée !)
+  const bulkFormState = useBulkCreateFeeScheduleForm({ schoolId, ...config });
+  const singleFormState = useCreateFeeScheduleForm({ schoolId, ...config });
+
+  const { formId, isSubmitting, onSubmit, feeTypeOptions } = pressed
+    ? bulkFormState
+    : singleFormState;
+
+  console.log(feeTypeOptions);
+  return (
+    <DialogForm
+      trigger={children}
+      title={pressed ? "Créer des échéances en masse" : "Créer une échéance"}
+      description="Configurez une ou plusieurs tranches de paiement pour vos frais scolaires."
+      formId={formId}
+      isLoading={isSubmitting}
+    >
+      <div className="mb-4 flex justify-end">
+        <ButtonInsertMultipleToggle
+          pressed={pressed}
+          onPressedChange={onPressedChange}
+        />
+      </div>
+
+      {pressed ? (
+        <FeeScheduleBulkForm
+          formId={formId}
+          onSubmit={onSubmit}
+          feeTypeOptions={feeTypeOptions}
+          defaultValues={defaultValues}
+        />
+      ) : (
+        <FeeScheduleForm
+          formId={formId}
+          onSubmit={onSubmit}
+          feeTypeOptions={feeTypeOptions}
+          defaultValues={defaultValues}
+        />
+      )}
     </DialogForm>
   );
 };
@@ -61,7 +125,7 @@ interface UpdateFeeScheduleProps {
 export const FeeScheduleDialogUpdateForm: React.FC<
   FeeScheduleDialogProps<UpdateFeeScheduleProps>
 > = ({ defaultValues, scheduleId, children, ...config }) => {
-  const { formId, isSubmitting, onSubmit, feeTypeSearch } =
+  const { formId, isSubmitting, onSubmit, feeTypeOptions } =
     useUpdateFeeScheduleForm({
       ...config,
       scheduleId,
@@ -75,12 +139,13 @@ export const FeeScheduleDialogUpdateForm: React.FC<
       formId={formId}
       isLoading={isSubmitting}
     >
+      {/* Utilisation du bon sous-composant CreateForm ou équivalent Update */}
       <FeeScheduleForm
         formId={formId}
         onSubmit={(data, helpers) =>
           onSubmit?.({ id: scheduleId, data }, helpers as any)
         }
-        feeTypeSearch={feeTypeSearch}
+        feeTypeOptions={feeTypeOptions}
         defaultValues={defaultValues}
       />
     </DialogForm>

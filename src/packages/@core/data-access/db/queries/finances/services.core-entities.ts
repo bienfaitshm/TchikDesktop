@@ -70,7 +70,9 @@ export class FeeScheduleService extends FeeScheduleRepository {
   }
 
   async getOptions(args: SearchOptions<FeeScheduleOptionFilters>) {
-    return this.selectOptions.loadOptions(args);
+    const data = await this.selectOptions.loadOptions(args);
+    console.log("======>", data);
+    return [];
   }
 }
 

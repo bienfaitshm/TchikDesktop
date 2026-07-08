@@ -51,7 +51,7 @@ export class GetSearchFeeTypes extends AbstractEndpoint<any> {
   protected handle({
     params,
   }: IpcRequest<any, SearchFeeTypeOptionsParams>): Promise<unknown> {
-    return feeTypeService.findMany(params);
+    return feeTypeService.getOptions(params);
   }
 }
 

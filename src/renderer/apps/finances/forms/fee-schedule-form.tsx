@@ -1,41 +1,40 @@
 import React from "react";
 import {
-  FeeScheduleCreate,
-  FeeScheduleCreateSchema,
-} from "@/packages/@core/data-access/schema-validations";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/renderer/components/ui/form";
-import { Input } from "@/renderer/components/ui/input";
-import { ComboboxSearch } from "@/renderer/components/form/fields/generic-search-combo-box";
-import { SearchOption } from "@/renderer/libs/queries/base";
-import {
   type BaseFormProps,
   mergeDefaultValues,
   useZodForm,
 } from "@/renderer/libs/forms";
+import {
+  type FeeScheduleCreate,
+  type FeeScheduleBulkCreate,
+  FeeScheduleCreateSchema,
+} from "@/packages/@core/data-access/schema-validations";
+import { Form } from "@/renderer/components/ui/form";
 
-const DEFAULT_VALUES: Partial<FeeScheduleCreate> = {
-  installmentName: "",
+import { FeeScheduleBaseForm } from "./base";
+import { GenericBulkForm } from "@/renderer/components/form/generic-bulk-form";
+
+const DEFAULT_VALUES = {
   feeTypeId: "",
-};
+  installmentName: "",
+} satisfies FeeScheduleCreate;
 
-type FeeScheduleProps = {
-  feeTypeSearch: SearchOption;
-};
+interface FeeTypeProps {
+  feeTypeOptions?: { value: string; label: string }[];
+}
 
+/**
+ * Formulaire de création unitaire
+ */
 export const FeeScheduleForm: React.FC<
-  BaseFormProps<FeeScheduleCreate> & FeeScheduleProps
-> = ({ formId, onSubmit, feeTypeSearch, defaultValues }) => {
+  BaseFormProps<FeeScheduleCreate> & FeeTypeProps
+> = ({ formId, onSubmit, feeTypeOptions, defaultValues }) => {
   const form = useZodForm<FeeScheduleCreate>({
     schema: FeeScheduleCreateSchema,
-    defaultValues: mergeDefaultValues(defaultValues, DEFAULT_VALUES),
+    defaultValues: mergeDefaultValues<FeeScheduleCreate>(
+      defaultValues,
+      DEFAULT_VALUES,
+    ),
     onSubmit,
   });
 
@@ -45,57 +44,55 @@ export const FeeScheduleForm: React.FC<
         id={formId}
         onSubmit={form.submit}
         className="space-y-6"
-        aria-label="Formulaire Échéance de versement"
+        aria-label="Formulaire des échéances"
       >
-        <FormField
+        <FeeScheduleBaseForm
           control={form.control}
-          name="feeTypeId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="font-semibold">
-                Type de Frais Concerné
-              </FormLabel>
-              <FormControl>
-                <ComboboxSearch
-                  onChange={field.onChange}
-                  value={field.value}
-                  options={feeTypeSearch.options}
-                  onSearchChange={feeTypeSearch.setSearchQuery}
-                  isLoading={feeTypeSearch.isSearching}
-                  search={feeTypeSearch.searchQuery}
-                  searchPlaceholder="Rechercher un type de frais..."
-                  placeholder="Sélectionner le type de frais parent..."
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          feeTypeOptions={feeTypeOptions}
         />
-
-        <FormField
-          control={form.control}
-          name="installmentName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="font-semibold">
-                Nom de la Tranche / Échéance
-              </FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  placeholder="Ex: Acompte Inscription, 1er Trimestre, Tranche Unique"
-                />
-              </FormControl>
-              <FormDescription>
-                Le nom du versement attendu de l'élève (affiché sur les reçus).
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Feedback d'erreur globale */}
+        {form.formState.errors.root && (
+          <div
+            role="alert"
+            className="p-3 text-red-600 border rounded-md text-sm font-medium animate-in fade-in zoom-in duration-200"
+          >
+            {form.formState.errors.root.message}
+          </div>
+        )}
       </form>
     </Form>
   );
 };
 
 FeeScheduleForm.displayName = "FeeScheduleForm";
+
+/**
+ * Formulaire de création en masse
+ */
+export const FeeScheduleBulkForm: React.FC<
+  BaseFormProps<FeeScheduleCreate, FeeScheduleBulkCreate> & FeeTypeProps
+> = ({ formId, onSubmit, feeTypeOptions, defaultValues }) => {
+  return (
+    <GenericBulkForm
+      formId={formId}
+      // 🌟 CORRECTION ICI : On passe le schéma UNITAIRE.
+      // GenericBulkForm se charge déjà d'exécuter createBulkCreateSchema(itemSchema)
+      itemSchema={FeeScheduleCreateSchema}
+      itemDefaultValues={mergeDefaultValues<FeeScheduleCreate>(
+        defaultValues,
+        DEFAULT_VALUES,
+      )}
+      onSubmit={onSubmit}
+      addButtonLabel="Ajouter une autre échéance"
+      renderFields={({ namePrefix, control }) => (
+        <FeeScheduleBaseForm
+          control={control}
+          prefixName={namePrefix}
+          feeTypeOptions={feeTypeOptions}
+        />
+      )}
+    />
+  );
+};
+
+FeeScheduleBulkForm.displayName = "FeeScheduleBulkForm";

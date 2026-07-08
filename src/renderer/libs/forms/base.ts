@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import { useId, useCallback, useMemo } from "react";
-import type { DefaultValues, FieldValues, UseFormReset } from "react-hook-form";
+import type {
+  DefaultValues,
+  FieldError,
+  FieldErrors,
+  FieldValues,
+  UseFormReset,
+} from "react-hook-form";
 import {
   useZodForm as useForm,
   type UseZodFormReturn,
@@ -70,15 +76,21 @@ export function useZodForm<TFieldValues extends FieldValues>({
   onSubmitRef.current = onSubmit;
 
   const submit = useMemo(() => {
-    return form.handleSubmit(async (values) => {
-      if (!onSubmitRef.current) return;
+    return form.handleSubmit(
+      async (values) => {
+        if (!onSubmitRef.current) return;
 
-      await onSubmitRef.current(values, {
-        reset: (nextValues) => {
-          form.reset(nextValues ?? defaultValues);
-        },
-      });
-    });
+        await onSubmitRef.current(values, {
+          reset: (nextValues) => {
+            form.reset(nextValues ?? defaultValues);
+          },
+        });
+      },
+      (errors) => {
+        const _errors = getFormErrors(errors);
+        console.log("Form Errors", _errors);
+      },
+    );
   }, [form, defaultValues]);
 
   return {
@@ -162,4 +174,47 @@ export function mergeDefaultValuesDeep<T extends Record<string, any>>(
   }
 
   return output;
+}
+
+interface FlatError {
+  path: string;
+  message: string;
+  type: string;
+}
+
+/**
+ * Extrait et aplatit toutes les erreurs actives de formState.errors
+ * Gère les objets imbriqués et les listes (Field Arrays / Bulk)
+ */
+export function getFormErrors(
+  errors: FieldErrors,
+  parentPath = "",
+): FlatError[] {
+  let extractedErrors: FlatError[] = [];
+
+  for (const key in errors) {
+    if (!Object.prototype.hasOwnProperty.call(errors, key)) continue;
+
+    const currentError = errors[key];
+    const currentPath = parentPath ? `${parentPath}.${key}` : key;
+
+    if (!currentError) continue;
+
+    if ("message" in currentError && typeof currentError.message === "string") {
+      const error = currentError as FieldError;
+      extractedErrors.push({
+        path: currentPath,
+        message: error.message ?? "Aucun message",
+        type: String(error.type),
+      });
+    } else {
+      // Sinon, c'est un niveau d'imbrication supérieur (un sous-objet ou un tableau)
+      extractedErrors = [
+        ...extractedErrors,
+        ...getFormErrors(currentError as FieldErrors, currentPath),
+      ];
+    }
+  }
+
+  return extractedErrors;
 }

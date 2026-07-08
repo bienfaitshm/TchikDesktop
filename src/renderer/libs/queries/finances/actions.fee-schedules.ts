@@ -1,35 +1,57 @@
-import { useCallback, useState } from "react";
+import type { FeeSchedule } from "@/packages/@core/data-access/db";
+import { useCallback } from "react";
 import {
   useCreateFeeSchedule,
+  useBulkCreateFeeSchedule,
   useUpdateFeeSchedule,
   useDeleteFeeSchedule,
-  useGetFeeSchedulesAsOptions,
+  useGetFeeTypeAsOptions,
 } from "./finances";
 import { useFormBaseNotify, useFormBase } from "../base";
 import { withNotifications } from "@/renderer/libs/notifications";
 import type {
-  FeeSchedule,
+  FeeScheduleBulkCreate,
   FeeScheduleCreate,
   FeeScheduleUpdate,
+  FeeType,
 } from "@/packages/@core/data-access/schema-validations";
-import type { BaseMutationConfig, QueryUpdatePayload } from "../base";
+import type {
+  BaseMutationConfig,
+  QueryUpdatePayload,
+  UseBaseParams,
+} from "../base";
+import type { FieldValues } from "react-hook-form";
 
-/* ==========================================================================
-   1. HOOK CRÉATION ÉCHÉANCE (FEE SCHEDULE)
-   ========================================================================== */
-export function useCreateFeeScheduleForm(
-  config?: BaseMutationConfig<FeeSchedule>,
-) {
+type SchoolID = Partial<Pick<FeeType, "schoolId">>;
+type HookActionsParams<T = FeeSchedule> = SchoolID & BaseMutationConfig<T>;
+export type FeeScheduleFormConfig<T = FeeSchedule> = BaseMutationConfig<T>;
+
+/**
+ * Hook de base partagé pour injecter les options de types de frais requis par les formulaires
+ */
+const useBaseFeeSchedule = <
+  TFormData extends FieldValues,
+  TMutateInput,
+  TReturnData = unknown,
+>({
+  schoolId,
+  ...params
+}: SchoolID & UseBaseParams<TFormData, TMutateInput, TReturnData>) => {
+  const { data: feeTypeOptions = [] } = useGetFeeTypeAsOptions({
+    where: { schoolId },
+  });
+  const form = useFormBaseNotify<TFormData, TMutateInput, TReturnData>(params);
+
+  return { feeTypeOptions, ...form };
+};
+
+/**
+ * Création unitaire
+ */
+export function useCreateFeeScheduleForm(config?: HookActionsParams) {
   const mutation = useCreateFeeSchedule();
-
-  // État local pour la recherche asynchrone du Type de Frais parent via le ComboboxSearch
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // On récupère les options filtrées (tu as aussi la possibilité d'utiliser ton hook dédié aux feeTypes ici)
-  const { data: options = [], isLoading: isSearching } =
-    useGetFeeSchedulesAsOptions();
-
-  const formBase = useFormBaseNotify<FeeScheduleCreate, FeeScheduleCreate>({
+  return useBaseFeeSchedule<FeeScheduleCreate, FeeScheduleCreate, FeeSchedule>({
+    schoolId: config?.schoolId,
     mutation,
     config,
     getNotifications: () => ({
@@ -42,32 +64,47 @@ export function useCreateFeeScheduleForm(
     }),
     adaptData: (data) => data,
   });
-
-  return {
-    ...formBase,
-    feeTypeSearch: {
-      searchQuery,
-      setSearchQuery,
-      isSearching,
-      options: options.map((opt) => ({ label: opt.label, value: opt.value })),
-    },
-  };
 }
 
-/* ==========================================================================
-   2. HOOK MODIFICATION ÉCHÉANCE (FEE SCHEDULE)
-   ========================================================================== */
+/**
+ * Création en masse (Bulk)
+ */
+export function useBulkCreateFeeScheduleForm(
+  config?: HookActionsParams<FeeSchedule[]>,
+) {
+  const mutation = useBulkCreateFeeSchedule();
+  return useBaseFeeSchedule<
+    FeeScheduleBulkCreate,
+    FeeScheduleBulkCreate,
+    FeeSchedule[]
+  >({
+    mutation,
+    config,
+    schoolId: config?.schoolId,
+    getNotifications: () => ({
+      success: {
+        title: "Échéances ajoutées",
+        description:
+          "Les tranches d'échéancier ont été enregistrées en masse avec succès.",
+      },
+      error: { title: "Erreur lors de la création en masse des échéances." },
+    }),
+    adaptData: (data) => data,
+  });
+}
+
+/**
+ * Modification d'une échéance
+ */
 export function useUpdateFeeScheduleForm(
   config?: BaseMutationConfig<FeeSchedule>,
 ) {
   const mutation = useUpdateFeeSchedule();
-  const [searchQuery, setSearchQuery] = useState("");
-  const { data: options = [], isLoading: isSearching } =
-    useGetFeeSchedulesAsOptions();
 
-  const formBase = useFormBaseNotify<
+  return useBaseFeeSchedule<
     QueryUpdatePayload<FeeScheduleUpdate>,
-    { data: FeeScheduleUpdate; id: string }
+    { data: FeeScheduleUpdate; id: string },
+    FeeSchedule
   >({
     mutation,
     config,
@@ -80,21 +117,11 @@ export function useUpdateFeeScheduleForm(
     }),
     adaptData: ({ data, id }) => ({ data, id }),
   });
-
-  return {
-    ...formBase,
-    feeTypeSearch: {
-      searchQuery,
-      setSearchQuery,
-      isSearching,
-      options: options.map((opt) => ({ label: opt.label, value: opt.value })),
-    },
-  };
 }
 
-/* ==========================================================================
-   3. HOOK SUPPRESSION ÉCHÉANCE (FEE SCHEDULE)
-   ========================================================================== */
+/**
+ * Suppression d'une échéance
+ */
 export function useDeleteFeeScheduleForm(config?: BaseMutationConfig<void>) {
   const { notifyAndInvalidate } = useFormBase(config);
   const mutation = useDeleteFeeSchedule();
@@ -113,7 +140,7 @@ export function useDeleteFeeScheduleForm(config?: BaseMutationConfig<void>) {
             },
           },
           onSuccess: () => {
-            notifyAndInvalidate(undefined as void);
+            notifyAndInvalidate();
           },
         }),
       );

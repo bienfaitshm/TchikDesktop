@@ -52,7 +52,6 @@ export function GenericBulkForm<TItemSchema extends z.ZodTypeAny>({
   addButtonLabel = "Ajouter un élément",
 }: BaseFormProps<InferBulkCreate<TItemSchema>> &
   GenericBulkFormProps<TItemSchema>) {
-  // 1. Mémorisation du schéma global
   const bulkSchema = React.useMemo(
     () => createBulkCreateSchema(itemSchema),
     [itemSchema],
