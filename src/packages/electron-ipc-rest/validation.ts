@@ -104,6 +104,7 @@ export function createValidatedHandler<
     safeData.headers = validate(schemas.headers, req.headers, "headers");
 
     if (errors.length > 0) {
+      console.error("[Validation] :", errors);
       throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST, {
         issues: errors,
       });

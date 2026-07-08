@@ -7,7 +7,8 @@ import {
   FeeScheduleFilterSchema,
   type FeeScheduleFilter,
   createSearchOptionsSchema,
-  FeeScheduleBulkCreate,
+  type FeeScheduleBulkCreate,
+  FeeScheduleBulkCreateSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -79,7 +80,7 @@ export class BulkPostFeeSchedule extends AbstractEndpoint<any> {
   route = FeeScheduleRoutes.BULK;
   method = HttpMethod.POST;
   schemas: ValidationSchemas = {
-    body: FeeScheduleCreateSchema,
+    body: FeeScheduleBulkCreateSchema,
   };
 
   protected handle({

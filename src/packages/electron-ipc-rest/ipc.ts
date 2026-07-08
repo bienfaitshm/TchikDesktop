@@ -180,6 +180,9 @@ export class IpcServer {
         },
       };
 
+      this.logger.info(`[Apis Call]: call apis on ${routeKey}`, {
+        payload: req,
+      });
       try {
         const result = await route.handler(req);
         return createResponse(result, HttpStatus.OK);
@@ -190,9 +193,7 @@ export class IpcServer {
 
     this.ipcMain.handle(this.GATEWAY_CHANNEL, gatewayHandler);
     this.isListening = true;
-    this.logger.info(
-      `[IpcServer] Gateway listening with ${this.routes.size} routes.`,
-    );
+    this.logger.info(`[Gateway] listening with ${this.routes.size} routes.`);
 
     return () => {
       this.ipcMain.removeHandler(this.GATEWAY_CHANNEL);
