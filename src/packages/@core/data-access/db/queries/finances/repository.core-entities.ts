@@ -136,7 +136,7 @@ export type FeeScheduleOptionFilters = Partial<
 >;
 
 const FEE_SCHEDULE_OPTION_DEFAULT_SORT: FeeScheduleOptionFilters = {
-  orderBy: [{ column: "installmentName", order: "asc" }],
+  orderBy: [{ column: "createdAt", order: "asc" }],
 };
 
 export class FeeScheduleRepository
