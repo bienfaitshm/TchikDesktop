@@ -19,17 +19,17 @@ import {
 } from "@/renderer/components/tables/data-table";
 import {
   optionColumns,
-  enhanceColumnsExpandable,
+  enhanceColumns,
 } from "@/renderer/components/tables/columns";
-import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import {
-  ActionContainer,
-  ActionTileCopy,
-  ActionTileDelete,
-  ActionTileEdit,
-} from "@/renderer/components/tables/data-table.action-tiles";
+  ActionMenu,
+  MenuDialogItem,
+  MenuDialogWrapper,
+} from "@/renderer/components/menus/dropdown";
+import { DropdownMenuSeparator } from "@/renderer/components/ui/dropdown-menu";
+import { ButtonMenu } from "@/renderer/components/buttons/button-menu";
 
 import {
   CreateOptionDialog,
@@ -39,62 +39,87 @@ import {
 } from "@/renderer/dialog-actions/option.dialog-actions";
 
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
+import { Pencil, Copy, Trash2 } from "lucide-react";
 
-const columns = enhanceColumnsExpandable(optionColumns);
-
-interface OptionRowActionsProps extends Pick<OptionDialogProps, "mutationKey"> {
+interface RowActionsProps extends Pick<OptionDialogProps, "mutationKey"> {
   option: Option;
 }
 
-/**
- * @description Actions de ligne
- */
-const OptionRowActions = React.memo(
-  ({ option, mutationKey }: OptionRowActionsProps) => {
-    return (
-      <ActionContainer>
-        {/* Modification */}
-        <UpdateOptionDialog
-          mutationKey={mutationKey}
-          optionId={option.optionId}
-          defaultValues={option}
-        >
-          <ActionTileEdit />
-        </UpdateOptionDialog>
+export const RowAction: React.FC<RowActionsProps> = ({
+  mutationKey,
+  option,
+}) => (
+  <ActionMenu
+    trigger={<ButtonMenu />}
+    dialogs={
+      <>
+        <MenuDialogWrapper id="edit">
+          <UpdateOptionDialog
+            mutationKey={mutationKey}
+            optionId={option.optionId}
+            defaultValues={option}
+          />
+        </MenuDialogWrapper>
+        <MenuDialogWrapper id="duplicate">
+          <CreateOptionDialog
+            mutationKey={mutationKey}
+            defaultValues={option}
+          />
+        </MenuDialogWrapper>
+        <MenuDialogWrapper id="delete">
+          <DeleteOptionDialog
+            mutationKey={mutationKey}
+            optionId={option.optionId}
+            optionName={option.optionName}
+          />
+        </MenuDialogWrapper>
+      </>
+    }
+  >
+    <MenuDialogItem targetId="edit" className="gap-2 cursor-pointer">
+      <Pencil className="size-4 text-muted-foreground" />
+      <span>Modifier la filière</span>
+    </MenuDialogItem>
 
-        {/* Duplication */}
-        <CreateOptionDialog mutationKey={mutationKey} defaultValues={option}>
-          <ActionTileCopy />
-        </CreateOptionDialog>
+    <MenuDialogItem targetId="duplicate" className="gap-2 cursor-pointer">
+      <Copy className="size-4 text-muted-foreground" />
+      <span>Dupliquer la filière</span>
+    </MenuDialogItem>
 
-        {/* Suppression unifiée (Plus de Render Props obsolète !) */}
-        <DeleteOptionDialog
-          mutationKey={mutationKey}
-          optionId={option.optionId}
-          optionName={option.optionName}
-        >
-          <ActionTileDelete />
-        </DeleteOptionDialog>
-      </ActionContainer>
-    );
-  },
+    <DropdownMenuSeparator />
+
+    <MenuDialogItem
+      targetId="delete"
+      className="gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+    >
+      <Trash2 className="size-4" />
+      <span>Supprimer la filière</span>
+    </MenuDialogItem>
+  </ActionMenu>
 );
-
-OptionRowActions.displayName = "OptionRowActions";
 
 export const OptionPage = () => {
   const { schoolId } = useSchoolContext();
-  const { data: rawOptions, queryKey: mutationKey } = useGetOptions({
+  const { data: options = [], queryKey: mutationKey } = useGetOptions({
     where: { schoolId },
   });
-  const options = React.useMemo(() => rawOptions ?? [], [rawOptions]);
+  const columns = React.useMemo(
+    () =>
+      enhanceColumns(optionColumns, {
+        variant: "actions",
+        renderRowAction: (option) => (
+          <RowAction option={option} mutationKey={mutationKey} />
+        ),
+      }),
+    [mutationKey],
+  );
 
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
       <PageShell
         maxWidth="xl"
         header={
-          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4 ">
+          <section>
             <header className="space-y-1">
               <h1 className="text-2xl font-bold tracking-tight">
                 Gestion des filières
@@ -141,21 +166,8 @@ export const OptionPage = () => {
 
           <DataTableContent>
             <DataContentHead />
-            <DataContentBody<Option>>
-              {({ row }) => (
-                <ExpandableRow
-                  row={row as any}
-                  renderDetail={
-                    <OptionRowActions
-                      option={row.original}
-                      mutationKey={mutationKey}
-                    />
-                  }
-                />
-              )}
-            </DataContentBody>
+            <DataContentBody<Option>></DataContentBody>
           </DataTableContent>
-
           <DataTablePagination />
         </DataTable>
       </PageShell>

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DialogForm } from "@/renderer/components/dialog/form";
+import { DialogForm, DialogFormProps } from "@/renderer/components/dialog/form";
 import {
   ConfirmDeleteDialog,
   useAsyncConfirm,
@@ -20,6 +20,7 @@ import {
 export type OptionDialogProps<TExtraProps extends Record<string, any> = {}> =
   React.PropsWithChildren<
     TExtraProps &
+      Pick<DialogFormProps, "open" | "onOpenChange"> &
       OptionFormConfig & {
         defaultValues?: Partial<OptionFormData>;
       }
@@ -32,6 +33,8 @@ export type OptionDialogProps<TExtraProps extends Record<string, any> = {}> =
 export const CreateOptionDialog: React.FC<OptionDialogProps> = ({
   children,
   defaultValues,
+  onOpenChange,
+  open,
   ...config
 }) => {
   const { formId, onSubmit, isSubmitting } = useCreateOptionForm(config);
@@ -43,6 +46,8 @@ export const CreateOptionDialog: React.FC<OptionDialogProps> = ({
       description="Remplissez les informations ci-dessous pour ajouter une nouvelle filière à votre établissement."
       formId={formId}
       isLoading={isSubmitting}
+      open={open}
+      onOpenChange={onOpenChange}
     >
       <OptionForm
         formId={formId}
@@ -62,7 +67,7 @@ interface UpdateOptionProps {
 
 export const UpdateOptionDialog: React.FC<
   OptionDialogProps<UpdateOptionProps>
-> = ({ defaultValues, optionId, children, ...config }) => {
+> = ({ defaultValues, optionId, children, onOpenChange, open, ...config }) => {
   const { formId, isSubmitting, onSubmit } = useUpdateOptionForm(config);
 
   const handleSubmit = React.useCallback(
@@ -80,6 +85,8 @@ export const UpdateOptionDialog: React.FC<
       description="Modifiez les détails de la filière. Les changements seront appliqués immédiatement."
       formId={formId}
       isLoading={isSubmitting}
+      open={open}
+      onOpenChange={onOpenChange}
     >
       <OptionForm
         formId={formId}
@@ -100,8 +107,11 @@ interface DeleteOptionProps {
 
 export const DeleteOptionDialog: React.FC<
   OptionDialogProps<DeleteOptionProps>
-> = ({ children, optionId, optionName, ...config }) => {
-  const { isOpen, onOpen, onClose } = useConfirm<string>();
+> = ({ children, optionId, optionName, onOpenChange, open, ...config }) => {
+  const { isOpen, onOpen, onClose } = useConfirm<string>({
+    open,
+    onOpenChange,
+  });
 
   const { deleteOption, isDeleting } = useDeleteOptionForm({
     ...config,

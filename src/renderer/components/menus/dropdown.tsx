@@ -11,6 +11,7 @@ import type {
   MenuTriggerState,
   HTMLProps,
 } from "@base-ui/react";
+import { cn } from "@/renderer/utils";
 
 type DialogState = {
   openDialogId: string | null;
@@ -70,7 +71,6 @@ export const MenuDialogItem: FC<MenuDialogItemProps> = ({
         e.preventDefault();
         onSelect?.(e);
         ctx.openDialog(targetId);
-        console.log(targetId);
       }}
     />
   );
@@ -82,25 +82,28 @@ type ActionMenuProps = {
     | ComponentRenderFn<HTMLProps, MenuTriggerState>;
   children: React.ReactNode;
   dialogs?: React.ReactNode;
+  className?: string;
 };
 
 export const ActionMenu: FC<ActionMenuProps> = ({
   trigger,
   children,
   dialogs,
+  className,
 }) => {
   const [openDialogId, setOpenDialogId] = useState<string | null>(null);
 
   const openDialog = useCallback((id: string) => setOpenDialogId(id), []);
   const closeDialog = useCallback(() => setOpenDialogId(null), []);
-  console.log("ActionMenu", openDialogId);
   return (
     <MenuDialogContext.Provider
       value={{ openDialogId, openDialog, closeDialog }}
     >
       <DropdownMenu>
         <DropdownMenuTrigger render={trigger} />
-        <DropdownMenuContent>{children}</DropdownMenuContent>
+        <DropdownMenuContent className={cn("min-w-xs", className)}>
+          {children}
+        </DropdownMenuContent>
         {dialogs}
       </DropdownMenu>
     </MenuDialogContext.Provider>
