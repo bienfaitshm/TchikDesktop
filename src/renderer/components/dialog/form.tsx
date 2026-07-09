@@ -26,6 +26,8 @@ export interface DialogFormProps {
   formId?: string;
   isLoading?: boolean;
   submitText?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const DialogForm: React.FC<DialogFormProps> = ({
@@ -36,12 +38,34 @@ export const DialogForm: React.FC<DialogFormProps> = ({
   isLoading = false,
   submitText = "Enregistrer",
   children,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }) => {
-  const [open, setOpen] = React.useState(false);
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  const isControlled = controlledOpen !== undefined;
+
+  const open = isControlled ? controlledOpen : internalOpen;
+
+  const handleOpenChange = React.useCallback(
+    (newOpen: boolean) => {
+      if (isLoading) return;
+      if (isControlled) {
+        controlledOnOpenChange?.(newOpen);
+      } else {
+        setInternalOpen(newOpen);
+      }
+    },
+    [isLoading, isControlled, controlledOnOpenChange],
+  );
 
   const handleClose = React.useCallback(() => {
-    if (!isLoading) setOpen(false);
-  }, [isLoading]);
+    if (isLoading) return;
+    if (isControlled) {
+      controlledOnOpenChange?.(false);
+    } else {
+      setInternalOpen(false);
+    }
+  }, [isLoading, isControlled, controlledOnOpenChange]);
 
   const handleContentInteract = React.useCallback(
     (e: Event) => {
@@ -51,11 +75,7 @@ export const DialogForm: React.FC<DialogFormProps> = ({
   );
 
   return (
-    <Dialog
-      modal={true}
-      open={open}
-      onOpenChange={isLoading ? undefined : setOpen}
-    >
+    <Dialog modal={true} open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
       <DialogContent
