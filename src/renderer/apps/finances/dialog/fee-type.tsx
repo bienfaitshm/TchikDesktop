@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DialogForm } from "@/renderer/components/dialog/form";
+import { DialogForm, DialogFormProps } from "@/renderer/components/dialog/form";
 import {
   ConfirmDeleteDialog,
   useAsyncConfirm,
@@ -18,10 +18,7 @@ import {
   useDeleteFeeTypeForm,
   type FeeTypeFormConfig,
 } from "@/renderer/libs/queries/finances";
-import type {
-  FeeTypeCreate,
-  FeeTypeBulkCreate,
-} from "@/packages/@core/data-access/schema-validations";
+import type { FeeTypeCreate } from "@/packages/@core/data-access/schema-validations";
 
 import {
   ButtonInsertMultipleToggle,
@@ -33,6 +30,7 @@ export type FeeTypeDialogProps<
   DefaultValue = FeeTypeCreate,
 > = React.PropsWithChildren<
   TExtraProps &
+    Partial<DialogFormProps> &
     FeeTypeFormConfig & {
       defaultValues?: Partial<DefaultValue>;
     }
@@ -40,23 +38,17 @@ export type FeeTypeDialogProps<
 
 type SchoolConfig = Pick<FeeTypeCreate, "schoolId">;
 
-/* ==========================================================================
-   CREATE FEE TYPE
-   ========================================================================== */
 interface CreateFeeTypeProps {}
 
 export const FeeTypeDialogCreateForm: React.FC<
   FeeTypeDialogProps<CreateFeeTypeProps & SchoolConfig>
-> = ({ schoolId, yearId, children, defaultValues, ...config }) => {
-  // 1. Gestion de l'état d'affichage (Unitaire vs Bulk)
+> = ({ schoolId, children, defaultValues, onOpenChange, open, ...config }) => {
   const { pressed, onPressedChange } = useButtonInsertToggle();
 
-  // 2. Initialisation inconditionnelle des deux formulaires (Règle des Hooks)
   const bulkFormState = useBulkCreateFeeTypeForm({ schoolId, ...config });
   const singleFormState = useCreateFeeTypeForm({ schoolId, ...config });
 
-  // 3. 🌟 STRATÉGIE SENIOR : Sélection dynamique de l'état du formulaire actif
-  const { formId, isSubmitting, onSubmit, options } = pressed
+  const { formId, options, isSubmitting } = pressed
     ? bulkFormState
     : singleFormState;
 
@@ -67,25 +59,25 @@ export const FeeTypeDialogCreateForm: React.FC<
       description="Définissez un nouveau type de frais (ex: Minerval) et associez-le à une caisse réceptrice."
       formId={formId}
       isLoading={isSubmitting}
+      onOpenChange={onOpenChange}
+      open={open}
     >
-      {/* Bouton de bascule d'insertion */}
       <ButtonInsertMultipleToggle
         pressed={pressed}
         onPressedChange={onPressedChange}
       />
 
-      {/* Rendu conditionnel du bon formulaire avec les données injectées du hook actif */}
       {pressed ? (
         <FeeTypeBulkForm
           formId={formId}
-          onSubmit={onSubmit}
+          onSubmit={bulkFormState.onSubmit}
           walletsOptions={options}
-          // defaultValues={defaultValues}
+          defaultValues={defaultValues}
         />
       ) : (
         <FeeTypeForm
           formId={formId}
-          onSubmit={onSubmit}
+          onSubmit={singleFormState.onSubmit}
           walletsOptions={options}
           defaultValues={defaultValues}
         />
@@ -95,16 +87,22 @@ export const FeeTypeDialogCreateForm: React.FC<
 };
 
 FeeTypeDialogCreateForm.displayName = "FeeTypeDialogCreateForm";
-/* ==========================================================================
-   UPDATE FEE TYPE
-   ========================================================================== */
+
 interface UpdateFeeTypeProps {
   feeTypeId: string;
 }
 
 export const FeeTypeDialogUpdateForm: React.FC<
   FeeTypeDialogProps<UpdateFeeTypeProps & SchoolConfig>
-> = ({ defaultValues, feeTypeId, schoolId, children, ...config }) => {
+> = ({
+  defaultValues,
+  feeTypeId,
+  schoolId,
+  children,
+  onOpenChange,
+  open,
+  ...config
+}) => {
   const { formId, isSubmitting, onSubmit, options } = useUpdateFeeTypeForm({
     ...config,
     schoolId,
@@ -117,6 +115,8 @@ export const FeeTypeDialogUpdateForm: React.FC<
       description="Ajustez le nom ou le portefeuille de destination par défaut."
       formId={formId}
       isLoading={isSubmitting}
+      onOpenChange={onOpenChange}
+      open={open}
     >
       <FeeTypeForm
         formId={formId}
@@ -140,8 +140,11 @@ interface DeleteFeeTypeProps {
 
 export const FeeTypeDialogDeleteForm: React.FC<
   FeeTypeDialogProps<DeleteFeeTypeProps>
-> = ({ children, feeTypeId, name, ...config }) => {
-  const { isOpen, onClose, onOpen } = useConfirm<string>();
+> = ({ children, feeTypeId, name, onOpenChange, open, ...config }) => {
+  const { isOpen, onClose, onOpen } = useConfirm<string>({
+    open,
+    onOpenChange,
+  });
   const { isDeleting, deleteFeeType } = useDeleteFeeTypeForm({
     ...config,
     onSuccess: (id) => {
