@@ -17,7 +17,7 @@ type DialogChildrenRenderProps = {
 };
 
 export interface DialogFormProps {
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
   title: string;
   description?: string;
   children?:
@@ -76,8 +76,7 @@ export const DialogForm: React.FC<DialogFormProps> = ({
 
   return (
     <Dialog modal={true} open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-
+      {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent
         className="sm:max-w-lg md:max-w-2xl lg:max-w-4xl flex flex-col max-h-[85vh]"
         onPointerDownOutside={handleContentInteract}
