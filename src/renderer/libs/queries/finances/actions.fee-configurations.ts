@@ -1,24 +1,90 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
+import type { FeeConfiguration } from "@/packages/@core/data-access/db";
 import {
-  useCreateFeeConfiguration,
-  useUpdateFeeConfiguration,
-  useDeleteFeeConfiguration,
-} from "./finances";
-import { useFormBaseNotify } from "../base";
-import { withNotifications } from "@/renderer/libs/notifications";
+  CURRENCY_OPTIONS,
+  SECTION_OPTIONS,
+} from "@/packages/@core/data-access/db/options";
 import type {
-  FeeConfiguration,
   FeeConfigurationCreate,
   FeeConfigurationUpdate,
 } from "@/packages/@core/data-access/schema-validations";
-import type { BaseMutationConfig, QueryUpdatePayload } from "../base";
-import { useFormBase } from "../base";
+import { withNotifications } from "@/renderer/libs/notifications";
+import { useSearchClassrooms } from "@/renderer/libs/queries/classrooms";
+import { useSearchOptions } from "@/renderer/libs/queries/options";
+import type {
+  BaseMutationConfig,
+  QueryUpdatePayload,
+  UseBaseParams,
+} from "../base";
+import { useFormBase, useFormBaseNotify } from "../base";
+import {
+  useCreateFeeConfiguration,
+  useDeleteFeeConfiguration,
+  useUpdateFeeConfiguration,
+} from "./finances";
+import { useSearchFeeTypeOptions } from "./helpers";
+import { FieldValues } from "react-hook-form";
 
+export type FeeConfigurationFormConfig = BaseMutationConfig<FeeConfiguration>;
+export type FeeConfigurationFormData = FeeConfigurationCreate;
+
+interface FeeConfigContextParams {
+  schoolId: string;
+  yearId: string;
+}
+
+/**
+ * 1. Hook de Base partagé (Shared Form Context)
+ * Centralise la récupération des options de recherche pour les formulaires (Simple & Bulk)
+ */
+export const useFeeConfigBaseForm = <
+  TFormData extends FieldValues,
+  TReturnData,
+>({
+  schoolId,
+  yearId,
+  ...params
+}: FeeConfigContextParams &
+  UseBaseParams<TFormData, TFormData, TReturnData>) => {
+  const schoolFilter = useMemo(
+    () => ({ filters: { where: { schoolId } } }),
+    [schoolId],
+  );
+  const feeTypeFilter = useMemo(
+    () => ({ filters: { where: { schoolId, yearId } } }),
+    [schoolId, yearId],
+  );
+
+  const classroomSearch = useSearchClassrooms(schoolFilter);
+  const optionSearch = useSearchOptions(schoolFilter);
+  const feeTypeSearch = useSearchFeeTypeOptions(feeTypeFilter);
+
+  const base = useFormBaseNotify<TFormData, TFormData, TReturnData>(params);
+
+  return {
+    currencyOptions: CURRENCY_OPTIONS,
+    sectionOptions: SECTION_OPTIONS,
+    feeTypeSearch,
+    optionSearch,
+    classroomSearch,
+    ...base,
+  };
+};
+
+/**
+ * 2. Hook pour la Création (Unitaire ou Bulk)
+ */
 export function useCreateFeeConfigurationForm(
-  config?: BaseMutationConfig<FeeConfiguration>,
+  // Ajout des identifiants nécessaires au contexte
+  { schoolId, yearId }: FeeConfigContextParams,
+  config?: FeeConfigurationFormConfig,
 ) {
   const mutation = useCreateFeeConfiguration();
-  return useFormBaseNotify<FeeConfigurationCreate, FeeConfigurationCreate>({
+
+  // Utilisation du hook de base unifié
+  return useFeeConfigBaseForm<FeeConfigurationCreate, FeeConfiguration>({
+    schoolId,
+    yearId,
     mutation,
     config,
     getNotifications: () => ({
@@ -28,18 +94,25 @@ export function useCreateFeeConfigurationForm(
       },
       error: { title: "Erreur lors de la création de la configuration." },
     }),
-    adaptData: (data) => data,
+    adaptData: (data) => ({ ...data, schoolId, yearId }),
   });
 }
 
+/**
+ * 3. Hook pour la Modification
+ */
 export function useUpdateFeeConfigurationForm(
-  config?: BaseMutationConfig<FeeConfiguration>,
+  { schoolId, yearId }: FeeConfigContextParams,
+  config?: FeeConfigurationFormConfig,
 ) {
   const mutation = useUpdateFeeConfiguration();
-  return useFormBaseNotify<
+
+  return useFeeConfigBaseForm<
     QueryUpdatePayload<FeeConfigurationUpdate>,
-    { data: FeeConfigurationUpdate; id: string }
+    FeeConfiguration
   >({
+    schoolId,
+    yearId,
     mutation,
     config,
     getNotifications: () => ({
@@ -53,6 +126,9 @@ export function useUpdateFeeConfigurationForm(
   });
 }
 
+/**
+ * 4. Hook pour la Suppression
+ */
 export function useDeleteFeeConfigurationForm(
   config?: BaseMutationConfig<void>,
 ) {
@@ -73,7 +149,7 @@ export function useDeleteFeeConfigurationForm(
             },
           },
           onSuccess: () => {
-            notifyAndInvalidate(undefined as void);
+            notifyAndInvalidate();
           },
         }),
       );

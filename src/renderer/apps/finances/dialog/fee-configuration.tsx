@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DialogForm } from "@/renderer/components/dialog/form";
+import { DialogForm, DialogFormProps } from "@/renderer/components/dialog/form";
 import {
   ConfirmDeleteDialog,
   useAsyncConfirm,
@@ -19,6 +19,7 @@ import {
 export type FeeConfigDialogProps<TExtraProps extends Record<string, any> = {}> =
   React.PropsWithChildren<
     TExtraProps &
+      Partial<DialogFormProps> &
       FeeConfigurationFormConfig & {
         defaultValues?: Partial<FeeConfigurationFormData>;
       }
@@ -34,7 +35,15 @@ interface CreateFeeConfigProps {
 
 export const FeeConfigurationDialogCreateForm: React.FC<
   FeeConfigDialogProps<CreateFeeConfigProps>
-> = ({ schoolId, yearId, children, defaultValues, ...config }) => {
+> = ({
+  schoolId,
+  yearId,
+  children,
+  defaultValues,
+  open,
+  onOpenChange,
+  ...config
+}) => {
   const {
     formId,
     currencyOptions,
@@ -53,6 +62,8 @@ export const FeeConfigurationDialogCreateForm: React.FC<
       description="Configurez une nouvelle grille de frais (montant, devise) appliquée à une cible spécifique."
       formId={formId}
       isLoading={isSubmitting}
+      open={open}
+      onOpenChange={onOpenChange}
     >
       <FeeConfigurationForm
         formId={formId}
@@ -62,7 +73,7 @@ export const FeeConfigurationDialogCreateForm: React.FC<
         feeTypeSearch={feeTypeSearch}
         optionSearch={optionSearch}
         classroomSearch={classroomSearch}
-        defaultValues={defaultValues}
+        defaultValues={{ ...defaultValues, schoolId, yearId }}
       />
     </DialogForm>
   );
@@ -73,11 +84,22 @@ export const FeeConfigurationDialogCreateForm: React.FC<
    ========================================================================== */
 interface UpdateFeeConfigProps {
   feeConfigId: string;
+  schoolId: string;
+  yearId: string;
 }
 
 export const FeeConfigurationDialogUpdateForm: React.FC<
   FeeConfigDialogProps<UpdateFeeConfigProps>
-> = ({ defaultValues, feeConfigId, children, ...config }) => {
+> = ({
+  defaultValues,
+  feeConfigId,
+  children,
+  schoolId,
+  yearId,
+  open,
+  onOpenChange,
+  ...config
+}) => {
   const {
     formId,
     isSubmitting,
@@ -87,7 +109,7 @@ export const FeeConfigurationDialogUpdateForm: React.FC<
     feeTypeSearch,
     optionSearch,
     classroomSearch,
-  } = useUpdateFeeConfigurationForm({ feeConfigId, ...config });
+  } = useUpdateFeeConfigurationForm({ ...config, schoolId, yearId });
 
   return (
     <DialogForm
@@ -96,6 +118,8 @@ export const FeeConfigurationDialogUpdateForm: React.FC<
       description="Modifiez les montants ou les cibles. Attention aux impacts sur les calculs de dettes d'élèves."
       formId={formId}
       isLoading={isSubmitting}
+      open={open}
+      onOpenChange={onOpenChange}
     >
       <FeeConfigurationForm
         formId={formId}
@@ -107,7 +131,7 @@ export const FeeConfigurationDialogUpdateForm: React.FC<
         feeTypeSearch={feeTypeSearch}
         optionSearch={optionSearch}
         classroomSearch={classroomSearch}
-        defaultValues={defaultValues}
+        defaultValues={{ ...defaultValues, schoolId, yearId }}
       />
     </DialogForm>
   );

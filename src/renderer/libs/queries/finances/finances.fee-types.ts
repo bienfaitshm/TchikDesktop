@@ -13,12 +13,13 @@ import type {
   UseSuspenseQueryOptions,
 } from "@tanstack/react-query";
 import type { FeeType } from "@/packages/@core/data-access/db";
+import { FeeTypeSearchParams } from "@/packages/@core/apis/clients/finances.fee-types";
 
 export const feeTypeKeys = {
   all: ["fee-types"] as const,
   lists: (params?: FeeTypeFilter) =>
     [...feeTypeKeys.all, "list", { params }] as const,
-  options: (params?: FeeTypeFilter) =>
+  options: (params?: FeeTypeSearchParams) =>
     [...feeTypeKeys.all, "options", { params }] as const,
   details: () => [...feeTypeKeys.all, "detail"] as const,
   detail: (id: string) => [...feeTypeKeys.details(), id] as const,
@@ -43,7 +44,7 @@ export function useGetFeeTypes(
 }
 
 export function useGetFeeTypeAsOptions(
-  params?: FeeTypeFilter,
+  params?: FeeTypeSearchParams,
   options?: Partial<UseSuspenseQueryOptions<(SelectOption & FeeType)[]>>,
 ) {
   return useSuspenseQuery({

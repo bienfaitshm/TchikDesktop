@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   TrendingUp,
   Settings,
   CheckCircle2,
-  XCircle,
   DollarSign,
   RefreshCw,
   Lock,
@@ -21,8 +20,12 @@ import {
   CardDescription,
 } from "@/renderer/components/ui/card";
 import { Badge } from "@/renderer/components/ui/badge";
+import { FeeConfigurationDialogCreateForm } from "../dialog";
+import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 
 export function SchoolPaymentConfigPage() {
+  const { schoolId, yearId } = useSchoolContext();
+
   const [exchangeRate, setExchangeRate] = useState(2850);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -48,12 +51,14 @@ export function SchoolPaymentConfigPage() {
             réception.
           </p>
         </div>
-        <Button
-          size="sm"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
-        >
-          Sauvegarder les Paramètres
-        </Button>
+        <FeeConfigurationDialogCreateForm schoolId={schoolId} yearId={yearId}>
+          <Button
+            size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+          >
+            Sauvegarder les Paramètres
+          </Button>
+        </FeeConfigurationDialogCreateForm>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -4,6 +4,7 @@ import {
   useFieldArray,
   FieldPath,
   FieldValues,
+  UseFormReturn,
 } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
@@ -30,6 +31,7 @@ export interface BulkFormItemRenderProps<TItemSchema extends z.ZodTypeAny> {
   index: number;
   namePrefix: `items.${number}.value`;
   control: Control<InferBulkCreate<TItemSchema>>;
+  form: UseFormReturn<InferBulkCreate<TItemSchema>>;
   disabled?: boolean;
 }
 
@@ -50,7 +52,7 @@ export function GenericBulkForm<TItemSchema extends z.ZodTypeAny>({
   defaultValues,
   renderFields,
   addButtonLabel = "Ajouter un élément",
-}: BaseFormProps<InferBulkCreate<TItemSchema>> &
+}: BaseFormProps<z.infer<TItemSchema>[], InferBulkCreate<TItemSchema>> &
   GenericBulkFormProps<TItemSchema>) {
   const bulkSchema = React.useMemo(
     () => createBulkCreateSchema(itemSchema),
@@ -66,7 +68,7 @@ export function GenericBulkForm<TItemSchema extends z.ZodTypeAny>({
 
   // Générateur d'item unitaire parfaitement stable
   const getInitialItemValue = React.useCallback(
-    (): InferBulkCreate<TItemSchema>["items"][0] => ({
+    (): { key: string; value: z.TypeOf<TItemSchema> } => ({
       key: crypto.randomUUID(),
       value: latestItemDefaultValues.current,
     }),
@@ -107,6 +109,7 @@ export function GenericBulkForm<TItemSchema extends z.ZodTypeAny>({
                   namePrefix: `items.${index}.value`,
                   control: form.control,
                   disabled: isSubmitting,
+                  form,
                 })}
               </div>
 

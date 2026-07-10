@@ -180,7 +180,6 @@ export namespace ClassroomStats {
    */
   export async function getStudentsCountByClass(
     schoolId: string,
-    yearId: string,
   ): Promise<ClassStatsDTO[]> {
     try {
       const results = await db
@@ -195,12 +194,7 @@ export namespace ClassroomStats {
           classrooms,
           eq(classroomEnrollments.classroomId, classrooms.classId),
         )
-        .where(
-          and(
-            eq(classroomEnrollments.schoolId, schoolId),
-            eq(classrooms.yearId, yearId),
-          ),
-        )
+        .where(and(eq(classroomEnrollments.schoolId, schoolId)))
         .groupBy(classrooms.classId)
         .orderBy(classrooms.shortIdentifier);
 
@@ -228,7 +222,6 @@ export namespace OptionStats {
    */
   export async function getStudentsCountByOption(
     schoolId: string,
-    yearId: string,
   ): Promise<ChartDataPoint[]> {
     try {
       return await db
@@ -242,12 +235,7 @@ export namespace OptionStats {
           eq(classroomEnrollments.classroomId, classrooms.classId),
         )
         .innerJoin(options, eq(classrooms.optionId, options.optionId))
-        .where(
-          and(
-            eq(classroomEnrollments.schoolId, schoolId),
-            eq(classrooms.yearId, yearId),
-          ),
-        )
+        .where(and(eq(classroomEnrollments.schoolId, schoolId)))
         .groupBy(options.optionShortName)
         .orderBy(options.optionShortName);
     } catch (error) {
@@ -404,11 +392,11 @@ export class StatsService {
   }
 
   static getStudentsCountByClass(schoolId: string, yearId: string) {
-    return ClassroomStats.getStudentsCountByClass(schoolId, yearId);
+    return ClassroomStats.getStudentsCountByClass(schoolId);
   }
 
   static getStudentsCountByOption(schoolId: string, yearId: string) {
-    return OptionStats.getStudentsCountByOption(schoolId, yearId);
+    return OptionStats.getStudentsCountByOption(schoolId);
   }
 
   static getRetentionMetrics(schoolId: string, yearId: string) {
