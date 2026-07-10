@@ -27,7 +27,7 @@ interface FeeTypeProps {
  * Formulaire de création unitaire
  */
 export const FeeScheduleForm: React.FC<
-  BaseFormProps<FeeScheduleCreate> & FeeTypeProps
+  BaseFormProps<FeeScheduleCreate, FeeScheduleCreate> & FeeTypeProps
 > = ({ formId, onSubmit, feeTypeOptions, defaultValues }) => {
   const form = useZodForm<FeeScheduleCreate>({
     schema: FeeScheduleCreateSchema,

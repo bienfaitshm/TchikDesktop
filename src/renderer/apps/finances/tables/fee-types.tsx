@@ -10,7 +10,6 @@ import {
   FeeTypeDialogDeleteForm,
   FeeTypeDialogUpdateForm,
   type FeeTypeDialogProps,
-  FeeScheduleDialogBulkToggleForm,
 } from "@/renderer/apps/finances/dialog";
 import { feeTypeColumns } from "./fee-types.columns";
 import { enhanceColumns } from "@/renderer/components/tables/columns";
@@ -23,6 +22,7 @@ import {
 import { DropdownMenuSeparator } from "@/renderer/components/ui/dropdown-menu";
 import { ButtonMenu } from "@/renderer/components/buttons/button-menu";
 import { Pencil, Trash2, ListOrdered } from "lucide-react";
+import { ScheduleViewDialog } from "../dialog/schedule.detail-dialog";
 
 interface FeeTypeRowActionsProps extends Pick<
   FeeTypeDialogProps,
@@ -50,11 +50,7 @@ export const RowAction: React.FC<FeeTypeRowActionsProps> = ({
           />
         </MenuDialogWrapper>
         <MenuDialogWrapper id="create-schedule">
-          <FeeScheduleDialogBulkToggleForm
-            schoolId={schoolId}
-            mutationKey={mutationKey}
-            defaultValues={{ feeTypeId: feeType.feeTypeId }}
-          />
+          <ScheduleViewDialog feeType={feeType} />
         </MenuDialogWrapper>
         <MenuDialogWrapper id="delete">
           <FeeTypeDialogDeleteForm

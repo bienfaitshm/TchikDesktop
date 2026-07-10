@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DialogForm } from "@/renderer/components/dialog/form";
+import { DialogForm, DialogFormProps } from "@/renderer/components/dialog/form";
 import {
   ConfirmDeleteDialog,
   useAsyncConfirm,
@@ -27,6 +27,7 @@ export type FeeScheduleDialogProps<
   TExtraProps extends Record<string, any> = {},
 > = React.PropsWithChildren<
   TExtraProps &
+    Partial<DialogFormProps> &
     FeeScheduleFormConfig & {
       defaultValues?: Partial<FeeScheduleCreate>;
     }
@@ -37,7 +38,7 @@ export type FeeScheduleDialogProps<
    ========================================================================== */
 export const FeeScheduleDialogCreateForm: React.FC<
   FeeScheduleDialogProps<{}>
-> = ({ children, defaultValues, ...config }) => {
+> = ({ children, defaultValues, open, onOpenChange, ...config }) => {
   const { formId, feeTypeOptions, isSubmitting, onSubmit } =
     useCreateFeeScheduleForm(config);
 
@@ -48,6 +49,8 @@ export const FeeScheduleDialogCreateForm: React.FC<
       description="Créez un point de passage obligatoire ou une tranche d'appel de fonds temporelle."
       formId={formId}
       isLoading={isSubmitting}
+      onOpenChange={onOpenChange}
+      open={open}
     >
       <FeeScheduleForm
         formId={formId}
@@ -68,19 +71,16 @@ interface CreateBulkToggleProps {
 
 export const FeeScheduleDialogBulkToggleForm: React.FC<
   FeeScheduleDialogProps<CreateBulkToggleProps>
-> = ({ schoolId, children, defaultValues, ...config }) => {
-  // 1. Gestion de l'état de bascule (Unitaire vs Masse)
+> = ({ schoolId, children, defaultValues, open, onOpenChange, ...config }) => {
   const { pressed, onPressedChange } = useButtonInsertToggle();
 
-  // 2. Initialisation inconditionnelle des hooks (Règle des Hooks respectée !)
   const bulkFormState = useBulkCreateFeeScheduleForm({ schoolId, ...config });
   const singleFormState = useCreateFeeScheduleForm({ schoolId, ...config });
 
-  const { formId, isSubmitting, onSubmit, feeTypeOptions } = pressed
+  const { formId, isSubmitting, feeTypeOptions } = pressed
     ? bulkFormState
     : singleFormState;
 
-  console.log(feeTypeOptions);
   return (
     <DialogForm
       trigger={children}
@@ -88,6 +88,8 @@ export const FeeScheduleDialogBulkToggleForm: React.FC<
       description="Configurez une ou plusieurs tranches de paiement pour vos frais scolaires."
       formId={formId}
       isLoading={isSubmitting}
+      onOpenChange={onOpenChange}
+      open={open}
     >
       <div className="mb-4 flex justify-end">
         <ButtonInsertMultipleToggle
@@ -99,14 +101,14 @@ export const FeeScheduleDialogBulkToggleForm: React.FC<
       {pressed ? (
         <FeeScheduleBulkForm
           formId={formId}
-          onSubmit={onSubmit}
+          onSubmit={bulkFormState.onSubmit}
           feeTypeOptions={feeTypeOptions}
           defaultValues={defaultValues}
         />
       ) : (
         <FeeScheduleForm
           formId={formId}
-          onSubmit={onSubmit}
+          onSubmit={singleFormState.onSubmit}
           feeTypeOptions={feeTypeOptions}
           defaultValues={defaultValues}
         />
@@ -124,12 +126,16 @@ interface UpdateFeeScheduleProps {
 
 export const FeeScheduleDialogUpdateForm: React.FC<
   FeeScheduleDialogProps<UpdateFeeScheduleProps>
-> = ({ defaultValues, scheduleId, children, ...config }) => {
+> = ({
+  defaultValues,
+  scheduleId,
+  children,
+  open,
+  onOpenChange,
+  ...config
+}) => {
   const { formId, isSubmitting, onSubmit, feeTypeOptions } =
-    useUpdateFeeScheduleForm({
-      ...config,
-      scheduleId,
-    });
+    useUpdateFeeScheduleForm(config);
 
   return (
     <DialogForm
@@ -138,8 +144,9 @@ export const FeeScheduleDialogUpdateForm: React.FC<
       description="Modifiez les termes ou renommez l'intitulé de la tranche de paiement."
       formId={formId}
       isLoading={isSubmitting}
+      onOpenChange={onOpenChange}
+      open={open}
     >
-      {/* Utilisation du bon sous-composant CreateForm ou équivalent Update */}
       <FeeScheduleForm
         formId={formId}
         onSubmit={(data, helpers) =>
@@ -162,8 +169,18 @@ interface DeleteFeeScheduleProps {
 
 export const FeeScheduleDialogDeleteForm: React.FC<
   FeeScheduleDialogProps<DeleteFeeScheduleProps>
-> = ({ children, scheduleId, installmentName, ...config }) => {
-  const { isOpen, onClose, onOpen } = useConfirm<string>();
+> = ({
+  children,
+  scheduleId,
+  installmentName,
+  open,
+  onOpenChange,
+  ...config
+}) => {
+  const { isOpen, onClose, onOpen } = useConfirm<string>({
+    open,
+    onOpenChange,
+  });
   const { isDeleting, deleteFeeSchedule } = useDeleteFeeScheduleForm({
     ...config,
     onSuccess: (id) => {
