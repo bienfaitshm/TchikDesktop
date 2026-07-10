@@ -7,7 +7,6 @@ import {
   Users,
   Settings,
   Wallet,
-  Receipt,
   Banknote,
   UserPlus,
   LayoutGrid,
@@ -44,7 +43,6 @@ import WorkInProgressPage from "@/renderer/components/work-in-progess-page";
 import {
   SchoolFinanceDashboard,
   ClassroomsFinPage,
-  FeeTypesPage,
   PaymentsJournalPage,
   PaymentsHistoryPage,
   SchoolPaymentConfigPage,
@@ -101,8 +99,11 @@ export const FINANCES_SUB_MENUS: NavItem[] = [
     url: APP_ROUTES.FIN.PAYMENT_CONFIGS.LIST,
     icon: Settings,
   },
-  { name: "Portefeuilles", url: APP_ROUTES.FIN.WALLETS.LIST, icon: Wallet },
-  { name: "Types de frais", url: APP_ROUTES.FIN.FEE_TYPES.LIST, icon: Receipt },
+  {
+    name: "Portefeuilles & Types de frais",
+    url: APP_ROUTES.FIN.WALLETS.LIST,
+    icon: Wallet,
+  },
 ];
 
 export const NAVIGATION_MENUS: NavSection[] = [
@@ -189,21 +190,6 @@ export default function RouterProvider(): JSX.Element {
                 element={<SchoolWalletPage />}
               />
             </Route>
-
-            {/* 2. Types de frais */}
-            <Route path={ROUTES.FIN.FEE_TYPE}>
-              <Route index element={<FeeTypesPage />} />
-              <Route path={ROUTES.ACTIONS.NEW} element={<FeeTypesPage />} />
-              <Route
-                path={ROUTES.PARAMS.FEE_TYPE_ID}
-                element={<FeeTypesPage />}
-              />
-              <Route
-                path={`${ROUTES.PARAMS.FEE_TYPE_ID}/${ROUTES.ACTIONS.EDIT}`}
-                element={<FeeTypesPage />}
-              />
-            </Route>
-
             {/* 3. Configurations de frais */}
             <Route path={ROUTES.FIN.PAYMENT_CONFIG}>
               <Route index element={<SchoolPaymentConfigPage />} />

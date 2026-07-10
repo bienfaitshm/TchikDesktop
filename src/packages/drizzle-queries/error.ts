@@ -1,4 +1,3 @@
-// Type guard utilitaire pour éviter le casting massif avec `any`
 function isErrorWithCode(error: unknown): error is { code: string } {
   return (
     typeof error === "object" &&
@@ -15,28 +14,27 @@ function isErrorWithMessage(error: unknown): error is { message: string } {
   );
 }
 
-/**
- * Erreur racine pour toutes les interactions Base de Données
- */
+/* =========================================================================
+   Erreur racine (Base de données)
+   ========================================================================= */
+
 export class DatabaseError extends Error {
   public readonly originalError: unknown;
   public readonly code?: string;
 
   constructor(message: string, options?: { cause?: unknown }) {
     super(message, options);
-    // Permet à toutes les classes enfants d'hériter dynamiquement de leur vrai nom de classe
     this.name = this.constructor.name;
     this.originalError = options?.cause;
 
-    // Extraction propre du code sans `any`
     if (isErrorWithCode(options?.cause)) {
       this.code = options.cause.code;
     }
   }
 
   /**
-   * Factory method : Analyse l'erreur brute de la DB et retourne la sous-classe appropriée.
-   * C'est ici que la magie opère pour mapper les erreurs SQL vers des erreurs Métier.
+   * Factory method : analyse l'erreur brute et retourne la sous-classe appropriée.
+   * Désormais compatible SQLite, PostgreSQL, MySQL et autres.
    */
   static from(
     error: unknown,
@@ -50,9 +48,39 @@ export class DatabaseError extends Error {
     if (isErrorWithCode(error)) code = error.code;
     if (isErrorWithMessage(error)) message = error.message;
 
-    const errorString = `${code} ${message}`.toUpperCase();
+    const errorString = `${code ?? ""} ${message}`.toUpperCase();
 
-    // Mapping des erreurs d'unicité (HTTP 409 Conflict)
+    // --- Verrous / accès concurrent (SQLite & autres) ---
+    // SQLite : 5 = SQLITE_BUSY, 6 = SQLITE_LOCKED
+    if (
+      code === "5" ||
+      code === "6" ||
+      /^54[0-9]{2}$/i.test(code ?? "") || // PostgreSQL lock codes (ex: 54P1)
+      errorString.includes("DATABASE IS LOCKED") ||
+      errorString.includes("LOCKED") ||
+      errorString.includes("BUSY")
+    ) {
+      return new DatabaseLockedError(
+        "The database is currently locked or busy",
+        { cause: error },
+      );
+    }
+
+    // --- Corruption de la base ---
+    // SQLite : 11 = SQLITE_CORRUPT
+    if (
+      code === "11" ||
+      errorString.includes("CORRUPT") ||
+      errorString.includes("MALFORMED")
+    ) {
+      return new DatabaseCorruptionError(
+        "The database file appears to be corrupted",
+        { cause: error },
+      );
+    }
+
+    // --- Violation d'unicité (HTTP 409) ---
+    // PostgreSQL : 23505, MySQL : ER_DUP_ENTRY, SQLite : message "UNIQUE constraint"
     if (
       code?.match(/23505|ER_DUP_ENTRY/i) ||
       errorString.includes("UNIQUE CONSTRAINT")
@@ -62,7 +90,8 @@ export class DatabaseError extends Error {
       });
     }
 
-    // Mapping des erreurs de clés étrangères (HTTP 400 ou 409)
+    // --- Violation de clé étrangère (HTTP 400/409) ---
+    // PostgreSQL : 23503, MySQL : ER_NO_REFERENCED_ROW, SQLite : message "FOREIGN KEY"
     if (
       code?.match(/23503|ER_NO_REFERENCED_ROW/i) ||
       errorString.includes("FOREIGN KEY")
@@ -72,45 +101,76 @@ export class DatabaseError extends Error {
       });
     }
 
-    // Mapping des erreurs de syntaxe ou de données invalides (HTTP 400)
-    if (code?.match(/22P02|42601/i) || errorString.includes("SYNTAX ERROR")) {
+    // --- Erreurs de syntaxe / données invalides (HTTP 400) ---
+    // PostgreSQL : 22P02, 42601, SQLite : 1 (SQLITE_ERROR) avec message "syntax error"
+    if (
+      code === "1" ||
+      code?.match(/22P02|42601/i) ||
+      errorString.includes("SYNTAX ERROR") ||
+      errorString.includes('NEAR "') // motif typique des erreurs SQLite
+    ) {
       return new DataCorruptionError("Invalid data format or syntax error", {
         cause: error,
       });
     }
 
+    // --- Disque plein / impossible d'ouvrir (peut être mappé selon besoins) ---
+    if (code === "13" || code === "14" || errorString.includes("DISK FULL")) {
+      return new DatabaseError("Disk full or unable to open database file", {
+        cause: error,
+      });
+    }
+
+    // Fallback
     return new DatabaseError(fallbackMessage, { cause: error });
   }
 }
 
 /* =========================================================================
-   Sous-classes d'erreurs DB spécifiques (Pour un mapping HTTP facile)
+   Sous-classes métier
    ========================================================================= */
 
-/** Lancée quand une insertion créerait un doublon interdit (Ex: email déjà pris) */
 export class UniqueConstraintError extends DatabaseError {
   constructor(
-    message: string = "Record already exists",
+    message = "Record already exists",
     options?: { cause?: unknown },
   ) {
     super(message, options);
   }
 }
 
-/** Lancée quand on pointe vers un ID qui n'existe pas dans une autre table */
 export class ForeignKeyConstraintError extends DatabaseError {
   constructor(
-    message: string = "Referenced record does not exist",
+    message = "Referenced record does not exist",
     options?: { cause?: unknown },
   ) {
     super(message, options);
   }
 }
 
-/** Lancée quand la DB refuse le format de la donnée (ex: UUID invalide) */
 export class DataCorruptionError extends DatabaseError {
   constructor(
-    message: string = "Data format rejected by database",
+    message = "Data format rejected by database",
+    options?: { cause?: unknown },
+  ) {
+    super(message, options);
+  }
+}
+
+/** Nouvelle classe : base verrouillée (concurrence, timeout) */
+export class DatabaseLockedError extends DatabaseError {
+  constructor(
+    message = "Database is locked or busy",
+    options?: { cause?: unknown },
+  ) {
+    super(message, options);
+  }
+}
+
+/** Nouvelle classe : fichier de base de données corrompu */
+export class DatabaseCorruptionError extends DatabaseError {
+  constructor(
+    message = "Database file is corrupted",
     options?: { cause?: unknown },
   ) {
     super(message, options);
@@ -118,7 +178,7 @@ export class DataCorruptionError extends DatabaseError {
 }
 
 /* =========================================================================
-   Erreurs liées au Pattern Repository (Logique métier)
+   Erreurs liées au Pattern Repository (inchangées)
    ========================================================================= */
 
 export class RepositoryError extends DatabaseError {
@@ -127,17 +187,15 @@ export class RepositoryError extends DatabaseError {
   }
 }
 
-/** Lancée quand on cherche un élément par ID/Slug et qu'il n'existe pas (HTTP 404) */
 export class RecordNotFoundError extends RepositoryError {
-  constructor(entityName: string = "Record", options?: { cause?: unknown }) {
+  constructor(entityName = "Record", options?: { cause?: unknown }) {
     super(`${entityName} not found`, options);
   }
 }
 
-/** Lancée quand une transaction métier échoue (rollback) */
 export class TransactionError extends RepositoryError {
   constructor(
-    message: string = "Transaction failed and was rolled back",
+    message = "Transaction failed and was rolled back",
     options?: { cause?: unknown },
   ) {
     super(message, options);

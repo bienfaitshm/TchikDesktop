@@ -76,7 +76,7 @@ export function createClassroomApis(ipcClient: IpcClient): ClassroomApi {
 
     fetchClassroomById(classroomId) {
       return ipcClient.get(ClassroomRoutes.DETAIL, {
-        params: { classId: classroomId }, // On garde 'classId' si c'est ce que l'IpcClient/Backend attend en clé
+        params: { classId: classroomId },
       });
     },
 

@@ -44,12 +44,15 @@ export const WalletRowAction: React.FC<WalletRowActionProps> = ({
           <WalletDialogUpdateForm
             mutationKey={mutationKey}
             defaultValues={wallet}
+            walletId={wallet.walletId}
+            schoolId={wallet.schoolId as string}
           />
         </MenuDialogWrapper>
         <MenuDialogWrapper id="delete">
           <WalletDialogDeleteForm
             mutationKey={mutationKey}
             walletId={wallet.walletId}
+            name={wallet.name}
           />
         </MenuDialogWrapper>
       </>

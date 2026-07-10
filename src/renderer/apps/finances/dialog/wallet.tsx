@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DialogForm } from "@/renderer/components/dialog/form";
+import { DialogForm, DialogFormProps } from "@/renderer/components/dialog/form";
 import {
   ConfirmDeleteDialog,
   useAsyncConfirm,
@@ -18,6 +18,7 @@ import {
 export type WalletDialogProps<TExtraProps extends Record<string, any> = {}> =
   React.PropsWithChildren<
     TExtraProps &
+      Partial<DialogFormProps> &
       WalletFormConfig & {
         defaultValues?: Partial<WalletFormData>;
       }
@@ -32,9 +33,9 @@ interface CreateWalletProps {
 
 export const WalletDialogCreateForm: React.FC<
   WalletDialogProps<CreateWalletProps>
-> = ({ schoolId, children, defaultValues, ...config }) => {
+> = ({ schoolId, children, defaultValues, open, onOpenChange, ...config }) => {
   const { formId, currencyOptions, isSubmitting, onSubmit } =
-    useCreateWalletForm(schoolId, config);
+    useCreateWalletForm(config);
 
   return (
     <DialogForm
@@ -43,6 +44,8 @@ export const WalletDialogCreateForm: React.FC<
       description="Ajoutez un nouveau compte ou une caisse physique pour percevoir les paiements."
       formId={formId}
       isLoading={isSubmitting}
+      open={open}
+      onOpenChange={onOpenChange}
     >
       <WalletForm
         formId={formId}
@@ -64,13 +67,17 @@ interface UpdateWalletProps {
 
 export const WalletDialogUpdateForm: React.FC<
   WalletDialogProps<UpdateWalletProps>
-> = ({ defaultValues, walletId, schoolId, children, ...config }) => {
+> = ({
+  defaultValues,
+  walletId,
+  schoolId,
+  open,
+  onOpenChange,
+  children,
+  ...config
+}) => {
   const { formId, isSubmitting, onSubmit, currencyOptions } =
-    useUpdateWalletForm({
-      ...config,
-      schoolId,
-      walletId,
-    });
+    useUpdateWalletForm(config);
 
   return (
     <DialogForm
@@ -79,6 +86,8 @@ export const WalletDialogUpdateForm: React.FC<
       description="Modifiez les informations de ce portefeuille comptable."
       formId={formId}
       isLoading={isSubmitting}
+      open={open}
+      onOpenChange={onOpenChange}
     >
       <WalletForm
         formId={formId}
@@ -102,8 +111,11 @@ interface DeleteWalletProps {
 
 export const WalletDialogDeleteForm: React.FC<
   WalletDialogProps<DeleteWalletProps>
-> = ({ children, walletId, name, ...config }) => {
-  const { isOpen, onClose, onOpen } = useConfirm<string>();
+> = ({ children, walletId, name, open, onOpenChange, ...config }) => {
+  const { isOpen, onClose, onOpen } = useConfirm<string>({
+    open,
+    onOpenChange,
+  });
   const { isDeleting, deleteWallet } = useDeleteWalletForm({
     ...config,
     onSuccess: (id) => {

@@ -46,6 +46,7 @@ export const withSchoolId = {
   schoolId: foreignKeyId("school_id", {
     ref: () => schools.schoolId,
     actions: { onDelete: "cascade" },
+    type: "NOT_NULL",
   }),
 };
 

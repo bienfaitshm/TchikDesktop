@@ -19,10 +19,11 @@ import {
   mergeDefaultValues,
   useZodForm,
 } from "@/renderer/libs/forms";
+import { CURRENCY_ENUM } from "@/packages/@core/data-access/db/options";
 
 const DEFAULT_VALUES: Partial<WalletCreate> = {
   name: "",
-  currency: "CDF",
+  currency: CURRENCY_ENUM.CDF,
   currentBalance: 0,
   schoolId: "",
 };
@@ -32,7 +33,7 @@ type WalletProps = {
 };
 
 export const WalletForm: React.FC<
-  BaseFormProps<WalletCreate> & WalletProps
+  BaseFormProps<Partial<WalletCreate>, WalletCreate> & WalletProps
 > = ({ formId, onSubmit, currencyOptions = [], defaultValues }) => {
   const form = useZodForm<WalletCreate>({
     schema: WalletCreateSchema,
@@ -98,7 +99,7 @@ export const WalletForm: React.FC<
                     type="number"
                     {...field}
                     placeholder="0"
-                    disabled={!!defaultValues} // Désactivé en mode édition pour des raisons de sécurité comptable
+                    disabled={!!defaultValues}
                   />
                 </FormControl>
                 <FormDescription>

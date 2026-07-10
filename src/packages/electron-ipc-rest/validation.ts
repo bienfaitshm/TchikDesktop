@@ -105,9 +105,13 @@ export function createValidatedHandler<
 
     if (errors.length > 0) {
       console.error("[Validation] :", errors);
-      throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST, {
-        issues: errors,
-      });
+      throw new HttpException(
+        getMessageError(errors, errorMessage),
+        HttpStatus.BAD_REQUEST,
+        {
+          issues: errors,
+        },
+      );
     }
 
     // Ici, le typage est garanti par Zod et l'inférence de la fonction
@@ -124,4 +128,14 @@ export function createValidatedHandler<
 
     return handler(safeReq);
   };
+}
+
+function getMessageError(
+  errors: ValidationErrorDetail[],
+  defaultMessage: string,
+): string {
+  const message = errors
+    .map((error) => `${error.location}/${error.path}: ${error.message}`)
+    .join(" ");
+  return `${defaultMessage} : ${message}`;
 }
