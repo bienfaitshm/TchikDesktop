@@ -4,14 +4,21 @@ import type {
   FeeConfigurationUpdate,
   FeeConfigurationFilter,
 } from "@/packages/@core/data-access/schema-validations";
-import type { FeeConfigurationDTO } from "@/packages/@core/data-access/db";
+import type {
+  FeeConfigurationDTO,
+  FeeApplicableConfiguration,
+} from "@/packages/@core/data-access/db";
 import type { SelectOption } from "@/packages/@core/data-access/db/queries";
+import type { FeeApplicableConfiguration as ApplicableParams } from "@/packages/@core/apis/servers/handlers/fee-configurations";
 import { FeeConfigurationRoutes } from "../routes-constant";
 
 export type FeeConfigurationApi = Readonly<{
   fetchFeeConfigurations(
     params?: FeeConfigurationFilter,
   ): Promise<FeeConfigurationDTO[]>;
+  fetchFeeApplicableConfigurations(
+    params?: ApplicableParams,
+  ): Promise<FeeApplicableConfiguration[]>;
   fetchFeeConfigurationsAsOptions(
     params?: FeeConfigurationFilter,
   ): Promise<(SelectOption & FeeConfigurationDTO)[]>;
@@ -32,6 +39,9 @@ export function createFeeConfigurationApis(
   return {
     fetchFeeConfigurations(params) {
       return ipcClient.get(FeeConfigurationRoutes.ALL, { params });
+    },
+    fetchFeeApplicableConfigurations(params) {
+      return ipcClient.get(FeeConfigurationRoutes.APPLICABLE, { params });
     },
     fetchFeeConfigurationsAsOptions(params) {
       return ipcClient.get(FeeConfigurationRoutes.SEARCH, { params });

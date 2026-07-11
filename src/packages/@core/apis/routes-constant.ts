@@ -174,6 +174,7 @@ export const FeeConfigurationRoutes = {
   SEARCH: "fee-configurations/search",
   DETAIL: "fee-configurations/:feeConfigId",
   BULK: "fee-configurations/bulk",
+  APPLICABLE: "fee-configurations/applicable",
 } as const;
 
 /**

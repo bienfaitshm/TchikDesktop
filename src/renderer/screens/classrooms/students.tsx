@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { useParams } from "react-router";
-import { Edit2, UserPen, UserPlus } from "lucide-react";
+import { Edit2, UserPen, UserPlus, Banknote } from "lucide-react";
 
 import {
   GENDER_OPTIONS,
@@ -42,6 +42,8 @@ import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { ButtonSheetStudentStat } from "@/renderer/components/sheets/students.stat";
 import { Button } from "@/renderer/components/ui/button";
 import type { EnrollmentTDO } from "@/packages/@core/data-access/db/queries";
+import type { Classroom } from "@/packages/@core/data-access/db";
+import { SchedulePayementDialog } from "@/renderer/apps/finances/dialog/student-payement-schedule.dialog";
 
 const enrolementStudentColumns = enhanceColumnsExpandable(studentColumns);
 
@@ -99,11 +101,14 @@ const EnrollementActions: React.FC<ActionProps> = ({
 };
 
 export const StudentPage = () => {
-  const { schoolId, yearId } = useSchoolContext();
+  const { schoolId, yearId, classroom } = useSchoolContext<{
+    classroom: Classroom;
+  }>();
   const { classroomId } = useParams();
   const { data: students = [], queryKey: mutationKey } = useGetEnrollments({
     where: { schoolId, yearId, classroomId: classroomId! },
   });
+
   // min-h-screen
   return (
     <div className="overflow-hidden">
@@ -118,7 +123,8 @@ export const StudentPage = () => {
               searchColumn="student_fullName"
               placeholder="Recherche Ex. SHOMARI"
             />
-            <ButtonSheetStudentStat students={[]} />
+            {/* <ButtonSheetStudentStat students={[]} /> */}
+
             <TableFacetedFilterItem
               columnId="student_gender"
               title="Sexe"
@@ -131,7 +137,20 @@ export const StudentPage = () => {
             />
           </FilteredTableToolbarContainer>
           <div className="flex items-center gap-4">
-            <DataTableColumnToggle />
+            <SchedulePayementDialog
+              params={{
+                classroomId: classroomId as string,
+                optionId: classroom.optionId,
+                schoolId,
+                section: classroom.section,
+                yearId,
+              }}
+            >
+              <Button variant="outline">
+                <Banknote />
+                <span>Payements</span>
+              </Button>
+            </SchedulePayementDialog>
             <CreateEnrollmentDialog
               schoolId={schoolId}
               yearId={yearId}
@@ -142,6 +161,7 @@ export const StudentPage = () => {
                 <span>Nouvelle Inscription</span>
               </Button>
             </CreateEnrollmentDialog>
+            <DataTableColumnToggle />
           </div>
         </DataTableToolbar>
         <DataTableContent>

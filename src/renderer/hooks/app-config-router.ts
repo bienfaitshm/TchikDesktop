@@ -9,8 +9,8 @@ interface SchoolContext {
  * Hook pour consommer les IDs scolaires de manière sécurisée.
  * À utiliser dans n'importe quelle page enfant du SchoolContextLayout.
  */
-export const useSchoolContext = () => {
-  const context = useOutletContext<SchoolContext>();
+export const useSchoolContext = <T extends object = {}>() => {
+  const context = useOutletContext<SchoolContext & T>();
 
   if (!context) {
     throw new Error(

@@ -17,8 +17,12 @@ import {
   type Option,
   type FeeType,
   type Classroom,
+  type FeeSchedule,
 } from "@/packages/@core/data-access/db/schemas";
-import { FEE_SCHEDULES_ENUM } from "@/packages/@core/data-access/db/options";
+import {
+  FEE_SCHEDULES_ENUM,
+  SECTION_ENUM,
+} from "@/packages/@core/data-access/db/options";
 import type {
   OptionProvider,
   SearchOptions,
@@ -29,6 +33,14 @@ import {
   type DrizzleClient,
 } from "@/packages/drizzle-queries";
 import { and, eq, getTableColumns, or, sql } from "drizzle-orm";
+
+export type FeeApplicableConfiguration = FeeConfiguration & {
+  feeType:
+    | (FeeType & {
+        schedules: FeeSchedule[];
+      })
+    | null;
+};
 
 export type FeeConfigurationDTO = FeeConfiguration & {
   option: Option | null;
@@ -48,10 +60,10 @@ const FEE_CONFIG_DEFAULT_SORT: FeeConfigurationFilters = {
 };
 
 export class FeeConfigurationRepository
-  extends BaseRepository<TableFeeConfiguration, DrizzleClient>
+  extends BaseRepository<TableFeeConfiguration, TDataBase>
   implements OptionProvider<FeeConfiguration>
 {
-  constructor(database: DrizzleClient = db) {
+  constructor(database: TDataBase = db) {
     super({
       db: database,
       table: feeConfigurations,
@@ -99,31 +111,63 @@ export class FeeConfigurationRepository
       yearId: string;
       classroomId: string;
       optionId: string | null;
-      section: string | null;
+      section: SECTION_ENUM | null;
     },
-    tx: DrizzleClient = this.db,
+    tx: TDataBase = this.db,
   ) {
     try {
+      const existeTeeTypeIDs = new Set();
       const client = this.getClient(tx);
 
-      /** Construction dynamique pour éviter les comparateurs '= NULL' bancals en SQL brut */
-      const targetCondition = ctx.optionId
-        ? or(
-            eq(feeConfigurations.classroomId, ctx.classroomId),
-            eq(feeConfigurations.optionId, ctx.optionId),
-          )
-        : eq(feeConfigurations.classroomId, ctx.classroomId);
+      const targetConditions = [
+        eq(feeConfigurations.classroomId, ctx.classroomId),
+      ];
 
-      return await client
-        .select()
-        .from(feeConfigurations)
-        .where(
-          and(
-            eq(feeConfigurations.schoolId, ctx.schoolId),
-            eq(feeConfigurations.yearId, ctx.yearId),
-            targetCondition,
-          ),
+      if (ctx.optionId) {
+        targetConditions.push(eq(feeConfigurations.optionId, ctx.optionId));
+      }
+      if (ctx.section) {
+        targetConditions.push(
+          eq(feeConfigurations.section, ctx.section as SECTION_ENUM),
         );
+      }
+
+      const configs = await client.query.feeConfigurations.findMany({
+        where: and(
+          eq(feeConfigurations.schoolId, ctx.schoolId),
+          eq(feeConfigurations.yearId, ctx.yearId),
+          or(...targetConditions),
+        ),
+        with: {
+          feeType: {
+            with: {
+              schedules: true,
+            },
+          },
+        },
+      });
+
+      if (configs.length === 0) return null;
+      // if (configs.length === 1) return configs[0];
+      const _configs = configs.sort((a, b) => {
+        const getWeight = (c: typeof a) => {
+          if (c.classroomId === ctx.classroomId) return 3;
+          if (ctx.optionId && c.optionId === ctx.optionId) return 2;
+          if (ctx.section && c.section === ctx.section) return 1;
+          return 0;
+        };
+
+        return getWeight(b) - getWeight(a);
+      });
+
+      const feeConfigs: FeeApplicableConfiguration[] = [];
+      _configs.forEach((element) => {
+        if (!existeTeeTypeIDs.has(element.feeTypeId)) {
+          feeConfigs.push(element);
+        }
+        existeTeeTypeIDs.add(element.feeTypeId);
+      });
+      return feeConfigs;
     } catch (error) {
       const dbError = DatabaseError.from(
         error,

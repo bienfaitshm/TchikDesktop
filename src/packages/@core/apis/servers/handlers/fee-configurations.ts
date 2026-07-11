@@ -18,6 +18,23 @@ import { FeeConfigurationRoutes } from "../../routes-constant";
 const FeeConfigIdSchema = FeeConfigurationBase.pick({ feeConfigId: true });
 type FeeConfigId = z.infer<typeof FeeConfigIdSchema>;
 
+export const FeeApplicableConfigurationSchema = FeeConfigurationBase.pick({
+  optionId: true,
+  section: true,
+  schoolId: true,
+  yearId: true,
+})
+  .required({ schoolId: true, yearId: true })
+  .merge(
+    z.object({
+      classroomId: z.string().nonempty(),
+    }),
+  );
+
+export type FeeApplicableConfiguration = z.infer<
+  typeof FeeApplicableConfigurationSchema
+>;
+
 export class GetFeeConfigurations extends AbstractEndpoint<any> {
   route = FeeConfigurationRoutes.ALL;
   method = HttpMethod.GET;
@@ -58,6 +75,20 @@ export class GetFeeConfiguration extends AbstractEndpoint<any> {
 
   protected handle({ params }: IpcRequest<any, FeeConfigId>): Promise<unknown> {
     return feeConfigurationRepository.findById(params.feeConfigId);
+  }
+}
+
+export class GetApplicableFeeConfiguration extends AbstractEndpoint<any> {
+  route = FeeConfigurationRoutes.APPLICABLE;
+  method = HttpMethod.GET;
+  schemas: ValidationSchemas = {
+    params: FeeApplicableConfigurationSchema,
+  };
+
+  protected handle({
+    params,
+  }: IpcRequest<any, FeeApplicableConfiguration>): Promise<unknown> {
+    return feeConfigurationRepository.findApplicableConfigurations(params);
   }
 }
 

@@ -34,19 +34,17 @@ export const primaryKeyId = (columnName: string) =>
  * Crée une clé étrangère standardisée.
  * Note : 'actions' contient onDelete/onUpdate dans la config Drizzle.
  */
-export const foreignKeyId = (
+export const foreignKeyId = <T extends "NULL" | "NOT_NULL" = "NOT_NULL">(
   columnName: string,
-  {
-    actions,
-    ref,
-    type = "NOT_NULL",
-  }: ReferenceConfig & { type?: "NULL" | "NOT_NULL" },
+  { actions, ref, type = "NOT_NULL" as T }: ReferenceConfig & { type?: T },
 ) => {
-  let field = text(columnName);
-  if (type === "NOT_NULL") {
-    field = field.notNull();
-  }
-  return field.references(ref, actions);
+  const field = text(columnName);
+
+  const finalField = (
+    type === "NOT_NULL" ? field.notNull() : field
+  ) as T extends "NOT_NULL" ? ReturnType<typeof field.notNull> : typeof field;
+
+  return finalField.references(ref, actions);
 };
 
 /**

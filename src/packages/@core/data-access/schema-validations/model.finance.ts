@@ -5,6 +5,7 @@ import {
   PAYMENT_METHOD_ENUM,
 } from "@/packages/@core/data-access/db/options";
 import { createZodEnum } from "./utils";
+import { ZSECTION_ENUM } from "./model";
 
 export const ZCURRENCY_ENUM = createZodEnum(CURRENCY_ENUM);
 export const ZFEE_SCHEDULES_ENUM = createZodEnum(FEE_SCHEDULES_ENUM);
@@ -79,7 +80,7 @@ export const FeeScheduleSchema = z.object({
   scheduleId: z.string().describe("ID unique de l'échéance (UUID)"),
   installmentName: z
     .string()
-    .min(1)
+    .nonempty()
     .describe("Nom du versement / de l'échéance (ex: Trimestre 1)"),
   feeTypeId: z.string().describe("Type de frais rattaché"),
   ...timestampFields,
@@ -109,7 +110,7 @@ export const FeeConfigurationBase = z.object({
     .nonnegative()
     .describe("Montant total en centimes"),
   currency: z.string().min(1).describe("Code devise (ex: USD, CDF)"),
-  section: z.string().nullable().describe("Section cible (si applicable)"),
+  section: ZSECTION_ENUM.nullable().describe("Section cible (si applicable)"),
   optionId: z.string().nullable().describe("Option cible (si applicable)"),
   classroomId: z.string().nullable().describe("Classe cible (si applicable)"),
   feeTypeId: z.string().describe("Type de frais associé"),

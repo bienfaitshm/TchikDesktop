@@ -145,6 +145,7 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
 
   // --- FINANCE : Fee Configurations ---
   feeConfigurations.GetFeeConfigurations,
+  feeConfigurations.GetApplicableFeeConfiguration,
   feeConfigurations.PostFeeConfiguration,
   feeConfigurations.GetFeeConfiguration,
   feeConfigurations.UpdateFeeConfiguration,

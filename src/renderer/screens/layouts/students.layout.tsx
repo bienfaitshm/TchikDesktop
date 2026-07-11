@@ -97,7 +97,7 @@ export const StudentLayout = () => {
               </p>
             </div>
           ) : (
-            <Outlet context={{ schoolId, yearId, classroomId }} />
+            <Outlet context={{ schoolId, yearId, classroomId, classroom }} />
           )}
         </PageShell>
       </SidebarContainer>
