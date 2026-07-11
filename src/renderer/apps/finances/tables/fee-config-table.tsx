@@ -29,12 +29,14 @@ interface FeeConfigurationRowActionsProps extends Pick<
 > {
   feeConfiguration: FeeConfiguration;
   schoolId: string;
+  yearId: string;
 }
 
 export const RowAction: React.FC<FeeConfigurationRowActionsProps> = ({
   mutationKey,
   feeConfiguration,
   schoolId,
+  yearId,
 }) => (
   <ActionMenu
     trigger={<ButtonMenu />}
@@ -43,8 +45,9 @@ export const RowAction: React.FC<FeeConfigurationRowActionsProps> = ({
         <MenuDialogWrapper id="edit">
           <FeeConfigurationDialogUpdateForm
             schoolId={schoolId}
+            yearId={yearId}
             mutationKey={mutationKey}
-            feeConfigurationId={feeConfiguration.feeConfigId}
+            feeConfigId={feeConfiguration.feeConfigId}
             defaultValues={feeConfiguration}
           />
         </MenuDialogWrapper>
@@ -79,12 +82,14 @@ export type FeeConfigTableProps = {
   feeConfigurations?: FeeConfiguration[];
   mutationKey?: readonly unknown[];
   schoolId: string;
+  yearId: string;
 };
 
 export const FeeConfigTable: React.FC<FeeConfigTableProps> = ({
   feeConfigurations = [],
   mutationKey,
   schoolId,
+  yearId,
 }) => {
   const serializedMutationKey = JSON.stringify(mutationKey);
 
@@ -96,6 +101,7 @@ export const FeeConfigTable: React.FC<FeeConfigTableProps> = ({
           <RowAction
             feeConfiguration={feeConfiguration}
             schoolId={schoolId}
+            yearId={yearId}
             mutationKey={mutationKey}
           />
         ),

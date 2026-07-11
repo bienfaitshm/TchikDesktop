@@ -4,25 +4,25 @@ import type {
   FeeConfigurationUpdate,
   FeeConfigurationFilter,
 } from "@/packages/@core/data-access/schema-validations";
-import type { FeeConfiguration } from "@/packages/@core/data-access/db/schemas";
+import type { FeeConfigurationDTO } from "@/packages/@core/data-access/db";
 import type { SelectOption } from "@/packages/@core/data-access/db/queries";
 import { FeeConfigurationRoutes } from "../routes-constant";
 
 export type FeeConfigurationApi = Readonly<{
   fetchFeeConfigurations(
     params?: FeeConfigurationFilter,
-  ): Promise<FeeConfiguration[]>;
+  ): Promise<FeeConfigurationDTO[]>;
   fetchFeeConfigurationsAsOptions(
     params?: FeeConfigurationFilter,
-  ): Promise<(SelectOption & FeeConfiguration)[]>;
-  fetchFeeConfigurationById(feeConfigId: string): Promise<FeeConfiguration>;
+  ): Promise<(SelectOption & FeeConfigurationDTO)[]>;
+  fetchFeeConfigurationById(feeConfigId: string): Promise<FeeConfigurationDTO>;
   createFeeConfiguration(
     data: FeeConfigurationCreate,
-  ): Promise<FeeConfiguration>;
+  ): Promise<FeeConfigurationDTO>;
   updateFeeConfiguration(
     feeConfigId: string,
     data: FeeConfigurationUpdate,
-  ): Promise<FeeConfiguration>;
+  ): Promise<FeeConfigurationDTO>;
   deleteFeeConfiguration(feeConfigId: string): Promise<void>;
 }>;
 

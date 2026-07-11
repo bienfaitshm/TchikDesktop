@@ -1,11 +1,12 @@
 import { useMutation, useSuspenseQuery } from "../base";
 import { feeConfiguration as feeConfigApi } from "@/renderer/libs/apis";
 import type {
-  FeeConfiguration,
   FeeConfigurationCreate,
   FeeConfigurationFilter,
   FeeConfigurationUpdate,
 } from "@/packages/@core/data-access/schema-validations";
+import type { FeeConfigurationDTO } from "@/packages/@core/data-access/db";
+
 import type { TQueryUpdate } from "../type";
 import type { SelectOption } from "@/packages/@core/data-access/db/queries";
 import type {
@@ -30,7 +31,7 @@ export const feeConfigurationKeys = {
 
 export function useGetFeeConfigurations(
   params?: FeeConfigurationFilter,
-  options?: Partial<UseSuspenseQueryOptions<FeeConfiguration[]>>,
+  options?: Partial<UseSuspenseQueryOptions<FeeConfigurationDTO[]>>,
 ) {
   return useSuspenseQuery({
     queryKey: feeConfigurationKeys.lists(params),
@@ -42,7 +43,7 @@ export function useGetFeeConfigurations(
 export function useGetFeeConfigurationAsOptions(
   params?: FeeConfigurationFilter,
   options?: Partial<
-    UseSuspenseQueryOptions<(SelectOption & FeeConfiguration)[]>
+    UseSuspenseQueryOptions<(SelectOption & FeeConfigurationDTO)[]>
   >,
 ) {
   return useSuspenseQuery({
@@ -54,7 +55,7 @@ export function useGetFeeConfigurationAsOptions(
 
 export function useGetFeeConfigurationById(
   feeConfigId: string,
-  options?: Partial<UseSuspenseQueryOptions<FeeConfiguration>>,
+  options?: Partial<UseSuspenseQueryOptions<FeeConfigurationDTO>>,
 ) {
   return useSuspenseQuery({
     queryKey: feeConfigurationKeys.detail(feeConfigId),
@@ -65,7 +66,7 @@ export function useGetFeeConfigurationById(
 
 export function useCreateFeeConfiguration(
   options?: Partial<
-    UseMutationOptions<FeeConfiguration, Error, FeeConfigurationCreate>
+    UseMutationOptions<FeeConfigurationDTO, Error, FeeConfigurationCreate>
   >,
 ) {
   return useMutation({
@@ -78,7 +79,7 @@ export function useCreateFeeConfiguration(
 export function useUpdateFeeConfiguration(
   options?: Partial<
     UseMutationOptions<
-      FeeConfiguration,
+      FeeConfigurationDTO,
       Error,
       TQueryUpdate<FeeConfigurationUpdate>
     >

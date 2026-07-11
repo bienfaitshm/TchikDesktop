@@ -1,4 +1,4 @@
-import { db } from "@/packages/@core/data-access/db/config";
+import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
   feeConfigurations,
@@ -11,6 +11,12 @@ import {
   type TableStudentPayment,
   type TableDailyExchangeRate,
   type FindManyOptions,
+  options,
+  feeTypes,
+  classrooms,
+  type Option,
+  type FeeType,
+  type Classroom,
 } from "@/packages/@core/data-access/db/schemas";
 import { FEE_SCHEDULES_ENUM } from "@/packages/@core/data-access/db/options";
 import type {
@@ -22,8 +28,13 @@ import {
   DatabaseError,
   type DrizzleClient,
 } from "@/packages/drizzle-queries";
-import { and, eq, or, sql } from "drizzle-orm";
+import { and, eq, getTableColumns, or, sql } from "drizzle-orm";
 
+export type FeeConfigurationDTO = FeeConfiguration & {
+  option: Option | null;
+  classroom: Classroom | null;
+  feeType: FeeType;
+};
 /* =========================================================================
    3. FEE CONFIGURATION REPOSITORY
    ========================================================================= */
@@ -53,6 +64,22 @@ export class FeeConfigurationRepository
     this.searchFiltersColumns = [feeConfigurations.name];
   }
 
+  protected getQuerySet(tx?: TDataBase) {
+    return this.getClient(tx)
+      .select({
+        ...getTableColumns(this.table),
+
+        option: getTableColumns(options),
+        classroom: getTableColumns(classrooms),
+        feeType: getTableColumns(feeTypes),
+      })
+      .from(this.table)
+      .leftJoin(options, eq(this.table.optionId, options.optionId))
+      .leftJoin(classrooms, eq(this.table.classroomId, classrooms.classId))
+      .innerJoin(feeTypes, eq(this.table.feeTypeId, feeTypes.feeTypeId))
+      .$dynamic();
+  }
+
   /**
    * Permet de lister les configurations de frais disponibles pour un Select/Combobox.
    */
@@ -72,6 +99,7 @@ export class FeeConfigurationRepository
       yearId: string;
       classroomId: string;
       optionId: string | null;
+      section: string | null;
     },
     tx: DrizzleClient = this.db,
   ) {

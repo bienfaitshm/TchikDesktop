@@ -143,7 +143,11 @@ export function SchoolPaymentConfigPage() {
             structurez les types de frais scolaires.
           </p>
         </div>
-        <FeeConfigurationDialogCreateForm schoolId={schoolId} yearId={yearId}>
+        <FeeConfigurationDialogCreateForm
+          mutationKey={mutationKey}
+          schoolId={schoolId}
+          yearId={yearId}
+        >
           <Button size="sm" className="shadow-xs gap-2 font-medium">
             <Plus className="w-4 h-4" />
             Nouvelle Configuration
@@ -156,6 +160,7 @@ export function SchoolPaymentConfigPage() {
         <div className="lg:col-span-2">
           <FeeConfigTable
             schoolId={schoolId}
+            yearId={yearId}
             feeConfigurations={feeConfigs}
             mutationKey={mutationKey}
           />
