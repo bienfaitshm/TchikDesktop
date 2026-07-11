@@ -205,6 +205,7 @@ export const DailyExchangeRateRoutes = {
   SEARCH: "daily-exchange-rates/search",
   DETAIL: "daily-exchange-rates/:rateId",
   BULK: "daily-exchange-rates/bulk",
+  LTS: "daily-exchange-rates/lts",
 } as const;
 
 /**

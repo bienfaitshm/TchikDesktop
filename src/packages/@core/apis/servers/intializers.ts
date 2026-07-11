@@ -170,6 +170,7 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   dailyExchangeRates.GetDailyExchangeRate,
   dailyExchangeRates.UpdateDailyExchangeRate,
   dailyExchangeRates.DeleteDailyExchangeRate,
+  dailyExchangeRates.GetLatestDailyExchangeRates,
 ];
 
 export const instantiatedHandlers = instantiateClasses(

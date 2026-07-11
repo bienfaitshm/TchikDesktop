@@ -29,7 +29,7 @@ interface FeeTypeProps {
  * Formulaire de création unitaire
  */
 export const FeeTypeForm: React.FC<
-  BaseFormProps<FeeTypeCreate> & FeeTypeProps
+  BaseFormProps<FeeTypeCreate, FeeTypeCreate> & FeeTypeProps
 > = ({ formId, onSubmit, walletsOptions, defaultValues }) => {
   const form = useZodForm<FeeTypeCreate>({
     schema: FeeTypeCreateSchema,

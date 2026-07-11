@@ -53,7 +53,6 @@ interface IpcPayload<T> {
 }
 
 export class IpcClient {
-  // Ajout d'un système d'éjection pour éviter les fuites de mémoire
   private requestHandlers: Interceptor<IpcPayload<any>>[] = [];
   private responseHandlers: Interceptor<IResponse<any>>[] = [];
 

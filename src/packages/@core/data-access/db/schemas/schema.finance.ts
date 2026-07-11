@@ -230,15 +230,7 @@ export const dailyExchangeRates = sqliteTable(
     ...withSchoolId,
     ...timestamps,
   },
-  (table) => [
-    uniqueIndex("daily_rate_unique_idx").on(
-      table.date,
-      table.currencyFrom,
-      table.currencyTo,
-      table.schoolId,
-    ),
-    index("daily_rate_date_idx").on(table.date),
-  ],
+  (table) => [index("daily_rate_date_idx").on(table.date)],
 );
 
 export type TableDailyExchangeRate = typeof dailyExchangeRates;

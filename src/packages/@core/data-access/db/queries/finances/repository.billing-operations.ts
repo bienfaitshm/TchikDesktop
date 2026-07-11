@@ -256,9 +256,12 @@ export class DailyExchangeRateRepository extends BaseRepository<
     tx: DrizzleClient = this.db,
   ) {
     try {
-      const [rate] = await this.findMany(filters, tx);
-
-      return rate;
+      const dailyRates = await this.findMany(filters, tx);
+      if (dailyRates.length > 0) {
+        const [rate] = dailyRates;
+        return rate;
+      }
+      return null;
     } catch (error) {
       const dbError = DatabaseError.from(
         error,

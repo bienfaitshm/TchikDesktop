@@ -15,6 +15,9 @@ export type DailyExchangeRateApi = Readonly<{
   fetchDailyExchangeRatesAsOptions(
     params?: DailyExchangeRateFilter,
   ): Promise<(SelectOption & DailyExchangeRate)[]>;
+  fetchLatestDailyExchangeRate(
+    params?: DailyExchangeRateFilter,
+  ): Promise<DailyExchangeRate | null>;
   fetchDailyExchangeRateById(rateId: string): Promise<DailyExchangeRate>;
   createDailyExchangeRate(
     data: DailyExchangeRateCreate,
@@ -35,6 +38,10 @@ export function createDailyExchangeRateApis(
     },
     fetchDailyExchangeRatesAsOptions(params) {
       return ipcClient.get(DailyExchangeRateRoutes.SEARCH, { params });
+    },
+
+    fetchLatestDailyExchangeRate(params) {
+      return ipcClient.get(DailyExchangeRateRoutes.LTS, { params });
     },
     fetchDailyExchangeRateById(rateId) {
       return ipcClient.get(DailyExchangeRateRoutes.DETAIL, {

@@ -1,11 +1,11 @@
 import { useMutation, useSuspenseQuery } from "../base";
 import { dailyExchangeRate as rateApi } from "@/renderer/libs/apis";
 import type {
-  DailyExchangeRate,
   DailyExchangeRateCreate,
   DailyExchangeRateFilter,
   DailyExchangeRateUpdate,
 } from "@/packages/@core/data-access/schema-validations";
+import type { DailyExchangeRate } from "@/packages/@core/data-access/db";
 import type { TQueryUpdate } from "../type";
 import type { SelectOption } from "@/packages/@core/data-access/db/queries";
 import type {
@@ -17,6 +17,8 @@ export const dailyExchangeRateKeys = {
   all: ["daily-exchange-rates"] as const,
   lists: (params?: DailyExchangeRateFilter) =>
     [...dailyExchangeRateKeys.all, "list", { params }] as const,
+  lts: (params?: DailyExchangeRateFilter) =>
+    [...dailyExchangeRateKeys.all, "lts", { params }] as const,
   options: (params?: DailyExchangeRateFilter) =>
     [...dailyExchangeRateKeys.all, "options", { params }] as const,
   details: () => [...dailyExchangeRateKeys.all, "detail"] as const,
@@ -35,6 +37,17 @@ export function useGetDailyExchangeRates(
   return useSuspenseQuery({
     queryKey: dailyExchangeRateKeys.lists(params),
     queryFn: () => rateApi.fetchDailyExchangeRates(params),
+    ...options,
+  });
+}
+
+export function useGetLatestDailyExchangeRate(
+  params?: DailyExchangeRateFilter,
+  options?: Partial<UseSuspenseQueryOptions<DailyExchangeRate | null>>,
+) {
+  return useSuspenseQuery({
+    queryKey: dailyExchangeRateKeys.lts(params),
+    queryFn: () => rateApi.fetchLatestDailyExchangeRate(params),
     ...options,
   });
 }

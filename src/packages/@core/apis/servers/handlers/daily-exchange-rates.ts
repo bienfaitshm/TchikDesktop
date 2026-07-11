@@ -32,6 +32,20 @@ export class GetDailyExchangeRates extends AbstractEndpoint<any> {
   }
 }
 
+export class GetLatestDailyExchangeRates extends AbstractEndpoint<any> {
+  route = DailyExchangeRateRoutes.LTS;
+  method = HttpMethod.GET;
+  schemas: ValidationSchemas = {
+    params: DailyExchangeRateFilterSchema,
+  };
+
+  protected handle({
+    params,
+  }: IpcRequest<any, DailyExchangeRateFilter>): Promise<unknown> {
+    return dailyExchangeRateRepository.getLatestExchangeRate(params);
+  }
+}
+
 export class PostDailyExchangeRate extends AbstractEndpoint<any> {
   route = DailyExchangeRateRoutes.ALL;
   method = HttpMethod.POST;
