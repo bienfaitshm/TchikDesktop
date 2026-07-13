@@ -15,6 +15,8 @@ import type { FindManyOptions } from "@/packages/@core/data-access/db/schemas/ty
 import {
   BaseRepository,
   DatabaseError,
+  mergeQueryOptions,
+  applyQueryOptions,
   type DynamicSelectQueryBuilder,
 } from "@/packages/drizzle-queries";
 import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/options";
@@ -29,6 +31,12 @@ export type EnrollmentTDO = ClassroomEnrollment & {
 
 const ENROLLMENT_DEFAULT_SORT: FindManyOptions<TableClassroomEnrollment> = {
   orderBy: [],
+};
+
+const ACTIVE_ENROLLEMENTS: FindManyOptions<TableClassroomEnrollment> = {
+  where: {
+    status: STUDENT_STATUS_ENUM.ACTIVE,
+  },
 };
 
 export class EnrollmentRepository extends BaseRepository<
@@ -72,32 +80,34 @@ export class EnrollmentRepository extends BaseRepository<
    * Récupère uniquement les inscriptions actives (allégées pour traitement lourd ou filtres internes)
    */
   async getActiveEnrollments(
-    filters: { schoolId: string; yearId: string },
+    filters: FindManyOptions<TableClassroomEnrollment>,
     tx?: TDataBase,
   ) {
     try {
       const client = this.getClient(tx) as TDataBase;
-      return await client
+      const query = client
         .select({
           enrollmentId: this.table.enrollmentId,
           classroomId: this.table.classroomId,
           optionId: classrooms.optionId,
+          student: UserRepository.getVisibleColumns(),
         })
         .from(this.table)
+        .innerJoin(users, eq(this.table.studentId, users.userId))
         .innerJoin(classrooms, eq(this.table.classroomId, classrooms.classId))
-        .where(
-          and(
-            eq(this.table.schoolId, filters.schoolId),
-            eq(this.table.yearId, filters.yearId),
-            eq(this.table.status, STUDENT_STATUS_ENUM.ACTIVE),
-          ),
-        );
+        .$dynamic();
+
+      return applyQueryOptions(
+        query,
+        this.table,
+        mergeQueryOptions(filters, ACTIVE_ENROLLEMENTS),
+      );
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
-        `Failed to fetch active enrollments for school ${filters.schoolId}`,
+        `Failed to fetch active enrollments for school ${filters.where?.schoolId}`,
       );
-      this.logError("getActiveEnrollments", dbError, filters);
+      this.logError("getActiveEnrollments", dbError, filters.where as any);
       throw dbError;
     }
   }
