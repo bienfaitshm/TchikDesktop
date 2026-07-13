@@ -19,6 +19,7 @@ const API_REGISTRY = {
   feeAssignment: apis.createFeeAssignmentApis,
   studentPayment: apis.createStudentPaymentApis,
   dailyExchangeRate: apis.createDailyExchangeRateApis,
+  payment: apis.createPaymentApis,
 } as const;
 
 export type AppClients = {
@@ -92,4 +93,5 @@ export const {
   feeAssignment,
   studentPayment,
   dailyExchangeRate,
+  payment,
 } = api;
