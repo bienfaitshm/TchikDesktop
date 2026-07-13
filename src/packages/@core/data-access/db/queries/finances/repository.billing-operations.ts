@@ -80,7 +80,6 @@ export class FeeConfigurationRepository
     return this.getClient(tx)
       .select({
         ...getTableColumns(this.table),
-
         option: getTableColumns(options),
         classroom: getTableColumns(classrooms),
         feeType: getTableColumns(feeTypes),
@@ -114,9 +113,8 @@ export class FeeConfigurationRepository
       section: SECTION_ENUM | null;
     },
     tx: TDataBase = this.db,
-  ) {
+  ): Promise<FeeApplicableConfiguration[]> {
     try {
-      const existeTeeTypeIDs = new Set();
       const client = this.getClient(tx);
 
       const targetConditions = [
@@ -147,27 +145,29 @@ export class FeeConfigurationRepository
         },
       });
 
-      if (configs.length === 0) return null;
-      // if (configs.length === 1) return configs[0];
-      const _configs = configs.sort((a, b) => {
-        const getWeight = (c: typeof a) => {
-          if (c.classroomId === ctx.classroomId) return 3;
-          if (ctx.optionId && c.optionId === ctx.optionId) return 2;
-          if (ctx.section && c.section === ctx.section) return 1;
-          return 0;
-        };
+      if (configs.length === 0) return [];
 
-        return getWeight(b) - getWeight(a);
-      });
+      const getWeight = (c: (typeof configs)[0]) => {
+        if (c.classroomId === ctx.classroomId) return 3;
+        if (ctx.optionId && c.optionId === ctx.optionId) return 2;
+        if (ctx.section && c.section === ctx.section) return 1;
+        return 0;
+      };
 
-      const feeConfigs: FeeApplicableConfiguration[] = [];
-      _configs.forEach((element) => {
-        if (!existeTeeTypeIDs.has(element.feeTypeId)) {
-          feeConfigs.push(element);
+      const bestConfigsMap = new Map<string | null, (typeof configs)[0]>();
+
+      for (const config of configs) {
+        const currentWeight = getWeight(config);
+        const existingConfig = bestConfigsMap.get(config.feeTypeId);
+
+        if (!existingConfig || currentWeight > getWeight(existingConfig)) {
+          bestConfigsMap.set(config.feeTypeId, config);
         }
-        existeTeeTypeIDs.add(element.feeTypeId);
-      });
-      return feeConfigs;
+      }
+
+      return Array.from(
+        bestConfigsMap.values(),
+      ) as FeeApplicableConfiguration[];
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
