@@ -3,7 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/renderer/components/tables/data-table.column-header";
 import { formatCurrency } from "@/packages/currency";
 import { Badge } from "@/renderer/components/ui/badge";
-import { School, Layers, GraduationCap } from "lucide-react"; // Pour enrichir l'UI si besoin, ou rester sur du pur CSS
+import { School, Layers, GraduationCap } from "lucide-react";
 
 export const feeConfigColumns: ColumnDef<FeeConfigurationDTO>[] = [
   {

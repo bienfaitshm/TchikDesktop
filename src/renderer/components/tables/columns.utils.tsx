@@ -4,7 +4,7 @@ import { Checkbox } from "@/renderer/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import React from "react";
 
-const createSelectColumn = <T,>(): ColumnDef<T> => ({
+export const createSelectColumn = <T,>(): ColumnDef<T> => ({
   id: "select",
   header: ({ table }) => (
     <div className="flex items-center justify-center">

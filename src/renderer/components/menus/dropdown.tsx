@@ -101,7 +101,10 @@ export const ActionMenu: FC<ActionMenuProps> = ({
     >
       <DropdownMenu>
         <DropdownMenuTrigger render={trigger} />
-        <DropdownMenuContent className={cn("min-w-xs", className)}>
+        <DropdownMenuContent
+          className={cn("min-w-xs", className)}
+          onWheel={(e) => e.stopPropagation()}
+        >
           {children}
         </DropdownMenuContent>
         {dialogs}

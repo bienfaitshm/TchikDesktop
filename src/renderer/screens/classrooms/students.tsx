@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import { useParams } from "react-router";
 import { Edit2, UserPen, UserPlus, Banknote } from "lucide-react";
 
@@ -39,11 +39,9 @@ import { UpdateStudentDialog } from "@/renderer/dialog-actions/student.dialog-ac
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import { enhanceColumnsExpandable } from "@/renderer/components/tables/columns";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import { ButtonSheetStudentStat } from "@/renderer/components/sheets/students.stat";
 import { Button } from "@/renderer/components/ui/button";
-import type { EnrollmentTDO } from "@/packages/@core/data-access/db/queries";
-import type { Classroom } from "@/packages/@core/data-access/db";
-import { SchedulePayementDialog } from "@/renderer/apps/finances/dialog/student-payement-schedule.dialog";
+import { SchedulePaymentDialog } from "@/renderer/apps/finances/dialog/student-payement-schedule.dialog";
+import type { Classroom, EnrollmentTDO } from "@/packages/@core/data-access/db";
 
 const enrolementStudentColumns = enhanceColumnsExpandable(studentColumns);
 
@@ -137,20 +135,17 @@ export const StudentPage = () => {
             />
           </FilteredTableToolbarContainer>
           <div className="flex items-center gap-4">
-            <SchedulePayementDialog
-              params={{
-                classroomId: classroomId as string,
-                optionId: classroom.optionId,
-                schoolId,
-                section: classroom.section,
-                yearId,
-              }}
+            <SchedulePaymentDialog
+              schoolId={schoolId}
+              yearId={yearId}
+              classId={classroomId as string}
+              classroomName={classroom.shortIdentifier}
             >
               <Button variant="outline">
                 <Banknote />
                 <span>Payements</span>
               </Button>
-            </SchedulePayementDialog>
+            </SchedulePaymentDialog>
             <CreateEnrollmentDialog
               schoolId={schoolId}
               yearId={yearId}

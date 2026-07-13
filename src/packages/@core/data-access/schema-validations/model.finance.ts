@@ -303,3 +303,14 @@ export const DailyExchangeRateUpdateSchema =
 export type DailyExchangeRateUpdate = z.infer<
   typeof DailyExchangeRateUpdateSchema
 >;
+
+export const ProcessPaymentSchema = z.object({
+  schoolId: z.string().nonempty(),
+  yearId: z.string().nonempty(),
+  assignmentId: z.string().nonempty(),
+  amountReceived: z.number().positive(),
+  currencyReceived: ZCURRENCY_ENUM,
+  paymentMethod: ZPAYMENT_METHOD_ENUM,
+  transactionReference: z.string().optional(),
+});
+export type ProcessPaymentPayload = z.infer<typeof ProcessPaymentSchema>;
