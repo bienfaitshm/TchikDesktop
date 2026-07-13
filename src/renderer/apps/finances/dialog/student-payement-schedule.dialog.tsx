@@ -31,8 +31,10 @@ export const SchedulePayementDialog: React.FC<SchedulePayementDialogProps> = ({
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-2xl md:max-w-4xl lg:max-w-4/5 flex flex-col max-h-[85vh]">
         <DialogHeader>
-          <DialogTitle>Payement</DialogTitle>
-          <DialogDescription>Gérez les tranches de paiement</DialogDescription>
+          <DialogTitle>Table de payement</DialogTitle>
+          <DialogDescription>
+            Gérez les eleves avec leurs paiements
+          </DialogDescription>
         </DialogHeader>
         <div className="min-h-[50vh]">
           <Suspense
