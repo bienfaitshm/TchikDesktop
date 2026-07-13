@@ -57,8 +57,12 @@ export const StudentSchedulePaymentTabs: React.FC<
                 key={config.feeTypeId}
                 value={config.feeTypeId}
                 className={cn(
-                  "relative h-10 rounded-none border-b-4 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-medium text-muted-foreground shadow-none transition-none",
-                  "data-active:border-b-primary data-active:text-foreground data-active:shadow-none dark:data-active:border-none",
+                  // Base : fond transparent, pas de border, transition fluide du texte
+                  "relative h-9 rounded-none border-b-2 border-transparent bg-transparent px-4 pb-2 pt-1.5 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground",
+                  // État Actif : La ligne apparaît ici, fine et élégante (style Vercel/Stripe)
+                  "data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none",
+                  // Reset complet des styles 'after' alternatifs de shadcn v4 pour éviter les doublons de lignes
+                  "after:hidden",
                 )}
               >
                 {config.name}

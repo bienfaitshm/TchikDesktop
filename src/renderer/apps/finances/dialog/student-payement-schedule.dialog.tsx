@@ -37,7 +37,11 @@ export const SchedulePaymentDialog: React.FC<SchedulePaymentDialogProps> = ({
     <Dialog modal={false} {...props}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
 
-      <DialogContent className="w-full sm:max-w-3xl md:max-w-5xl lg:max-w-[85vw] xl:max-w-[80vw] h-[85vh] flex flex-col p-0 overflow-hidden gap-0 rounded-xl border bg-background shadow-lg">
+      <DialogContent
+        className="sm:max-w-3xl md:max-w-5xl lg:max-w-[85vw] xl:max-w-[80vw] flex flex-col max-h-[85vh] h-[85vh]"
+
+        // className="w-full sm:max-w-3xl md:max-w-5xl lg:max-w-[85vw] xl:max-w-[80vw] h-[85vh] flex flex-col p-0 overflow-hidden gap-0 rounded-xl border bg-background shadow-lg"
+      >
         {/* Header avec design épuré et padding interne uniforme */}
         <DialogHeader className="p-6 border-b border-border/60 shrink-0">
           <div className="flex items-center gap-3">
@@ -58,7 +62,7 @@ export const SchedulePaymentDialog: React.FC<SchedulePaymentDialogProps> = ({
         </DialogHeader>
 
         {/* Zone de contenu scrollable indépendante */}
-        <div className="-mx-4 my-2 overflow-y-auto border-t border-border/60 px-4 py-4 h-full  felx-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
+        <div className="-mx-4 my-2 overflow-y-auto border-t border-border/60 px-4 py-4 flex-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
           <Suspense
             fallback={
               <div className="flex h-full min-h-[40vh] flex-col justify-center items-center gap-3 text-muted-foreground">
