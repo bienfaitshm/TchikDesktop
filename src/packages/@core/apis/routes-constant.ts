@@ -135,6 +135,24 @@ export const SeatingAssignmentRoutes = {
    FINANCE MODULE ROUTES
    ========================================================================= */
 
+export const PaymentRoutes = {
+  /**
+   * Récupérer le tableau matriciel des assignations et statuts de paiement d'une classe.
+   * Utile pour la vue globale de type grille/table côté Front.
+   */
+  CLASSROOM_TABLE: "payments/classroom-table",
+
+  /**
+   * Route POST pour l'assignation automatique ou manuelle de frais initiaux à un étudiant.
+   */
+  ASSIGN_FEES: "payments/assign-fees",
+
+  /**
+   * Route POST centrale pour traiter un encaissement au guichet (Ledger + Wallet sync).
+   */
+  PROCESS_PAYMENT: "payments/process",
+} as const;
+
 /**
  * Routes IPC pour la gestion des PORTEFEUILLES.
  */
@@ -232,4 +250,5 @@ export const IpcRoutes = {
   FEE_ASSIGNMENTS: FeeAssignmentRoutes,
   STUDENT_PAYMENTS: StudentPaymentRoutes,
   DAILY_EXCHANGE_RATES: DailyExchangeRateRoutes,
+  PAYMENT: PaymentRoutes,
 } as const;

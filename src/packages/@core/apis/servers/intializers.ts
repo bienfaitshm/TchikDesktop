@@ -21,6 +21,7 @@ import * as feeConfigurations from "./handlers/fee-configurations";
 import * as dailyExchangeRates from "./handlers/daily-exchange-rates";
 import * as wallets from "./handlers/wallets";
 import * as studentPayments from "./handlers/student-payments";
+import * as payments from "./handlers/payment.endpoints";
 
 const initializerLogger = getLogger("IPC Server");
 
@@ -114,6 +115,11 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   seatings.ClearRoomAssignments,
   seatings.FindStudentSeat,
   seatings.GenerateSeating,
+
+  // ---FINANCE : Payments---
+  payments.GetClassroomAssignmentTable,
+  payments.PostAssignFeesToStudent,
+  payments.PostProcessStudentPayment,
 
   // --- FINANCE : Wallets ---
   wallets.GetWallets,

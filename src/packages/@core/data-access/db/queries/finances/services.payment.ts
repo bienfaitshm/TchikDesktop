@@ -2,7 +2,6 @@ import { eq, sql } from "drizzle-orm";
 import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import {
   feeAssignments,
-  studentPayments,
   User,
   wallets,
   type InsertFeeAssignment,
@@ -402,7 +401,7 @@ export class PaymentService {
     assignmentId: string;
     amountReceived: number;
     currencyReceived: CURRENCY_ENUM;
-    paymentMethod: PAYMENT_METHOD_ENUM;
+    paymentMethod?: PAYMENT_METHOD_ENUM;
     transactionReference?: string;
   }) {
     this.validateContext(payload.schoolId, payload.yearId);
@@ -470,19 +469,18 @@ export class PaymentService {
       }
 
       return await this.clientDb.transaction(async (tx) => {
-        const paymentClient = this.studentPaymentRepo.getClient(tx);
-        const [newPayment] = await paymentClient
-          .insert(studentPayments)
-          .values({
+        const newPayment = await this.studentPaymentRepo.create(
+          {
             assignmentId: payload.assignmentId,
             amountReceived: payload.amountReceived,
             currencyReceived: payload.currencyReceived,
             appliedExchangeRate: exchangeRateMultiplied,
             amountConverted: amountConverted,
-            paymentMethod: payload.paymentMethod,
+            paymentMethod: payload.paymentMethod ?? PAYMENT_METHOD_ENUM.CASH,
             transactionReference: payload.transactionReference,
-          })
-          .returning();
+          },
+          tx,
+        );
 
         await this.feeAssignmentRepo.updateAssignmentProgress(
           payload.assignmentId,
