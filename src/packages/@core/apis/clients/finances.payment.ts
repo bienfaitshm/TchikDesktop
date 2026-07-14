@@ -1,4 +1,7 @@
-import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
+import {
+  IpcClient,
+  ProgressPayload,
+} from "@/packages/electron-ipc-rest/ipc.client";
 import type { StudentPayment } from "@/packages/@core/data-access/db/schemas";
 import type { TableClassroomPaymentAssignment } from "@/packages/@core/data-access/db";
 import { PaymentRoutes } from "../routes-constant";
@@ -40,6 +43,14 @@ export type PaymentApi = Readonly<{
   ): Promise<TableClassroomPaymentAssignment[]>;
 
   /**
+   * S'abonne aux notifications de progression de la synchronisation de la classe
+   * @returns Une fonction pour se désabonner (nettoyage)
+   */
+  onClassroomSyncProgress(
+    callback: (params: ProgressPayload) => void,
+  ): () => void;
+
+  /**
    * Assigne manuellement ou automatiquement la grille des frais initiaux à un étudiant
    */
   assignFeesToStudent(data: AssignFeesToStudentPayload): Promise<void>;
@@ -56,6 +67,12 @@ export function createPaymentApis(ipcClient: IpcClient): PaymentApi {
   return {
     fetchClassroomAssignmentTable(params) {
       return ipcClient.get(PaymentRoutes.CLASSROOM_TABLE, { params });
+    },
+    onClassroomSyncProgress(callback) {
+      return ipcClient.onSyncProgressMessage(
+        PaymentRoutes.CLASSROOM_TABLE,
+        callback,
+      );
     },
     assignFeesToStudent(data) {
       return ipcClient.post(PaymentRoutes.ASSIGN_FEES, data);

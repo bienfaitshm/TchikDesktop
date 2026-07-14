@@ -50,8 +50,14 @@ export class GetClassroomAssignmentTable extends AbstractEndpoint<any> {
 
   protected handle({
     params,
+    context,
   }: IpcRequest<any, ClassroomFilter>): Promise<unknown> {
-    return paymentService.getAssignmentTableOfClassroom(params);
+    return paymentService.getAssignmentTableOfClassroom(
+      params,
+      ({ message, pourcent }) => {
+        context.sender.send(this.route, { message, pourcent });
+      },
+    );
   }
 }
 

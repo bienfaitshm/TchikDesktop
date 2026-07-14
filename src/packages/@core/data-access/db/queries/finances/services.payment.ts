@@ -50,6 +50,9 @@ export type TableClassroomPaymentAssignment = {
   };
 };
 
+export type OnSyncMessageParams = { message: string; pourcent: number };
+export type OnSyncMessage = (context: OnSyncMessageParams) => void;
+
 export class BusinessRuleError extends Error {
   constructor(
     message: string,
@@ -131,17 +134,26 @@ export class PaymentService {
     });
   }
 
-  async syncClassroomFeeAssignments(ctx: {
-    schoolId: string;
-    yearId: string;
-    classId: string;
-  }) {
+  async syncClassroomFeeAssignments(
+    ctx: {
+      schoolId: string;
+      yearId: string;
+      classId: string;
+    },
+    onSyncMessage?: OnSyncMessage,
+  ) {
     const { schoolId, yearId, classId } = ctx;
 
     try {
       this.logger.info(
         `[Sync Background] Starting fee assignment sync for classroom: ${classId}`,
       );
+
+      // 🎯 Étape 1 : Initialisation & Vérification de la classe
+      onSyncMessage?.({
+        message: "Vérification de la classe en base de données...",
+        pourcent: 10,
+      });
 
       const classroom = await this.classroomRepo.findById(
         classId,
@@ -151,8 +163,18 @@ export class PaymentService {
         this.logger.warn(
           `[Sync Background] Classroom ${classId} not found. Aborting sync.`,
         );
+        onSyncMessage?.({
+          message: "Classe introuvable. Annulation de la synchronisation.",
+          pourcent: 100,
+        });
         return { configs: [], enrollments: [] };
       }
+
+      // 🎯 Étape 2 : Chargement des inscriptions et configurations applicables
+      onSyncMessage?.({
+        message: "Chargement des élèves et des grilles tarifaires...",
+        pourcent: 30,
+      });
 
       const [activeEnrollments, applicableConfigs] = await Promise.all([
         this.enrollmentRepo.getActiveEnrollments(
@@ -175,14 +197,27 @@ export class PaymentService {
         this.logger.info(
           `[Sync Background] No active enrollments or configs for classroom ${classId}.`,
         );
+        onSyncMessage?.({
+          message: "Aucun élève actif ou configuration tarifaire trouvé.",
+          pourcent: 100,
+        });
         return { configs: applicableConfigs, enrollments: activeEnrollments };
       }
 
       const requiredAssignments =
         this.extractRequiredAssignments(applicableConfigs);
       if (!requiredAssignments.length) {
+        onSyncMessage?.({
+          message: "Aucun échéancier de paiement requis détecté.",
+          pourcent: 100,
+        });
         return { configs: applicableConfigs, enrollments: activeEnrollments };
       }
+
+      onSyncMessage?.({
+        message: "Comparaison des comptes élèves...",
+        pourcent: 50,
+      });
 
       const enrollmentIds = activeEnrollments.map((e) => e.enrollmentId);
       const existingAssignments = await this.feeAssignmentRepo.findMany({
@@ -199,6 +234,10 @@ export class PaymentService {
         ),
       );
 
+      onSyncMessage?.({
+        message: "Calcul des nouvelles échéances à générer...",
+        pourcent: 70,
+      });
       const assignmentsToCreate: InsertFeeAssignment[] = [];
 
       for (const enrollment of activeEnrollments) {
@@ -223,6 +262,11 @@ export class PaymentService {
       }
 
       if (assignmentsToCreate.length > 0) {
+        onSyncMessage?.({
+          message: `Enregistrement de ${assignmentsToCreate.length} nouvelles affectations financières...`,
+          pourcent: 90,
+        });
+
         this.logger.info(
           `[Sync Background] Creating ${assignmentsToCreate.length} new assignments.`,
         );
@@ -233,6 +277,11 @@ export class PaymentService {
         );
       }
 
+      onSyncMessage?.({
+        message: "Mise à jour des comptes terminée avec succès !",
+        pourcent: 100,
+      });
+
       return {
         configs: applicableConfigs,
         enrollments: activeEnrollments,
@@ -242,6 +291,10 @@ export class PaymentService {
         `[Sync Background] Sync failed for classroom ${classId}:`,
         error,
       );
+      onSyncMessage?.({
+        message: "Erreur lors de la synchronisation.",
+        pourcent: 100,
+      });
       throw DatabaseError.from(
         error,
         "Failed to synchronize student fee assignments.",
@@ -249,17 +302,22 @@ export class PaymentService {
     }
   }
 
-  async getAssignmentTableOfClassroom(filters: {
-    schoolId: string;
-    yearId: string;
-    classId: string;
-  }): Promise<TableClassroomPaymentAssignment[]> {
+  async getAssignmentTableOfClassroom(
+    filters: {
+      schoolId: string;
+      yearId: string;
+      classId: string;
+    },
+    onSyncMessage?: OnSyncMessage,
+  ): Promise<TableClassroomPaymentAssignment[]> {
     this.logger.info(
       `[Payment Table] Fetching assignment table for classroom ${filters.classId}`,
     );
 
-    const { configs, enrollments } =
-      await this.syncClassroomFeeAssignments(filters);
+    const { configs, enrollments } = await this.syncClassroomFeeAssignments(
+      filters,
+      onSyncMessage,
+    );
 
     if (!enrollments.length || !configs.length) return [];
 

@@ -31,6 +31,21 @@ export class DatabaseManager {
       schema,
       logger: createDrizzleLogger(dbLogger),
     });
+
+    /*Optimisation des performances d'écriture SQLite au démarrage*/
+    this.client
+      .executeMultiple(
+        `
+      PRAGMA journal_mode = WAL;
+      PRAGMA synchronous = NORMAL;
+    `,
+      )
+      .catch((err) => {
+        dbLogger.error(
+          "Échec du paramétrage des PRAGMAs d'optimisation SQLite",
+          err,
+        );
+      });
   }
 
   /**

@@ -12,8 +12,51 @@ import {
 import { Spinner } from "@/renderer/components/ui/spinner";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { StudentSchedulePaymentTabs } from "../contents/student-schedule-payement-tab.contents";
+import { useOnClassroomSyncProgress } from "@/renderer/libs/queries/finances";
+
 import { Button } from "@/renderer/components/ui/button";
 import { CreditCard } from "lucide-react";
+
+/**
+ * Fallback dynamique affichant la progression réelle de la synchronisation SQLite
+ */
+const ClassroomProgressFallback: React.FC = () => {
+  const { progress } = useOnClassroomSyncProgress();
+
+  const currentMessage =
+    progress?.message ?? "Chargement des données financières...";
+  const currentPercent = progress?.pourcent ?? 0;
+
+  return (
+    <div className="flex h-full min-h-[45vh] flex-col justify-center items-center gap-4 text-muted-foreground px-6">
+      <div className="relative flex items-center justify-center">
+        <Spinner className="h-10 w-10 text-primary animate-spin" />
+        {currentPercent > 0 && (
+          <span className="absolute text-[10px] font-semibold text-primary">
+            {currentPercent}%
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-col items-center gap-2 max-w-sm w-full text-center">
+        <span className="text-sm font-semibold text-foreground">
+          Synchronisation en cours
+        </span>
+        <span className="text-xs text-muted-foreground line-clamp-1">
+          {currentMessage}
+        </span>
+
+        {/* Barre de progression visuelle */}
+        <div className="w-full bg-secondary h-1.5 rounded-full mt-2 overflow-hidden">
+          <div
+            className="bg-primary h-full transition-all duration-300 ease-out rounded-full"
+            style={{ width: `${currentPercent}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 type SchedulePaymentDialogProps = Partial<
   React.ComponentProps<typeof Dialog>
@@ -37,11 +80,7 @@ export const SchedulePaymentDialog: React.FC<SchedulePaymentDialogProps> = ({
     <Dialog modal={false} {...props}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
 
-      <DialogContent
-        className="sm:max-w-3xl md:max-w-5xl lg:max-w-[85vw] xl:max-w-[80vw] flex flex-col max-h-[85vh] h-[85vh]"
-
-        // className="w-full sm:max-w-3xl md:max-w-5xl lg:max-w-[85vw] xl:max-w-[80vw] h-[85vh] flex flex-col p-0 overflow-hidden gap-0 rounded-xl border bg-background shadow-lg"
-      >
+      <DialogContent className="sm:max-w-3xl md:max-w-5xl lg:max-w-[85vw] xl:max-w-[80vw] flex flex-col max-h-[85vh] h-[85vh]">
         {/* Header avec design épuré et padding interne uniforme */}
         <DialogHeader className="p-6 border-b border-border/60 shrink-0">
           <div className="flex items-center gap-3">
@@ -63,21 +102,7 @@ export const SchedulePaymentDialog: React.FC<SchedulePaymentDialogProps> = ({
 
         {/* Zone de contenu scrollable indépendante */}
         <div className="-mx-4 my-2 overflow-y-auto border-t border-border/60 px-4 py-4 flex-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
-          <Suspense
-            fallback={
-              <div className="flex h-full min-h-[40vh] flex-col justify-center items-center gap-3 text-muted-foreground">
-                <Spinner className="h-6 w-6 text-primary animate-spin" />
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-sm font-medium text-foreground">
-                    Chargement des données financières
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    Vérification et synchronisation de la matrice...
-                  </span>
-                </div>
-              </div>
-            }
-          >
+          <Suspense fallback={<ClassroomProgressFallback />}>
             <StudentSchedulePaymentTabs
               classId={classId}
               schoolId={schoolId}
@@ -85,8 +110,9 @@ export const SchedulePaymentDialog: React.FC<SchedulePaymentDialogProps> = ({
             />
           </Suspense>
         </div>
+
         {/* Footer rigide, aligné sur la grille */}
-        <DialogFooter>
+        <DialogFooter className="p-4 border-t border-border/60 shrink-0">
           <DialogClose asChild>
             <Button variant="outline" className="min-w-25">
               Fermer

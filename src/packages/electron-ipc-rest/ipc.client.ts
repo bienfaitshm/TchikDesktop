@@ -28,6 +28,11 @@ export interface ServerConfig {
   readonly logger?: ILogger;
 }
 
+export interface ProgressPayload {
+  message: string;
+  pourcent: number;
+}
+
 // Handler mis à jour avec le type Headers instanciable
 export type RequestHandler<
   TRes,
@@ -79,6 +84,19 @@ export class IpcClient {
     private readonly ipcRenderer: IpcRenderer,
     private readonly baseHeaders: Record<string, string> = {},
   ) {}
+
+  /**
+   * onSyncMessage
+   */
+  public onSyncProgressMessage(
+    url: string,
+    callback: (params: ProgressPayload) => void,
+  ) {
+    const subscription = (_event: any, value: ProgressPayload) =>
+      callback(value);
+    this.ipcRenderer.on(url, subscription);
+    return () => this.ipcRenderer.removeListener(url, subscription);
+  }
 
   public get<T>(url: string, config?: ClientRequestConfig): Promise<T> {
     return this.request<T>(url, HttpMethod.GET, undefined, config);

@@ -142,7 +142,7 @@ export class IpcServer {
   ): this {
     const routeKey = `${method}:${path}`;
     if (this.routes.has(routeKey)) {
-      this.logger.warn(`[IpcServer] Route override warning: ${routeKey}`);
+      this.logger.warn(`Route override warning: ${routeKey}`);
     }
     this.routes.set(routeKey, { method, handler });
     return this;
@@ -180,13 +180,30 @@ export class IpcServer {
         },
       };
 
-      this.logger.info(`[Apis Call]: call apis on ${routeKey}`, {
+      this.logger.info(`[Incoming]: ${routeKey}`, {
         payload: req,
       });
+
+      const startTime = performance.now();
+
       try {
         const result = await route.handler(req);
+
+        const duration = (performance.now() - startTime).toFixed(2);
+        this.logger.info(`[Success]: ${routeKey} - ${duration}ms`, {
+          requestId: req.id,
+          durationMs: parseFloat(duration),
+        });
+
         return createResponse(result, HttpStatus.OK);
       } catch (error) {
+        const duration = (performance.now() - startTime).toFixed(2);
+
+        this.logger.warn(`[Failed]: ${routeKey} failed after ${duration}ms`, {
+          requestId: req.id,
+          durationMs: parseFloat(duration),
+        });
+
         return this.handleError(req, error as Error);
       }
     };
@@ -207,7 +224,7 @@ export class IpcServer {
   ): IResponse<null> {
     if (error instanceof HttpException) {
       this.logger.warn(
-        `[IpcServer] HTTP ${error.statusCode} on ${req.id}: ${error.message}`,
+        `HTTP ${error.statusCode} on ${req.id}: ${error.message}`,
         { error },
       );
       return createErrorResponse(
@@ -217,10 +234,7 @@ export class IpcServer {
       );
     }
 
-    this.logger.error(
-      `[IpcServer] Critical Error on ${req.id}: ${error?.message}`,
-      error,
-    );
+    this.logger.error(`Critical Error on ${req.id}: ${error?.message}`, error);
     return createErrorResponse(
       "Internal Server Error",
       HttpStatus.INTERNAL_SERVER_ERROR,

@@ -11,6 +11,8 @@ import type {
   UseMutationOptions,
   UseSuspenseQueryOptions,
 } from "@tanstack/react-query";
+import React from "react";
+import type { ProgressPayload } from "@/packages/electron-ipc-rest/ipc.client";
 
 export const paymentKeys = {
   all: ["payments"] as const,
@@ -65,4 +67,27 @@ export function useProcessStudentPayment(
     mutationFn: (data) => paymentApi.processStudentPayment(data),
     ...options,
   });
+}
+
+export function useOnClassroomSyncProgress() {
+  const [progress, setProgress] = React.useState<ProgressPayload | null>(null);
+
+  React.useEffect(() => {
+    // 1. Abonnement
+    const unsubscribe = paymentApi.onClassroomSyncProgress((data) => {
+      setProgress(data);
+    });
+
+    // 2. Nettoyage lors du démontage du composant
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Permet à l'UI de remettre la progression à null (ex: fermer le modal ou la notification)
+  const resetProgress = React.useCallback(() => {
+    setProgress(null);
+  }, []);
+
+  return { progress, resetProgress };
 }
