@@ -213,6 +213,20 @@ export class FeeAssignmentRepository extends BaseRepository<
     this.searchFiltersColumns = [];
   }
 
+  getPaymentStatus(amount: number, totalAmount: number): FEE_SCHEDULES_ENUM {
+    if (amount >= totalAmount) {
+      return amount > totalAmount
+        ? FEE_SCHEDULES_ENUM.OVERPAID
+        : FEE_SCHEDULES_ENUM.PAID;
+    }
+
+    if (amount <= 0) {
+      return FEE_SCHEDULES_ENUM.UNPAID;
+    }
+
+    return FEE_SCHEDULES_ENUM.PARTIALLY_PAID;
+  }
+
   /**
    * Mettre à jour l'état d'avancement de la dette de l'élève (Garanti transactionnel)
    */
@@ -225,28 +239,36 @@ export class FeeAssignmentRepository extends BaseRepository<
     try {
       const client = this.getClient(tx);
 
+      // 1. Récupération de l'état actuel de l'assignment
       const [current] = await client
-        .select({ amountPaid: feeAssignments.amountPaid })
-        .from(feeAssignments)
-        .where(eq(feeAssignments.assignmentId, assignmentId));
+        .select({
+          amountPaid: this.table.amountPaid,
+        })
+        .from(this.table)
+        .where(eq(this.table.assignmentId, assignmentId));
 
-      const newAmountPaid = (current?.amountPaid ?? 0) + amountConverted;
-      let newStatus = FEE_SCHEDULES_ENUM.PARTIALLY_PAID;
-
-      if (newAmountPaid >= totalAmount) {
-        newStatus = FEE_SCHEDULES_ENUM.PAID;
-      } else if (newAmountPaid <= 0) {
-        newStatus = FEE_SCHEDULES_ENUM.UNPAID;
+      if (!current) {
+        throw new Error(`Fee assignment with ID ${assignmentId} not found`);
       }
 
-      await client
-        .update(feeAssignments)
+      // 2. Calcul du nouveau montant payé
+      const previousAmount = current.amountPaid ?? 0;
+      const newAmountPaid = previousAmount + amountConverted;
+
+      const newStatus = this.getPaymentStatus(newAmountPaid, totalAmount);
+
+      // 4. Persistance des modifications
+      const [updatedRecord] = await client
+        .update(this.table)
         .set({
           amountPaid: newAmountPaid,
-          status: newStatus as any,
-          updatedAt: sql`CURRENT_TIMESTAMP`,
+          status: newStatus,
+          updatedAt: sql`(CURRENT_TIMESTAMP)`,
         })
-        .where(eq(feeAssignments.assignmentId, assignmentId));
+        .where(eq(this.table.assignmentId, assignmentId))
+        .returning();
+
+      return updatedRecord;
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
