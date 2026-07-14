@@ -63,7 +63,9 @@ export const CellAction: React.FC<FeeTypeRowActionsProps> = ({
           <ViewPayementDetailDialog />
         </MenuDialogWrapper>
         <MenuDialogWrapper id="view-history">
-          <FeeAssignmentPaymentHistoryDialog />
+          <FeeAssignmentPaymentHistoryDialog
+            assignmentId={feeAssignment.assignmentId}
+          />
         </MenuDialogWrapper>
         <MenuDialogWrapper id="pay">
           <SavePaymentDialog

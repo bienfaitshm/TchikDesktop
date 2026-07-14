@@ -16,19 +16,23 @@ import {
 } from "@/renderer/libs/queries/finances";
 import { Loader2, Calendar, CreditCard, Receipt } from "lucide-react";
 import { PaymentProcessForm } from "../forms/payment-process-form";
+import { Suspense } from "@/renderer/libs/queries/suspense";
+import { PaymentAssignHistory } from "../contents/payment-assign-hisotry.content";
 
 type DialogProps = Partial<React.ComponentProps<typeof Dialog>> & {
   children?: React.ReactNode;
   schoolId?: string;
   yearId?: string;
+  assignmentId: string;
 };
 
 /* ==========================================================================
    1. HISTORIQUE DES PAIEMENTS (MINIMALISTE TIMELINE)
    ========================================================================== */
-export const FeeAssignmentPaymentHistoryDialog: React.FC<DialogProps> = (
-  props,
-) => {
+export const FeeAssignmentPaymentHistoryDialog: React.FC<DialogProps> = ({
+  assignmentId,
+  ...props
+}) => {
   return (
     <Dialog {...props}>
       <DialogContent className="sm:max-w-106.25">
@@ -42,32 +46,9 @@ export const FeeAssignmentPaymentHistoryDialog: React.FC<DialogProps> = (
         </DialogHeader>
 
         {/* Contenu type Timeline épurée style Stripe */}
-        <div className="py-4 space-y-4 max-h-75 overflow-y-auto pr-1">
-          {/* Exemple d'item de flux (à boucler avec tes datas réelles) */}
-          <div className="flex items-start justify-between border-b border-border/40 pb-3 text-sm last:border-0 last:pb-0">
-            <div className="flex gap-2.5 items-start">
-              <div className="mt-0.5 rounded-md bg-muted p-1.5 text-muted-foreground">
-                <Receipt className="size-3.5" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-medium text-foreground">
-                  Versement #4920
-                </span>
-                <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                  <Calendar className="size-3" /> 12 Janv. 2026 à 14:32
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-col items-end">
-              <span className="font-mono font-medium text-foreground text-sm">
-                45 000 FCFA
-              </span>
-              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                Espèces
-              </span>
-            </div>
-          </div>
-        </div>
+        <Suspense>
+          <PaymentAssignHistory assignmentId={assignmentId} />
+        </Suspense>
 
         <DialogFooter className="sm:justify-end">
           <DialogClose asChild>
