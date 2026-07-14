@@ -14,7 +14,7 @@ function App(): JSX.Element {
         <TooltipProvider>
           <SuspenseErrorBoundary
             fallbackRender={({ error, resetErrorBoundary }) => (
-              <ErrorPage error={error} onRetry={resetErrorBoundary} />
+              <ErrorPage error={error as Error} onRetry={resetErrorBoundary} />
             )}
           >
             <Router />

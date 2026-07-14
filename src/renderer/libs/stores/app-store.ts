@@ -16,7 +16,7 @@ interface ConfigurationState {
   currentSchool: School | null;
   currentStudyYear: StudyYear | null;
   _hasHydrated: boolean;
-  isSyncing: boolean; // 👈 Nouveau flag pour savoir si on met à jour en arrière-plan
+  isSyncing: boolean;
 }
 
 interface ConfigurationActions {
@@ -24,7 +24,7 @@ interface ConfigurationActions {
   setCurrentStudyYear: (year: StudyYear | null) => void;
   resetConfiguration: () => void;
   setHasHydrated: (state: boolean) => void;
-  syncFreshData: () => Promise<void>; // 👈 Action dédiée pour synchroniser les données proprement
+  syncFreshData: () => Promise<void>;
 }
 
 type ConfigurationStore = ConfigurationState & {
