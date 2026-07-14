@@ -1,10 +1,6 @@
 import z from "zod";
 import { paymentService } from "@/packages/@core/data-access/db/queries";
 import {
-  CURRENCY_ENUM,
-  PAYMENT_METHOD_ENUM,
-} from "@/packages/@core/data-access/db/options";
-import {
   HttpMethod,
   IpcRequest,
   ValidationSchemas,
@@ -81,9 +77,15 @@ export class PostProcessStudentPayment extends AbstractEndpoint<any> {
     body: ProcessPaymentSchema,
   };
 
-  protected handle({
+  protected async handle({
     body,
+    context,
   }: IpcRequest<ProcessPaymentPayload, any>): Promise<unknown> {
-    return paymentService.processStudentPayment(body);
+    const payment = await paymentService.processStudentPayment(body);
+    // if(payment){
+    //   // create facture and print
+    //   context.window.
+    // }
+    return payment;
   }
 }

@@ -170,7 +170,7 @@ export class ProcessStudentPayment {
         tx,
       );
 
-      await this.feeAssignmentRepo.updateAssignmentProgress(
+      const assignment = await this.feeAssignmentRepo.updateAssignmentProgress(
         payload.assignmentId,
         amountConverted,
         configRecord.totalAmount,
@@ -185,7 +185,7 @@ export class ProcessStudentPayment {
       this.logger.info(
         `[Payment processing] Success for assignment ${payload.assignmentId}. ID: ${newPayment.paymentId}`,
       );
-      return newPayment;
+      return { ...assignment, payment: newPayment };
     });
   }
 
