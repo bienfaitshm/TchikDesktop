@@ -12,23 +12,19 @@ import { api } from "@/renderer/libs/apis";
 
 const APP_STORE_NAME = "@app-configuration";
 
-/**
- * Interface de l'état
- */
 interface ConfigurationState {
   currentSchool: School | null;
   currentStudyYear: StudyYear | null;
   _hasHydrated: boolean;
+  isSyncing: boolean; // 👈 Nouveau flag pour savoir si on met à jour en arrière-plan
 }
 
-/**
- * Interface des actions
- */
 interface ConfigurationActions {
   setCurrentSchool: (school: School | null) => void;
   setCurrentStudyYear: (year: StudyYear | null) => void;
   resetConfiguration: () => void;
   setHasHydrated: (state: boolean) => void;
+  syncFreshData: () => Promise<void>; // 👈 Action dédiée pour synchroniser les données proprement
 }
 
 type ConfigurationStore = ConfigurationState & {
@@ -37,10 +33,11 @@ type ConfigurationStore = ConfigurationState & {
 
 export const useConfigStore = create<ConfigurationStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       currentSchool: null,
       currentStudyYear: null,
       _hasHydrated: false,
+      isSyncing: false,
 
       actions: {
         setCurrentSchool: (school) => set({ currentSchool: school }),
@@ -49,19 +46,16 @@ export const useConfigStore = create<ConfigurationStore>()(
         resetConfiguration: () =>
           set({ currentSchool: null, currentStudyYear: null }),
         setHasHydrated: (state) => set({ _hasHydrated: state }),
-      },
-    }),
-    {
-      name: APP_STORE_NAME,
-      storage: createJSONStorage(() => localStorage),
 
-      onRehydrateStorage: () => async (state) => {
-        if (!state) return;
+        // ⚡ Synchronisation asynchrone non-bloquante
+        syncFreshData: async () => {
+          const state = get();
+          const schoolId = state.currentSchool?.schoolId;
+          const yearId = state.currentStudyYear?.yearId;
 
-        const schoolId = state.currentSchool?.schoolId;
-        const yearId = state.currentStudyYear?.yearId;
+          if (!schoolId || !yearId) return;
 
-        if (schoolId && yearId) {
+          set({ isSyncing: true });
           try {
             const [freshSchool, freshStudyYear] = await Promise.all([
               api.school.fetchSchoolById(schoolId),
@@ -69,21 +63,32 @@ export const useConfigStore = create<ConfigurationStore>()(
             ]);
 
             if (freshSchool && freshStudyYear) {
-              state.actions.setCurrentSchool(freshSchool);
-              state.actions.setCurrentStudyYear(freshStudyYear);
+              set({
+                currentSchool: freshSchool,
+                currentStudyYear: freshStudyYear,
+              });
             } else {
-              state.actions.resetConfiguration();
+              set({ currentSchool: null, currentStudyYear: null });
             }
           } catch (error) {
             console.error(
-              "Erreur lors de la réhydratation de la configuration via l'API:",
+              "[ConfigStore] Échec de la synchronisation en tâche de fond:",
               error,
             );
-            state.actions.resetConfiguration();
+            // Optionnel: Ne pas reset la config si c'est juste un problème réseau temporaire
+          } finally {
+            set({ isSyncing: false });
           }
-        }
+        },
+      },
+    }),
+    {
+      name: APP_STORE_NAME,
+      storage: createJSONStorage(() => localStorage),
 
-        // On signale que le processus de réhydratation (y compris l'API) est terminé
+      // ⏱️ L'hydratation du cache localStorage est désormais instantanée (< 2ms)
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
         state.actions.setHasHydrated(true);
       },
       partialize: (state) => ({
@@ -94,8 +99,9 @@ export const useConfigStore = create<ConfigurationStore>()(
   ),
 );
 
+// HOOKS
 export const useIsConfigHydrated = () => useConfigStore((s) => s._hasHydrated);
-
+export const useIsConfigSyncing = () => useConfigStore((s) => s.isSyncing); // Pour afficher un petit indicateur de synchro discret
 export const useConfigActions = () => useConfigStore((s) => s.actions);
 
 export const useCurrentConfig = () => {

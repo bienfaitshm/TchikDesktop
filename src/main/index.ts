@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow } from "electron";
+import { app, shell, BrowserWindow, nativeTheme } from "electron";
 import path from "node:path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { dbManager } from "@/packages/@core/data-access/db";
@@ -10,7 +10,9 @@ import { updateInit } from "@/main/update";
 import { getAppIcon } from "@/main/utils";
 import { handleFatalError } from "./error-handler";
 import "@/main/apps/system-infos";
+
 const mainLogger = getLogger("MainProcess");
+const isDark = nativeTheme.shouldUseDarkColors;
 
 const createMainWindow = async (): Promise<BrowserWindow> => {
   mainLogger.info("Création de la fenêtre principale...");
@@ -18,25 +20,21 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
 
   const mainWindow = new BrowserWindow({
     width: 900,
-    height: 670,
-    minWidth: 670,
-    minHeight: 600,
+    height: 800,
+    minWidth: 870,
+    minHeight: 800,
     center: true,
-
+    backgroundColor: isDark ? "#181c1e" : "#ffffff",
     show: false,
-    backgroundColor: "#ffffff",
-
     title: "Tchik",
     icon: appIcon,
     autoHideMenuBar: true,
     titleBarStyle: "default",
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
-
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
-
       spellcheck: true,
       backgroundThrottling: true,
       devTools: is.dev,
@@ -44,7 +42,7 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
   });
 
   if (is.dev) {
-    mainWindow.webContents.openDevTools({ mode: "detach" });
+    mainWindow.webContents.openDevTools({ mode: "right" });
   }
 
   mainLogger.info("Fenêtre principale créée avec les options par défaut.");
@@ -82,21 +80,37 @@ app.whenReady().then(async () => {
   electronApp.setAppUserModelId("com.electron.tchik");
   mainLogger.info("AppUserModelId défini.");
 
-  mainLogger.info("Initialisation de la DATA...");
-  // 1. Initialisation de la DATA en premier
-  await dbManager.performBackup();
-  await dbManager.initialize();
-
-  mainLogger.info("Préparation des services...");
-  // 2. Préparation des services
-  apiGateway.registerEndpoints();
-  ipcServer.listen();
-
-  await setupDevelopmentEnvironment({ logger: mainLogger });
-
   const mainWindow = await createMainWindow();
-
   updateInit(mainWindow);
+
+  (async () => {
+    try {
+      mainLogger.info("Initialisation de la DATA en arrière-plan...");
+
+      await dbManager.performBackup();
+      await dbManager.initialize();
+      mainLogger.info("DATA initialisée avec succès.");
+
+      mainLogger.info("Préparation et enregistrement des services...");
+      apiGateway.registerEndpoints();
+      ipcServer.listen();
+
+      mainWindow.webContents.send("database-ready");
+    } catch (error) {
+      mainLogger.error(
+        "Erreur critique lors de l'initialisation de la base de données :",
+        error,
+      );
+      handleFatalError("Database Initialization Error", error, mainLogger);
+    }
+  })();
+
+  setupDevelopmentEnvironment({ logger: mainLogger }).catch((err) => {
+    mainLogger.error(
+      "Erreur lors de la configuration de l'environnement de dev :",
+      err,
+    );
+  });
 
   app.on("activate", async () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -121,7 +135,6 @@ app.on("window-all-closed", async () => {
     mainLogger.info(
       'Événement "window-all-closed": Fermeture de l\'application.',
     );
-    // await dbManager.performBackup();
     app.quit();
   }
 });
