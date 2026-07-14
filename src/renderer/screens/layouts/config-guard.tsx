@@ -3,6 +3,7 @@ import { Navigate, useLocation } from "react-router";
 import {
   useCurrentConfig,
   useIsConfigHydrated,
+  useConfigActions,
 } from "@/renderer/libs/stores/app-store";
 
 interface ConfigGuardProps {
@@ -12,13 +13,15 @@ interface ConfigGuardProps {
 
 /**
  * ConfigGuard
- * Garantit que l'application est configurée localement avant d'autoriser l'accès aux routes privées.
+ * Garantit que l'application est configurée localement avant d'autoriser l'accès aux routes privées,
+ * puis rafraîchit les données de manière asynchrone en arrière-plan.
  */
 export const ConfigGuard: React.FC<
   React.PropsWithChildren<ConfigGuardProps>
 > = ({ children, loader = null, redirectTo }) => {
   const isHydrated = useIsConfigHydrated();
   const { isConfigured } = useCurrentConfig();
+  const { syncFreshData } = useConfigActions();
   const location = useLocation();
   const startTime = useRef(performance.now());
 
@@ -30,6 +33,12 @@ export const ConfigGuard: React.FC<
       );
     }
   }, [isHydrated]);
+
+  useEffect(() => {
+    if (isHydrated && isConfigured) {
+      syncFreshData();
+    }
+  }, [isHydrated, isConfigured, syncFreshData]);
 
   if (!isHydrated) {
     return <>{loader}</>;

@@ -1,6 +1,6 @@
 export const ROUTES = {
   HOME: "/",
-  ENROLLMENTS: "/inscriptions",
+  ENROLLMENTS: "/enrollments",
   SCHOOLS: {
     ROOT: "/schools",
     OPTIONS: "options",

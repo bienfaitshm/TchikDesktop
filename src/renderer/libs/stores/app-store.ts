@@ -8,7 +8,8 @@ import type {
   StudyYear,
 } from "@/packages/@core/data-access/db/schemas";
 
-import { api } from "@/renderer/libs/apis";
+import { loadStudyYear } from "@/renderer/libs/queries/study-years";
+import { loadSchool } from "@/renderer/libs/queries/schools";
 
 const APP_STORE_NAME = "@app-configuration";
 
@@ -58,8 +59,8 @@ export const useConfigStore = create<ConfigurationStore>()(
           set({ isSyncing: true });
           try {
             const [freshSchool, freshStudyYear] = await Promise.all([
-              api.school.fetchSchoolById(schoolId),
-              api.school.fetchStudyYearById(yearId),
+              loadSchool(schoolId),
+              loadStudyYear(yearId),
             ]);
 
             if (freshSchool && freshStudyYear) {
