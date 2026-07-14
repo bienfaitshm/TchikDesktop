@@ -25,7 +25,7 @@ import {
   ViewPayementDetailDialog,
 } from "../dialog";
 // Configuration des pastilles de statut discrètes (Style Vercel/Linear)
-const STATUS_INDICATORS: Record<FEE_SCHEDULES_ENUM, string> = {
+export const STATUS_INDICATORS: Record<FEE_SCHEDULES_ENUM, string> = {
   [FEE_SCHEDULES_ENUM.PAID]: "bg-emerald-500",
   [FEE_SCHEDULES_ENUM.UNPAID]: "bg-rose-500",
   [FEE_SCHEDULES_ENUM.PARTIALLY_PAID]: "bg-amber-500",
@@ -35,11 +35,17 @@ const STATUS_INDICATORS: Record<FEE_SCHEDULES_ENUM, string> = {
 
 interface FeeTypeRowActionsProps {
   feeAssignment: FeeAssignment;
+  schoolId: string;
+  yearId: string;
+  onSaveSuccess?(data: unknown): void;
 }
 
 // Bouton d'action contextuel à la cellule (apparaît au survol de la cellule)
 export const CellAction: React.FC<FeeTypeRowActionsProps> = ({
   feeAssignment,
+  schoolId,
+  yearId,
+  onSaveSuccess,
 }) => (
   <ActionMenu
     trigger={
@@ -61,9 +67,10 @@ export const CellAction: React.FC<FeeTypeRowActionsProps> = ({
         </MenuDialogWrapper>
         <MenuDialogWrapper id="pay">
           <SavePaymentDialog
-            yearId=""
-            schoolId=""
+            yearId={yearId}
+            schoolId={schoolId}
             assignmentId={feeAssignment.assignmentId}
+            onSuccess={onSaveSuccess}
           />
         </MenuDialogWrapper>
       </>
@@ -112,6 +119,7 @@ export const staticPaymentColumns: ColumnDef<AssignmentTableOfClassroom>[] = [
 // --- COLONNES DYNAMIQUES ---
 export const createPaymentColumns = (
   heads: { id: string; name: string }[],
+  ctx: { schoolId: string; yearId: string },
 ): ColumnDef<AssignmentTableOfClassroom>[] => {
   const dynamicColumns: ColumnDef<AssignmentTableOfClassroom>[] = heads.map(
     (head) => ({
@@ -158,7 +166,13 @@ export const createPaymentColumns = (
             </div>
 
             {/* Action contextuelle masquée, ne pope qu'au survol de la cellule */}
-            <CellAction feeAssignment={feeAssignment} />
+            <CellAction
+              feeAssignment={feeAssignment}
+              onSaveSuccess={(data) => {
+                console.log("Payement successed", data);
+              }}
+              {...ctx}
+            />
           </div>
         );
       },

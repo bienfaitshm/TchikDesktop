@@ -308,7 +308,7 @@ export const ProcessPaymentSchema = z.object({
   schoolId: z.string().nonempty(),
   yearId: z.string().nonempty(),
   assignmentId: z.string().nonempty(),
-  amountReceived: z.number().positive(),
+  amountReceived: z.coerce.number().positive(),
   currencyReceived: ZCURRENCY_ENUM,
   paymentMethod: ZPAYMENT_METHOD_ENUM,
   transactionReference: z.string().optional(),

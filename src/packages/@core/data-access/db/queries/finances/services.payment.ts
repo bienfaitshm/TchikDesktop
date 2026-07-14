@@ -546,15 +546,11 @@ export class PaymentService {
           configRecord.totalAmount,
           tx,
         );
-
-        const walletClient = this.walletRepo.getClient(tx);
-        await walletClient
-          .update(wallets)
-          .set({
-            currentBalance: sql`${wallets.currentBalance} + ${amountConverted}`,
-            updatedAt: sql`CURRENT_TIMESTAMP`,
-          })
-          .where(eq(wallets.walletId, configRecord.walletId as string));
+        await this.walletRepo.incrementWalletBalance(
+          configRecord.wallet.walletId,
+          amountConverted,
+          tx,
+        );
 
         this.logger.info(
           `[Payment processing] Success for assignment ${payload.assignmentId}. ID: ${newPayment.paymentId}`,

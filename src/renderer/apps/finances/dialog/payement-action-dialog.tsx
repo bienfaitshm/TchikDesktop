@@ -10,7 +10,10 @@ import {
 } from "@/renderer/components/ui/dialog";
 import { Button } from "@/renderer/components/ui/button";
 import { DialogForm } from "@/renderer/components/dialog/form";
-import { useProcessStudentPaymentForm } from "@/renderer/libs/queries/finances";
+import {
+  ProcessPaymentFormConfig,
+  useProcessStudentPaymentForm,
+} from "@/renderer/libs/queries/finances";
 import { Loader2, Calendar, CreditCard, Receipt } from "lucide-react";
 import { PaymentProcessForm } from "../forms/payment-process-form";
 
@@ -142,15 +145,22 @@ export const ViewPayementDetailDialog: React.FC<DialogProps> = (props) => {
    3. ENREGISTRER UN PAIEMENT (DIALOGFORM + HOOK FORM)
    ========================================================================== */
 export const SavePaymentDialog: React.FC<
-  DialogProps & { assignmentId: string; schoolId: string; yearId: string }
-> = ({ assignmentId, schoolId, yearId, ...props }) => {
+  DialogProps & {
+    assignmentId: string;
+    schoolId: string;
+    yearId: string;
+  } & ProcessPaymentFormConfig
+> = ({ assignmentId, schoolId, yearId, mutationKey, onSuccess, ...props }) => {
   const {
     currencyOptions,
     formId,
     isSubmitting,
     paymentMethodOptions,
     onSubmit,
-  } = useProcessStudentPaymentForm({ schoolId, yearId });
+  } = useProcessStudentPaymentForm(
+    { schoolId, yearId },
+    { mutationKey, onSuccess },
+  );
 
   return (
     <DialogForm
@@ -161,10 +171,11 @@ export const SavePaymentDialog: React.FC<
       {...props}
     >
       <PaymentProcessForm
-        formId=""
+        formId={formId}
         currencyOptions={currencyOptions}
         paymentMethodOptions={paymentMethodOptions}
         onSubmit={onSubmit}
+        defaultValues={{ schoolId, yearId, assignmentId }}
       />
     </DialogForm>
   );

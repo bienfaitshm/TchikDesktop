@@ -71,7 +71,7 @@ export class WalletRepository
       await this.getClient(tx)
         .update(wallets)
         .set({
-          currentBalance: sql`${wallets.currentBalance} + ${amount}`,
+          currentBalance: sql`${wallets.currentBalance} + ${Number(amount)}`,
           updatedAt: sql`CURRENT_TIMESTAMP`,
         })
         .where(eq(wallets.walletId, walletId));

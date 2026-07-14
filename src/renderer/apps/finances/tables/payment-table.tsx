@@ -22,11 +22,21 @@ export type FeeConfigTableProps = {
 
 export const FeeClassroomPayementTable: React.FC<FeeConfigTableProps> = ({
   data,
+  schoolId,
+  yearId,
 }) => {
-  const columns = React.useMemo(
-    () => createPaymentColumns(data?.head ?? []),
-    [],
-  );
+  const columns = React.useMemo(() => {
+    const _columns = createPaymentColumns(data?.head ?? [], {
+      schoolId,
+      yearId,
+    });
+    console.log(
+      "[FeeClassroomPayementTable]: columns of tables, ",
+      _columns.length,
+      " created",
+    );
+    return _columns;
+  }, []);
 
   return (
     <div className="w-full">

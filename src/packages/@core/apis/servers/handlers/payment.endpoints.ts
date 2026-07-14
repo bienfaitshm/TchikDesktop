@@ -11,6 +11,10 @@ import {
   AbstractEndpoint,
 } from "@/packages/electron-ipc-rest";
 import { PaymentRoutes } from "../../routes-constant";
+import {
+  ProcessPaymentPayload,
+  ProcessPaymentSchema,
+} from "@/packages/@core/data-access/schema-validations";
 
 const ClassroomFilterSchema = z.object({
   schoolId: z.string().nonempty(),
@@ -26,17 +30,6 @@ const AssignFeesToStudentSchema = z.object({
   classroomId: z.string().nonempty(),
 });
 type AssignFeesToStudentPayload = z.infer<typeof AssignFeesToStudentSchema>;
-
-const ProcessPaymentSchema = z.object({
-  schoolId: z.string().nonempty(),
-  yearId: z.string().nonempty(),
-  assignmentId: z.string().nonempty(),
-  amountReceived: z.number().positive(),
-  currencyReceived: z.nativeEnum(CURRENCY_ENUM),
-  paymentMethod: z.nativeEnum(PAYMENT_METHOD_ENUM),
-  transactionReference: z.string().optional(),
-});
-type ProcessPaymentPayload = z.infer<typeof ProcessPaymentSchema>;
 
 /**
  * Récupérer le tableau matriciel des assignations et des statuts de paiement d'une classe

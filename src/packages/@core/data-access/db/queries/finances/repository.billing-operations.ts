@@ -18,6 +18,8 @@ import {
   type FeeType,
   type Classroom,
   type FeeSchedule,
+  type Wallet,
+  wallets,
 } from "@/packages/@core/data-access/db/schemas";
 import {
   FEE_SCHEDULES_ENUM,
@@ -46,6 +48,7 @@ export type FeeConfigurationDTO = FeeConfiguration & {
   option: Option | null;
   classroom: Classroom | null;
   feeType: FeeType;
+  wallet: Wallet;
 };
 /* =========================================================================
    3. FEE CONFIGURATION REPOSITORY
@@ -60,7 +63,7 @@ const FEE_CONFIG_DEFAULT_SORT: FeeConfigurationFilters = {
 };
 
 export class FeeConfigurationRepository
-  extends BaseRepository<TableFeeConfiguration, TDataBase>
+  extends BaseRepository<TableFeeConfiguration, TDataBase, FeeConfigurationDTO>
   implements OptionProvider<FeeConfiguration>
 {
   constructor(database: TDataBase = db) {
@@ -83,11 +86,13 @@ export class FeeConfigurationRepository
         option: getTableColumns(options),
         classroom: getTableColumns(classrooms),
         feeType: getTableColumns(feeTypes),
+        wallet: getTableColumns(wallets),
       })
       .from(this.table)
       .leftJoin(options, eq(this.table.optionId, options.optionId))
       .leftJoin(classrooms, eq(this.table.classroomId, classrooms.classId))
       .innerJoin(feeTypes, eq(this.table.feeTypeId, feeTypes.feeTypeId))
+      .innerJoin(wallets, eq(feeTypes.walletId, wallets.walletId))
       .$dynamic();
   }
 
@@ -226,7 +231,7 @@ export class FeeAssignmentRepository extends BaseRepository<
         .where(eq(feeAssignments.assignmentId, assignmentId));
 
       const newAmountPaid = (current?.amountPaid ?? 0) + amountConverted;
-      let newStatus = FEE_SCHEDULES_ENUM.PARTIAL;
+      let newStatus = FEE_SCHEDULES_ENUM.PARTIALLY_PAID;
 
       if (newAmountPaid >= totalAmount) {
         newStatus = FEE_SCHEDULES_ENUM.PAID;
