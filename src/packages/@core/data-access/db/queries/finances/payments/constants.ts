@@ -1,0 +1,1 @@
+export const EXCHANGE_RATE_SCALE = 1_000_000;
