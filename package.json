@@ -74,6 +74,7 @@
     "exam-seating-engine": "^1.0.4",
     "exceljs": "^3.4.0",
     "framer-motion": "^12.23.12",
+    "handlebars": "^4.7.9",
     "jotai": "^2.12.5",
     "json-2-csv": "^5.5.10",
     "localforage": "^1.10.0",

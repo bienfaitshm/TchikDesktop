@@ -37,7 +37,7 @@ export abstract class AbstractExportExtension<
   TData = unknown,
 > implements IExportExtension<TData> {
   abstract readonly extension: DOCUMENT_EXTENSION;
-  abstract readonly description?: string;
+  abstract description?: string;
 
   public getExtensionFilter(): FileFilter & { description?: string } {
     return {
@@ -219,7 +219,6 @@ export abstract class AbstractExportStrategy<
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.log("engine.process", error);
       return {
         success: false,
         error: {

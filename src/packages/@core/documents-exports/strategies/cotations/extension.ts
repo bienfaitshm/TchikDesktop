@@ -7,7 +7,7 @@ import {
   CsvExportExtension,
   JsonExportExtension,
 } from "@/packages/@core/documents-exports/extensions/data";
-import { CotationReportExportDocxExtension } from "./cotation-docx";
+import { CotationReportExportDocxExtension } from "./extension.engine";
 
 const EXTENSION_CLASSES: ClassConstructor<IExportExtension<unknown>>[] = [
   CotationReportExportDocxExtension,

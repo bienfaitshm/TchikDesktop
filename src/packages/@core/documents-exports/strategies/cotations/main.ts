@@ -8,11 +8,11 @@ import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
-import { extensions } from "@/packages/@core/documents-exports/extensions/cotations";
 import { createCotationDocumentExportForm } from "./form";
 import { CotationDataResolver } from "./resolver";
 import type { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
+import { extensions } from "./extension";
 
 type ExportPayload = {
   schoolId: string;
