@@ -1,4 +1,8 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient as useTSQueryClient,
+} from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export const queryClient = new QueryClient({
@@ -12,6 +16,10 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+export const useQueryClient = () => {
+  return useTSQueryClient(queryClient);
+};
 
 // if (process.env.NODE_ENV !== 'production') {
 //   window.TANSTACK_QUERY_CLIENT = queryClient;

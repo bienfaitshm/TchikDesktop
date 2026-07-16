@@ -1,4 +1,11 @@
-import type { StudentPayment } from "@/packages/@core/data-access/db/schemas";
+import type {
+  StudentPayment,
+  FeeAssignment,
+} from "@/packages/@core/data-access/db/schemas";
+import type {
+  FeeConfigurationDTO,
+  TableClassroomPaymentAssignment,
+} from "@/packages/@core/data-access/db/queries";
 import {
   CURRENCY_OPTIONS,
   PAYMENT_METHOD_OPTIONS,
@@ -10,9 +17,15 @@ import type {
 import type { BaseMutationConfig } from "../base";
 import { useFormBaseNotify } from "../base";
 import { useAssignFeesToStudent, useProcessStudentPayment } from "./finances";
+import { useQueryClient } from "@tanstack/react-query";
 
+export type ReturnPayementProcessData = FeeAssignment & {
+  payment: StudentPayment;
+  feeConfig: FeeConfigurationDTO;
+};
 export type AssignFeesFormConfig = BaseMutationConfig<void>;
-export type ProcessPaymentFormConfig = BaseMutationConfig<StudentPayment>;
+export type ProcessPaymentFormConfig =
+  BaseMutationConfig<ReturnPayementProcessData>;
 
 interface PaymentContextParams {
   schoolId: string;
@@ -46,18 +59,91 @@ export function useAssignFeesToStudentForm(
   });
 }
 
+export function useUpdateTableClassroomPayment(
+  config?: ProcessPaymentFormConfig,
+): ProcessPaymentFormConfig {
+  const queryClient = useQueryClient();
+
+  return {
+    onSuccess: (responseData) => {
+      const { feeConfig, payment, ...data } = responseData;
+      // 1. Destructuration propre des données renvoyées par l'API
+      console.log(
+        "[Payement process] updating classroom payment table",
+        responseData,
+        { feeConfig, payment, data },
+      );
+
+      // ⚠️ ATTENTION SÉMANTIQUE :
+      // On met généralement à jour une "queryKey" et non une "mutationKey" dans le cache.
+      // Assurez-vous que config.mutationKey est bien la clé de votre useQuery cible.
+      const targetCacheKey = config?.mutationKey;
+
+      if (targetCacheKey) {
+        // 2. Utilisation du générique sur setQueryData pour un meilleur typage
+        queryClient.setQueryData<TableClassroomPaymentAssignment[]>(
+          targetCacheKey,
+          (oldCache) => {
+            // Si le cache est vide ou non initialisé, on retourne undefined
+            // pour ne pas créer un tableau vide factice.
+            if (!oldCache) return undefined;
+
+            return oldCache.map((assignment) => {
+              // 3. Early return : réduit l'indentation et facilite la lecture
+              if (assignment.feeTypeId !== feeConfig.feeTypeId) {
+                return assignment;
+              }
+
+              return {
+                ...assignment,
+                table: {
+                  ...assignment.table,
+                  body: assignment.table.body.map((row) => {
+                    // Early return pour les lignes non concernées
+                    if (row.enrollmentId !== data.enrollmentId) {
+                      return row;
+                    }
+
+                    return {
+                      ...row,
+                      payments: {
+                        ...row.payments,
+                        // 4. Éviter le 'as string'. L'utilisation de String() est plus sûre
+                        // si scheduleId s'avère être un nombre ou undefined.
+                        [String(data.scheduleId)]: responseData,
+                      },
+                    };
+                  }),
+                },
+              };
+            });
+          },
+        );
+      }
+
+      // 5. PRÉSERVATION DES CALLBACKS :
+      // Si un onSuccess a été passé dans la 'config' initiale, il ne faut pas l'écraser,
+      // il faut l'exécuter après avoir mis à jour le cache.
+      if (config?.onSuccess) {
+        config.onSuccess(responseData);
+      }
+    },
+  };
+}
+
 /**
  * 2. Hook pour le traitement d'un encaissement au guichet (Formulaire de paiement)
  */
 export function useProcessStudentPaymentForm(
   { schoolId, yearId }: PaymentContextParams,
-  config?: ProcessPaymentFormConfig,
+  _config?: ProcessPaymentFormConfig,
 ) {
   const mutation = useProcessStudentPayment();
+  const config = useUpdateTableClassroomPayment(_config);
   const base = useFormBaseNotify<
     ProcessStudentPaymentPayload,
     ProcessStudentPaymentPayload,
-    StudentPayment
+    ReturnPayementProcessData
   >({
     mutation,
     config,

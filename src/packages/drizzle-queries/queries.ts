@@ -1,4 +1,4 @@
-import { eq, type AnyColumn, type Table } from "drizzle-orm";
+import { eq, sql, type AnyColumn, type Table } from "drizzle-orm";
 import {
   applyQueryOptions,
   mergeQueryOptions,
@@ -231,7 +231,7 @@ export abstract class BaseRepository<
         async () => {
           const [updated] = await this.getClient(tx)
             .update(this.table)
-            .set(updates as any)
+            .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
             .where(eq(this.idColumn, id))
             .returning();
 

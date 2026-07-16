@@ -157,6 +157,7 @@ export const feeAssignments = sqliteTable(
       actions: { onDelete: "cascade" },
     }),
     amountPaid: integer("amount_paid").notNull().default(0),
+    totalAmount: integer("total_amount").notNull().default(0),
     status: enumColumn("status", FEE_SCHEDULES_ENUM)
       .notNull()
       .default(FEE_SCHEDULES_ENUM.UNPAID),

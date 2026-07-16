@@ -5,7 +5,7 @@ import type {
   AssignFeesToStudentPayload,
   ProcessStudentPaymentPayload,
 } from "@/packages/@core/apis/clients/finances.payment";
-import type { TableClassroomPaymentAssignment } from "@/packages/@core/data-access/db";
+import type { TableClassroomPaymentAssignment } from "@/packages/@core/data-access/db/queries";
 import type { StudentPayment } from "@/packages/@core/data-access/db/schemas";
 import type {
   UseMutationOptions,

@@ -123,7 +123,9 @@ export class PostProcessStudentPayment extends AbstractEndpoint<any> {
         context.window,
       );
       console.log("=======>PRINTERS", printers);
-      printReceipt();
+      try {
+        printReceipt();
+      } catch (error) {}
     }
     return payment;
   }

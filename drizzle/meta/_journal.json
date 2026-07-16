@@ -71,6 +71,13 @@
       "when": 1783764808946,
       "tag": "0009_brief_sasquatch",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1784216846420,
+      "tag": "0010_curly_chamber",
+      "breakpoints": true
     }
   ]
 }

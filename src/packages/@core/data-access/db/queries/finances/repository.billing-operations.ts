@@ -19,6 +19,7 @@ import {
   type Classroom,
   type FeeSchedule,
   type Wallet,
+  type FeeAssignment,
   wallets,
 } from "@/packages/@core/data-access/db/schemas";
 import {
@@ -50,6 +51,7 @@ export type FeeConfigurationDTO = FeeConfiguration & {
   feeType: FeeType;
   wallet: Wallet;
 };
+
 /* =========================================================================
    3. FEE CONFIGURATION REPOSITORY
    ========================================================================= */
@@ -106,8 +108,8 @@ export class FeeConfigurationRepository
   }
 
   /**
-   * Trouver toutes les configurations applicables à une classe ou une option (XOR)
-   * Sécurisé contre les valeurs nulles en SQL
+   * Trouver toutes les configurations applicables à une classe ou une option.
+   * Modifiée pour être 100% synchrone (retrait de 'async').
    */
   async findApplicableConfigurations(
     ctx: {
@@ -135,7 +137,8 @@ export class FeeConfigurationRepository
         );
       }
 
-      const configs = await client.query.feeConfigurations.findMany({
+      // Synchrone sous better-sqlite3
+      const configs = (await client.query.feeConfigurations.findMany({
         where: and(
           eq(feeConfigurations.schoolId, ctx.schoolId),
           eq(feeConfigurations.yearId, ctx.yearId),
@@ -148,7 +151,7 @@ export class FeeConfigurationRepository
             },
           },
         },
-      });
+      })) as unknown as FeeApplicableConfiguration[];
 
       if (configs.length === 0) return [];
 
@@ -190,17 +193,18 @@ export const feeConfigurationRepository = new FeeConfigurationRepository(db);
    4. FEE ASSIGNMENT REPOSITORY
    ========================================================================= */
 
-export type FeeAssignmentFilters = Partial<FindManyOptions<TableFeeAssignment>>;
+export type FeeAssignmentFilters = Partial<TableFeeAssignment>;
 
-const FEE_ASSIGNMENT_DEFAULT_SORT: FeeAssignmentFilters = {
+const FEE_ASSIGNMENT_DEFAULT_SORT: FindManyOptions<TableFeeAssignment> = {
   orderBy: [{ column: "assignmentId", order: "desc" }],
 };
 
 export class FeeAssignmentRepository extends BaseRepository<
   TableFeeAssignment,
-  DrizzleClient
+  TDataBase,
+  FeeAssignment
 > {
-  constructor(database: DrizzleClient = db) {
+  constructor(database: TDataBase = db) {
     super({
       db: database,
       table: feeAssignments,
@@ -228,18 +232,18 @@ export class FeeAssignmentRepository extends BaseRepository<
   }
 
   /**
-   * Mettre à jour l'état d'avancement de la dette de l'élève (Garanti transactionnel)
+   * Mettre à jour l'état d'avancement de la dette de l'élève (Garanti transactionnel & synchrone)
    */
   async updateAssignmentProgress(
     assignmentId: string,
     amountConverted: number,
     totalAmount: number,
-    tx: DrizzleClient = this.db,
+    tx: TDataBase = this.db,
   ) {
     try {
-      const client = this.getClient(tx);
+      const client: TDataBase = this.getClient(tx);
 
-      // 1. Récupération de l'état actuel de l'assignment
+      // 1. Récupération synchrone via l'exécuteur `.get()`
       const [current] = await client
         .select({
           amountPaid: this.table.amountPaid,
@@ -254,19 +258,24 @@ export class FeeAssignmentRepository extends BaseRepository<
       // 2. Calcul du nouveau montant payé
       const previousAmount = current.amountPaid ?? 0;
       const newAmountPaid = previousAmount + amountConverted;
-
       const newStatus = this.getPaymentStatus(newAmountPaid, totalAmount);
 
-      // 4. Persistance des modifications
+      // 3. Persistance synchrone et immédiate via `.all()` sur la clause `.returning()`
       const [updatedRecord] = await client
         .update(this.table)
         .set({
           amountPaid: newAmountPaid,
           status: newStatus,
-          updatedAt: sql`(CURRENT_TIMESTAMP)`,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
         })
         .where(eq(this.table.assignmentId, assignmentId))
         .returning();
+
+      if (!updatedRecord) {
+        throw new Error(
+          `Failed to return the updated record for assignment ID: ${assignmentId}`,
+        );
+      }
 
       return updatedRecord;
     } catch (error) {

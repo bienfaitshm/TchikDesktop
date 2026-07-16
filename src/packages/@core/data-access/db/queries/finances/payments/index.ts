@@ -121,3 +121,5 @@ export const paymentService = {
     return processStudentPaymentUseCase.execute(payload);
   },
 };
+
+export * from "./types";

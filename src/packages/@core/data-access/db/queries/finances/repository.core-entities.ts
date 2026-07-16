@@ -52,6 +52,7 @@ export class WalletRepository
 
   /**
    * Récupère les portefeuilles pour les composants Select / Combobox.
+   * Synchrone.
    */
   async fetchOptions(
     params: SearchOptions<WalletOptionFilters> = {},
@@ -61,20 +62,22 @@ export class WalletRepository
 
   /**
    * Mettre à jour le solde d'un portefeuille (Incrémentation atomique sur la DB)
+   * Synchrone.
    */
-  async incrementWalletBalance(
+  incrementWalletBalance(
     walletId: string,
     amount: number,
     tx: DrizzleClient = this.db,
   ) {
     try {
-      await this.getClient(tx)
+      this.getClient(tx)
         .update(wallets)
         .set({
           currentBalance: sql`${wallets.currentBalance} + ${Number(amount)}`,
           updatedAt: sql`CURRENT_TIMESTAMP`,
         })
-        .where(eq(wallets.walletId, walletId));
+        .where(eq(wallets.walletId, walletId))
+        .run(); // Exécution synchrone sans retour de données
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
@@ -117,6 +120,7 @@ export class FeeTypeRepository
 
   /**
    * Récupère les types de frais pour les composants Select / Combobox.
+   * Synchrone.
    */
   async fetchOptions(
     params: SearchOptions<FeeTypeOptionFilters> = {},
@@ -158,6 +162,7 @@ export class FeeScheduleRepository
 
   /**
    * Récupère les échéances de paiement pour les composants Select / Combobox.
+   * Synchrone.
    */
   async fetchOptions(
     params: SearchOptions<FeeScheduleOptionFilters> = {},
@@ -167,17 +172,17 @@ export class FeeScheduleRepository
 
   /**
    * Récupère toutes les échéances liées à un type de frais spécifique.
+   * Synchrone.
    */
   async findByFeeType(
     feeTypeId: string,
     tx: DrizzleClient = this.db,
   ): Promise<FeeSchedule[]> {
     try {
-      return await this.getClient(tx)
+      return this.getClient(tx)
         .select()
         .from(feeSchedules)
-        .where(eq(feeSchedules.feeTypeId, feeTypeId))
-        .execute();
+        .where(eq(feeSchedules.feeTypeId, feeTypeId));
     } catch (error) {
       const dbError = DatabaseError.from(
         error,

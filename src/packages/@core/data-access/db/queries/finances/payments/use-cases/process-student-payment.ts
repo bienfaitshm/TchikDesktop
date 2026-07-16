@@ -49,31 +49,89 @@ export class ProcessStudentPayment {
     );
 
     try {
-      const { assignmentRecord, configRecord } = await this.fetchRecords(
-        payload.assignmentId,
-      );
+      // Transaction synchrone : pas de await ici, le callback ne doit pas être async
+      const dataToReturn = await this.clientDb.transaction(async (tx) => {
+        // 1. Récupération et verrouillage implicite via la transaction
+        const assignmentRecord = await this.feeAssignmentRepo.findById(
+          payload.assignmentId,
+          tx,
+        );
+        if (!assignmentRecord) {
+          throw new RecordNotFoundError(
+            `Fee assignment [${payload.assignmentId}]`,
+          );
+        }
 
-      const { amountConverted, exchangeRateMultiplied } =
-        await this.calculateConversion(
-          payload.amountReceived,
-          payload.currencyReceived,
+        const configRecord = await this.feeConfigRepo.findById(
+          assignmentRecord.feeConfigId as string,
+          tx,
+        );
+        if (!configRecord) {
+          throw new RecordNotFoundError(
+            `Fee configuration [${assignmentRecord.feeConfigId}]`,
+          );
+        }
+
+        // 2. Conversion (méthode devenue synchrone)
+        const { amountConverted, exchangeRateMultiplied } =
+          await this.calculateConversion(
+            payload.amountReceived,
+            payload.currencyReceived,
+            configRecord.currency,
+            payload.schoolId,
+            tx,
+          );
+
+        // 3. Vérification dette
+        this.verifyDebt(
+          configRecord.totalAmount,
+          assignmentRecord.amountPaid,
+          amountConverted,
           configRecord.currency,
-          payload.schoolId,
         );
 
-      this.verifyDebt(
-        configRecord.totalAmount,
-        assignmentRecord.amountPaid,
-        amountConverted,
-        configRecord.currency,
-      );
+        // 4. Écritures
+        const newPayment = await this.studentPaymentRepo.create(
+          {
+            assignmentId: payload.assignmentId,
+            amountReceived: payload.amountReceived,
+            currencyReceived: payload.currencyReceived,
+            appliedExchangeRate: exchangeRateMultiplied,
+            amountConverted: amountConverted,
+            paymentMethod: payload.paymentMethod ?? PAYMENT_METHOD_ENUM.CASH,
+            transactionReference: payload.transactionReference,
+          },
+          tx,
+        );
 
-      return await this.executeTransaction(
-        payload,
-        configRecord,
-        amountConverted,
-        exchangeRateMultiplied,
-      );
+        const updatedAssignment =
+          await this.feeAssignmentRepo.updateAssignmentProgress(
+            payload.assignmentId,
+            amountConverted,
+            configRecord.totalAmount,
+            tx,
+          );
+
+        this.walletRepo.incrementWalletBalance(
+          configRecord.wallet.walletId,
+          amountConverted,
+          tx,
+        );
+
+        this.logger.info(
+          `[Payment processing] Success for assignment ${payload.assignmentId}. ID: ${newPayment.paymentId}`,
+        );
+
+        // Retour immédiat
+        return {
+          ...updatedAssignment,
+          payment: newPayment,
+          feeConfig: configRecord,
+        };
+      });
+
+      console.log("<================================>", dataToReturn);
+      return dataToReturn;
     } catch (error) {
       this.logger.error(
         `[Payment processing] Transaction failed for assignment ${payload.assignmentId}`,
@@ -83,31 +141,12 @@ export class ProcessStudentPayment {
     }
   }
 
-  private async fetchRecords(assignmentId: string) {
-    const assignmentRecord = await this.feeAssignmentRepo.findById(
-      assignmentId,
-      this.clientDb,
-    );
-    if (!assignmentRecord)
-      throw new RecordNotFoundError(`Fee assignment [${assignmentId}]`);
-
-    const configRecord = await this.feeConfigRepo.findById(
-      assignmentRecord.feeConfigId as string,
-      this.clientDb,
-    );
-    if (!configRecord)
-      throw new RecordNotFoundError(
-        `Fee configuration [${assignmentRecord.feeConfigId}]`,
-      );
-
-    return { assignmentRecord, configRecord };
-  }
-
   private async calculateConversion(
     amount: number,
     fromCurrency: CURRENCY_ENUM,
     toCurrency: CURRENCY_ENUM,
     schoolId: string,
+    tx: TDataBase,
   ) {
     if (fromCurrency === toCurrency) {
       return {
@@ -126,11 +165,12 @@ export class ProcessStudentPayment {
           currencyTo: toCurrency,
         },
       },
-      this.clientDb,
+      tx,
     );
 
-    if (!rateRow)
+    if (!rateRow) {
       throw new ExchangeRateNotFoundError(fromCurrency, toCurrency, todayStr);
+    }
 
     const amountConverted = Math.round(
       (amount * EXCHANGE_RATE_SCALE) / rateRow.rate,
@@ -150,51 +190,13 @@ export class ProcessStudentPayment {
     }
   }
 
-  private async executeTransaction(
-    payload: any,
-    configRecord: any,
-    amountConverted: number,
-    exchangeRate: number,
-  ) {
-    return await this.clientDb.transaction(async (tx) => {
-      const newPayment = await this.studentPaymentRepo.create(
-        {
-          assignmentId: payload.assignmentId,
-          amountReceived: payload.amountReceived,
-          currencyReceived: payload.currencyReceived,
-          appliedExchangeRate: exchangeRate,
-          amountConverted: amountConverted,
-          paymentMethod: payload.paymentMethod ?? PAYMENT_METHOD_ENUM.CASH,
-          transactionReference: payload.transactionReference,
-        },
-        tx,
-      );
-
-      const assignment = await this.feeAssignmentRepo.updateAssignmentProgress(
-        payload.assignmentId,
-        amountConverted,
-        configRecord.totalAmount,
-        tx,
-      );
-      await this.walletRepo.incrementWalletBalance(
-        configRecord.wallet.walletId,
-        amountConverted,
-        tx,
-      );
-
-      this.logger.info(
-        `[Payment processing] Success for assignment ${payload.assignmentId}. ID: ${newPayment.paymentId}`,
-      );
-      return { ...assignment, payment: newPayment };
-    });
-  }
-
   private handleError(error: unknown) {
     if (
       error instanceof BusinessRuleError ||
       error instanceof RecordNotFoundError
-    )
+    ) {
       return error;
+    }
     return new TransactionError(
       "Payment processing failed and was rolled back.",
       { cause: error },

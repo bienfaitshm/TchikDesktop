@@ -1,3 +1,4 @@
+import type { FeeApplicableConfiguration } from "../repository.billing-operations";
 import { BusinessRuleError } from "./errors";
 
 export function validateContext(
@@ -27,12 +28,15 @@ export function buildAssignmentKey(
   return `${enrollmentId}-${feeConfigId}-${scheduleId}`;
 }
 
-export function extractRequiredAssignments(configs: any[]) {
+export function extractRequiredAssignments(
+  configs: FeeApplicableConfiguration[],
+) {
   return configs.flatMap((config) => {
     const schedules = config.feeType?.schedules || [];
     return schedules.map((schedule: any) => ({
       feeConfigId: config.feeConfigId,
       scheduleId: schedule.scheduleId,
+      totalAmount: config.totalAmount,
     }));
   });
 }

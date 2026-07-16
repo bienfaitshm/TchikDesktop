@@ -176,6 +176,7 @@ export class SyncClassroomFees {
         );
         if (!existingKeys.has(key)) {
           toCreate.push({
+            totalAmount: req.totalAmount,
             amountPaid: 0,
             status: FEE_SCHEDULES_ENUM.UNPAID,
             enrollmentId: enrollment.enrollmentId,
