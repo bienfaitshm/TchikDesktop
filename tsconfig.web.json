@@ -13,6 +13,7 @@
     "jsx": "react-jsx",
     "paths": {
       "@/renderer/*": ["src/renderer/*"],
+      "@/components/*": ["src/renderer/components/*"],
       "@/packages/*": ["src/packages/*"]
     }
   }

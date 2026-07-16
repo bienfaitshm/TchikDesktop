@@ -1,7 +1,10 @@
 import "dotenv/config";
-import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";
-import { createClient, Client } from "@libsql/client";
-import { migrate } from "drizzle-orm/libsql/migrator";
+import {
+  drizzle,
+  type BetterSQLite3Database,
+} from "drizzle-orm/better-sqlite3";
+import Database from "better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as schema from "./schemas";
@@ -22,30 +25,28 @@ const DB_CONFIG = {
 
 export class DatabaseManager {
   private static instance: DatabaseManager;
-  private client: Client;
-  public db: LibSQLDatabase<typeof schema>;
+  private client: Database.Database;
+  public db: BetterSQLite3Database<typeof schema>;
 
   private constructor() {
-    this.client = createClient({ url: `file:${DB_CONFIG.FILENAME}` });
+    // Initialisation synchrone du client better-sqlite3
+    this.client = new Database(DB_CONFIG.FILENAME);
+
     this.db = drizzle(this.client, {
       schema,
       logger: createDrizzleLogger(dbLogger),
     });
 
-    /*Optimisation des performances d'écriture SQLite au démarrage*/
-    this.client
-      .executeMultiple(
-        `
-      PRAGMA journal_mode = WAL;
-      PRAGMA synchronous = NORMAL;
-    `,
-      )
-      .catch((err) => {
-        dbLogger.error(
-          "Échec du paramétrage des PRAGMAs d'optimisation SQLite",
-          err,
-        );
-      });
+    /* Optimisation des performances d'écriture SQLite au démarrage */
+    try {
+      this.client.pragma("journal_mode = WAL");
+      this.client.pragma("synchronous = NORMAL");
+    } catch (err) {
+      dbLogger.error(
+        "Échec du paramétrage des PRAGMAs d'optimisation SQLite",
+        err as Error,
+      );
+    }
   }
 
   /**
@@ -60,13 +61,15 @@ export class DatabaseManager {
 
   /**
    * Initialise la base de données.
-   * Crée le fichier (automatique via libsql) et applique les migrations en attente.
+   * Crée le fichier et applique les migrations en attente.
    */
   public async initialize(): Promise<void> {
     try {
       dbLogger.info(
         `Initialisation de la base de données : ${DB_CONFIG.FILENAME}`,
       );
+
+      // La fonction migrate reste asynchrone car elle lit les fichiers de migration sur le disque
       await migrate(this.db, { migrationsFolder: DB_CONFIG.MIGRATIONS_FOLDER });
 
       dbLogger.info("Migrations Drizzle appliquées avec succès.");
@@ -84,7 +87,7 @@ export class DatabaseManager {
   }
 
   /**
-   * Retourne la liste des fichiers de sauvegarde (triés par date, du plus ancien au plus récent).
+   * Retourne la liste des fichiers de sauvegarde.
    */
   public async getBackDBFiles(): Promise<
     Array<{ name: string; time: number }>
@@ -94,7 +97,6 @@ export class DatabaseManager {
 
   /**
    * Exécute une sauvegarde en copiant le fichier de la base de données.
-   * @returns Le chemin du fichier de sauvegarde créé, ou undefined si échec.
    */
   public async performBackup(): Promise<string | undefined> {
     const dbPath = path.resolve(DB_CONFIG.FILENAME);
@@ -115,6 +117,7 @@ export class DatabaseManager {
       const backupFileName = `${dbBaseName}-${timestamp}.db`;
       const backupPath = path.join(DB_CONFIG.BACKUP_DIR, backupFileName);
 
+      // Copie asynchrone du fichier de base de données
       await fs.copyFile(dbPath, backupPath);
       dbLogger.info(`Sauvegarde réussie : ${backupPath}`);
 
@@ -156,13 +159,16 @@ export class DatabaseManager {
   }
 
   /**
-   * Méthode privée factorisant la lecture, le filtrage et le tri des fichiers de sauvegarde.
-   * @returns Tableau trié par date (mtimeMs) des fichiers de backup, du plus ancien au plus récent.
+   * Trie les fichiers de backup du plus ancien au plus récent.
    */
   private async getSortedBackupFiles(): Promise<
     Array<{ name: string; time: number }>
   > {
     const dbBaseName = this.getDBName();
+
+    // S'assure que le dossier de backup existe avant de le lire
+    await fs.mkdir(DB_CONFIG.BACKUP_DIR, { recursive: true });
+
     const files = await fs.readdir(DB_CONFIG.BACKUP_DIR);
     const dbFiles = files.filter((f) => f.startsWith(dbBaseName));
 

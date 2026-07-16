@@ -1,6 +1,6 @@
 import { resolve } from "path";
-import { defineConfig } from "electron-vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig, swcPlugin } from "electron-vite";
+import react from "@vitejs/plugin-react-swc";
 
 export default defineConfig({
   main: {
@@ -11,26 +11,30 @@ export default defineConfig({
         "@/packages": resolve("src/packages"),
       },
     },
+    plugins: [
+      swcPlugin({
+        // Doit correspondre STRICTEMENT à l'interface SwcOptions
+        transformOptions: {
+          // Doit correspondre STRICTEMENT à l'interface TransformConfig de @swc/core
+          legacyDecorator: true, // Active la transformation des décorateurs (ex: TypeORM/Drizzle)
+          decoratorMetadata: true, // Génère les métadonnées de réflexion pour TypeScript
+          react: {
+            runtime: "automatic", // Utilise le JSX transform moderne (React 17+)
+          },
+        },
+      }),
+    ],
     build: {
-      externalizeDeps: true,
-      rollupOptions: {
-        external: [
-          "electron",
-          "sqlite3",
-          "pg",
-          "pg-hstore",
-          "mysql2",
-          "tedious",
-          "oracledb",
-        ],
-      },
+      externalizeDeps: true, // Laisse sqlite3 et electron à l'extérieur du bundle
     },
   },
 
   preload: {
+    oxc: false,
     build: {
       externalizeDeps: true,
     },
+    plugins: [swcPlugin()],
   },
 
   renderer: {
@@ -40,6 +44,6 @@ export default defineConfig({
         "@/packages": resolve("src/packages"),
       },
     },
-    plugins: [react()], // SWC est géré nativement par le plugin react
+    plugins: [react()],
   },
 });

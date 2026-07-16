@@ -11,6 +11,33 @@ import {
   ProcessPaymentPayload,
   ProcessPaymentSchema,
 } from "@/packages/@core/data-access/schema-validations";
+import { renderTemplate } from "@/packages/document-template";
+import { defaultPrinterManagementService } from "@/packages/electron-utility";
+import { printReceipt } from "@/packages/pos-printer";
+
+const donneesAInjecter = {
+  entreprise: {
+    nom: "BOUTIQUE TECH & CO",
+    adresse: "45 Rue de la République, Lyon",
+    telephone: "04.72.00.11.22",
+  },
+  numeroFacture: "FAC-2026-0412",
+  date: "15/07/2026 11:15",
+  caissier: "Marc K.",
+  articles: [
+    { nom: "Souris Sans Fil RGB", quantite: 1, prixTotal: "25.00" },
+    { nom: "Câble USB-C 2m", quantite: 2, prixTotal: "12.00" },
+    { nom: "Clé USB 64Go", quantite: 1, prixTotal: "15.00", remise: 10 },
+  ],
+  totalBrut: "52.00",
+  tva: {
+    taux: "20",
+    montant: "10.40",
+  },
+  netAPayer: "52.00",
+  modePaiement: "CARTE BANCAIRE",
+  logicielInfo: "POS Système v2.1 - Sécurisé",
+};
 
 const ClassroomFilterSchema = z.object({
   schoolId: z.string().nonempty(),
@@ -82,10 +109,22 @@ export class PostProcessStudentPayment extends AbstractEndpoint<any> {
     context,
   }: IpcRequest<ProcessPaymentPayload, any>): Promise<unknown> {
     const payment = await paymentService.processStudentPayment(body);
-    // if(payment){
-    //   // create facture and print
-    //   context.window.
-    // }
+    if (payment && context.window) {
+      // create facture and print
+      // const facture: string = await renderTemplate(
+      //   "facture.hbs",
+      //   donneesAInjecter,
+      // );
+      // await defaultPrinterManagementService.printHtmlContent(facture, {
+      //   landscape: true,
+      //   pageSize: "A6",
+      // });
+      const printers = await defaultPrinterManagementService.getSystemPrinters(
+        context.window,
+      );
+      console.log("=======>PRINTERS", printers);
+      printReceipt();
+    }
     return payment;
   }
 }
