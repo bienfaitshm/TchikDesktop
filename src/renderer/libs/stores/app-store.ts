@@ -116,3 +116,12 @@ export const useCurrentConfig = () => {
     })),
   );
 };
+
+export const getConfig = () => {
+  const state = useConfigStore.getState();
+
+  return {
+    schoolId: state.currentSchool?.schoolId,
+    yearId: state.currentStudyYear?.yearId,
+  };
+};

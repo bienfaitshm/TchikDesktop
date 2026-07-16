@@ -28,11 +28,7 @@ export type AppClients = {
   >;
 };
 
-export function createLazyAppClients(
-  ipcRendererInstance: IpcRenderer,
-): AppClients {
-  const ipcClient = new IpcClient(ipcRendererInstance);
-
+export function createLazyAppClients(ipcClient: IpcClient): AppClients {
   const cache: Partial<Record<keyof AppClients, any>> = {};
 
   return new Proxy({} as AppClients, {
@@ -73,9 +69,9 @@ export function createLazyAppClients(
     },
   });
 }
+export const apiClient = new IpcClient(window.electron.ipcRenderer);
 
-export const api = createLazyAppClients(window.electron.ipcRenderer);
-
+export const api = createLazyAppClients(apiClient);
 export const {
   classroom,
   enrollment,

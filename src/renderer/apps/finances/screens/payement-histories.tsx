@@ -13,6 +13,7 @@ import {
 import { Button } from "@/renderer/components/ui/button";
 import { Badge } from "@/renderer/components/ui/badge";
 import { Card, CardContent } from "@/renderer/components/ui/card";
+import { useGetStudentPayments } from "@/renderer/libs/queries/finances";
 
 // Objet de routage global
 const FIN = {
@@ -65,6 +66,8 @@ export function PaymentsHistoryPage() {
       selectedCurrency === "ALL" || payment.currency === selectedCurrency;
     return matchesSearch && matchesCurrency;
   });
+
+  const { data: payments = [] } = useGetStudentPayments({ where: {} });
 
   return (
     <div className="min-h-screen font-sans bg-background text-foreground p-6 lg:p-8 container mx-auto space-y-8">

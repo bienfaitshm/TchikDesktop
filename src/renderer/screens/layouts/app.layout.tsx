@@ -12,12 +12,16 @@ import { Separator } from "@/renderer/components/ui/separator";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
+import React from "react";
 
 type AppLayoutProps = ApplicationSidebarProps;
 
 export function AppLayout({ menus = [] }: AppLayoutProps) {
   const { schoolId, yearId } = useCurrentConfig();
-
+  const outletContext = React.useMemo(
+    () => ({ schoolId, yearId }),
+    [schoolId, yearId],
+  );
   return (
     <SidebarProvider>
       <ApplicationSidebar menus={menus} />
@@ -35,7 +39,7 @@ export function AppLayout({ menus = [] }: AppLayoutProps) {
               </div>
             }
           >
-            <Outlet context={{ schoolId, yearId }} />
+            <Outlet context={outletContext} />
           </Suspense>
         </main>
       </SidebarInset>
