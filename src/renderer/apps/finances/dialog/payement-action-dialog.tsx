@@ -14,10 +14,13 @@ import {
   ProcessPaymentFormConfig,
   useProcessStudentPaymentForm,
 } from "@/renderer/libs/queries/finances";
-import { Loader2, Calendar, CreditCard, Receipt } from "lucide-react";
 import { PaymentProcessForm } from "../forms/payment-process-form";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { PaymentAssignHistory } from "../contents/payment-assign-hisotry.content";
+import type { FeeAssignment } from "@/packages/@core/data-access/db";
+import { formatCurrency } from "@/packages/currency";
+import { cn } from "@/renderer/utils";
+import { Skeleton } from "@/renderer/components/ui/skeleton";
 
 type DialogProps = Partial<React.ComponentProps<typeof Dialog>> & {
   children?: React.ReactNode;
@@ -25,94 +28,96 @@ type DialogProps = Partial<React.ComponentProps<typeof Dialog>> & {
   yearId?: string;
   assignmentId: string;
 };
-
 /* ==========================================================================
-   1. HISTORIQUE DES PAIEMENTS (MINIMALISTE TIMELINE)
+   1. HISTORIQUE DES PAIEMENTS
    ========================================================================== */
-export const FeeAssignmentPaymentHistoryDialog: React.FC<DialogProps> = ({
+interface PaymentHistoryDialogProps extends Partial<
+  React.ComponentProps<typeof Dialog>
+> {
+  assignmentId: string;
+}
+
+export const PaymentHistoryDialog: React.FC<PaymentHistoryDialogProps> = ({
   assignmentId,
   ...props
-}) => {
-  return (
-    <Dialog {...props}>
-      <DialogContent className="sm:max-w-106.25">
-        <DialogHeader>
-          <DialogTitle className="text-base font-semibold tracking-tight">
-            Historique des paiements
-          </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground">
-            Liste chronologique des versements effectués pour cette échéance.
-          </DialogDescription>
-        </DialogHeader>
+}) => (
+  <Dialog {...props}>
+    <DialogContent className="sm:max-w-[425px]">
+      <DialogHeader>
+        <DialogTitle className="text-base font-semibold tracking-tight">
+          Historique des paiements
+        </DialogTitle>
+        <DialogDescription className="text-xs text-muted-foreground">
+          Liste chronologique des versements effectués pour cette échéance.
+        </DialogDescription>
+      </DialogHeader>
 
-        {/* Contenu type Timeline épurée style Stripe */}
-        <Suspense>
-          <PaymentAssignHistory assignmentId={assignmentId} />
-        </Suspense>
+      <Suspense fallback={<Skeleton className="h-32 w-full" />}>
+        <PaymentAssignHistory assignmentId={assignmentId} />
+      </Suspense>
 
-        <DialogFooter className="sm:justify-end">
-          <DialogClose asChild>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-8 text-xs font-medium"
-            >
-              Fermer
-            </Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant="secondary" size="sm" className="h-8 text-xs">
+            Fermer
+          </Button>
+        </DialogClose>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+);
 
 /* ==========================================================================
-   2. DÉTAILS DE L'ÉCHÉANCE
+   2. DÉTAILS DE L’ÉCHÉANCE
    ========================================================================== */
-export const ViewPayementDetailDialog: React.FC<DialogProps> = (props) => {
+interface PaymentDetailDialogProps extends Partial<
+  React.ComponentProps<typeof Dialog>
+> {
+  assignment: FeeAssignment;
+}
+
+export const PaymentDetailDialog: React.FC<PaymentDetailDialogProps> = ({
+  assignment,
+  ...props
+}) => {
+  const remaining = assignment.totalAmount - assignment.amountPaid;
+  const remainingColor =
+    remaining > 0
+      ? "text-rose-600 dark:text-rose-500"
+      : "text-emerald-600 dark:text-emerald-500";
+
   return (
     <Dialog {...props}>
-      <DialogContent className="sm:max-w-100">
+      <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle className="text-base font-semibold tracking-tight">
-            Détails de l'échéance
+          <DialogTitle className="text-base font-semibold">
+            Détails de l’échéance
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            Vue d'ensemble de la situation de cette assignation financière.
+            Vue d’ensemble de la situation de cette assignation financière.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Grid de données clés, ultra propre sans boîte ou bordure inutile */}
         <div className="py-2 space-y-3.5 text-sm">
-          <div className="flex justify-between items-center border-b border-border/40 pb-2">
-            <span className="text-muted-foreground text-xs">Montant total</span>
-            <span className="font-mono font-semibold text-foreground">
-              150 000 FCFA
-            </span>
-          </div>
-          <div className="flex justify-between items-center border-b border-border/40 pb-2">
-            <span className="text-muted-foreground text-xs">Montant payé</span>
-            <span className="font-mono font-medium text-emerald-600 dark:text-emerald-500">
-              100 000 FCFA
-            </span>
-          </div>
-          <div className="flex justify-between items-center pb-1">
-            <span className="text-muted-foreground text-xs">
-              Reste à recouvrer
-            </span>
-            <span className="font-mono font-medium text-rose-600 dark:text-rose-500">
-              50 000 FCFA
-            </span>
-          </div>
+          <DetailRow
+            label="Montant total"
+            value={formatCurrency(assignment.totalAmount)}
+          />
+          <DetailRow
+            label="Montant payé"
+            value={formatCurrency(assignment.amountPaid)}
+            valueClassName="text-emerald-600 dark:text-emerald-500"
+          />
+          <DetailRow
+            label="Reste à recouvrer"
+            value={formatCurrency(remaining)}
+            valueClassName={remainingColor}
+          />
         </div>
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-8 text-xs font-medium"
-            >
+            <Button variant="secondary" size="sm" className="h-8 text-xs">
               Fermer
             </Button>
           </DialogClose>
@@ -121,6 +126,18 @@ export const ViewPayementDetailDialog: React.FC<DialogProps> = (props) => {
     </Dialog>
   );
 };
+
+// Petit composant utilitaire local
+const DetailRow: React.FC<{
+  label: string;
+  value: string;
+  valueClassName?: string;
+}> = ({ label, value, valueClassName }) => (
+  <div className="flex justify-between items-center border-b border-border/40 pb-2 last:border-b-0">
+    <span className="text-muted-foreground text-xs">{label}</span>
+    <span className={cn("font-mono font-medium", valueClassName)}>{value}</span>
+  </div>
+);
 
 /* ==========================================================================
    3. ENREGISTRER UN PAIEMENT (DIALOGFORM + HOOK FORM)
@@ -130,8 +147,17 @@ export const SavePaymentDialog: React.FC<
     assignmentId: string;
     schoolId: string;
     yearId: string;
+    totalAmount?: number;
   } & ProcessPaymentFormConfig
-> = ({ assignmentId, schoolId, yearId, mutationKey, onSuccess, ...props }) => {
+> = ({
+  assignmentId,
+  schoolId,
+  yearId,
+  totalAmount,
+  mutationKey,
+  onSuccess,
+  ...props
+}) => {
   const {
     currencyOptions,
     formId,
@@ -156,6 +182,7 @@ export const SavePaymentDialog: React.FC<
         currencyOptions={currencyOptions}
         paymentMethodOptions={paymentMethodOptions}
         onSubmit={onSubmit}
+        totalAmount={totalAmount}
         defaultValues={{ schoolId, yearId, assignmentId }}
       />
     </DialogForm>

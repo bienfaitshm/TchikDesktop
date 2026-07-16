@@ -28,8 +28,8 @@ import {
 import { Eye, CreditCard, Info, MoreVerticalIcon } from "lucide-react";
 import {
   SavePaymentDialog,
-  FeeAssignmentPaymentHistoryDialog,
-  ViewPayementDetailDialog,
+  PaymentHistoryDialog,
+  PaymentDetailDialog,
 } from "../dialog";
 
 // Configuration des pastilles de statut discrètes (Style Vercel/Linear)
@@ -68,17 +68,16 @@ export const CellAction: React.FC<FeeTypeRowActionsProps> = ({
     dialogs={
       <>
         <MenuDialogWrapper id="infos">
-          <ViewPayementDetailDialog assignmentId={feeAssignment.assignmentId} />
+          <PaymentDetailDialog assignment={feeAssignment} />
         </MenuDialogWrapper>
         <MenuDialogWrapper id="view-history">
-          <FeeAssignmentPaymentHistoryDialog
-            assignmentId={feeAssignment.assignmentId}
-          />
+          <PaymentHistoryDialog assignmentId={feeAssignment.assignmentId} />
         </MenuDialogWrapper>
         <MenuDialogWrapper id="pay">
           <SavePaymentDialog
             yearId={yearId}
             schoolId={schoolId}
+            totalAmount={feeAssignment.totalAmount}
             assignmentId={feeAssignment.assignmentId}
             mutationKey={mutationKey}
           />
@@ -94,7 +93,11 @@ export const CellAction: React.FC<FeeTypeRowActionsProps> = ({
       <Eye className="size-4 text-muted-foreground" />
       <span>Historique des paiements</span>
     </MenuDialogItem>
-    <MenuDialogItem targetId="pay" className="gap-2">
+    <MenuDialogItem
+      targetId="pay"
+      className="gap-2"
+      disabled={feeAssignment.totalAmount === feeAssignment.amountPaid}
+    >
       <CreditCard className="size-4 text-muted-foreground" />
       <span>Enregistrer un paiement</span>
     </MenuDialogItem>

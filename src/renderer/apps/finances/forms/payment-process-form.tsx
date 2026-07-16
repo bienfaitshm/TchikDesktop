@@ -33,9 +33,37 @@ const DEFAULT_VALUES: Partial<ProcessPaymentPayload> = {
   transactionReference: "",
 };
 
+/**
+ * Ajoute une règle : le montant reçu ne doit pas dépasser le total attendu.
+ * @param schema - le schéma de base
+ * @param maxAmount - montant maximum autorisé (en centimes). Si undefined, pas de limite.
+ * @returns le schéma enrichi de la règle de dépassement
+ */
+export const schemaWithMaxAmount = (
+  schema: typeof ProcessPaymentSchema,
+  maxAmount?: number,
+) => {
+  if (maxAmount === undefined) return schema;
+
+  return schema.refine(
+    (data) => {
+      const { amountReceived } = data;
+      if (typeof amountReceived !== "number" || isNaN(amountReceived)) {
+        return false;
+      }
+      return amountReceived <= maxAmount;
+    },
+    {
+      message: `Le montant reçu ne peut pas dépasser la somme a payer, la somme est de ${maxAmount} que l'eleve doit payer.`,
+      path: ["amountReceived"],
+    },
+  );
+};
+
 type PaymentProcessFormProps = {
   currencyOptions: { label: string; value: string }[];
   paymentMethodOptions: { label: string; value: string }[];
+  totalAmount?: number;
 };
 
 export const PaymentProcessForm: React.FC<
@@ -44,12 +72,13 @@ export const PaymentProcessForm: React.FC<
 > = ({
   formId,
   onSubmit,
+  totalAmount,
   currencyOptions = [],
   paymentMethodOptions = [],
   defaultValues,
 }) => {
   const form = useZodForm<ProcessPaymentPayload>({
-    schema: ProcessPaymentSchema,
+    schema: schemaWithMaxAmount(ProcessPaymentSchema, totalAmount),
     defaultValues: mergeDefaultValues(defaultValues, DEFAULT_VALUES),
     onSubmit,
   });
