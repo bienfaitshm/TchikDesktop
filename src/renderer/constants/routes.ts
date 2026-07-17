@@ -1,6 +1,7 @@
 export const ROUTES = {
   HOME: "/",
   ENROLLMENTS: "/enrollments",
+  PAYMENTS: "payments",
   SCHOOLS: {
     ROOT: "/schools",
     OPTIONS: "options",
@@ -70,6 +71,7 @@ export const ROUTES = {
 export const APP_ROUTES = {
   HOME: ROUTES.HOME,
   ENROLLMENTS: ROUTES.ENROLLMENTS,
+  PAYEMENTS: ROUTES.PAYMENTS,
   SCHOOLS: {
     LIST: `${ROUTES.SCHOOLS.ROOT}/${ROUTES.SCHOOLS.LIST}`,
     ROOT: ROUTES.SCHOOLS.ROOT,

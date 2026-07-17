@@ -3,5 +3,5 @@ export * from "./payement-config";
 export * from "./wallet";
 export * from "./classrooms";
 export * from "./fee-types";
-export * from "./payements";
+export * from "./payments";
 export * from "./payement-histories";

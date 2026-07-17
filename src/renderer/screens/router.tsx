@@ -142,9 +142,9 @@ const ClassroomsFinPage = lazyNamed(
   () => import("@/renderer/apps/finances"),
   "ClassroomsFinPage",
 );
-const PaymentsJournalPage = lazyNamed(
+const PaymentPage = lazyNamed(
   () => import("@/renderer/apps/finances"),
-  "PaymentsJournalPage",
+  "FastPaymentPage",
 );
 const PaymentsHistoryPage = lazyNamed(
   () => import("@/renderer/apps/finances"),
@@ -217,7 +217,7 @@ export const NAVIGATION_MENUS: NavSection[] = [
     label: "Accès Rapide",
     items: [
       { name: "Accueil", url: APP_ROUTES.HOME, icon: Home },
-      { name: "Paiements", url: APP_ROUTES.FIN.DASHBOARD, icon: Banknote },
+      { name: "Paiements", url: APP_ROUTES.PAYEMENTS, icon: Banknote },
       { name: "Inscriptions", url: APP_ROUTES.ENROLLMENTS, icon: UserPlus },
       {
         name: "Plan de classe",
@@ -259,6 +259,7 @@ export default function RouterProvider(): JSX.Element {
             {/* Base Routes */}
             <Route index element={<HomePage />} />
             <Route path={ROUTES.ENROLLMENTS} element={<EnrollmentPage />} />
+            <Route path={ROUTES.PAYMENTS} element={<PaymentPage />} />
 
             {/* ========== SCHOOL ========== */}
             <Route
@@ -350,15 +351,14 @@ export default function RouterProvider(): JSX.Element {
 
               {/* Historique global des paiements */}
               <Route path={ROUTES.FIN.PAYMENTS}>
-                <Route index element={<PaymentsJournalPage />} />
                 <Route
                   path={ROUTES.FIN.PAYMENTS_HISTORIES}
                   element={<PaymentsHistoryPage />}
                 />
-                <Route
+                {/* <Route
                   path={ROUTES.PARAMS.PAYMENT_ID}
                   element={<PaymentsJournalPage />}
-                />
+                /> */}
               </Route>
 
               {/* Taux de change */}
