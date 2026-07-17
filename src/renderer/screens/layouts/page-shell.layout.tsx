@@ -53,7 +53,7 @@ export const PageShell = ({
         )}
         <main
           className={cn(
-            "mx-auto w-full px-6 lg:px-10 lg:pt-5",
+            "mx-auto flex-1 w-full px-6 lg:px-10 lg:pt-5",
             MAX_WIDTH_CLASSES[maxWidth],
           )}
         >

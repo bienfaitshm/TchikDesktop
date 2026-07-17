@@ -56,9 +56,7 @@ const StudyYearListDisplayTable: React.FC = () => {
     );
   }
 
-  const { data: studyYears, isError } = useGetStudyYears({
-    where: { schoolId: school.schoolId },
-  });
+  const { data: studyYears, isError } = useGetStudyYears();
 
   if (isError) {
     return (
@@ -105,8 +103,8 @@ const StudyYearListDisplayTable: React.FC = () => {
         </TableCaption>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[100px]">ID Année</TableHead>
-            <TableHead className="w-[250px]">Nom de l'année scolaire</TableHead>
+            <TableHead className="w-25">ID Année</TableHead>
+            <TableHead className="w-62.5">Nom de l'année scolaire</TableHead>
             <TableHead>Date de début</TableHead>
             <TableHead className="text-right">Date de fin</TableHead>
           </TableRow>

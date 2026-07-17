@@ -69,7 +69,7 @@ export const SubNavigationLayout = ({
         <PageShell maxWidth="2xl">
           <Suspense
             fallback={
-              <div className="flex justify-center items-center h-full">
+              <div className="flex flex-1 w-full justify-center items-center h-full">
                 <LoadingSpinner />
               </div>
             }

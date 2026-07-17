@@ -37,7 +37,6 @@ interface TableFacetedFilterProps<TData, TValue> {
   className?: string;
 }
 
-// 🔥 Étape 1 : On wrapper le composant dans React.memo
 export const TableFacetedFilter = React.memo(
   <TData, TValue>({
     column,
@@ -45,18 +44,15 @@ export const TableFacetedFilter = React.memo(
     options,
     className,
   }: TableFacetedFilterProps<TData, TValue>) => {
-    // 🔥 Étape 2 : On mémorise le Set uniquement quand la valeur du filtre change
     const filterValue = column?.getFilterValue() as string[] | undefined;
     const selectedValuesSet = React.useMemo(
       () => new Set(filterValue),
       [filterValue],
     );
 
-    // 🔥 Étape 3 : Handler stable qui ne mute rien
     const handleSelect = React.useCallback(
       (value: string) => {
         const current = (column?.getFilterValue() as string[]) || [];
-        // On vérifie si la valeur est déjà présente
         const isSelected = current.includes(value);
         const newValue = isSelected
           ? current.filter((v) => v !== value)
@@ -131,7 +127,7 @@ export const TableFacetedFilter = React.memo(
                   return (
                     <CommandItem
                       key={option.value}
-                      onSelect={() => handleSelect(option.value)} // On utilise le handler stable
+                      onSelect={() => handleSelect(option.value)}
                     >
                       <div className="flex flex-row items-center justify-between w-full">
                         <div className="flex flex-row">
@@ -179,7 +175,6 @@ export const TableFacetedFilter = React.memo(
       </Popover>
     );
   },
-  // 🔥 Étape 4 : Comparateur personnalisé pour ignorer les changements de référence inutiles sur 'options'
   (prevProps, nextProps) => {
     // Si la colonne ou le titre changent, on re-rend
     if (prevProps.column !== nextProps.column) return false;

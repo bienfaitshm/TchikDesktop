@@ -16,12 +16,10 @@ import { MenubarLinkAction, MenuSelect, SubMenuSelect } from "./submenu-select";
 import { APP_ROUTES } from "@/renderer/constants";
 
 export function YearSubMenus() {
-  const { currentSchool, currentStudyYear } = useConfigStore();
+  const { currentStudyYear } = useConfigStore();
   const configActions = useConfigActions();
 
-  const { data: studyYears = [] } = useGetStudyYears({
-    where: { schoolId: currentSchool?.schoolId! },
-  });
+  const { data: studyYears = [] } = useGetStudyYears();
 
   const handleSelectYear = useCallback(
     (year: any) => {
@@ -52,7 +50,7 @@ export function YearSubMenus() {
         onSelectItem={handleSelectYear}
       />
       <MenubarSeparator />
-      <MenubarLinkAction to={APP_ROUTES.SCHOOL_YEARS}>
+      <MenubarLinkAction to={APP_ROUTES.SCHOOLS.SCHOOL_YEARS}>
         <span>Gérer les années</span>
       </MenubarLinkAction>
     </SubMenuSelect>

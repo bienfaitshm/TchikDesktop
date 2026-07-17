@@ -22,9 +22,10 @@ import {
 
 import IconImage from "@/renderer/assets/icon.svg";
 import { useConfigStore } from "@/renderer/libs/stores/app-store";
-
 import { SchoolSubMenus } from "./submenus.school";
 import { YearSubMenus } from "./submenus.years";
+import { Suspense } from "@/renderer/libs/queries/suspense";
+import { Spinner } from "@/components/ui/spinner";
 
 function SchoolProfile({ school }: { school: any }) {
   if (!school) {
@@ -79,8 +80,7 @@ export function SidebarHead() {
                 aria-label={`Sélection école et année scolaire${
                   currentSchool ? ` – ${currentSchool.name}` : ""
                 }`}
-                className="w-full cursor-pointer transition-all duration-300 ease-in-out
-                  text-sidebar-foreground/80 hover:text-sidebar-foreground data-[state=open]:text-sidebar-foreground
+                className="w-full cursor-pointer transition-all duration-300 ease-in-out text-sidebar-foreground/80 hover:text-sidebar-foreground data-[state=open]:text-sidebar-foreground
                   hover:bg-sidebar-accent/40 data-[state=open]:bg-sidebar-accent/60
                   group"
               >
@@ -117,7 +117,7 @@ export function SidebarHead() {
             </MenubarTrigger>
 
             <MenubarContent
-              className="w-(--radix-menubar-trigger-width) min-w-[360px] rounded-lg shadow-xl border-sidebar-border"
+              className="w-(--radix-menubar-trigger-width) min-w-90 rounded-lg shadow-xl border-sidebar-border"
               side={isMobile ? "bottom" : "right"}
               align="start"
               sideOffset={8}
@@ -129,8 +129,16 @@ export function SidebarHead() {
 
               <MenubarSeparator />
               <div className="p-1">
-                <SchoolSubMenus />
-                <YearSubMenus />
+                <Suspense
+                  fallback={
+                    <div className="flex w-full justify-center items-center">
+                      <Spinner />
+                    </div>
+                  }
+                >
+                  <SchoolSubMenus />
+                  <YearSubMenus />
+                </Suspense>
               </div>
             </MenubarContent>
           </MenubarMenu>

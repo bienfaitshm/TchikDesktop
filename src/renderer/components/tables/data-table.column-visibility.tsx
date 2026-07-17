@@ -12,6 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from "@/renderer/components/ui/dropdown-menu";
 import { cn } from "@/renderer/utils";
 
@@ -77,25 +78,28 @@ export function TableColumnVisibility<TData>({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-          Colonnes visibles
-        </DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs font-bold text-muted-foreground tracking-wider">
+            Colonnes visibles
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          {maskableColumns.map((column) => {
+            const cleanLabel = getColumnLabel(column);
 
-        {maskableColumns.map((column) => {
-          const cleanLabel = getColumnLabel(column);
-
-          return (
-            <DropdownMenuCheckboxItem
-              key={column.id}
-              className="cursor-pointer"
-              checked={column.getIsVisible()}
-              onCheckedChange={(value) => column.toggleVisibility(!!value)}
-            >
-              <span className="truncate">{cleanLabel}</span>
-            </DropdownMenuCheckboxItem>
-          );
-        })}
+            return (
+              <DropdownMenuCheckboxItem
+                key={column.id}
+                className="cursor-pointer text-sm"
+                checked={column.getIsVisible()}
+                onCheckedChange={(value) => column.toggleVisibility(!!value)}
+              >
+                <span className="truncate">{cleanLabel}</span>
+              </DropdownMenuCheckboxItem>
+            );
+          })}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

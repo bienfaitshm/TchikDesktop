@@ -12,7 +12,6 @@ import {
   DataTableContent,
   DataTablePagination,
   DataTableToolbar,
-  TableFacetedFilterItem,
   SearchTableToolbar,
   FilteredTableToolbarContainer,
   DataTableColumnToggle,
@@ -38,7 +37,6 @@ import {
   type OptionDialogProps,
 } from "@/renderer/dialog-actions/option.dialog-actions";
 
-import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 import { Pencil, Copy, Trash2 } from "lucide-react";
 
 interface RowActionsProps extends Pick<OptionDialogProps, "mutationKey"> {
@@ -143,11 +141,6 @@ export const OptionPage = () => {
               <SearchTableToolbar
                 searchColumn="optionName"
                 placeholder="Recherche Ex. HSC"
-              />
-              <TableFacetedFilterItem
-                title="Section"
-                columnId="section"
-                options={SECTION_OPTIONS}
               />
             </FilteredTableToolbarContainer>
             <div className="flex items-center gap-4">

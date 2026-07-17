@@ -47,7 +47,7 @@ export function SchoolSubMenus() {
         onSelectItem={handleSelectSchool}
       />
       <MenubarSeparator />
-      <MenubarLinkAction to={APP_ROUTES.SCHOOLS}>
+      <MenubarLinkAction to={APP_ROUTES.SCHOOLS.SCHOOL_YEARS}>
         Gérer les écoles
       </MenubarLinkAction>
     </SubMenuSelect>

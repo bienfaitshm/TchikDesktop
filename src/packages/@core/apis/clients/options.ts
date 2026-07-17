@@ -1,6 +1,5 @@
 import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import {
-  Option,
   OptionFilter,
   OptionCreate,
   OptionUpdate,
@@ -8,7 +7,8 @@ import {
 import type {
   SearchOptions,
   SelectOption,
-} from "@/packages/@core/data-access/db/queries";
+  Option,
+} from "@/packages/@core/data-access/db";
 
 import { OptionRoutes } from "../routes-constant";
 

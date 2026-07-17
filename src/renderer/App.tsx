@@ -18,7 +18,6 @@ apiClient.interceptors.request.use(async (payload) => {
     payload.headers["yearId"] = yearId;
   }
 
-  console.log(`Appel vers ${payload.route}`, payload);
   return payload;
 });
 

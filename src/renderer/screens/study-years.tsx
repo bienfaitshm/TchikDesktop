@@ -85,9 +85,7 @@ StudyYearRowActions.displayName = "StudyYearRowActions";
 
 export const StudyYearsPage = () => {
   const { schoolId } = useSchoolContext();
-  const { data: studyYears = [], queryKey: mutationKey } = useGetStudyYears({
-    where: { schoolId },
-  });
+  const { data: studyYears = [], queryKey: mutationKey } = useGetStudyYears();
 
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
