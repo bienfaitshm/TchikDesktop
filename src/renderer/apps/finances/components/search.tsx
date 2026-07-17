@@ -31,34 +31,85 @@ export const GoogleSearchInput = () => {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!isOpen) return;
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!isOpen || RECENT_SEARCHES.length === 0) return;
 
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setActiveIndex((prev) =>
-        prev < RECENT_SEARCHES.length - 1 ? prev + 1 : prev,
-      );
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setActiveIndex((prev) => (prev > -1 ? prev - 1 : -1));
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (activeIndex >= 0) {
-        setQuery(RECENT_SEARCHES[activeIndex].text);
+      const totalItems = RECENT_SEARCHES.length;
+
+      switch (e.key) {
+        case "ArrowDown": {
+          e.preventDefault();
+          // Logique de boucle : si on dépasse le dernier index, on revient à -1 (champ vide)
+          const nextIndex =
+            activeIndex === totalItems - 1 ? -1 : activeIndex + 1;
+
+          setActiveIndex(nextIndex);
+          setQuery(nextIndex === -1 ? "" : RECENT_SEARCHES[nextIndex].text);
+          break;
+        }
+
+        case "ArrowUp": {
+          e.preventDefault();
+          // Logique de boucle : si on recule au-delà de -1, on boucle vers le dernier élément
+          const nextIndex =
+            activeIndex === -1 ? totalItems - 1 : activeIndex - 1;
+
+          setActiveIndex(nextIndex);
+          setQuery(nextIndex === -1 ? "" : RECENT_SEARCHES[nextIndex].text);
+          break;
+        }
+
+        case "Enter": {
+          e.preventDefault();
+          if (activeIndex >= 0) {
+            setQuery(RECENT_SEARCHES[activeIndex].text);
+          }
+          setIsOpen(false);
+          break;
+        }
+
+        case "Escape": {
+          setIsOpen(false);
+          break;
+        }
+
+        default:
+          break;
       }
-      setIsOpen(false);
-    } else if (e.key === "Escape") {
-      setIsOpen(false);
-    }
-  };
+    },
+    [isOpen, activeIndex, setQuery, setActiveIndex, setIsOpen],
+  );
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChange = React.useCallback((open: boolean) => {
     setIsOpen(open);
     if (!open) {
       setActiveIndex(-1);
     }
-  };
+  }, []);
+
+  const handlerFocus = React.useCallback(() => setIsOpen(true), []);
+
+  const onInteractOutside = React.useCallback(
+    (e: Event) => {
+      if (containerRef.current?.contains(e.target as Node)) {
+        e.preventDefault();
+      }
+    },
+    [containerRef],
+  );
+
+  const onOpenAutoFocus = React.useCallback(
+    (e: Event) => e.preventDefault(),
+    [],
+  );
+
+  const onChangeValue = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
+      setQuery(e.target.value);
+    },
+    [],
+  );
 
   return (
     <div
@@ -73,15 +124,15 @@ export const GoogleSearchInput = () => {
               "hover:bg-accent focus-within:bg-accent focus-within:shadow-xl",
               isOpen ? "rounded-t-3xl bg-accent" : "rounded-full",
             )}
-            onClick={() => setIsOpen(true)}
+            onClick={handlerFocus}
           >
             <Search className="text-muted-foreground h-5 w-5 mr-3 shrink-0" />
 
             <input
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onFocus={() => setIsOpen(true)}
+              onChange={onChangeValue}
+              onFocus={handlerFocus}
               onKeyDown={handleKeyDown}
               placeholder=""
               className="flex-1 bg-transparent outline-none border-none text-base min-w-0"
@@ -117,12 +168,8 @@ export const GoogleSearchInput = () => {
           sideOffset={0}
           style={{ width: "var(--radix-popover-trigger-width)" }}
           className="p-0 ring-0 border border-accent border-t-0 shadow-none bg-accent rounded-b-3xl rounded-t-none border-none overflow-hidden duration-150"
-          onOpenAutoFocus={(e) => e.preventDefault()}
-          onInteractOutside={(e) => {
-            if (containerRef.current?.contains(e.target as Node)) {
-              e.preventDefault();
-            }
-          }}
+          onOpenAutoFocus={onOpenAutoFocus}
+          onInteractOutside={onInteractOutside}
         >
           {/* Ligne de séparation supérieure */}
           <div className="mx-4 border-t bg-border" />
@@ -183,7 +230,7 @@ export const GoogleSearchInput = () => {
               */}
               <div className="w-[calc(var(--radix-popover-trigger-width)*0.5-20px)] h-full">
                 {activeIndex >= 0 && (
-                  <div className="flex flex-col p-4 h-full animate-in fade-in slide-in-from-right-8 duration-300">
+                  <div className="flex flex-col px-4 pt-4 pb-1 h-full animate-in fade-in slide-in-from-right-8 duration-300">
                     <div className="flex items-center gap-2 mb-4 text-muted-foreground">
                       <Info className="h-4 w-4" />
                       <span className="text-xs font-medium uppercase tracking-wider">
@@ -191,7 +238,7 @@ export const GoogleSearchInput = () => {
                       </span>
                     </div>
 
-                    <h3 className="text-lg font-medium leading-tight mb-3 break-words text-foreground">
+                    <h3 className="text-lg font-medium leading-tight mb-3 wrap-break-word text-foreground">
                       {RECENT_SEARCHES[activeIndex].text}
                     </h3>
 
@@ -201,7 +248,7 @@ export const GoogleSearchInput = () => {
                       </span>
                     )}
 
-                    <p className="text-sm text-muted-foreground mt-auto pt-4">
+                    <p className="text-xs text-right text-muted-foreground mt-auto pt-4">
                       Appuyez sur{" "}
                       <kbd className="bg-accent-foreground/20 px-1.5 py-0.5 rounded-md font-mono text-[10px]">
                         Entrée
