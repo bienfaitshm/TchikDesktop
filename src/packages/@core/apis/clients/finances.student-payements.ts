@@ -4,23 +4,25 @@ import type {
   StudentPaymentUpdate,
   StudentPaymentFilter,
 } from "@/packages/@core/data-access/schema-validations";
-import type { StudentPayment } from "@/packages/@core/data-access/db/schemas";
-import type { SelectOption } from "@/packages/@core/data-access/db/queries";
+import type {
+  StudentPaymentTDO,
+  SelectOption,
+} from "@/packages/@core/data-access/db";
 import { StudentPaymentRoutes } from "../routes-constant";
 
 export type StudentPaymentApi = Readonly<{
   fetchStudentPayments(
     params?: StudentPaymentFilter,
-  ): Promise<StudentPayment[]>;
+  ): Promise<StudentPaymentTDO[]>;
   fetchStudentPaymentsAsOptions(
     params?: StudentPaymentFilter,
-  ): Promise<(SelectOption & StudentPayment)[]>;
-  fetchStudentPaymentById(paymentId: string): Promise<StudentPayment>;
-  createStudentPayment(data: StudentPaymentCreate): Promise<StudentPayment>;
+  ): Promise<(SelectOption & StudentPaymentTDO)[]>;
+  fetchStudentPaymentById(paymentId: string): Promise<StudentPaymentTDO>;
+  createStudentPayment(data: StudentPaymentCreate): Promise<StudentPaymentTDO>;
   updateStudentPayment(
     paymentId: string,
     data: StudentPaymentUpdate,
-  ): Promise<StudentPayment>;
+  ): Promise<StudentPaymentTDO>;
   deleteStudentPayment(paymentId: string): Promise<void>;
 }>;
 

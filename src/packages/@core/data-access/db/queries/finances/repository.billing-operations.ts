@@ -21,6 +21,10 @@ import {
   type Wallet,
   type FeeAssignment,
   wallets,
+  classroomEnrollments,
+  users,
+  StudentPayment,
+  User,
 } from "@/packages/@core/data-access/db/schemas";
 import {
   FEE_SCHEDULES_ENUM,
@@ -33,9 +37,11 @@ import type {
 import {
   BaseRepository,
   DatabaseError,
+  DynamicSelectQueryBuilder,
   type DrizzleClient,
 } from "@/packages/drizzle-queries";
 import { and, eq, getTableColumns, or, sql } from "drizzle-orm";
+import { UserRepository } from "../users";
 
 export type FeeApplicableConfiguration = FeeConfiguration & {
   feeType:
@@ -303,6 +309,12 @@ export type StudentPaymentFilters = Partial<
   FindManyOptions<TableStudentPayment>
 >;
 
+export type StudentPaymentTDO = StudentPayment & {
+  feeType: FeeType;
+  classroom: Classroom;
+  student: User;
+};
+
 const STUDENT_PAYMENT_DEFAULT_SORT: StudentPaymentFilters = {
   orderBy: [{ column: "paymentId", order: "desc" }],
 };
@@ -322,6 +334,36 @@ export class StudentPaymentRepository extends BaseRepository<
     });
 
     this.searchFiltersColumns = [studentPayments.transactionReference];
+  }
+
+  protected getQuerySet(tx?: DrizzleClient) {
+    return this.getClient(tx)
+      .select({
+        ...getTableColumns(this.table),
+        classroom: getTableColumns(classrooms),
+        student: UserRepository.getVisibleColumns(),
+        feeType: getTableColumns(feeTypes),
+      })
+      .from(this.table)
+      .innerJoin(
+        feeAssignments,
+        eq(this.table.assignmentId, feeAssignments.assignmentId),
+      )
+      .innerJoin(
+        classroomEnrollments,
+        eq(feeAssignments.enrollmentId, classroomEnrollments.enrollmentId),
+      )
+      .innerJoin(
+        classrooms,
+        eq(classroomEnrollments.classroomId, classrooms.classId),
+      )
+      .innerJoin(users, eq(classroomEnrollments.studentId, users.userId))
+      .innerJoin(
+        feeConfigurations,
+        eq(feeAssignments.feeConfigId, feeConfigurations.feeConfigId),
+      )
+      .innerJoin(feeTypes, eq(feeConfigurations.feeTypeId, feeTypes.feeTypeId))
+      .$dynamic();
   }
 }
 

@@ -1,13 +1,15 @@
 import { useMutation, useSuspenseQuery } from "../base";
 import { studentPayment as paymentApi } from "@/renderer/libs/apis";
 import type {
-  StudentPayment,
   StudentPaymentCreate,
   StudentPaymentFilter,
   StudentPaymentUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import type { TQueryUpdate } from "../type";
-import type { SelectOption } from "@/packages/@core/data-access/db/queries";
+import type {
+  SelectOption,
+  StudentPaymentTDO,
+} from "@/packages/@core/data-access/db/queries";
 import type {
   UseMutationOptions,
   UseSuspenseQueryOptions,
@@ -30,7 +32,7 @@ export const studentPaymentKeys = {
 
 export function useGetStudentPayments(
   params?: StudentPaymentFilter,
-  options?: Partial<UseSuspenseQueryOptions<StudentPayment[]>>,
+  options?: Partial<UseSuspenseQueryOptions<StudentPaymentTDO[]>>,
 ) {
   return useSuspenseQuery({
     queryKey: studentPaymentKeys.lists(params),
@@ -41,7 +43,9 @@ export function useGetStudentPayments(
 
 export function useGetStudentPaymentAsOptions(
   params?: StudentPaymentFilter,
-  options?: Partial<UseSuspenseQueryOptions<(SelectOption & StudentPayment)[]>>,
+  options?: Partial<
+    UseSuspenseQueryOptions<(SelectOption & StudentPaymentTDO)[]>
+  >,
 ) {
   return useSuspenseQuery({
     queryKey: studentPaymentKeys.options(params),
@@ -52,7 +56,7 @@ export function useGetStudentPaymentAsOptions(
 
 export function useGetStudentPaymentById(
   paymentId: string,
-  options?: Partial<UseSuspenseQueryOptions<StudentPayment>>,
+  options?: Partial<UseSuspenseQueryOptions<StudentPaymentTDO>>,
 ) {
   return useSuspenseQuery({
     queryKey: studentPaymentKeys.detail(paymentId),
@@ -63,7 +67,7 @@ export function useGetStudentPaymentById(
 
 export function useCreateStudentPayment(
   options?: Partial<
-    UseMutationOptions<StudentPayment, Error, StudentPaymentCreate>
+    UseMutationOptions<StudentPaymentTDO, Error, StudentPaymentCreate>
   >,
 ) {
   return useMutation({
@@ -76,7 +80,7 @@ export function useCreateStudentPayment(
 export function useUpdateStudentPayment(
   options?: Partial<
     UseMutationOptions<
-      StudentPayment,
+      StudentPaymentTDO,
       Error,
       TQueryUpdate<StudentPaymentUpdate>
     >

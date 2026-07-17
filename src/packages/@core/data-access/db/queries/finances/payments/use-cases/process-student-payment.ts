@@ -100,6 +100,8 @@ export class ProcessStudentPayment {
             amountConverted: amountConverted,
             paymentMethod: payload.paymentMethod ?? PAYMENT_METHOD_ENUM.CASH,
             transactionReference: payload.transactionReference,
+            schoolId: payload.schoolId,
+            yearId: payload.yearId,
           },
           tx,
         );
