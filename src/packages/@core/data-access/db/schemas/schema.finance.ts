@@ -13,6 +13,7 @@ import {
   options,
   withYearAndSchoolIds,
   withSchoolId,
+  users,
 } from "./schema";
 import {
   FEE_SCHEDULES_ENUM,
@@ -23,12 +24,12 @@ import {
 import {
   primaryKeyId,
   foreignKeyId,
+  foreignKeyIdNoNull,
   enumColumn,
   timestamps,
 } from "../drizzle-fields";
 import type { AsUpdatePayload } from "./types";
 
-// 1. Portefeuilles (caisses virtuelles par type de frais)
 export const wallets = sqliteTable(
   "wallets",
   {
@@ -49,20 +50,22 @@ export type Wallet = InferSelectModel<TableWallet>;
 export type InsertWallet = InferInsertModel<TableWallet>;
 export type UpdateWallet = AsUpdatePayload<InsertWallet, "walletId">;
 
-// 2. Types de frais (rattachés à un portefeuille)
 export const feeTypes = sqliteTable(
   "fee_types",
   {
     feeTypeId: primaryKeyId("fee_type_id"),
     name: text("name").notNull(),
-    walletId: foreignKeyId("wallet_id", {
+    walletId: foreignKeyIdNoNull("wallet_id", {
       ref: () => wallets.walletId,
       actions: { onDelete: "cascade" },
     }),
     ...withYearAndSchoolIds,
     ...timestamps,
   },
-  (table) => [index("fee_type_school_idx").on(table.schoolId)],
+  (table) => [
+    index("fee_types_school_year_idx").on(table.schoolId, table.yearId),
+    index("fee_types_wallet_idx").on(table.walletId),
+  ],
 );
 
 export type TableFeeType = typeof feeTypes;
@@ -70,16 +73,19 @@ export type FeeType = InferSelectModel<TableFeeType>;
 export type InsertFeeType = InferInsertModel<TableFeeType>;
 export type UpdateFeeType = AsUpdatePayload<InsertFeeType, "feeTypeId">;
 
-// 3. Échéancier de Paiement (Le découpage temporel par mois / par volée)
-export const feeSchedules = sqliteTable("fee_schedules", {
-  scheduleId: primaryKeyId("schedule_id"),
-  installmentName: text("installment_name").notNull(),
-  feeTypeId: foreignKeyId("fee_type_id", {
-    ref: () => feeTypes.feeTypeId,
-    actions: { onDelete: "cascade" },
-  }),
-  ...timestamps,
-});
+export const feeSchedules = sqliteTable(
+  "fee_schedules",
+  {
+    scheduleId: primaryKeyId("schedule_id"),
+    installmentName: text("installment_name").notNull(),
+    feeTypeId: foreignKeyIdNoNull("fee_type_id", {
+      ref: () => feeTypes.feeTypeId,
+      actions: { onDelete: "cascade" },
+    }),
+    ...timestamps,
+  },
+  (table) => [index("fee_schedules_fee_type_idx").on(table.feeTypeId)],
+);
 
 export type TableFeeSchedule = typeof feeSchedules;
 export type FeeSchedule = InferSelectModel<TableFeeSchedule>;
@@ -89,7 +95,6 @@ export type UpdateFeeSchedule = AsUpdatePayload<
   "scheduleId"
 >;
 
-// 4. Configuration des frais (montant, devise, cible)
 export const feeConfigurations = sqliteTable(
   "fee_configurations",
   {
@@ -110,7 +115,7 @@ export const feeConfigurations = sqliteTable(
       ref: () => classrooms.classId,
       actions: { onDelete: "cascade" },
     }),
-    feeTypeId: foreignKeyId("fee_type_id", {
+    feeTypeId: foreignKeyIdNoNull("fee_type_id", {
       ref: () => feeTypes.feeTypeId,
       actions: { onDelete: "cascade" },
     }),
@@ -128,6 +133,10 @@ export const feeConfigurations = sqliteTable(
         (${table.section} IS NULL AND ${table.optionId} IS NULL AND ${table.classroomId} IS NOT NULL)
       `,
     ),
+    index("fee_config_school_year_idx").on(table.schoolId, table.yearId),
+    index("fee_config_fee_type_idx").on(table.feeTypeId),
+    index("fee_config_option_idx").on(table.optionId),
+    index("fee_config_classroom_idx").on(table.classroomId),
   ],
 );
 
@@ -139,20 +148,19 @@ export type UpdateFeeConfiguration = AsUpdatePayload<
   "feeConfigId"
 >;
 
-// 4. Attribution d’un échéancier à un élève (via son inscription active)
 export const feeAssignments = sqliteTable(
   "fee_assignments",
   {
     assignmentId: primaryKeyId("assignment_id"),
-    enrollmentId: foreignKeyId("enrollment_id", {
+    enrollmentId: foreignKeyIdNoNull("enrollment_id", {
       ref: () => classroomEnrollments.enrollmentId,
       actions: { onDelete: "cascade" },
     }),
-    feeConfigId: foreignKeyId("fee_config_id", {
+    feeConfigId: foreignKeyIdNoNull("fee_config_id", {
       ref: () => feeConfigurations.feeConfigId,
       actions: { onDelete: "cascade" },
     }),
-    scheduleId: foreignKeyId("schedule_id", {
+    scheduleId: foreignKeyIdNoNull("schedule_id", {
       ref: () => feeSchedules.scheduleId,
       actions: { onDelete: "cascade" },
     }),
@@ -169,6 +177,8 @@ export const feeAssignments = sqliteTable(
       table.feeConfigId,
       table.scheduleId,
     ),
+    index("fee_assignments_config_idx").on(table.feeConfigId),
+    index("fee_assignments_schedule_idx").on(table.scheduleId),
   ],
 );
 
@@ -180,33 +190,37 @@ export type UpdateFeeAssignment = AsUpdatePayload<
   "assignmentId"
 >;
 
-// 5. Historique comptable des paiements réels
 export const studentPayments = sqliteTable(
   "student_payments",
   {
     paymentId: primaryKeyId("payment_id"),
-    assignmentId: foreignKeyId("assignment_id", {
+    assignmentId: foreignKeyIdNoNull("assignment_id", {
       ref: () => feeAssignments.assignmentId,
       actions: { onDelete: "cascade" },
     }),
 
-    // Montant et devise remis physiquement
     amountReceived: integer("amount_received").notNull(),
     currencyReceived: enumColumn("currency_received", CURRENCY_ENUM)
       .notNull()
       .default(CURRENCY_ENUM.CDF),
-
-    // Taux de change appliqué, multiplié par 1 000 000 pour précision (ex: 2850750000 pour 2850.75 CDF / 1 USD)
     appliedExchangeRate: integer("applied_exchange_rate").notNull(),
-    // Montant converti dans la devise de la dette (en centimes)
     amountConverted: integer("amount_converted").notNull(),
 
     paymentMethod: enumColumn("payment_method", PAYMENT_METHOD_ENUM).notNull(),
     transactionReference: text("transaction_reference"),
-
+    user: foreignKeyId("user", {
+      type: "NULL",
+      actions: { onDelete: "set default" },
+      ref: () => users.userId,
+    }),
+    ...withYearAndSchoolIds,
     ...timestamps,
   },
-  (table) => [index("payments_assignment_idx").on(table.assignmentId)],
+  (table) => [
+    index("payments_assignment_idx").on(table.assignmentId),
+    index("payments_school_year_idx").on(table.schoolId, table.yearId),
+    index("payments_user_idx").on(table.user),
+  ],
 );
 
 export type TableStudentPayment = typeof studentPayments;
@@ -217,7 +231,6 @@ export type UpdateStudentPayment = AsUpdatePayload<
   "paymentId"
 >;
 
-// 6. Taux de change quotidien (TauxDuJour)
 export const dailyExchangeRates = sqliteTable(
   "daily_exchange_rates",
   {
@@ -231,7 +244,15 @@ export const dailyExchangeRates = sqliteTable(
     ...withSchoolId,
     ...timestamps,
   },
-  (table) => [index("daily_rate_date_idx").on(table.date)],
+  (table) => [
+    uniqueIndex("daily_rate_unique_idx").on(
+      table.schoolId,
+      table.date,
+      table.currencyFrom,
+      table.currencyTo,
+    ),
+    index("daily_rate_date_idx").on(table.date),
+  ],
 );
 
 export type TableDailyExchangeRate = typeof dailyExchangeRates;

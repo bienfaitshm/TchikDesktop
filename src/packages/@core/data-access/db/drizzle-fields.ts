@@ -28,7 +28,7 @@ export const enumColumn = <T extends Record<string, string>>(
 export const primaryKeyId = (columnName: string) =>
   text(columnName)
     .primaryKey()
-    .$defaultFn(() => generateShortId(6));
+    .$defaultFn(() => generateShortId(10));
 
 /**
  * Crée une clé étrangère standardisée.
@@ -45,6 +45,13 @@ export const foreignKeyId = <T extends "NULL" | "NOT_NULL" = "NOT_NULL">(
   ) as T extends "NOT_NULL" ? ReturnType<typeof field.notNull> : typeof field;
 
   return finalField.references(ref, actions);
+};
+
+export const foreignKeyIdNoNull = (
+  columnName: string,
+  actions: ReferenceConfig,
+) => {
+  return text(columnName).notNull().references(actions.ref, actions.actions);
 };
 
 /**

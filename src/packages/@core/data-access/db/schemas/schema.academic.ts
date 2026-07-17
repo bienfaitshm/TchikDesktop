@@ -20,8 +20,8 @@ import {
   primaryKeyId,
   enumColumn,
   timestamps,
-  foreignKeyId,
   timestampColumn,
+  foreignKeyIdNoNull,
 } from "../drizzle-fields";
 
 type AsUpdatePayload<T, PK extends keyof T> = Partial<
@@ -43,10 +43,9 @@ export type InsertSchool = InferInsertModel<TableSchool>;
 export type UpdateSchool = AsUpdatePayload<InsertSchool, "schoolId">;
 
 export const withSchoolId = {
-  schoolId: foreignKeyId("school_id", {
+  schoolId: foreignKeyIdNoNull("school_id", {
     ref: () => schools.schoolId,
     actions: { onDelete: "cascade" },
-    type: "NOT_NULL",
   }),
 };
 
@@ -107,24 +106,13 @@ export type Option = InferSelectModel<TableOption>;
 export type InsertOption = InferInsertModel<TableOption>;
 export type UpdateOption = AsUpdatePayload<InsertOption, "optionId">;
 
-export const studyYears = sqliteTable(
-  "study_years",
-  {
-    yearId: primaryKeyId("year_id"),
-    yearName: text("year_name").notNull(),
-    startDate: timestampColumn("start_date"),
-    endDate: timestampColumn("end_date"),
-    ...withSchoolId,
-    ...timestamps,
-  },
-  (table) => [
-    index("study_years_school_idx").on(table.schoolId),
-    uniqueIndex("school_year_name_unique_idx").on(
-      table.schoolId,
-      table.yearName,
-    ),
-  ],
-);
+export const studyYears = sqliteTable("study_years", {
+  yearId: primaryKeyId("year_id"),
+  yearName: text("year_name").notNull(),
+  startDate: timestampColumn("start_date"),
+  endDate: timestampColumn("end_date"),
+  ...timestamps,
+});
 
 export type TableStudyYear = typeof studyYears;
 export type StudyYear = InferSelectModel<TableStudyYear>;
@@ -164,7 +152,7 @@ export type UpdateClassroom = AsUpdatePayload<InsertClassroom, "classId">;
 
 export const withYearAndSchoolIds = {
   ...withSchoolId,
-  yearId: foreignKeyId("year_id", {
+  yearId: foreignKeyIdNoNull("year_id", {
     ref: () => studyYears.yearId,
     actions: { onDelete: "cascade" },
   }),
