@@ -14,9 +14,9 @@ export const feeConfigColumns: ColumnDef<FeeConfigurationDTO>[] = [
     cell: ({ getValue }) => {
       const name = getValue() as string;
       return (
-        <div className="font-medium text-foreground max-w-70 truncate">
+        <p className="font-medium  text-sm text-foreground max-w-70 truncate">
           {name ?? "Sans nom"}
-        </div>
+        </p>
       );
     },
     enableSorting: true,
@@ -30,7 +30,7 @@ export const feeConfigColumns: ColumnDef<FeeConfigurationDTO>[] = [
     cell: ({ getValue, row: { original } }) => {
       const amount = Number(getValue() ?? 0);
       return (
-        <div className="text-base text-foreground">
+        <div className="text-sm text-foreground">
           {formatCurrency(amount, original.currency)}
         </div>
       );

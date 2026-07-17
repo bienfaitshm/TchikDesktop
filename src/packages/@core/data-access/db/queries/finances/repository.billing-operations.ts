@@ -37,7 +37,6 @@ import type {
 import {
   BaseRepository,
   DatabaseError,
-  DynamicSelectQueryBuilder,
   type DrizzleClient,
 } from "@/packages/drizzle-queries";
 import { and, eq, getTableColumns, or, sql } from "drizzle-orm";
