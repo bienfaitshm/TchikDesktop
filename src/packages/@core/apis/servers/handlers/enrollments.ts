@@ -18,16 +18,22 @@ import {
   type EnrollmentCreate,
   type EnrollmentFilter,
   type EnrollmentQuickCreate,
+  createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { EnrollmentRoutes } from "../../routes-constant";
 
-const EnrollementIdSchema = EnrollmentSchema.pick({
+const EnrollmentIdSchema = EnrollmentSchema.pick({
   enrollmentId: true,
 });
 
-type EnrollementId = z.infer<typeof EnrollementIdSchema>;
-export class GetEnrollements extends AbstractEndpoint<any> {
+export const SearchEnrollmentSchema = createSearchOptionsSchema(
+  EnrollmentFilterSchema,
+);
+export type SearchEnrollmentParams = z.infer<typeof SearchEnrollmentSchema>;
+
+type EnrollmentId = z.infer<typeof EnrollmentIdSchema>;
+export class GetEnrollments extends AbstractEndpoint<any> {
   route = EnrollmentRoutes.ALL;
   method = HttpMethod.GET;
   schemas: ValidationSchemas = {
@@ -40,7 +46,20 @@ export class GetEnrollements extends AbstractEndpoint<any> {
   }
 }
 
-export class PostEnrollement extends AbstractEndpoint<any> {
+export class GetSearchEnrollments extends AbstractEndpoint<any> {
+  route = EnrollmentRoutes.SEARCH;
+  method = HttpMethod.GET;
+  validationErrorMessage? = undefined;
+  schemas: ValidationSchemas = {
+    params: SearchEnrollmentSchema,
+  };
+
+  protected handle({ params }: IpcRequest<unknown, SearchEnrollmentParams>) {
+    return enrollmentRepository.findForSelect(params);
+  }
+}
+
+export class PostEnrollment extends AbstractEndpoint<any> {
   route = EnrollmentRoutes.ALL;
   method = HttpMethod.POST;
   schemas: ValidationSchemas = {
@@ -54,7 +73,7 @@ export class PostEnrollement extends AbstractEndpoint<any> {
   }
 }
 
-export class PostQuickEnrollement extends AbstractEndpoint<any> {
+export class PostQuickEnrollment extends AbstractEndpoint<any> {
   route = EnrollmentRoutes.QUICK_ENROLLMENT;
   method = HttpMethod.POST;
   schemas: ValidationSchemas = {
@@ -68,46 +87,46 @@ export class PostQuickEnrollement extends AbstractEndpoint<any> {
   }
 }
 
-export class GetEnrollement extends AbstractEndpoint<any> {
+export class GetEnrollment extends AbstractEndpoint<any> {
   route = EnrollmentRoutes.DETAIL;
   method = HttpMethod.GET;
   schemas: ValidationSchemas = {
-    params: EnrollementIdSchema,
+    params: EnrollmentIdSchema,
   };
 
   protected handle({
     params,
-  }: IpcRequest<unknown, EnrollementId>): Promise<unknown> {
+  }: IpcRequest<unknown, EnrollmentId>): Promise<unknown> {
     return enrollmentRepository.findById(params.enrollmentId);
   }
 }
 
-export class UpdateEnrollement extends AbstractEndpoint<any> {
+export class UpdateEnrollment extends AbstractEndpoint<any> {
   route = EnrollmentRoutes.DETAIL;
   method = HttpMethod.PUT;
   schemas: ValidationSchemas = {
-    params: EnrollementIdSchema,
+    params: EnrollmentIdSchema,
     body: EnrollmentUpdateSchema,
   };
 
   protected handle({
     params,
     body,
-  }: IpcRequest<EnrollmentUpdate, EnrollementId>): Promise<unknown> {
+  }: IpcRequest<EnrollmentUpdate, EnrollmentId>): Promise<unknown> {
     return enrollmentRepository.update(params.enrollmentId, body);
   }
 }
 
-export class DeleteEnrollement extends AbstractEndpoint<any> {
+export class DeleteEnrollment extends AbstractEndpoint<any> {
   route = EnrollmentRoutes.DETAIL;
   method = HttpMethod.DELETE;
   schemas: ValidationSchemas = {
-    params: EnrollementIdSchema,
+    params: EnrollmentIdSchema,
   };
 
   protected handle({
     params,
-  }: IpcRequest<unknown, EnrollementId>): Promise<unknown> {
+  }: IpcRequest<unknown, EnrollmentId>): Promise<unknown> {
     return enrollmentRepository.delete(params.enrollmentId);
   }
 }

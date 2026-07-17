@@ -6,20 +6,14 @@ import {
   EnrollmentFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import type {
-  ClassroomEnrollment,
-  User,
-  Classroom,
-} from "@/packages/@core/data-access/db/schemas";
+  EnrollmentTDO,
+  SearchOptions,
+} from "@/packages/@core/data-access/db";
 import { EnrollmentRoutes } from "../routes-constant";
 
-/**
- * type représentant la structure des données d'une salle des inscriptions (Enrollment).
- * Remplace 'unknown' par les propriétés réelles de votre Enrollment.
- */
-export type EnrollmentData = ClassroomEnrollment & {
-  student: User & { fullName?: string };
-  classroom: Classroom;
-};
+export type SearchEnrollmentQueryParams = Partial<
+  SearchOptions<EnrollmentFilter>
+>;
 
 /**
  * Type définissant les paramètres de requête pour les listes.
@@ -34,50 +28,54 @@ export type EnrollmentApi = Readonly<{
   /**
    * Récupère toutes les salles des inscriptions, éventuellement filtrées par des paramètres.
    * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
-   * @returns Une promesse résolue avec la liste des EnrollmentData.
+   * @returns Une promesse résolue avec la liste des EnrollmentTDO.
    */
-  fetchEnrollments(params?: EnrollmentQueryParams): Promise<EnrollmentData[]>;
+  fetchEnrollments(params?: EnrollmentQueryParams): Promise<EnrollmentTDO[]>;
+
+  searchEnrollments(
+    params?: SearchEnrollmentQueryParams,
+  ): Promise<EnrollmentTDO[]>;
 
   /**
    * Récupère toutes les salles des inscriptions, éventuellement filtrées par des paramètres.
    * @param params Les paramètres de requête pour filtrer, paginer ou trier les résultats.
-   * @returns Une promesse résolue avec la liste des EnrollmentData.
+   * @returns Une promesse résolue avec la liste des EnrollmentTDO.
    */
   fetchEnrollmentHistory(
     params?: EnrollmentQueryParams,
-  ): Promise<EnrollmentData[]>;
+  ): Promise<EnrollmentTDO[]>;
 
   /**
    * Récupère les détails d'une salle des inscriptions spécifique par son ID.
    * @param enrollmentId L'identifiant unique de la salle des inscriptions.
-   * @returns Une promesse résolue avec l'objet EnrollmentData.
+   * @returns Une promesse résolue avec l'objet EnrollmentTDO.
    */
-  fetchEnrollmentById(enrollmentId: string): Promise<EnrollmentData>;
+  fetchEnrollmentById(enrollmentId: string): Promise<EnrollmentTDO>;
 
   /**
    * Crée une nouvelle salle des inscriptions.
    * @param data L'objet de données nécessaire pour créer la salle des inscriptions.
-   * @returns Une promesse résolue avec l'objet EnrollmentData nouvellement créé.
+   * @returns Une promesse résolue avec l'objet EnrollmentTDO nouvellement créé.
    */
-  createEnrollment(data: EnrollmentCreate): Promise<EnrollmentData>;
+  createEnrollment(data: EnrollmentCreate): Promise<EnrollmentTDO>;
 
   /**
    * Crée une nouvelle salle des inscriptions rapides.
    * @param data L'objet de données nécessaire pour créer la salle des inscriptions.
-   * @returns Une promesse résolue avec l'objet EnrollmentData nouvellement créé.
+   * @returns Une promesse résolue avec l'objet EnrollmentTDO nouvellement créé.
    */
-  createQuickEnrollment(data: EnrollmentQuickCreate): Promise<EnrollmentData>;
+  createQuickEnrollment(data: EnrollmentQuickCreate): Promise<EnrollmentTDO>;
 
   /**
    * Met à jour une salle des inscriptions existante.
    * @param enrollmentId L'identifiant unique de la salle des inscriptions à mettre à jour.
-   * @param data Les champs partiels de EnrollmentData à modifier.
-   * @returns Une promesse résolue avec l'objet EnrollmentData mis à jour.
+   * @param data Les champs partiels de EnrollmentTDO à modifier.
+   * @returns Une promesse résolue avec l'objet EnrollmentTDO mis à jour.
    */
   updateEnrollment(
     enrollmentId: string,
     data: EnrollmentUpdate,
-  ): Promise<EnrollmentData>;
+  ): Promise<EnrollmentTDO>;
 
   /**
    * Supprime une salle des inscriptions par son ID.
@@ -101,7 +99,9 @@ export function createEnrollmentApis(ipcClient: IpcClient): EnrollmentApi {
       // Utilisation du 'params' Enrollmentnel de l'appel pour les filtres/pagination
       return ipcClient.get(EnrollmentRoutes.ALL, { params });
     },
-
+    searchEnrollments(params) {
+      return ipcClient.get(EnrollmentRoutes.SEARCH, { params });
+    },
     fetchEnrollmentHistory(params) {
       // Utilisation du 'params' Enrollmentnel de l'appel pour les filtres/pagination
       return ipcClient.get(EnrollmentRoutes.ALL_HISTORIES, { params });

@@ -1,8 +1,22 @@
-import { GoogleStyleSearchForm } from "../components/advanced-search";
+import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { GoogleSearchInput } from "../components/search";
-import FastPaymentForm from "../forms/fast-payment-form";
+import { useSearchEnrollments } from "@/renderer/libs/queries/enrollements";
+import { EnrollmentOverview } from "../components/enrollment-search-render";
 
 export function FastPaymentPage() {
+  const { schoolId, yearId } = useCurrentConfig();
+  const { data: enrollments = [] } = useSearchEnrollments({
+    search: "kil",
+    filters: {
+      limit: 10,
+      where: {
+        yearId,
+        schoolId,
+      },
+    },
+  });
+
+  console.log("enrollments", enrollments);
   return (
     <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 lg:p-8 container mx-auto flex flex-col gap-6 md:gap-8">
       {/* Zone d'en-tête de la page */}
@@ -20,7 +34,18 @@ export function FastPaymentPage() {
       <main className="w-full flex justify-center">
         {/* <FastPaymentForm /> */}
         {/* <GoogleStyleSearchForm /> */}
-        <GoogleSearchInput />
+        <GoogleSearchInput
+          data={enrollments}
+          getItemLabel={(item) => ({
+            label: item.student.fullName ?? item.student.lastName,
+            description: `Eleve de ${item.classroom.shortIdentifier}, ${item.student.gender}`,
+          })}
+          renderDetail={(enrollment) => (
+            <div>
+              <EnrollmentOverview enrollment={enrollment} />
+            </div>
+          )}
+        />
       </main>
     </div>
   );

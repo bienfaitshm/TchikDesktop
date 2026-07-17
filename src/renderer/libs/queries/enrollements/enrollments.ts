@@ -1,19 +1,22 @@
 import { useMutation, useSuspenseQuery } from "../base/query";
+import { useQuery } from "@tanstack/react-query";
 import {
   type Enrollment,
   type EnrollmentCreate,
   type EnrollmentQuickCreate,
   type EnrollmentUpdate,
-  type EnrollmentFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { enrollment as enrollmentApi } from "@/renderer/libs/apis";
-
+import type { EnrollmentTDO } from "@/packages/@core/data-access/db";
 import type { QueryUpdatePayload } from "../base";
 import type {
   UseSuspenseQueryOptions,
   UseMutationOptions,
 } from "@tanstack/react-query";
-import type { EnrollmentData } from "@/packages/@core/apis/clients";
+import type {
+  SearchEnrollmentQueryParams,
+  EnrollmentQueryParams,
+} from "@/packages/@core/apis/clients";
 
 /**
  * 1. Query Key Factory
@@ -21,8 +24,10 @@ import type { EnrollmentData } from "@/packages/@core/apis/clients";
  */
 export const enrollmentKeys = {
   all: ["enrollments"] as const,
-  lists: (params?: EnrollmentFilter) =>
+  lists: (params?: EnrollmentQueryParams) =>
     [...enrollmentKeys.all, "list", { params }] as const,
+  search: (params?: SearchEnrollmentQueryParams) =>
+    [...enrollmentKeys.all, "search", { params }] as const,
   details: () => [...enrollmentKeys.all, "detail"] as const,
   detail: (id: string) => [...enrollmentKeys.details(), id] as const,
   mutations: {
@@ -38,12 +43,23 @@ export const enrollmentKeys = {
  */
 
 export function useGetEnrollments(
-  params?: EnrollmentFilter,
-  options?: Partial<UseSuspenseQueryOptions<EnrollmentData[]>>,
+  params?: EnrollmentQueryParams,
+  options?: Partial<UseSuspenseQueryOptions<EnrollmentTDO[]>>,
 ) {
   return useSuspenseQuery({
     queryKey: enrollmentKeys.lists(params),
     queryFn: () => enrollmentApi.fetchEnrollments(params),
+    ...options,
+  });
+}
+
+export function useSearchEnrollments(
+  params?: SearchEnrollmentQueryParams,
+  options?: Partial<UseSuspenseQueryOptions<EnrollmentTDO[]>>,
+) {
+  return useQuery({
+    queryKey: enrollmentKeys.search(params),
+    queryFn: () => enrollmentApi.searchEnrollments(params),
     ...options,
   });
 }

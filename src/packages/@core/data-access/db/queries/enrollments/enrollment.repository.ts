@@ -17,7 +17,6 @@ import {
   DatabaseError,
   mergeQueryOptions,
   applyQueryOptions,
-  type DynamicSelectQueryBuilder,
 } from "@/packages/drizzle-queries";
 import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/options";
 
@@ -30,7 +29,7 @@ export type EnrollmentTDO = ClassroomEnrollment & {
 };
 
 const ENROLLMENT_DEFAULT_SORT: FindManyOptions<TableClassroomEnrollment> = {
-  orderBy: [],
+  orderBy: [{ column: "createdAt", order: "desc" }],
 };
 
 const ACTIVE_ENROLLEMENTS: FindManyOptions<TableClassroomEnrollment> = {
@@ -53,27 +52,32 @@ export class EnrollmentRepository extends BaseRepository<
       logger: getLogger,
       defaultSort: ENROLLMENT_DEFAULT_SORT,
     });
+    this.searchFiltersColumns = [
+      users.lastName,
+      users.middleName,
+      users.firstName,
+      classrooms.shortIdentifier,
+      classrooms.identifier,
+    ];
   }
 
   /**
    * Surcharge propre du QuerySet de base pour inclure systématiquement les relations
    */
-  protected override getQuerySet(tx?: TDataBase): DynamicSelectQueryBuilder {
-    const { classId, schoolId, ...classFields } = getTableColumns(classrooms);
-    const client = this.getClient(tx) as TDataBase;
-
+  protected override getQuerySet(tx?: TDataBase) {
+    const client = this.getClient(tx);
     return client
       .select({
         ...getTableColumns(this.table),
         student: UserRepository.getVisibleColumns(),
-        classroom: classFields,
+        classroom: getTableColumns(classrooms),
         yearName: studyYears.yearName,
       })
       .from(this.table)
       .innerJoin(users, eq(this.table.studentId, users.userId))
       .innerJoin(classrooms, eq(this.table.classroomId, classrooms.classId))
       .innerJoin(studyYears, eq(this.table.yearId, studyYears.yearId))
-      .$dynamic() as unknown as DynamicSelectQueryBuilder;
+      .$dynamic();
   }
 
   /**

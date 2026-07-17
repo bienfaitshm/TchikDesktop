@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { ReactNode, useRef, useState } from "react";
 import { Search, Mic, Camera, Clock, Info } from "lucide-react";
 import { cn } from "@/renderer/utils";
 import {
@@ -8,34 +8,41 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/renderer/components/ui/button";
 
-const RECENT_SEARCHES = [
-  { text: "drizzle sqlite config", modeIA: false },
-  { text: "electron-vite", modeIA: false },
-  { text: "drizzle sqlite condif", modeIA: true },
-  { text: "pos printer simulator", modeIA: true },
-  {
-    text: "lunix mint lorsque j'aissie de restorere les donnes supprimee cela orend beaucoup de temp",
-    modeIA: true,
-  },
-  { text: "zodjs", modeIA: false },
-  { text: "gem expert en code ui shadcn", modeIA: false },
-  { text: "github download folder", modeIA: false },
-  { text: "k", modeIA: false },
-  { text: "yarn clear cache", modeIA: true },
-];
-
-export const GoogleSearchInput = () => {
+type GoogleSearchInputProps<TData> = {
+  data?: TData[];
+  renderDetail?(data: TData): ReactNode;
+  getItemLabel(data: TData): { label: string; description?: string };
+};
+export function GoogleSearchInput<TData>({
+  data = [],
+  getItemLabel,
+  renderDetail,
+}: GoogleSearchInputProps<TData>) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [query, setQuery] = useState<string>("");
   const [activeIndex, setActiveIndex] = useState<number>(-1);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const getLabelOfIndex = React.useCallback(
+    (index: number) => {
+      const activeItem = data[index];
+      if (activeItem) {
+        const { label } = getItemLabel(activeItem);
+        return label;
+      }
+      return "";
+    },
+    [data],
+  );
+
+  const indexItem = React.useMemo(() => data[activeIndex], [activeIndex]);
+
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (!isOpen || RECENT_SEARCHES.length === 0) return;
+      if (!isOpen || data.length === 0) return;
 
-      const totalItems = RECENT_SEARCHES.length;
+      const totalItems = data.length;
 
       switch (e.key) {
         case "ArrowDown": {
@@ -45,7 +52,7 @@ export const GoogleSearchInput = () => {
             activeIndex === totalItems - 1 ? -1 : activeIndex + 1;
 
           setActiveIndex(nextIndex);
-          setQuery(nextIndex === -1 ? "" : RECENT_SEARCHES[nextIndex].text);
+          setQuery(nextIndex === -1 ? "" : getLabelOfIndex(nextIndex));
           break;
         }
 
@@ -56,14 +63,14 @@ export const GoogleSearchInput = () => {
             activeIndex === -1 ? totalItems - 1 : activeIndex - 1;
 
           setActiveIndex(nextIndex);
-          setQuery(nextIndex === -1 ? "" : RECENT_SEARCHES[nextIndex].text);
+          setQuery(nextIndex === -1 ? "" : getLabelOfIndex(nextIndex));
           break;
         }
 
         case "Enter": {
           e.preventDefault();
           if (activeIndex >= 0) {
-            setQuery(RECENT_SEARCHES[activeIndex].text);
+            setQuery(getLabelOfIndex(activeIndex));
           }
           setIsOpen(false);
           break;
@@ -184,34 +191,37 @@ export const GoogleSearchInput = () => {
                 activeIndex >= 0 ? "w-full md:w-1/2" : "w-full",
               )}
             >
-              {RECENT_SEARCHES.map((item, index) => (
-                <div
-                  key={index}
-                  onMouseEnter={() => setActiveIndex(index)}
-                  className={cn(
-                    "flex items-start px-4 py-2 cursor-pointer transition-colors rounded-r-full mr-2 min-w-0",
-                    activeIndex === index
-                      ? "bg-accent-foreground/10"
-                      : "hover:bg-accent-foreground/5",
-                  )}
-                  onClick={() => {
-                    setQuery(item.text);
-                    setIsOpen(false);
-                  }}
-                >
-                  <Clock className="text-muted-foreground h-4 w-4 mr-4 mt-1 shrink-0" />
-                  <div className="flex flex-col min-w-0 flex-1">
-                    <span className="text-muted-foreground text-sm font-normal truncate">
-                      {item.text}
-                    </span>
-                    {item.modeIA && (
-                      <span className="text-muted-foreground text-[11px] mt-0.5">
-                        Mode IA
-                      </span>
+              {data.map((item, index) => {
+                const { label, description } = getItemLabel(item);
+                return (
+                  <div
+                    key={index}
+                    onMouseEnter={() => setActiveIndex(index)}
+                    className={cn(
+                      "flex items-start px-4 py-2 cursor-pointer transition-colors rounded-r-full mr-2 min-w-0",
+                      activeIndex === index
+                        ? "bg-accent-foreground/10"
+                        : "hover:bg-accent-foreground/5",
                     )}
+                    onClick={() => {
+                      setQuery(label);
+                      setIsOpen(false);
+                    }}
+                  >
+                    <Search className="text-muted-foreground h-4 w-4 mr-4 mt-1 shrink-0" />
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-sm font-normal truncate">
+                        {label}
+                      </span>
+                      {description && (
+                        <span className="text-muted-foreground text-[11px] mt-0.5">
+                          {description}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Colonne Droite : Détails */}
@@ -229,7 +239,7 @@ export const GoogleSearchInput = () => {
                 Ainsi le conteneur parent révèle le contenu comme un masque pendant son animation.
               */}
               <div className="w-[calc(var(--radix-popover-trigger-width)*0.5-20px)] h-full">
-                {activeIndex >= 0 && (
+                {activeIndex >= 0 && renderDetail && (
                   <div className="flex flex-col px-4 pt-4 pb-1 h-full animate-in fade-in slide-in-from-right-8 duration-300">
                     <div className="flex items-center gap-2 mb-4 text-muted-foreground">
                       <Info className="h-4 w-4" />
@@ -238,15 +248,7 @@ export const GoogleSearchInput = () => {
                       </span>
                     </div>
 
-                    <h3 className="text-lg font-medium leading-tight mb-3 wrap-break-word text-foreground">
-                      {RECENT_SEARCHES[activeIndex].text}
-                    </h3>
-
-                    {RECENT_SEARCHES[activeIndex].modeIA && (
-                      <span className="inline-flex items-center rounded-md bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-inset ring-blue-500/20 w-fit mb-4">
-                        Généré par l'IA
-                      </span>
-                    )}
+                    {renderDetail(indexItem)}
 
                     <p className="text-xs text-right text-muted-foreground mt-auto pt-4">
                       Appuyez sur{" "}
@@ -264,4 +266,4 @@ export const GoogleSearchInput = () => {
       </Popover>
     </div>
   );
-};
+}

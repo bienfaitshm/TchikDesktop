@@ -66,12 +66,13 @@ const HANDLER_CLASSES_REGISTRY: ClassConstructor<AbstractEndpoint<any>>[] = [
   classrooms.DeleteClassroom,
 
   // enrollments
-  enrollments.GetEnrollements,
-  enrollments.PostEnrollement,
-  enrollments.PostQuickEnrollement,
-  enrollments.GetEnrollement,
-  enrollments.UpdateEnrollement,
-  enrollments.DeleteEnrollement,
+  enrollments.GetEnrollments,
+  enrollments.GetSearchEnrollments,
+  enrollments.PostEnrollment,
+  enrollments.PostQuickEnrollment,
+  enrollments.GetEnrollment,
+  enrollments.UpdateEnrollment,
+  enrollments.DeleteEnrollment,
 
   // stats
   stats.GetStatsByClass,
