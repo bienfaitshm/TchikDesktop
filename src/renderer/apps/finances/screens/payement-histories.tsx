@@ -1,85 +1,87 @@
-import React, { useState } from "react";
+"use client";
+
+import { useState } from "react";
 import {
   ArrowLeft,
   Search,
   Coins,
   Printer,
-  Filter,
-  CalendarDays,
   Download,
   FileText,
 } from "lucide-react";
-
 import { Button } from "@/renderer/components/ui/button";
 import { Badge } from "@/renderer/components/ui/badge";
-import { Card, CardContent } from "@/renderer/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/renderer/components/ui/card";
+import { Separator } from "@/renderer/components/ui/separator";
+import { Empty } from "@/renderer/components/ui/empty";
+import { Field, FieldLabel } from "@/renderer/components/ui/field";
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+} from "@/renderer/components/ui/input-group";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/renderer/components/ui/toggle-group";
+import { Avatar, AvatarFallback } from "@/renderer/components/ui/avatar";
 import { useGetStudentPayments } from "@/renderer/libs/queries/finances";
+import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
+import { formatDate } from "@/packages/times";
 
 // Objet de routage global
 const FIN = {
   DASHBOARD: "/dashboard",
 };
 
-// Tes données factices d'historique (Reflet direct de student_payments)
-const recentPaymentsData = [
-  {
-    student: "Alice Mutombo",
-    classroom: "3ème Primaire A",
-    amount: 150,
-    currency: "USD",
-    feeType: "Minerval - Trimestre 2",
-    method: "M-Pesa",
-    reference: "MP-9843A",
-  },
-  {
-    student: "David Kasongo",
-    classroom: "1ère Secondaire B",
-    amount: 85500,
-    currency: "CDF",
-    feeType: "Frais de l'État",
-    method: "Cash",
-    reference: "RECU-1024",
-  },
-  {
-    student: "Sarah Ilunga",
-    classroom: "6ème Primaire B",
-    amount: 50,
-    currency: "USD",
-    feeType: "Transport - Février",
-    method: "Banque",
-    reference: "BK-TR001",
-  },
-];
-
 export function PaymentsHistoryPage() {
+  const { schoolId, yearId } = useCurrentConfig();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCurrency, setSelectedCurrency] = useState<
     "ALL" | "USD" | "CDF"
   >("ALL");
 
-  // Filtrage pro des données côté client
-  const filteredPayments = recentPaymentsData.filter((payment) => {
+  // Requête API réelle
+  const { data: payments = [] } = useGetStudentPayments({
+    where: { yearId, schoolId },
+  });
+
+  // Filtrage des données côté client basé sur les types réels
+  const filteredPayments = payments.filter((payment) => {
     const matchesSearch =
-      payment.student.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.reference.toLowerCase().includes(searchQuery.toLowerCase());
+      payment.transactionReference
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      payment.paymentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      // Si vous liez les informations de l'étudiant via l'assignmentId ultérieurement :
+      payment.assignmentId.toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesCurrency =
-      selectedCurrency === "ALL" || payment.currency === selectedCurrency;
+      selectedCurrency === "ALL" ||
+      payment.currencyReceived === selectedCurrency;
+
     return matchesSearch && matchesCurrency;
   });
 
-  const { data: payments = [] } = useGetStudentPayments({ where: {} });
-
   return (
-    <div className="min-h-screen font-sans bg-background text-foreground p-6 lg:p-8 container mx-auto space-y-8">
+    <div className="min-h-screen bg-background text-foreground p-6 lg:p-8 container mx-auto flex flex-col gap-8">
       {/* En-tête de page & Lien de retour */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
-        <div className="space-y-1">
-          <a
-            href={FIN.DASHBOARD}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors mb-1"
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <Button
+            variant="link"
+            className="p-0 h-auto justify-start text-xs font-semibold text-muted-foreground hover:text-foreground mb-1"
+            asChild
           >
-            <ArrowLeft className="w-3.5 h-3.5" /> Retour au Tableau de Bord
-          </a>
+            <a href={FIN.DASHBOARD}>
+              <ArrowLeft data-icon="inline-start" /> Retour au Tableau de Bord
+            </a>
+          </Button>
           <h1 className="text-3xl font-bold tracking-tight">
             Historique des Reçus
           </h1>
@@ -94,126 +96,146 @@ export function PaymentsHistoryPage() {
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-xs font-medium h-9"
+            className="h-9"
             onClick={() => window.print()}
           >
-            <Printer className="w-3.5 h-3.5" /> Imprimer le journal
+            <Printer data-icon="inline-start" /> Imprimer le journal
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs font-medium h-9"
-          >
-            <Download className="w-3.5 h-3.5" /> Exporter Excel
+          <Button variant="outline" size="sm" className="h-9">
+            <Download data-icon="inline-start" /> Exporter Excel
           </Button>
         </div>
       </div>
 
-      {/* Barre d'outils de filtrage sémantique (UX simplifiée) */}
+      <Separator />
+
+      {/* Barre d'outils de filtrage sémantique */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center bg-card p-4 border border-border rounded-xl shadow-xs">
-        {/* Champ de recherche */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Rechercher par nom d'élève ou numéro de référence..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 w-full bg-background border border-border rounded-lg h-9 px-3 text-sm focus:outline-hidden focus:ring-1 focus:ring-primary font-medium"
-          />
+        {/* Champ de recherche avec InputGroup accessible */}
+        <div className="flex-1 max-w-md">
+          <Field>
+            <FieldLabel htmlFor="search-receipts" className="sr-only">
+              Rechercher un reçu
+            </FieldLabel>
+            <InputGroup>
+              <InputGroupAddon>
+                <Search className="text-muted-foreground" />
+              </InputGroupAddon>
+              <InputGroupInput
+                id="search-receipts"
+                type="text"
+                placeholder="Rechercher par référence ou ID de transaction..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </InputGroup>
+          </Field>
         </div>
 
-        {/* Boutons de filtres par devises */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider hidden sm:inline mr-1">
+        {/* Boutons de filtres par devises (Composant ToggleGroup sémantique) */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider hidden sm:inline">
             Devise :
           </span>
-          <div className="flex items-center gap-1.5 p-1 bg-muted/50 border border-border rounded-lg text-xs font-medium">
-            <button
-              onClick={() => setSelectedCurrency("ALL")}
-              className={`px-3 py-1 rounded-md transition-all ${selectedCurrency === "ALL" ? "bg-background text-foreground shadow-xs font-semibold" : "text-muted-foreground hover:text-foreground"}`}
-            >
+          <ToggleGroup
+            type="single"
+            value={selectedCurrency}
+            onValueChange={(value) => {
+              if (value) setSelectedCurrency(value as "ALL" | "USD" | "CDF");
+            }}
+            spacing={1}
+            className="p-1 bg-muted/50 border border-border rounded-lg"
+          >
+            <ToggleGroupItem value="ALL" className="text-xs px-3 py-1 h-7">
               Toutes
-            </button>
-            <button
-              onClick={() => setSelectedCurrency("USD")}
-              className={`px-3 py-1 rounded-md transition-all ${selectedCurrency === "USD" ? "bg-background text-foreground shadow-xs font-semibold" : "text-muted-foreground hover:text-foreground"}`}
-            >
+            </ToggleGroupItem>
+            <ToggleGroupItem value="USD" className="text-xs px-3 py-1 h-7">
               USD
-            </button>
-            <button
-              onClick={() => setSelectedCurrency("CDF")}
-              className={`px-3 py-1 rounded-md transition-all ${selectedCurrency === "CDF" ? "bg-background text-foreground shadow-xs font-semibold" : "text-muted-foreground hover:text-foreground"}`}
-            >
+            </ToggleGroupItem>
+            <ToggleGroupItem value="CDF" className="text-xs px-3 py-1 h-7">
               CDF
-            </button>
-          </div>
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
       </div>
 
-      {/* Liste principale calquée sur ton arborescence HTML et tes classes CSS */}
+      {/* Liste principale des transactions */}
       <Card className="border border-border bg-card shadow-xs rounded-xl overflow-hidden">
-        <div className="p-4 border-b border-border bg-muted/20 flex items-center gap-2">
-          <FileText className="w-4 h-4 text-primary" />
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <CardHeader className="p-4 border-b border-border bg-muted/20 flex flex-row items-center gap-2 space-y-0">
+          <FileText className="text-primary" />
+          <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Transactions Enregistrées ({filteredPayments.length})
-          </span>
-        </div>
+          </CardTitle>
+        </CardHeader>
 
         <CardContent className="p-4 sm:p-6">
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             {filteredPayments.length > 0 ? (
-              filteredPayments.map((payment, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-border/40 hover:bg-muted/40 transition-colors gap-3"
-                >
-                  {/* Partie Gauche : Identité de l'élève & Type de frais */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full border border-border bg-background flex items-center justify-center text-xs font-bold text-foreground shadow-xs shrink-0">
-                      {payment.student[0]}
+              filteredPayments.map((payment) => {
+                const isUSD = payment.currencyReceived === "USD";
+
+                return (
+                  <div
+                    key={payment.paymentId}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-border/40 hover:bg-muted/40 transition-colors gap-3"
+                  >
+                    {/* Partie Gauche : Métadonnées du paiement */}
+                    <div className="flex items-center gap-3">
+                      <Avatar className="size-9 border border-border shadow-xs">
+                        <AvatarFallback className="text-xs font-bold">
+                          {payment.paymentMethod
+                            ? payment.paymentMethod[0].toUpperCase()
+                            : "P"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold text-sm text-foreground leading-snug">
+                          ID Affectation : {payment.assignmentId.slice(0, 8)}...
+                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Enregistré le{" "}
+                          {formatDate(new Date(payment.createdAt))}
+                          {payment.appliedExchangeRate && !isUSD && (
+                            <span className="text-primary font-medium ml-1">
+                              • Taux : {payment.appliedExchangeRate}
+                            </span>
+                          )}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-sm text-foreground leading-snug">
-                        {payment.student}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
-                        {payment.feeType} •{" "}
-                        <span className="text-primary font-medium">
-                          {payment.classroom}
-                        </span>
-                      </p>
+
+                    {/* Partie Droite : Financier & Méthode de paiement */}
+                    <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-border/50">
+                      <div className="text-left sm:text-right">
+                        <p className="font-bold text-sm text-foreground whitespace-nowrap">
+                          {payment.amountReceived.toLocaleString()}{" "}
+                          {payment.currencyReceived}
+                        </p>
+                        {payment.transactionReference && (
+                          <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                            Réf: {payment.transactionReference}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Badge sémantique lié au canal d'encaissement */}
+                      <Badge
+                        variant="secondary"
+                        className="h-6 px-2.5 text-[10px] font-medium border border-border/60"
+                      >
+                        {payment.paymentMethod}
+                      </Badge>
                     </div>
                   </div>
-
-                  {/* Partie Droite : Financier & Méthode de paiement */}
-                  <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-border/50">
-                    <div className="text-left sm:text-right">
-                      <p className="font-bold text-sm text-foreground whitespace-nowrap">
-                        {payment.amount.toLocaleString()} {payment.currency}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                        Réf: {payment.reference}
-                      </p>
-                    </div>
-
-                    {/* Badge sémantique lié au canal d'encaissement */}
-                    <Badge
-                      variant="secondary"
-                      className="h-6 px-2.5 text-[10px] bg-secondary text-secondary-foreground border border-border/60 font-medium"
-                    >
-                      {payment.method}
-                    </Badge>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
-              <div className="text-center py-12 text-sm text-muted-foreground space-y-2">
-                <Coins className="w-8 h-8 mx-auto text-muted-foreground/60 animate-bounce" />
-                <p className="font-medium">
+              <Empty className="py-12">
+                <Coins className="text-muted-foreground/60 animate-pulse" />
+                <p className="font-medium mt-2 text-sm text-muted-foreground">
                   Aucun reçu de paiement ne correspond à vos critères.
                 </p>
-              </div>
+              </Empty>
             )}
           </div>
         </CardContent>

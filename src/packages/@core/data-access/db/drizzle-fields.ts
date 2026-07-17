@@ -54,6 +54,13 @@ export const foreignKeyIdNoNull = (
   return text(columnName).notNull().references(actions.ref, actions.actions);
 };
 
+export const foreignKeyIdNull = (
+  columnName: string,
+  actions: ReferenceConfig,
+) => {
+  return text(columnName).references(actions.ref, actions.actions);
+};
+
 /**
  * Crée un champ de type Timestamp (stocké en INTEGER pour SQLite).
  * Compatible avec les migrations de lignes existantes.

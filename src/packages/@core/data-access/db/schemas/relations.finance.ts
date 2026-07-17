@@ -14,6 +14,7 @@ import {
   classrooms,
   classroomEnrollments,
   options,
+  users,
 } from "./schema";
 
 export const walletsRelations = relations(wallets, ({ one, many }) => ({
@@ -104,6 +105,18 @@ export const studentPaymentsRelations = relations(
     assignment: one(feeAssignments, {
       fields: [studentPayments.assignmentId],
       references: [feeAssignments.assignmentId],
+    }),
+    user: one(users, {
+      fields: [studentPayments.userId],
+      references: [users.userId],
+    }),
+    school: one(schools, {
+      fields: [studentPayments.schoolId],
+      references: [schools.schoolId],
+    }),
+    year: one(studyYears, {
+      fields: [studentPayments.yearId],
+      references: [studyYears.yearId],
     }),
   }),
 );

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "bc79966f-56ec-41b6-8cc3-16238b8819b8",
+  "id": "7f8aa2c5-868b-495c-9eaf-a0e4ccb72621",
   "prevId": "c9f27210-f25c-4133-b23f-f1ffd857aede",
   "tables": {
     "classroom_enrollments": {
@@ -1318,8 +1318,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "user": {
-          "name": "user",
+        "user_id": {
+          "name": "user_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -1373,7 +1373,7 @@
         "payments_user_idx": {
           "name": "payments_user_idx",
           "columns": [
-            "user"
+            "user_id"
           ],
           "isUnique": false
         }
@@ -1392,12 +1392,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "student_payments_user_users_user_id_fk": {
-          "name": "student_payments_user_users_user_id_fk",
+        "student_payments_user_id_users_user_id_fk": {
+          "name": "student_payments_user_id_users_user_id_fk",
           "tableFrom": "student_payments",
           "tableTo": "users",
           "columnsFrom": [
-            "user"
+            "user_id"
           ],
           "columnsTo": [
             "user_id"

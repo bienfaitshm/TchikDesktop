@@ -38,11 +38,7 @@ export const optionsRelations = relations(options, ({ one, many }) => ({
   classrooms: many(classrooms),
 }));
 
-export const studyYearsRelations = relations(studyYears, ({ one, many }) => ({
-  school: one(schools, {
-    fields: [studyYears.schoolId],
-    references: [schools.schoolId],
-  }),
+export const studyYearsRelations = relations(studyYears, ({ many }) => ({
   classrooms: many(classrooms),
   enrollments: many(classroomEnrollments),
   seatingSessions: many(seatingSessions),

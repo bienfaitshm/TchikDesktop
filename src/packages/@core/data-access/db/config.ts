@@ -1,13 +1,12 @@
 import "dotenv/config";
 import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";
-import { createClient, Client } from "@libsql/client";
-import { migrate } from "drizzle-orm/libsql/migrator";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as schema from "./schemas";
 import { getLogger } from "@/packages/logger";
 import { getUserDataPath, getResourcePath } from "@/packages/electron-utility";
 import { createDrizzleLogger } from "./drizzle-adapter";
+import { DatabaseClient, type IDatabaseClient } from "./db";
 
 const dbLogger = getLogger("DataBase");
 
@@ -21,26 +20,13 @@ const DB_CONFIG = {
 };
 
 export class DatabaseManager {
-  private static instance: DatabaseManager;
-  private client: Client;
   public db: LibSQLDatabase<typeof schema>;
 
-  private constructor() {
-    this.client = createClient({ url: `file:${DB_CONFIG.FILENAME}` });
-    this.db = drizzle(this.client, {
+  constructor(private dataBase: IDatabaseClient) {
+    this.db = drizzle(this.dataBase.client, {
       schema,
       logger: createDrizzleLogger(dbLogger),
     });
-  }
-
-  /**
-   * Retourne l'instance unique du DatabaseManager (Singleton).
-   */
-  public static getInstance(): DatabaseManager {
-    if (!DatabaseManager.instance) {
-      DatabaseManager.instance = new DatabaseManager();
-    }
-    return DatabaseManager.instance;
   }
 
   /**
@@ -52,7 +38,7 @@ export class DatabaseManager {
       dbLogger.info(
         `Initialisation de la base de données : ${DB_CONFIG.FILENAME}`,
       );
-      await migrate(this.db, { migrationsFolder: DB_CONFIG.MIGRATIONS_FOLDER });
+      await this.dataBase.migrate(this.db, DB_CONFIG.MIGRATIONS_FOLDER);
 
       dbLogger.info("Migrations Drizzle appliquées avec succès.");
     } catch (error) {
@@ -164,6 +150,7 @@ export class DatabaseManager {
   }
 }
 
-export const dbManager = DatabaseManager.getInstance();
+export const dbClient = new DatabaseClient(DB_CONFIG.FILENAME);
+export const dbManager = new DatabaseManager(dbClient);
 export const db = dbManager.db;
 export type TDataBase = typeof db;

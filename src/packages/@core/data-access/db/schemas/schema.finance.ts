@@ -208,7 +208,7 @@ export const studentPayments = sqliteTable(
 
     paymentMethod: enumColumn("payment_method", PAYMENT_METHOD_ENUM).notNull(),
     transactionReference: text("transaction_reference"),
-    user: foreignKeyId("user", {
+    userId: foreignKeyId("user_id", {
       type: "NULL",
       actions: { onDelete: "set default" },
       ref: () => users.userId,
@@ -219,7 +219,7 @@ export const studentPayments = sqliteTable(
   (table) => [
     index("payments_assignment_idx").on(table.assignmentId),
     index("payments_school_year_idx").on(table.schoolId, table.yearId),
-    index("payments_user_idx").on(table.user),
+    index("payments_user_idx").on(table.userId),
   ],
 );
 

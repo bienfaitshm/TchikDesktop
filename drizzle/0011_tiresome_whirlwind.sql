@@ -15,11 +15,11 @@ PRAGMA foreign_keys=ON;--> statement-breakpoint
 DROP INDEX `fee_type_school_idx`;--> statement-breakpoint
 CREATE INDEX `fee_types_school_year_idx` ON `fee_types` (`school_id`,`year_id`);--> statement-breakpoint
 CREATE INDEX `fee_types_wallet_idx` ON `fee_types` (`wallet_id`);--> statement-breakpoint
-ALTER TABLE `student_payments` ADD `user` text REFERENCES users(user_id);--> statement-breakpoint
+ALTER TABLE `student_payments` ADD `user_id` text REFERENCES users(user_id);--> statement-breakpoint
 ALTER TABLE `student_payments` ADD `school_id` text NOT NULL REFERENCES schools(school_id);--> statement-breakpoint
 ALTER TABLE `student_payments` ADD `year_id` text NOT NULL REFERENCES study_years(year_id);--> statement-breakpoint
 CREATE INDEX `payments_school_year_idx` ON `student_payments` (`school_id`,`year_id`);--> statement-breakpoint
-CREATE INDEX `payments_user_idx` ON `student_payments` (`user`);--> statement-breakpoint
+CREATE INDEX `payments_user_idx` ON `student_payments` (`user_id`);--> statement-breakpoint
 CREATE UNIQUE INDEX `daily_rate_unique_idx` ON `daily_exchange_rates` (`school_id`,`date`,`currency_from`,`currency_to`);--> statement-breakpoint
 CREATE INDEX `fee_assignments_config_idx` ON `fee_assignments` (`fee_config_id`);--> statement-breakpoint
 CREATE INDEX `fee_assignments_schedule_idx` ON `fee_assignments` (`schedule_id`);--> statement-breakpoint
