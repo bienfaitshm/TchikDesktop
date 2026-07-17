@@ -295,7 +295,6 @@ export abstract class BaseRepository<
             this.searchFiltersColumns,
             search,
           );
-
           const effectiveFilters: Partial<
             FindManyOptions<TTable["$inferSelect"]>
           > = { ...filters };
@@ -310,7 +309,8 @@ export abstract class BaseRepository<
 
           let query = this.getQuerySet();
           if (searchFilter) {
-            query = query.where(searchFilter);
+            query = query.where(searchFilter).$dynamic();
+            console.log("==== find", query);
           }
 
           return (await applyQueryOptions(

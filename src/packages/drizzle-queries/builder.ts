@@ -148,8 +148,9 @@ export function applyQueryOptions<
   query: TQuery,
   table: T,
   options?: Partial<FindManyOptions<InferSelect<T>>>,
+  querySql: SQL[] = [],
 ): TQuery {
-  const conditions: SQL[] = [];
+  const conditions: SQL[] = [...querySql];
 
   if (options?.where)
     conditions.push(...buildWhereConditions(table, options.where));
