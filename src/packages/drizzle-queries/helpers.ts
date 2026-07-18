@@ -18,6 +18,7 @@ import {
   type SQL,
   type AnyColumn,
 } from "drizzle-orm";
+import { merge } from "ts-deepmerge";
 
 export const DEFAULT_MAX_LIMIT = 500;
 export const DEFAULT_MAX_OFFSET = 50000;
@@ -272,4 +273,17 @@ export function applyQueryOptions<
   query.offset(payload.offset);
 
   return query;
+}
+
+/**
+ * Deeply merges user-defined query options with structural default options.
+ * @param defaultOptions - The baseline configuration that guarantees required query limits or relations.
+ * @param userOptions - The optional overrides provided by the caller.
+ * @returns The fully constructed query configuration ready for execution.
+ */
+export function mergeFindManyOptions<TTables extends Record<string, Table>>(
+  defaultOptions: FindManyOptions<TTables> = {},
+  userOptions: Partial<FindManyOptions<TTables>> = {},
+): FindManyOptions<TTables> {
+  return merge({}, defaultOptions, userOptions);
 }
