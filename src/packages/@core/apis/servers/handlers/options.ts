@@ -1,4 +1,7 @@
-import { optionService } from "@/packages/@core/data-access/db/queries";
+import {
+  optionRepository,
+  optionService,
+} from "@/packages/@core/data-access/db/queries";
 import {
   OptionFilterSchema,
   OptionCreateSchema,
@@ -30,7 +33,7 @@ export class OptionController {
     params: OptionFilterSchema,
   })
   static async getAll(req: IpcRequest) {
-    return optionService.findMany(req.params);
+    return optionRepository.findMany(req.params);
   }
 
   /**
@@ -54,7 +57,7 @@ export class OptionController {
     body: OptionCreateSchema,
   })
   static async create(req: IpcRequest) {
-    return optionService.create(req.body);
+    return optionRepository.create(req.body);
   }
 
   /**
@@ -66,7 +69,7 @@ export class OptionController {
     params: OptionIdSchema,
   })
   static async getById(req: IpcRequest) {
-    return optionService.findById(req.params.optionId);
+    return optionRepository.findById(req.params.optionId);
   }
 
   /**
@@ -79,7 +82,7 @@ export class OptionController {
     body: OptionUpdateSchema,
   })
   static async update(req: IpcRequest) {
-    return optionService.update(req.body, req.params);
+    return optionRepository.update(req.body, req.params);
   }
 
   /**
@@ -91,6 +94,6 @@ export class OptionController {
     params: OptionIdSchema,
   })
   static async delete(req: IpcRequest) {
-    return optionService.delete(req.params.optionId);
+    return optionRepository.delete(req.params.optionId);
   }
 }

@@ -1,4 +1,4 @@
-import { enrollmentService } from "@/packages/@core/data-access/db/queries";
+import { enrollmentRepository } from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcServer,
@@ -32,7 +32,7 @@ export class EnrollmentController {
     params: EnrollmentFilterSchema,
   })
   static async getAll(req: IpcRequest) {
-    return enrollmentService.findMany(req.params);
+    return enrollmentRepository.findMany(req.params);
   }
 
   /**
@@ -44,7 +44,7 @@ export class EnrollmentController {
     params: SearchEnrollmentSchema,
   })
   static async getOptions(req: IpcRequest) {
-    return enrollmentService.findForSelect(req.params);
+    return enrollmentRepository.findForSelect(req.params);
   }
 
   /**
@@ -56,7 +56,7 @@ export class EnrollmentController {
     body: EnrollmentCreateSchema,
   })
   static async create(req: IpcRequest) {
-    return enrollmentService.create(req.body);
+    return enrollmentRepository.create(req.body);
   }
 
   /**
@@ -68,7 +68,7 @@ export class EnrollmentController {
     body: EnrollmentQuickCreateSchema,
   })
   static async quickCreate(req: IpcRequest) {
-    return enrollmentService.quickCreate(req.body);
+    return enrollmentRepository.quickCreate(req.body);
   }
 
   /**
@@ -80,7 +80,7 @@ export class EnrollmentController {
     params: EnrollmentIdSchema,
   })
   static async getById(req: IpcRequest) {
-    return enrollmentService.findById(req.params.enrollmentId);
+    return enrollmentRepository.findById(req.params.enrollmentId);
   }
 
   /**
@@ -93,7 +93,7 @@ export class EnrollmentController {
     body: EnrollmentUpdateSchema,
   })
   static async update(req: IpcRequest) {
-    return enrollmentService.update(req.body, req.params);
+    return enrollmentRepository.update(req.body, req.params);
   }
 
   /**
@@ -105,6 +105,6 @@ export class EnrollmentController {
     params: EnrollmentIdSchema,
   })
   static async delete(req: IpcRequest) {
-    return enrollmentService.delete(req.params.enrollmentId);
+    return enrollmentRepository.delete(req.params.enrollmentId);
   }
 }

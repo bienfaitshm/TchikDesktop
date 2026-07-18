@@ -1,28 +1,7 @@
-import type { BrowserWindow } from "electron";
 import type { IpcRenderer } from "@electron-toolkit/preload";
 import { HttpMethod, HttpStatus } from "./constant";
 import { unwrapResult, HttpException, type IResponse } from "./utils";
-
-export interface ILogger {
-  info(message: string, meta?: unknown): void;
-  warn(message: string, meta?: unknown): void;
-  error(message: string, error?: unknown): void;
-}
-
-export interface IpcRequest<
-  TBody = unknown,
-  TParams = Record<string, unknown>,
-  THeaders = Record<string, string>,
-> {
-  readonly id: string;
-  readonly body: TBody;
-  readonly params: TParams;
-  readonly headers: THeaders;
-  readonly context: {
-    readonly sender: Electron.WebContents;
-    readonly window: BrowserWindow | null;
-  };
-}
+import { ILogger, IpcRequest } from "./type";
 
 export interface ServerConfig {
   readonly logger?: ILogger;

@@ -25,14 +25,16 @@ export const ZPAYMENT_METHOD_ENUM = createZodEnum(PAYMENT_METHOD_ENUM);
  * Base schema ensuring the presence of a valid school identifier for multi-tenancy.
  */
 export const schoolIdBaseSchema = z.object({
-  schoolId: z.string().min(1).describe("Owner school identifier"),
+  schoolId: z.string().nonempty().describe("Owner school identifier"),
 });
+
+export type SchoolIdBase = z.infer<typeof schoolIdBaseSchema>;
 
 /**
  * Base schema ensuring the presence of a valid academic year identifier.
  */
 export const yearIdBaseSchema = z.object({
-  yearId: z.string().min(1).describe("Academic year identifier"),
+  yearId: z.string().nonempty().describe("Academic year identifier"),
 });
 
 /**
@@ -42,6 +44,7 @@ export const schoolYearIdBaseSchema = schoolIdBaseSchema.extend(
   yearIdBaseSchema.shape,
 );
 
+export type SchoolYearIdBase = z.infer<typeof schoolYearIdBaseSchema>;
 // Fallback alias to prevent breaking changes in files not yet refactored
 export const schoolYearIdBaseSchama = schoolYearIdBaseSchema;
 

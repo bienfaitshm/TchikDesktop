@@ -5,9 +5,12 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { StatsRoutes } from "../../routes-constant";
 import { StatsService } from "@/packages/@core/data-access/db/queries";
-import { StatsFilterSchema } from "@/packages/@core/data-access/schema-validations";
-
-const SchoolIdFilterSchema = StatsFilterSchema.pick({ schoolId: true });
+import {
+  schoolIdBaseSchema,
+  type SchoolYearIdBase,
+  schoolYearIdBaseSchema,
+  type SchoolIdBase,
+} from "@/packages/@core/data-access/schema-validations";
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for institutional statistics and KPIs.
@@ -19,10 +22,12 @@ export class StatsController {
    * @returns A promise resolving to the global metrics summary object.
    */
   @IpcServer.register(HttpMethod.GET, StatsRoutes.SUMMARY, {
-    params: StatsFilterSchema,
+    params: schoolYearIdBaseSchema,
   })
-  static async getSummary(req: IpcRequest) {
-    return StatsService.getQuickKpis(req.params);
+  static async getSummary({
+    params: { schoolId, yearId },
+  }: IpcRequest<unknown, SchoolYearIdBase>) {
+    return StatsService.getQuickKpis(schoolId, yearId);
   }
 
   /**
@@ -31,10 +36,12 @@ export class StatsController {
    * @returns A promise resolving to status distribution data arrays.
    */
   @IpcServer.register(HttpMethod.GET, StatsRoutes.STUDENTS_BY_STATUS, {
-    params: StatsFilterSchema,
+    params: schoolYearIdBaseSchema,
   })
-  static async getByStatus(req: IpcRequest) {
-    return StatsService.getStudentStatusStats(req.params);
+  static async getByStatus({
+    params: { schoolId, yearId },
+  }: IpcRequest<unknown, SchoolYearIdBase>) {
+    return StatsService.getStudentStatusStats(schoolId, yearId);
   }
 
   /**
@@ -43,10 +50,12 @@ export class StatsController {
    * @returns A promise resolving to global institutional gender statistics.
    */
   @IpcServer.register(HttpMethod.GET, StatsRoutes.STUDENTS_BY_GENDER, {
-    params: SchoolIdFilterSchema,
+    params: schoolIdBaseSchema,
   })
-  static async getByGender(req: IpcRequest) {
-    return StatsService.getGenderDistribution(req.params);
+  static async getByGender({
+    params: { schoolId },
+  }: IpcRequest<unknown, SchoolIdBase>) {
+    return StatsService.getGenderDistribution(schoolId);
   }
 
   /**
@@ -55,10 +64,12 @@ export class StatsController {
    * @returns A promise resolving to classroom occupancy volume metrics.
    */
   @IpcServer.register(HttpMethod.GET, StatsRoutes.STUDENTS_BY_CLASS, {
-    params: StatsFilterSchema,
+    params: schoolYearIdBaseSchema,
   })
-  static async getByClass(req: IpcRequest) {
-    return StatsService.getStudentsCountByClass(req.params);
+  static async getByClass({
+    params: { schoolId, yearId },
+  }: IpcRequest<unknown, SchoolYearIdBase>) {
+    return StatsService.getStudentsCountByClass(schoolId, yearId);
   }
 
   /**
@@ -67,10 +78,12 @@ export class StatsController {
    * @returns A promise resolving to specialized study option volume metrics.
    */
   @IpcServer.register(HttpMethod.GET, StatsRoutes.STUDENTS_BY_OPTION, {
-    params: StatsFilterSchema,
+    params: schoolYearIdBaseSchema,
   })
-  static async getByOption(req: IpcRequest) {
-    return StatsService.getStudentsCountByOption(req.params);
+  static async getByOption({
+    params: { schoolId, yearId },
+  }: IpcRequest<unknown, SchoolYearIdBase>) {
+    return StatsService.getStudentsCountByOption(schoolId, yearId);
   }
 
   /**
@@ -79,10 +92,12 @@ export class StatsController {
    * @returns A promise resolving to structural school retention statistics.
    */
   @IpcServer.register(HttpMethod.GET, StatsRoutes.RETENTION, {
-    params: StatsFilterSchema,
+    params: schoolYearIdBaseSchema,
   })
-  static async getRetention(req: IpcRequest) {
-    return StatsService.getRetentionMetrics(req.params);
+  static async getRetention({
+    params: { schoolId, yearId },
+  }: IpcRequest<unknown, SchoolYearIdBase>) {
+    return StatsService.getRetentionMetrics(schoolId, yearId);
   }
 
   /**
@@ -91,10 +106,12 @@ export class StatsController {
    * @returns A promise resolving to the absolute numeric volume of students.
    */
   @IpcServer.register(HttpMethod.GET, StatsRoutes.TOTAL_STUDENTS, {
-    params: StatsFilterSchema,
+    params: schoolYearIdBaseSchema,
   })
-  static async getTotalStudents(req: IpcRequest) {
-    return StatsService.getTotalStudents(req.params);
+  static async getTotalStudents({
+    params: { schoolId, yearId },
+  }: IpcRequest<unknown, SchoolYearIdBase>) {
+    return StatsService.getTotalStudents(schoolId, yearId);
   }
 
   /**
@@ -103,9 +120,11 @@ export class StatsController {
    * @returns A promise resolving to historical multi-year enrollment growth datasets.
    */
   @IpcServer.register(HttpMethod.GET, StatsRoutes.ENROLLMENTS_BY_YEAR, {
-    params: SchoolIdFilterSchema,
+    params: schoolIdBaseSchema,
   })
-  static async getEnrollmentsByYear(req: IpcRequest) {
-    return StatsService.getEnrollmentStatsByYear(req.params);
+  static async getEnrollmentsByYear({
+    params: { schoolId },
+  }: IpcRequest<unknown, SchoolIdBase>) {
+    return StatsService.getEnrollmentStatsByYear(schoolId);
   }
 }

@@ -127,9 +127,10 @@ export namespace EnrollmentStats {
           ),
         )
         .leftJoin(users, eq(classroomEnrollments.studentId, users.userId))
-        .where(eq(studyYears.schoolId, schoolId))
+        .where(eq(studyYears.yearId, classroomEnrollments.yearId))
         .groupBy(studyYears.yearId)
-        .orderBy(asc(studyYears.startDate));
+        .orderBy(asc(studyYears.startDate))
+        .all();
 
       return results.map((row) => ({
         ...row,

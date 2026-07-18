@@ -1,4 +1,4 @@
-import { classroomService } from "@/packages/@core/data-access/db/queries";
+import { classroomRepository } from "@/packages/@core/data-access/db/queries";
 import {
   ClassroomSchema,
   ClassroomCreateSchema,
@@ -29,7 +29,7 @@ export class ClassroomController {
     params: ClassroomFilterSchema,
   })
   static async getAll(req: IpcRequest) {
-    return classroomService.findMany(req.params);
+    return classroomRepository.findMany(req.params);
   }
 
   /**
@@ -41,7 +41,7 @@ export class ClassroomController {
     params: SearchOptionsSchema,
   })
   static async getOptions(req: IpcRequest) {
-    return classroomService.getOptions(req.params);
+    return classroomRepository.getOptions(req.params);
   }
 
   /**
@@ -53,7 +53,7 @@ export class ClassroomController {
     params: ClassroomFilterSchema,
   })
   static async getWithEnrollments(req: IpcRequest) {
-    return classroomService.findClassroomsWithStudents(req.params);
+    return classroomRepository.findClassroomsWithStudents(req.params);
   }
 
   /**
@@ -65,7 +65,7 @@ export class ClassroomController {
     params: ClassIdSchema,
   })
   static async getById(req: IpcRequest) {
-    return classroomService.findById(req.params.classId);
+    return classroomRepository.findById(req.params.classId);
   }
 
   /**
@@ -77,7 +77,7 @@ export class ClassroomController {
     body: ClassroomCreateSchema,
   })
   static async create(req: IpcRequest) {
-    return classroomService.create(req.body);
+    return classroomRepository.create(req.body);
   }
 
   /**
@@ -90,7 +90,7 @@ export class ClassroomController {
     body: ClassroomUpdateSchema,
   })
   static async update(req: IpcRequest) {
-    return classroomService.update(req.body, req.params);
+    return classroomRepository.update(req.body, req.params);
   }
 
   /**
@@ -102,6 +102,6 @@ export class ClassroomController {
     params: ClassIdSchema,
   })
   static async delete(req: IpcRequest) {
-    return classroomService.delete(req.params.classId);
+    return classroomRepository.delete(req.params.classId);
   }
 }

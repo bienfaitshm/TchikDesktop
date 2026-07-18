@@ -10,6 +10,7 @@ import { updateInit } from "@/main/update";
 import { getAppIcon } from "@/main/utils";
 import { handleFatalError } from "./error-handler";
 import "@/main/apps/system-infos";
+import "@/packages/@core/apis/servers/handlers";
 
 const mainLogger = getLogger("MainProcess");
 const isDark = nativeTheme.shouldUseDarkColors;
