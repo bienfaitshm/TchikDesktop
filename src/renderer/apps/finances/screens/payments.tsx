@@ -1,7 +1,7 @@
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { GoogleSearchInput } from "../components/search";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrollements";
-import { EnrollmentOverview } from "../components/enrollment-search-render";
+import { EnrollmentOverview } from "../components/enrollment-overview";
 
 export function FastPaymentPage() {
   const { schoolId, yearId } = useCurrentConfig();
@@ -48,7 +48,7 @@ export function FastPaymentPage() {
           data={enrollments}
           getItemLabel={(item) => ({
             label: item.student.fullName ?? item.student.lastName,
-            description: `Eleve de ${item.classroom.shortIdentifier}, ${item.student.gender}`,
+            description: `${item.student.gender} - ${item.classroom.shortIdentifier}`,
           })}
           renderDetail={(enrollment) => (
             <div>
