@@ -2,49 +2,22 @@ import z from "zod";
 import { paymentService } from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
-  IpcRequest,
-  ValidationSchemas,
-  AbstractEndpoint,
+  IpcServer,
+  type IpcRequest,
 } from "@/packages/electron-ipc-rest";
 import { PaymentRoutes } from "../../routes-constant";
 import {
-  ProcessPaymentPayload,
+  type ProcessPaymentPayload,
   ProcessPaymentSchema,
 } from "@/packages/@core/data-access/schema-validations";
-import { renderTemplate } from "@/packages/document-template";
 import { defaultPrinterManagementService } from "@/packages/electron-utility";
 import { printReceipt } from "@/packages/pos-printer";
-
-const donneesAInjecter = {
-  entreprise: {
-    nom: "BOUTIQUE TECH & CO",
-    adresse: "45 Rue de la République, Lyon",
-    telephone: "04.72.00.11.22",
-  },
-  numeroFacture: "FAC-2026-0412",
-  date: "15/07/2026 11:15",
-  caissier: "Marc K.",
-  articles: [
-    { nom: "Souris Sans Fil RGB", quantite: 1, prixTotal: "25.00" },
-    { nom: "Câble USB-C 2m", quantite: 2, prixTotal: "12.00" },
-    { nom: "Clé USB 64Go", quantite: 1, prixTotal: "15.00", remise: 10 },
-  ],
-  totalBrut: "52.00",
-  tva: {
-    taux: "20",
-    montant: "10.40",
-  },
-  netAPayer: "52.00",
-  modePaiement: "CARTE BANCAIRE",
-  logicielInfo: "POS Système v2.1 - Sécurisé",
-};
 
 const ClassroomFilterSchema = z.object({
   schoolId: z.string().nonempty(),
   yearId: z.string().nonempty(),
   classId: z.string().nonempty(),
 });
-type ClassroomFilter = z.infer<typeof ClassroomFilterSchema>;
 
 const AssignFeesToStudentSchema = z.object({
   schoolId: z.string().nonempty(),
@@ -52,81 +25,96 @@ const AssignFeesToStudentSchema = z.object({
   enrollmentId: z.string().nonempty(),
   classroomId: z.string().nonempty(),
 });
+
+type ClassroomFilter = z.infer<typeof ClassroomFilterSchema>;
 type AssignFeesToStudentPayload = z.infer<typeof AssignFeesToStudentSchema>;
 
-/**
- * Récupérer le tableau matriciel des assignations et des statuts de paiement d'une classe
- */
-export class GetClassroomAssignmentTable extends AbstractEndpoint<any> {
-  route = PaymentRoutes.CLASSROOM_TABLE;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
-    params: ClassroomFilterSchema,
-  };
+const INVOICE_TEMPLATE_DATA = {
+  company: {
+    name: "TECH & CO BOUTIQUE",
+    address: "45 Rue de la République, Lyon",
+    phone: "04.72.00.11.22",
+  },
+  invoiceNumber: "FAC-2026-0412",
+  date: "15/07/2026 11:15",
+  cashier: "Marc K.",
+  items: [
+    { name: "Wireless RGB Mouse", quantity: 1, totalPrice: "25.00" },
+    { name: "USB-C Cable 2m", quantity: 2, totalPrice: "12.00" },
+    { name: "USB Drive 64GB", quantity: 1, totalPrice: "15.00", discount: 10 },
+  ],
+  grossTotal: "52.00",
+  vat: {
+    rate: "20",
+    amount: "10.40",
+  },
+  netToPay: "52.00",
+  paymentMode: "CREDIT CARD",
+  softwareInfo: "POS System v2.1 - Secured",
+};
 
-  protected handle({
-    params,
-    context,
-  }: IpcRequest<any, ClassroomFilter>): Promise<unknown> {
+/**
+ * Handles Inter-Process Communication (IPC) inbound requests for student payments and fee assignments.
+ */
+export class PaymentController {
+  /**
+   * Fetches the assignment and financial payment status matrix for a classroom.
+   * @param req - The IPC request context carrying classroom filtering parameters.
+   * @returns A promise resolving to the final classroom assignment table dataset.
+   */
+  @IpcServer.register(HttpMethod.GET, PaymentRoutes.CLASSROOM_TABLE, {
+    params: ClassroomFilterSchema,
+  })
+  static async getClassroomTable(req: IpcRequest<unknown, ClassroomFilter>) {
     return paymentService.getAssignmentTableOfClassroom(
-      params,
-      ({ message, pourcent }) => {
-        context.sender.send(this.route, { message, pourcent });
+      req.params,
+      (progress: { message: string; pourcent: number }) => {
+        req.context.sender.send(PaymentRoutes.CLASSROOM_TABLE, {
+          message: progress.message,
+          pourcent: progress.pourcent,
+        });
       },
     );
   }
-}
 
-/**
- * Déclencher manuellement ou automatiquement l'assignation de frais initiaux pour un étudiant
- */
-export class PostAssignFeesToStudent extends AbstractEndpoint<any> {
-  route = PaymentRoutes.ASSIGN_FEES;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
+  /**
+   * Provisions foundational initial school fees directly onto a designated student record.
+   * @param req - The IPC request context carrying the assignment details payload body.
+   * @returns A promise resolving to the generated fee assignment operational results.
+   */
+  @IpcServer.register(HttpMethod.POST, PaymentRoutes.ASSIGN_FEES, {
     body: AssignFeesToStudentSchema,
-  };
-
-  protected handle({
-    body,
-  }: IpcRequest<AssignFeesToStudentPayload, any>): Promise<unknown> {
-    return paymentService.assignFeesToStudent(body);
+  })
+  static async assignFees(
+    req: IpcRequest<AssignFeesToStudentPayload, unknown>,
+  ) {
+    return paymentService.assignFeesToStudent(req.body);
   }
-}
 
-/**
- * Encaisser un versement étudiant (gère les multi-devises et les écritures comptables au guichet)
- */
-export class PostProcessStudentPayment extends AbstractEndpoint<any> {
-  route = PaymentRoutes.PROCESS_PAYMENT;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
+  /**
+   * Validates financial intake variables and drives POS hardware receipt generation streams.
+   * @param req - The IPC request context containing structured transactional payment configurations.
+   * @returns A promise resolving to the successfully committed payment record entity.
+   */
+  @IpcServer.register(HttpMethod.POST, PaymentRoutes.PROCESS_PAYMENT, {
     body: ProcessPaymentSchema,
-  };
+  })
+  static async processPayment(req: IpcRequest<ProcessPaymentPayload, unknown>) {
+    const payment = await paymentService.processStudentPayment(req.body);
 
-  protected async handle({
-    body,
-    context,
-  }: IpcRequest<ProcessPaymentPayload, any>): Promise<unknown> {
-    const payment = await paymentService.processStudentPayment(body);
-    if (payment && context.window) {
-      // create facture and print
-      // const facture: string = await renderTemplate(
-      //   "facture.hbs",
-      //   donneesAInjecter,
-      // );
-      // await defaultPrinterManagementService.printHtmlContent(facture, {
-      //   landscape: true,
-      //   pageSize: "A6",
-      // });
+    if (payment && req.context.window) {
       const printers = await defaultPrinterManagementService.getSystemPrinters(
-        context.window,
+        req.context.window,
       );
-      console.log("=======>PRINTERS", printers);
+      console.log("System printers retrieved:", printers);
+
       try {
         printReceipt();
-      } catch (error) {}
+      } catch (error) {
+        console.error("Hardware printing execution pipeline failed:", error);
+      }
     }
+
     return payment;
   }
 }

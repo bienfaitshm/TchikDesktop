@@ -1,138 +1,99 @@
-import z from "zod";
 import {
   userRepository,
   userService,
 } from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
+  IpcServer,
   type IpcRequest,
-  type ValidationSchemas,
 } from "@/packages/electron-ipc-rest";
 import {
-  type UserFilter,
-  type UserCreate,
-  type UserUpdate,
   UserSchema,
   UserFilterSchema,
   UserCreateSchema,
   UserUpdateSchema,
   createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
-import type {
-  InsertUser,
-  UpdateUser as UpUser,
-} from "@/packages/@core/data-access/db/schemas";
-import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { UserRoutes } from "../../routes-constant";
-import type { SelectOption } from "@/packages/@core/data-access/db/queries/select-option.transformer";
-import type { UserDTO } from "@/packages/@core/data-access/db/queries/users";
 
 const UserIdSchema = UserSchema.pick({ userId: true }).required();
-type UserId = z.infer<typeof UserIdSchema>;
-
 export const searchUserOptionsSchema =
   createSearchOptionsSchema(UserFilterSchema);
-export type SearchUserOptionsParams = z.infer<typeof searchUserOptionsSchema>;
 
 /**
- * Récupère la liste brute des utilisateurs filtrés.
+ * Handles Inter-Process Communication (IPC) inbound requests for user identity and account management.
  */
-export class GetUsers extends AbstractEndpoint<any> {
-  route = UserRoutes.ALL;
-  method = HttpMethod.GET;
-  validationErrorMessage? = undefined;
-  schemas: ValidationSchemas = {
+export class UserController {
+  /**
+   * Retrieves all users based on optional lookup query filters.
+   * @param req - The IPC request object containing filtering parameters.
+   * @returns A promise resolving to an array of matching user records.
+   */
+  @IpcServer.register(HttpMethod.GET, UserRoutes.ALL, {
     params: UserFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<unknown, UserFilter>): Promise<UserDTO[]> {
-    return userRepository.findMany(params as any);
+  })
+  static async getAll(req: IpcRequest) {
+    return userRepository.findMany(req.params);
   }
-}
 
-/**
- * Endpoint dédié aux composants UI Select / Combobox avec recherche intégrée.
- */
-export class GetSearchUsers extends AbstractEndpoint<any> {
-  route = UserRoutes.SEARCH;
-  method = HttpMethod.GET;
-  validationErrorMessage? = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Retrieves selection data and simplified structures for search combobox elements.
+   * @param req - The IPC request object containing search options parameters.
+   * @returns A promise resolving to structured autocomplete user selection choices.
+   */
+  @IpcServer.register(HttpMethod.GET, UserRoutes.SEARCH, {
     params: searchUserOptionsSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<unknown, SearchUserOptionsParams>): Promise<SelectOption[]> {
-    return userService.getOptions(params as any);
+  })
+  static async getOptions(req: IpcRequest) {
+    return userService.getOptions(req.params);
   }
-}
 
-/**
- * Création d'un nouvel utilisateur.
- */
-export class PostUser extends AbstractEndpoint<any> {
-  route = UserRoutes.ALL;
-  method = HttpMethod.POST;
-  validationErrorMessage? = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Creates a new user instance record inside the persistent engine.
+   * @param req - The IPC request object carrying the initialization payload.
+   * @returns A promise resolving to the newly initialized user instance.
+   */
+  @IpcServer.register(HttpMethod.POST, UserRoutes.ALL, {
     body: UserCreateSchema,
-  };
-
-  protected handle({ body }: IpcRequest<UserCreate, unknown>) {
-    return userRepository.create(body as InsertUser);
+  })
+  static async create(req: IpcRequest) {
+    return userRepository.create(req.body);
   }
-}
 
-/**
- * Récupère le détail complet d'un utilisateur par son ID.
- */
-export class GetUser extends AbstractEndpoint<any> {
-  route = UserRoutes.DETAIL;
-  method = HttpMethod.GET;
-  validationErrorMessage? = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Fetches full structural details of a single user matching its tracking identifier.
+   * @param req - The IPC request object holding target parameters.
+   * @returns A promise resolving to the target user record details or null.
+   */
+  @IpcServer.register(HttpMethod.GET, UserRoutes.DETAIL, {
     params: UserIdSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, UserId>): Promise<UserDTO | null> {
-    return userRepository.findById(params.userId);
+  })
+  static async getById(req: IpcRequest) {
+    return userRepository.findById(req.params.userId);
   }
-}
 
-/**
- * Met à jour les informations d'un utilisateur.
- */
-export class UpdateUser extends AbstractEndpoint<any> {
-  route = UserRoutes.DETAIL;
-  method = HttpMethod.PUT;
-  validationErrorMessage? = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Updates configuration fields on an existing user account profile.
+   * @param req - The IPC request object carrying operational payloads and identifier parameters.
+   * @returns A promise resolving to the modified user data object.
+   */
+  @IpcServer.register(HttpMethod.PUT, UserRoutes.DETAIL, {
     params: UserIdSchema,
     body: UserUpdateSchema,
-  };
-
-  protected handle({ params, body }: IpcRequest<UserUpdate, UserId>) {
-    return userRepository.update(params.userId, body as UpUser);
+  })
+  static async update(req: IpcRequest) {
+    return userRepository.update(req.body, req.params);
   }
-}
 
-/**
- * Supprime un utilisateur par son ID.
- */
-export class DeleteUser extends AbstractEndpoint<any> {
-  route = UserRoutes.DETAIL;
-  method = HttpMethod.DELETE;
-  validationErrorMessage? = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Purges a designated user account permanently from active infrastructure tables.
+   * @param req - The IPC request object holding target identification keys.
+   * @returns A promise resolving to the operational execution results.
+   */
+  @IpcServer.register(HttpMethod.DELETE, UserRoutes.DETAIL, {
     params: UserIdSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, UserId>) {
-    return userRepository.delete(params.userId);
+  })
+  static async delete(req: IpcRequest<unknown, { userId: string }>) {
+    return userRepository.delete(req.params.userId);
   }
 }

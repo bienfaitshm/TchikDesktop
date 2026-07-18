@@ -1,93 +1,81 @@
-import z from "zod";
 import { studentPaymentRepository } from "@/packages/@core/data-access/db/queries";
 import {
   StudentPaymentSchema,
   StudentPaymentCreateSchema,
   StudentPaymentUpdateSchema,
   StudentPaymentFilterSchema,
-  type StudentPaymentFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
-  IpcRequest,
-  ValidationSchemas,
+  IpcServer,
+  type IpcRequest,
 } from "@/packages/electron-ipc-rest";
-import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { StudentPaymentRoutes } from "../../routes-constant";
 
 const PaymentIdSchema = StudentPaymentSchema.pick({ paymentId: true });
-type PaymentId = z.infer<typeof PaymentIdSchema>;
 
-export class GetStudentPayments extends AbstractEndpoint<any> {
-  route = StudentPaymentRoutes.ALL;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+/**
+ * Handles Inter-Process Communication (IPC) inbound requests for student payment records.
+ */
+export class StudentPaymentController {
+  /**
+   * Retrieves all student payments based on lookup query filters.
+   * @param req - The IPC request object containing filtering parameters.
+   * @returns A promise resolving to an array of matching student payment records.
+   */
+  @IpcServer.register(HttpMethod.GET, StudentPaymentRoutes.ALL, {
     params: StudentPaymentFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, StudentPaymentFilter>): Promise<unknown> {
-    return studentPaymentRepository.findMany(params);
+  })
+  static async getAll(req: IpcRequest) {
+    return studentPaymentRepository.findMany(req.params);
   }
-}
 
-export class PostStudentPayment extends AbstractEndpoint<any> {
-  route = StudentPaymentRoutes.ALL;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
+  /**
+   * Creates a new student payment record with the provided body specification.
+   * @param req - The IPC request object containing the raw initialization payload.
+   * @returns A promise resolving to the newly initialized student payment instance.
+   */
+  @IpcServer.register(HttpMethod.POST, StudentPaymentRoutes.ALL, {
     body: StudentPaymentCreateSchema,
-  };
-
-  protected handle({
-    body,
-  }: IpcRequest<
-    z.infer<typeof StudentPaymentCreateSchema>,
-    any
-  >): Promise<unknown> {
-    return studentPaymentRepository.create(body);
+  })
+  static async create(req: IpcRequest) {
+    return studentPaymentRepository.create(req.body);
   }
-}
 
-export class GetStudentPayment extends AbstractEndpoint<any> {
-  route = StudentPaymentRoutes.DETAIL;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+  /**
+   * Fetches a specific student payment details by its unique identifier.
+   * @param req - The IPC request object containing target parameters.
+   * @returns A promise resolving to the target student payment object or null.
+   */
+  @IpcServer.register(HttpMethod.GET, StudentPaymentRoutes.DETAIL, {
     params: PaymentIdSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, PaymentId>): Promise<unknown> {
-    return studentPaymentRepository.findById(params.paymentId);
+  })
+  static async getById(req: IpcRequest) {
+    return studentPaymentRepository.findById(req.params.paymentId);
   }
-}
 
-export class UpdateStudentPayment extends AbstractEndpoint<any> {
-  route = StudentPaymentRoutes.DETAIL;
-  method = HttpMethod.PUT;
-  schemas: ValidationSchemas = {
+  /**
+   * Updates fields on an existing student payment designated by route parameters.
+   * @param req - The IPC request object carrying the identification parameters and payload.
+   * @returns A promise resolving to the mutated student payment object.
+   */
+  @IpcServer.register(HttpMethod.PUT, StudentPaymentRoutes.DETAIL, {
     params: PaymentIdSchema,
     body: StudentPaymentUpdateSchema,
-  };
-
-  protected handle({
-    params,
-    body,
-  }: IpcRequest<
-    z.infer<typeof StudentPaymentUpdateSchema>,
-    PaymentId
-  >): Promise<unknown> {
-    return studentPaymentRepository.update(params.paymentId, body);
+  })
+  static async update(req: IpcRequest) {
+    return studentPaymentRepository.update(req.body, req.params);
   }
-}
 
-export class DeleteStudentPayment extends AbstractEndpoint<any> {
-  route = StudentPaymentRoutes.DETAIL;
-  method = HttpMethod.DELETE;
-  schemas: ValidationSchemas = {
+  /**
+   * Deletes a specific target student payment record.
+   * @param req - The IPC request object holding target identification params.
+   * @returns A promise resolving to the operation completion result.
+   */
+  @IpcServer.register(HttpMethod.DELETE, StudentPaymentRoutes.DETAIL, {
     params: PaymentIdSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, PaymentId>): Promise<unknown> {
-    return studentPaymentRepository.delete(params.paymentId);
+  })
+  static async delete(req: IpcRequest) {
+    return studentPaymentRepository.delete(req.params.paymentId);
   }
 }

@@ -1,151 +1,120 @@
 import z from "zod";
-import {
-  seatingAssignmentRepository,
-  seatingSessionService,
-} from "@/packages/@core/data-access/db/queries/seatings";
-
-import {
-  HttpMethod,
-  IpcRequest,
-  ValidationSchemas,
-} from "@/packages/electron-ipc-rest";
+import { seatingSessionService } from "@/packages/@core/data-access/db/queries/seatings";
 import {
   seatingGeneratorSchema,
   SchoolYearSchema,
   BulkSeatingAssignmentSchema,
-  type TBulkSeatingAssignment,
-  type SeatingGenerator,
-  type SchoolYear,
 } from "@/packages/@core/data-access/schema-validations";
-import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
+import {
+  HttpMethod,
+  IpcServer,
+  type IpcRequest,
+} from "@/packages/electron-ipc-rest";
 import { SeatingAssignmentRoutes } from "../../routes-constant";
 
-/** Genere le mise en place */
-export class GenerateSeating extends AbstractEndpoint<any> {
-  route = SeatingAssignmentRoutes.GENERATING;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
-    body: seatingGeneratorSchema.merge(SchoolYearSchema),
-  };
-  protected handle({
-    body,
-  }: IpcRequest<SeatingGenerator & SchoolYear>): Promise<unknown> {
-    return seatingSessionService.generate(body);
-  }
-}
+const GenerateBodySchema = seatingGeneratorSchema.merge(SchoolYearSchema);
 
-/** Récupère la disposition visuelle d'une salle avec les élèves à leurs places. */
-export class GetRoomLayout extends AbstractEndpoint<any> {
-  route = SeatingAssignmentRoutes.LAYOUT;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
-    params: z.object({
-      sessionId: z.string(),
-      localroomId: z.string(),
-    }),
-  };
-  protected handle({
-    params,
-  }: IpcRequest<
-    unknown,
-    { sessionId: string; localroomId: string }
-  >): Promise<unknown> {
-    return seatingAssignmentRepository.getRoomLayout(
-      params.sessionId,
-      params.localroomId,
-    );
-  }
-}
+const RoomLayoutParamSchema = z.object({
+  sessionId: z.string().nonempty(),
+  localroomId: z.string().nonempty(),
+});
 
-/** Procède à l'assignation massive d'élèves à des places précises (Bulk Insert). */
-export class BulkAssignStudents extends AbstractEndpoint<any> {
-  route = SeatingAssignmentRoutes.BULK;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {};
-  protected handle({ body }: IpcRequest<any>): Promise<unknown> {
-    return seatingAssignmentRepository.bulkAssign(body);
-  }
-}
+const UnassignedParamSchema = z.object({
+  sessionId: z.string().nonempty(),
+  yearId: z.string().nonempty(),
+});
 
-export class RebuildAssignments extends AbstractEndpoint<any> {
-  route = SeatingAssignmentRoutes.RE_ASSIGNED;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
+const FindStudentParamSchema = z.object({
+  sessionId: z.string().nonempty(),
+  enrolementId: z.string().nonempty(),
+});
+
+/**
+ * Handles Inter-Process Communication (IPC) inbound requests for student seating arrangements and layouts.
+ */
+export class SeatingAssignmentController {
+  /**
+   * Automatically generates optimized seating assignments using institutional and academic rules.
+   * @param req - The IPC request context containing setup configurations and calendar boundaries.
+   * @returns A promise resolving to the generated layout operational results.
+   */
+  @IpcServer.register(HttpMethod.POST, SeatingAssignmentRoutes.GENERATING, {
+    body: GenerateBodySchema,
+  })
+  static async generate(req: IpcRequest) {
+    return seatingSessionService.generate(req.body);
+  }
+
+  /**
+   * Fetches the complete structural grid blueprint layout filled with assigned student slots.
+   * @param req - The IPC request context carrying tracking reference and structural room keys.
+   * @returns A promise resolving to the computed visual configuration matrix layout.
+   */
+  @IpcServer.register(HttpMethod.GET, SeatingAssignmentRoutes.LAYOUT, {
+    params: RoomLayoutParamSchema,
+  })
+  static async getRoomLayout(req: IpcRequest) {
+    return seatingSessionService.getRoomLayout(req.params);
+  }
+
+  /**
+   * Commits bulk insert operations to attach large datasets of student records to layout spaces.
+   * @param req - The IPC request context carrying bulk allocation specifications body.
+   * @returns A promise resolving to the batch transaction confirmation summary.
+   */
+  @IpcServer.register(HttpMethod.POST, SeatingAssignmentRoutes.BULK, {
     body: BulkSeatingAssignmentSchema,
-  };
-  protected handle({
-    body: { sessionId, assignments },
-  }: IpcRequest<TBulkSeatingAssignment>): Promise<unknown> {
-    return seatingAssignmentRepository.rebuildAssignments(
-      sessionId,
-      assignments,
-    );
+  })
+  static async bulkAssign(req: IpcRequest) {
+    return seatingSessionService.bulkAssign(req.body);
   }
-}
 
-/** Liste les élèves inscrits qui n'ont pas encore de place pour cette session. */
-export class GetUnassignedStudents extends AbstractEndpoint<any> {
-  route = SeatingAssignmentRoutes.UNASSIGNED;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
-    params: z.object({
-      sessionId: z.string(),
-      yearId: z.string(),
-    }),
-  };
-  protected handle({
-    params,
-  }: IpcRequest<
-    unknown,
-    { sessionId: string; yearId: string }
-  >): Promise<unknown> {
-    return seatingAssignmentRepository.getUnassignedStudents(
-      params.sessionId,
-      params.yearId,
-    );
+  /**
+   * Rewrites current assignment structures by resetting allocations under a tracking code.
+   * @param req - The IPC request context carrying updated full layout specifications payload.
+   * @returns A promise resolving to the transaction reconstruction confirmation results.
+   */
+  @IpcServer.register(HttpMethod.POST, SeatingAssignmentRoutes.RE_ASSIGNED, {
+    body: BulkSeatingAssignmentSchema,
+  })
+  static async rebuildAssignments(req: IpcRequest) {
+    return seatingSessionService.rebuildAssignments(req.body);
   }
-}
 
-/** Réinitialise (vide) toutes les places d'une salle spécifique pour une session. */
-export class ClearRoomAssignments extends AbstractEndpoint<any> {
-  route = SeatingAssignmentRoutes.CLEAR_ROOM;
-  method = HttpMethod.DELETE;
-  schemas: ValidationSchemas = {
-    body: z.object({
-      sessionId: z.string(),
-      localroomId: z.string(),
-    }),
-  };
-  protected async handle({
-    body,
-  }: IpcRequest<{ sessionId: string; localroomId: string }>): Promise<unknown> {
-    const success = await seatingAssignmentRepository.clearRoomAssignments(
-      body.sessionId,
-      body.localroomId,
-    );
+  /**
+   * Retrieves registered student profiles lacking spatial room slot indices.
+   * @param req - The IPC request context holding filter parameters.
+   * @returns A promise resolving to an array of unassigned student profiles.
+   */
+  @IpcServer.register(HttpMethod.GET, SeatingAssignmentRoutes.UNASSIGNED, {
+    params: UnassignedParamSchema,
+  })
+  static async getUnassignedStudents(req: IpcRequest) {
+    return seatingSessionService.getUnassignedStudents(req.params);
+  }
+
+  /**
+   * Clears out all allocated placement spaces inside a designated room record space.
+   * @param req - The IPC request context containing target structure descriptors.
+   * @returns A promise resolving to the operation execution success wrapper object.
+   */
+  @IpcServer.register(HttpMethod.DELETE, SeatingAssignmentRoutes.CLEAR_ROOM, {
+    body: RoomLayoutParamSchema,
+  })
+  static async clearRoomAssignments(req: IpcRequest) {
+    const success = await seatingSessionService.clearRoomAssignments(req.body);
     return { success };
   }
-}
 
-/** Localise précisément la salle et la place d'un étudiant via son enrolementId. */
-export class FindStudentSeat extends AbstractEndpoint<any> {
-  route = SeatingAssignmentRoutes.FIND_STUDENT;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
-    params: z.object({
-      sessionId: z.string(),
-      enrolementId: z.string(),
-    }),
-  };
-  protected handle({
-    params,
-  }: IpcRequest<
-    unknown,
-    { sessionId: string; enrolementId: string }
-  >): Promise<unknown> {
-    return seatingAssignmentRepository.findStudentSeat(
-      params.sessionId,
-      params.enrolementId,
-    );
+  /**
+   * Locates the precise room coordinate tracking cell mapped to an enrollment item key.
+   * @param req - The IPC request context holding targeted search constraints.
+   * @returns A promise resolving to the targeted student placement information or null.
+   */
+  @IpcServer.register(HttpMethod.GET, SeatingAssignmentRoutes.FIND_STUDENT, {
+    params: FindStudentParamSchema,
+  })
+  static async findStudentSeat(req: IpcRequest) {
+    return seatingSessionService.findStudentSeat(req.params);
   }
 }

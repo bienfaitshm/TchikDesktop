@@ -1,127 +1,109 @@
-import z from "zod";
 import { walletService } from "@/packages/@core/data-access/db/queries";
 import {
   WalletSchema,
   WalletCreateSchema,
   WalletUpdateSchema,
-  WalletFilter,
   WalletFilterSchema,
-  createSearchOptionsSchema,
   WalletBulkCreateSchema,
-  type WalletBulkCreate,
+  createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
-  IpcRequest,
-  ValidationSchemas,
+  IpcServer,
+  type IpcRequest,
 } from "@/packages/electron-ipc-rest";
-import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { WalletRoutes } from "../../routes-constant";
 
 const WalletIdSchema = WalletSchema.pick({ walletId: true });
-type WalletId = z.infer<typeof WalletIdSchema>;
-
 export const searchWalletOptionsSchema =
   createSearchOptionsSchema(WalletFilterSchema);
-export type SearchWalletOptionsParams = z.infer<
-  typeof searchWalletOptionsSchema
->;
 
-export class GetWallets extends AbstractEndpoint<any> {
-  route = WalletRoutes.ALL;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+/**
+ * Handles Inter-Process Communication (IPC) inbound requests for financial wallet management.
+ */
+export class WalletController {
+  /**
+   * Retrieves all wallets based on standard lookup query filters.
+   * @param req - The IPC request object containing filtering parameters.
+   * @returns A promise resolving to an array of matching wallet records.
+   */
+  @IpcServer.register(HttpMethod.GET, WalletRoutes.ALL, {
     params: WalletFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, WalletFilter>): Promise<unknown> {
-    return walletService.findMany(params);
+  })
+  static async getAll(req: IpcRequest) {
+    return walletService.findMany(req.params);
   }
-}
 
-export class GetSearchWallets extends AbstractEndpoint<any> {
-  route = WalletRoutes.SEARCH;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+  /**
+   * Retrieves selection data and simplified search structures for dropdown components.
+   * @param req - The IPC request object containing search options parameters.
+   * @returns A promise resolving to structured autocomplete selection choices.
+   */
+  @IpcServer.register(HttpMethod.GET, WalletRoutes.SEARCH, {
     params: searchWalletOptionsSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, SearchWalletOptionsParams>): Promise<unknown> {
-    return walletService.getOptions(params);
+  })
+  static async getOptions(req: IpcRequest) {
+    return walletService.getOptions(req.params);
   }
-}
 
-export class PostWallet extends AbstractEndpoint<any> {
-  route = WalletRoutes.ALL;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
+  /**
+   * Creates a new wallet record with the provided body specification.
+   * @param req - The IPC request object containing the raw initialization payload.
+   * @returns A promise resolving to the newly initialized wallet instance.
+   */
+  @IpcServer.register(HttpMethod.POST, WalletRoutes.ALL, {
     body: WalletCreateSchema,
-  };
-
-  protected handle({
-    body,
-  }: IpcRequest<z.infer<typeof WalletCreateSchema>, any>): Promise<unknown> {
-    return walletService.create(body);
+  })
+  static async create(req: IpcRequest) {
+    return walletService.create(req.body);
   }
-}
 
-export class BulkPostWallet extends AbstractEndpoint<any> {
-  route = WalletRoutes.BULK;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
+  /**
+   * Provisions multiple wallets at once using a collection of inputs.
+   * @param req - The IPC request object containing an array of initialization items.
+   * @returns A promise resolving to the batch creation execution result.
+   */
+  @IpcServer.register(HttpMethod.POST, WalletRoutes.BULK, {
     body: WalletBulkCreateSchema,
-  };
-
-  protected handle({
-    body,
-  }: IpcRequest<WalletBulkCreate, any>): Promise<unknown> {
-    return walletService.bulkCreate(body.items.map((item) => item.value));
+  })
+  static async bulkCreate(req: IpcRequest) {
+    return walletService.bulkCreate(req.body.items.map((item) => item.value));
   }
-}
 
-export class GetWallet extends AbstractEndpoint<any> {
-  route = WalletRoutes.DETAIL;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+  /**
+   * Fetches a specific wallet details by its unique identifier.
+   * @param req - The IPC request object containing target parameters.
+   * @returns A promise resolving to the target wallet object or null.
+   */
+  @IpcServer.register(HttpMethod.GET, WalletRoutes.DETAIL, {
     params: WalletIdSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, WalletId>): Promise<unknown> {
-    return walletService.findById(params.walletId);
+  })
+  static async getById(req: IpcRequest) {
+    return walletService.findById(req.params.walletId);
   }
-}
 
-export class UpdateWallet extends AbstractEndpoint<any> {
-  route = WalletRoutes.DETAIL;
-  method = HttpMethod.PUT;
-  schemas: ValidationSchemas = {
+  /**
+   * Updates fields on an existing wallet designated by route parameters.
+   * @param req - The IPC request object carrying the identification parameters and payload.
+   * @returns A promise resolving to the mutated wallet object.
+   */
+  @IpcServer.register(HttpMethod.PUT, WalletRoutes.DETAIL, {
     params: WalletIdSchema,
     body: WalletUpdateSchema,
-  };
-
-  protected handle({
-    params,
-    body,
-  }: IpcRequest<
-    z.infer<typeof WalletUpdateSchema>,
-    WalletId
-  >): Promise<unknown> {
-    return walletService.update(params.walletId, body);
+  })
+  static async update(req: IpcRequest) {
+    return walletService.update(req.body, req.params);
   }
-}
 
-export class DeleteWallet extends AbstractEndpoint<any> {
-  route = WalletRoutes.DETAIL;
-  method = HttpMethod.DELETE;
-  schemas: ValidationSchemas = {
+  /**
+   * Deletes a specific target wallet record.
+   * @param req - The IPC request object holding target identification params.
+   * @returns A promise resolving to the operation completion result.
+   */
+  @IpcServer.register(HttpMethod.DELETE, WalletRoutes.DETAIL, {
     params: WalletIdSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, WalletId>): Promise<unknown> {
-    return walletService.delete(params.walletId);
+  })
+  static async delete(req: IpcRequest) {
+    return walletService.delete(req.params.walletId);
   }
 }

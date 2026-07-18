@@ -1,4 +1,4 @@
-export * from "./ipc";
+export * from "./ipc.server";
 export * from "./constant";
 export * from "./validation";
 export * from "./abstract";

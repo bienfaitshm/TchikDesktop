@@ -1,12 +1,8 @@
-import z from "zod";
-import {
-  enrollmentService,
-  enrollmentRepository,
-} from "@/packages/@core/data-access/db/queries";
+import { enrollmentService } from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
-  IpcRequest,
-  ValidationSchemas,
+  IpcServer,
+  type IpcRequest,
 } from "@/packages/electron-ipc-rest";
 import {
   EnrollmentCreateSchema,
@@ -14,119 +10,101 @@ import {
   EnrollmentUpdateSchema,
   EnrollmentQuickCreateSchema,
   EnrollmentSchema,
-  type EnrollmentUpdate,
-  type EnrollmentCreate,
-  type EnrollmentFilter,
-  type EnrollmentQuickCreate,
   createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
-import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { EnrollmentRoutes } from "../../routes-constant";
 
-const EnrollmentIdSchema = EnrollmentSchema.pick({
-  enrollmentId: true,
-});
-
-export const SearchEnrollmentSchema = createSearchOptionsSchema(
+const EnrollmentIdSchema = EnrollmentSchema.pick({ enrollmentId: true });
+const SearchEnrollmentSchema = createSearchOptionsSchema(
   EnrollmentFilterSchema,
 );
-export type SearchEnrollmentParams = z.infer<typeof SearchEnrollmentSchema>;
 
-type EnrollmentId = z.infer<typeof EnrollmentIdSchema>;
-export class GetEnrollments extends AbstractEndpoint<any> {
-  route = EnrollmentRoutes.ALL;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+/**
+ * Handles Inter-Process Communication (IPC) inbound requests for student enrollment records.
+ */
+export class EnrollmentController {
+  /**
+   * Retrieves all enrollments based on standard lookup query filters.
+   * @param req - The IPC request context containing filtering parameters.
+   * @returns A promise resolving to an array of matching enrollment records.
+   */
+  @IpcServer.register(HttpMethod.GET, EnrollmentRoutes.ALL, {
     params: EnrollmentFilterSchema,
-  };
-  protected handle({
-    params,
-  }: IpcRequest<unknown, EnrollmentFilter>): Promise<unknown> {
-    return enrollmentRepository.findMany(params);
+  })
+  static async getAll(req: IpcRequest) {
+    return enrollmentService.findMany(req.params);
   }
-}
 
-export class GetSearchEnrollments extends AbstractEndpoint<any> {
-  route = EnrollmentRoutes.SEARCH;
-  method = HttpMethod.GET;
-  validationErrorMessage? = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Retrieves selection data and simplified search structures for dropdown populators.
+   * @param req - The IPC request context containing search validation options.
+   * @returns A promise resolving to structured autocomplete selection options.
+   */
+  @IpcServer.register(HttpMethod.GET, EnrollmentRoutes.SEARCH, {
     params: SearchEnrollmentSchema,
-  };
-
-  protected handle({ params }: IpcRequest<unknown, SearchEnrollmentParams>) {
-    return enrollmentRepository.findForSelect(params);
+  })
+  static async getOptions(req: IpcRequest) {
+    return enrollmentService.findForSelect(req.params);
   }
-}
 
-export class PostEnrollment extends AbstractEndpoint<any> {
-  route = EnrollmentRoutes.ALL;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
+  /**
+   * Instantiates a comprehensive enrollment record following full data specifications.
+   * @param req - The IPC request context carrying the complete creation payload.
+   * @returns A promise resolving to the fully instantiated enrollment record.
+   */
+  @IpcServer.register(HttpMethod.POST, EnrollmentRoutes.ALL, {
     body: EnrollmentCreateSchema,
-  };
-
-  protected handle({
-    body,
-  }: IpcRequest<EnrollmentCreate, unknown>): Promise<unknown> {
-    return enrollmentRepository.create(body);
+  })
+  static async create(req: IpcRequest) {
+    return enrollmentService.create(req.body);
   }
-}
 
-export class PostQuickEnrollment extends AbstractEndpoint<any> {
-  route = EnrollmentRoutes.QUICK_ENROLLMENT;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
+  /**
+   * Executes a high-speed creation workflow using minimalist enrollment parameters.
+   * @param req - The IPC request context carrying basic initialization variables.
+   * @returns A promise resolving to the quickly processed enrollment instance.
+   */
+  @IpcServer.register(HttpMethod.POST, EnrollmentRoutes.QUICK_ENROLLMENT, {
     body: EnrollmentQuickCreateSchema,
-  };
-
-  protected handle({
-    body,
-  }: IpcRequest<EnrollmentQuickCreate, unknown>): Promise<unknown> {
-    return enrollmentService.quickCreate(body);
+  })
+  static async quickCreate(req: IpcRequest) {
+    return enrollmentService.quickCreate(req.body);
   }
-}
 
-export class GetEnrollment extends AbstractEndpoint<any> {
-  route = EnrollmentRoutes.DETAIL;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+  /**
+   * Locates a single granular enrollment entity tracking its primary lookup key.
+   * @param req - The IPC request context holding the unique identifier parameter.
+   * @returns A promise resolving to the requested enrollment file or null.
+   */
+  @IpcServer.register(HttpMethod.GET, EnrollmentRoutes.DETAIL, {
     params: EnrollmentIdSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<unknown, EnrollmentId>): Promise<unknown> {
-    return enrollmentRepository.findById(params.enrollmentId);
+  })
+  static async getById(req: IpcRequest) {
+    return enrollmentService.findById(req.params.enrollmentId);
   }
-}
 
-export class UpdateEnrollment extends AbstractEndpoint<any> {
-  route = EnrollmentRoutes.DETAIL;
-  method = HttpMethod.PUT;
-  schemas: ValidationSchemas = {
+  /**
+   * Updates tracking values on an active enrollment entry targeted by parameter keys.
+   * @param req - The IPC request context containing update data body and identification params.
+   * @returns A promise resolving to the modified enrollment entry structure.
+   */
+  @IpcServer.register(HttpMethod.PUT, EnrollmentRoutes.DETAIL, {
     params: EnrollmentIdSchema,
     body: EnrollmentUpdateSchema,
-  };
-
-  protected handle({
-    params,
-    body,
-  }: IpcRequest<EnrollmentUpdate, EnrollmentId>): Promise<unknown> {
-    return enrollmentRepository.update(params.enrollmentId, body);
+  })
+  static async update(req: IpcRequest) {
+    return enrollmentService.update(req.body, req.params);
   }
-}
 
-export class DeleteEnrollment extends AbstractEndpoint<any> {
-  route = EnrollmentRoutes.DETAIL;
-  method = HttpMethod.DELETE;
-  schemas: ValidationSchemas = {
+  /**
+   * Removes an independent enrollment instance completely from active tracking databases.
+   * @param req - The IPC request context carrying targeted identification parameters.
+   * @returns A promise resolving to the final deletion execution output payload.
+   */
+  @IpcServer.register(HttpMethod.DELETE, EnrollmentRoutes.DETAIL, {
     params: EnrollmentIdSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<unknown, EnrollmentId>): Promise<unknown> {
-    return enrollmentRepository.delete(params.enrollmentId);
+  })
+  static async delete(req: IpcRequest) {
+    return enrollmentService.delete(req.params.enrollmentId);
   }
 }

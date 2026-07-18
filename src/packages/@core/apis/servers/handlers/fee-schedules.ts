@@ -5,160 +5,126 @@ import {
   FeeScheduleCreateSchema,
   FeeScheduleUpdateSchema,
   FeeScheduleFilterSchema,
-  type FeeScheduleFilter,
-  createSearchOptionsSchema,
-  type FeeScheduleBulkCreate,
   FeeScheduleBulkCreateSchema,
+  createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
-  IpcRequest,
-  ValidationSchemas,
+  IpcServer,
+  type IpcRequest,
 } from "@/packages/electron-ipc-rest";
-import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { FeeScheduleRoutes } from "../../routes-constant";
 
 const FeeScheduleIdSchema = FeeScheduleSchema.pick({ scheduleId: true });
-type FeeScheduleId = z.infer<typeof FeeScheduleIdSchema>;
-
 const FeeTypeIdFilterSchema = FeeScheduleSchema.pick({ feeTypeId: true });
-type FeeTypeIdFilter = z.infer<typeof FeeTypeIdFilterSchema>;
 
 export const searchFeeScheduleOptionsSchema = createSearchOptionsSchema(
   FeeScheduleFilterSchema,
 );
-export type SearchWalletOptionsParams = z.infer<
+export type SearchFeeScheduleOptionsParams = z.infer<
   typeof searchFeeScheduleOptionsSchema
 >;
 
-export class GetFeeSchedules extends AbstractEndpoint<any> {
-  route = FeeScheduleRoutes.ALL;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+/**
+ * Handles Inter-Process Communication (IPC) inbound requests for fee schedule management.
+ */
+export class FeeScheduleController {
+  /**
+   * Retrieves all fee schedules based on standard lookup query filters.
+   * @param req - The IPC request object containing filtering parameters.
+   * @returns A promise resolving to an array of matching fee schedules.
+   */
+  @IpcServer.register(HttpMethod.GET, FeeScheduleRoutes.ALL, {
     params: FeeScheduleFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, FeeScheduleFilter>): Promise<unknown> {
-    return feeScheduleService.findMany(params);
+  })
+  static async getAll(req: IpcRequest) {
+    return feeScheduleService.findMany(req.params);
   }
-}
 
-export class GetSearchFeeSchedules extends AbstractEndpoint<any> {
-  route = FeeScheduleRoutes.SEARCH;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+  /**
+   * Retrieves selection data and simplified search structures for dropdown components.
+   * @param req - The IPC request object containing search options parameters.
+   * @returns A promise resolving to structured autocomplete selection options.
+   */
+  @IpcServer.register(HttpMethod.GET, FeeScheduleRoutes.SEARCH, {
     params: searchFeeScheduleOptionsSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, SearchWalletOptionsParams>): Promise<unknown> {
-    return feeScheduleService.getOptions(params);
+  })
+  static async getOptions(req: IpcRequest) {
+    return feeScheduleService.getOptions(req.params);
   }
-}
 
-export class PostFeeSchedule extends AbstractEndpoint<any> {
-  route = FeeScheduleRoutes.ALL;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
+  /**
+   * Creates a new fee schedule record with the provided body specification.
+   * @param req - The IPC request object containing the raw initialization payload.
+   * @returns A promise resolving to the newly initialized fee schedule instance.
+   */
+  @IpcServer.register(HttpMethod.POST, FeeScheduleRoutes.ALL, {
     body: FeeScheduleCreateSchema,
-  };
-
-  protected handle({
-    body,
-  }: IpcRequest<
-    z.infer<typeof FeeScheduleCreateSchema>,
-    any
-  >): Promise<unknown> {
-    return feeScheduleService.create(body);
+  })
+  static async create(req: IpcRequest) {
+    return feeScheduleService.create(req.body);
   }
-}
 
-export class BulkPostFeeSchedule extends AbstractEndpoint<any> {
-  route = FeeScheduleRoutes.BULK;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
+  /**
+   * Provisions multiple fee schedules at once using a collection of inputs.
+   * @param req - The IPC request object containing an array of initialization items.
+   * @returns A promise resolving to the batch creation execution result.
+   */
+  @IpcServer.register(HttpMethod.POST, FeeScheduleRoutes.BULK, {
     body: FeeScheduleBulkCreateSchema,
-  };
-
-  protected handle({
-    body,
-  }: IpcRequest<FeeScheduleBulkCreate, any>): Promise<unknown> {
-    return feeScheduleService.bulkCreate(body.items.map((item) => item.value));
+  })
+  static async bulkCreate(req: IpcRequest) {
+    return feeScheduleService.bulkCreate(
+      req.body.items.map((item) => item.value),
+    );
   }
-}
 
-/* =========================================================================
-   3. GET SINGLE SCHEDULE DETAIL
-   ========================================================================= */
-export class GetFeeSchedule extends AbstractEndpoint<any> {
-  route = FeeScheduleRoutes.DETAIL;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+  /**
+   * Fetches a specific fee schedule details by its unique identifier.
+   * @param req - The IPC request object containing target parameters.
+   * @returns A promise resolving to the target fee schedule object or null.
+   */
+  @IpcServer.register(HttpMethod.GET, FeeScheduleRoutes.DETAIL, {
     params: FeeScheduleIdSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, FeeScheduleId>): Promise<unknown> {
-    return feeScheduleService.findById(params.scheduleId);
+  })
+  static async getById(req: IpcRequest) {
+    return feeScheduleService.findById(req.params.scheduleId);
   }
-}
 
-/* =========================================================================
-   4. PUT / UPDATE SCHEDULE
-   ========================================================================= */
-export class UpdateFeeSchedule extends AbstractEndpoint<any> {
-  route = FeeScheduleRoutes.DETAIL;
-  method = HttpMethod.PUT;
-  schemas: ValidationSchemas = {
+  /**
+   * Updates fields on an existing fee schedule designated by route parameters.
+   * @param req - The IPC request object carrying the identification parameters and payload.
+   * @returns A promise resolving to the mutated fee schedule object.
+   */
+  @IpcServer.register(HttpMethod.PUT, FeeScheduleRoutes.DETAIL, {
     params: FeeScheduleIdSchema,
     body: FeeScheduleUpdateSchema,
-  };
-
-  protected handle({
-    params,
-    body,
-  }: IpcRequest<
-    z.infer<typeof FeeScheduleUpdateSchema>,
-    FeeScheduleId
-  >): Promise<unknown> {
-    return feeScheduleService.update(params.scheduleId, body);
+  })
+  static async update(req: IpcRequest) {
+    return feeScheduleService.update(req.body, req.params);
   }
-}
 
-/* =========================================================================
-   5. DELETE SCHEDULE
-   ========================================================================= */
-export class DeleteFeeSchedule extends AbstractEndpoint<any> {
-  route = FeeScheduleRoutes.DETAIL;
-  method = HttpMethod.DELETE;
-  schemas: ValidationSchemas = {
+  /**
+   * Deletes a specific target fee schedule record.
+   * @param req - The IPC request object holding target identification params.
+   * @returns A promise resolving to the operation completion result.
+   */
+  @IpcServer.register(HttpMethod.DELETE, FeeScheduleRoutes.DETAIL, {
     params: FeeScheduleIdSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, FeeScheduleId>): Promise<unknown> {
-    return feeScheduleService.delete(params.scheduleId);
+  })
+  static async delete(req: IpcRequest) {
+    return feeScheduleService.delete(req.params.scheduleId);
   }
-}
 
-/* =========================================================================
-   6. GET SCHEDULES BY FEE TYPE (Route custom optimisée)
-   ========================================================================= */
-export class GetFeeSchedulesByFeeType extends AbstractEndpoint<any> {
-  route = FeeScheduleRoutes.BY_FEE_TYPE;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+  /**
+   * Extracts subsets of fee schedules matching a targeted category classifier.
+   * @param req - The IPC request object holding category classification filters.
+   * @returns A promise resolving to categorized fee schedule collections.
+   */
+  @IpcServer.register(HttpMethod.GET, FeeScheduleRoutes.BY_FEE_TYPE, {
     params: FeeTypeIdFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, FeeTypeIdFilter>): Promise<unknown> {
-    return feeScheduleService.findByFeeType(params.feeTypeId);
+  })
+  static async getByFeeType(req: IpcRequest) {
+    return feeScheduleService.findByFeeType(req.params.feeTypeId);
   }
 }

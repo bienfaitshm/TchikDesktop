@@ -3,7 +3,7 @@ import path from "node:path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { dbManager } from "@/packages/@core/data-access/db";
 import { getLogger } from "@/packages/logger";
-import { apiGateway, ipcServer } from "@/main/apps";
+import { ipcServer } from "@/main/apps";
 import { initializeTextModifiers } from "@/main/features/text-transformation";
 import { setupDevelopmentEnvironment } from "@/main/electron-dev-extension";
 import { updateInit } from "@/main/update";
@@ -92,7 +92,6 @@ app.whenReady().then(async () => {
       mainLogger.info("DATA initialisée avec succès.");
 
       mainLogger.info("Préparation et enregistrement des services...");
-      apiGateway.registerEndpoints();
       ipcServer.listen();
 
       mainWindow.webContents.send("database-ready");

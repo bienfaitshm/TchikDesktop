@@ -1,127 +1,109 @@
-import z from "zod";
 import { feeTypeService } from "@/packages/@core/data-access/db/queries";
 import {
   FeeTypeSchema,
   FeeTypeCreateSchema,
   FeeTypeUpdateSchema,
   FeeTypeFilterSchema,
-  type FeeTypeFilter,
-  createSearchOptionsSchema,
   FeeTypeBulkCreateSchema,
-  type FeeTypeBulkCreate,
+  createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
-  IpcRequest,
-  ValidationSchemas,
+  IpcServer,
+  type IpcRequest,
 } from "@/packages/electron-ipc-rest";
-import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { FeeTypeRoutes } from "../../routes-constant";
 
 const FeeTypeIdSchema = FeeTypeSchema.pick({ feeTypeId: true });
-type FeeTypeId = z.infer<typeof FeeTypeIdSchema>;
-
 export const searchFeeTypeOptionsSchema =
   createSearchOptionsSchema(FeeTypeFilterSchema);
-export type SearchFeeTypeOptionsParams = z.infer<
-  typeof searchFeeTypeOptionsSchema
->;
 
-export class GetFeeTypes extends AbstractEndpoint<any> {
-  route = FeeTypeRoutes.ALL;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+/**
+ * Handles Inter-Process Communication (IPC) inbound requests for fee type configurations.
+ */
+export class FeeTypeController {
+  /**
+   * Retrieves all fee types based on lookup query filters.
+   * @param req - The IPC request object containing filtering parameters.
+   * @returns A promise resolving to an array of matching fee types.
+   */
+  @IpcServer.register(HttpMethod.GET, FeeTypeRoutes.ALL, {
     params: FeeTypeFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, FeeTypeFilter>): Promise<unknown> {
-    return feeTypeService.findMany(params);
+  })
+  static async getAll(req: IpcRequest) {
+    return feeTypeService.findMany(req.params);
   }
-}
 
-export class GetSearchFeeTypes extends AbstractEndpoint<any> {
-  route = FeeTypeRoutes.SEARCH;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+  /**
+   * Retrieves selection data and simplified search structures for dropdown components.
+   * @param req - The IPC request object containing search options parameters.
+   * @returns A promise resolving to structured autocomplete selection options.
+   */
+  @IpcServer.register(HttpMethod.GET, FeeTypeRoutes.SEARCH, {
     params: searchFeeTypeOptionsSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, SearchFeeTypeOptionsParams>): Promise<unknown> {
-    return feeTypeService.getOptions(params);
+  })
+  static async getOptions(req: IpcRequest) {
+    return feeTypeService.getOptions(req.params);
   }
-}
 
-export class PostFeeType extends AbstractEndpoint<any> {
-  route = FeeTypeRoutes.ALL;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
+  /**
+   * Creates a new fee type record with the provided body specification.
+   * @param req - The IPC request object containing the raw initialization payload.
+   * @returns A promise resolving to the newly initialized fee type instance.
+   */
+  @IpcServer.register(HttpMethod.POST, FeeTypeRoutes.ALL, {
     body: FeeTypeCreateSchema,
-  };
-
-  protected handle({
-    body,
-  }: IpcRequest<z.infer<typeof FeeTypeCreateSchema>, any>): Promise<unknown> {
-    return feeTypeService.create(body);
+  })
+  static async create(req: IpcRequest) {
+    return feeTypeService.create(req.body);
   }
-}
 
-export class BulkPostFeeType extends AbstractEndpoint<any> {
-  route = FeeTypeRoutes.BULK;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
+  /**
+   * Provisions multiple fee types at once using a collection of inputs.
+   * @param req - The IPC request object containing an array of initialization items.
+   * @returns A promise resolving to the batch creation execution result.
+   */
+  @IpcServer.register(HttpMethod.POST, FeeTypeRoutes.BULK, {
     body: FeeTypeBulkCreateSchema,
-  };
-
-  protected handle({
-    body,
-  }: IpcRequest<FeeTypeBulkCreate, any>): Promise<unknown> {
-    return feeTypeService.bulkCreate(body.items.map((item) => item.value));
+  })
+  static async bulkCreate(req: IpcRequest) {
+    return feeTypeService.bulkCreate(req.body.items.map((item) => item.value));
   }
-}
 
-export class GetFeeType extends AbstractEndpoint<any> {
-  route = FeeTypeRoutes.DETAIL;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+  /**
+   * Fetches a specific fee type details by its unique identifier.
+   * @param req - The IPC request object containing target parameters.
+   * @returns A promise resolving to the target fee type object or null.
+   */
+  @IpcServer.register(HttpMethod.GET, FeeTypeRoutes.DETAIL, {
     params: FeeTypeIdSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, FeeTypeId>): Promise<unknown> {
-    return feeTypeService.findById(params.feeTypeId);
+  })
+  static async getById(req: IpcRequest) {
+    return feeTypeService.findById(req.params.feeTypeId);
   }
-}
 
-export class UpdateFeeType extends AbstractEndpoint<any> {
-  route = FeeTypeRoutes.DETAIL;
-  method = HttpMethod.PUT;
-  schemas: ValidationSchemas = {
+  /**
+   * Updates fields on an existing fee type designated by route parameters.
+   * @param req - The IPC request object carrying the identification parameters and payload.
+   * @returns A promise resolving to the mutated fee type object.
+   */
+  @IpcServer.register(HttpMethod.PUT, FeeTypeRoutes.DETAIL, {
     params: FeeTypeIdSchema,
     body: FeeTypeUpdateSchema,
-  };
-
-  protected handle({
-    params,
-    body,
-  }: IpcRequest<
-    z.infer<typeof FeeTypeUpdateSchema>,
-    FeeTypeId
-  >): Promise<unknown> {
-    return feeTypeService.update(params.feeTypeId, body);
+  })
+  static async update(req: IpcRequest) {
+    return feeTypeService.update(req.body, req.params);
   }
-}
 
-export class DeleteFeeType extends AbstractEndpoint<any> {
-  route = FeeTypeRoutes.DETAIL;
-  method = HttpMethod.DELETE;
-  schemas: ValidationSchemas = {
+  /**
+   * Deletes a specific target fee type record.
+   * @param req - The IPC request object holding target identification params.
+   * @returns A promise resolving to the operation completion result.
+   */
+  @IpcServer.register(HttpMethod.DELETE, FeeTypeRoutes.DETAIL, {
     params: FeeTypeIdSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, FeeTypeId>): Promise<unknown> {
-    return feeTypeService.delete(params.feeTypeId);
+  })
+  static async delete(req: IpcRequest) {
+    return feeTypeService.delete(req.params.feeTypeId);
   }
 }

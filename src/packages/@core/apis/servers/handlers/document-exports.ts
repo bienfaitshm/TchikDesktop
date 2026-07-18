@@ -1,8 +1,8 @@
 import { z } from "zod";
 import {
   HttpMethod,
-  IpcRequest,
-  ValidationSchemas,
+  IpcServer,
+  type IpcRequest,
   HttpException,
   HttpStatus,
 } from "@/packages/electron-ipc-rest";
@@ -11,7 +11,6 @@ import {
   type SchoolYear,
 } from "@/packages/@core/data-access/schema-validations";
 import { documentExport } from "@/packages/@core/documents-exports";
-import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
 import { DocumentExportRoutes } from "../../routes-constant";
 
 export const defaultDocumentExportSchema = z.object({
@@ -23,36 +22,42 @@ export type DocumentExportFormData = z.infer<
   typeof defaultDocumentExportSchema
 >;
 
-export class GetInfosDocumentExports extends AbstractEndpoint<any> {
-  route = DocumentExportRoutes.INFOS;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
+/**
+ * Handles Inter-Process Communication (IPC) inbound requests for document generation and configuration metadata.
+ */
+export class DocumentExportController {
+  /**
+   * Retrieves available document export definitions for a specified school year.
+   * @param req - The IPC request context containing school year reference parameters.
+   * @returns A promise resolving to the metadata layout of available document configurations.
+   */
+  @IpcServer.register(HttpMethod.GET, DocumentExportRoutes.INFOS, {
     params: SchoolYearSchema.passthrough(),
-  };
-
-  protected async handle({
-    params,
-  }: IpcRequest<unknown, SchoolYear>): Promise<unknown> {
-    return documentExport.getAvailableExports(params);
+  })
+  static async getInfos(req: IpcRequest<unknown, SchoolYear>) {
+    return documentExport.getAvailableExports(req.params);
   }
-}
 
-export class ExportDocuments extends AbstractEndpoint<any> {
-  route = DocumentExportRoutes.EXPORTS;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = {
+  /**
+   * Initiates the document compilation and rendering process workflow.
+   * @param req - The IPC request context holding generation payload definitions and scope constraints.
+   * @returns A promise resolving to the processed operational completion payload.
+   * @throws {HttpException} If the business layer generation pipeline encounters downstream processing failure.
+   */
+  @IpcServer.register(HttpMethod.POST, DocumentExportRoutes.EXPORTS, {
     params: SchoolYearSchema.passthrough(),
-  };
+    body: defaultDocumentExportSchema,
+  })
+  static async export(req: IpcRequest<DocumentExportFormData, SchoolYear>) {
+    const { documentType, data } = req.body;
+    const { schoolId, yearId } = req.params;
 
-  protected async handle({
-    body: { documentType, data },
-    params,
-  }: IpcRequest<DocumentExportFormData, SchoolYear>): Promise<unknown> {
     const response = await documentExport.executeExport(documentType, {
       ...data,
-      schoolId: params.schoolId,
-      yearId: params.yearId,
+      schoolId,
+      yearId,
     });
+
     if (!response.success) {
       throw new HttpException(
         response.error.message,
@@ -60,6 +65,7 @@ export class ExportDocuments extends AbstractEndpoint<any> {
         response.error.details,
       );
     }
+
     return response;
   }
 }

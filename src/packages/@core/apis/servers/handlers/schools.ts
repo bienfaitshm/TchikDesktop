@@ -1,13 +1,7 @@
-import z from "zod";
 import {
   schoolRepository,
   studyYearRepository,
 } from "@/packages/@core/data-access/db/queries";
-import {
-  HttpMethod,
-  IpcRequest,
-  type ValidationSchemas,
-} from "@/packages/electron-ipc-rest";
 import {
   SchoolSchema,
   StudyYearSchema,
@@ -17,168 +11,145 @@ import {
   StudyYearCreateSchema,
   StudyYearUpdateSchema,
   StudyYearFilterSchema,
-  type SchoolCreate,
-  type SchoolUpdate,
-  type SchoolFilter,
-  type StudyYearCreate,
-  type StudyYearUpdate,
-  type StudyYearFilter,
 } from "@/packages/@core/data-access/schema-validations";
-import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
+import {
+  HttpMethod,
+  IpcServer,
+  type IpcRequest,
+} from "@/packages/electron-ipc-rest";
 import { SchoolRoutes, StudyYearRoutes } from "../../routes-constant";
 
 const SchoolIdSchema = SchoolSchema.pick({ schoolId: true });
-
-type SchoolId = z.infer<typeof SchoolIdSchema>;
-
 const YearIdSchema = StudyYearSchema.pick({ yearId: true });
 
-type YearId = z.infer<typeof YearIdSchema>;
-
-export class GetSchools extends AbstractEndpoint<any> {
-  route = SchoolRoutes.ALL;
-  method = HttpMethod.GET;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+/**
+ * Handles Inter-Process Communication (IPC) inbound requests for school metadata management.
+ */
+export class SchoolController {
+  /**
+   * Retrieves all school entities based on standard multi-criteria filters.
+   * @param req - The IPC request object containing filtering parameters.
+   * @returns A promise resolving to an array of filtered school records.
+   */
+  @IpcServer.register(HttpMethod.GET, SchoolRoutes.ALL, {
     params: SchoolFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, SchoolFilter>): Promise<unknown> {
-    return schoolRepository.findMany(params);
+  })
+  static async getAll(req: IpcRequest) {
+    return schoolRepository.findMany(req.params);
   }
-}
 
-export class PostSchool extends AbstractEndpoint<any> {
-  route = SchoolRoutes.ALL;
-  method = HttpMethod.POST;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * provisions a new school entity record inside the core database structure.
+   * @param req - The IPC request object containing the raw creation payload.
+   * @returns A promise resolving to the newly created school record instance.
+   */
+  @IpcServer.register(HttpMethod.POST, SchoolRoutes.ALL, {
     body: SchoolCreateSchema,
-  };
-
-  protected handle({
-    body,
-  }: IpcRequest<SchoolCreate, unknown>): Promise<unknown> {
-    return schoolRepository.create(body);
+  })
+  static async create(req: IpcRequest) {
+    return schoolRepository.create(req.body);
   }
-}
 
-export class GetSchool extends AbstractEndpoint<any> {
-  route = SchoolRoutes.DETAIL;
-  method = HttpMethod.GET;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Fetches specific structural school details using a primary identification token.
+   * @param req - The IPC request object carrying target identification parameters.
+   * @returns A promise resolving to the matched school object, or null.
+   */
+  @IpcServer.register(HttpMethod.GET, SchoolRoutes.DETAIL, {
     params: SchoolIdSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, SchoolId>): Promise<unknown> {
-    return schoolRepository.findById(params.schoolId);
+  })
+  static async getById(req: IpcRequest) {
+    return schoolRepository.findById(req.params.schoolId);
   }
-}
 
-export class UpdateSchool extends AbstractEndpoint<any> {
-  route = SchoolRoutes.DETAIL;
-  method = HttpMethod.PUT;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Updates fields on an existing institutional record designated by parameters.
+   * @param req - The IPC request object containing update body payload and identification parameters.
+   * @returns A promise resolving to the mutated school object record.
+   */
+  @IpcServer.register(HttpMethod.PUT, SchoolRoutes.DETAIL, {
     params: SchoolIdSchema,
     body: SchoolUpdateSchema,
-  };
-
-  protected handle({
-    params,
-    body,
-  }: IpcRequest<SchoolUpdate, SchoolId>): Promise<unknown> {
-    return schoolRepository.update(params.schoolId, body);
+  })
+  static async update(req: IpcRequest) {
+    return schoolRepository.update(req.body, req.params);
   }
-}
 
-export class DeleteSchool extends AbstractEndpoint<any> {
-  route = SchoolRoutes.DETAIL;
-  method = HttpMethod.DELETE;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Removes a targeted school entry definitively from persistent data storage tables.
+   * @param req - The IPC request object carrying target tracking keys.
+   * @returns A promise resolving to the operation completion status results.
+   */
+  @IpcServer.register(HttpMethod.DELETE, SchoolRoutes.DETAIL, {
     params: SchoolIdSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, SchoolId>): Promise<unknown> {
-    return schoolRepository.delete(params.schoolId);
+  })
+  static async delete(req: IpcRequest) {
+    return schoolRepository.delete(req.params.schoolId);
   }
 }
 
-// study year
-
-export class GetStudyYears extends AbstractEndpoint<any> {
-  route = StudyYearRoutes.ALL;
-  method = HttpMethod.GET;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+/**
+ * Handles Inter-Process Communication (IPC) inbound requests for academic calendar study years.
+ */
+export class StudyYearController {
+  /**
+   * Retrieves all study years based on chronological query lookup parameters.
+   * @param req - The IPC request object containing filter configurations.
+   * @returns A promise resolving to an array of matching study years.
+   */
+  @IpcServer.register(HttpMethod.GET, StudyYearRoutes.ALL, {
     params: StudyYearFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, StudyYearFilter>): Promise<unknown> {
-    return studyYearRepository.findMany(params);
+  })
+  static async getAll(req: IpcRequest) {
+    return studyYearRepository.findMany(req.params);
   }
-}
 
-export class PostStudyYear extends AbstractEndpoint<any> {
-  route = StudyYearRoutes.ALL;
-  method = HttpMethod.POST;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Instantiates a new study year timeline boundary within the application workspace.
+   * @param req - The IPC request object carrying basic timeline initialization fields.
+   * @returns A promise resolving to the initialized study year framework object.
+   */
+  @IpcServer.register(HttpMethod.POST, StudyYearRoutes.ALL, {
     body: StudyYearCreateSchema,
-  };
-
-  protected handle({
-    body,
-  }: IpcRequest<StudyYearCreate, any>): Promise<unknown> {
-    return studyYearRepository.create(body);
+  })
+  static async create(req: IpcRequest) {
+    return studyYearRepository.create(req.body);
   }
-}
 
-export class GetStudyYear extends AbstractEndpoint<any> {
-  route = StudyYearRoutes.DETAIL;
-  method = HttpMethod.GET;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Resolves comprehensive study year configurations via a primary identification tracking code.
+   * @param req - The IPC request object holding target operational parameters.
+   * @returns A promise resolving to the single targeted study year data structure.
+   */
+  @IpcServer.register(HttpMethod.GET, StudyYearRoutes.DETAIL, {
     params: YearIdSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, YearId>): Promise<unknown> {
-    return studyYearRepository.findById(params.yearId);
+  })
+  static async getById(req: IpcRequest) {
+    return studyYearRepository.findById(req.params.yearId);
   }
-}
 
-export class UpdateStudyYear extends AbstractEndpoint<any> {
-  route = StudyYearRoutes.DETAIL;
-  method = HttpMethod.PUT;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Updates attributes on an active study year framework tracking reference.
+   * @param req - The IPC request object containing specific change payload variables and identification parameters.
+   * @returns A promise resolving to the mutated study year entity object.
+   */
+  @IpcServer.register(HttpMethod.PUT, StudyYearRoutes.DETAIL, {
+    params: YearIdSchema,
     body: StudyYearUpdateSchema,
-    params: YearIdSchema,
-  };
-
-  protected handle({
-    params,
-    body,
-  }: IpcRequest<StudyYearUpdate, YearId>): Promise<unknown> {
-    return studyYearRepository.update(params.yearId, body);
+  })
+  static async update(req: IpcRequest) {
+    return studyYearRepository.update(req.body, req.params);
   }
-}
 
-export class DeleteStudyYear extends AbstractEndpoint<any> {
-  route = StudyYearRoutes.DETAIL;
-  method = HttpMethod.DELETE;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Purges a designated study year timeline profile definitively from persistent storage tables.
+   * @param req - The IPC request object carrying specific target constraints parameters.
+   * @returns A promise resolving to the final terminal execution confirmation result.
+   */
+  @IpcServer.register(HttpMethod.DELETE, StudyYearRoutes.DETAIL, {
     params: YearIdSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, YearId>): Promise<unknown> {
-    return studyYearRepository.delete(params.yearId);
+  })
+  static async delete(req: IpcRequest) {
+    return studyYearRepository.delete(req.params.yearId);
   }
 }

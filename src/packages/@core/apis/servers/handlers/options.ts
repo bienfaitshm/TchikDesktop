@@ -1,112 +1,96 @@
-import z from "zod";
-import {
-  optionRepository,
-  optionService,
-} from "@/packages/@core/data-access/db/queries";
-import {
-  HttpMethod,
-  IpcRequest,
-  ValidationSchemas,
-} from "@/packages/electron-ipc-rest";
+import { optionService } from "@/packages/@core/data-access/db/queries";
 import {
   OptionFilterSchema,
   OptionCreateSchema,
   OptionUpdateSchema,
   OptionSchema,
-  type OptionCreate,
-  type OptionUpdate,
-  type OptionFilter,
   createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
-import type { SelectOption } from "@/packages/@core/data-access/db/queries/select-option.transformer";
-import { AbstractEndpoint } from "@/packages/electron-ipc-rest";
+import {
+  HttpMethod,
+  IpcServer,
+  type IpcRequest,
+} from "@/packages/electron-ipc-rest";
 import { OptionRoutes } from "../../routes-constant";
 
 const OptionIdSchema = OptionSchema.pick({ optionId: true });
-
-type OptionId = z.infer<typeof OptionIdSchema>;
-
 export const searchOptionsSchema =
   createSearchOptionsSchema(OptionFilterSchema);
-export type SearchOptionsParams = z.infer<typeof searchOptionsSchema>;
 
-export class GetOptions extends AbstractEndpoint<any> {
-  route = OptionRoutes.ALL;
-  method = HttpMethod.GET;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+/**
+ * Handles Inter-Process Communication (IPC) inbound requests for core options management.
+ */
+export class OptionController {
+  /**
+   * Retrieves all options based on lookup query filters.
+   * @param req - The IPC request object containing filtering parameters.
+   * @returns A promise resolving to an array of matching options.
+   */
+  @IpcServer.register(HttpMethod.GET, OptionRoutes.ALL, {
     params: OptionFilterSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, OptionFilter>) {
-    return optionRepository.findMany(params);
+  })
+  static async getAll(req: IpcRequest) {
+    return optionService.findMany(req.params);
   }
-}
 
-export class GetSearchOptions extends AbstractEndpoint<any> {
-  route = OptionRoutes.SEARCH;
-  method = HttpMethod.GET;
-  validationErrorMessage? = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Retrieves selection data and simplified search structures for dropdown components.
+   * @param req - The IPC request object containing search options parameters.
+   * @returns A promise resolving to structured autocomplete selection options.
+   */
+  @IpcServer.register(HttpMethod.GET, OptionRoutes.SEARCH, {
     params: searchOptionsSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<unknown, SearchOptionsParams>): Promise<SelectOption[]> {
-    return optionService.getOptions(params as any);
+  })
+  static async getOptions(req: IpcRequest) {
+    return optionService.getOptions(req.params);
   }
-}
 
-export class PostOption extends AbstractEndpoint<any> {
-  route = OptionRoutes.ALL;
-  method = HttpMethod.POST;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Creates a new option record with the provided body specification.
+   * @param req - The IPC request object containing the raw initialization payload.
+   * @returns A promise resolving to the newly initialized option instance.
+   */
+  @IpcServer.register(HttpMethod.POST, OptionRoutes.ALL, {
     body: OptionCreateSchema,
-  };
-
-  protected handle({ body }: IpcRequest<OptionCreate, any>) {
-    return optionRepository.create(body);
+  })
+  static async create(req: IpcRequest) {
+    return optionService.create(req.body);
   }
-}
 
-export class GetOption extends AbstractEndpoint<any> {
-  route = OptionRoutes.DETAIL;
-  method = HttpMethod.GET;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Fetches a specific option details by its unique identifier.
+   * @param req - The IPC request object containing target parameters.
+   * @returns A promise resolving to the target option object or null.
+   */
+  @IpcServer.register(HttpMethod.GET, OptionRoutes.DETAIL, {
     params: OptionIdSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, OptionId>) {
-    return optionRepository.findById(params.optionId);
+  })
+  static async getById(req: IpcRequest) {
+    return optionService.findById(req.params.optionId);
   }
-}
 
-export class UpdateOption extends AbstractEndpoint<any> {
-  route = OptionRoutes.DETAIL;
-  method = HttpMethod.PUT;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Updates fields on an existing option designated by route parameters.
+   * @param req - The IPC request object carrying the identification parameters and payload.
+   * @returns A promise resolving to the mutated option object.
+   */
+  @IpcServer.register(HttpMethod.PUT, OptionRoutes.DETAIL, {
     params: OptionIdSchema,
     body: OptionUpdateSchema,
-  };
-
-  protected handle({ params, body }: IpcRequest<OptionUpdate, OptionId>) {
-    return optionRepository.update(params.optionId, body);
+  })
+  static async update(req: IpcRequest) {
+    return optionService.update(req.body, req.params);
   }
-}
 
-export class DeleteOption extends AbstractEndpoint<any> {
-  route = OptionRoutes.DETAIL;
-  method = HttpMethod.DELETE;
-  validationErrorMessage?: string | undefined = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Deletes a specific target option record.
+   * @param req - The IPC request object holding target identification params.
+   * @returns A promise resolving to the operation completion result.
+   */
+  @IpcServer.register(HttpMethod.DELETE, OptionRoutes.DETAIL, {
     params: OptionIdSchema,
-  };
-
-  protected handle({ params }: IpcRequest<any, OptionId>) {
-    return optionRepository.delete(params.optionId);
+  })
+  static async delete(req: IpcRequest) {
+    return optionService.delete(req.params.optionId);
   }
 }
