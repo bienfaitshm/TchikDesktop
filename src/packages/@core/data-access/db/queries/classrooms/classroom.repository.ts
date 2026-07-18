@@ -55,8 +55,9 @@ export type GetClassroomsOptions = helpers.FindManyOptions<
   typeof JOINED_TABLES_DETAIL
 >;
 
-const CLASSROOM_DEFAULT_SORT: helpers.AdvancedFilters<typeof JOINED_TABLES> =
-  {};
+const CLASSROOM_DEFAULT_SORT: BaseClassroomFilters = {
+  orderBy: [{ table: "classrooms", column: "identifier", order: "asc" }],
+};
 
 /**
  * Repository handling database operations for Classroom entities.
@@ -76,7 +77,7 @@ export class ClassroomRepository
       idColumn: classrooms.classId,
       baseTableName: "Classroom",
       logger: getLogger,
-      fixedFilters: CLASSROOM_DEFAULT_SORT,
+      defaultFilters: CLASSROOM_DEFAULT_SORT,
     });
   }
 

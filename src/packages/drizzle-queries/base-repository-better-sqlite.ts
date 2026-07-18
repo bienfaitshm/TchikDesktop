@@ -4,7 +4,7 @@ import {
   extractQueryPayload,
   type DynamicSelectQueryBuilder,
   type FindManyOptions,
-  type AdvancedFilters,
+  mergeFindManyOptions,
 } from "./helpers";
 import { DatabaseError, RecordNotFoundError } from "./error";
 
@@ -30,7 +30,7 @@ export interface IBaseRepositoryConfig<
   idColumn: AnyColumn;
   logger: (context: string) => ILogger;
   baseTableName: string;
-  fixedFilters?: AdvancedFilters<Record<string, Table>>;
+  defaultFilters?: FindManyOptions<Record<string, Table>>;
 }
 
 /**
@@ -48,7 +48,7 @@ export abstract class BaseRepository<
   protected table: TTable;
   protected idColumn: AnyColumn;
   protected baseTableName: string;
-  protected fixedFilters: AdvancedFilters<Record<string, Table>> | undefined;
+  protected defaultFilters: FindManyOptions<Record<string, Table>> | undefined;
 
   /**
    * Initializes the repository with database client, schema references, and logging utilities.
@@ -59,7 +59,7 @@ export abstract class BaseRepository<
     this.table = config.table;
     this.idColumn = config.idColumn;
     this.baseTableName = config.baseTableName;
-    this.fixedFilters = config.fixedFilters;
+    this.defaultFilters = config.defaultFilters;
     this.logger = config.logger(`${config.baseTableName}Repository`);
   }
 
@@ -148,8 +148,7 @@ export abstract class BaseRepository<
         const queryBuilder = applyQueryOptions(
           query,
           joinTables,
-          filters,
-          this.fixedFilters,
+          mergeFindManyOptions(filters, this.defaultFilters),
         );
         return queryBuilder.all() as TSelect[];
       },
@@ -250,7 +249,7 @@ export abstract class BaseRepository<
         const queryPayload = extractQueryPayload(
           joinTables,
           filters,
-          this.fixedFilters?.where,
+          this.defaultFilters?.where,
         );
 
         const baseQuery = this.getClient(tx)
