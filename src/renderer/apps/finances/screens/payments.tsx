@@ -16,13 +16,30 @@ export function FastPaymentPage() {
           $eq: schoolId,
         },
       },
-
-      users: {
-        lastName: {
-          $like: "%ki%",
+    },
+    or: [
+      {
+        users: {
+          lastName: {
+            $like: "%kil%",
+          },
         },
       },
-    },
+      {
+        users: {
+          middleName: {
+            $like: "%kil%",
+          },
+        },
+      },
+      {
+        users: {
+          firstName: {
+            $like: "%kil%",
+          },
+        },
+      },
+    ],
     orderBy: [{ table: "users", column: "lastName", order: "asc" }],
   });
 
