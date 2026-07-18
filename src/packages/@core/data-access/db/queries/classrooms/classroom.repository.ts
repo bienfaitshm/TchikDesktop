@@ -1,4 +1,4 @@
-import { eq, getTableColumns } from "drizzle-orm";
+import { eq, getTableColumns, type Table } from "drizzle-orm";
 import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
@@ -7,59 +7,92 @@ import {
   classroomEnrollments,
   seatingAssignments,
   type TableClassroom,
-  type TableClassroomEnrollment,
-  type TableSeatingAssignment,
   type Classroom,
   type Option,
-  type FindManyOptions,
 } from "@/packages/@core/data-access/db/schemas";
-import { BaseRepository, DatabaseError } from "@/packages/drizzle-queries";
-
 import {
-  applyQueryOptions,
-  mergeQueryOptions,
-  extractQueryPayload,
-} from "@/packages/@core/data-access/db/queries/drizzle-builder";
-import type {
-  OptionProvider,
-  SearchOptions,
-} from "@/packages/@core/data-access/db/queries/select-option.transformer";
-import { createSQLiteSearchFilter } from "../drizzle-utility";
+  DatabaseError,
+  helpers,
+  betterSqlite,
+} from "@/packages/drizzle-queries";
+import type { OptionProvider } from "@/packages/@core/data-access/db/queries/select-option.transformer";
 
+/**
+ * Data Transfer Object representing a Classroom and its associated Option.
+ */
 export type ClassroomDTO = Classroom & {
   option: Option | null;
 };
 
-export type BaseClassroomFilters = Partial<FindManyOptions<TableClassroom>>;
+/**
+ * Standard table dictionary used for basic classroom queries.
+ */
+export const JOINED_TABLES = {
+  classrooms,
+  options,
+} as const;
 
-interface GetClassroomsOptions {
-  classroomOptions?: BaseClassroomFilters;
-  enrollmentOptions?: Partial<FindManyOptions<TableClassroomEnrollment>>;
-  assignmentOptions?: Partial<FindManyOptions<TableSeatingAssignment>>;
-}
+/**
+ * Extended table dictionary used for detailed classroom hierarchy queries.
+ */
+export const JOINED_TABLES_DETAIL = {
+  classrooms,
+  classroomEnrollments,
+  seatingAssignments,
+} as const;
 
-const CLASSROOM_DEFAULT_SORT: FindManyOptions<TableClassroom> = {
-  orderBy: [
-    { column: "identifier", order: "asc" },
-    { column: "shortIdentifier", order: "asc" },
-  ],
-};
+/**
+ * Filter configuration type for standard classroom lists.
+ */
+export type BaseClassroomFilters = helpers.FindManyOptions<
+  typeof JOINED_TABLES
+>;
 
+/**
+ * Filter configuration type for complex classroom relational queries.
+ */
+export type GetClassroomsOptions = helpers.FindManyOptions<
+  typeof JOINED_TABLES_DETAIL
+>;
+
+const CLASSROOM_DEFAULT_SORT: helpers.AdvancedFilters<typeof JOINED_TABLES> =
+  {};
+
+/**
+ * Repository handling database operations for Classroom entities.
+ * Extends the BaseRepository tailored for SQLite and implements OptionProvider.
+ */
 export class ClassroomRepository
-  extends BaseRepository<TableClassroom, TDataBase, ClassroomDTO>
+  extends betterSqlite.BaseRepository<TableClassroom, TDataBase, ClassroomDTO>
   implements OptionProvider<ClassroomDTO>
 {
+  /**
+   * Initializes the repository with schema mappings, database client, and loggers.
+   */
   constructor() {
     super({
       db,
       table: classrooms,
       idColumn: classrooms.classId,
-      entityName: "Classroom",
+      baseTableName: "Classroom",
       logger: getLogger,
-      defaultSort: CLASSROOM_DEFAULT_SORT,
+      fixedFilters: CLASSROOM_DEFAULT_SORT,
     });
   }
 
+  /**
+   * Returns the schema mapping dictionary used by dynamic query builders.
+   * @returns A record of Drizzle tables.
+   */
+  protected getJoinTable(): Record<string, Table> {
+    return JOINED_TABLES;
+  }
+
+  /**
+   * Constructs the foundational dynamic query builder with a predefined join to options.
+   * @param tx - Optional database transaction client.
+   * @returns The dynamic select query builder instance.
+   */
   protected override getQuerySet(tx?: TDataBase) {
     return this.getClient(tx)
       .select({
@@ -72,60 +105,35 @@ export class ClassroomRepository
   }
 
   /**
-   * Récupère les données de classes filtrées (compatible SQLite Case-Insensitive)
+   * Retrieves a filtered collection of classrooms formatted as DTOs.
+   * @param filters - Dynamic parameters to filter the result set.
+   * @param tx - Optional database transaction client.
+   * @returns A promise resolving to an array of ClassroomDTO.
    */
-  async fetchOptions(
-    { filters, search }: SearchOptions<BaseClassroomFilters> = {},
+  public async fetchOptions(
+    filters: BaseClassroomFilters,
     tx: TDataBase = this.db,
   ): Promise<ClassroomDTO[]> {
-    try {
-      let query = this.getQuerySet(tx);
-
-      const searchFilter = createSQLiteSearchFilter(
-        [classrooms.identifier, classrooms.shortIdentifier],
-        search,
-      );
-
-      if (searchFilter) {
-        query = query.where(searchFilter).limit(20);
-      }
-
-      return (await applyQueryOptions(
-        query,
-        this.table,
-        mergeQueryOptions(filters, CLASSROOM_DEFAULT_SORT),
-      )) as ClassroomDTO[];
-    } catch (error) {
-      const dbError = DatabaseError.from(
-        error,
-        "Erreur lors de la récupération des options de classes.",
-      );
-      this.logError("fetchOptions", dbError, { filters, search });
-      throw dbError;
-    }
+    return this.findMany(filters, tx);
   }
 
   /**
-   * Récupère les classes avec les étudiants associés via Drizzle Relational API (Compatible Transaction)
+   * Fetches classrooms along with their enrolled students via Drizzle's Relational API.
+   * @param filters - Query parameters applied to the root classroom table.
+   * @param tx - Optional database transaction client.
+   * @returns A promise resolving to classrooms and their associated students.
    */
-  async findClassroomsWithStudents(
-    {
-      classroomOptions = {},
-      enrollmentOptions = {},
-    }: GetClassroomsOptions = {},
+  public async findClassroomsWithStudents(
+    filters: GetClassroomsOptions = {},
     tx: TDataBase = this.db,
   ) {
     try {
       const client = this.getClient(tx);
 
       return await client.query.classrooms.findMany({
-        ...extractQueryPayload(
-          this.table,
-          mergeQueryOptions(classroomOptions, CLASSROOM_DEFAULT_SORT),
-        ),
+        ...helpers.extractQueryPayload(JOINED_TABLES_DETAIL, filters),
         with: {
           enrollments: {
-            ...extractQueryPayload(classroomEnrollments, enrollmentOptions),
             with: { student: true },
           },
         },
@@ -133,38 +141,35 @@ export class ClassroomRepository
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
-        "Erreur lors de la récupération des classes et de leurs étudiants.",
+        "Error retrieving classrooms and their associated students.",
       );
       this.logError("findClassroomsWithStudents", dbError, {
-        classroomOptions,
+        filters,
       });
       throw dbError;
     }
   }
 
   /**
-   * Récupère la structure complète : classes, étudiants et assignations de places (Compatible Transaction)
+   * Fetches the complete classroom structural hierarchy, including students and seating assignments.
+   * @param filters - Query parameters applied to the root classroom table.
+   * @param tx - Optional database transaction client.
+   * @returns A promise resolving to classrooms containing their enrollments and seating assignments.
    */
-  async findClassroomsWithStudentAndAssignments(
-    {
-      classroomOptions = {},
-      enrollmentOptions = {},
-      assignmentOptions = {},
-    }: GetClassroomsOptions = {},
+  public async findClassroomsWithStudentAndAssignments(
+    filters: GetClassroomsOptions = {},
     tx: TDataBase = this.db,
   ) {
     try {
       const client = this.getClient(tx);
 
       return await client.query.classrooms.findMany({
-        ...extractQueryPayload(this.table, classroomOptions),
+        ...helpers.extractQueryPayload(JOINED_TABLES_DETAIL, filters),
         with: {
           enrollments: {
-            ...extractQueryPayload(classroomEnrollments, enrollmentOptions),
             with: {
               student: true,
               seatingAssignments: {
-                ...extractQueryPayload(seatingAssignments, assignmentOptions),
                 with: { localroom: true },
               },
             },
@@ -174,10 +179,10 @@ export class ClassroomRepository
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
-        "Erreur lors de la récupération complète des assignations.",
+        "Error retrieving the complete seating assignment hierarchy.",
       );
       this.logError("findClassroomsWithStudentAndAssignments", dbError, {
-        classroomOptions,
+        filters,
       });
       throw dbError;
     }

@@ -24,7 +24,7 @@ export const DEFAULT_MAX_OFFSET = 50000;
 
 const OPERATOR_MAP: Record<
   string,
-  (column: Column, value: any) => SQL | undefined
+  (column: Column, value: unknown) => SQL | undefined
 > = {
   $eq: (col, val) => eq(col, val),
   $ne: (col, val) => ne(col, val),
@@ -86,11 +86,15 @@ export interface DynamicSelectQueryBuilder {
   limit(n: number): DynamicSelectQueryBuilder;
   offset(n: number): DynamicSelectQueryBuilder;
   $dynamic(): DynamicSelectQueryBuilder;
-  execute(): Promise<unknown[]>;
+  all(): unknown[];
+  get(): unknown;
 }
 
 /**
- * Compile un bloc de filtres structuré par table en conditions SQL Drizzle
+ * Compiles a structured multi-table filter object into Drizzle SQL conditions.
+ * @param tables - Dictionary of active Drizzle tables.
+ * @param filters - Advanced filters specifying values or operations per column.
+ * @returns Array of compiled SQL conditions.
  */
 export function buildWhereConditions<TTables extends Record<string, Table>>(
   tables: TTables,
@@ -101,7 +105,6 @@ export function buildWhereConditions<TTables extends Record<string, Table>>(
 
   for (const [tableName, tableFilters] of Object.entries(filters)) {
     const targetTable = tables[tableName];
-    // Sécurité : On ignore proprement si la table n'est pas enregistrée dans la requête
     if (!targetTable) continue;
 
     const columns = getTableColumns(targetTable);
@@ -111,11 +114,9 @@ export function buildWhereConditions<TTables extends Record<string, Table>>(
     )) {
       if (filterPayload === undefined) continue;
 
-      // Sécurité anti-pollution de prototype et validation de la colonne
       if (!Object.prototype.hasOwnProperty.call(columns, columnName)) continue;
       const column = columns[columnName] as Column;
 
-      // Cas 1 : Valeur directe (Égalité par défaut) -> { age: 25 }
       if (
         filterPayload === null ||
         typeof filterPayload !== "object" ||
@@ -125,12 +126,10 @@ export function buildWhereConditions<TTables extends Record<string, Table>>(
         continue;
       }
 
-      // Cas 2 : Utilisation d'opérateurs -> { age: { $gt: 18 } }
       for (const [op, val] of Object.entries(
         filterPayload as QueryOperators<unknown>,
       )) {
         if (val === undefined) continue;
-
         const clause = mapOperatorToQuery(column, op, val);
         if (clause) conditions.push(clause);
       }
@@ -141,19 +140,26 @@ export function buildWhereConditions<TTables extends Record<string, Table>>(
 }
 
 /**
- * Mapping des opérateurs vers les fonctions natives de Drizzle
+ * Maps a string operator to its native Drizzle ORM equivalent.
+ * @param column - Target Drizzle table column.
+ * @param op - String representation of the SQL operator.
+ * @param val - Extracted value to match against.
+ * @returns Executable SQL conditional clause or undefined.
  */
 function mapOperatorToQuery(
   column: Column,
   op: string,
-  val: any,
+  val: unknown,
 ): SQL | undefined {
   const executeOperator = OPERATOR_MAP[op];
   return executeOperator ? executeOperator(column, val) : undefined;
 }
 
 /**
- * Construit les clauses d'ordonnancement multi-tables
+ * Constructs multi-table ordering clauses based on query options.
+ * @param tables - Dictionary of active Drizzle tables.
+ * @param orderBy - Array of ordering configurations.
+ * @returns Array of Drizzle SQL ordering clauses.
  */
 export function buildOrderByClauses<TTables extends Record<string, Table>>(
   tables: TTables,
@@ -178,26 +184,28 @@ export function buildOrderByClauses<TTables extends Record<string, Table>>(
 }
 
 /**
- * Extrait le payload SQL nettoyé et sécurisé. Unique source de vérité.
+ * Extracts and unifies all SQL constraints, securely merging dynamic inputs with global static filters.
+ * @param tables - Dictionary of active Drizzle tables.
+ * @param options - Dynamic query options (where, or, orderBy, limit, offset).
+ * @param staticFilters - Fixed system-level rules enforced across the query layer.
+ * @returns Finalized payload mapping rules into executable query constraints.
  */
 export function extractQueryPayload<TTables extends Record<string, Table>>(
   tables: TTables,
   options?: FindManyOptions<TTables>,
-  fixedFilters?: AdvancedFilters<TTables>,
+  staticFilters?: AdvancedFilters<TTables>,
 ) {
-  const conditions: SQL[] = [];
+  const rootConditions: SQL[] = [];
+  const dynamicConditions: SQL[] = [];
 
-  // 1. Filtres imposés par le code (ex: Hard delete security `is_deleted: 0`)
-  if (fixedFilters) {
-    conditions.push(...buildWhereConditions(tables, fixedFilters));
+  if (staticFilters) {
+    rootConditions.push(...buildWhereConditions(tables, staticFilters));
   }
 
-  // 2. Filtres dynamiques du client
   if (options?.where) {
-    conditions.push(...buildWhereConditions(tables, options.where));
+    dynamicConditions.push(...buildWhereConditions(tables, options.where));
   }
 
-  // 3. Gestion des blocs OR complexes
   if (options?.or && Array.isArray(options.or) && options.or.length > 0) {
     const orBlocks: SQL[] = [];
     for (const orGroup of options.or) {
@@ -205,11 +213,14 @@ export function extractQueryPayload<TTables extends Record<string, Table>>(
       if (groupConditions.length === 1) orBlocks.push(groupConditions[0]);
       if (groupConditions.length > 1) orBlocks.push(and(...groupConditions)!);
     }
-    if (orBlocks.length === 1) conditions.push(orBlocks[0]);
-    if (orBlocks.length > 1) conditions.push(or(...orBlocks)!);
+    if (orBlocks.length === 1) dynamicConditions.push(orBlocks[0]);
+    if (orBlocks.length > 1) dynamicConditions.push(or(...orBlocks)!);
   }
 
-  // 4. Pagination & Tri
+  if (dynamicConditions.length > 0) {
+    rootConditions.push(and(...dynamicConditions)!);
+  }
+
   const limit = Math.max(
     1,
     Math.min(options?.limit ?? DEFAULT_MAX_LIMIT, DEFAULT_MAX_LIMIT),
@@ -224,10 +235,10 @@ export function extractQueryPayload<TTables extends Record<string, Table>>(
 
   return {
     where:
-      conditions.length > 0
-        ? conditions.length === 1
-          ? conditions[0]
-          : and(...conditions)
+      rootConditions.length > 0
+        ? rootConditions.length === 1
+          ? rootConditions[0]
+          : and(...rootConditions)
         : undefined,
     orderBy: orderByPayload.length > 0 ? orderByPayload : undefined,
     limit,
@@ -236,7 +247,12 @@ export function extractQueryPayload<TTables extends Record<string, Table>>(
 }
 
 /**
- * Applique directement le payload extrait sur le Query Builder Drizzle
+ * Directly applies extracted query parameters to the Drizzle query builder instance.
+ * @param query - Instantiated dynamic select query builder.
+ * @param tables - Dictionary of active Drizzle tables.
+ * @param options - Dynamic client query options parameters.
+ * @param staticFilters - Fixed system-level filter conditions block.
+ * @returns Mutated query builder ready for synchronous execution.
  */
 export function applyQueryOptions<
   TQuery extends DynamicSelectQueryBuilder,
@@ -245,9 +261,9 @@ export function applyQueryOptions<
   query: TQuery,
   tables: TTables,
   options?: FindManyOptions<TTables>,
-  fixedFilters?: AdvancedFilters<TTables>,
+  staticFilters?: AdvancedFilters<TTables>,
 ): TQuery {
-  const payload = extractQueryPayload(tables, options, fixedFilters);
+  const payload = extractQueryPayload(tables, options, staticFilters);
 
   if (payload.where) query.where(payload.where);
   if (payload.orderBy) query.orderBy(...payload.orderBy);

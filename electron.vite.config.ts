@@ -17,6 +17,7 @@ export default defineConfig({
         external: [
           "electron",
           "sqlite3",
+          "better-sqlite3",
           "pg",
           "pg-hstore",
           "mysql2",
