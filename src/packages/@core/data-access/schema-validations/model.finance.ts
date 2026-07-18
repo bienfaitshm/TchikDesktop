@@ -5,7 +5,7 @@ import {
   ZFEE_SCHEDULES_ENUM,
   ZPAYMENT_METHOD_ENUM,
   schoolIdBaseSchema,
-  schoolYearIdBaseSchama,
+  schoolYearIdBaseSchema,
   timestampBaseSchema,
 } from "./model.base";
 
@@ -48,7 +48,7 @@ export const FeeTypeSchema = z
     walletId: z.string().nonempty().describe("Portefeuille associé"),
   })
   .extend(timestampBaseSchema.shape)
-  .extend(schoolYearIdBaseSchama.shape);
+  .extend(schoolYearIdBaseSchema.shape);
 
 export type FeeType = z.infer<typeof FeeTypeSchema>;
 
@@ -63,7 +63,7 @@ export const FeeTypeUpdateSchema = FeeTypeCreateSchema.partial();
 export type FeeTypeUpdate = z.infer<typeof FeeTypeUpdateSchema>;
 
 /* =========================================================================
-   FEE SCHEDULES (Le nouveau venu)
+   FEE SCHEDULES
    ========================================================================= */
 export const FeeScheduleSchema = z
   .object({
@@ -100,18 +100,16 @@ export const FeeConfigurationBase = z
       .int()
       .nonnegative()
       .describe("Montant total en centimes"),
-    currency: z.string().min(1).describe("Code devise (ex: USD, CDF)"),
+    currency: ZCURRENCY_ENUM.describe("Devise de la configuration"),
     section: ZSECTION_ENUM.nullable().describe("Section cible (si applicable)"),
     optionId: z.string().nullable().describe("Option cible (si applicable)"),
     classroomId: z.string().nullable().describe("Classe cible (si applicable)"),
     feeTypeId: z.string().describe("Type de frais associé"),
   })
   .extend(timestampBaseSchema.shape)
-  .extend(schoolYearIdBaseSchama.shape);
+  .extend(schoolYearIdBaseSchema.shape);
 
-export const addFeeConfigurationRefine = <
-  T extends typeof FeeConfigurationBase,
->(
+export const addFeeConfigurationRefine = <T extends z.ZodTypeAny>(
   schema: T,
 ) => {
   return schema.superRefine((data, ctx) => {
@@ -168,20 +166,26 @@ export const addFeeConfigurationRefine = <
 
 export const FeeConfigurationSchema =
   addFeeConfigurationRefine(FeeConfigurationBase);
-
 export type FeeConfiguration = z.infer<typeof FeeConfigurationSchema>;
 
-export const FeeConfigurationCreateSchema = FeeConfigurationBase.omit({
-  feeConfigId: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const FeeConfigurationCreateSchema = addFeeConfigurationRefine(
+  FeeConfigurationBase.omit({
+    feeConfigId: true,
+    createdAt: true,
+    updatedAt: true,
+  }),
+);
 export type FeeConfigurationCreate = z.infer<
   typeof FeeConfigurationCreateSchema
 >;
 
-export const FeeConfigurationUpdateSchema =
-  FeeConfigurationCreateSchema.partial();
+export const FeeConfigurationUpdateSchema = addFeeConfigurationRefine(
+  FeeConfigurationBase.omit({
+    feeConfigId: true,
+    createdAt: true,
+    updatedAt: true,
+  }).partial(),
+);
 export type FeeConfigurationUpdate = z.infer<
   typeof FeeConfigurationUpdateSchema
 >;
@@ -194,7 +198,7 @@ export const FeeAssignmentSchema = z
     assignmentId: z.string().describe("ID unique de l'attribution (UUID)"),
     enrollmentId: z.string().describe("Inscription concernée"),
     feeConfigId: z.string().describe("Configuration de frais appliquée"),
-    scheduleId: z.string().describe("Échéance associée"), // <-- AJOUTÉ SUITE AUX CHANGEMENTS DB
+    scheduleId: z.string().describe("Échéance associée"),
     amountPaid: z.coerce
       .number()
       .int()
@@ -249,7 +253,7 @@ export const StudentPaymentSchema = z
       .describe("Référence externe (M-Pesa, bordereau)"),
   })
   .extend(timestampBaseSchema.shape)
-  .extend(schoolYearIdBaseSchama.shape);
+  .extend(schoolYearIdBaseSchema.shape);
 
 export type StudentPayment = z.infer<typeof StudentPaymentSchema>;
 
@@ -269,7 +273,7 @@ export type StudentPaymentUpdate = z.infer<typeof StudentPaymentUpdateSchema>;
 export const DailyExchangeRateSchema = z
   .object({
     rateId: z.string().describe("ID unique du taux (UUID)"),
-    date: z.iso.datetime().describe("Date du taux (format ISO)"),
+    date: z.string().datetime().describe("Date du taux (format ISO)"),
     currencyFrom: ZCURRENCY_ENUM.describe("Devise source"),
     currencyTo: ZCURRENCY_ENUM.describe("Devise cible"),
     rate: z.coerce
@@ -298,6 +302,9 @@ export type DailyExchangeRateUpdate = z.infer<
   typeof DailyExchangeRateUpdateSchema
 >;
 
+/* =========================================================================
+   PROCESS PAYMENT PAYLOAD
+   ========================================================================= */
 export const ProcessPaymentSchema = z
   .object({
     assignmentId: z.string().nonempty(),
@@ -306,5 +313,6 @@ export const ProcessPaymentSchema = z
     paymentMethod: ZPAYMENT_METHOD_ENUM,
     transactionReference: z.string().optional(),
   })
-  .extend(schoolYearIdBaseSchama.shape);
+  .extend(schoolYearIdBaseSchema.shape);
+
 export type ProcessPaymentPayload = z.infer<typeof ProcessPaymentSchema>;
