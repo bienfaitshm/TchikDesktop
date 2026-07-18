@@ -10,8 +10,9 @@ import {
   LocalroomSchema,
   SeatingSessionSchema,
   SeatingAssignmentSchema,
-  withQueryOptions,
 } from "./model";
+
+import { withQueryOptions } from "./helpers";
 
 export const SchoolYearSchema = z.object({
   schoolId: z.string().min(1, "L'ID de l'école est requis"),
@@ -19,21 +20,40 @@ export const SchoolYearSchema = z.object({
 });
 export type SchoolYear = z.infer<typeof SchoolYearSchema>;
 
-export const SchoolFilterSchema = withQueryOptions(SchoolSchema);
-export const UserFilterSchema = withQueryOptions(UserSchema);
-export const OptionFilterSchema = withQueryOptions(OptionSchema);
-export const StudyYearFilterSchema = withQueryOptions(StudyYearSchema);
-export const ClassroomFilterSchema = withQueryOptions(ClassroomSchema);
-export const EnrollmentFilterSchema = withQueryOptions(EnrollmentSchema);
-export const EnrollmentActionFilterSchema = withQueryOptions(
-  EnrollmentActionSchema,
-);
-export const LocalroomFilterSchema = withQueryOptions(LocalroomSchema);
-export const SeatingSessionFilterSchema =
-  withQueryOptions(SeatingSessionSchema);
-export const SeatingAssignmentFilterSchema = withQueryOptions(
-  SeatingAssignmentSchema,
-);
+export const SchoolFilterSchema = withQueryOptions({
+  schools: SchoolSchema,
+});
+export const UserFilterSchema = withQueryOptions({
+  users: UserSchema,
+});
+export const OptionFilterSchema = withQueryOptions({
+  options: OptionSchema,
+});
+export const StudyYearFilterSchema = withQueryOptions({
+  studyYears: StudyYearSchema,
+});
+export const ClassroomFilterSchema = withQueryOptions({
+  classrooms: ClassroomSchema,
+  options: OptionSchema,
+});
+export const EnrollmentFilterSchema = withQueryOptions({
+  classroomEnrollments: EnrollmentSchema,
+  users: UserSchema,
+  classrooms: ClassroomSchema,
+});
+
+export const EnrollmentActionFilterSchema = withQueryOptions({
+  enrollmentActions: EnrollmentActionSchema,
+});
+export const LocalroomFilterSchema = withQueryOptions({
+  localrooms: LocalroomSchema,
+});
+export const SeatingSessionFilterSchema = withQueryOptions({
+  seatingSessions: SeatingSessionSchema,
+});
+export const SeatingAssignmentFilterSchema = withQueryOptions({
+  seatingAssignments: SeatingAssignmentSchema,
+});
 
 /**
  * Schéma pour filtrer les tableaux de bord et métriques de placement.

@@ -1,19 +1,29 @@
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { GoogleSearchInput } from "../components/search";
-import { useSearchEnrollments } from "@/renderer/libs/queries/enrollements";
+import { useGetEnrollments } from "@/renderer/libs/queries/enrollements";
 import { EnrollmentOverview } from "../components/enrollment-search-render";
 
 export function FastPaymentPage() {
   const { schoolId, yearId } = useCurrentConfig();
-  const { data: enrollments = [] } = useSearchEnrollments({
-    search: "kil",
-    filters: {
-      limit: 10,
-      where: {
-        yearId,
-        schoolId,
+  const { data: enrollments = [] } = useGetEnrollments({
+    limit: 10,
+    where: {
+      classroomEnrollments: {
+        yearId: {
+          $eq: yearId,
+        },
+        schoolId: {
+          $eq: schoolId,
+        },
+      },
+
+      users: {
+        lastName: {
+          $like: "%ki%",
+        },
       },
     },
+    orderBy: [{ table: "users", column: "lastName", order: "asc" }],
   });
 
   console.log("enrollments", enrollments);

@@ -1,4 +1,4 @@
-import { eq, and, sql, count, getTableColumns } from "drizzle-orm";
+import { eq, and, sql, count, getTableColumns, Table } from "drizzle-orm";
 import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
@@ -11,12 +11,10 @@ import {
   type User,
   type Classroom,
 } from "@/packages/@core/data-access/db/schemas/schema";
-import type { FindManyOptions } from "@/packages/@core/data-access/db/schemas/types";
 import {
-  BaseRepository,
   DatabaseError,
-  mergeQueryOptions,
-  applyQueryOptions,
+  helpers,
+  betterSqlite,
 } from "@/packages/drizzle-queries";
 import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/options";
 
@@ -28,17 +26,36 @@ export type EnrollmentTDO = ClassroomEnrollment & {
   yearName: string;
 };
 
-const ENROLLMENT_DEFAULT_SORT: FindManyOptions<TableClassroomEnrollment> = {
-  orderBy: [{ column: "createdAt", order: "desc" }],
+export const JOINED_TABLES = {
+  classrooms,
+  users,
+  classroomEnrollments,
+} as const;
+
+/**
+ * Filter configuration type for standard classroom lists.
+ */
+export type BaseClassroomEnrollmentFilters = helpers.FindManyOptions<
+  typeof JOINED_TABLES
+>;
+
+const ENROLLMENT_DEFAULT_SORT: BaseClassroomEnrollmentFilters = {
+  orderBy: [
+    { table: "classroomEnrollments", column: "createdAt", order: "desc" },
+  ],
 };
 
-const ACTIVE_ENROLLEMENTS: FindManyOptions<TableClassroomEnrollment> = {
+const ACTIVE_ENROLLEMENTS: BaseClassroomEnrollmentFilters = {
   where: {
-    status: STUDENT_STATUS_ENUM.ACTIVE,
+    classroomEnrollments: {
+      status: {
+        $eq: STUDENT_STATUS_ENUM.ACTIVE,
+      },
+    },
   },
 };
 
-export class EnrollmentRepository extends BaseRepository<
+export class EnrollmentRepository extends betterSqlite.BaseRepository<
   TableClassroomEnrollment,
   TDataBase,
   EnrollmentTDO
@@ -48,17 +65,10 @@ export class EnrollmentRepository extends BaseRepository<
       db: database,
       table: classroomEnrollments,
       idColumn: classroomEnrollments.enrollmentId,
-      entityName: "Enrollment",
+      baseTableName: "Enrollment",
       logger: getLogger,
-      defaultSort: ENROLLMENT_DEFAULT_SORT,
+      defaultFilters: ENROLLMENT_DEFAULT_SORT,
     });
-    this.searchFiltersColumns = [
-      users.lastName,
-      users.middleName,
-      users.firstName,
-      classrooms.shortIdentifier,
-      classrooms.identifier,
-    ];
   }
 
   /**
@@ -81,10 +91,18 @@ export class EnrollmentRepository extends BaseRepository<
   }
 
   /**
+   * Returns the schema mapping dictionary used by dynamic query builders.
+   * @returns A record of Drizzle tables.
+   */
+  protected getJoinTable(): Record<string, Table> {
+    return JOINED_TABLES;
+  }
+
+  /**
    * Récupère uniquement les inscriptions actives (allégées pour traitement lourd ou filtres internes)
    */
-  async getActiveEnrollments(
-    filters: FindManyOptions<TableClassroomEnrollment>,
+  getActiveEnrollments(
+    filters: BaseClassroomEnrollmentFilters,
     tx?: TDataBase,
   ) {
     try {
@@ -100,18 +118,17 @@ export class EnrollmentRepository extends BaseRepository<
         .innerJoin(users, eq(this.table.studentId, users.userId))
         .innerJoin(classrooms, eq(this.table.classroomId, classrooms.classId))
         .$dynamic();
-
-      return applyQueryOptions(
+      return helpers.applyQueryOptions(
         query,
-        this.table,
-        mergeQueryOptions(filters, ACTIVE_ENROLLEMENTS),
+        this.getJoinTable(),
+        helpers.mergeFindManyOptions(filters, ACTIVE_ENROLLEMENTS),
       );
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
-        `Failed to fetch active enrollments for school ${filters.where?.schoolId}`,
+        `Failed to fetch active enrollments for school ${filters}`,
       );
-      this.logError("getActiveEnrollments", dbError, filters.where as any);
+      this.logError("getActiveEnrollments", dbError, filters as any);
       throw dbError;
     }
   }

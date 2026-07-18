@@ -109,7 +109,13 @@ export const ClassroomPage = () => {
   const { options } = useGetOptionAsOptions(schoolId);
 
   const { data: classrooms = [], queryKey: mutationKey } = useGetClassrooms({
-    where: { schoolId },
+    where: {
+      classrooms: {
+        schoolId: {
+          $eq: schoolId,
+        },
+      },
+    },
   });
 
   return (
@@ -181,7 +187,6 @@ export const ClassroomPage = () => {
                       <ClassroomRowActions
                         classroom={row.original}
                         schoolId={schoolId}
-                        yearId={yearId}
                         mutationKey={mutationKey}
                       />
                     }

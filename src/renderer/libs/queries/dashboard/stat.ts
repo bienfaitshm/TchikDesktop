@@ -88,8 +88,23 @@ export function useDashboardStatistics(params: TStatsFilter) {
         queryKey: statsKeys.enrollmentHistory(schoolId, yearId),
         queryFn: () =>
           enrollment.fetchEnrollments({
-            where: { yearId, schoolId },
-            orderBy: [{ column: "createdAt", order: "desc" }],
+            where: {
+              classroomEnrollments: {
+                yearId: {
+                  $eq: yearId,
+                },
+                schoolId: {
+                  $eq: schoolId,
+                },
+              },
+            },
+            orderBy: [
+              {
+                column: "createdAt",
+                order: "desc",
+                table: "classroomEnrollments",
+              },
+            ],
             limit: 5,
           }),
         staleTime: 1000 * 60 * 10,
