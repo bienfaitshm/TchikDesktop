@@ -70,7 +70,7 @@
     "drizzle-orm": "^0.45.2",
     "electron-context-menu": "^4.1.2",
     "electron-log": "^5.4.1",
-    "electron-store": "^10.1.0",
+    "electron-store": "^11.0.2",
     "electron-updater": "^6.6.2",
     "escpos": "^3.0.0-alpha.6",
     "escpos-adapter": "^3.0.0-alpha.4",
