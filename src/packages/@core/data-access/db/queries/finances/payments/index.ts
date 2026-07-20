@@ -1,26 +1,29 @@
-import {
-  CURRENCY_ENUM,
-  PAYMENT_METHOD_ENUM,
-} from "@/packages/@core/data-access/db/options";
-import { db } from "@/packages/@core/data-access/db/config";
+import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
   feeAssignmentRepository,
   feeConfigurationRepository,
   studentPaymentRepository,
-  dailyExchangeRateRepository,
   walletRepository,
 } from "@/packages/@core/data-access/db/queries/finances";
-
+import { dailyExchangeRateService } from "../services";
 import { classroomRepository } from "@/packages/@core/data-access/db/queries/classrooms";
 import { enrollmentRepository } from "@/packages/@core/data-access/db/queries/enrollments";
 
 import { SyncClassroomFees } from "./use-cases/sync-classroom-fees";
 import { GetClassroomPaymentTable } from "./use-cases/get-classroom-payment-table";
-import { AssignInitialFees } from "./use-cases/assign-initial-fees";
-import { ProcessStudentPayment } from "./use-cases/process-student-payment";
+import {
+  AssignInitialFees,
+  StudentPaymentInfos,
+  type StudentPaymentTable,
+} from "./use-cases/assign-initial-fees";
+import {
+  ProcessStudentPayment,
+  type ProcessPaymentPayload,
+  type ProcessPaymentResult,
+} from "./use-cases/process-student-payment";
 
-import { OnSyncMessage, TableClassroomPaymentAssignment } from "./types";
+import { OnSyncMessage } from "./types";
 
 const logger = getLogger("PaymentService");
 
@@ -47,26 +50,43 @@ const assignInitialFeesUseCase = new AssignInitialFees(
   logger,
 );
 
+const paymentInfos = new StudentPaymentInfos(
+  enrollmentRepository,
+  feeAssignmentRepository,
+  assignInitialFeesUseCase,
+  logger,
+);
+
 const processStudentPaymentUseCase = new ProcessStudentPayment(
   feeConfigurationRepository,
   feeAssignmentRepository,
   studentPaymentRepository,
-  dailyExchangeRateRepository,
+  dailyExchangeRateService,
   walletRepository,
   db,
   logger,
 );
 
-// =========================================================================
-// FACADE EXPORTÉE (paymentService)
-// =========================================================================
-
+/**
+ * Service facade providing entry points for financial and payment management workflows.
+ */
 export const paymentService = {
   /**
-   * Synchronise les échéances financières d'une classe en fonction des élèves actifs
-   * et des configurations tarifaires applicables.
+   * Retrieves student payment summary and schedule details by enrollment ID.
+   * @param enrollmentId - Unique identifier of the student enrollment.
+   * @returns Structured payment overview data.
    */
-  async syncClassroomFeeAssignments(
+  getStudentPaymentOverview(enrollmentId: string): StudentPaymentTable {
+    return paymentInfos.getStudentPaymentOverview(enrollmentId);
+  },
+
+  /**
+   * Synchronizes fee assignments across all active students in a classroom.
+   * @param ctx - Context object containing school, academic year, and classroom IDs.
+   * @param onSyncMessage - Optional callback invoked during progress updates.
+   * @returns The sync execution result.
+   */
+  syncClassroomFeeAssignments(
     ctx: {
       schoolId: string;
       yearId: string;
@@ -78,48 +98,48 @@ export const paymentService = {
   },
 
   /**
-   * Récupère la table de suivi des paiements pour une classe donnée sous forme structurée.
+   * Retrieves the payment matrix for a classroom in a structured grid format.
+   * @param filters - Filter criteria specifying school, academic year, and classroom IDs.
+   * @param onSyncMessage - Optional callback invoked during sync operations.
+   * @returns Array of classroom payment assignments.
    */
-  async getAssignmentTableOfClassroom(
+  getClassroomPaymentTable(
     filters: {
       schoolId: string;
       yearId: string;
       classId: string;
     },
     onSyncMessage?: OnSyncMessage,
-  ): Promise<TableClassroomPaymentAssignment[]> {
+  ) {
     return getClassroomPaymentTableUseCase.execute(filters, onSyncMessage);
   },
 
   /**
-   * ACTION AUTOMATIQUE : Assigne la dette de départ d'un élève lors de son inscription active.
+   * Assigns initial fee obligations to a student upon active enrollment.
+   * @param payload - Details required for student fee allocation.
+   * @param tx - Optional database transaction instance.
    */
-  async assignFeesToStudent(
+  assignFeesToStudent(
     payload: {
       schoolId: string;
       yearId: string;
       enrollmentId: string;
       classroomId: string;
     },
-    tx = db,
-  ) {
+    tx: TDataBase = db,
+  ): void {
     return assignInitialFeesUseCase.execute(payload, tx);
   },
 
   /**
-   * ACTION CENTRALISÉE : Enregistre et traite un versement (gestion multi-devises et portefeuille).
+   * Processes a student payment, handling currency conversion and wallet updates.
+   * @param payload - Details of the payment transaction.
+   * @returns Resulting updated fee assignment and payment details.
    */
-  async processStudentPayment(payload: {
-    schoolId: string;
-    yearId: string;
-    assignmentId: string;
-    amountReceived: number;
-    currencyReceived: CURRENCY_ENUM;
-    paymentMethod?: PAYMENT_METHOD_ENUM;
-    transactionReference?: string;
-  }) {
+  processStudentPayment(payload: ProcessPaymentPayload): ProcessPaymentResult {
     return processStudentPaymentUseCase.execute(payload);
   },
 };
 
 export * from "./types";
+export { type StudentPaymentTable };

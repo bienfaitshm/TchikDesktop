@@ -141,6 +141,7 @@ export const PaymentRoutes = {
    * Utile pour la vue globale de type grille/table côté Front.
    */
   CLASSROOM_TABLE: "payments/classroom-table",
+  STUDENT_PAYMENT_OVERVIEW: "payments/student/overview",
 
   /**
    * Route POST pour l'assignation automatique ou manuelle de frais initiaux à un étudiant.

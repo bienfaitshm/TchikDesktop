@@ -11,48 +11,71 @@ import {
   FeeAssignmentRepository,
   FeeConfigurationRepository,
   StudentPaymentRepository,
-  DailyExchangeRateRepository,
   WalletRepository,
 } from "../../repository";
 import { CustomLogger } from "@/packages/logger";
-import { validateContext, getLocalDateString } from "../utils";
+import { validateContext } from "../utils";
+import { OverpaymentError, BusinessRuleError } from "../errors";
+import { DailyExchangeRateService } from "../../services";
 import {
-  ExchangeRateNotFoundError,
-  OverpaymentError,
-  BusinessRuleError,
-} from "../errors";
-import { EXCHANGE_RATE_SCALE } from "../constants";
+  FeeAssignment,
+  FeeConfiguration,
+  StudentPayment,
+} from "@/packages/@core/data-access/db/schemas";
 
+export interface ProcessPaymentPayload {
+  schoolId: string;
+  yearId: string;
+  assignmentId: string;
+  amountReceived: number;
+  currencyReceived: CURRENCY_ENUM;
+  paymentMethod?: PAYMENT_METHOD_ENUM;
+  transactionReference?: string;
+}
+
+export interface ProcessPaymentResult extends FeeAssignment {
+  payment: StudentPayment;
+  feeConfig: FeeConfiguration;
+}
+
+/**
+ * Use case service responsible for processing student payments atomically.
+ */
 export class ProcessStudentPayment {
+  /**
+   * Initializes a new instance of ProcessStudentPayment.
+   * @param feeConfigRepo - Repository for fee configurations.
+   * @param feeAssignmentRepo - Repository for fee assignments.
+   * @param studentPaymentRepo - Repository for student payments.
+   * @param rateService - Service for exchange rate calculations.
+   * @param walletRepo - Repository for wallet management.
+   * @param clientDb - Database client connection instance.
+   * @param logger - Custom logger instance.
+   */
   constructor(
     private readonly feeConfigRepo: FeeConfigurationRepository,
     private readonly feeAssignmentRepo: FeeAssignmentRepository,
     private readonly studentPaymentRepo: StudentPaymentRepository,
-    private readonly rateRepo: DailyExchangeRateRepository,
+    private readonly rateService: DailyExchangeRateService,
     private readonly walletRepo: WalletRepository,
     private readonly clientDb: TDataBase,
     private readonly logger: CustomLogger,
   ) {}
 
-  async execute(payload: {
-    schoolId: string;
-    yearId: string;
-    assignmentId: string;
-    amountReceived: number;
-    currencyReceived: CURRENCY_ENUM;
-    paymentMethod?: PAYMENT_METHOD_ENUM;
-    transactionReference?: string;
-  }) {
+  /**
+   * Executes the student payment workflow synchronously within a transaction.
+   * @param payload - Details of the payment transaction to process.
+   * @returns The updated assignment record along with created payment and config details.
+   */
+  execute(payload: ProcessPaymentPayload): ProcessPaymentResult {
     validateContext(payload.schoolId, payload.yearId);
     this.logger.info(
       `[Payment processing] Initiating payment for assignment ${payload.assignmentId}`,
     );
 
     try {
-      // Transaction synchrone : pas de await ici, le callback ne doit pas être async
-      const dataToReturn = await this.clientDb.transaction(async (tx) => {
-        // 1. Récupération et verrouillage implicite via la transaction
-        const assignmentRecord = await this.feeAssignmentRepo.findById(
+      return this.clientDb.transaction((tx) => {
+        const assignmentRecord = this.feeAssignmentRepo.findById(
           payload.assignmentId,
           tx,
         );
@@ -62,8 +85,14 @@ export class ProcessStudentPayment {
           );
         }
 
-        const configRecord = await this.feeConfigRepo.findById(
-          assignmentRecord.feeConfigId as string,
+        if (!assignmentRecord.feeConfigId) {
+          throw new BusinessRuleError(
+            `Fee assignment [${payload.assignmentId}] lacks a valid configuration ID.`,
+          );
+        }
+
+        const configRecord = this.feeConfigRepo.findById(
+          assignmentRecord.feeConfigId,
           tx,
         );
         if (!configRecord) {
@@ -72,17 +101,14 @@ export class ProcessStudentPayment {
           );
         }
 
-        // 2. Conversion (méthode devenue synchrone)
         const { amountConverted, exchangeRateMultiplied } =
-          await this.calculateConversion(
+          this.rateService.computeExchangeRate(
             payload.amountReceived,
             payload.currencyReceived,
             configRecord.currency,
             payload.schoolId,
-            tx,
           );
 
-        // 3. Vérification dette
         this.verifyDebt(
           configRecord.totalAmount,
           assignmentRecord.amountPaid,
@@ -90,8 +116,7 @@ export class ProcessStudentPayment {
           configRecord.currency,
         );
 
-        // 4. Écritures
-        const newPayment = await this.studentPaymentRepo.create(
+        const newPayment = this.studentPaymentRepo.create(
           {
             assignmentId: payload.assignmentId,
             amountReceived: payload.amountReceived,
@@ -107,7 +132,7 @@ export class ProcessStudentPayment {
         );
 
         const updatedAssignment =
-          await this.feeAssignmentRepo.updateAssignmentProgress(
+          this.feeAssignmentRepo.updateAssignmentProgress(
             payload.assignmentId,
             amountConverted,
             configRecord.totalAmount,
@@ -130,8 +155,6 @@ export class ProcessStudentPayment {
           feeConfig: configRecord,
         };
       });
-
-      return dataToReturn;
     } catch (error) {
       this.logger.error(
         `[Payment processing] Transaction failed for assignment ${payload.assignmentId}`,
@@ -141,56 +164,31 @@ export class ProcessStudentPayment {
     }
   }
 
-  private async calculateConversion(
-    amount: number,
-    fromCurrency: CURRENCY_ENUM,
-    toCurrency: CURRENCY_ENUM,
-    schoolId: string,
-    tx: TDataBase,
-  ) {
-    if (fromCurrency === toCurrency) {
-      return {
-        amountConverted: amount,
-        exchangeRateMultiplied: EXCHANGE_RATE_SCALE,
-      };
-    }
-
-    const todayStr = getLocalDateString();
-    const rateRow = await this.rateRepo.getLatestExchangeRate(
-      {
-        where: {
-          schoolId,
-          date: todayStr,
-          currencyFrom: fromCurrency,
-          currencyTo: toCurrency,
-        },
-      },
-      tx,
-    );
-
-    if (!rateRow) {
-      throw new ExchangeRateNotFoundError(fromCurrency, toCurrency, todayStr);
-    }
-
-    const amountConverted = Math.round(
-      (amount * EXCHANGE_RATE_SCALE) / rateRow.rate,
-    );
-    return { amountConverted, exchangeRateMultiplied: rateRow.rate };
-  }
-
+  /**
+   * Verifies that the payment amount does not exceed the remaining unpaid debt.
+   * @param totalAmount - Total amount expected for the fee configuration.
+   * @param amountPaid - Amount already paid towards the fee assignment.
+   * @param amountConverted - The newly converted payment amount to apply.
+   * @param currency - The currency code for error reporting context.
+   */
   private verifyDebt(
     totalAmount: number,
     amountPaid: number,
     amountConverted: number,
     currency: string,
-  ) {
+  ): void {
     const remainingDebt = totalAmount - amountPaid;
     if (amountConverted > remainingDebt) {
       throw new OverpaymentError(remainingDebt, currency);
     }
   }
 
-  private handleError(error: unknown) {
+  /**
+   * Normalizes errors into appropriate application or transaction exceptions.
+   * @param error - The caught error instance.
+   * @returns An error instance ready to be thrown.
+   */
+  private handleError(error: unknown): Error {
     if (
       error instanceof BusinessRuleError ||
       error instanceof RecordNotFoundError

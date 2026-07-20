@@ -20,7 +20,7 @@ import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/options";
 
 import { UserRepository } from "../users";
 
-export type EnrollmentTDO = ClassroomEnrollment & {
+export type EnrollmentDTO = ClassroomEnrollment & {
   student: User & { fullName?: string };
   classroom: Omit<Classroom, "classId" | "schoolId">;
   yearName: string;
@@ -58,7 +58,8 @@ const ACTIVE_ENROLLEMENTS: BaseClassroomEnrollmentFilters = {
 export class EnrollmentRepository extends betterSqlite.BaseRepository<
   TableClassroomEnrollment,
   TDataBase,
-  EnrollmentTDO
+  EnrollmentDTO,
+  BaseClassroomEnrollmentFilters
 > {
   constructor(database: TDataBase = db) {
     super({

@@ -4,6 +4,7 @@ import {
   feeAssignments,
   type TableFeeAssignment,
   type FeeAssignment,
+  type InsertFeeAssignment,
 } from "@/packages/@core/data-access/db/schemas";
 import { FEE_SCHEDULES_ENUM } from "@/packages/@core/data-access/db/options";
 
@@ -27,6 +28,10 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
   TDataBase,
   FeeAssignment
 > {
+  /**
+   * Initializes a new instance of the FeeAssignmentRepository.
+   * @param database - Optional database connection instance.
+   */
   constructor(database: TDataBase = db) {
     super({
       db: database,
@@ -72,6 +77,30 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
       throw new Error(`Fee assignment with ID ${assignmentId} not found`);
     }
     return current.amountPaid ?? 0;
+  }
+
+  /**
+   * Inserts multiple fee assignments in bulk while ignoring conflicting unique constraints.
+   * @param assignments - Array of fee assignment records to insert.
+   * @param tx - Optional database transaction instance.
+   * @returns The result of the batch insert operation.
+   */
+  assignFees(assignments: InsertFeeAssignment[], tx: TDataBase = this.db) {
+    try {
+      const assignmentClient = this.getClient(tx);
+      return assignmentClient
+        .insert(this.table)
+        .values(assignments)
+        .onConflictDoNothing()
+        .run();
+    } catch (error) {
+      const dbError = DatabaseError.from(
+        error,
+        "Failed to assign fee records in bulk.",
+      );
+      this.logError("assignFees", dbError, { count: assignments.length });
+      throw dbError;
+    }
   }
 
   /**

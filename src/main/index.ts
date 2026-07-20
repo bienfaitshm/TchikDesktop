@@ -1,4 +1,5 @@
 import { app, shell, BrowserWindow, nativeTheme } from "electron";
+import debug from "electron-debug";
 import path from "node:path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { dbManager } from "@/packages/@core/data-access/db";
@@ -11,6 +12,8 @@ import { getAppIcon } from "@/main/utils";
 import { handleFatalError } from "./error-handler";
 import "@/main/apps/system-infos";
 import "@/packages/@core/apis/servers/handlers";
+
+debug();
 
 const mainLogger = getLogger("MainProcess");
 const isDark = nativeTheme.shouldUseDarkColors;

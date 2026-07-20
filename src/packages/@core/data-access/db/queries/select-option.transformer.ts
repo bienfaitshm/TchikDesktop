@@ -25,11 +25,8 @@ export interface DataToOptionConfig<T, R extends SelectOption = SelectOption> {
   transform?: (baseOption: SelectOption, originalItem: T) => R;
 }
 
-export interface OptionProvider<
-  T,
-  TFields extends Record<string, unknown> = {},
-> {
-  fetchOptions(args: TFields): T[];
+export interface OptionProvider<T, TFields = unknown> {
+  fetchOptions(args?: TFields): T[];
 }
 
 /**
@@ -102,7 +99,7 @@ export class SelectOptionFacade<T, R extends SelectOption = SelectOption> {
   /**
    * Récupère et transforme les options de manière sécurisée.
    */
-  public async loadOptions(args: SearchOptions = {}): Promise<R[]> {
+  public async loadOptions<TFields>(args?: TFields): Promise<R[]> {
     try {
       const rawData = await this.provider.fetchOptions(args);
       return SelectOptionTransformer.transformMany(rawData, this.config);

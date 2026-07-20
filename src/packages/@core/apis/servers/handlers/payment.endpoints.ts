@@ -7,6 +7,7 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { PaymentRoutes } from "../../routes-constant";
 import {
+  EnrollmentSchema,
   type ProcessPaymentPayload,
   ProcessPaymentSchema,
 } from "@/packages/@core/data-access/schema-validations";
@@ -29,34 +30,19 @@ const AssignFeesToStudentSchema = z.object({
 type ClassroomFilter = z.infer<typeof ClassroomFilterSchema>;
 type AssignFeesToStudentPayload = z.infer<typeof AssignFeesToStudentSchema>;
 
-const INVOICE_TEMPLATE_DATA = {
-  company: {
-    name: "TECH & CO BOUTIQUE",
-    address: "45 Rue de la République, Lyon",
-    phone: "04.72.00.11.22",
-  },
-  invoiceNumber: "FAC-2026-0412",
-  date: "15/07/2026 11:15",
-  cashier: "Marc K.",
-  items: [
-    { name: "Wireless RGB Mouse", quantity: 1, totalPrice: "25.00" },
-    { name: "USB-C Cable 2m", quantity: 2, totalPrice: "12.00" },
-    { name: "USB Drive 64GB", quantity: 1, totalPrice: "15.00", discount: 10 },
-  ],
-  grossTotal: "52.00",
-  vat: {
-    rate: "20",
-    amount: "10.40",
-  },
-  netToPay: "52.00",
-  paymentMode: "CREDIT CARD",
-  softwareInfo: "POS System v2.1 - Secured",
-};
-
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for student payments and fee assignments.
  */
 export class PaymentController {
+  @IpcServer.register(HttpMethod.GET, PaymentRoutes.STUDENT_PAYMENT_OVERVIEW, {
+    params: EnrollmentSchema.pick({ enrollmentId: true }),
+  })
+  static async getStudentPaymentOverview(
+    req: IpcRequest<unknown, { enrollmentId: string }>,
+  ) {
+    return paymentService.getStudentPaymentOverview(req.params.enrollmentId);
+  }
+
   /**
    * Fetches the assignment and financial payment status matrix for a classroom.
    * @param req - The IPC request context carrying classroom filtering parameters.
@@ -66,7 +52,7 @@ export class PaymentController {
     params: ClassroomFilterSchema,
   })
   static async getClassroomTable(req: IpcRequest<unknown, ClassroomFilter>) {
-    return paymentService.getAssignmentTableOfClassroom(
+    return paymentService.getClassroomPaymentTable(
       req.params,
       (progress: { message: string; pourcent: number }) => {
         req.context.sender.send(PaymentRoutes.CLASSROOM_TABLE, {

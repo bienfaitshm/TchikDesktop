@@ -24,13 +24,16 @@ export interface ILogger {
 export interface IBaseRepositoryConfig<
   TTable extends Table,
   TDb extends DrizzleClient,
+  TFilter extends FindManyOptions<Record<string, Table>> = FindManyOptions<
+    Record<string, Table>
+  >,
 > {
   db: TDb;
   table: TTable;
   idColumn: AnyColumn;
   logger: (context: string) => ILogger;
   baseTableName: string;
-  defaultFilters?: FindManyOptions<Record<string, Table>>;
+  defaultFilters?: TFilter;
   joinTables?: Record<string, Table>;
 }
 
@@ -41,6 +44,9 @@ export abstract class BaseRepository<
   TTable extends Table,
   TDb extends DrizzleClient = DrizzleClient,
   TSelect = TTable["$inferSelect"],
+  TFilter extends FindManyOptions<Record<string, Table>> = FindManyOptions<
+    Record<string, Table>
+  >,
   TInsert = TTable["$inferInsert"],
   TUpdate = Partial<TTable["$inferInsert"]>,
 > {
@@ -49,18 +55,18 @@ export abstract class BaseRepository<
   protected table: TTable;
   protected idColumn: AnyColumn;
   protected baseTableName: string;
-  protected defaultFilters: FindManyOptions<Record<string, Table>> | undefined;
-  protected joinTables: Record<string, Table> | undefined;
+  protected defaultFilters: TFilter | undefined;
+  protected readonly joinTables: Record<string, Table>;
   /**
    * Initializes the repository with database client, schema references, and logging utilities.
    * @param config - Configuration object containing structural dependencies and static filters.
    */
-  constructor(config: IBaseRepositoryConfig<TTable, TDb>) {
+  constructor(config: IBaseRepositoryConfig<TTable, TDb, TFilter>) {
     this.db = config.db;
     this.table = config.table;
     this.idColumn = config.idColumn;
     this.baseTableName = config.baseTableName;
-    this.joinTables = config.joinTables;
+    this.joinTables = config.joinTables ?? { [this.baseTableName]: this.table };
     this.defaultFilters = config.defaultFilters;
     this.logger = config.logger(`${config.baseTableName}Repository`);
   }
@@ -78,12 +84,8 @@ export abstract class BaseRepository<
    * Generates the tabular structural reference tracking dictionary.
    * @returns Key-value mapping of tables indexed under the base table name identifier.
    */
-  protected getJoinTable(): Record<string, Table> {
-    return (
-      this.joinTables ?? {
-        [this.baseTableName]: this.table,
-      }
-    );
+  protected getJoinTable() {
+    return this.joinTables;
   }
 
   /**
@@ -144,7 +146,7 @@ export abstract class BaseRepository<
    * @returns Array matching specified entity properties structures.
    */
   public findMany<Fields extends Record<string, unknown>>(
-    filters?: FindManyOptions<Record<string, Table>>,
+    filters?: TFilter,
     tx?: TDb,
     field?: Fields | undefined,
   ): TSelect[] {
@@ -249,11 +251,7 @@ export abstract class BaseRepository<
    * @param tx - Optional database transaction orchestration reference.
    * @returns Model details map reflecting final operational changes updates or null.
    */
-  public update(
-    payload: TUpdate,
-    filters?: FindManyOptions<Record<string, Table>>,
-    tx?: TDb,
-  ): TSelect | null {
+  public update(payload: TUpdate, filters?: TFilter, tx?: TDb): TSelect | null {
     if (!filters) return null;
 
     return this.executeWithTiming(
