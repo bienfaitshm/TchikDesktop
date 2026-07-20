@@ -10,13 +10,12 @@ const SALT_ROUNDS = 10;
 /**
  * Hache un mot de passe en utilisant l'algorithme Bcrypt.
  * * @param password Le mot de passe en clair à sécuriser.
- * @returns Une promesse contenant le hash généré (incluant le sel).
  */
-export const hashPassword = async (password: string): Promise<string> => {
+export const hashPassword = (password: string): string => {
   if (!password || password.trim() === "") {
     throw new Error("Le mot de passe ne peut pas être vide.");
   }
-  return bcrypt.hash(password, SALT_ROUNDS);
+  return bcrypt.hashSync(password, SALT_ROUNDS);
 };
 
 /**

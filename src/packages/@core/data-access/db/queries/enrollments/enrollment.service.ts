@@ -4,14 +4,36 @@ import {
   type UserRepository,
   userRepository,
 } from "@/packages/@core/data-access/db/queries/users";
-import { EnrollmentRepository } from "./enrollment.repository";
+import {
+  EnrollmentRepository,
+  EnrollmentDTO,
+  BaseClassroomEnrollmentFilters,
+} from "./enrollment.repository";
+import { SelectOptionFacade } from "@/packages/drizzle-queries";
 
 export class EnrollmentService {
+  public readonly enrollmentSelectService: SelectOptionFacade<EnrollmentDTO>;
+
   constructor(
     private readonly enrollmentRepo: EnrollmentRepository,
     private readonly userRepo: UserRepository,
     private readonly clientDb: TDataBase = db,
-  ) {}
+  ) {
+    this.enrollmentSelectService = new SelectOptionFacade<EnrollmentDTO>(
+      this.enrollmentRepo,
+      {
+        valueKey: "enrollmentId",
+        labelKeyLong: ({ student }) =>
+          student.fullName ?? `${student.lastName} ${student.middleName}`,
+        labelKeyShort: ({ student }) => student.lastName,
+        labelFormat: "long",
+      },
+    );
+  }
+
+  getOptions(filters: BaseClassroomEnrollmentFilters) {
+    return this.enrollmentSelectService.loadOptions(filters);
+  }
 
   private validateContext(
     schoolId?: string,
@@ -35,14 +57,14 @@ export class EnrollmentService {
   /**
    * Processus transactionnel de création rapide
    */
-  async quickCreate(payload: EnrollmentQuickCreate) {
+  quickCreate(payload: EnrollmentQuickCreate) {
     this.validateContext(payload.schoolId, payload.yearId);
 
-    return await this.clientDb.transaction(async (tx) => {
+    return this.clientDb.transaction(async (tx) => {
       let targetStudentId = payload.studentId;
 
       if (payload.student) {
-        const newUser = await this.userRepo.createUser(
+        const newUser = this.userRepo.createUser(
           {
             lastName: payload.student.lastName,
             middleName: payload.student.middleName,
@@ -61,7 +83,7 @@ export class EnrollmentService {
         );
       }
 
-      const enrollment = await this.enrollmentRepo.create(
+      const enrollment = this.enrollmentRepo.create(
         {
           classroomId: payload.classroomId,
           schoolId: payload.schoolId,

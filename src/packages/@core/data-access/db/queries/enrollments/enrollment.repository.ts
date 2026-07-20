@@ -15,7 +15,9 @@ import {
   DatabaseError,
   helpers,
   betterSqlite,
+  OptionProvider,
 } from "@/packages/drizzle-queries";
+
 import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/options";
 
 import { UserRepository } from "../users";
@@ -55,21 +57,28 @@ const ACTIVE_ENROLLEMENTS: BaseClassroomEnrollmentFilters = {
   },
 };
 
-export class EnrollmentRepository extends betterSqlite.BaseRepository<
-  TableClassroomEnrollment,
-  TDataBase,
-  EnrollmentDTO,
-  BaseClassroomEnrollmentFilters
-> {
+export class EnrollmentRepository
+  extends betterSqlite.BaseRepository<
+    TableClassroomEnrollment,
+    TDataBase,
+    EnrollmentDTO,
+    BaseClassroomEnrollmentFilters
+  >
+  implements OptionProvider<EnrollmentDTO>
+{
   constructor(database: TDataBase = db) {
     super({
       db: database,
       table: classroomEnrollments,
       idColumn: classroomEnrollments.enrollmentId,
-      baseTableName: "Enrollment",
+      baseTableName: "classroomEnrollments",
       logger: getLogger,
       defaultFilters: ENROLLMENT_DEFAULT_SORT,
     });
+  }
+
+  fetchOptions(filters: BaseClassroomEnrollmentFilters): EnrollmentDTO[] {
+    return this.findMany(filters);
   }
 
   /**

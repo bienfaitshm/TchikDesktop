@@ -1,4 +1,6 @@
 import { CustomLogger } from "@/packages/logger";
+import { FindManyOptions } from "./helpers";
+import type { Table } from "drizzle-orm";
 
 export interface SelectOption {
   value: string;
@@ -7,34 +9,42 @@ export interface SelectOption {
   description?: string;
 }
 
-export interface SearchOptions<TFields extends Record<string, unknown> = {}> {
-  search?: string;
-  filters?: TFields;
-}
+export interface SearchOptions extends FindManyOptions<Record<string, Table>> {}
 
 export type LabelFormatterStrategy = "short" | "long" | "combined";
 
+export type LabelExtractor<T> = keyof T | ((item: T) => string);
+
 /**
- * Configuration purement axée sur la donnée et son formatage (Pure Domain/UI).
+ * Data transformation configuration mapping domain objects to UI SelectOption format.
  */
 export interface DataToOptionConfig<T, R extends SelectOption = SelectOption> {
   valueKey: keyof T;
-  labelKeyLong: keyof T;
-  labelKeyShort: keyof T;
+  labelKeyLong: LabelExtractor<T>;
+  labelKeyShort: LabelExtractor<T>;
   labelFormat?: LabelFormatterStrategy;
   transform?: (baseOption: SelectOption, originalItem: T) => R;
 }
 
+/**
+ * Interface for components or repositories capable of providing option items.
+ */
 export interface OptionProvider<T> {
-  fetchOptions(args: SearchOptions): Promise<T[]>;
+  fetchOptions(args: SearchOptions): Promise<T[]> | T[];
 }
 
 /**
- * Service utilitaire purement fonctionnel et stateless (SRP).
+ * Pure, stateless transformer utility for converting domain objects to UI select options.
  */
 export class SelectOptionTransformer {
   private static readonly DEFAULT_FORMAT: LabelFormatterStrategy = "combined";
 
+  /**
+   * Transforms an array of domain objects into an array of SelectOptions.
+   * @param data - Array of items to convert.
+   * @param config - Transformation rules and keys configuration.
+   * @returns Array of transformed SelectOption items.
+   */
   public static transformMany<T, R extends SelectOption = SelectOption>(
     data: T[],
     config: DataToOptionConfig<T, R>,
@@ -45,6 +55,12 @@ export class SelectOptionTransformer {
     return data.map((item) => this.transformSingle(item, config));
   }
 
+  /**
+   * Transforms a single domain object into a SelectOption item.
+   * @param item - Domain object to convert.
+   * @param config - Transformation rules and keys configuration.
+   * @returns Transformed SelectOption item.
+   */
   public static transformSingle<T, R extends SelectOption = SelectOption>(
     item: T,
     config: DataToOptionConfig<T, R>,
@@ -54,19 +70,46 @@ export class SelectOptionTransformer {
       labelKeyLong,
       labelKeyShort,
       labelFormat = this.DEFAULT_FORMAT,
-      transform = (option, item) => ({ ...option, ...item }),
+      transform,
     } = config;
 
-    const longLabel = String(item[labelKeyLong] ?? "").trim();
-    const shortLabel = String(item[labelKeyShort] ?? "").trim();
+    const longLabel = this.resolveLabelValue(item, labelKeyLong);
+    const shortLabel = this.resolveLabelValue(item, labelKeyShort);
     const value = String(item[valueKey] ?? "");
 
     const label = this.formatLabel(longLabel, shortLabel, labelFormat);
     const baseOption: SelectOption = { value, label };
 
-    return transform ? (transform(baseOption, item) as R) : (baseOption as R);
+    if (transform) {
+      return transform(baseOption, item);
+    }
+
+    return baseOption as R;
   }
 
+  /**
+   * Resolves the label string value using a property key or an extractor function.
+   * @param item - Target object instance.
+   * @param extractor - Property key or extraction function.
+   * @returns Extracted string value.
+   */
+  private static resolveLabelValue<T>(
+    item: T,
+    extractor: LabelExtractor<T>,
+  ): string {
+    if (typeof extractor === "function") {
+      return String(extractor(item) ?? "").trim();
+    }
+    return String(item[extractor] ?? "").trim();
+  }
+
+  /**
+   * Formats long and short label representations based on the chosen strategy.
+   * @param long - Long label text.
+   * @param short - Short label text.
+   * @param format - Label formatting strategy.
+   * @returns Formatted label string.
+   */
   private static formatLabel(
     long: string,
     short: string,
@@ -86,10 +129,15 @@ export class SelectOptionTransformer {
 }
 
 /**
- * Façade de coordination.
- * Le logger est injecté ici, car la gestion des erreurs d'infrastructure est de sa responsabilité.
+ * Coordination facade that manages option loading, error logging, and transformation.
  */
 export class SelectOptionFacade<T, R extends SelectOption = SelectOption> {
+  /**
+   * Initializes a new instance of SelectOptionFacade.
+   * @param provider - Option provider supplying raw records.
+   * @param config - Transformation configuration rules.
+   * @param logger - Optional custom logger instance.
+   */
   constructor(
     private readonly provider: OptionProvider<T>,
     private readonly config: DataToOptionConfig<T, R>,
@@ -97,7 +145,9 @@ export class SelectOptionFacade<T, R extends SelectOption = SelectOption> {
   ) {}
 
   /**
-   * Récupère et transforme les options de manière sécurisée.
+   * Loads options from the provider and transforms them safely into SelectOption objects.
+   * @param args - Search options and query filters.
+   * @returns Promise resolving to an array of SelectOption objects.
    */
   public async loadOptions(args: SearchOptions = {}): Promise<R[]> {
     try {

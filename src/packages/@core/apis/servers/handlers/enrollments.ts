@@ -1,4 +1,7 @@
-import { enrollmentRepository } from "@/packages/@core/data-access/db/queries";
+import {
+  enrollmentRepository,
+  enrollmentService,
+} from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcServer,
@@ -10,14 +13,14 @@ import {
   EnrollmentUpdateSchema,
   EnrollmentQuickCreateSchema,
   EnrollmentSchema,
-  createSearchOptionsSchema,
+  type EnrollmentFilter,
+  type EnrollmentCreate,
+  type EnrollmentQuickCreate,
+  type EnrollmentUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import { EnrollmentRoutes } from "../../routes-constant";
 
 const EnrollmentIdSchema = EnrollmentSchema.pick({ enrollmentId: true });
-const SearchEnrollmentSchema = createSearchOptionsSchema(
-  EnrollmentFilterSchema,
-);
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for student enrollment records.
@@ -31,7 +34,7 @@ export class EnrollmentController {
   @IpcServer.register(HttpMethod.GET, EnrollmentRoutes.ALL, {
     params: EnrollmentFilterSchema,
   })
-  static async getAll(req: IpcRequest) {
+  static async getAll(req: IpcRequest<unknown, EnrollmentFilter>) {
     return enrollmentRepository.findMany(req.params);
   }
 
@@ -41,10 +44,10 @@ export class EnrollmentController {
    * @returns A promise resolving to structured autocomplete selection options.
    */
   @IpcServer.register(HttpMethod.GET, EnrollmentRoutes.SEARCH, {
-    params: SearchEnrollmentSchema,
+    params: EnrollmentFilterSchema,
   })
-  static async getOptions(req: IpcRequest) {
-    return enrollmentRepository.findForSelect(req.params);
+  static async getOptions(req: IpcRequest<unknown, EnrollmentFilter>) {
+    return enrollmentService.getOptions(req.params);
   }
 
   /**
@@ -55,7 +58,7 @@ export class EnrollmentController {
   @IpcServer.register(HttpMethod.POST, EnrollmentRoutes.ALL, {
     body: EnrollmentCreateSchema,
   })
-  static async create(req: IpcRequest) {
+  static async create(req: IpcRequest<EnrollmentCreate>) {
     return enrollmentRepository.create(req.body);
   }
 
@@ -67,8 +70,8 @@ export class EnrollmentController {
   @IpcServer.register(HttpMethod.POST, EnrollmentRoutes.QUICK_ENROLLMENT, {
     body: EnrollmentQuickCreateSchema,
   })
-  static async quickCreate(req: IpcRequest) {
-    return enrollmentRepository.quickCreate(req.body);
+  static async quickCreate(req: IpcRequest<EnrollmentQuickCreate, unknown>) {
+    return enrollmentService.quickCreate(req.body);
   }
 
   /**
@@ -79,7 +82,7 @@ export class EnrollmentController {
   @IpcServer.register(HttpMethod.GET, EnrollmentRoutes.DETAIL, {
     params: EnrollmentIdSchema,
   })
-  static async getById(req: IpcRequest) {
+  static async getById(req: IpcRequest<unknown, { enrollmentId: string }>) {
     return enrollmentRepository.findById(req.params.enrollmentId);
   }
 
@@ -92,7 +95,7 @@ export class EnrollmentController {
     params: EnrollmentIdSchema,
     body: EnrollmentUpdateSchema,
   })
-  static async update(req: IpcRequest) {
+  static async update(req: IpcRequest<EnrollmentUpdate, EnrollmentFilter>) {
     return enrollmentRepository.update(req.body, req.params);
   }
 
@@ -104,7 +107,7 @@ export class EnrollmentController {
   @IpcServer.register(HttpMethod.DELETE, EnrollmentRoutes.DETAIL, {
     params: EnrollmentIdSchema,
   })
-  static async delete(req: IpcRequest) {
+  static async delete(req: IpcRequest<unknown, { enrollmentId: string }>) {
     return enrollmentRepository.delete(req.params.enrollmentId);
   }
 }

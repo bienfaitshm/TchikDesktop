@@ -1,40 +1,45 @@
 import { getTableColumns, sql } from "drizzle-orm";
 import { getLogger } from "@/packages/logger";
-import { db } from "@/packages/@core/data-access/db/config";
+import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import {
   users,
   type TableUser,
   type InsertUser,
   type User,
-  type FindManyOptions,
 } from "@/packages/@core/data-access/db/schemas";
 import { hashPassword } from "@/packages/@core/data-access/db/crypt";
 import {
-  applyQueryOptions,
-  mergeQueryOptions,
-} from "@/packages/@core/data-access/db/queries/drizzle-builder";
-import type {
+  helpers,
+  betterSqlite,
   OptionProvider,
-  SearchOptions,
-} from "@/packages/@core/data-access/db/queries/select-option.transformer";
-import { createSQLiteSearchFilter } from "../drizzle-utility";
-import { BaseRepository, type LibSqlClient } from "../base-repository";
+} from "@/packages/drizzle-queries";
 
-export type UserDTO = { fullName?: string } & Omit<User, "password">;
-export type BaseUserFilters = Partial<FindManyOptions<TableUser>>;
+export type UserDTO = { fullName: string } & Omit<User, "password">;
 
-const DEFAULT_LIMIT_VALUE = 50;
+const userJoinTables = {
+  users,
+} as const;
 
-const USER_DEFAULT_SORT: FindManyOptions<TableUser> = {
+export type BaseUserFilters = helpers.FindManyOptions<typeof userJoinTables>;
+
+const USER_DEFAULT_SORT: BaseUserFilters = {
   orderBy: [
-    { column: "lastName", order: "asc" },
-    { column: "middleName", order: "asc" },
-    { column: "firstName", order: "asc" },
+    { table: "users", column: "lastName", order: "asc" },
+    { table: "users", column: "middleName", order: "asc" },
+    { table: "users", column: "firstName", order: "asc" },
   ],
 };
 
+/**
+ * Repository handling user database operations and option queries.
+ */
 export class UserRepository
-  extends BaseRepository<TableUser, LibSqlClient>
+  extends betterSqlite.BaseRepository<
+    TableUser,
+    TDataBase,
+    UserDTO,
+    BaseUserFilters
+  >
   implements OptionProvider<UserDTO>
 {
   static readonly fullNameSql = sql<string>`
@@ -46,7 +51,8 @@ export class UserRepository
   `.as("fullName");
 
   /**
-   * Retourne les colonnes sélectionnables de l'utilisateur sans le mot de passe.
+   * Returns selectable user table columns excluding the password field with a concatenated fullName alias.
+   * @returns An object representing mapped visible columns for SQL selection.
    */
   static getVisibleColumns() {
     const { password, ...userFields } = getTableColumns(users);
@@ -56,18 +62,28 @@ export class UserRepository
     };
   }
 
-  constructor(database: LibSqlClient = db) {
+  /**
+   * Initializes a new instance of UserRepository.
+   * @param database - Optional database connection client instance.
+   */
+  constructor(database: TDataBase = db) {
     super({
       db: database,
       table: users,
       idColumn: users.userId,
-      entityName: "User",
+      baseTableName: "User",
       logger: getLogger,
-      defaultSort: USER_DEFAULT_SORT,
+      joinTables: userJoinTables,
+      defaultFilters: USER_DEFAULT_SORT,
     });
   }
 
-  protected override getQuerySet(tx?: LibSqlClient): any {
+  /**
+   * Builds the base dynamic query set selecting non-sensitive user attributes.
+   * @param tx - Optional database transaction instance.
+   * @returns Dynamic query builder targeting the users table.
+   */
+  protected override getQuerySet(tx?: TDataBase) {
     return this.getClient(tx)
       .select(UserRepository.getVisibleColumns())
       .from(this.table)
@@ -75,55 +91,22 @@ export class UserRepository
   }
 
   /**
-   * Récupère les utilisateurs pour les composants Select / Combobox.
-   * Alterne intelligemment entre recherche textuelle filtrée et données par défaut.
+   * Retrieves user records filtered for selection components like drop-downs and comboboxes.
+   * @param filters - Filter options to apply when fetching records.
+   * @returns Array of matching user DTO objects.
    */
-  async fetchOptions({
-    filters,
-    search,
-  }: SearchOptions<BaseUserFilters> = {}): Promise<UserDTO[]> {
-    try {
-      let query = this.getQuerySet();
-
-      const searchFilter = createSQLiteSearchFilter(
-        [this.table.lastName, this.table.middleName, this.table.firstName],
-        search,
-      );
-
-      if (searchFilter) {
-        const mergedOptions = mergeQueryOptions(filters, USER_DEFAULT_SORT);
-        query = query.where(searchFilter);
-
-        return (await applyQueryOptions(
-          query,
-          this.table,
-          mergedOptions,
-        )) as unknown as UserDTO[];
-      }
-
-      const defaultOptions = mergeQueryOptions(
-        { limit: DEFAULT_LIMIT_VALUE, ...filters },
-        USER_DEFAULT_SORT,
-      );
-
-      return (await applyQueryOptions(
-        query,
-        this.table,
-        defaultOptions,
-      )) as unknown as UserDTO[];
-    } catch (error) {
-      this.logError("fetchOptions", error, { filters, search });
-      throw new Error(
-        "Erreur lors de la récupération des options d'utilisateurs.",
-      );
-    }
+  fetchOptions(filters: BaseUserFilters): UserDTO[] {
+    return this.findMany(filters);
   }
 
   /**
-   * Crée un utilisateur en injectant un hash de mot de passe temporaire ou par défaut.
+   * Creates a user record by assigning a hashed default temporary password.
+   * @param value - User insertion payload excluding password.
+   * @param tx - Optional database transaction instance.
+   * @returns The created user entity.
    */
-  async createUser(value: Omit<InsertUser, "password">, tx?: LibSqlClient) {
-    const passwordHash = await hashPassword("0000");
+  createUser(value: Omit<InsertUser, "password">, tx?: TDataBase) {
+    const passwordHash = hashPassword("0000");
     return this.create({ ...value, password: passwordHash }, tx);
   }
 }
