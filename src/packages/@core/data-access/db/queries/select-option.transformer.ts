@@ -25,8 +25,11 @@ export interface DataToOptionConfig<T, R extends SelectOption = SelectOption> {
   transform?: (baseOption: SelectOption, originalItem: T) => R;
 }
 
-export interface OptionProvider<T> {
-  fetchOptions(args: SearchOptions): T[];
+export interface OptionProvider<
+  T,
+  TFields extends Record<string, unknown> = {},
+> {
+  fetchOptions(args: TFields): T[];
 }
 
 /**

@@ -2,6 +2,7 @@ import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { GoogleSearchInput } from "../components/search";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrollements";
 import { EnrollmentOverview } from "../components/enrollment-overview";
+import { FastPaymentForm } from "../forms/fast-payment-form";
 
 export function FastPaymentPage() {
   const { schoolId, yearId } = useCurrentConfig();
@@ -58,21 +59,8 @@ export function FastPaymentPage() {
       </div>
 
       {/* Zone de contenu principal */}
-      <main className="w-full flex justify-center">
-        {/* <FastPaymentForm /> */}
-        {/* <GoogleStyleSearchForm /> */}
-        <GoogleSearchInput
-          data={enrollments}
-          getItemLabel={(item) => ({
-            label: item.student.fullName ?? item.student.lastName,
-            description: `${item.student.gender} - ${item.classroom.shortIdentifier}`,
-          })}
-          renderDetail={(enrollment) => (
-            <div>
-              <EnrollmentOverview enrollment={enrollment} />
-            </div>
-          )}
-        />
+      <main>
+        <FastPaymentForm enrollments={[]} />
       </main>
     </div>
   );

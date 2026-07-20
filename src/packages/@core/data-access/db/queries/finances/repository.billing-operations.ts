@@ -2,15 +2,10 @@ import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
   feeConfigurations,
-  feeAssignments,
-  studentPayments,
   dailyExchangeRates,
   type TableFeeConfiguration,
   type FeeConfiguration,
-  type TableFeeAssignment,
-  type TableStudentPayment,
   type TableDailyExchangeRate,
-  type FindManyOptions,
   options,
   feeTypes,
   classrooms,
@@ -19,28 +14,16 @@ import {
   type Classroom,
   type FeeSchedule,
   type Wallet,
-  type FeeAssignment,
   wallets,
-  classroomEnrollments,
-  users,
-  StudentPayment,
-  User,
 } from "@/packages/@core/data-access/db/schemas";
+import { SECTION_ENUM } from "@/packages/@core/data-access/db/options";
+import type { OptionProvider } from "@/packages/@core/data-access/db/queries/select-option.transformer";
 import {
-  FEE_SCHEDULES_ENUM,
-  SECTION_ENUM,
-} from "@/packages/@core/data-access/db/options";
-import type {
-  OptionProvider,
-  SearchOptions,
-} from "@/packages/@core/data-access/db/queries/select-option.transformer";
-import {
-  BaseRepository,
   DatabaseError,
-  type DrizzleClient,
+  helpers,
+  betterSqlite,
 } from "@/packages/drizzle-queries";
-import { and, eq, getTableColumns, or, sql } from "drizzle-orm";
-import { UserRepository } from "../users";
+import { eq, getTableColumns } from "drizzle-orm";
 
 export type FeeApplicableConfiguration = FeeConfiguration & {
   feeType:
@@ -57,35 +40,51 @@ export type FeeConfigurationDTO = FeeConfiguration & {
   wallet: Wallet;
 };
 
-/* =========================================================================
-   3. FEE CONFIGURATION REPOSITORY
-   ========================================================================= */
+const configJoinTables = {
+  options,
+  classrooms,
+  feeTypes,
+  wallets,
+  feeConfigurations,
+} as const;
 
-export type FeeConfigurationFilters = Partial<
-  FindManyOptions<TableFeeConfiguration>
+export type FeeConfigurationFilters = helpers.FindManyOptions<
+  typeof configJoinTables
 >;
 
 const FEE_CONFIG_DEFAULT_SORT: FeeConfigurationFilters = {
-  orderBy: [{ column: "name", order: "asc" }],
+  orderBy: [{ table: "feeConfigurations", column: "name", order: "asc" }],
 };
 
 export class FeeConfigurationRepository
-  extends BaseRepository<TableFeeConfiguration, TDataBase, FeeConfigurationDTO>
+  extends betterSqlite.BaseRepository<
+    TableFeeConfiguration,
+    TDataBase,
+    FeeConfigurationDTO
+  >
   implements OptionProvider<FeeConfiguration>
 {
+  /**
+   * Initializes a new instance of the FeeConfigurationRepository.
+   * @param database - Optional database connection instance.
+   */
   constructor(database: TDataBase = db) {
     super({
       db: database,
       table: feeConfigurations,
       idColumn: feeConfigurations.feeConfigId,
-      entityName: "FeeConfiguration",
+      baseTableName: "feeConfigurations",
       logger: getLogger,
-      defaultSort: FEE_CONFIG_DEFAULT_SORT,
+      defaultFilters: FEE_CONFIG_DEFAULT_SORT,
+      joinTables: configJoinTables,
     });
-
-    this.searchFiltersColumns = [feeConfigurations.name];
   }
 
+  /**
+   * Constructs the base query set with necessary relations for fee configurations.
+   * @param tx - Optional database transaction instance.
+   * @returns The dynamic query builder populated with joined relations.
+   */
   protected getQuerySet(tx?: TDataBase) {
     return this.getClient(tx)
       .select({
@@ -104,19 +103,21 @@ export class FeeConfigurationRepository
   }
 
   /**
-   * Permet de lister les configurations de frais disponibles pour un Select/Combobox.
+   * Lists available fee configurations for selection components.
+   * @param filters - Optional filters to apply when fetching records.
+   * @returns An array of fee configurations.
    */
-  async fetchOptions(
-    params: SearchOptions<FeeConfigurationFilters> = {},
-  ): Promise<FeeConfiguration[]> {
-    return this.findForSelect(params);
+  fetchOptions(filters: FeeConfigurationFilters = {}): FeeConfiguration[] {
+    return this.findMany(filters);
   }
 
   /**
-   * Trouver toutes les configurations applicables à une classe ou une option.
-   * Modifiée pour être 100% synchrone (retrait de 'async').
+   * Finds all applicable configurations for a classroom or option based on specific context weightings.
+   * @param ctx - Context object containing school, year, classroom, option, and section identifiers.
+   * @param tx - Optional database transaction instance.
+   * @returns An array of prioritized applicable fee configurations.
    */
-  async findApplicableConfigurations(
+  findApplicableConfigurations(
     ctx: {
       schoolId: string;
       yearId: string;
@@ -125,30 +126,24 @@ export class FeeConfigurationRepository
       section: SECTION_ENUM | null;
     },
     tx: TDataBase = this.db,
-  ): Promise<FeeApplicableConfiguration[]> {
+  ): FeeApplicableConfiguration[] {
     try {
       const client = this.getClient(tx);
+      const filters: FeeConfigurationFilters = {
+        where: {
+          feeConfigurations: {
+            schoolId: { $eq: ctx.schoolId },
+            yearId: { $eq: ctx.yearId },
+          },
+        },
+        or: [
+          { feeConfigurations: { optionId: { $eq: ctx.optionId } } },
+          { feeConfigurations: { classroomId: { $eq: ctx.classroomId } } },
+        ],
+      };
 
-      const targetConditions = [
-        eq(feeConfigurations.classroomId, ctx.classroomId),
-      ];
-
-      if (ctx.optionId) {
-        targetConditions.push(eq(feeConfigurations.optionId, ctx.optionId));
-      }
-      if (ctx.section) {
-        targetConditions.push(
-          eq(feeConfigurations.section, ctx.section as SECTION_ENUM),
-        );
-      }
-
-      // Synchrone sous better-sqlite3
-      const configs = (await client.query.feeConfigurations.findMany({
-        where: and(
-          eq(feeConfigurations.schoolId, ctx.schoolId),
-          eq(feeConfigurations.yearId, ctx.yearId),
-          or(...targetConditions),
-        ),
+      const configs = client.query.feeConfigurations.findMany({
+        ...helpers.extractQueryPayload(this.getJoinTable(), filters),
         with: {
           feeType: {
             with: {
@@ -156,7 +151,7 @@ export class FeeConfigurationRepository
             },
           },
         },
-      })) as unknown as FeeApplicableConfiguration[];
+      }) as unknown as FeeApplicableConfiguration[];
 
       if (configs.length === 0) return [];
 
@@ -194,218 +189,50 @@ export class FeeConfigurationRepository
 
 export const feeConfigurationRepository = new FeeConfigurationRepository(db);
 
-/* =========================================================================
-   4. FEE ASSIGNMENT REPOSITORY
-   ========================================================================= */
+const dailyExchangeJoinTables = {
+  dailyExchangeRates,
+} as const;
 
-export type FeeAssignmentFilters = Partial<TableFeeAssignment>;
-
-const FEE_ASSIGNMENT_DEFAULT_SORT: FindManyOptions<TableFeeAssignment> = {
-  orderBy: [{ column: "assignmentId", order: "desc" }],
-};
-
-export class FeeAssignmentRepository extends BaseRepository<
-  TableFeeAssignment,
-  TDataBase,
-  FeeAssignment
-> {
-  constructor(database: TDataBase = db) {
-    super({
-      db: database,
-      table: feeAssignments,
-      idColumn: feeAssignments.assignmentId,
-      entityName: "FeeAssignment",
-      logger: getLogger,
-      defaultSort: FEE_ASSIGNMENT_DEFAULT_SORT,
-    });
-
-    this.searchFiltersColumns = [];
-  }
-
-  getPaymentStatus(amount: number, totalAmount: number): FEE_SCHEDULES_ENUM {
-    if (amount >= totalAmount) {
-      return amount > totalAmount
-        ? FEE_SCHEDULES_ENUM.OVERPAID
-        : FEE_SCHEDULES_ENUM.PAID;
-    }
-
-    if (amount <= 0) {
-      return FEE_SCHEDULES_ENUM.UNPAID;
-    }
-
-    return FEE_SCHEDULES_ENUM.PARTIALLY_PAID;
-  }
-
-  /**
-   * Mettre à jour l'état d'avancement de la dette de l'élève (Garanti transactionnel & synchrone)
-   */
-  async updateAssignmentProgress(
-    assignmentId: string,
-    amountConverted: number,
-    totalAmount: number,
-    tx: TDataBase = this.db,
-  ) {
-    try {
-      const client: TDataBase = this.getClient(tx);
-
-      // 1. Récupération synchrone via l'exécuteur `.get()`
-      const [current] = await client
-        .select({
-          amountPaid: this.table.amountPaid,
-        })
-        .from(this.table)
-        .where(eq(this.table.assignmentId, assignmentId));
-
-      if (!current) {
-        throw new Error(`Fee assignment with ID ${assignmentId} not found`);
-      }
-
-      // 2. Calcul du nouveau montant payé
-      const previousAmount = current.amountPaid ?? 0;
-      const newAmountPaid = previousAmount + amountConverted;
-      const newStatus = this.getPaymentStatus(newAmountPaid, totalAmount);
-
-      // 3. Persistance synchrone et immédiate via `.all()` sur la clause `.returning()`
-      const [updatedRecord] = await client
-        .update(this.table)
-        .set({
-          amountPaid: newAmountPaid,
-          status: newStatus,
-          updatedAt: sql`CURRENT_TIMESTAMP`,
-        })
-        .where(eq(this.table.assignmentId, assignmentId))
-        .returning();
-
-      if (!updatedRecord) {
-        throw new Error(
-          `Failed to return the updated record for assignment ID: ${assignmentId}`,
-        );
-      }
-
-      return updatedRecord;
-    } catch (error) {
-      const dbError = DatabaseError.from(
-        error,
-        `Failed to update assignment progress for ID: ${assignmentId}`,
-      );
-      this.logError("updateAssignmentProgress", dbError, {
-        assignmentId,
-        amountConverted,
-        totalAmount,
-      });
-      throw dbError;
-    }
-  }
-}
-
-export const feeAssignmentRepository = new FeeAssignmentRepository(db);
-
-/* =========================================================================
-   5. STUDENT PAYMENT REPOSITORY (Historique Comptable)
-   ========================================================================= */
-
-export type StudentPaymentFilters = Partial<
-  FindManyOptions<TableStudentPayment>
->;
-
-export type StudentPaymentTDO = StudentPayment & {
-  feeType: FeeType;
-  classroom: Classroom;
-  student: User;
-};
-
-const STUDENT_PAYMENT_DEFAULT_SORT: StudentPaymentFilters = {
-  orderBy: [{ column: "paymentId", order: "desc" }],
-};
-
-export class StudentPaymentRepository extends BaseRepository<
-  TableStudentPayment,
-  DrizzleClient
-> {
-  constructor(database: DrizzleClient = db) {
-    super({
-      db: database,
-      table: studentPayments,
-      idColumn: studentPayments.paymentId,
-      entityName: "StudentPayment",
-      logger: getLogger,
-      defaultSort: STUDENT_PAYMENT_DEFAULT_SORT,
-    });
-
-    this.searchFiltersColumns = [studentPayments.transactionReference];
-  }
-
-  protected getQuerySet(tx?: DrizzleClient) {
-    return this.getClient(tx)
-      .select({
-        ...getTableColumns(this.table),
-        classroom: getTableColumns(classrooms),
-        student: UserRepository.getVisibleColumns(),
-        feeType: getTableColumns(feeTypes),
-      })
-      .from(this.table)
-      .innerJoin(
-        feeAssignments,
-        eq(this.table.assignmentId, feeAssignments.assignmentId),
-      )
-      .innerJoin(
-        classroomEnrollments,
-        eq(feeAssignments.enrollmentId, classroomEnrollments.enrollmentId),
-      )
-      .innerJoin(
-        classrooms,
-        eq(classroomEnrollments.classroomId, classrooms.classId),
-      )
-      .innerJoin(users, eq(classroomEnrollments.studentId, users.userId))
-      .innerJoin(
-        feeConfigurations,
-        eq(feeAssignments.feeConfigId, feeConfigurations.feeConfigId),
-      )
-      .innerJoin(feeTypes, eq(feeConfigurations.feeTypeId, feeTypes.feeTypeId))
-      .$dynamic();
-  }
-}
-
-export const studentPaymentRepository = new StudentPaymentRepository(db);
-
-/* =========================================================================
-   6. DAILY EXCHANGE RATE REPOSITORY (Taux du jour)
-   ========================================================================= */
-
-export type DailyExchangeRateFilters = Partial<
-  FindManyOptions<TableDailyExchangeRate>
+export type DailyExchangeRateFilters = helpers.FindManyOptions<
+  typeof dailyExchangeJoinTables
 >;
 
 const DAILY_EXCHANGE_RATE_DEFAULT_SORT: DailyExchangeRateFilters = {
-  orderBy: [{ column: "date", order: "desc" }],
+  orderBy: [{ table: "dailyExchangeRates", column: "date", order: "desc" }],
 };
 
-export class DailyExchangeRateRepository extends BaseRepository<
+export class DailyExchangeRateRepository extends betterSqlite.BaseRepository<
   TableDailyExchangeRate,
-  DrizzleClient
+  TDataBase
 > {
-  constructor(database: DrizzleClient = db) {
+  /**
+   * Initializes a new instance of the DailyExchangeRateRepository.
+   * @param database - Optional database connection instance.
+   */
+  constructor(database: TDataBase = db) {
     super({
       db: database,
       table: dailyExchangeRates,
       idColumn: dailyExchangeRates.rateId,
-      entityName: "DailyExchangeRate",
+      baseTableName: "dailyExchangeRates",
       logger: getLogger,
-      defaultSort: DAILY_EXCHANGE_RATE_DEFAULT_SORT,
+      defaultFilters: DAILY_EXCHANGE_RATE_DEFAULT_SORT,
+      joinTables: dailyExchangeJoinTables,
     });
-
-    this.searchFiltersColumns = [dailyExchangeRates.date];
   }
 
   /**
-   * Obtenir le taux du jour le plus récent pour un couple de devises (Compatible Transaction)
+   * Retrieves the most recent daily exchange rate for a given currency pair.
+   * @param filters - Filter options to locate the appropriate exchange rate.
+   * @param tx - Optional database transaction instance.
+   * @returns The latest daily exchange rate record or null if not found.
    */
-  async getLatestExchangeRate(
+  getLatestExchangeRate(
     filters: DailyExchangeRateFilters,
-    tx: DrizzleClient = this.db,
+    tx: TDataBase = this.db,
   ) {
     try {
-      const dailyRates = await this.findMany(filters, tx);
+      const dailyRates = this.findMany(filters, tx);
       if (dailyRates.length > 0) {
         const [rate] = dailyRates;
         return rate;
@@ -416,7 +243,7 @@ export class DailyExchangeRateRepository extends BaseRepository<
         error,
         "Failed to retrieve the latest exchange rate.",
       );
-      this.logError("getLatestExchangeRate", dbError, filters);
+      this.logError("getLatestExchangeRate", dbError, { filters });
       throw dbError;
     }
   }

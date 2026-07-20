@@ -49,21 +49,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { ComboboxSearch } from "@/components/form/fields/generic-search-combo-box";
 
 const FEE_TYPES = [
   { id: "minerval", label: "Minerval / Scolarité" },
@@ -97,45 +85,11 @@ const paymentFormSchema = z.object({
 
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
-const MOCK_STUDENTS: StudentExtended[] = [
-  {
-    userId: "usr_1",
-    lastName: "KABANGE",
-    middleName: "MWAMBA",
-    firstName: "Idris",
-    username: "ikabange26",
-    password: "hashed_password",
-    gender: "M",
-    role: "STUDENT",
-    schoolId: "sch_1",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    enrollment: {
-      enrollmentId: "enr_1",
-      classroomId: "cls_5e_sec",
-      status: "ACTIVE",
-      isNewStudent: false,
-      studentCode: "2026001",
-      studentId: "usr_1",
-      yearId: "yr_2026",
-      schoolId: "sch_1",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      classroom: {
-        classId: "cls_5e_sec",
-        identifier: "5ème Année Électricité",
-        shortIdentifier: "5e ELEC",
-        section: "SECONDARY",
-        optionId: "opt_elec",
-        schoolId: "sch_1",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    },
-  },
-];
+export type FastPaymentFormProps = {
+  enrollments: [];
+};
 
-export default function FastPaymentForm() {
+export function FastPaymentForm({}: FastPaymentFormProps) {
   const [openCombobox, setOpenCombobox] = useState(false);
   const [selectedStudent, setSelectedStudent] =
     useState<StudentExtended | null>(null);
@@ -205,134 +159,27 @@ export default function FastPaymentForm() {
                 className="flex flex-col gap-5"
               >
                 <FieldGroup className="flex flex-col gap-5">
-                  {/* RECHERCHE ÉLÈVE & DETECTION AUTO CLASSE */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-                    <div className="md:col-span-2">
-                      <FormField
-                        control={form.control}
-                        name="studentId"
-                        render={({ field, fieldState: { error } }) => (
-                          <Field
-                            data-invalid={!!error}
-                            className="flex flex-col gap-1.5"
-                          >
-                            <FieldLabel htmlFor="student-select">
-                              Élève au guichet
-                            </FieldLabel>
-                            <Popover
-                              open={openCombobox}
-                              onOpenChange={setOpenCombobox}
-                            >
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    id="student-select"
-                                    variant="outline"
-                                    role="combobox"
-                                    aria-invalid={!!error}
-                                    className="w-full justify-between font-normal"
-                                  >
-                                    <span>
-                                      {selectedStudent
-                                        ? `${selectedStudent.lastName} ${selectedStudent.middleName} ${selectedStudent.firstName || ""}`
-                                        : "Rechercher par nom, code..."}
-                                    </span>
-                                    <ChevronsUpDown
-                                      data-icon="inline-end"
-                                      className="opacity-50"
-                                    />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                className="w-[350px] p-0"
-                                align="start"
-                              >
-                                <Command>
-                                  <CommandInput placeholder="Saisir un nom ou code élève..." />
-                                  <CommandList>
-                                    <CommandEmpty>
-                                      Aucun élève trouvé.
-                                    </CommandEmpty>
-                                    <CommandGroup>
-                                      {MOCK_STUDENTS.map((student) => (
-                                        <CommandItem
-                                          key={student.userId}
-                                          value={`${student.lastName} ${student.middleName} ${student.firstName} ${student.enrollment?.studentCode}`}
-                                          onSelect={() =>
-                                            handleStudentSelect(student)
-                                          }
-                                        >
-                                          <Check
-                                            data-icon="inline-start"
-                                            className={
-                                              selectedStudent?.userId ===
-                                              student.userId
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                            }
-                                          />
-                                          <div className="flex flex-col">
-                                            <span className="font-medium text-sm">
-                                              {student.lastName}{" "}
-                                              {student.middleName}{" "}
-                                              {student.firstName}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground">
-                                              Code:{" "}
-                                              {student.enrollment?.studentCode}{" "}
-                                              •{" "}
-                                              {
-                                                student.enrollment?.classroom
-                                                  ?.shortIdentifier
-                                              }
-                                            </span>
-                                          </div>
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                          </Field>
-                        )}
-                      />
-                    </div>
-
-                    {/* DETECTION AUTOMATIQUE DE LA CLASSE */}
-                    <div className="md:col-span-1">
+                  {/* RECHERCHE ÉLÈVE E */}
+                  <FormField
+                    control={form.control}
+                    name="studentId"
+                    render={({ field, fieldState: { error } }) => (
                       <Field
-                        data-disabled={!selectedStudent}
+                        data-invalid={!!error}
                         className="flex flex-col gap-1.5"
                       >
-                        <FieldLabel>Classe Détectée</FieldLabel>
-                        <div className="h-9 w-full rounded-md border border-input bg-muted/50 px-3 py-1 text-sm shadow-sm flex items-center justify-between font-medium">
-                          {selectedStudent?.enrollment?.classroom ? (
-                            <>
-                              <span className="text-foreground">
-                                {
-                                  selectedStudent.enrollment.classroom
-                                    .shortIdentifier
-                                }
-                              </span>
-                              <Badge
-                                variant="secondary"
-                                className="text-[10px] uppercase font-bold px-1.5 py-0"
-                              >
-                                Auto
-                              </Badge>
-                            </>
-                          ) : (
-                            <span className="text-muted-foreground text-xs italic">
-                              En attente...
-                            </span>
-                          )}
-                        </div>
+                        <FieldLabel htmlFor="student-select">
+                          Élève au guichet
+                        </FieldLabel>
+                        <ComboboxSearch
+                          placeholder="Rechercher par nom, code..."
+                          options={[]}
+                          onChange={() => {}}
+                        />
+                        <FormMessage />
                       </Field>
-                    </div>
-                  </div>
+                    )}
+                  />
 
                   {/* PARAMETRES DE PAIEMENT */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -124,7 +124,6 @@ export class ProcessStudentPayment {
           `[Payment processing] Success for assignment ${payload.assignmentId}. ID: ${newPayment.paymentId}`,
         );
 
-        // Retour immédiat
         return {
           ...updatedAssignment,
           payment: newPayment,
@@ -132,7 +131,6 @@ export class ProcessStudentPayment {
         };
       });
 
-      console.log("<================================>", dataToReturn);
       return dataToReturn;
     } catch (error) {
       this.logger.error(

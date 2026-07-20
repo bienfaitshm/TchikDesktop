@@ -31,6 +31,7 @@ export interface IBaseRepositoryConfig<
   logger: (context: string) => ILogger;
   baseTableName: string;
   defaultFilters?: FindManyOptions<Record<string, Table>>;
+  joinTables?: Record<string, Table>;
 }
 
 /**
@@ -49,7 +50,7 @@ export abstract class BaseRepository<
   protected idColumn: AnyColumn;
   protected baseTableName: string;
   protected defaultFilters: FindManyOptions<Record<string, Table>> | undefined;
-
+  protected joinTables: Record<string, Table> | undefined;
   /**
    * Initializes the repository with database client, schema references, and logging utilities.
    * @param config - Configuration object containing structural dependencies and static filters.
@@ -59,6 +60,7 @@ export abstract class BaseRepository<
     this.table = config.table;
     this.idColumn = config.idColumn;
     this.baseTableName = config.baseTableName;
+    this.joinTables = config.joinTables;
     this.defaultFilters = config.defaultFilters;
     this.logger = config.logger(`${config.baseTableName}Repository`);
   }
@@ -77,9 +79,11 @@ export abstract class BaseRepository<
    * @returns Key-value mapping of tables indexed under the base table name identifier.
    */
   protected getJoinTable(): Record<string, Table> {
-    return {
-      [this.baseTableName]: this.table,
-    };
+    return (
+      this.joinTables ?? {
+        [this.baseTableName]: this.table,
+      }
+    );
   }
 
   /**
@@ -87,8 +91,11 @@ export abstract class BaseRepository<
    * @param tx - Optional transactional client context.
    * @returns A dynamic select query builder instance.
    */
-  protected getQuerySet(tx?: TDb): DynamicSelectQueryBuilder {
-    return this.getClient(tx).select().from(this.table).$dynamic();
+  protected getQuerySet<Fields extends Record<string, unknown>>(
+    tx?: TDb,
+    field?: Fields | undefined,
+  ): DynamicSelectQueryBuilder {
+    return this.getClient(tx).select(field).from(this.table).$dynamic();
   }
 
   /**
@@ -136,14 +143,15 @@ export abstract class BaseRepository<
    * @param tx - Optional database transaction orchestration reference.
    * @returns Array matching specified entity properties structures.
    */
-  public findMany(
+  public findMany<Fields extends Record<string, unknown>>(
     filters?: FindManyOptions<Record<string, Table>>,
     tx?: TDb,
+    field?: Fields | undefined,
   ): TSelect[] {
     return this.executeWithTiming(
       "findMany",
       () => {
-        const query = this.getQuerySet(tx);
+        const query = this.getQuerySet(tx, field);
         const joinTables = this.getJoinTable();
         const queryBuilder = applyQueryOptions(
           query,
@@ -162,13 +170,19 @@ export abstract class BaseRepository<
    * @param tx - Optional database transaction orchestration reference.
    * @returns Explicit data model properties blueprint structure or null.
    */
-  public findById(id: string | number, tx?: TDb): TSelect | null {
+  public findById<Fields extends Record<string, unknown>>(
+    id: string | number,
+    tx?: TDb,
+    field?: Fields | undefined,
+  ): TSelect | null {
     if (id === undefined || id === null) return null;
 
     return this.executeWithTiming(
       "findById",
       () => {
-        const result = this.getQuerySet(tx).where(eq(this.idColumn, id)).get();
+        const result = this.getQuerySet(tx, field)
+          .where(eq(this.idColumn, id))
+          .get();
 
         if (!result) {
           this.logger.info(
