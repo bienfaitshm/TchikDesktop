@@ -5,7 +5,10 @@ import type {
   AssignFeesToStudentPayload,
   ProcessStudentPaymentPayload,
 } from "@/packages/@core/apis/clients/finances.payment";
-import type { TableClassroomPaymentAssignment } from "@/packages/@core/data-access/db/queries";
+import type {
+  StudentPaymentTable,
+  TableClassroomPaymentAssignment,
+} from "@/packages/@core/data-access/db/queries";
 import type { StudentPayment } from "@/packages/@core/data-access/db/schemas";
 import type {
   UseMutationOptions,
@@ -14,11 +17,17 @@ import type {
 import React from "react";
 import type { ProgressPayload } from "@/packages/electron-ipc-rest/ipc.client";
 
+/**
+ * Query key factory for payment operations cache management.
+ */
 export const paymentKeys = {
   all: ["payments"] as const,
   classroomTables: () => [...paymentKeys.all, "classroom-table"] as const,
   classroomTable: (params: ClassroomPaymentFilterParams) =>
     [...paymentKeys.classroomTables(), { params }] as const,
+  studentOverviews: () => [...paymentKeys.all, "student-overview"] as const,
+  studentOverview: (enrollmentId: string) =>
+    [...paymentKeys.studentOverviews(), enrollmentId] as const,
   mutations: {
     assignFees: () => [...paymentKeys.all, "assign-fees"] as const,
     processPayment: () => [...paymentKeys.all, "process-payment"] as const,
@@ -26,7 +35,10 @@ export const paymentKeys = {
 } as const;
 
 /**
- * Hook pour récupérer la matrice complète des assignations et paiements d'une classe (Suspense-ready)
+ * Suspense query hook to fetch the complete classroom assignment and payment matrix table.
+ * @param params - Filter parameters containing school, year, and class identifiers.
+ * @param options - Additional options for the suspense query.
+ * @returns Suspense query result containing the classroom payment assignment table.
  */
 export function useGetClassroomAssignmentTable(
   params: ClassroomPaymentFilterParams,
@@ -40,7 +52,26 @@ export function useGetClassroomAssignmentTable(
 }
 
 /**
- * Hook mutation pour assigner la structure de frais à un étudiant lors de son inscription active
+ * Suspense query hook to retrieve detailed payment overview for a specific student.
+ * @param enrollmentId - Unique identifier for the student enrollment.
+ * @param options - Additional options for the suspense query.
+ * @returns Suspense query result containing the student payment table.
+ */
+export function useGetStudentPaymentOverview(
+  enrollmentId: string,
+  options?: Partial<UseSuspenseQueryOptions<StudentPaymentTable>>,
+) {
+  return useSuspenseQuery({
+    queryKey: paymentKeys.studentOverview(enrollmentId),
+    queryFn: () => paymentApi.getStudentPaymentOverview(enrollmentId),
+    ...options,
+  });
+}
+
+/**
+ * Mutation hook to assign initial fee structures to a student upon active enrollment.
+ * @param options - Mutation options for callback and execution handling.
+ * @returns Mutation controls for assigning student fees.
  */
 export function useAssignFeesToStudent(
   options?: Partial<
@@ -55,7 +86,9 @@ export function useAssignFeesToStudent(
 }
 
 /**
- * Hook mutation central pour encaisser un versement étudiant au guichet
+ * Central mutation hook to process counter student payment transactions.
+ * @param options - Mutation options for callback and execution handling.
+ * @returns Mutation controls for processing student payments.
  */
 export function useProcessStudentPayment(
   options?: Partial<
@@ -69,22 +102,23 @@ export function useProcessStudentPayment(
   });
 }
 
+/**
+ * Hook to subscribe to real-time classroom synchronization progress updates.
+ * @returns Object containing current progress state and a reset callback.
+ */
 export function useOnClassroomSyncProgress() {
   const [progress, setProgress] = React.useState<ProgressPayload | null>(null);
 
   React.useEffect(() => {
-    // 1. Abonnement
     const unsubscribe = paymentApi.onClassroomSyncProgress((data) => {
       setProgress(data);
     });
 
-    // 2. Nettoyage lors du démontage du composant
     return () => {
       unsubscribe();
     };
   }, []);
 
-  // Permet à l'UI de remettre la progression à null (ex: fermer le modal ou la notification)
   const resetProgress = React.useCallback(() => {
     setProgress(null);
   }, []);
