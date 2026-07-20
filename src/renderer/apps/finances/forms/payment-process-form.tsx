@@ -166,6 +166,7 @@ export const PaymentProcessForm: React.FC<
                     {...field}
                     placeholder="Devise"
                     options={currencyOptions}
+                    disabled
                     className="h-9 data-[size=default]:h-9 data-[size=sm]:h-8"
                   />
                   <FormMessage className="text-[11px]" />

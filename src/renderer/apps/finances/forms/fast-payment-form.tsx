@@ -3,11 +3,15 @@
 import React, { useState } from "react";
 import { Receipt, CreditCard, Landmark, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import type {
-  EnrollmentDTO,
-  School,
-  EnrollmentPayment,
+import {
+  type EnrollmentDTO,
+  type School,
+  type EnrollmentPayment,
 } from "@/packages/@core/data-access/db";
+import {
+  FEE_SCHEDULES_ENUM,
+  getFeeScheduleLabel,
+} from "@/packages/@core/data-access/db/options";
 import {
   Card,
   CardContent,
@@ -115,17 +119,20 @@ export const StudentSearch: React.FC<StudentSearchProps> = ({
  * @returns A formatted string describing the payment status.
  */
 function formatScheduleStatus(
-  status: string,
+  status: FEE_SCHEDULES_ENUM,
   amountPaid: number,
   totalAmount: number,
 ): string {
-  if (status === "PAID") {
-    return "Payé";
-  }
-  if (status === "PARTIAL") {
+  // if (
+  //   status === FEE_SCHEDULES_ENUM.PAID ||
+  //   status === FEE_SCHEDULES_ENUM.EXEMPTED
+  // ) {
+  //   return ;
+  // }
+  if (status === FEE_SCHEDULES_ENUM.PARTIALLY_PAID) {
     return `Avance de ${amountPaid.toFixed(2)}, Reste: ${(totalAmount - amountPaid).toFixed(2)}`;
   }
-  return "Non payé";
+  return getFeeScheduleLabel(status);
 }
 
 export type FeeSelectionProps = {

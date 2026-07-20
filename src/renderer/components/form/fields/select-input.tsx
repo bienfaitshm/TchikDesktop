@@ -16,6 +16,7 @@ export type SelectInputProps = {
   value?: string;
   onChange?(value: string): void;
   name?: string;
+  disabled?: boolean;
 };
 
 export const SelectInput: React.FC<SelectInputProps> = ({
@@ -25,12 +26,14 @@ export const SelectInput: React.FC<SelectInputProps> = ({
   name,
   onChange,
   value,
+  disabled,
 }) => {
   return (
     <Select name={name} value={value} onValueChange={onChange}>
       <SelectTrigger
         aria-label={placeholder}
         className={cn("w-full", className)}
+        disabled={disabled}
       >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
