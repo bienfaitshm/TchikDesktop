@@ -1,4 +1,4 @@
-import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
+import { db } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
   feeAssignmentRepository,
@@ -10,14 +10,13 @@ import { dailyExchangeRateService } from "../services";
 import { classroomRepository } from "@/packages/@core/data-access/db/queries/classrooms";
 import { enrollmentRepository } from "@/packages/@core/data-access/db/queries/enrollments";
 
-import { SyncClassroomFees } from "./use-cases/sync-classroom-fees";
-import { GetClassroomPaymentTable } from "./use-cases/get-classroom-payment-table";
 import {
-  AssignInitialFees,
-  StudentPaymentInfos,
   type StudentPaymentTable,
   type EnrollmentPayment,
-} from "./use-cases/assign-initial-fees";
+  FeeManagementService,
+} from "./use-cases/sync-classroom-fees";
+import { GetClassroomPaymentTable } from "./use-cases/get-classroom-payment-table";
+
 import {
   ProcessStudentPayment,
   type ProcessPaymentPayload,
@@ -28,7 +27,7 @@ import { OnSyncMessage } from "./types";
 
 const logger = getLogger("PaymentService");
 
-const syncClassroomFeesUseCase = new SyncClassroomFees(
+const feeManagementService = new FeeManagementService(
   classroomRepository,
   enrollmentRepository,
   feeConfigurationRepository,
@@ -38,23 +37,8 @@ const syncClassroomFeesUseCase = new SyncClassroomFees(
 );
 
 const getClassroomPaymentTableUseCase = new GetClassroomPaymentTable(
-  syncClassroomFeesUseCase,
+  feeManagementService,
   feeAssignmentRepository,
-  logger,
-);
-
-const assignInitialFeesUseCase = new AssignInitialFees(
-  classroomRepository,
-  feeConfigurationRepository,
-  feeAssignmentRepository,
-  db,
-  logger,
-);
-
-const paymentInfos = new StudentPaymentInfos(
-  enrollmentRepository,
-  feeAssignmentRepository,
-  assignInitialFeesUseCase,
   logger,
 );
 
@@ -78,7 +62,7 @@ export const paymentService = {
    * @returns Structured payment overview data.
    */
   getStudentPaymentOverview(enrollmentId: string): StudentPaymentTable {
-    return paymentInfos.getStudentPaymentOverview(enrollmentId);
+    return feeManagementService.getStudentPaymentOverview(enrollmentId);
   },
 
   /**
@@ -95,7 +79,7 @@ export const paymentService = {
     },
     onSyncMessage?: OnSyncMessage,
   ) {
-    return syncClassroomFeesUseCase.execute(ctx, onSyncMessage);
+    return feeManagementService.syncClassroomFeeAssignments(ctx, onSyncMessage);
   },
 
   /**
@@ -112,24 +96,10 @@ export const paymentService = {
     },
     onSyncMessage?: OnSyncMessage,
   ) {
-    return getClassroomPaymentTableUseCase.execute(filters, onSyncMessage);
-  },
-
-  /**
-   * Assigns initial fee obligations to a student upon active enrollment.
-   * @param payload - Details required for student fee allocation.
-   * @param tx - Optional database transaction instance.
-   */
-  assignFeesToStudent(
-    payload: {
-      schoolId: string;
-      yearId: string;
-      enrollmentId: string;
-      classroomId: string;
-    },
-    tx: TDataBase = db,
-  ): void {
-    return assignInitialFeesUseCase.execute(payload, tx);
+    return getClassroomPaymentTableUseCase.getClassroomPaymentTable(
+      filters,
+      onSyncMessage,
+    );
   },
 
   /**

@@ -26,7 +26,8 @@ const FEE_ASSIGNMENT_DEFAULT_SORT: BaseFeeAssignmentFilters = {
 export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
   TableFeeAssignment,
   TDataBase,
-  FeeAssignment
+  FeeAssignment,
+  BaseFeeAssignmentFilters
 > {
   /**
    * Initializes a new instance of the FeeAssignmentRepository.

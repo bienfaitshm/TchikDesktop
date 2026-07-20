@@ -166,6 +166,9 @@ export const feeAssignments = sqliteTable(
     }),
     amountPaid: integer("amount_paid").notNull().default(0),
     totalAmount: integer("total_amount").notNull().default(0),
+    currency: enumColumn("currency", CURRENCY_ENUM)
+      .notNull()
+      .default(CURRENCY_ENUM.CDF),
     status: enumColumn("status", FEE_SCHEDULES_ENUM)
       .notNull()
       .default(FEE_SCHEDULES_ENUM.UNPAID),

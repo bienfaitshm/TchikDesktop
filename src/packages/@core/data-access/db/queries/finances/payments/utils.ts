@@ -37,6 +37,7 @@ export function extractRequiredAssignments(
       feeConfigId: config.feeConfigId,
       scheduleId: schedule.scheduleId,
       totalAmount: config.totalAmount,
+      currency: config.currency,
     }));
   });
 }

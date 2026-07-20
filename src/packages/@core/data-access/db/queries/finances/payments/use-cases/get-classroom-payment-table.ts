@@ -1,18 +1,38 @@
 import { CustomLogger } from "@/packages/logger";
 import { FeeAssignmentRepository } from "../../repository";
-import { SyncClassroomFees } from "./sync-classroom-fees";
+import { FeeManagementService } from "./sync-classroom-fees";
 import { buildAssignmentKey } from "../utils";
 import { TableClassroomPaymentAssignment, OnSyncMessage } from "../types";
-import { FeeAssignment } from "@/packages/@core/data-access/db/schemas";
+import {
+  ClassroomEnrollment,
+  FeeAssignment,
+  User,
+} from "@/packages/@core/data-access/db/schemas";
+import { FeeApplicableConfiguration } from "@/packages/@core/data-access/db/queries/finances";
 
+/**
+ * Service generating formatted classroom payment assignment tables.
+ */
 export class GetClassroomPaymentTable {
+  /**
+   * Initializes the GetClassroomPaymentTable query service.
+   * @param syncFees - Fee management service handling classroom sync.
+   * @param feeAssignmentRepo - Repository for fee assignment persistence queries.
+   * @param logger - Custom logger instance for tracking query lifecycle.
+   */
   constructor(
-    private readonly syncFeesUseCase: SyncClassroomFees,
+    private readonly syncFees: FeeManagementService,
     private readonly feeAssignmentRepo: FeeAssignmentRepository,
     private readonly logger: CustomLogger,
   ) {}
 
-  async execute(
+  /**
+   * Synchronizes and formats payment assignment tables for a classroom.
+   * @param filters - Context filter arguments (schoolId, yearId, classId).
+   * @param onSyncMessage - Optional progress tracking callback.
+   * @returns Array of structured classroom payment assignment objects.
+   */
+  async getClassroomPaymentTable(
     filters: { schoolId: string; yearId: string; classId: string },
     onSyncMessage?: OnSyncMessage,
   ): Promise<TableClassroomPaymentAssignment[]> {
@@ -20,30 +40,36 @@ export class GetClassroomPaymentTable {
       `[Payment Table] Fetching assignment table for classroom ${filters.classId}`,
     );
 
-    // 1. On s'assure que tout est à jour
-    const { configs, enrollments } = await this.syncFeesUseCase.execute(
-      filters,
-      onSyncMessage,
-    );
-    if (!enrollments.length || !configs.length) return [];
+    // Ensure all fee assignments are up-to-date
+    const { configs, enrollments } =
+      await this.syncFees.syncClassroomFeeAssignments(filters, onSyncMessage);
 
-    // 2. Récupération des affectations
+    if (!enrollments.length || !configs.length) {
+      return [];
+    }
+
+    // Retrieve database assignments for classroom students
     const enrollmentIds = enrollments.map((e) => e.enrollmentId);
-    const assignments = await this.feeAssignmentRepo.findMany({
-      whereIn: { enrollmentId: enrollmentIds },
+    const assignments = this.feeAssignmentRepo.findMany({
+      where: {
+        feeAssignments: { enrollmentId: { $in: enrollmentIds } },
+      },
     });
 
-    // 3. Indexation rapide O(1)
+    // Fast O(1) indexing map
     const assignmentMap = this.groupAssignmentsByKey(assignments);
 
-    // 4. Formatage pour la vue
-    return this.formatTableData(configs, enrollments, assignmentMap);
+    // Format output payload for the UI component
+    return this.formatTableData(configs, enrollments as any, assignmentMap);
   }
 
-  // --- Méthodes privées ---
-
+  /**
+   * Groups assignment entities into a key-value record mapped by assignment key.
+   * @param assignments - Array of fee assignment records.
+   * @returns Map of assignment keys targeting corresponding fee assignments.
+   */
   private groupAssignmentsByKey(
-    assignments: any[],
+    assignments: FeeAssignment[],
   ): Record<string, FeeAssignment> {
     return assignments.reduce(
       (acc, current) => {
@@ -52,21 +78,28 @@ export class GetClassroomPaymentTable {
           current.feeConfigId,
           current.scheduleId,
         );
-        acc[key] = current as FeeAssignment;
+        acc[key] = current;
         return acc;
       },
       {} as Record<string, FeeAssignment>,
     );
   }
 
+  /**
+   * Formats configurations, student enrollments, and assignments into table rows and columns.
+   * @param configs - Applicable fee configurations.
+   * @param enrollments - Student enrollment records.
+   * @param assignmentMap - Pre-indexed assignment lookup map.
+   * @returns Structured classroom payment assignment table dataset.
+   */
   private formatTableData(
-    configs: any[],
-    enrollments: any[],
+    configs: FeeApplicableConfiguration[],
+    enrollments: (ClassroomEnrollment & { student: User })[],
     assignmentMap: Record<string, FeeAssignment>,
-  ) {
+  ): TableClassroomPaymentAssignment[] {
     return configs.map((config) => {
       const head =
-        config.feeType?.schedules.map((sch: any) => ({
+        config.feeType?.schedules.map((sch) => ({
           id: sch.scheduleId,
           name: sch.installmentName,
         })) ?? [];
@@ -77,17 +110,20 @@ export class GetClassroomPaymentTable {
         table: {
           head,
           body: enrollments.map((enrollment) => ({
-            enrollmentId: enrollment.enrollmentId as string,
+            enrollmentId: enrollment.enrollmentId,
             student: enrollment.student,
-            payments: head.reduce((acc: any, current: any) => {
-              const key = buildAssignmentKey(
-                enrollment.enrollmentId,
-                config.feeConfigId,
-                current.id,
-              );
-              acc[current.id] = assignmentMap[key] ?? null;
-              return acc;
-            }, {}),
+            payments: head.reduce(
+              (acc, current) => {
+                const key = buildAssignmentKey(
+                  enrollment.enrollmentId,
+                  config.feeConfigId,
+                  current.id,
+                );
+                acc[current.id] = assignmentMap[key] ?? null;
+                return acc;
+              },
+              {} as Record<string, FeeAssignment | null>,
+            ),
           })),
         },
       };

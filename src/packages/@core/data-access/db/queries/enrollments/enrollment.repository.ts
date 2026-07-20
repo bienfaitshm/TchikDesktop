@@ -128,11 +128,12 @@ export class EnrollmentRepository
         .innerJoin(users, eq(this.table.studentId, users.userId))
         .innerJoin(classrooms, eq(this.table.classroomId, classrooms.classId))
         .$dynamic();
-      return helpers.applyQueryOptions(
+      const result = helpers.applyQueryOptions(
         query,
         this.getJoinTable(),
         helpers.mergeFindManyOptions(filters, ACTIVE_ENROLLEMENTS),
       );
+      return result.all();
     } catch (error) {
       const dbError = DatabaseError.from(
         error,

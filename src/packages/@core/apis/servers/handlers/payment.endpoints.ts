@@ -20,15 +20,7 @@ const ClassroomFilterSchema = z.object({
   classId: z.string().nonempty(),
 });
 
-const AssignFeesToStudentSchema = z.object({
-  schoolId: z.string().nonempty(),
-  yearId: z.string().nonempty(),
-  enrollmentId: z.string().nonempty(),
-  classroomId: z.string().nonempty(),
-});
-
 type ClassroomFilter = z.infer<typeof ClassroomFilterSchema>;
-type AssignFeesToStudentPayload = z.infer<typeof AssignFeesToStudentSchema>;
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for student payments and fee assignments.
@@ -61,20 +53,6 @@ export class PaymentController {
         });
       },
     );
-  }
-
-  /**
-   * Provisions foundational initial school fees directly onto a designated student record.
-   * @param req - The IPC request context carrying the assignment details payload body.
-   * @returns A promise resolving to the generated fee assignment operational results.
-   */
-  @IpcServer.register(HttpMethod.POST, PaymentRoutes.ASSIGN_FEES, {
-    body: AssignFeesToStudentSchema,
-  })
-  static async assignFees(
-    req: IpcRequest<AssignFeesToStudentPayload, unknown>,
-  ) {
-    return paymentService.assignFeesToStudent(req.body);
   }
 
   /**
