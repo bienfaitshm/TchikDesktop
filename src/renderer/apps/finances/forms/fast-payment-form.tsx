@@ -3,9 +3,11 @@
 import React, { useState } from "react";
 import { Receipt, CreditCard, Landmark, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
-
+import type {
+  EnrollmentDTO,
+  School,
+  EnrollmentPayment,
+} from "@/packages/@core/data-access/db";
 import {
   Card,
   CardContent,
@@ -21,7 +23,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -33,11 +34,27 @@ import type { SelectOption } from "@/packages/drizzle-queries";
 import { PaymentProcessForm } from "./payment-process-form";
 import { useGetStudentPaymentOverview } from "@/renderer/libs/queries/finances";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-import type { EnrollmentPayment } from "@/packages/@core/data-access/db";
+import type { ProcessStudentPaymentPayload } from "@/packages/@core/apis/clients/finances.payment";
+import { LoadingButton } from "@/renderer/components/buttons/button-loading";
+import {
+  EmptySelect,
+  EmptySelectStudent,
+  FastPaymentLoading,
+  PaymentOverview,
+} from "../components/fast-payment-empty";
+import { formatCurrency } from "@/packages/currency";
+import { formatDate } from "@/packages/times";
 
+type Option = { label: string; value: string };
 export type FastPaymentFormProps = {
   schoolId: string;
   yearId: string;
+  currencyOptions?: Option[];
+  paymentMethodOptions?: Option[];
+  onSubmint(payload: ProcessStudentPaymentPayload): void;
+  school?: School;
+  isSubmitting?: boolean;
+  formId?: string;
 };
 
 export type StudentSearchProps = Pick<
@@ -145,9 +162,14 @@ export const FeeSelection: React.FC<FeeSelectionProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
         <Field className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor="fee-type">Type de Frais</FieldLabel>
+          <FieldLabel
+            htmlFor="fee-type"
+            className="text-xs font-medium text-muted-foreground"
+          >
+            Type de Frais
+          </FieldLabel>
           <ComboboxSearch
             selectedItem={selectedFeeType}
             value={selectedFeeType?.value}
@@ -160,7 +182,12 @@ export const FeeSelection: React.FC<FeeSelectionProps> = ({
         </Field>
 
         <Field className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor="fee-schedule">Échéancier / Période</FieldLabel>
+          <FieldLabel
+            htmlFor="fee-schedule"
+            className="text-xs font-medium text-muted-foreground"
+          >
+            Échéancier / Période
+          </FieldLabel>
           <ComboboxSearch
             selectedItem={selectedSchedule}
             value={selectedSchedule?.scheduleId}
@@ -183,21 +210,25 @@ export const FeeSelection: React.FC<FeeSelectionProps> = ({
       </div>
 
       <AnimatePresence mode="wait">
-        {selectedSchedule && (
-          <motion.div
-            key="payment-form"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
-          >
-            {children?.({
-              totalAmount: selectedSchedule.totalAmount,
-              amountPaid: selectedSchedule.amountPaid,
-              assignmentId: selectedSchedule.assignmentId,
-            })}
-          </motion.div>
+        {selectedSchedule ? (
+          <PaymentOverview assignment={{ ...selectedSchedule }}>
+            <motion.div
+              key="payment-form"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              {children?.({
+                totalAmount: selectedSchedule.totalAmount,
+                amountPaid: selectedSchedule.amountPaid,
+                assignmentId: selectedSchedule.assignmentId,
+              })}
+            </motion.div>
+          </PaymentOverview>
+        ) : (
+          <EmptySelect />
         )}
       </AnimatePresence>
     </motion.div>
@@ -209,7 +240,16 @@ export const FeeSelection: React.FC<FeeSelectionProps> = ({
  * @param props - Component properties including school and academic year identifiers.
  * @returns The complete fast payment form interface.
  */
-export function FastPaymentForm({ schoolId, yearId }: FastPaymentFormProps) {
+export function FastPaymentForm({
+  schoolId,
+  yearId,
+  currencyOptions = [],
+  paymentMethodOptions = [],
+  onSubmint,
+  formId,
+  isSubmitting,
+  school,
+}: FastPaymentFormProps) {
   const [selectedStudent, setSelectedStudent] = useState<
     (SelectOption & EnrollmentDTO) | undefined
   >(undefined);
@@ -224,8 +264,9 @@ export function FastPaymentForm({ schoolId, yearId }: FastPaymentFormProps) {
     ? selectedSchedule.totalAmount - selectedSchedule.amountPaid
     : 0;
 
+  console.log(selectedSchedule);
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 max-w-7xl mx-auto items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 items-start">
       <div className="lg:col-span-7 flex flex-col gap-6">
         <Card className="border-muted shadow-md">
           <CardHeader className="flex flex-col gap-1">
@@ -262,7 +303,7 @@ export function FastPaymentForm({ schoolId, yearId }: FastPaymentFormProps) {
                 </Field>
 
                 <AnimatePresence mode="wait">
-                  {selectedStudent && (
+                  {selectedStudent ? (
                     <motion.div
                       key={selectedStudent.enrollmentId}
                       initial={{ opacity: 0, y: 10 }}
@@ -270,13 +311,7 @@ export function FastPaymentForm({ schoolId, yearId }: FastPaymentFormProps) {
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Suspense
-                        fallback={
-                          <p className="text-sm text-muted-foreground">
-                            Chargement des frais...
-                          </p>
-                        }
-                      >
+                      <Suspense fallback={<FastPaymentLoading />}>
                         <FeeSelection
                           enrollmentId={selectedStudent.enrollmentId}
                           selectedFeeType={selectedFeeType}
@@ -284,35 +319,42 @@ export function FastPaymentForm({ schoolId, yearId }: FastPaymentFormProps) {
                           selectedSchedule={selectedSchedule}
                           onScheduleChange={setSelectedSchedule}
                         >
-                          {() => (
+                          {({ amountPaid, assignmentId, totalAmount }) => (
                             <div className="mt-4">
                               <PaymentProcessForm
-                                onSubmit={() => {}}
-                                currencyOptions={[]}
-                                paymentMethodOptions={[]}
-                                formId="fast-payment-form"
-                                defaultValues={{}}
-                                totalAmount={amountDue}
+                                onSubmit={onSubmint}
+                                currencyOptions={currencyOptions}
+                                paymentMethodOptions={paymentMethodOptions}
+                                formId={formId}
+                                defaultValues={{
+                                  schoolId,
+                                  yearId,
+                                  assignmentId,
+                                }}
+                                totalAmount={totalAmount}
+                                amountPaid={amountPaid}
                               />
                             </div>
                           )}
                         </FeeSelection>
                       </Suspense>
                     </motion.div>
+                  ) : (
+                    <EmptySelectStudent />
                   )}
                 </AnimatePresence>
               </FieldGroup>
-
-              <Button
+              <LoadingButton
                 type="submit"
-                form="fast-payment-form"
+                form={formId}
                 className="w-full font-semibold tracking-wide mt-6 transition-all"
                 size="lg"
-                disabled={!selectedSchedule || amountDue <= 0}
+                disabled={!selectedSchedule || amountDue <= 0 || isSubmitting}
+                loading={isSubmitting}
               >
                 <Receipt data-icon="inline-start" className="mr-2" /> Valider
                 l'encaissement & Archiver
-              </Button>
+              </LoadingButton>
             </div>
           </CardContent>
         </Card>
@@ -335,10 +377,10 @@ export function FastPaymentForm({ schoolId, yearId }: FastPaymentFormProps) {
           <CardContent className="flex flex-col gap-4 font-sans text-xs">
             <div className="text-center flex flex-col gap-1">
               <h3 className="font-extrabold text-sm tracking-wide uppercase text-foreground">
-                Complexe Scolaire Excellence
+                {school?.name}
               </h3>
               <p className="text-muted-foreground text-[10px]">
-                12, Avenue de l'Église, Commune de la Gombe
+                {school?.address}
               </p>
               <div className="text-[10px] font-mono text-muted-foreground pt-1">
                 Date: {new Date().toLocaleDateString("fr-FR")}
@@ -424,7 +466,7 @@ export function FastPaymentForm({ schoolId, yearId }: FastPaymentFormProps) {
                       animate={{ opacity: 1, y: 0 }}
                       className="font-mono font-bold text-sm text-foreground"
                     >
-                      {amountDue > 0 ? `${amountDue.toFixed(2)} $` : "0.00 $"}
+                      {formatCurrency(amountDue)}
                     </motion.span>
                   </motion.div>
                 )}
@@ -444,19 +486,19 @@ export function FastPaymentForm({ schoolId, yearId }: FastPaymentFormProps) {
                   animate={{ opacity: 1, scale: 1 }}
                   className="font-mono font-black text-lg text-primary"
                 >
-                  {amountDue > 0 ? `${amountDue.toFixed(2)} $` : "0.00 $"}
+                  {formatCurrency(amountDue)}
                 </motion.span>
               </AnimatePresence>
             </div>
 
             <div className="text-center text-[10px] text-muted-foreground pt-2 flex flex-col gap-1">
-              <p className="italic">
-                Généré via Système de Facturation Instantanée
+              {/* <p className="italic">Généré</p> */}
+              <p className="font-mono text-[9px]">
+                ID Caisse: CAISSE_A_{formatDate(new Date(), "yyyy")}
               </p>
-              <p className="font-mono text-[9px]">ID Caisse: CAISSE_A_2026</p>
             </div>
 
-            <Alert variant="warning" className="mt-2">
+            <Alert variant="destructive" className="mt-2">
               <AlertTriangle className="size-4" />
               <AlertTitle>Attention</AlertTitle>
               <AlertDescription className="text-[11px] leading-relaxed">

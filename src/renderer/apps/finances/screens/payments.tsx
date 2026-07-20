@@ -1,8 +1,17 @@
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { FastPaymentForm } from "../forms/fast-payment-form";
+import { useProcessStudentPaymentForm } from "@/renderer/libs/queries/finances";
 
 export function FastPaymentPage() {
-  const { schoolId, yearId } = useCurrentConfig();
+  const { schoolId, yearId, school } = useCurrentConfig();
+
+  const {
+    currencyOptions,
+    formId,
+    isSubmitting,
+    onSubmit,
+    paymentMethodOptions,
+  } = useProcessStudentPaymentForm({ schoolId, yearId });
   return (
     <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 lg:p-8 container mx-auto flex flex-col gap-6 md:gap-8">
       {/* Zone d'en-tête de la page */}
@@ -18,7 +27,16 @@ export function FastPaymentPage() {
 
       {/* Zone de contenu principal */}
       <main>
-        <FastPaymentForm schoolId={schoolId} yearId={yearId} />
+        <FastPaymentForm
+          school={school}
+          formId={formId}
+          isSubmitting={isSubmitting}
+          schoolId={schoolId}
+          yearId={yearId}
+          onSubmint={onSubmit}
+          currencyOptions={currencyOptions}
+          paymentMethodOptions={paymentMethodOptions}
+        />
       </main>
     </div>
   );

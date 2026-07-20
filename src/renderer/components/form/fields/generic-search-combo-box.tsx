@@ -174,7 +174,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
           shouldFilter={false} // Disabled because filtering and sorting is handled locally
           className="flex flex-col space-y-4 relative"
         >
-          <div className="relative flex items-center border-b px-2 mb-2 pb-2">
+          <div className="relative flex items-center border-b mb-2 pb-2">
             <CommandInput
               value={search}
               onValueChange={onSearchChange}

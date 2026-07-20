@@ -6,6 +6,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -22,6 +23,7 @@ import {
   CURRENCY_ENUM,
   PAYMENT_METHOD_ENUM,
 } from "@/packages/@core/data-access/db/options";
+import { formatCurrency } from "@/packages/currency";
 
 const DEFAULT_VALUES: Partial<ProcessPaymentPayload> = {
   amountReceived: 0,
@@ -34,38 +36,49 @@ const DEFAULT_VALUES: Partial<ProcessPaymentPayload> = {
 };
 
 /**
- * Ajoute une règle : le montant reçu ne doit pas dépasser le total attendu.
- * @param schema - le schéma de base
- * @param maxAmount - montant maximum autorisé (en centimes). Si undefined, pas de limite.
- * @returns le schéma enrichi de la règle de dépassement
+ * Extends the payment validation schema by enforcing that the received amount does not exceed the remaining balance.
+ * @param schema - Base payment validation schema.
+ * @param totalAmount - Total amount expected for the assignment.
+ * @param amountPaid - Amount already paid for the assignment.
+ * @returns Refined Zod schema with upper-bound amount validation in French.
  */
 export const schemaWithMaxAmount = (
   schema: typeof ProcessPaymentSchema,
-  maxAmount?: number,
+  totalAmount?: number,
+  amountPaid: number = 0,
 ) => {
-  if (maxAmount === undefined) return schema;
+  if (totalAmount === undefined) return schema;
+
+  const remainingBalance = Math.max(0, totalAmount - amountPaid);
 
   return schema.refine(
     (data) => {
-      const { amountReceived } = data;
-      if (typeof amountReceived !== "number" || isNaN(amountReceived)) {
+      const amountReceived = Number(data.amountReceived);
+      if (isNaN(amountReceived) || amountReceived <= 0) {
         return false;
       }
-      return amountReceived <= maxAmount;
+      return amountReceived <= remainingBalance;
     },
+
     {
-      message: `Le montant reçu ne peut pas dépasser la somme a payer, la somme est de ${maxAmount} que l'eleve doit payer.`,
+      message: `Le montant reçu ne peut pas dépasser le solde restant dû de ${formatCurrency(remainingBalance)}.`,
       path: ["amountReceived"],
     },
   );
 };
 
-type PaymentProcessFormProps = {
+export type PaymentProcessFormProps = {
   currencyOptions: { label: string; value: string }[];
   paymentMethodOptions: { label: string; value: string }[];
   totalAmount?: number;
+  amountPaid?: number;
 };
 
+/**
+ * Renders a form for entering and validating student payment details.
+ * @param props - Form configuration props including options, balance thresholds, and callbacks.
+ * @returns The rendered payment process form.
+ */
 export const PaymentProcessForm: React.FC<
   BaseFormProps<Partial<ProcessPaymentPayload>, ProcessPaymentPayload> &
     PaymentProcessFormProps
@@ -73,28 +86,34 @@ export const PaymentProcessForm: React.FC<
   formId,
   onSubmit,
   totalAmount,
+  amountPaid = 0,
   currencyOptions = [],
   paymentMethodOptions = [],
   defaultValues,
 }) => {
   const form = useZodForm<ProcessPaymentPayload>({
-    schema: schemaWithMaxAmount(ProcessPaymentSchema, totalAmount),
+    schema: schemaWithMaxAmount(ProcessPaymentSchema, totalAmount, amountPaid),
     defaultValues: mergeDefaultValues(defaultValues, DEFAULT_VALUES),
     onSubmit,
   });
 
   const currentCurrency = form.watch("currencyReceived");
+  const currencyReceived = form.watch("currencyReceived");
+  const remainingBalance =
+    totalAmount !== undefined
+      ? Math.max(0, totalAmount - amountPaid)
+      : undefined;
+
   return (
     <Form {...form}>
       <form
         id={formId}
         onSubmit={form.submit}
         className="space-y-4"
-        aria-label="Formulaire d'enregistrement de paiement"
+        aria-label="Formulaire d'enregistrement du paiement"
       >
-        {/* Ligne 1 : Montant & Devise (Idéal pour la gestion multi-devise Big Tech) */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="col-span-2">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-1">
             <FormField
               control={form.control}
               name="amountReceived"
@@ -107,15 +126,27 @@ export const PaymentProcessForm: React.FC<
                     <div className="relative flex items-center">
                       <Input
                         type="number"
+                        step="0.01"
                         placeholder="0.00"
                         className="h-9 font-mono pr-14 text-sm focus-visible:ring-1 focus-visible:ring-ring"
                         {...field}
+                        onChange={(e) =>
+                          field.onChange(e.target.valueAsNumber || 0)
+                        }
                       />
                       <span className="absolute right-3 font-mono text-xs font-semibold text-muted-foreground/70 select-none">
                         {currentCurrency}
                       </span>
                     </div>
                   </FormControl>
+                  {remainingBalance !== undefined && (
+                    <FormDescription className="text-[11px] text-muted-foreground">
+                      Solde restant à payer :{" "}
+                      <span className="font-mono font-medium">
+                        {formatCurrency(remainingBalance, currencyReceived)}
+                      </span>
+                    </FormDescription>
+                  )}
                   <FormMessage className="text-[11px]" />
                 </FormItem>
               )}
@@ -135,7 +166,7 @@ export const PaymentProcessForm: React.FC<
                     {...field}
                     placeholder="Devise"
                     options={currencyOptions}
-                    className="h-9"
+                    className="h-9 data-[size=default]:h-9 data-[size=sm]:h-8"
                   />
                   <FormMessage className="text-[11px]" />
                 </FormItem>
@@ -144,7 +175,6 @@ export const PaymentProcessForm: React.FC<
           </div>
         </div>
 
-        {/* Ligne 2 : Mode de paiement & Référence (Densifié) */}
         <div className="grid grid-cols-2 gap-3">
           <FormField
             control={form.control}
@@ -158,7 +188,7 @@ export const PaymentProcessForm: React.FC<
                   {...field}
                   placeholder="Sélectionner le mode"
                   options={paymentMethodOptions}
-                  className="h-9"
+                  className="h-9 data-[size=default]:h-9 data-[size=sm]:h-8"
                 />
                 <FormMessage className="text-[11px]" />
               </FormItem>
