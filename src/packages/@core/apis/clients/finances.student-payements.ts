@@ -5,7 +5,7 @@ import type {
   StudentPaymentFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import type {
-  StudentPaymentTDO,
+  StudentPaymentDTO,
   SelectOption,
 } from "@/packages/@core/data-access/db";
 import { StudentPaymentRoutes } from "../routes-constant";
@@ -13,16 +13,16 @@ import { StudentPaymentRoutes } from "../routes-constant";
 export type StudentPaymentApi = Readonly<{
   fetchStudentPayments(
     params?: StudentPaymentFilter,
-  ): Promise<StudentPaymentTDO[]>;
+  ): Promise<StudentPaymentDTO[]>;
   fetchStudentPaymentsAsOptions(
     params?: StudentPaymentFilter,
-  ): Promise<(SelectOption & StudentPaymentTDO)[]>;
-  fetchStudentPaymentById(paymentId: string): Promise<StudentPaymentTDO>;
-  createStudentPayment(data: StudentPaymentCreate): Promise<StudentPaymentTDO>;
+  ): Promise<(SelectOption & StudentPaymentDTO)[]>;
+  fetchStudentPaymentById(paymentId: string): Promise<StudentPaymentDTO>;
+  createStudentPayment(data: StudentPaymentCreate): Promise<StudentPaymentDTO>;
   updateStudentPayment(
     paymentId: string,
     data: StudentPaymentUpdate,
-  ): Promise<StudentPaymentTDO>;
+  ): Promise<StudentPaymentDTO>;
   deleteStudentPayment(paymentId: string): Promise<void>;
 }>;
 

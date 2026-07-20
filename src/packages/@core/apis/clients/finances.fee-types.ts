@@ -6,13 +6,10 @@ import type {
   FeeTypeFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import type { FeeType } from "@/packages/@core/data-access/db/schemas";
-import type {
-  SelectOption,
-  SearchOptions,
-} from "@/packages/@core/data-access/db/queries";
+import type { SelectOption } from "@/packages/@core/data-access/db/queries";
 import { FeeTypeRoutes } from "../routes-constant";
 
-export type FeeTypeSearchParams = Partial<SearchOptions<FeeTypeFilter>>;
+export type FeeTypeSearchParams = FeeTypeFilter;
 
 export type FeeTypeApi = Readonly<{
   fetchFeeTypes(params?: FeeTypeFilter): Promise<FeeType[]>;

@@ -7,7 +7,7 @@ import {
   type EnrollmentUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import { enrollment as enrollmentApi } from "@/renderer/libs/apis";
-import type { EnrollmentTDO } from "@/packages/@core/data-access/db";
+import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
 import type { QueryUpdatePayload } from "../base";
 import type {
   UseSuspenseQueryOptions,
@@ -44,7 +44,7 @@ export const enrollmentKeys = {
 
 export function useGetEnrollments(
   params?: EnrollmentQueryParams,
-  options?: Partial<UseSuspenseQueryOptions<EnrollmentTDO[]>>,
+  options?: Partial<UseSuspenseQueryOptions<EnrollmentDTO[]>>,
 ) {
   return useSuspenseQuery({
     queryKey: enrollmentKeys.lists(params),
@@ -55,7 +55,7 @@ export function useGetEnrollments(
 
 export function useSearchEnrollments(
   params?: SearchEnrollmentQueryParams,
-  options?: Partial<UseSuspenseQueryOptions<EnrollmentTDO[]>>,
+  options?: Partial<UseSuspenseQueryOptions<EnrollmentDTO[]>>,
 ) {
   return useQuery({
     queryKey: enrollmentKeys.search(params),

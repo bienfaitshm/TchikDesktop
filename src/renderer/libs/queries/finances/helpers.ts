@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react";
-import { useDebounce } from "../base";
+import { useCallback } from "react";
 import {
   useGetFeeTypeAsOptions,
   useGetFeeAssignmentAsOptions,
@@ -9,109 +8,166 @@ import {
   useGetStudentPaymentAsOptions,
 } from "./finances";
 
-import type {
-  FeeTypeFilter,
-  FeeAssignmentFilter,
-  FeeScheduleFilter,
-  StudentPaymentFilter,
-  DailyExchangeRateFilter,
-  FeeConfiguration,
-} from "@/packages/@core/data-access/schema-validations";
+import { useGenericSearchOptions } from "../base";
+import { FeeScheduleFilter } from "@/packages/@core/data-access/schema-validations";
 
-export interface SearchHookOptions<TFilters = Record<string, any>> {
-  /** Filtres additionnels optionnels pour restreindre la recherche */
-  filters?: TFilters;
-  /** Délai de debounce en millisecondes (par défaut: 300ms) */
-  debounceMs?: number;
+export interface FinanceOptionSearchParams {
+  schoolId: string;
+  yearId: string;
 }
 
 /**
- * 2. Hook Générique Interne (Factory Pattern)
- * Centralise la logique de debounce et de gestion d'état pour éviter la duplication.
+ * Provides a debounced search query hook for retrieving fee type selection options.
+ * @param params - Context parameters specifying schoolId and yearId.
+ * @returns Search option results containing options array, loading state, and search controls.
  */
-function useGenericSearchOptions<TData, TFilters>(
-  useQueryHook: (params: { search: string; filters?: TFilters }) => {
-    data?: TData[];
-    isLoading: boolean;
-    isFetching: boolean;
-  },
-  options: SearchHookOptions<TFilters> = {},
-) {
-  const { filters, debounceMs = 300 } = options;
+export function useSearchFeeTypeOptions(params: FinanceOptionSearchParams) {
+  const { schoolId, yearId } = params;
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounce(searchQuery, debounceMs);
-
-  const serializedFilters = JSON.stringify(filters);
-
-  const queryParams = useMemo(
-    () => ({
-      search: debouncedSearch,
-      filters: filters,
+  const buildQuery = useCallback(
+    (search: string) => ({
+      where: {
+        feeTypes: {
+          schoolId: { $eq: schoolId },
+          yearId: { $eq: yearId },
+        },
+      },
+      or: [
+        { feeTypes: { name: { $like: `%${search}%` } } },
+        { wallets: { name: { $like: `%${search}%` } } },
+      ],
     }),
-    [debouncedSearch, serializedFilters],
+    [schoolId, yearId],
   );
 
-  const { data = [], isLoading, isFetching } = useQueryHook(queryParams);
-
-  return {
-    searchQuery,
-    options: data,
-    isSearching: isLoading || isFetching,
-    setSearchQuery,
-  };
+  return useGenericSearchOptions(useGetFeeTypeAsOptions, buildQuery);
 }
 
 /**
- * Recherche des types de frais (Fee Types)
- */
-export function useSearchFeeTypeOptions(
-  options?: SearchHookOptions<FeeTypeFilter>,
-) {
-  return useGenericSearchOptions(useGetFeeTypeAsOptions, options);
-}
-
-/**
- * Recherche des assignations de frais (Fee Assignments)
+ * Provides a debounced search query hook for fee assignment options.
+ * @param params - Context parameters specifying schoolId and yearId.
+ * @returns Search option results containing options array, loading state, and search controls.
  */
 export function useSearchFeeAssignmentOptions(
-  options?: SearchHookOptions<FeeAssignmentFilter>,
+  params: FinanceOptionSearchParams,
 ) {
-  return useGenericSearchOptions(useGetFeeAssignmentAsOptions, options);
+  const { schoolId, yearId } = params;
+
+  const buildQuery = useCallback(
+    (search: string) => ({
+      where: {
+        feeAssignments: {
+          enrollmentId: { $like: `%${search}%` },
+        },
+      },
+    }),
+    [schoolId, yearId],
+  );
+
+  return useGenericSearchOptions(useGetFeeAssignmentAsOptions, buildQuery);
 }
 
 /**
- * Recherche des configurations de frais (Fee Configurations)
+ * Provides a debounced search query hook for fee configuration options.
+ * @param params - Context parameters specifying schoolId and yearId.
+ * @returns Search option results containing options array, loading state, and search controls.
  */
 export function useSearchFeeConfigurationOptions(
-  options?: SearchHookOptions<FeeConfiguration>,
+  params: FinanceOptionSearchParams,
 ) {
-  return useGenericSearchOptions(useGetFeeConfigurationAsOptions, options);
+  const { schoolId, yearId } = params;
+
+  const buildQuery = useCallback(
+    (search: string) => ({
+      where: {
+        feeConfigurations: {
+          schoolId: { $eq: schoolId },
+          yearId: { $eq: yearId },
+          name: { $like: `%${search}%` },
+        },
+      },
+    }),
+    [schoolId, yearId],
+  );
+
+  return useGenericSearchOptions(useGetFeeConfigurationAsOptions, buildQuery);
 }
 
 /**
- * Recherche des échéanciers (Fee Schedules)
+ * Provides a debounced search query hook for fee schedule options.
+ * @param params - Context parameters specifying schoolId and yearId.
+ * @returns Search option results containing options array, loading state, and search controls.
  */
-export function useSearchFeeScheduleOptions(
-  options?: SearchHookOptions<FeeScheduleFilter>,
-) {
-  return useGenericSearchOptions(useGetFeeSchedulesAsOptions, options);
+export function useSearchFeeScheduleOptions(params: FinanceOptionSearchParams) {
+  const { schoolId, yearId } = params;
+
+  const buildQuery = useCallback(
+    (search: string): FeeScheduleFilter => ({
+      where: {
+        feeSchedules: {
+          installmentName: { $like: `%${search}%` },
+        },
+      },
+    }),
+    [schoolId, yearId],
+  );
+
+  return useGenericSearchOptions(useGetFeeSchedulesAsOptions, buildQuery);
 }
 
 /**
- * Recherche des taux de change journaliers (Daily Exchange Rates)
+ * Provides a debounced search query hook for daily exchange rate options.
+ * @param params - Context parameters specifying schoolId and yearId.
+ * @returns Search option results containing options array, loading state, and search controls.
  */
 export function useSearchDailyExchangeRateOptions(
-  options?: SearchHookOptions<DailyExchangeRateFilter>,
+  params: FinanceOptionSearchParams,
 ) {
-  return useGenericSearchOptions(useGetDailyExchangeRateAsOptions, options);
+  const { schoolId, yearId } = params;
+
+  const buildQuery = useCallback(
+    (search: string) => ({
+      where: {
+        dailyExchangeRates: {
+          schoolId: { $eq: schoolId },
+        },
+      },
+      or: [
+        { dailyExchangeRates: { currencyFrom: { $like: `%${search}%` } } },
+        { dailyExchangeRates: { currencyTo: { $like: `%${search}%` } } },
+      ],
+    }),
+    [schoolId, yearId],
+  );
+
+  return useGenericSearchOptions(useGetDailyExchangeRateAsOptions, buildQuery);
 }
 
 /**
- * Recherche des paiements d'élèves (Student Payments)
+ * Provides a debounced search query hook for student payment options.
+ * @param params - Context parameters specifying schoolId and yearId.
+ * @returns Search option results containing options array, loading state, and search controls.
  */
 export function useSearchStudentPaymentOptions(
-  options?: SearchHookOptions<StudentPaymentFilter>,
+  params: FinanceOptionSearchParams,
 ) {
-  return useGenericSearchOptions(useGetStudentPaymentAsOptions, options);
+  const { schoolId, yearId } = params;
+
+  const buildQuery = useCallback(
+    (search: string) => ({
+      where: {
+        studentPayments: {
+          schoolId: { $eq: schoolId },
+          yearId: { $eq: yearId },
+        },
+      },
+      or: [
+        { studentPayments: { transactionReference: { $like: `%${search}%` } } },
+        { studentPayments: { paymentMethod: { $like: `%${search}%` } } },
+      ],
+    }),
+    [schoolId, yearId],
+  );
+
+  return useGenericSearchOptions(useGetStudentPaymentAsOptions, buildQuery);
 }

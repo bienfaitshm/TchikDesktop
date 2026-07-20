@@ -9,7 +9,7 @@ import type {
   FeeApplicableConfiguration,
 } from "@/packages/@core/data-access/db";
 import type { SelectOption } from "@/packages/@core/data-access/db/queries";
-import type { FeeApplicableConfiguration as ApplicableParams } from "@/packages/@core/apis/servers/handlers/fee-configurations";
+import type { FeeApplicableConfiguration as ApplicableParams } from "@/packages/@core/data-access/db";
 import { FeeConfigurationRoutes } from "../routes-constant";
 
 export type FeeConfigurationApi = Readonly<{

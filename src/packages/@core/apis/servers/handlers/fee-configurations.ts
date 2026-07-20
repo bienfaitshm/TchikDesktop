@@ -1,5 +1,8 @@
 import z from "zod";
-import { feeConfigurationService } from "@/packages/@core/data-access/db/queries";
+import {
+  feeConfigurationService,
+  feeConfigurationRepository,
+} from "@/packages/@core/data-access/db/queries";
 import {
   FeeConfigurationBase,
   FeeConfigurationCreateSchema,
@@ -77,7 +80,7 @@ export class FeeConfigurationController {
     params: FeeApplicableConfigurationSchema,
   })
   static async getApplicable(req: IpcRequest) {
-    return feeConfigurationService.findApplicableConfigurations(req.params);
+    return feeConfigurationRepository.findApplicableConfigurations(req.params);
   }
 
   /**
