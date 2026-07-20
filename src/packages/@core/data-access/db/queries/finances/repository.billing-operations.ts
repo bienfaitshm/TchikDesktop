@@ -1,5 +1,5 @@
 import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
-import { getLogger } from "@/packages/logger";
+import { CustomLogger, getLogger } from "@/packages/logger";
 import {
   feeConfigurations,
   dailyExchangeRates,
@@ -17,11 +17,11 @@ import {
   wallets,
 } from "@/packages/@core/data-access/db/schemas";
 import { SECTION_ENUM } from "@/packages/@core/data-access/db/options";
-import type { OptionProvider } from "@/packages/@core/data-access/db/queries/select-option.transformer";
 import {
   DatabaseError,
   helpers,
   betterSqlite,
+  OptionProvider,
 } from "@/packages/drizzle-queries";
 import { eq, getTableColumns } from "drizzle-orm";
 
@@ -56,25 +56,35 @@ const FEE_CONFIG_DEFAULT_SORT: FeeConfigurationFilters = {
   orderBy: [{ table: "feeConfigurations", column: "name", order: "asc" }],
 };
 
+/**
+ * Repository handling database operations for fee configurations.
+ */
 export class FeeConfigurationRepository
   extends betterSqlite.BaseRepository<
     TableFeeConfiguration,
     TDataBase,
-    FeeConfigurationDTO
+    FeeConfigurationDTO,
+    FeeConfigurationFilters
   >
   implements OptionProvider<FeeConfiguration>
 {
   /**
-   * Initializes a new instance of the FeeConfigurationRepository.
-   * @param database - Optional database connection instance.
+   * Initializes a new instance of FeeConfigurationRepository.
+   * @param database - Database connection instance.
+   * @param logger - Custom logger instance.
    */
-  constructor(database: TDataBase = db) {
+  constructor(
+    database: TDataBase = db,
+    private readonly customLogger: CustomLogger = getLogger(
+      "FeeConfigurationRepository",
+    ),
+  ) {
     super({
       db: database,
       table: feeConfigurations,
       idColumn: feeConfigurations.feeConfigId,
       baseTableName: "feeConfigurations",
-      logger: getLogger,
+      logger: () => customLogger,
       defaultFilters: FEE_CONFIG_DEFAULT_SORT,
       joinTables: configJoinTables,
     });
@@ -85,7 +95,7 @@ export class FeeConfigurationRepository
    * @param tx - Optional database transaction instance.
    * @returns The dynamic query builder populated with joined relations.
    */
-  protected getQuerySet(tx?: TDataBase) {
+  protected override getQuerySet(tx?: TDataBase) {
     return this.getClient(tx)
       .select({
         ...getTableColumns(this.table),
@@ -107,7 +117,10 @@ export class FeeConfigurationRepository
    * @param filters - Optional filters to apply when fetching records.
    * @returns An array of fee configurations.
    */
-  fetchOptions(filters: FeeConfigurationFilters = {}): FeeConfiguration[] {
+  fetchOptions(filters?: FeeConfigurationFilters) {
+    this.customLogger.info(
+      "[FeeConfigurationRepository] Fetching fee configuration options.",
+    );
     return this.findMany(filters);
   }
 
@@ -127,6 +140,10 @@ export class FeeConfigurationRepository
     },
     tx: TDataBase = this.db,
   ): FeeApplicableConfiguration[] {
+    this.customLogger.info(
+      `[FeeConfigurationRepository] Finding applicable configurations for classroom ${ctx.classroomId} and school ${ctx.schoolId}`,
+    );
+
     try {
       const client = this.getClient(tx);
       const filters: FeeConfigurationFilters = {
@@ -139,30 +156,46 @@ export class FeeConfigurationRepository
         or: [
           { feeConfigurations: { optionId: { $eq: ctx.optionId } } },
           { feeConfigurations: { classroomId: { $eq: ctx.classroomId } } },
+          { feeConfigurations: { section: { $eq: ctx.section } } },
         ],
       };
 
-      const configs = client.query.feeConfigurations.findMany({
-        ...helpers.extractQueryPayload(this.getJoinTable(), filters),
-        with: {
-          feeType: {
-            with: {
-              schedules: true,
+      const queryPayload = helpers.extractQueryPayload(
+        this.getJoinTable(),
+        filters,
+      );
+
+      const configs = client.query.feeConfigurations
+        .findMany({
+          ...queryPayload,
+          with: {
+            feeType: {
+              with: {
+                schedules: true,
+              },
             },
           },
-        },
-      }) as unknown as FeeApplicableConfiguration[];
+        })
+        .sync();
 
-      if (configs.length === 0) return [];
+      if (configs.length === 0) {
+        this.customLogger.info(
+          "[FeeConfigurationRepository] No matching fee configurations found.",
+        );
+        return [];
+      }
 
-      const getWeight = (c: (typeof configs)[0]) => {
+      const getWeight = (c: FeeApplicableConfiguration) => {
         if (c.classroomId === ctx.classroomId) return 3;
         if (ctx.optionId && c.optionId === ctx.optionId) return 2;
         if (ctx.section && c.section === ctx.section) return 1;
         return 0;
       };
 
-      const bestConfigsMap = new Map<string | null, (typeof configs)[0]>();
+      const bestConfigsMap = new Map<
+        string | null,
+        FeeApplicableConfiguration
+      >();
 
       for (const config of configs) {
         const currentWeight = getWeight(config);
@@ -173,15 +206,21 @@ export class FeeConfigurationRepository
         }
       }
 
-      return Array.from(
-        bestConfigsMap.values(),
-      ) as FeeApplicableConfiguration[];
+      const resolvedConfigs = Array.from(bestConfigsMap.values());
+      this.customLogger.info(
+        `[FeeConfigurationRepository] Resolved ${resolvedConfigs.length} prioritized applicable configurations.`,
+      );
+
+      return resolvedConfigs;
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
         "Failed to find applicable fee configurations.",
       );
-      this.logError("findApplicableConfigurations", dbError, ctx);
+      this.customLogger.error(
+        "[FeeConfigurationRepository] Failed to find applicable fee configurations",
+        error,
+      );
       throw dbError;
     }
   }
@@ -201,21 +240,32 @@ const DAILY_EXCHANGE_RATE_DEFAULT_SORT: DailyExchangeRateFilters = {
   orderBy: [{ table: "dailyExchangeRates", column: "date", order: "desc" }],
 };
 
+/**
+ * Repository handling daily exchange rate operations.
+ */
 export class DailyExchangeRateRepository extends betterSqlite.BaseRepository<
   TableDailyExchangeRate,
-  TDataBase
+  TDataBase,
+  any,
+  DailyExchangeRateFilters
 > {
   /**
-   * Initializes a new instance of the DailyExchangeRateRepository.
-   * @param database - Optional database connection instance.
+   * Initializes a new instance of DailyExchangeRateRepository.
+   * @param database - Database connection instance.
+   * @param logger - Custom logger instance.
    */
-  constructor(database: TDataBase = db) {
+  constructor(
+    database: TDataBase = db,
+    private readonly customLogger: CustomLogger = getLogger(
+      "DailyExchangeRateRepository",
+    ),
+  ) {
     super({
       db: database,
       table: dailyExchangeRates,
       idColumn: dailyExchangeRates.rateId,
       baseTableName: "dailyExchangeRates",
-      logger: getLogger,
+      logger: () => customLogger,
       defaultFilters: DAILY_EXCHANGE_RATE_DEFAULT_SORT,
       joinTables: dailyExchangeJoinTables,
     });
@@ -231,19 +281,32 @@ export class DailyExchangeRateRepository extends betterSqlite.BaseRepository<
     filters: DailyExchangeRateFilters,
     tx: TDataBase = this.db,
   ) {
+    this.customLogger.info(
+      "[DailyExchangeRateRepository] Fetching latest exchange rate.",
+    );
+
     try {
       const dailyRates = this.findMany(filters, tx);
       if (dailyRates.length > 0) {
         const [rate] = dailyRates;
+        this.customLogger.info(
+          `[DailyExchangeRateRepository] Exchange rate found: ${rate.rateId}`,
+        );
         return rate;
       }
+      this.customLogger.info(
+        "[DailyExchangeRateRepository] No exchange rate found for given filters.",
+      );
       return null;
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
         "Failed to retrieve the latest exchange rate.",
       );
-      this.logError("getLatestExchangeRate", dbError, { filters });
+      this.customLogger.error(
+        "[DailyExchangeRateRepository] Failed to retrieve latest exchange rate",
+        error,
+      );
       throw dbError;
     }
   }

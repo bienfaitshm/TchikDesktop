@@ -6,6 +6,7 @@ import {
   EnrollmentFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
+import { SelectOption } from "@/packages/drizzle-queries";
 import { EnrollmentRoutes } from "../routes-constant";
 
 export type SearchEnrollmentQueryParams = EnrollmentFilter;
@@ -29,7 +30,7 @@ export type EnrollmentApi = Readonly<{
 
   searchEnrollments(
     params?: SearchEnrollmentQueryParams,
-  ): Promise<EnrollmentDTO[]>;
+  ): Promise<(SelectOption & EnrollmentDTO)[]>;
 
   /**
    * Récupère toutes les salles des inscriptions, éventuellement filtrées par des paramètres.

@@ -16,6 +16,7 @@ import {
   AssignInitialFees,
   StudentPaymentInfos,
   type StudentPaymentTable,
+  type EnrollmentPayment,
 } from "./use-cases/assign-initial-fees";
 import {
   ProcessStudentPayment,
@@ -142,4 +143,4 @@ export const paymentService = {
 };
 
 export * from "./types";
-export { type StudentPaymentTable };
+export { type StudentPaymentTable, EnrollmentPayment };

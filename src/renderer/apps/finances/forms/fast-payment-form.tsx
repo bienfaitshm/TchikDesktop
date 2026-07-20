@@ -1,24 +1,10 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import {
-  Check,
-  ChevronsUpDown,
-  Receipt,
-  CreditCard,
-  Printer,
-  Landmark,
-  AlertTriangle,
-} from "lucide-react";
+import React, { useState } from "react";
+import { Receipt, CreditCard, Landmark, AlertTriangle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-import type {
-  User as DrizzleUser,
-  Classroom,
-  ClassroomEnrollment,
-} from "@/packages/@core/data-access/db";
+import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
 
 import {
   Card,
@@ -29,114 +15,217 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import {
-  Form,
-  FormField,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import { FieldGroup, Field, FieldLabel } from "@/components/ui/field";
-import {
-  InputGroup,
-  InputGroupInput,
-  InputGroupAddon,
-} from "@/components/ui/input-group";
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ComboboxSearch } from "@/components/form/fields/generic-search-combo-box";
-
-const FEE_TYPES = [
-  { id: "minerval", label: "Minerval / Scolarité" },
-  { id: "inscription", label: "Frais d'Inscription" },
-  { id: "state_exam", label: "Frais d'Examen d'État" },
-  { id: "uniform", label: "Uniforme & Écussons" },
-] as const;
-
-const SCHEDULES = [
-  { id: "tranche_1", label: "1ère Tranche" },
-  { id: "tranche_2", label: "2ème Tranche" },
-  { id: "tranche_3", label: "3ème Tranche" },
-  { id: "mensuel_sep", label: "Mensualité - Septembre" },
-  { id: "mensuel_oct", label: "Mensualité - Octobre" },
-  { id: "totalite", label: "Totalité de l'année" },
-] as const;
-
-interface StudentExtended extends DrizzleUser {
-  enrollment?: ClassroomEnrollment & {
-    classroom?: Classroom;
-  };
-}
-
-const paymentFormSchema = z.object({
-  studentId: z.string({ required_error: "Veuillez sélectionner un élève." }),
-  feeType: z.string({ required_error: "Sélectionnez le type de frais." }),
-  schedule: z.string({ required_error: "Sélectionnez l'échéancier." }),
-  amountPaid: z.coerce.number().positive("Le montant doit être supérieur à 0"),
-  referenceNumber: z.string().optional(),
-});
-
-type PaymentFormValues = z.infer<typeof paymentFormSchema>;
+import {
+  ComboboxSearch,
+  RenderItem,
+} from "@/components/form/fields/generic-search-combo-box";
+import { useSearchEnrollments } from "@/renderer/libs/queries/enrollements/helpers";
+import type { SelectOption } from "@/packages/drizzle-queries";
+import { PaymentProcessForm } from "./payment-process-form";
+import { useGetStudentPaymentOverview } from "@/renderer/libs/queries/finances";
+import { Suspense } from "@/renderer/libs/queries/suspense";
+import type { EnrollmentPayment } from "@/packages/@core/data-access/db";
 
 export type FastPaymentFormProps = {
-  enrollments: [];
+  schoolId: string;
+  yearId: string;
 };
 
-export function FastPaymentForm({}: FastPaymentFormProps) {
-  const [openCombobox, setOpenCombobox] = useState(false);
-  const [selectedStudent, setSelectedStudent] =
-    useState<StudentExtended | null>(null);
+export type StudentSearchProps = Pick<
+  FastPaymentFormProps,
+  "schoolId" | "yearId"
+> & {
+  enrollment?: SelectOption & EnrollmentDTO;
+  onChange?: (
+    enrollmentId: string,
+    enrollment?: SelectOption & EnrollmentDTO,
+  ) => void;
+  value?: string;
+};
 
-  const form = useForm<PaymentFormValues>({
-    resolver: zodResolver(paymentFormSchema),
-    defaultValues: {
-      studentId: "",
-      feeType: "",
-      schedule: "",
-      amountPaid: 0,
-      referenceNumber: "",
-    },
-  });
+/**
+ * Renders a searchable combobox to find and select a student enrollment.
+ * @param props - Component properties containing context IDs and change handlers.
+ * @returns The student search combobox element.
+ */
+export const StudentSearch: React.FC<StudentSearchProps> = ({
+  schoolId,
+  yearId,
+  onChange,
+  value,
+  enrollment,
+}) => {
+  const { isSearching, options, searchQuery, setSearchQuery } =
+    useSearchEnrollments({ schoolId, yearId });
 
-  const watchedAmount = form.watch("amountPaid");
-  const watchedFeeType = form.watch("feeType");
-  const watchedSchedule = form.watch("schedule");
-
-  const handleStudentSelect = (student: StudentExtended) => {
-    setSelectedStudent(student);
-    form.setValue("studentId", student.userId);
-    setOpenCombobox(false);
-  };
-
-  const onSubmit = async (data: PaymentFormValues) => {
-    console.log("Transaction :", data);
-    alert(`Paiement enregistré avec succès !`);
-    form.reset();
-    setSelectedStudent(null);
-  };
-
-  const feeTypeLabel = useMemo(
-    () =>
-      FEE_TYPES.find((f) => f.id === watchedFeeType)?.label ||
-      "Non sélectionné",
-    [watchedFeeType],
+  return (
+    <ComboboxSearch
+      placeholder="Sélectionner l'élève"
+      options={options}
+      selectedItem={enrollment}
+      value={value}
+      onChange={(enrollmentId, selectedItem) =>
+        onChange?.(enrollmentId, selectedItem)
+      }
+      search={searchQuery}
+      isLoading={isSearching}
+      onSearchChange={setSearchQuery}
+      searchPlaceholder="Rechercher par nom, code..."
+      renderItem={(item) => (
+        <RenderItem
+          label={item.label}
+          description={`${item.student?.gender} - ${item.classroom.shortIdentifier}`}
+        />
+      )}
+    />
   );
-  const scheduleLabel = useMemo(
-    () =>
-      SCHEDULES.find((s) => s.id === watchedSchedule)?.label || "Non spécifié",
-    [watchedSchedule],
+};
+
+/**
+ * Formats the fee schedule description based on its payment status.
+ * @param status - The current payment status (e.g., "PAID", "PARTIAL").
+ * @param amountPaid - The amount already paid.
+ * @param totalAmount - The total amount required.
+ * @returns A formatted string describing the payment status.
+ */
+function formatScheduleStatus(
+  status: string,
+  amountPaid: number,
+  totalAmount: number,
+): string {
+  if (status === "PAID") {
+    return "Payé";
+  }
+  if (status === "PARTIAL") {
+    return `Avance de ${amountPaid.toFixed(2)}, Reste: ${(totalAmount - amountPaid).toFixed(2)}`;
+  }
+  return "Non payé";
+}
+
+export type FeeSelectionProps = {
+  enrollmentId: string;
+  selectedFeeType?: EnrollmentPayment;
+  onFeeTypeChange: (feeType?: EnrollmentPayment) => void;
+  selectedSchedule?: EnrollmentPayment["schedules"][0];
+  onScheduleChange: (schedule?: EnrollmentPayment["schedules"][0]) => void;
+  children?: (defaultValue: {
+    totalAmount: number;
+    amountPaid: number;
+    assignmentId: string;
+  }) => React.ReactNode;
+};
+
+/**
+ * Provides animated dropdown selections for a student's fee types and associated schedules.
+ * @param props - Component properties including state handlers and render children.
+ * @returns The fee selection component.
+ */
+export const FeeSelection: React.FC<FeeSelectionProps> = ({
+  enrollmentId,
+  selectedFeeType,
+  onFeeTypeChange,
+  selectedSchedule,
+  onScheduleChange,
+  children,
+}) => {
+  const { data: feeOverview } = useGetStudentPaymentOverview(enrollmentId);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Field className="flex flex-col gap-1.5">
+          <FieldLabel htmlFor="fee-type">Type de Frais</FieldLabel>
+          <ComboboxSearch
+            selectedItem={selectedFeeType}
+            value={selectedFeeType?.value}
+            options={feeOverview.payments}
+            onChange={(_, feeType) => {
+              onFeeTypeChange(feeType);
+              onScheduleChange(undefined);
+            }}
+          />
+        </Field>
+
+        <Field className="flex flex-col gap-1.5">
+          <FieldLabel htmlFor="fee-schedule">Échéancier / Période</FieldLabel>
+          <ComboboxSearch
+            selectedItem={selectedSchedule}
+            value={selectedSchedule?.scheduleId}
+            options={selectedFeeType?.schedules}
+            onChange={(_, schedule) => {
+              onScheduleChange(schedule);
+            }}
+            renderItem={({ label, status, amountPaid, totalAmount }) => (
+              <RenderItem
+                label={label}
+                description={formatScheduleStatus(
+                  status,
+                  amountPaid,
+                  totalAmount,
+                )}
+              />
+            )}
+          />
+        </Field>
+      </div>
+
+      <AnimatePresence mode="wait">
+        {selectedSchedule && (
+          <motion.div
+            key="payment-form"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            {children?.({
+              totalAmount: selectedSchedule.totalAmount,
+              amountPaid: selectedSchedule.amountPaid,
+              assignmentId: selectedSchedule.assignmentId,
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
+};
+
+/**
+ * Main form component for processing fast student payments, including an animated live invoice preview.
+ * @param props - Component properties including school and academic year identifiers.
+ * @returns The complete fast payment form interface.
+ */
+export function FastPaymentForm({ schoolId, yearId }: FastPaymentFormProps) {
+  const [selectedStudent, setSelectedStudent] = useState<
+    (SelectOption & EnrollmentDTO) | undefined
+  >(undefined);
+  const [selectedFeeType, setSelectedFeeType] = useState<
+    EnrollmentPayment | undefined
+  >(undefined);
+  const [selectedSchedule, setSelectedSchedule] = useState<
+    EnrollmentPayment["schedules"][0] | undefined
+  >(undefined);
+
+  const amountDue = selectedSchedule
+    ? selectedSchedule.totalAmount - selectedSchedule.amountPaid
+    : 0;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 max-w-7xl mx-auto items-start">
-      {/* SECTION FORMULAIRE (7 Colonnes) */}
       <div className="lg:col-span-7 flex flex-col gap-6">
         <Card className="border-muted shadow-md">
           <CardHeader className="flex flex-col gap-1">
@@ -153,195 +242,84 @@ export function FastPaymentForm({}: FastPaymentFormProps) {
           </CardHeader>
 
           <CardContent>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="flex flex-col gap-5"
-              >
-                <FieldGroup className="flex flex-col gap-5">
-                  {/* RECHERCHE ÉLÈVE E */}
-                  <FormField
-                    control={form.control}
-                    name="studentId"
-                    render={({ field, fieldState: { error } }) => (
-                      <Field
-                        data-invalid={!!error}
-                        className="flex flex-col gap-1.5"
-                      >
-                        <FieldLabel htmlFor="student-select">
-                          Élève au guichet
-                        </FieldLabel>
-                        <ComboboxSearch
-                          placeholder="Rechercher par nom, code..."
-                          options={[]}
-                          onChange={() => {}}
-                        />
-                        <FormMessage />
-                      </Field>
-                    )}
+            <div>
+              <FieldGroup className="flex flex-col gap-5">
+                <Field>
+                  <FieldLabel htmlFor="student">Élève au guichet</FieldLabel>
+                  <StudentSearch
+                    schoolId={schoolId}
+                    yearId={yearId}
+                    enrollment={selectedStudent}
+                    onChange={(_, enrollment) => {
+                      setSelectedStudent(enrollment);
+                      setSelectedFeeType(undefined);
+                      setSelectedSchedule(undefined);
+                    }}
                   />
+                  <FieldDescription>
+                    Apparaît sur les factures et reçus imprimés.
+                  </FieldDescription>
+                </Field>
 
-                  {/* PARAMETRES DE PAIEMENT */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="feeType"
-                      render={({ field, fieldState: { error } }) => (
-                        <Field
-                          data-invalid={!!error}
-                          className="flex flex-col gap-1.5"
+                <AnimatePresence mode="wait">
+                  {selectedStudent && (
+                    <motion.div
+                      key={selectedStudent.enrollmentId}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Suspense
+                        fallback={
+                          <p className="text-sm text-muted-foreground">
+                            Chargement des frais...
+                          </p>
+                        }
+                      >
+                        <FeeSelection
+                          enrollmentId={selectedStudent.enrollmentId}
+                          selectedFeeType={selectedFeeType}
+                          onFeeTypeChange={setSelectedFeeType}
+                          selectedSchedule={selectedSchedule}
+                          onScheduleChange={setSelectedSchedule}
                         >
-                          <FieldLabel htmlFor="fee-type">
-                            Type de Frais
-                          </FieldLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger
-                                id="fee-type"
-                                aria-invalid={!!error}
-                              >
-                                <SelectValue placeholder="Choisir le type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {FEE_TYPES.map((type) => (
-                                <SelectItem key={type.id} value={type.id}>
-                                  {type.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </Field>
-                      )}
-                    />
+                          {() => (
+                            <div className="mt-4">
+                              <PaymentProcessForm
+                                onSubmit={() => {}}
+                                currencyOptions={[]}
+                                paymentMethodOptions={[]}
+                                formId="fast-payment-form"
+                                defaultValues={{}}
+                                totalAmount={amountDue}
+                              />
+                            </div>
+                          )}
+                        </FeeSelection>
+                      </Suspense>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </FieldGroup>
 
-                    <FormField
-                      control={form.control}
-                      name="schedule"
-                      render={({ field, fieldState: { error } }) => (
-                        <Field
-                          data-invalid={!!error}
-                          className="flex flex-col gap-1.5"
-                        >
-                          <FieldLabel htmlFor="schedule-select">
-                            Échéancier / Période
-                          </FieldLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger
-                                id="schedule-select"
-                                aria-invalid={!!error}
-                              >
-                                <SelectValue placeholder="Sélectionner la tranche" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {SCHEDULES.map((sch) => (
-                                <SelectItem key={sch.id} value={sch.id}>
-                                  {sch.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </Field>
-                      )}
-                    />
-                  </div>
-
-                  {/* MONTANT ET REF CAISSE */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-2">
-                      <FormField
-                        control={form.control}
-                        name="amountPaid"
-                        render={({ field, fieldState: { error } }) => (
-                          <Field
-                            data-invalid={!!error}
-                            className="flex flex-col gap-1.5"
-                          >
-                            <FieldLabel htmlFor="amount-input">
-                              Montant Versé
-                            </FieldLabel>
-                            <FormControl>
-                              <InputGroup>
-                                <InputGroupInput
-                                  id="amount-input"
-                                  type="number"
-                                  step="0.01"
-                                  placeholder="0.00"
-                                  className="text-right font-mono font-bold text-base text-primary"
-                                  aria-invalid={!!error}
-                                  {...field}
-                                />
-                                <InputGroupAddon>
-                                  <span className="text-xs font-semibold text-muted-foreground">
-                                    USD
-                                  </span>
-                                </InputGroupAddon>
-                              </InputGroup>
-                            </FormControl>
-                            <FormMessage />
-                          </Field>
-                        )}
-                      />
-                    </div>
-
-                    <div className="md:col-span-1">
-                      <FormField
-                        control={form.control}
-                        name="referenceNumber"
-                        render={({ field, fieldState: { error } }) => (
-                          <Field
-                            data-invalid={!!error}
-                            className="flex flex-col gap-1.5"
-                          >
-                            <FieldLabel htmlFor="ref-input">
-                              N° Bordereau / Réf
-                            </FieldLabel>
-                            <FormControl>
-                              <InputGroup>
-                                <InputGroupInput
-                                  id="ref-input"
-                                  placeholder="Optionnel"
-                                  className="font-mono text-xs uppercase"
-                                  aria-invalid={!!error}
-                                  {...field}
-                                />
-                              </InputGroup>
-                            </FormControl>
-                            <FormMessage />
-                          </Field>
-                        )}
-                      />
-                    </div>
-                  </div>
-                </FieldGroup>
-
-                <Button
-                  type="submit"
-                  className="w-full font-semibold tracking-wide mt-2"
-                  size="lg"
-                >
-                  <Receipt data-icon="inline-start" /> Valider l'encaissement &
-                  Archiver
-                </Button>
-              </form>
-            </Form>
+              <Button
+                type="submit"
+                form="fast-payment-form"
+                className="w-full font-semibold tracking-wide mt-6 transition-all"
+                size="lg"
+                disabled={!selectedSchedule || amountDue <= 0}
+              >
+                <Receipt data-icon="inline-start" className="mr-2" /> Valider
+                l'encaissement & Archiver
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* SECTION FACTURE EN TEMPS RÉEL (5 Colonnes) */}
       <div className="lg:col-span-5">
-        <Card className="border-dashed bg-slate-50/50 dark:bg-zinc-900/40 shadow-sm sticky top-6">
+        <Card className="border-dashed bg-slate-50/50 dark:bg-zinc-900/40 shadow-sm sticky top-6 overflow-hidden">
           <CardHeader className="pb-3 flex flex-col gap-2">
             <div className="flex justify-between items-center">
               <Badge
@@ -355,7 +333,6 @@ export function FastPaymentForm({}: FastPaymentFormProps) {
           </CardHeader>
 
           <CardContent className="flex flex-col gap-4 font-sans text-xs">
-            {/* Header de la facture */}
             <div className="text-center flex flex-col gap-1">
               <h3 className="font-extrabold text-sm tracking-wide uppercase text-foreground">
                 Complexe Scolaire Excellence
@@ -370,64 +347,108 @@ export function FastPaymentForm({}: FastPaymentFormProps) {
 
             <Separator className="border-dashed" />
 
-            {/* Identité de l'élève */}
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Élève :</span>
-                <span className="font-bold text-right text-foreground">
-                  {selectedStudent
-                    ? `${selectedStudent.lastName} ${selectedStudent.middleName} ${selectedStudent.firstName || ""}`
-                    : "—"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Code Permanent :</span>
-                <span className="font-mono text-right">
-                  {selectedStudent?.enrollment?.studentCode || "—"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Classe / Option :</span>
-                <span className="font-medium text-right text-foreground">
-                  {selectedStudent?.enrollment?.classroom?.identifier || "—"}
-                </span>
-              </div>
+            <div className="flex flex-col gap-2 min-h-15">
+              <AnimatePresence mode="popLayout">
+                {selectedStudent ? (
+                  <motion.div
+                    key={selectedStudent.enrollmentId}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Nom, Postnom et Prénom
+                      </span>
+                      <span className="font-bold text-right text-foreground">
+                        {selectedStudent.student.fullName}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Code de l'élève :
+                      </span>
+                      <span className="font-mono text-right">
+                        {selectedStudent.studentCode || "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Classe / Option :
+                      </span>
+                      <span className="font-medium text-right text-foreground">
+                        {selectedStudent.classroom?.shortIdentifier || "—"}
+                      </span>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="empty-student"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex items-center justify-center h-full text-muted-foreground italic text-[11px]"
+                  >
+                    En attente de sélection d'un élève...
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <Separator className="border-dashed" />
 
-            {/* Détails de la transaction financière */}
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-bold text-foreground">{feeTypeLabel}</p>
-                  <p className="text-muted-foreground text-[10px] mt-0.5">
-                    Échéance : {scheduleLabel}
-                  </p>
-                </div>
-                <span className="font-mono font-bold text-sm text-foreground">
-                  {watchedAmount > 0
-                    ? `${Number(watchedAmount).toFixed(2)} $`
-                    : "0.00 $"}
-                </span>
-              </div>
+            <div className="flex flex-col gap-2 min-h-10">
+              <AnimatePresence mode="popLayout">
+                {selectedFeeType && selectedSchedule && (
+                  <motion.div
+                    key={selectedSchedule.scheduleId}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex justify-between items-start"
+                  >
+                    <div>
+                      <p className="font-bold text-foreground">
+                        {selectedFeeType.label}
+                      </p>
+                      <p className="text-muted-foreground text-[10px] mt-0.5">
+                        Échéance : {selectedSchedule.label}
+                      </p>
+                    </div>
+                    <motion.span
+                      key={amountDue}
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="font-mono font-bold text-sm text-foreground"
+                    >
+                      {amountDue > 0 ? `${amountDue.toFixed(2)} $` : "0.00 $"}
+                    </motion.span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <Separator className="border-neutral-300 dark:border-neutral-700 my-2" />
 
-            {/* Total */}
             <div className="flex justify-between items-center bg-white dark:bg-black p-3 rounded-lg border shadow-xs">
               <span className="text-xs font-black uppercase tracking-wider text-foreground">
                 Net Payé
               </span>
-              <span className="font-mono font-black text-lg text-primary">
-                {watchedAmount > 0
-                  ? `${Number(watchedAmount).toFixed(2)} $`
-                  : "0.00 $"}
-              </span>
+              <AnimatePresence mode="popLayout">
+                <motion.span
+                  key={amountDue}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="font-mono font-black text-lg text-primary"
+                >
+                  {amountDue > 0 ? `${amountDue.toFixed(2)} $` : "0.00 $"}
+                </motion.span>
+              </AnimatePresence>
             </div>
 
-            {/* Pied de reçu */}
             <div className="text-center text-[10px] text-muted-foreground pt-2 flex flex-col gap-1">
               <p className="italic">
                 Généré via Système de Facturation Instantanée
@@ -445,16 +466,7 @@ export function FastPaymentForm({}: FastPaymentFormProps) {
             </Alert>
           </CardContent>
 
-          <CardFooter className="bg-muted/40 p-3 rounded-b-xl flex gap-2">
-            <Button
-              variant="outline"
-              className="w-full text-xs h-8"
-              disabled={!selectedStudent || watchedAmount <= 0}
-              onClick={() => window.print()}
-            >
-              <Printer data-icon="inline-start" /> Imprimer Ticket
-            </Button>
-          </CardFooter>
+          <CardFooter className="bg-muted/40 p-3 rounded-b-xl flex gap-2"></CardFooter>
         </Card>
       </div>
     </div>

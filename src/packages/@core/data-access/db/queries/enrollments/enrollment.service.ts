@@ -27,6 +27,9 @@ export class EnrollmentService {
           student.fullName ?? `${student.lastName} ${student.middleName}`,
         labelKeyShort: ({ student }) => student.lastName,
         labelFormat: "long",
+        transform(baseOption, originalItem) {
+          return { ...baseOption, ...originalItem };
+        },
       },
     );
   }

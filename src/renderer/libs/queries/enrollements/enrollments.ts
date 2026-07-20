@@ -17,6 +17,7 @@ import type {
   SearchEnrollmentQueryParams,
   EnrollmentQueryParams,
 } from "@/packages/@core/apis/clients";
+import type { SelectOption } from "@/packages/drizzle-queries";
 
 /**
  * 1. Query Key Factory
@@ -55,7 +56,7 @@ export function useGetEnrollments(
 
 export function useSearchEnrollments(
   params?: SearchEnrollmentQueryParams,
-  options?: Partial<UseSuspenseQueryOptions<EnrollmentDTO[]>>,
+  options?: Partial<UseSuspenseQueryOptions<(SelectOption & EnrollmentDTO)[]>>,
 ) {
   return useQuery({
     queryKey: enrollmentKeys.search(params),

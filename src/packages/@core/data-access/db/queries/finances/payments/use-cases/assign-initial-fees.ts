@@ -24,8 +24,8 @@ import {
 import { validateContext, extractRequiredAssignments } from "../utils";
 import { BusinessRuleError } from "../errors";
 
-export type EnrollmentPayment = FeeType & {
-  schedules: (FeeAssignment & FeeSchedule)[];
+export type EnrollmentPayment = FeeType & { label: string; value: string } & {
+  schedules: (FeeAssignment & FeeSchedule & { label: string; value: string })[];
 };
 
 export type StudentPaymentTable = {
@@ -199,8 +199,12 @@ export class StudentPaymentInfos {
           config.feeType !== null,
       )
       .map(({ feeType }) => ({
+        value: feeType.feeTypeId,
+        label: feeType.name,
         ...feeType,
         schedules: (feeType.schedules || []).map((schedule) => ({
+          value: schedule.scheduleId,
+          label: schedule.installmentName,
           ...schedule,
           ...(assignmentMap.get(schedule.scheduleId) ?? {}),
         })),
