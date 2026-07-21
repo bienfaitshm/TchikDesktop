@@ -25,7 +25,6 @@ import {
   UpdateLocalRoomDialog,
   type LocalRoomDialogProps,
 } from "@/renderer/dialog-actions/localroom.dialog-action";
-import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import {
   createActionMenus,
   type ActionMenuConfig,
@@ -38,6 +37,7 @@ import {
   PageHeadDescription,
   PageContent,
 } from "@/renderer/containers/page-container";
+import { useCurrentConfig } from "../libs/stores/app-store";
 
 export interface LocalRoomRowActionsProps extends Pick<
   LocalRoomDialogProps,
@@ -102,7 +102,8 @@ export const LocalRoomRowAction: React.FC<LocalRoomRowActionsProps> =
  * @returns Rendered local room management page layout with data table and toolbars.
  */
 export const LocalRoomPage: React.FC = () => {
-  const { schoolId } = useSchoolContext();
+  const { schoolId } = useCurrentConfig();
+  console.log("schoolId", schoolId);
   const { data: rawLocalRooms, queryKey: mutationKey } = useGetLocalRooms({
     where: { localrooms: { schoolId: { $eq: schoolId } } },
   });

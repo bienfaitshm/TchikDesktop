@@ -7,8 +7,8 @@ import {
   HttpStatus,
 } from "@/packages/electron-ipc-rest";
 import {
-  SchoolYearSchema,
-  type SchoolYear,
+  schoolYearIdBaseSchema,
+  type SchoolYearIdBase,
 } from "@/packages/@core/data-access/schema-validations";
 import { documentExport } from "@/packages/@core/documents-exports";
 import { DocumentExportRoutes } from "../../routes-constant";
@@ -32,9 +32,9 @@ export class DocumentExportController {
    * @returns A promise resolving to the metadata layout of available document configurations.
    */
   @IpcServer.register(HttpMethod.GET, DocumentExportRoutes.INFOS, {
-    params: SchoolYearSchema.passthrough(),
+    params: schoolYearIdBaseSchema.passthrough(),
   })
-  static async getInfos(req: IpcRequest<unknown, SchoolYear>) {
+  static async getInfos(req: IpcRequest<unknown, SchoolYearIdBase>) {
     return documentExport.getAvailableExports(req.params);
   }
 
@@ -45,10 +45,12 @@ export class DocumentExportController {
    * @throws {HttpException} If the business layer generation pipeline encounters downstream processing failure.
    */
   @IpcServer.register(HttpMethod.POST, DocumentExportRoutes.EXPORTS, {
-    params: SchoolYearSchema.passthrough(),
+    params: schoolYearIdBaseSchema.passthrough(),
     body: defaultDocumentExportSchema,
   })
-  static async export(req: IpcRequest<DocumentExportFormData, SchoolYear>) {
+  static async export(
+    req: IpcRequest<DocumentExportFormData, SchoolYearIdBase>,
+  ) {
     const { documentType, data } = req.body;
     const { schoolId, yearId } = req.params;
 

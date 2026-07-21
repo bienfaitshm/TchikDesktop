@@ -3,7 +3,7 @@
  */
 
 import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
-import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
+import { schoolYearIdBaseSchema } from "@/packages/@core/data-access/schema-validations";
 import {
   type FormFieldDef,
   generateValidationSchema,
@@ -30,7 +30,7 @@ export class FicheCotationExportStrategy extends AbstractExportStrategy<
   public readonly displayName = "Fiche de cotation des eleves";
   public readonly description = "Génère les fiches de cotations par classe";
 
-  public readonly validationSchema = SchoolYearSchema;
+  public readonly validationSchema = schoolYearIdBaseSchema;
 
   constructor() {
     super({

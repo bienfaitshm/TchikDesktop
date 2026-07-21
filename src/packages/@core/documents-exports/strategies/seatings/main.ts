@@ -3,7 +3,7 @@
  */
 
 import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
-import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
+import { schoolYearIdBaseSchema } from "@/packages/@core/data-access/schema-validations";
 import {
   type FormFieldDef,
   generateValidationSchema,
@@ -29,7 +29,7 @@ export class SeatingExportStrategy extends AbstractExportStrategy<
   public readonly description =
     "Génère un état détaillé de la répartition des élèves par salle. Cet export inclut les listes d'émargement, l'affectation aux pupitres et les métadonnées de l'établissement pour faciliter l'organisation physique des épreuves ou des cours.";
 
-  public readonly validationSchema = SchoolYearSchema;
+  public readonly validationSchema = schoolYearIdBaseSchema;
 
   constructor() {
     super({

@@ -9,7 +9,7 @@ import {
   FormMessage,
 } from "@/renderer/components/ui/form";
 import {
-  seatingGeneratorSchema,
+  SeatingGeneratorSchema,
   type SeatingGenerator,
 } from "@/packages/@core/data-access/schema-validations";
 import { MultiSelect } from "@/renderer/components/form/fields/multi-select-input";
@@ -47,7 +47,7 @@ export const SeatingGeneratorForm = ({
   localRoomOptions = [],
 }: SeatingGeneratorFormProps) => {
   const form = useZodForm<SeatingGenerator>({
-    schema: seatingGeneratorSchema,
+    schema: SeatingGeneratorSchema,
     defaultValues: mergeDefaultValues(defaultValues, DEFAULT_VALUES),
     onSubmit,
   });

@@ -1,5 +1,5 @@
 import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
-import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
+import { schoolYearIdBaseSchema } from "@/packages/@core/data-access/schema-validations";
 import {
   type FormFieldDef,
   generateValidationSchema,
@@ -28,7 +28,7 @@ export class EnrollmentExportStrategy extends AbstractExportStrategy<
   public readonly description =
     "Export complet des données d'inscription (élèves, classes, dates).";
 
-  protected readonly validationSchema = SchoolYearSchema;
+  protected readonly validationSchema = schoolYearIdBaseSchema;
 
   constructor() {
     super({

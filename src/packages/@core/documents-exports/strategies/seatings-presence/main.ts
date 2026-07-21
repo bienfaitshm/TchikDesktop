@@ -3,7 +3,7 @@
  */
 
 import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
-import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
+import { schoolYearIdBaseSchema } from "@/packages/@core/data-access/schema-validations";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 import {
   type FormFieldDef,
@@ -30,7 +30,7 @@ export class SeatingPresenceExportStrategy extends AbstractExportStrategy<
   public readonly description =
     "Génère la liste de présence pour la mise en place des examens.";
 
-  public readonly validationSchema = SchoolYearSchema;
+  public readonly validationSchema = schoolYearIdBaseSchema;
 
   constructor() {
     super({
