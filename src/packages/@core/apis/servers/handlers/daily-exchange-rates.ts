@@ -4,6 +4,9 @@ import {
   DailyExchangeRateCreateSchema,
   DailyExchangeRateUpdateSchema,
   DailyExchangeRateFilterSchema,
+  type DailyExchangeRateCreate,
+  type DailyExchangeRateUpdate,
+  type DailyExchangeRateFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -11,8 +14,11 @@ import {
   type IpcRequest,
 } from "@/packages/electron-ipc-rest";
 import { DailyExchangeRateRoutes } from "../../routes-constant";
+import z from "zod";
 
 const RateIdSchema = DailyExchangeRateSchema.pick({ rateId: true });
+type RateId = z.infer<typeof RateIdSchema>;
+
 const SearchOptionsSchema = DailyExchangeRateFilterSchema;
 
 /**
@@ -27,7 +33,7 @@ export class DailyExchangeRateController {
   @IpcServer.register(HttpMethod.GET, DailyExchangeRateRoutes.ALL, {
     params: SearchOptionsSchema,
   })
-  static async getAll(req: IpcRequest) {
+  static async getAll(req: IpcRequest<unknown, DailyExchangeRateFilter>) {
     return dailyExchangeRateRepository.findMany(req.params);
   }
 
@@ -39,7 +45,7 @@ export class DailyExchangeRateController {
   @IpcServer.register(HttpMethod.GET, DailyExchangeRateRoutes.LTS, {
     params: SearchOptionsSchema,
   })
-  static async getLatest(req: IpcRequest) {
+  static async getLatest(req: IpcRequest<unknown, DailyExchangeRateFilter>) {
     return dailyExchangeRateRepository.getLatestExchangeRate(req.params);
   }
 
@@ -51,7 +57,7 @@ export class DailyExchangeRateController {
   @IpcServer.register(HttpMethod.POST, DailyExchangeRateRoutes.ALL, {
     body: DailyExchangeRateCreateSchema,
   })
-  static async create(req: IpcRequest) {
+  static async create(req: IpcRequest<DailyExchangeRateCreate>) {
     return dailyExchangeRateRepository.create(req.body);
   }
 
@@ -63,7 +69,7 @@ export class DailyExchangeRateController {
   @IpcServer.register(HttpMethod.GET, DailyExchangeRateRoutes.DETAIL, {
     params: RateIdSchema,
   })
-  static async getById(req: IpcRequest) {
+  static async getById(req: IpcRequest<unknown, RateId>) {
     return dailyExchangeRateRepository.findById(req.params.rateId);
   }
 
@@ -76,8 +82,8 @@ export class DailyExchangeRateController {
     params: RateIdSchema,
     body: DailyExchangeRateUpdateSchema,
   })
-  static async update(req: IpcRequest) {
-    return dailyExchangeRateRepository.update(req.body, req.params);
+  static async update(req: IpcRequest<DailyExchangeRateUpdate, RateId>) {
+    return dailyExchangeRateRepository.updateById(req.params.rateId, req.body);
   }
 
   /**
@@ -88,7 +94,7 @@ export class DailyExchangeRateController {
   @IpcServer.register(HttpMethod.DELETE, DailyExchangeRateRoutes.DETAIL, {
     params: RateIdSchema,
   })
-  static async delete(req: IpcRequest) {
+  static async delete(req: IpcRequest<unknown, RateId>) {
     return dailyExchangeRateRepository.delete(req.params.rateId);
   }
 }

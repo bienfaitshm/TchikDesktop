@@ -69,7 +69,7 @@ export type OrderByOption<TTables extends Record<string, Table>> = {
   [K in keyof TTables]: {
     table: K;
     column: keyof InferSelect<TTables[K]> & string;
-    order: "asc" | "desc";
+    order?: "asc" | "desc";
   };
 }[keyof TTables];
 

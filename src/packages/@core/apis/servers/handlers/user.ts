@@ -1,3 +1,4 @@
+import z from "zod";
 import {
   userRepository,
   userService,
@@ -12,13 +13,22 @@ import {
   UserFilterSchema,
   UserCreateSchema,
   UserUpdateSchema,
-  createSearchOptionsSchema,
+  type UserFilter,
+  type UserCreate,
+  type UserUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import { UserRoutes } from "../../routes-constant";
 
+/* =========================================================================
+   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
+   ========================================================================= */
+
 const UserIdSchema = UserSchema.pick({ userId: true }).required();
-export const searchUserOptionsSchema =
-  createSearchOptionsSchema(UserFilterSchema);
+type UserId = z.infer<typeof UserIdSchema>;
+
+/* =========================================================================
+   CONTROLLER IMPLEMENTATION
+   ========================================================================= */
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for user identity and account management.
@@ -32,7 +42,7 @@ export class UserController {
   @IpcServer.register(HttpMethod.GET, UserRoutes.ALL, {
     params: UserFilterSchema,
   })
-  static async getAll(req: IpcRequest) {
+  static async getAll(req: IpcRequest<unknown, UserFilter>) {
     return userRepository.findMany(req.params);
   }
 
@@ -42,9 +52,9 @@ export class UserController {
    * @returns A promise resolving to structured autocomplete user selection choices.
    */
   @IpcServer.register(HttpMethod.GET, UserRoutes.SEARCH, {
-    params: searchUserOptionsSchema,
+    params: UserFilterSchema,
   })
-  static async getOptions(req: IpcRequest) {
+  static async getOptions(req: IpcRequest<unknown, UserFilter>) {
     return userService.getOptions(req.params);
   }
 
@@ -56,7 +66,7 @@ export class UserController {
   @IpcServer.register(HttpMethod.POST, UserRoutes.ALL, {
     body: UserCreateSchema,
   })
-  static async create(req: IpcRequest) {
+  static async create(req: IpcRequest<UserCreate>) {
     return userRepository.create(req.body);
   }
 
@@ -68,7 +78,7 @@ export class UserController {
   @IpcServer.register(HttpMethod.GET, UserRoutes.DETAIL, {
     params: UserIdSchema,
   })
-  static async getById(req: IpcRequest) {
+  static async getById(req: IpcRequest<unknown, UserId>) {
     return userRepository.findById(req.params.userId);
   }
 
@@ -81,8 +91,8 @@ export class UserController {
     params: UserIdSchema,
     body: UserUpdateSchema,
   })
-  static async update(req: IpcRequest) {
-    return userRepository.update(req.body, req.params);
+  static async update(req: IpcRequest<UserUpdate, UserId>) {
+    return userRepository.updateById(req.params.userId, req.body);
   }
 
   /**
@@ -93,7 +103,7 @@ export class UserController {
   @IpcServer.register(HttpMethod.DELETE, UserRoutes.DETAIL, {
     params: UserIdSchema,
   })
-  static async delete(req: IpcRequest<unknown, { userId: string }>) {
+  static async delete(req: IpcRequest<unknown, UserId>) {
     return userRepository.delete(req.params.userId);
   }
 }

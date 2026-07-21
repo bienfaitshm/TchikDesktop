@@ -1,3 +1,4 @@
+import z from "zod";
 import {
   schoolRepository,
   studyYearRepository,
@@ -11,6 +12,12 @@ import {
   StudyYearCreateSchema,
   StudyYearUpdateSchema,
   StudyYearFilterSchema,
+  type SchoolFilter,
+  type SchoolCreate,
+  type SchoolUpdate,
+  type StudyYearFilter,
+  type StudyYearCreate,
+  type StudyYearUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -19,8 +26,19 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { SchoolRoutes, StudyYearRoutes } from "../../routes-constant";
 
+/* =========================================================================
+   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
+   ========================================================================= */
+
 const SchoolIdSchema = SchoolSchema.pick({ schoolId: true });
+type SchoolId = z.infer<typeof SchoolIdSchema>;
+
 const YearIdSchema = StudyYearSchema.pick({ yearId: true });
+type YearId = z.infer<typeof YearIdSchema>;
+
+/* =========================================================================
+   SCHOOL CONTROLLER IMPLEMENTATION
+   ========================================================================= */
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for school metadata management.
@@ -34,19 +52,19 @@ export class SchoolController {
   @IpcServer.register(HttpMethod.GET, SchoolRoutes.ALL, {
     params: SchoolFilterSchema,
   })
-  static async getAll(req: IpcRequest) {
+  static async getAll(req: IpcRequest<unknown, SchoolFilter>) {
     return schoolRepository.findMany(req.params);
   }
 
   /**
-   * provisions a new school entity record inside the core database structure.
+   * Provisions a new school entity record inside the core database structure.
    * @param req - The IPC request object containing the raw creation payload.
    * @returns A promise resolving to the newly created school record instance.
    */
   @IpcServer.register(HttpMethod.POST, SchoolRoutes.ALL, {
     body: SchoolCreateSchema,
   })
-  static async create(req: IpcRequest) {
+  static async create(req: IpcRequest<SchoolCreate>) {
     return schoolRepository.create(req.body);
   }
 
@@ -58,7 +76,7 @@ export class SchoolController {
   @IpcServer.register(HttpMethod.GET, SchoolRoutes.DETAIL, {
     params: SchoolIdSchema,
   })
-  static async getById(req: IpcRequest) {
+  static async getById(req: IpcRequest<unknown, SchoolId>) {
     return schoolRepository.findById(req.params.schoolId);
   }
 
@@ -71,8 +89,8 @@ export class SchoolController {
     params: SchoolIdSchema,
     body: SchoolUpdateSchema,
   })
-  static async update(req: IpcRequest) {
-    return schoolRepository.update(req.body, req.params);
+  static async update(req: IpcRequest<SchoolUpdate, SchoolId>) {
+    return schoolRepository.updateById(req.params.schoolId, req.body);
   }
 
   /**
@@ -83,10 +101,14 @@ export class SchoolController {
   @IpcServer.register(HttpMethod.DELETE, SchoolRoutes.DETAIL, {
     params: SchoolIdSchema,
   })
-  static async delete(req: IpcRequest) {
+  static async delete(req: IpcRequest<unknown, SchoolId>) {
     return schoolRepository.delete(req.params.schoolId);
   }
 }
+
+/* =========================================================================
+   STUDY YEAR CONTROLLER IMPLEMENTATION
+   ========================================================================= */
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for academic calendar study years.
@@ -100,7 +122,7 @@ export class StudyYearController {
   @IpcServer.register(HttpMethod.GET, StudyYearRoutes.ALL, {
     params: StudyYearFilterSchema,
   })
-  static async getAll(req: IpcRequest) {
+  static async getAll(req: IpcRequest<unknown, StudyYearFilter>) {
     return studyYearRepository.findMany(req.params);
   }
 
@@ -112,7 +134,7 @@ export class StudyYearController {
   @IpcServer.register(HttpMethod.POST, StudyYearRoutes.ALL, {
     body: StudyYearCreateSchema,
   })
-  static async create(req: IpcRequest) {
+  static async create(req: IpcRequest<StudyYearCreate>) {
     return studyYearRepository.create(req.body);
   }
 
@@ -124,7 +146,7 @@ export class StudyYearController {
   @IpcServer.register(HttpMethod.GET, StudyYearRoutes.DETAIL, {
     params: YearIdSchema,
   })
-  static async getById(req: IpcRequest) {
+  static async getById(req: IpcRequest<unknown, YearId>) {
     return studyYearRepository.findById(req.params.yearId);
   }
 
@@ -137,8 +159,8 @@ export class StudyYearController {
     params: YearIdSchema,
     body: StudyYearUpdateSchema,
   })
-  static async update(req: IpcRequest) {
-    return studyYearRepository.update(req.body, req.params);
+  static async update(req: IpcRequest<StudyYearUpdate, YearId>) {
+    return studyYearRepository.updateById(req.params.yearId, req.body);
   }
 
   /**
@@ -149,7 +171,7 @@ export class StudyYearController {
   @IpcServer.register(HttpMethod.DELETE, StudyYearRoutes.DETAIL, {
     params: YearIdSchema,
   })
-  static async delete(req: IpcRequest) {
+  static async delete(req: IpcRequest<unknown, YearId>) {
     return studyYearRepository.delete(req.params.yearId);
   }
 }

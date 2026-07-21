@@ -19,8 +19,10 @@ import {
   type EnrollmentUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import { EnrollmentRoutes } from "../../routes-constant";
+import z from "zod";
 
 const EnrollmentIdSchema = EnrollmentSchema.pick({ enrollmentId: true });
+type EnrollmentId = z.infer<typeof EnrollmentIdSchema>;
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for student enrollment records.
@@ -82,7 +84,7 @@ export class EnrollmentController {
   @IpcServer.register(HttpMethod.GET, EnrollmentRoutes.DETAIL, {
     params: EnrollmentIdSchema,
   })
-  static async getById(req: IpcRequest<unknown, { enrollmentId: string }>) {
+  static async getById(req: IpcRequest<unknown, EnrollmentId>) {
     return enrollmentRepository.findById(req.params.enrollmentId);
   }
 
@@ -95,8 +97,8 @@ export class EnrollmentController {
     params: EnrollmentIdSchema,
     body: EnrollmentUpdateSchema,
   })
-  static async update(req: IpcRequest<EnrollmentUpdate, EnrollmentFilter>) {
-    return enrollmentRepository.update(req.body, req.params);
+  static async update(req: IpcRequest<EnrollmentUpdate, EnrollmentId>) {
+    return enrollmentRepository.updateById(req.params.enrollmentId, req.body);
   }
 
   /**
@@ -107,7 +109,7 @@ export class EnrollmentController {
   @IpcServer.register(HttpMethod.DELETE, EnrollmentRoutes.DETAIL, {
     params: EnrollmentIdSchema,
   })
-  static async delete(req: IpcRequest<unknown, { enrollmentId: string }>) {
+  static async delete(req: IpcRequest<unknown, EnrollmentId>) {
     return enrollmentRepository.delete(req.params.enrollmentId);
   }
 }

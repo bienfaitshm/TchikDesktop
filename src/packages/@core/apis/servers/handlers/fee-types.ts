@@ -1,3 +1,4 @@
+import z from "zod";
 import { feeTypeService } from "@/packages/@core/data-access/db/queries";
 import {
   FeeTypeSchema,
@@ -5,7 +6,10 @@ import {
   FeeTypeUpdateSchema,
   FeeTypeFilterSchema,
   FeeTypeBulkCreateSchema,
-  createSearchOptionsSchema,
+  type FeeTypeFilter,
+  type FeeTypeCreate,
+  type FeeTypeUpdate,
+  type FeeTypeBulkCreate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -14,9 +18,16 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { FeeTypeRoutes } from "../../routes-constant";
 
+/* =========================================================================
+   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
+   ========================================================================= */
+
 const FeeTypeIdSchema = FeeTypeSchema.pick({ feeTypeId: true });
-export const searchFeeTypeOptionsSchema =
-  createSearchOptionsSchema(FeeTypeFilterSchema);
+type FeeTypeId = z.infer<typeof FeeTypeIdSchema>;
+
+/* =========================================================================
+   CONTROLLER IMPLEMENTATION
+   ========================================================================= */
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for fee type configurations.
@@ -30,7 +41,7 @@ export class FeeTypeController {
   @IpcServer.register(HttpMethod.GET, FeeTypeRoutes.ALL, {
     params: FeeTypeFilterSchema,
   })
-  static async getAll(req: IpcRequest) {
+  static async getAll(req: IpcRequest<unknown, FeeTypeFilter>) {
     return feeTypeService.findMany(req.params);
   }
 
@@ -40,9 +51,9 @@ export class FeeTypeController {
    * @returns A promise resolving to structured autocomplete selection options.
    */
   @IpcServer.register(HttpMethod.GET, FeeTypeRoutes.SEARCH, {
-    params: searchFeeTypeOptionsSchema,
+    params: FeeTypeFilterSchema,
   })
-  static async getOptions(req: IpcRequest) {
+  static async getOptions(req: IpcRequest<unknown, FeeTypeFilter>) {
     return feeTypeService.getOptions(req.params);
   }
 
@@ -54,7 +65,7 @@ export class FeeTypeController {
   @IpcServer.register(HttpMethod.POST, FeeTypeRoutes.ALL, {
     body: FeeTypeCreateSchema,
   })
-  static async create(req: IpcRequest) {
+  static async create(req: IpcRequest<FeeTypeCreate>) {
     return feeTypeService.create(req.body);
   }
 
@@ -66,7 +77,7 @@ export class FeeTypeController {
   @IpcServer.register(HttpMethod.POST, FeeTypeRoutes.BULK, {
     body: FeeTypeBulkCreateSchema,
   })
-  static async bulkCreate(req: IpcRequest) {
+  static async bulkCreate(req: IpcRequest<FeeTypeBulkCreate>) {
     return feeTypeService.bulkCreate(req.body.items.map((item) => item.value));
   }
 
@@ -78,7 +89,7 @@ export class FeeTypeController {
   @IpcServer.register(HttpMethod.GET, FeeTypeRoutes.DETAIL, {
     params: FeeTypeIdSchema,
   })
-  static async getById(req: IpcRequest) {
+  static async getById(req: IpcRequest<unknown, FeeTypeId>) {
     return feeTypeService.findById(req.params.feeTypeId);
   }
 
@@ -91,8 +102,8 @@ export class FeeTypeController {
     params: FeeTypeIdSchema,
     body: FeeTypeUpdateSchema,
   })
-  static async update(req: IpcRequest) {
-    return feeTypeService.update(req.body, req.params);
+  static async update(req: IpcRequest<FeeTypeUpdate, FeeTypeId>) {
+    return feeTypeService.updateById(req.params.feeTypeId, req.body);
   }
 
   /**
@@ -103,7 +114,7 @@ export class FeeTypeController {
   @IpcServer.register(HttpMethod.DELETE, FeeTypeRoutes.DETAIL, {
     params: FeeTypeIdSchema,
   })
-  static async delete(req: IpcRequest) {
+  static async delete(req: IpcRequest<unknown, FeeTypeId>) {
     return feeTypeService.delete(req.params.feeTypeId);
   }
 }

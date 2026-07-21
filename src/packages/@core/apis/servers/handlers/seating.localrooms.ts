@@ -1,4 +1,8 @@
-import { localRoomService } from "@/packages/@core/data-access/db/queries";
+import z from "zod";
+import {
+  localRoomService,
+  localRoomRepository,
+} from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
   IpcServer,
@@ -11,15 +15,28 @@ import {
   LocalroomCreateSchema,
   LocalroomSchema,
   createSearchOptionsSchema,
+  type LocalroomFilter,
+  type LocalroomCreate,
+  type LocalroomUpdate,
 } from "@/packages/@core/data-access/schema-validations";
+
+/* =========================================================================
+   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
+   ========================================================================= */
 
 const LocalRoomIdSchema = LocalroomSchema.pick({
   localroomId: true,
 }).required();
+type LocalRoomId = z.infer<typeof LocalRoomIdSchema>;
 
 export const searchLocalRoomSchema = createSearchOptionsSchema(
   LocalroomFilterSchema,
 );
+type SearchLocalRoomOptions = z.infer<typeof searchLocalRoomSchema>;
+
+/* =========================================================================
+   CONTROLLER IMPLEMENTATION
+   ========================================================================= */
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for physical school room management.
@@ -33,8 +50,8 @@ export class LocalRoomController {
   @IpcServer.register(HttpMethod.GET, LocalRoomRoutes.ALL, {
     params: LocalroomFilterSchema,
   })
-  static async getAll(req: IpcRequest) {
-    return localRoomService.findMany(req.params);
+  static async getAll(req: IpcRequest<unknown, LocalroomFilter>) {
+    return localRoomRepository.findMany(req.params);
   }
 
   /**
@@ -45,7 +62,7 @@ export class LocalRoomController {
   @IpcServer.register(HttpMethod.GET, LocalRoomRoutes.SEARCH, {
     params: searchLocalRoomSchema,
   })
-  static async getOptions(req: IpcRequest) {
+  static async getOptions(req: IpcRequest<unknown, SearchLocalRoomOptions>) {
     return localRoomService.getOptions(req.params);
   }
 
@@ -57,8 +74,8 @@ export class LocalRoomController {
   @IpcServer.register(HttpMethod.GET, LocalRoomRoutes.DETAIL, {
     params: LocalRoomIdSchema,
   })
-  static async getById(req: IpcRequest) {
-    return localRoomService.findById(req.params.localroomId);
+  static async getById(req: IpcRequest<unknown, LocalRoomId>) {
+    return localRoomRepository.findById(req.params.localroomId);
   }
 
   /**
@@ -69,8 +86,8 @@ export class LocalRoomController {
   @IpcServer.register(HttpMethod.POST, LocalRoomRoutes.ALL, {
     body: LocalroomCreateSchema,
   })
-  static async create(req: IpcRequest) {
-    return localRoomService.create(req.body);
+  static async create(req: IpcRequest<LocalroomCreate>) {
+    return localRoomRepository.create(req.body);
   }
 
   /**
@@ -82,8 +99,8 @@ export class LocalRoomController {
     params: LocalRoomIdSchema,
     body: LocalroomUpdateSchema,
   })
-  static async update(req: IpcRequest) {
-    return localRoomService.update(req.body, req.params);
+  static async update(req: IpcRequest<LocalroomUpdate, LocalRoomId>) {
+    return localRoomRepository.updateById(req.params.localroomId, req.body);
   }
 
   /**
@@ -94,7 +111,7 @@ export class LocalRoomController {
   @IpcServer.register(HttpMethod.DELETE, LocalRoomRoutes.DETAIL, {
     params: LocalRoomIdSchema,
   })
-  static async delete(req: IpcRequest) {
-    return localRoomService.delete(req.params.localroomId);
+  static async delete(req: IpcRequest<unknown, LocalRoomId>) {
+    return localRoomRepository.delete(req.params.localroomId);
   }
 }

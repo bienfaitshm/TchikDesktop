@@ -1,3 +1,4 @@
+import z from "zod";
 import { walletService } from "@/packages/@core/data-access/db/queries";
 import {
   WalletSchema,
@@ -5,7 +6,10 @@ import {
   WalletUpdateSchema,
   WalletFilterSchema,
   WalletBulkCreateSchema,
-  createSearchOptionsSchema,
+  type WalletFilter,
+  type WalletCreate,
+  type WalletUpdate,
+  type WalletBulkCreate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -14,9 +18,16 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { WalletRoutes } from "../../routes-constant";
 
+/* =========================================================================
+   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
+   ========================================================================= */
+
 const WalletIdSchema = WalletSchema.pick({ walletId: true });
-export const searchWalletOptionsSchema =
-  createSearchOptionsSchema(WalletFilterSchema);
+type WalletId = z.infer<typeof WalletIdSchema>;
+
+/* =========================================================================
+   CONTROLLER IMPLEMENTATION
+   ========================================================================= */
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for financial wallet management.
@@ -30,7 +41,7 @@ export class WalletController {
   @IpcServer.register(HttpMethod.GET, WalletRoutes.ALL, {
     params: WalletFilterSchema,
   })
-  static async getAll(req: IpcRequest) {
+  static async getAll(req: IpcRequest<unknown, WalletFilter>) {
     return walletService.findMany(req.params);
   }
 
@@ -40,9 +51,9 @@ export class WalletController {
    * @returns A promise resolving to structured autocomplete selection choices.
    */
   @IpcServer.register(HttpMethod.GET, WalletRoutes.SEARCH, {
-    params: searchWalletOptionsSchema,
+    params: WalletFilterSchema,
   })
-  static async getOptions(req: IpcRequest) {
+  static async getOptions(req: IpcRequest<unknown, WalletFilter>) {
     return walletService.getOptions(req.params);
   }
 
@@ -54,7 +65,7 @@ export class WalletController {
   @IpcServer.register(HttpMethod.POST, WalletRoutes.ALL, {
     body: WalletCreateSchema,
   })
-  static async create(req: IpcRequest) {
+  static async create(req: IpcRequest<WalletCreate>) {
     return walletService.create(req.body);
   }
 
@@ -66,7 +77,7 @@ export class WalletController {
   @IpcServer.register(HttpMethod.POST, WalletRoutes.BULK, {
     body: WalletBulkCreateSchema,
   })
-  static async bulkCreate(req: IpcRequest) {
+  static async bulkCreate(req: IpcRequest<WalletBulkCreate>) {
     return walletService.bulkCreate(req.body.items.map((item) => item.value));
   }
 
@@ -78,7 +89,7 @@ export class WalletController {
   @IpcServer.register(HttpMethod.GET, WalletRoutes.DETAIL, {
     params: WalletIdSchema,
   })
-  static async getById(req: IpcRequest) {
+  static async getById(req: IpcRequest<unknown, WalletId>) {
     return walletService.findById(req.params.walletId);
   }
 
@@ -91,8 +102,8 @@ export class WalletController {
     params: WalletIdSchema,
     body: WalletUpdateSchema,
   })
-  static async update(req: IpcRequest) {
-    return walletService.update(req.body, req.params);
+  static async update(req: IpcRequest<WalletUpdate, WalletId>) {
+    return walletService.updateById(req.params.walletId, req.body);
   }
 
   /**
@@ -103,7 +114,7 @@ export class WalletController {
   @IpcServer.register(HttpMethod.DELETE, WalletRoutes.DETAIL, {
     params: WalletIdSchema,
   })
-  static async delete(req: IpcRequest) {
+  static async delete(req: IpcRequest<unknown, WalletId>) {
     return walletService.delete(req.params.walletId);
   }
 }

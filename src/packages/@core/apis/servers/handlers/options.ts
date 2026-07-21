@@ -1,3 +1,4 @@
+import z from "zod";
 import {
   optionRepository,
   optionService,
@@ -7,7 +8,9 @@ import {
   OptionCreateSchema,
   OptionUpdateSchema,
   OptionSchema,
-  createSearchOptionsSchema,
+  type OptionFilter,
+  type OptionCreate,
+  type OptionUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -16,9 +19,16 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { OptionRoutes } from "../../routes-constant";
 
+/* =========================================================================
+   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
+   ========================================================================= */
+
 const OptionIdSchema = OptionSchema.pick({ optionId: true });
-export const searchOptionsSchema =
-  createSearchOptionsSchema(OptionFilterSchema);
+type OptionId = z.infer<typeof OptionIdSchema>;
+
+/* =========================================================================
+   CONTROLLER IMPLEMENTATION
+   ========================================================================= */
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for core options management.
@@ -32,7 +42,7 @@ export class OptionController {
   @IpcServer.register(HttpMethod.GET, OptionRoutes.ALL, {
     params: OptionFilterSchema,
   })
-  static async getAll(req: IpcRequest) {
+  static async getAll(req: IpcRequest<unknown, OptionFilter>) {
     return optionRepository.findMany(req.params);
   }
 
@@ -42,9 +52,9 @@ export class OptionController {
    * @returns A promise resolving to structured autocomplete selection options.
    */
   @IpcServer.register(HttpMethod.GET, OptionRoutes.SEARCH, {
-    params: searchOptionsSchema,
+    params: OptionFilterSchema,
   })
-  static async getOptions(req: IpcRequest) {
+  static async getOptions(req: IpcRequest<unknown, OptionFilter>) {
     return optionService.getOptions(req.params);
   }
 
@@ -56,7 +66,7 @@ export class OptionController {
   @IpcServer.register(HttpMethod.POST, OptionRoutes.ALL, {
     body: OptionCreateSchema,
   })
-  static async create(req: IpcRequest) {
+  static async create(req: IpcRequest<OptionCreate>) {
     return optionRepository.create(req.body);
   }
 
@@ -68,7 +78,7 @@ export class OptionController {
   @IpcServer.register(HttpMethod.GET, OptionRoutes.DETAIL, {
     params: OptionIdSchema,
   })
-  static async getById(req: IpcRequest) {
+  static async getById(req: IpcRequest<unknown, OptionId>) {
     return optionRepository.findById(req.params.optionId);
   }
 
@@ -81,8 +91,8 @@ export class OptionController {
     params: OptionIdSchema,
     body: OptionUpdateSchema,
   })
-  static async update(req: IpcRequest) {
-    return optionRepository.update(req.body, req.params);
+  static async update(req: IpcRequest<OptionUpdate, OptionId>) {
+    return optionRepository.updateById(req.params.optionId, req.body);
   }
 
   /**
@@ -93,7 +103,7 @@ export class OptionController {
   @IpcServer.register(HttpMethod.DELETE, OptionRoutes.DETAIL, {
     params: OptionIdSchema,
   })
-  static async delete(req: IpcRequest) {
+  static async delete(req: IpcRequest<unknown, OptionId>) {
     return optionRepository.delete(req.params.optionId);
   }
 }

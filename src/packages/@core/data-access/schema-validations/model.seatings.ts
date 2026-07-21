@@ -90,26 +90,39 @@ export const LocalroomCreateSchema = LocalroomSchema.omit({
   createdAt: true,
   updatedAt: true,
 });
+export type LocalroomCreate = z.infer<typeof LocalroomCreateSchema>;
+
 export const LocalroomUpdateSchema = LocalroomCreateSchema.omit({
   schoolId: true,
 }).partial();
+export type LocalroomUpdate = z.infer<typeof LocalroomUpdateSchema>;
 
 export const SeatingSessionCreateSchema = SeatingSessionSchema.omit({
   sessionId: true,
   createdAt: true,
   updatedAt: true,
 });
+export type SeatingSessionCreate = z.infer<typeof SeatingSessionCreateSchema>;
+
 export const SeatingSessionUpdateSchema = SeatingSessionCreateSchema.omit({
   schoolId: true,
   yearId: true,
 }).partial();
+export type SeatingSessionUpdate = z.infer<typeof SeatingSessionUpdateSchema>;
 
 export const SeatingAssignmentCreateSchema = SeatingAssignmentSchema.omit({
   assignmentId: true,
 });
+export type SeatingAssignmentCreate = z.infer<
+  typeof SeatingAssignmentCreateSchema
+>;
+
 export const SeatingAssignmentUpdateSchema = SeatingAssignmentCreateSchema.omit(
   { sessionId: true, localroomId: true, enrollmentId: true },
 ).partial();
+export type SeatingAssignmentUpdate = z.infer<
+  typeof SeatingAssignmentUpdateSchema
+>;
 
 export const BulkSeatingAssignmentSchema = z
   .object({

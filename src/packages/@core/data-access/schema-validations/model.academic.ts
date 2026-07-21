@@ -108,16 +108,8 @@ export const StudyYearSchema = z
       .min(4, "Ex: 2025-2026")
       .max(50)
       .describe("Nom de l'année"),
-    startDate: z.iso
-      .datetime()
-      .nullable()
-      .optional()
-      .describe("Date de début (ISO)"),
-    endDate: z.iso
-      .datetime()
-      .nullable()
-      .optional()
-      .describe("Date de fin (ISO)"),
+    startDate: z.date().nullable().optional().describe("Date de début (ISO)"),
+    endDate: z.date().nullable().optional().describe("Date de fin (ISO)"),
   })
   .extend(timestampBaseSchema.shape);
 
@@ -196,7 +188,10 @@ export const SchoolCreateSchema = SchoolSchema.omit({
   createdAt: true,
   updatedAt: true,
 });
+export type SchoolCreate = z.infer<typeof SchoolCreateSchema>;
+
 export const SchoolUpdateSchema = SchoolCreateSchema.partial();
+export type SchoolUpdate = z.infer<typeof SchoolUpdateSchema>;
 
 export const UserCreateSchema = UserSchema.omit({
   userId: true,
@@ -204,34 +199,46 @@ export const UserCreateSchema = UserSchema.omit({
   createdAt: true,
   updatedAt: true,
 });
+export type UserCreate = z.infer<typeof UserCreateSchema>;
+
 export const UserUpdateSchema = UserCreateSchema.omit({
   schoolId: true,
 }).partial();
+export type UserUpdate = z.infer<typeof UserUpdateSchema>;
 
 export const OptionCreateSchema = OptionSchema.omit({
   optionId: true,
   createdAt: true,
   updatedAt: true,
 });
+export type OptionCreate = z.infer<typeof OptionCreateSchema>;
+
 export const OptionUpdateSchema = OptionCreateSchema.omit({
   schoolId: true,
 }).partial();
+export type OptionUpdate = z.infer<typeof OptionUpdateSchema>;
 
 export const StudyYearCreateSchema = StudyYearSchema.omit({
   yearId: true,
   createdAt: true,
   updatedAt: true,
 });
+export type StudyYearCreate = z.infer<typeof StudyYearCreateSchema>;
+
 export const StudyYearUpdateSchema = StudyYearCreateSchema.partial();
+export type StudyYearUpdate = z.infer<typeof StudyYearUpdateSchema>;
 
 export const ClassroomCreateSchema = ClassroomSchema.omit({
   classId: true,
   createdAt: true,
   updatedAt: true,
 });
+export type ClassroomCreate = z.infer<typeof ClassroomCreateSchema>;
+
 export const ClassroomUpdateSchema = ClassroomCreateSchema.omit({
   schoolId: true,
 }).partial();
+export type ClassroomUpdate = z.infer<typeof ClassroomUpdateSchema>;
 
 export const EnrollmentCreateSchema = EnrollmentSchema.omit({
   enrollmentId: true,
@@ -239,17 +246,23 @@ export const EnrollmentCreateSchema = EnrollmentSchema.omit({
   createdAt: true,
   updatedAt: true,
 });
+export type EnrollmentCreate = z.infer<typeof EnrollmentCreateSchema>;
+
 export const EnrollmentUpdateSchema = EnrollmentCreateSchema.omit({
   schoolId: true,
   yearId: true,
   studentId: true,
 }).partial();
+export type EnrollmentUpdate = z.infer<typeof EnrollmentUpdateSchema>;
 
 export const EnrollmentActionCreateSchema = EnrollmentActionSchema.omit({
   actionId: true,
   createdAt: true,
   updatedAt: true,
 });
+export type EnrollmentActionCreate = z.infer<
+  typeof EnrollmentActionCreateSchema
+>;
 
 /* =========================================================================
    QUICK ENROLLMENT & BULK SEATING
@@ -264,6 +277,9 @@ export type BaseStudent = z.infer<typeof BaseStudentSchema>;
 const BaseEnrollmentSchemaWithoutStudent = EnrollmentCreateSchema.omit({
   studentId: true,
 });
+export type BaseEnrollmentWithoutStudent = z.infer<
+  typeof BaseEnrollmentSchemaWithoutStudent
+>;
 
 export const EnrollmentQuickCreateSchema = z.discriminatedUnion("isInSystem", [
   // Cas A : Élève existant dans la BD

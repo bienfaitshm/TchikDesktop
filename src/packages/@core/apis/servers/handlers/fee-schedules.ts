@@ -1,3 +1,4 @@
+import z from "zod";
 import { feeScheduleService } from "@/packages/@core/data-access/db/queries";
 import {
   FeeScheduleSchema,
@@ -5,6 +6,10 @@ import {
   FeeScheduleUpdateSchema,
   FeeScheduleFilterSchema,
   FeeScheduleBulkCreateSchema,
+  type FeeScheduleFilter,
+  type FeeScheduleCreate,
+  type FeeScheduleUpdate,
+  type FeeScheduleBulkCreate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -13,7 +18,16 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { FeeScheduleRoutes } from "../../routes-constant";
 
+/* =========================================================================
+   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
+   ========================================================================= */
+
 const FeeScheduleIdSchema = FeeScheduleSchema.pick({ scheduleId: true });
+type FeeScheduleId = z.infer<typeof FeeScheduleIdSchema>;
+
+/* =========================================================================
+   CONTROLLER IMPLEMENTATION
+   ========================================================================= */
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for fee schedule management.
@@ -27,7 +41,7 @@ export class FeeScheduleController {
   @IpcServer.register(HttpMethod.GET, FeeScheduleRoutes.ALL, {
     params: FeeScheduleFilterSchema,
   })
-  static async getAll(req: IpcRequest) {
+  static async getAll(req: IpcRequest<unknown, FeeScheduleFilter>) {
     return feeScheduleService.findMany(req.params);
   }
 
@@ -39,7 +53,7 @@ export class FeeScheduleController {
   @IpcServer.register(HttpMethod.GET, FeeScheduleRoutes.SEARCH, {
     params: FeeScheduleFilterSchema,
   })
-  static async getOptions(req: IpcRequest) {
+  static async getOptions(req: IpcRequest<unknown, FeeScheduleFilter>) {
     return feeScheduleService.getOptions(req.params);
   }
 
@@ -51,7 +65,7 @@ export class FeeScheduleController {
   @IpcServer.register(HttpMethod.POST, FeeScheduleRoutes.ALL, {
     body: FeeScheduleCreateSchema,
   })
-  static async create(req: IpcRequest) {
+  static async create(req: IpcRequest<FeeScheduleCreate>) {
     return feeScheduleService.create(req.body);
   }
 
@@ -63,7 +77,7 @@ export class FeeScheduleController {
   @IpcServer.register(HttpMethod.POST, FeeScheduleRoutes.BULK, {
     body: FeeScheduleBulkCreateSchema,
   })
-  static async bulkCreate(req: IpcRequest) {
+  static async bulkCreate(req: IpcRequest<FeeScheduleBulkCreate>) {
     return feeScheduleService.bulkCreate(
       req.body.items.map((item) => item.value),
     );
@@ -77,7 +91,7 @@ export class FeeScheduleController {
   @IpcServer.register(HttpMethod.GET, FeeScheduleRoutes.DETAIL, {
     params: FeeScheduleIdSchema,
   })
-  static async getById(req: IpcRequest<unknown, { scheduleId: string }>) {
+  static async getById(req: IpcRequest<unknown, FeeScheduleId>) {
     return feeScheduleService.findById(req.params.scheduleId);
   }
 
@@ -90,8 +104,8 @@ export class FeeScheduleController {
     params: FeeScheduleIdSchema,
     body: FeeScheduleUpdateSchema,
   })
-  static async update(req: IpcRequest) {
-    return feeScheduleService.update(req.body, req.params);
+  static async update(req: IpcRequest<FeeScheduleUpdate, FeeScheduleId>) {
+    return feeScheduleService.updateById(req.params.scheduleId, req.body);
   }
 
   /**
@@ -102,7 +116,7 @@ export class FeeScheduleController {
   @IpcServer.register(HttpMethod.DELETE, FeeScheduleRoutes.DETAIL, {
     params: FeeScheduleIdSchema,
   })
-  static async delete(req: IpcRequest<unknown, { scheduleId: string }>) {
+  static async delete(req: IpcRequest<unknown, FeeScheduleId>) {
     return feeScheduleService.delete(req.params.scheduleId);
   }
 }

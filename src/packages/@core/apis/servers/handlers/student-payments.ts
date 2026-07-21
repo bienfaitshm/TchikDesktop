@@ -1,9 +1,13 @@
+import z from "zod";
 import { studentPaymentRepository } from "@/packages/@core/data-access/db/queries";
 import {
   StudentPaymentSchema,
   StudentPaymentCreateSchema,
   StudentPaymentUpdateSchema,
   StudentPaymentFilterSchema,
+  type StudentPaymentFilter,
+  type StudentPaymentCreate,
+  type StudentPaymentUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -12,7 +16,16 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { StudentPaymentRoutes } from "../../routes-constant";
 
+/* =========================================================================
+   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
+   ========================================================================= */
+
 const PaymentIdSchema = StudentPaymentSchema.pick({ paymentId: true });
+type PaymentId = z.infer<typeof PaymentIdSchema>;
+
+/* =========================================================================
+   CONTROLLER IMPLEMENTATION
+   ========================================================================= */
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for student payment records.
@@ -26,7 +39,7 @@ export class StudentPaymentController {
   @IpcServer.register(HttpMethod.GET, StudentPaymentRoutes.ALL, {
     params: StudentPaymentFilterSchema,
   })
-  static async getAll(req: IpcRequest) {
+  static async getAll(req: IpcRequest<unknown, StudentPaymentFilter>) {
     return studentPaymentRepository.findMany(req.params);
   }
 
@@ -38,7 +51,7 @@ export class StudentPaymentController {
   @IpcServer.register(HttpMethod.POST, StudentPaymentRoutes.ALL, {
     body: StudentPaymentCreateSchema,
   })
-  static async create(req: IpcRequest) {
+  static async create(req: IpcRequest<StudentPaymentCreate>) {
     return studentPaymentRepository.create(req.body);
   }
 
@@ -50,7 +63,7 @@ export class StudentPaymentController {
   @IpcServer.register(HttpMethod.GET, StudentPaymentRoutes.DETAIL, {
     params: PaymentIdSchema,
   })
-  static async getById(req: IpcRequest) {
+  static async getById(req: IpcRequest<unknown, PaymentId>) {
     return studentPaymentRepository.findById(req.params.paymentId);
   }
 
@@ -63,8 +76,8 @@ export class StudentPaymentController {
     params: PaymentIdSchema,
     body: StudentPaymentUpdateSchema,
   })
-  static async update(req: IpcRequest) {
-    return studentPaymentRepository.update(req.body, req.params);
+  static async update(req: IpcRequest<StudentPaymentUpdate, PaymentId>) {
+    return studentPaymentRepository.updateById(req.params.paymentId, req.body);
   }
 
   /**
@@ -75,7 +88,7 @@ export class StudentPaymentController {
   @IpcServer.register(HttpMethod.DELETE, StudentPaymentRoutes.DETAIL, {
     params: PaymentIdSchema,
   })
-  static async delete(req: IpcRequest) {
+  static async delete(req: IpcRequest<unknown, PaymentId>) {
     return studentPaymentRepository.delete(req.params.paymentId);
   }
 }

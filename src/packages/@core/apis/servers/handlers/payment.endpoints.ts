@@ -14,23 +14,38 @@ import {
 import { defaultPrinterManagementService } from "@/packages/electron-utility";
 import { printReceipt } from "@/packages/pos-printer";
 
-const ClassroomFilterSchema = z.object({
-  schoolId: z.string().nonempty(),
-  yearId: z.string().nonempty(),
-  classId: z.string().nonempty(),
-});
+/* =========================================================================
+   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
+   ========================================================================= */
 
+const EnrollmentIdSchema = EnrollmentSchema.pick({ enrollmentId: true });
+type EnrollmentId = z.infer<typeof EnrollmentIdSchema>;
+
+const ClassroomFilterSchema = z.object({
+  schoolId: z.string().min(1, "L'identifiant de l'école est requis."),
+  yearId: z.string().min(1, "L'identifiant de l'année académique est requis."),
+  classId: z.string().min(1, "L'identifiant de la classe est requis."),
+});
 type ClassroomFilter = z.infer<typeof ClassroomFilterSchema>;
+
+/* =========================================================================
+   CONTROLLER IMPLEMENTATION
+   ========================================================================= */
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for student payments and fee assignments.
  */
 export class PaymentController {
+  /**
+   * Retrieves student payment overview and status summary.
+   * @param req - The IPC request context carrying enrollment parameters.
+   * @returns A promise resolving to the student payment overview dataset.
+   */
   @IpcServer.register(HttpMethod.GET, PaymentRoutes.STUDENT_PAYMENT_OVERVIEW, {
-    params: EnrollmentSchema.pick({ enrollmentId: true }),
+    params: EnrollmentIdSchema,
   })
   static async getStudentPaymentOverview(
-    req: IpcRequest<unknown, { enrollmentId: string }>,
+    req: IpcRequest<unknown, EnrollmentId>,
   ) {
     return paymentService.getStudentPaymentOverview(req.params.enrollmentId);
   }
@@ -63,7 +78,7 @@ export class PaymentController {
   @IpcServer.register(HttpMethod.POST, PaymentRoutes.PROCESS_PAYMENT, {
     body: ProcessPaymentSchema,
   })
-  static async processPayment(req: IpcRequest<ProcessPaymentPayload, unknown>) {
+  static async processPayment(req: IpcRequest<ProcessPaymentPayload>) {
     const payment = await paymentService.processStudentPayment(req.body);
 
     if (payment && req.context.window) {

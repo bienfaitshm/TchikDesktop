@@ -1,8 +1,13 @@
+import z from "zod";
 import { seatingSessionRepository } from "@/packages/@core/data-access/db/queries/seatings";
 import {
   SeatingSessionSchema,
   SeatingSessionCreateSchema,
+  SeatingSessionUpdateSchema,
   SeatingSessionFilterSchema,
+  type SeatingSessionFilter,
+  type SeatingSessionCreate,
+  type SeatingSessionUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -11,9 +16,18 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { SeatingSessionRoutes } from "../../routes-constant";
 
+/* =========================================================================
+   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
+   ========================================================================= */
+
 const SeatingSessionIdSchema = SeatingSessionSchema.pick({
   sessionId: true,
 });
+type SeatingSessionId = z.infer<typeof SeatingSessionIdSchema>;
+
+/* =========================================================================
+   CONTROLLER IMPLEMENTATION
+   ========================================================================= */
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for academic seating session management.
@@ -27,7 +41,7 @@ export class SeatingSessionController {
   @IpcServer.register(HttpMethod.GET, SeatingSessionRoutes.ALL, {
     params: SeatingSessionFilterSchema,
   })
-  static async getAll(req: IpcRequest) {
+  static async getAll(req: IpcRequest<unknown, SeatingSessionFilter>) {
     return seatingSessionRepository.findMany(req.params);
   }
 
@@ -39,7 +53,7 @@ export class SeatingSessionController {
   @IpcServer.register(HttpMethod.GET, SeatingSessionRoutes.DETAIL, {
     params: SeatingSessionIdSchema,
   })
-  static async getById(req: IpcRequest) {
+  static async getById(req: IpcRequest<unknown, SeatingSessionId>) {
     return seatingSessionRepository.findById(req.params.sessionId);
   }
 
@@ -51,7 +65,7 @@ export class SeatingSessionController {
   @IpcServer.register(HttpMethod.GET, SeatingSessionRoutes.FULL_DETAILS, {
     params: SeatingSessionIdSchema,
   })
-  static async getWithAssignments(req: IpcRequest) {
+  static async getWithAssignments(req: IpcRequest<unknown, SeatingSessionId>) {
     return seatingSessionRepository.getSessionWithAssignments(
       req.params.sessionId,
     );
@@ -65,7 +79,7 @@ export class SeatingSessionController {
   @IpcServer.register(HttpMethod.POST, SeatingSessionRoutes.ALL, {
     body: SeatingSessionCreateSchema,
   })
-  static async create(req: IpcRequest) {
+  static async create(req: IpcRequest<SeatingSessionCreate>) {
     return seatingSessionRepository.create(req.body);
   }
 
@@ -76,10 +90,10 @@ export class SeatingSessionController {
    */
   @IpcServer.register(HttpMethod.PUT, SeatingSessionRoutes.DETAIL, {
     params: SeatingSessionIdSchema,
-    body: SeatingSessionCreateSchema,
+    body: SeatingSessionUpdateSchema,
   })
-  static async update(req: IpcRequest) {
-    return seatingSessionRepository.update(req.body, req.params);
+  static async update(req: IpcRequest<SeatingSessionUpdate, SeatingSessionId>) {
+    return seatingSessionRepository.updateById(req.params.sessionId, req.body);
   }
 
   /**
@@ -90,7 +104,7 @@ export class SeatingSessionController {
   @IpcServer.register(HttpMethod.DELETE, SeatingSessionRoutes.DETAIL, {
     params: SeatingSessionIdSchema,
   })
-  static async delete(req: IpcRequest) {
+  static async delete(req: IpcRequest<unknown, SeatingSessionId>) {
     return seatingSessionRepository.delete(req.params.sessionId);
   }
 
@@ -102,7 +116,7 @@ export class SeatingSessionController {
   @IpcServer.register(HttpMethod.GET, SeatingSessionRoutes.STATUS, {
     params: SeatingSessionIdSchema,
   })
-  static async getRoomsStatus(req: IpcRequest) {
+  static async getRoomsStatus(req: IpcRequest<unknown, SeatingSessionId>) {
     return seatingSessionRepository.getSessionRoomsStatus(req.params.sessionId);
   }
 }

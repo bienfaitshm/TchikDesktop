@@ -8,16 +8,31 @@ import {
 
 import { withQueryOptions } from "./helpers";
 
+/* =========================================================================
+   LOCALROOM FILTER
+   ========================================================================= */
 export const LocalroomFilterSchema = withQueryOptions({
   localrooms: LocalroomSchema,
 });
+export type LocalroomFilter = z.infer<typeof LocalroomFilterSchema>;
+
+/* =========================================================================
+   SEATING SESSION FILTER
+   ========================================================================= */
 export const SeatingSessionFilterSchema = withQueryOptions({
   seatingSessions: SeatingSessionSchema,
 });
+export type SeatingSessionFilter = z.infer<typeof SeatingSessionFilterSchema>;
+
+/* =========================================================================
+   SEATING ASSIGNMENT FILTER
+   ========================================================================= */
 export const SeatingAssignmentFilterSchema = withQueryOptions({
   seatingAssignments: SeatingAssignmentSchema,
 });
-
+export type SeatingAssignmentFilter = z.infer<
+  typeof SeatingAssignmentFilterSchema
+>;
 /**
  * Schéma pour filtrer les tableaux de bord et métriques de placement.
  * Pro-Tip: On réutilise les types de base plutôt que de re-déclarer du z.string().uuid()

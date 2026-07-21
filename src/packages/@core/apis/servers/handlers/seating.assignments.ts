@@ -1,9 +1,13 @@
 import z from "zod";
-import { seatingSessionService } from "@/packages/@core/data-access/db/queries/seatings";
 import {
-  seatingGeneratorSchema,
-  SchoolYearSchema,
+  seatingSessionService,
+  seatingAssignmentRepository,
+} from "@/packages/@core/data-access/db/queries/seatings";
+import {
+  SeatingGeneratorSchema,
+  schoolYearIdBaseSchema,
   BulkSeatingAssignmentSchema,
+  type BulkSeatingAssignment,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -12,22 +16,36 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { SeatingAssignmentRoutes } from "../../routes-constant";
 
-const GenerateBodySchema = seatingGeneratorSchema.merge(SchoolYearSchema);
+/* =========================================================================
+   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
+   ========================================================================= */
+
+const GenerateBodySchema = SeatingGeneratorSchema.extend(
+  schoolYearIdBaseSchema.shape,
+);
+type GenerateBody = z.infer<typeof GenerateBodySchema>;
 
 const RoomLayoutParamSchema = z.object({
-  sessionId: z.string().nonempty(),
-  localroomId: z.string().nonempty(),
+  sessionId: z.string().min(1, "L'identifiant de la session est requis."),
+  localroomId: z.string().min(1, "L'identifiant du local est requis."),
 });
+type RoomLayoutParam = z.infer<typeof RoomLayoutParamSchema>;
 
 const UnassignedParamSchema = z.object({
-  sessionId: z.string().nonempty(),
-  yearId: z.string().nonempty(),
+  sessionId: z.string().min(1, "L'identifiant de la session est requis."),
+  yearId: z.string().min(1, "L'identifiant de l'année académique est requis."),
 });
+type UnassignedParam = z.infer<typeof UnassignedParamSchema>;
 
 const FindStudentParamSchema = z.object({
-  sessionId: z.string().nonempty(),
-  enrolementId: z.string().nonempty(),
+  sessionId: z.string().min(1, "L'identifiant de la session est requis."),
+  enrollmentId: z.string().min(1, "L'identifiant de l'inscription est requis."),
 });
+type FindStudentParam = z.infer<typeof FindStudentParamSchema>;
+
+/* =========================================================================
+   CONTROLLER IMPLEMENTATION
+   ========================================================================= */
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for student seating arrangements and layouts.
@@ -41,7 +59,7 @@ export class SeatingAssignmentController {
   @IpcServer.register(HttpMethod.POST, SeatingAssignmentRoutes.GENERATING, {
     body: GenerateBodySchema,
   })
-  static async generate(req: IpcRequest) {
+  static async generate(req: IpcRequest<GenerateBody>) {
     return seatingSessionService.generate(req.body);
   }
 
@@ -53,7 +71,7 @@ export class SeatingAssignmentController {
   @IpcServer.register(HttpMethod.GET, SeatingAssignmentRoutes.LAYOUT, {
     params: RoomLayoutParamSchema,
   })
-  static async getRoomLayout(req: IpcRequest) {
+  static async getRoomLayout(req: IpcRequest<unknown, RoomLayoutParam>) {
     return seatingSessionService.getRoomLayout(req.params);
   }
 
@@ -65,7 +83,7 @@ export class SeatingAssignmentController {
   @IpcServer.register(HttpMethod.POST, SeatingAssignmentRoutes.BULK, {
     body: BulkSeatingAssignmentSchema,
   })
-  static async bulkAssign(req: IpcRequest) {
+  static async bulkAssign(req: IpcRequest<BulkSeatingAssignment>) {
     return seatingSessionService.bulkAssign(req.body);
   }
 
@@ -77,8 +95,8 @@ export class SeatingAssignmentController {
   @IpcServer.register(HttpMethod.POST, SeatingAssignmentRoutes.RE_ASSIGNED, {
     body: BulkSeatingAssignmentSchema,
   })
-  static async rebuildAssignments(req: IpcRequest) {
-    return seatingSessionService.rebuildAssignments(req.body);
+  static async rebuildAssignments(req: IpcRequest<BulkSeatingAssignment>) {
+    return seatingAssignmentRepository.rebuildAssignments(req.body);
   }
 
   /**
@@ -89,7 +107,9 @@ export class SeatingAssignmentController {
   @IpcServer.register(HttpMethod.GET, SeatingAssignmentRoutes.UNASSIGNED, {
     params: UnassignedParamSchema,
   })
-  static async getUnassignedStudents(req: IpcRequest) {
+  static async getUnassignedStudents(
+    req: IpcRequest<unknown, UnassignedParam>,
+  ) {
     return seatingSessionService.getUnassignedStudents(req.params);
   }
 
@@ -101,7 +121,7 @@ export class SeatingAssignmentController {
   @IpcServer.register(HttpMethod.DELETE, SeatingAssignmentRoutes.CLEAR_ROOM, {
     body: RoomLayoutParamSchema,
   })
-  static async clearRoomAssignments(req: IpcRequest) {
+  static async clearRoomAssignments(req: IpcRequest<RoomLayoutParam>) {
     const success = await seatingSessionService.clearRoomAssignments(req.body);
     return { success };
   }
@@ -114,7 +134,7 @@ export class SeatingAssignmentController {
   @IpcServer.register(HttpMethod.GET, SeatingAssignmentRoutes.FIND_STUDENT, {
     params: FindStudentParamSchema,
   })
-  static async findStudentSeat(req: IpcRequest) {
+  static async findStudentSeat(req: IpcRequest<unknown, FindStudentParam>) {
     return seatingSessionService.findStudentSeat(req.params);
   }
 }

@@ -5,6 +5,9 @@ import {
   FeeConfigurationCreateSchema,
   FeeConfigurationFilterSchema,
   FeeConfigurationUpdateSchema,
+  type FeeConfigurationFilter,
+  type FeeConfigurationCreate,
+  type FeeConfigurationUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -13,7 +16,12 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { FeeConfigurationRoutes } from "../../routes-constant";
 
+/* =========================================================================
+   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
+   ========================================================================= */
+
 const FeeConfigIdSchema = FeeConfigurationBase.pick({ feeConfigId: true });
+type FeeConfigId = z.infer<typeof FeeConfigIdSchema>;
 
 export const FeeApplicableConfigurationSchema = FeeConfigurationBase.pick({
   optionId: true,
@@ -22,11 +30,19 @@ export const FeeApplicableConfigurationSchema = FeeConfigurationBase.pick({
   yearId: true,
 })
   .required({ schoolId: true, yearId: true })
-  .merge(
+  .extend(
     z.object({
-      classroomId: z.string().nonempty(),
-    }),
+      classroomId: z.string().min(1, "L'identifiant de la classe est requis."),
+    }).shape,
   );
+
+type FeeApplicableConfiguration = z.infer<
+  typeof FeeApplicableConfigurationSchema
+>;
+
+/* =========================================================================
+   CONTROLLER IMPLEMENTATION
+   ========================================================================= */
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for fee configuration management.
@@ -40,7 +56,7 @@ export class FeeConfigurationController {
   @IpcServer.register(HttpMethod.GET, FeeConfigurationRoutes.ALL, {
     params: FeeConfigurationFilterSchema,
   })
-  static async getAll(req: IpcRequest) {
+  static async getAll(req: IpcRequest<unknown, FeeConfigurationFilter>) {
     return feeConfigurationRepository.findMany(req.params);
   }
 
@@ -52,7 +68,7 @@ export class FeeConfigurationController {
   @IpcServer.register(HttpMethod.POST, FeeConfigurationRoutes.ALL, {
     body: FeeConfigurationCreateSchema,
   })
-  static async create(req: IpcRequest) {
+  static async create(req: IpcRequest<FeeConfigurationCreate>) {
     return feeConfigurationRepository.create(req.body);
   }
 
@@ -64,7 +80,7 @@ export class FeeConfigurationController {
   @IpcServer.register(HttpMethod.GET, FeeConfigurationRoutes.DETAIL, {
     params: FeeConfigIdSchema,
   })
-  static async getById(req: IpcRequest) {
+  static async getById(req: IpcRequest<unknown, FeeConfigId>) {
     return feeConfigurationRepository.findById(req.params.feeConfigId);
   }
 
@@ -76,7 +92,9 @@ export class FeeConfigurationController {
   @IpcServer.register(HttpMethod.GET, FeeConfigurationRoutes.APPLICABLE, {
     params: FeeApplicableConfigurationSchema,
   })
-  static async getApplicable(req: IpcRequest) {
+  static async getApplicable(
+    req: IpcRequest<unknown, FeeApplicableConfiguration>,
+  ) {
     return feeConfigurationRepository.findApplicableConfigurations(req.params);
   }
 
@@ -89,8 +107,11 @@ export class FeeConfigurationController {
     params: FeeConfigIdSchema,
     body: FeeConfigurationUpdateSchema,
   })
-  static async update(req: IpcRequest) {
-    return feeConfigurationRepository.update(req.body, req.params);
+  static async update(req: IpcRequest<FeeConfigurationUpdate, FeeConfigId>) {
+    return feeConfigurationRepository.updateById(
+      req.params.feeConfigId,
+      req.body,
+    );
   }
 
   /**
@@ -101,7 +122,7 @@ export class FeeConfigurationController {
   @IpcServer.register(HttpMethod.DELETE, FeeConfigurationRoutes.DETAIL, {
     params: FeeConfigIdSchema,
   })
-  static async delete(req: IpcRequest) {
+  static async delete(req: IpcRequest<unknown, FeeConfigId>) {
     return feeConfigurationRepository.delete(req.params.feeConfigId);
   }
 }
