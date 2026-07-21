@@ -245,6 +245,38 @@ export abstract class BaseRepository<
   }
 
   /**
+   * Updates a record by its unique identifier within an optional transaction.
+   * @param id - The unique identifier of the record to update.
+   * @param payload - The data payload containing the fields to update.
+   * @param tx - Optional database transaction context.
+   * @returns The updated record or null if not found.
+   */
+  public updateById(id: string | number, payload: TUpdate, tx?: TDb) {
+    if (id === undefined || id === null) return null;
+
+    return this.executeWithTiming(
+      "updateById",
+      () => {
+        const result = this.getClient(tx)
+          .update(this.table)
+          .set({
+            ...payload,
+            updatedAt: sql`CURRENT_TIMESTAMP`,
+          })
+          .where(eq(this.idColumn, id))
+          .returning()
+          .get();
+        if (!result) {
+          this.logger.info(
+            `Element ${this.baseTableName} with id ${id} not found.`,
+          );
+        }
+        return (result as TSelect) ?? null;
+      },
+      { id },
+    );
+  }
+  /**
    * Modifies targeted active model instance variables matched against entity identification keys adapted for SQLite.
    * @param payload - Property updates payload mapped to insertion updates.
    * @param filters - Target query filter criteria configuration parameter settings flags.
