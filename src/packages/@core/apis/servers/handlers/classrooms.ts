@@ -5,9 +5,11 @@ import {
 import {
   ClassroomSchema,
   ClassroomCreateSchema,
+  type ClassroomCreate,
   ClassroomUpdateSchema,
+  type ClassroomUpdate,
   ClassroomFilterSchema,
-  createSearchOptionsSchema,
+  type ClassroomFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -15,10 +17,10 @@ import {
   type IpcRequest,
 } from "@/packages/electron-ipc-rest";
 import { ClassroomRoutes } from "../../routes-constant";
+import z from "zod";
 
 const ClassIdSchema = ClassroomSchema.pick({ classId: true });
-const SearchOptionsSchema = createSearchOptionsSchema(ClassroomFilterSchema);
-
+type ClassId = z.infer<typeof ClassIdSchema>;
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for classroom management.
  */
@@ -31,7 +33,7 @@ export class ClassroomController {
   @IpcServer.register(HttpMethod.GET, ClassroomRoutes.ALL, {
     params: ClassroomFilterSchema,
   })
-  static async getAll(req: IpcRequest) {
+  static async getAll(req: IpcRequest<unknown, ClassroomFilter>) {
     return classroomRepository.findMany(req.params);
   }
 
@@ -41,9 +43,9 @@ export class ClassroomController {
    * @returns A promise resolving to structured classroom search filter metadata.
    */
   @IpcServer.register(HttpMethod.GET, ClassroomRoutes.SEARCH, {
-    params: SearchOptionsSchema,
+    params: ClassroomFilterSchema,
   })
-  static async getOptions(req: IpcRequest) {
+  static async getOptions(req: IpcRequest<unknown, ClassroomFilter>) {
     return classroomService.getOptions(req.params);
   }
 
@@ -55,7 +57,7 @@ export class ClassroomController {
   @IpcServer.register(HttpMethod.GET, ClassroomRoutes.ALL_ENROLLMENT, {
     params: ClassroomFilterSchema,
   })
-  static async getWithEnrollments(req: IpcRequest) {
+  static async getWithEnrollments(req: IpcRequest<unknown, ClassroomFilter>) {
     return classroomRepository.findClassroomsWithStudents(req.params);
   }
 
@@ -67,7 +69,7 @@ export class ClassroomController {
   @IpcServer.register(HttpMethod.GET, ClassroomRoutes.DETAIL, {
     params: ClassIdSchema,
   })
-  static async getById(req: IpcRequest) {
+  static async getById(req: IpcRequest<unknown, ClassId>) {
     return classroomRepository.findById(req.params.classId);
   }
 
@@ -79,7 +81,7 @@ export class ClassroomController {
   @IpcServer.register(HttpMethod.POST, ClassroomRoutes.ALL, {
     body: ClassroomCreateSchema,
   })
-  static async create(req: IpcRequest) {
+  static async create(req: IpcRequest<ClassroomCreate>) {
     return classroomRepository.create(req.body);
   }
 
@@ -92,8 +94,8 @@ export class ClassroomController {
     params: ClassIdSchema,
     body: ClassroomUpdateSchema,
   })
-  static async update(req: IpcRequest) {
-    return classroomRepository.update(req.body, req.params);
+  static async update(req: IpcRequest<ClassroomUpdate, ClassId>) {
+    return classroomRepository.updateById(req.params.classId, req.body);
   }
 
   /**
@@ -104,7 +106,7 @@ export class ClassroomController {
   @IpcServer.register(HttpMethod.DELETE, ClassroomRoutes.DETAIL, {
     params: ClassIdSchema,
   })
-  static async delete(req: IpcRequest) {
+  static async delete(req: IpcRequest<unknown, ClassId>) {
     return classroomRepository.delete(req.params.classId);
   }
 }

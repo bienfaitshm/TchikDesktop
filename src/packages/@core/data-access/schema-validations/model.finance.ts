@@ -1,26 +1,35 @@
 import { z } from "zod";
-import { ZSECTION_ENUM } from "./model";
 import {
   ZCURRENCY_ENUM,
   ZFEE_SCHEDULES_ENUM,
   ZPAYMENT_METHOD_ENUM,
+  ZSECTION_ENUM,
   schoolIdBaseSchema,
   schoolYearIdBaseSchema,
   timestampBaseSchema,
+  optionalNullableString,
 } from "./model.base";
 
 /* =========================================================================
    WALLETS
    ========================================================================= */
+
 export const WalletSchema = z
   .object({
-    walletId: z.string().describe("ID unique du portefeuille (UUID)"),
-    name: z.string().nonempty().describe("Nom du portefeuille"),
+    walletId: z
+      .string()
+      .min(1, "L'ID du portefeuille est requis.")
+      .describe("ID unique du portefeuille (UUID)"),
+    name: z
+      .string()
+      .min(1, "Le nom du portefeuille est requis.")
+      .describe("Nom du portefeuille"),
     currency: ZCURRENCY_ENUM.describe("Devise du portefeuille"),
     currentBalance: z.coerce
       .number()
-      .int()
-      .nonnegative()
+      .int("Le solde doit être un entier.")
+      .min(0, "Le solde ne peut pas être négatif.")
+      .default(0)
       .describe("Solde actuel (en centimes)"),
   })
   .extend(schoolIdBaseSchema.shape)
@@ -35,17 +44,29 @@ export const WalletCreateSchema = WalletSchema.omit({
 });
 export type WalletCreate = z.infer<typeof WalletCreateSchema>;
 
-export const WalletUpdateSchema = WalletCreateSchema.partial();
+export const WalletUpdateSchema = WalletCreateSchema.omit({
+  schoolId: true,
+}).partial();
 export type WalletUpdate = z.infer<typeof WalletUpdateSchema>;
 
 /* =========================================================================
    FEE TYPES
    ========================================================================= */
+
 export const FeeTypeSchema = z
   .object({
-    feeTypeId: z.string().describe("ID unique du type de frais (UUID)"),
-    name: z.string().nonempty().describe("Nom du type de frais"),
-    walletId: z.string().nonempty().describe("Portefeuille associé"),
+    feeTypeId: z
+      .string()
+      .min(1, "L'ID du type de frais est requis.")
+      .describe("ID unique du type de frais (UUID)"),
+    name: z
+      .string()
+      .min(1, "Le nom du type de frais est requis.")
+      .describe("Nom du type de frais"),
+    walletId: z
+      .string()
+      .min(1, "L'ID du portefeuille est requis.")
+      .describe("Portefeuille associé"),
   })
   .extend(timestampBaseSchema.shape)
   .extend(schoolYearIdBaseSchema.shape);
@@ -59,20 +80,30 @@ export const FeeTypeCreateSchema = FeeTypeSchema.omit({
 });
 export type FeeTypeCreate = z.infer<typeof FeeTypeCreateSchema>;
 
-export const FeeTypeUpdateSchema = FeeTypeCreateSchema.partial();
+export const FeeTypeUpdateSchema = FeeTypeCreateSchema.omit({
+  schoolId: true,
+  yearId: true,
+}).partial();
 export type FeeTypeUpdate = z.infer<typeof FeeTypeUpdateSchema>;
 
 /* =========================================================================
    FEE SCHEDULES
    ========================================================================= */
+
 export const FeeScheduleSchema = z
   .object({
-    scheduleId: z.string().describe("ID unique de l'échéance (UUID)"),
+    scheduleId: z
+      .string()
+      .min(1, "L'ID de l'échéance est requis.")
+      .describe("ID unique de l'échéance (UUID)"),
     installmentName: z
       .string()
-      .nonempty()
+      .min(1, "Le nom de l'échéance est requis.")
       .describe("Nom du versement / de l'échéance (ex: Trimestre 1)"),
-    feeTypeId: z.string().describe("Type de frais rattaché"),
+    feeTypeId: z
+      .string()
+      .min(1, "Le type de frais est requis.")
+      .describe("Type de frais rattaché"),
   })
   .extend(timestampBaseSchema.shape);
 
@@ -85,81 +116,71 @@ export const FeeScheduleCreateSchema = FeeScheduleSchema.omit({
 });
 export type FeeScheduleCreate = z.infer<typeof FeeScheduleCreateSchema>;
 
-export const FeeScheduleUpdateSchema = FeeScheduleCreateSchema.partial();
+export const FeeScheduleUpdateSchema = FeeScheduleCreateSchema.omit({
+  feeTypeId: true,
+}).partial();
 export type FeeScheduleUpdate = z.infer<typeof FeeScheduleUpdateSchema>;
 
 /* =========================================================================
    FEE CONFIGURATIONS
    ========================================================================= */
+
 export const FeeConfigurationBase = z
   .object({
-    feeConfigId: z.string().describe("ID unique de la configuration (UUID)"),
-    name: z.string().min(1).describe("Nom de la configuration"),
+    feeConfigId: z
+      .string()
+      .min(1, "L'ID de la configuration est requis.")
+      .describe("ID unique de la configuration (UUID)"),
+    name: z
+      .string()
+      .min(1, "Le nom de la configuration est requis.")
+      .describe("Nom de la configuration"),
     totalAmount: z.coerce
       .number()
-      .int()
-      .nonnegative()
+      .int("Le montant doit être un entier.")
+      .min(0, "Le montant ne peut pas être négatif.")
       .describe("Montant total en centimes"),
     currency: ZCURRENCY_ENUM.describe("Devise de la configuration"),
-    section: ZSECTION_ENUM.nullable().describe("Section cible (si applicable)"),
-    optionId: z.string().nullable().describe("Option cible (si applicable)"),
-    classroomId: z.string().nullable().describe("Classe cible (si applicable)"),
-    feeTypeId: z.string().describe("Type de frais associé"),
+    section: ZSECTION_ENUM.nullable()
+      .optional()
+      .describe("Section cible (si applicable)"),
+    optionId: optionalNullableString.describe("Option cible (si applicable)"),
+    classroomId: optionalNullableString.describe(
+      "Classe cible (si applicable)",
+    ),
+    feeTypeId: z
+      .string()
+      .min(1, "Le type de frais est requis.")
+      .describe("Type de frais associé"),
   })
   .extend(timestampBaseSchema.shape)
   .extend(schoolYearIdBaseSchema.shape);
 
-export const addFeeConfigurationRefine = <T extends z.ZodTypeAny>(
-  schema: T,
-) => {
+export const addFeeConfigurationRefine = <T extends z.ZodObject>(schema: T) => {
   return schema.superRefine((data, ctx) => {
-    const hasSection = data.section !== null;
-    const hasOption = data.optionId !== null;
-    const hasClassroom = data.classroomId !== null;
+    // Compatibilité 'partial()' & nullability
+    const hasSection = data.section !== undefined && data.section !== null;
+    const hasOption = data.optionId !== undefined && data.optionId !== null;
+    const hasClassroom =
+      data.classroomId !== undefined && data.classroomId !== null;
 
-    const targetCount = [hasSection, hasOption, hasClassroom].filter(
-      Boolean,
-    ).length;
+    const targets = [hasSection, hasOption, hasClassroom].filter(Boolean);
 
-    if (targetCount === 0) {
+    if (targets.length === 0) {
       const msg =
         "Vous devez spécifier exactement une cible (soit une section, une option ou une classe).";
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: msg,
-        path: ["section"],
-      });
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: msg,
-        path: ["optionId"],
-      });
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: msg,
-        path: ["classroomId"],
-      });
-    } else if (targetCount > 1) {
+      ctx.addIssue({ message: msg, path: ["section"], code: "custom" });
+      ctx.addIssue({ message: msg, path: ["optionId"], code: "custom" });
+      ctx.addIssue({ message: msg, path: ["classroomId"], code: "custom" });
+    } else if (targets.length > 1) {
       const msg =
         "Une configuration de frais ne peut pas cibler plusieurs entités en même temps.";
       if (hasSection)
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: msg,
-          path: ["section"],
-        });
+        ctx.addIssue({ message: msg, path: ["section"], code: "custom" });
       if (hasOption)
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: msg,
-          path: ["optionId"],
-        });
+        ctx.addIssue({ message: msg, path: ["optionId"], code: "custom" });
       if (hasClassroom)
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: msg,
-          path: ["classroomId"],
-        });
+        ctx.addIssue({ message: msg, path: ["classroomId"], code: "custom" });
     }
   });
 };
@@ -179,13 +200,13 @@ export type FeeConfigurationCreate = z.infer<
   typeof FeeConfigurationCreateSchema
 >;
 
-export const FeeConfigurationUpdateSchema = addFeeConfigurationRefine(
-  FeeConfigurationBase.omit({
-    feeConfigId: true,
-    createdAt: true,
-    updatedAt: true,
-  }).partial(),
-);
+export const FeeConfigurationUpdateSchema = FeeConfigurationBase.omit({
+  feeConfigId: true,
+  createdAt: true,
+  updatedAt: true,
+  schoolId: true,
+  yearId: true,
+}).partial();
 export type FeeConfigurationUpdate = z.infer<
   typeof FeeConfigurationUpdateSchema
 >;
@@ -193,16 +214,30 @@ export type FeeConfigurationUpdate = z.infer<
 /* =========================================================================
    FEE ASSIGNMENTS
    ========================================================================= */
+
 export const FeeAssignmentSchema = z
   .object({
-    assignmentId: z.string().describe("ID unique de l'attribution (UUID)"),
-    enrollmentId: z.string().describe("Inscription concernée"),
-    feeConfigId: z.string().describe("Configuration de frais appliquée"),
-    scheduleId: z.string().describe("Échéance associée"),
+    assignmentId: z
+      .string()
+      .min(1, "L'ID d'attribution est requis.")
+      .describe("ID unique de l'attribution (UUID)"),
+    enrollmentId: z
+      .string()
+      .min(1, "L'inscription est requise.")
+      .describe("Inscription concernée"),
+    feeConfigId: z
+      .string()
+      .min(1, "La configuration de frais est requise.")
+      .describe("Configuration de frais appliquée"),
+    scheduleId: z
+      .string()
+      .min(1, "L'échéance est requise.")
+      .describe("Échéance associée"),
     amountPaid: z.coerce
       .number()
       .int()
-      .nonnegative()
+      .min(0, "Le montant payé ne peut pas être négatif.")
+      .default(0)
       .describe("Montant déjà payé (en centimes)"),
     status: ZFEE_SCHEDULES_ENUM.describe(
       "Statut de l'échéancier (UNPAID, PARTIAL, PAID, ...)",
@@ -219,38 +254,50 @@ export const FeeAssignmentCreateSchema = FeeAssignmentSchema.omit({
 });
 export type FeeAssignmentCreate = z.infer<typeof FeeAssignmentCreateSchema>;
 
-export const FeeAssignmentUpdateSchema = FeeAssignmentCreateSchema.partial();
+export const FeeAssignmentUpdateSchema = FeeAssignmentCreateSchema.omit({
+  enrollmentId: true,
+  feeConfigId: true,
+  scheduleId: true,
+}).partial();
 export type FeeAssignmentUpdate = z.infer<typeof FeeAssignmentUpdateSchema>;
 
 /* =========================================================================
    STUDENT PAYMENTS
    ========================================================================= */
+
 export const StudentPaymentSchema = z
   .object({
-    paymentId: z.string().describe("ID unique du paiement (UUID)"),
-    assignmentId: z.string().nonempty().describe("Attribution de frais liée"),
+    paymentId: z
+      .string()
+      .min(1, "L'ID du paiement est requis.")
+      .describe("ID unique du paiement (UUID)"),
+    assignmentId: z
+      .string()
+      .min(1, "L'attribution de frais est requise.")
+      .describe("Attribution de frais liée"),
     amountReceived: z.coerce
       .number()
       .int()
-      .nonnegative()
+      .positive("Le montant reçu doit être supérieur à zéro.")
       .describe("Montant reçu (en centimes)"),
     currencyReceived: ZCURRENCY_ENUM.describe("Devise du montant reçu"),
     appliedExchangeRate: z.coerce
       .number()
       .int()
-      .positive()
+      .positive("Taux de change invalide.")
       .describe("Taux de change appliqué"),
     amountConverted: z.coerce
       .number()
       .int()
-      .nonnegative()
+      .min(0)
       .describe("Montant converti dans la devise de la dette (en centimes)"),
     paymentMethod: ZPAYMENT_METHOD_ENUM.describe("Moyen de paiement"),
-    transactionReference: z
-      .string()
-      .nullable()
-      .optional()
-      .describe("Référence externe (M-Pesa, bordereau)"),
+    transactionReference: optionalNullableString.describe(
+      "Référence externe (M-Pesa, bordereau)",
+    ),
+    userId: optionalNullableString.describe(
+      "Utilisateur ayant saisi le paiement",
+    ),
   })
   .extend(timestampBaseSchema.shape)
   .extend(schoolYearIdBaseSchema.shape);
@@ -264,25 +311,36 @@ export const StudentPaymentCreateSchema = StudentPaymentSchema.omit({
 });
 export type StudentPaymentCreate = z.infer<typeof StudentPaymentCreateSchema>;
 
-export const StudentPaymentUpdateSchema = StudentPaymentCreateSchema.partial();
+export const StudentPaymentUpdateSchema = StudentPaymentCreateSchema.omit({
+  schoolId: true,
+  yearId: true,
+  assignmentId: true,
+}).partial();
 export type StudentPaymentUpdate = z.infer<typeof StudentPaymentUpdateSchema>;
 
 /* =========================================================================
    DAILY EXCHANGE RATES
    ========================================================================= */
+
 export const DailyExchangeRateSchema = z
   .object({
-    rateId: z.string().describe("ID unique du taux (UUID)"),
-    date: z.string().datetime().describe("Date du taux (format ISO)"),
+    rateId: z
+      .string()
+      .min(1, "L'ID du taux est requis.")
+      .describe("ID unique du taux (UUID)"),
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Format de date YYYY-MM-DD requis.")
+      .describe("Date du taux"),
     currencyFrom: ZCURRENCY_ENUM.describe("Devise source"),
     currencyTo: ZCURRENCY_ENUM.describe("Devise cible"),
     rate: z.coerce
       .number()
       .int()
-      .positive()
+      .positive("Le taux doit être un entier positif.")
       .describe("Taux de change (multiplié par 1 000 000)"),
-    schoolId: z.string().describe("École propriétaire"),
   })
+  .extend(schoolIdBaseSchema.shape)
   .extend(timestampBaseSchema.shape);
 
 export type DailyExchangeRate = z.infer<typeof DailyExchangeRateSchema>;
@@ -296,8 +354,9 @@ export type DailyExchangeRateCreate = z.infer<
   typeof DailyExchangeRateCreateSchema
 >;
 
-export const DailyExchangeRateUpdateSchema =
-  DailyExchangeRateCreateSchema.partial();
+export const DailyExchangeRateUpdateSchema = DailyExchangeRateCreateSchema.omit(
+  { schoolId: true },
+).partial();
 export type DailyExchangeRateUpdate = z.infer<
   typeof DailyExchangeRateUpdateSchema
 >;
@@ -305,13 +364,14 @@ export type DailyExchangeRateUpdate = z.infer<
 /* =========================================================================
    PROCESS PAYMENT PAYLOAD
    ========================================================================= */
+
 export const ProcessPaymentSchema = z
   .object({
-    assignmentId: z.string().nonempty(),
-    amountReceived: z.coerce.number().positive(),
+    assignmentId: z.string().min(1, "L'attribution est requise."),
+    amountReceived: z.coerce.number().positive("Le montant doit être positif."),
     currencyReceived: ZCURRENCY_ENUM,
     paymentMethod: ZPAYMENT_METHOD_ENUM,
-    transactionReference: z.string().optional(),
+    transactionReference: optionalNullableString,
   })
   .extend(schoolYearIdBaseSchema.shape);
 

@@ -39,8 +39,8 @@ export type QueryOptionsOutput<TShapes extends ShapesRecord> = {
   offset?: number;
 };
 
-function unwrapOptionalNullable(schema: z.ZodTypeAny): z.ZodTypeAny {
-  let cur: z.ZodTypeAny = schema;
+function unwrapOptionalNullable(schema: z.ZodTypeAny): z.core.$ZodType {
+  let cur: z.core.$ZodType = schema;
 
   while (cur instanceof z.ZodOptional || cur instanceof z.ZodNullable) {
     cur = cur.unwrap();
@@ -120,7 +120,11 @@ export function withQueryOptions<TShapes extends ShapesRecord>(
       : orderBySchemas.length === 1
         ? orderBySchemas[0]
         : z.union(
-            orderBySchemas as [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]],
+            orderBySchemas as unknown as [
+              z.ZodTypeAny,
+              z.ZodTypeAny,
+              ...z.ZodTypeAny[],
+            ],
           );
 
   return z
