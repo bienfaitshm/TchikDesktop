@@ -46,3 +46,4 @@ export const SeatingStatsFilterSchema = z.object({
 
 export type SeatingStatsFilter = z.infer<typeof SeatingStatsFilterSchema>;
 export const StatsFilterSchema = schoolYearIdBaseSchema;
+export type StatsFilter = z.infer<typeof StatsFilterSchema>;

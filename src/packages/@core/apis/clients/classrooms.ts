@@ -4,16 +4,11 @@ import type {
   ClassroomFilter,
   ClassroomUpdate,
 } from "@/packages/@core/data-access/schema-validations";
-import type {
-  SearchOptions,
-  SelectOption,
-} from "@/packages/@core/data-access/db/queries";
+import type { SelectOption } from "@/packages/@core/data-access/db/queries";
 import type { ClassroomDTO } from "@/packages/@core/data-access/db/queries/classrooms";
 import { ClassroomRoutes } from "../routes-constant";
 
-export type SearchClassroomQueryParams = Partial<
-  SearchOptions<ClassroomFilter>
->;
+export type SearchClassroomQueryParams = ClassroomFilter;
 
 /**
  * Type de l'objet API retourné. Le 'Readonly' garantit que toutes les propriétés
