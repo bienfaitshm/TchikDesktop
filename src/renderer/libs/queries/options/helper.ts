@@ -1,39 +1,48 @@
-import React from "react";
-import type { SearchOptionQueryParams } from "@/packages/@core/apis/clients";
-import { useDebounce } from "../base";
+import { useCallback } from "react";
+import { useGenericSearchOptions } from "../base";
+import type { OptionFilter } from "@/packages/@core/data-access/schema-validations";
 import { useGetOptionsAsOptions } from "./option";
 
-export interface UseSearchOptions {
-  /** Filtres additionnels optionnels pour restreindre la recherche */
-  filters?: SearchOptionQueryParams["filters"];
-  /** Délai de debounce en millisecondes (par défaut: 300ms) */
-  debounceMs?: number;
+export interface OptionSearchContextParams {
+  schoolId: string;
 }
 
-export function useSearchOptions(options: UseSearchOptions = {}) {
-  const { filters, debounceMs = 300 } = options;
+export function useSearchOptions(params: OptionSearchContextParams) {
+  const { schoolId } = params;
 
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const debouncedSearch = useDebounce(searchQuery, debounceMs);
-
-  const queryParams = React.useMemo<SearchOptionQueryParams>(
-    () => ({
-      search: debouncedSearch,
-      filters,
+  const buildSearchQuery = useCallback(
+    (search: string): OptionFilter => ({
+      limit: 25,
+      where: {
+        options: {
+          schoolId: {
+            $eq: schoolId,
+          },
+        },
+      },
+      or: [
+        {
+          options: {
+            optionName: {
+              $like: `%${search}%`,
+            },
+          },
+        },
+        {
+          options: {
+            optionShortName: {
+              $like: `%${search}%`,
+            },
+          },
+        },
+      ],
+      orderBy: [
+        { table: "options", column: "optionName", order: "asc" as const },
+        { table: "options", column: "optionShortName", order: "asc" as const },
+      ],
     }),
-    [debouncedSearch, JSON.stringify(filters)],
+    [schoolId],
   );
 
-  const {
-    data = [],
-    isLoading,
-    isFetching,
-  } = useGetOptionsAsOptions(queryParams);
-
-  return {
-    searchQuery,
-    options: data,
-    isSearching: isLoading || isFetching,
-    setSearchQuery,
-  };
+  return useGenericSearchOptions(useGetOptionsAsOptions, buildSearchQuery);
 }

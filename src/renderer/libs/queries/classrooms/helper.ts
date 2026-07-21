@@ -1,39 +1,52 @@
-import React from "react";
-import type { SearchClassroomQueryParams } from "@/packages/@core/apis/clients";
-import { useDebounce } from "../base";
 import { useGetClassroomAsOptions } from "./classroom";
+import { useCallback } from "react";
+import { useGenericSearchOptions } from "../base";
+import type { ClassroomFilter } from "@/packages/@core/data-access/schema-validations";
 
-export interface UseSearchClassroomsOptions {
-  /** Filtres additionnels optionnels pour restreindre la recherche */
-  filters?: SearchClassroomQueryParams["filters"];
-  /** Délai de debounce en millisecondes (par défaut: 300ms) */
-  debounceMs?: number;
+export interface ClassroomSearchContextParams {
+  schoolId: string;
 }
 
-export function useSearchClassrooms(options: UseSearchClassroomsOptions = {}) {
-  const { filters, debounceMs = 300 } = options;
+export function useSearchClassrooms(options: ClassroomSearchContextParams) {
+  const { schoolId } = options;
 
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const debouncedSearch = useDebounce(searchQuery, debounceMs);
-
-  const queryParams = React.useMemo<SearchClassroomQueryParams>(
-    () => ({
-      search: debouncedSearch,
-      filters,
+  const buildSearchQuery = useCallback(
+    (search: string): ClassroomFilter => ({
+      limit: 25,
+      where: {
+        classrooms: {
+          schoolId: {
+            $eq: schoolId,
+          },
+        },
+      },
+      or: [
+        {
+          classrooms: {
+            identifier: {
+              $like: `%${search}%`,
+            },
+          },
+        },
+        {
+          classrooms: {
+            shortIdentifier: {
+              $like: `%${search}%`,
+            },
+          },
+        },
+      ],
+      orderBy: [
+        { table: "classrooms", column: "identifier", order: "asc" as const },
+        {
+          table: "classrooms",
+          column: "shortIdentifier",
+          order: "asc" as const,
+        },
+      ],
     }),
-    [debouncedSearch, JSON.stringify(filters)],
+    [schoolId],
   );
 
-  const {
-    data = [],
-    isLoading,
-    isFetching,
-  } = useGetClassroomAsOptions(queryParams);
-
-  return {
-    searchQuery,
-    options: data,
-    isSearching: isLoading || isFetching,
-    setSearchQuery,
-  };
+  return useGenericSearchOptions(useGetClassroomAsOptions, buildSearchQuery);
 }

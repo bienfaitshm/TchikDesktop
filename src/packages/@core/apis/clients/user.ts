@@ -6,10 +6,7 @@ import {
   UserUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 
-import type {
-  SearchOptions,
-  SelectOption,
-} from "@/packages/@core/data-access/db/queries";
+import type { SelectOption } from "@/packages/@core/data-access/db/queries";
 
 import { UserRoutes } from "../routes-constant";
 
@@ -20,7 +17,7 @@ export type UserData = User;
  */
 export type UserQueryParams = UserFilter;
 
-export type SearchUserQueryParams = Partial<SearchOptions<UserQueryParams>>;
+export type SearchUserQueryParams = UserFilter;
 
 /**
  * Type de l'objet API retourné. Le 'as const' garantit que toutes les propriétés
