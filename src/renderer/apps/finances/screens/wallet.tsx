@@ -43,7 +43,13 @@ export const WalletRowAction: React.FC<WalletRowActionProps> = ({
         <MenuDialogWrapper id="edit">
           <WalletDialogUpdateForm
             mutationKey={mutationKey}
-            defaultValues={wallet}
+            defaultValues={{
+              currentBalance: wallet.currentBalance,
+              currency: wallet.currency,
+              schoolId: wallet.schoolId,
+              walletId: wallet.walletId,
+              name: wallet.name,
+            }}
             walletId={wallet.walletId}
             schoolId={wallet.schoolId as string}
           />
@@ -128,13 +134,13 @@ export function SchoolWalletPage() {
     data: wallets,
     queryKey: walletQueryKey,
     isLoading: isLoadingWallets,
-  } = useGetWallets({ where: { schoolId } });
+  } = useGetWallets({ where: { wallets: { schoolId: { $eq: schoolId } } } });
 
   const {
     data: feeTypes,
     queryKey: feeTypeQueryKey,
     isLoading: isLoadingFees,
-  } = useGetFeeTypes({ where: { schoolId } });
+  } = useGetFeeTypes({ where: { feeTypes: { schoolId: { $eq: schoolId } } } });
 
   return (
     <div className="min-h-screen w-full py-8">

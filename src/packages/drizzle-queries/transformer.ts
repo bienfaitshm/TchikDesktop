@@ -29,8 +29,8 @@ export interface DataToOptionConfig<T, R extends SelectOption = SelectOption> {
 /**
  * Interface for components or repositories capable of providing option items.
  */
-export interface OptionProvider<T> {
-  fetchOptions(args: SearchOptions): Promise<T[]> | T[];
+export interface OptionProvider<T, SearchOptions = unknown> {
+  fetchOptions(args?: SearchOptions): Promise<T[]> | T[];
 }
 
 /**

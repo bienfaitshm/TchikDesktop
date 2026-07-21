@@ -268,7 +268,7 @@ export abstract class BaseRepository<
           .update(this.table)
           .set({
             ...payload,
-            updatedAt: sql`(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))`,
+            updatedAt: sql`CURRENT_TIMESTAMP`,
           })
           .$dynamic();
 

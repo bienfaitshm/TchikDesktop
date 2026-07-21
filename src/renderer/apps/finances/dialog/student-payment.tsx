@@ -1,52 +1,51 @@
-import * as React from "react";
-import { DialogForm } from "@/renderer/components/dialog/form";
-import {
-  ConfirmDeleteDialog,
-  useAsyncConfirm,
-} from "@/renderer/components/dialog/confirm-delete";
-import { useConfirm } from "@/renderer/hooks/use-confirm";
-import { cloneElementWithProps } from "@/renderer/utils/react";
+import type { ReactNode } from "react";
 import { StudentPaymentForm } from "@/renderer/apps/finances/forms/student-payment-form";
-
 import {
   useCreateStudentPaymentForm,
   useDeleteStudentPaymentForm,
   type StudentPaymentFormConfig,
   type StudentPaymentFormData,
 } from "@/renderer/libs/queries/finances";
+import {
+  createBaseActionDialog,
+  createDeleteActionDialog,
+  type ActionDialogProps,
+} from "./base.dialog-actions";
 
-export type StudentPaymentDialogProps<
-  TExtraProps extends Record<string, any> = {},
-> = React.PropsWithChildren<
-  TExtraProps &
-    StudentPaymentFormConfig & {
-      defaultValues?: Partial<StudentPaymentFormData>;
-    }
+export type StudentPaymentDialogProps = ActionDialogProps<
+  StudentPaymentFormData,
+  StudentPaymentFormConfig
 >;
 
-/* ==========================================================================
-   CREATE PAYMENT (ENCAISSEMENT GUICHET)
-   ========================================================================== */
-export const StudentPaymentDialogCreateForm: React.FC<
-  StudentPaymentDialogProps<{}>
-> = ({ children, defaultValues, ...config }) => {
-  const {
+export type CreateStudentPaymentDialogProps = StudentPaymentDialogProps;
+
+export type CancelStudentPaymentDialogProps = StudentPaymentDialogProps & {
+  paymentId: string;
+  receiptReference: string;
+};
+
+/**
+ * Action dialog component for recording front-desk student fee payments.
+ * @param props - Dialog properties containing initial form values and mutation callbacks.
+ * @returns Rendered payment creation dialog component.
+ */
+export const CreateStudentPaymentDialog = createBaseActionDialog<
+  CreateStudentPaymentDialogProps,
+  ReturnType<typeof useCreateStudentPaymentForm>
+>({
+  title: "Percevoir un versement (Guichet)",
+  description:
+    "Saisissez les fonds remis par l'élève. Le reçu comptable sera généré dès validation.",
+  useForm: useCreateStudentPaymentForm,
+  form({
     formId,
+    onSubmit,
     currencyOptions,
     paymentMethodOptions,
     assignmentSearch,
-    isSubmitting,
-    onSubmit,
-  } = useCreateStudentPaymentForm(config);
-
-  return (
-    <DialogForm
-      trigger={children}
-      title="Percevoir un versement (Guichet)"
-      description="Saisissez les fonds remis par l'élève. Le reçu comptable sera généré dès validation."
-      formId={formId}
-      isLoading={isSubmitting}
-    >
+    defaultValues,
+  }): ReactNode {
+    return (
       <StudentPaymentForm
         formId={formId}
         onSubmit={onSubmit}
@@ -55,55 +54,26 @@ export const StudentPaymentDialogCreateForm: React.FC<
         assignmentSearch={assignmentSearch}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-/* ==========================================================================
-   DELETE / CANCEL PAYMENT (ANNULATION DE REÇU)
-   ========================================================================== */
-interface CancelPaymentProps {
-  paymentId: string;
-  receiptReference: string; // Ex: "REC-2026-0094"
-}
+CreateStudentPaymentDialog.displayName = "CreateStudentPaymentDialog";
 
-export const StudentPaymentDialogCancelForm: React.FC<
-  StudentPaymentDialogProps<CancelPaymentProps>
-> = ({ children, paymentId, receiptReference, ...config }) => {
-  const { isOpen, onClose, onOpen } = useConfirm<string>();
-  const { isDeleting, deleteStudentPayment } = useDeleteStudentPaymentForm({
-    ...config,
-    onSuccess: (id) => {
-      config.onSuccess?.(id as any);
-      onClose();
-    },
-  });
+/**
+ * Confirmation dialog component for canceling student payment receipts.
+ * @returns Rendered delete confirmation dialog component.
+ */
+export const CancelStudentPaymentDialog = createDeleteActionDialog({
+  title: "Annuler un reçu d'encaissement",
+  description:
+    "Le montant associé sera déduit du solde de la caisse et réappliqué comme dette due sur le compte de l'élève.",
+  errorMessage: "Erreur lors de l'annulation du paiement :",
+  useDeleteForm: useDeleteStudentPaymentForm,
+});
 
-  const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
-    id: paymentId,
-    onOpenConfirm: onOpen,
-    onCloseConfirm: onClose,
-    onConfirmAction: deleteStudentPayment,
-    actionArgs: [receiptReference],
-    errorMessage: "Erreur lors de l'annulation du paiement :",
-  });
+CancelStudentPaymentDialog.displayName = "CancelStudentPaymentDialog";
 
-  return (
-    <>
-      <ConfirmDeleteDialog
-        id={paymentId}
-        isOpen={isOpen}
-        onClose={onClose}
-        onConfirm={handleConfirm}
-        isPending={isDeleting}
-        title="Annuler un reçu d'encaissement"
-        description="Le montant associé sera déduit du solde de la caisse et réappliqué comme dette due sur le compte de l'élève."
-        itemName={receiptReference}
-      />
-      {cloneElementWithProps(children, {
-        onClick: handleTriggerClick,
-        disabled: isDeleting,
-      })}
-    </>
-  );
-};
+/* Backward compatibility aliases */
+export const StudentPaymentDialogCreateForm = CreateStudentPaymentDialog;
+export const StudentPaymentDialogCancelForm = CancelStudentPaymentDialog;

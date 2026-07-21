@@ -1,40 +1,45 @@
-import * as React from "react";
-import { DialogForm } from "@/renderer/components/dialog/form";
+import type { ReactNode } from "react";
 import {
   FeeBulkAssignmentForm,
   type FeeBulkAssignmentData,
 } from "@/renderer/apps/finances/forms/fee-bulk-assignment-form";
-import { useCreateBulkFeeAssignmentForm } from "@/renderer/libs/queries/finances";
+import {
+  useCreateBulkFeeAssignmentForm,
+  type BulkFeeAssignmentFormConfig,
+} from "@/renderer/libs/queries/finances";
+import {
+  createBaseActionDialog,
+  type ActionDialogProps,
+} from "./base.dialog-actions";
 
-type BulkAssignmentConfig = any;
-
-export type FeeBulkAssignmentDialogProps = React.PropsWithChildren<
-  BulkAssignmentConfig & {
-    defaultValues?: Partial<FeeBulkAssignmentData>;
-  }
+export type FeeBulkAssignmentDialogProps = ActionDialogProps<
+  FeeBulkAssignmentData,
+  BulkFeeAssignmentFormConfig
 >;
 
-export const FeeBulkAssignmentDialog: React.FC<
-  FeeBulkAssignmentDialogProps
-> = ({ children, defaultValues, ...config }) => {
-  const {
+/**
+ * Action dialog component managing bulk fee assignments for groups of students.
+ * @param props - Dialog properties including configuration settings and initial form values.
+ * @returns Rendered bulk fee assignment dialog component.
+ */
+export const FeeBulkAssignmentDialog = createBaseActionDialog<
+  FeeBulkAssignmentDialogProps,
+  ReturnType<typeof useCreateBulkFeeAssignmentForm>
+>({
+  title: "Facturation collective / Assignation de masse",
+  description:
+    "Générez instantanément des fiches de frais pour tout un groupe d'élèves en fonction des critères sélectionnés.",
+  useForm: useCreateBulkFeeAssignmentForm,
+  form({
     formId,
+    onSubmit,
     feeConfigSearch,
     scheduleSearch,
     classroomSearch,
     optionSearch,
-    isSubmitting,
-    onSubmit,
-  } = useCreateBulkFeeAssignmentForm(config);
-
-  return (
-    <DialogForm
-      trigger={children}
-      title="Facturation collective / Assignation de masse"
-      description="Générez instantanément des fiches de frais pour tout un groupe d'élèves en fonction des critères sélectionnés."
-      formId={formId}
-      isLoading={isSubmitting}
-    >
+    defaultValues,
+  }): ReactNode {
+    return (
       <FeeBulkAssignmentForm
         formId={formId}
         onSubmit={onSubmit}
@@ -44,8 +49,8 @@ export const FeeBulkAssignmentDialog: React.FC<
         optionSearch={optionSearch}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
 FeeBulkAssignmentDialog.displayName = "FeeBulkAssignmentDialog";

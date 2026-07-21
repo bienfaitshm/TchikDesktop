@@ -9,7 +9,14 @@ import { DailyExchange } from "../components/daily-exchange";
 export function SchoolPaymentConfigPage() {
   const { schoolId, yearId } = useSchoolContext();
   const { data: feeConfigs = [], queryKey: mutationKey } =
-    useGetFeeConfigurations({ where: { schoolId, yearId } });
+    useGetFeeConfigurations({
+      where: {
+        feeConfigurations: {
+          schoolId: { $eq: schoolId },
+          yearId: { $eq: yearId },
+        },
+      },
+    });
 
   return (
     <div className="min-h-screen bg-background text-foreground p-6 lg:p-8 container mx-auto space-y-8 antialiased">

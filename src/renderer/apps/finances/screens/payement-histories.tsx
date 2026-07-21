@@ -7,7 +7,12 @@ import { PaymentTable } from "../tables/payement-history";
 export function PaymentsHistoryPage() {
   const { schoolId, yearId } = useCurrentConfig();
   const { data: payments = [] } = useGetStudentPayments({
-    where: { yearId, schoolId },
+    where: {
+      studentPayments: {
+        schoolId: { $eq: schoolId },
+        yearId: { $eq: yearId },
+      },
+    },
     limit: 50,
   });
 

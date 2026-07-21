@@ -1,8 +1,5 @@
 import z from "zod";
-import {
-  feeConfigurationService,
-  feeConfigurationRepository,
-} from "@/packages/@core/data-access/db/queries";
+import { feeConfigurationRepository } from "@/packages/@core/data-access/db/queries";
 import {
   FeeConfigurationBase,
   FeeConfigurationCreateSchema,
@@ -44,7 +41,7 @@ export class FeeConfigurationController {
     params: FeeConfigurationFilterSchema,
   })
   static async getAll(req: IpcRequest) {
-    return feeConfigurationService.findMany(req.params);
+    return feeConfigurationRepository.findMany(req.params);
   }
 
   /**
@@ -56,7 +53,7 @@ export class FeeConfigurationController {
     body: FeeConfigurationCreateSchema,
   })
   static async create(req: IpcRequest) {
-    return feeConfigurationService.create(req.body);
+    return feeConfigurationRepository.create(req.body);
   }
 
   /**
@@ -68,7 +65,7 @@ export class FeeConfigurationController {
     params: FeeConfigIdSchema,
   })
   static async getById(req: IpcRequest) {
-    return feeConfigurationService.findById(req.params.feeConfigId);
+    return feeConfigurationRepository.findById(req.params.feeConfigId);
   }
 
   /**
@@ -93,7 +90,7 @@ export class FeeConfigurationController {
     body: FeeConfigurationUpdateSchema,
   })
   static async update(req: IpcRequest) {
-    return feeConfigurationService.update(req.body, req.params);
+    return feeConfigurationRepository.update(req.body, req.params);
   }
 
   /**
@@ -105,6 +102,6 @@ export class FeeConfigurationController {
     params: FeeConfigIdSchema,
   })
   static async delete(req: IpcRequest) {
-    return feeConfigurationService.delete(req.params.feeConfigId);
+    return feeConfigurationRepository.delete(req.params.feeConfigId);
   }
 }

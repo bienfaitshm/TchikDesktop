@@ -1,7 +1,6 @@
 "use client";
-
-import * as React from "react";
-import { useId, useCallback, useMemo } from "react";
+import { useId, useCallback, useMemo, useEffect, useRef } from "react";
+import { merge } from "ts-deepmerge";
 import type {
   DefaultValues,
   FieldError,
@@ -27,7 +26,7 @@ export type FormSubmitHandler<TFieldValues extends FieldValues> = (
 
 export interface BaseFormProps<
   DefaultValue extends FieldValues,
-  TFormData extends FieldValues = {},
+  TFormData extends FieldValues = DefaultValue,
 > {
   formId?: string;
   defaultValues?: DefaultValues<DefaultValue>;
@@ -57,7 +56,9 @@ export interface UseZodFormConfig<TFieldValues extends FieldValues> {
 }
 
 /**
- * @description Hook étendant react-hook-form avec Zod, optimisant la stabilité des valeurs par défaut.
+ * Custom hook integrating React Hook Form with Zod schema validation.
+ * @param config - Configuration including schema, default values, and submit handler.
+ * @returns Enhanced form instance including a custom submit handler and submission state.
  */
 export function useZodForm<TFieldValues extends FieldValues>({
   schema,
@@ -68,12 +69,15 @@ export function useZodForm<TFieldValues extends FieldValues>({
 > & { isSubmitting?: boolean } {
   const form = useForm({
     schema,
-    defaultValues: defaultValues,
+    defaultValues,
     shouldUnregister: false,
   });
 
-  const onSubmitRef = React.useRef(onSubmit);
-  onSubmitRef.current = onSubmit;
+  const onSubmitRef = useRef(onSubmit);
+
+  useEffect(() => {
+    onSubmitRef.current = onSubmit;
+  }, [onSubmit]);
 
   const submit = useMemo(() => {
     return form.handleSubmit(
@@ -87,8 +91,7 @@ export function useZodForm<TFieldValues extends FieldValues>({
         });
       },
       (errors) => {
-        const _errors = getFormErrors(errors);
-        console.log("Form Errors", _errors);
+        getFormErrors(errors);
       },
     );
   }, [form, defaultValues]);
@@ -105,15 +108,20 @@ export interface UseFormBaseConfig<TData> {
 }
 
 /**
- * @description Hook de base pour centraliser la logique commune des formulaires (ID unique et gestion du cache).
+ * Base hook offering common form state mechanisms such as unique IDs and success callbacks.
+ * @param config - Optional configuration containing success callbacks.
+ * @returns Form base state including formId and a memoized success handler.
  */
 export function useFormBase<TData = unknown>(
   config?: UseFormBaseConfig<TData>,
 ) {
   const formId = useId();
 
-  const configRef = React.useRef(config);
-  configRef.current = config;
+  const configRef = useRef(config);
+
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
 
   const handleSuccess = useCallback(async (data: TData) => {
     await configRef.current?.onSuccess?.(data);
@@ -125,66 +133,77 @@ export function useFormBase<TData = unknown>(
   };
 }
 
-const isObject = (item: any): item is Record<string, any> => {
-  return item && typeof item === "object" && !Array.isArray(item);
+/**
+ * Checks whether an item is a non-array object.
+ * @param item - Target item to check.
+ * @returns True if the item is a valid object, false otherwise.
+ */
+const isObject = (item: unknown): item is Record<string, unknown> => {
+  return Boolean(item) && typeof item === "object" && !Array.isArray(item);
 };
 
 /**
- * Fusionne les valeurs par défaut et initiales (Shallow Merge).
- * Les valeurs initiales écrasent les valeurs par défaut.
+ * Shallow merges default and initial form values, prioritizing initial values.
+ * @param initialValues - Initial values provided to the form.
+ * @param defaultValues - Fallback default values.
+ * @returns Merged partial object containing combined values.
  */
-export function mergeDefaultValues<T extends Record<string, any>>(
+export function mergeDefaultValues<T extends Record<string, unknown>>(
   initialValues: Partial<T> | undefined,
   defaultValues: Partial<T> | undefined,
 ): Partial<T> {
-  return {
-    ...defaultValues,
-    ...initialValues,
-  } as Partial<T>;
+  return merge({}, { ...defaultValues }, { ...initialValues }) as Partial<T>;
 }
 
 /**
- * Fusionne récursivement deux objets (Deep Merge) pour éviter la perte
- * de sous-propriétés dans les formulaires complexes.
+ * Deeply merges default and initial form values to prevent overwriting nested objects.
+ * @param initialValues - Initial values provided to the form.
+ * @param defaultValues - Fallback default values.
+ * @returns Deeply merged partial object.
  */
-export function mergeDefaultValuesDeep<T extends Record<string, any>>(
+export function mergeDefaultValuesDeep<T extends Record<string, unknown>>(
   initialValues: Partial<T> | undefined,
   defaultValues: Partial<T> | undefined,
 ): Partial<T> {
   if (!defaultValues) return initialValues ?? {};
   if (!initialValues) return defaultValues ?? {};
 
-  const output = { ...defaultValues };
+  const output: Record<string, unknown> = { ...defaultValues };
 
   if (isObject(defaultValues) && isObject(initialValues)) {
     Object.keys(initialValues).forEach((key) => {
-      if (isObject(initialValues[key])) {
+      const initialVal = initialValues[key];
+      const defaultVal = defaultValues[key];
+
+      if (isObject(initialVal)) {
         if (!(key in defaultValues)) {
-          Object.assign(output, { [key]: initialValues[key] });
-        } else {
-          output[key as keyof T] = mergeDefaultValuesDeep(
-            defaultValues[key],
-            initialValues[key],
-          ) as any;
+          output[key] = initialVal;
+        } else if (isObject(defaultVal)) {
+          output[key] = mergeDefaultValuesDeep(
+            defaultVal as Record<string, unknown>,
+            initialVal as Record<string, unknown>,
+          );
         }
       } else {
-        Object.assign(output, { [key]: initialValues[key] });
+        output[key] = initialVal;
       }
     });
   }
 
-  return output;
+  return output as Partial<T>;
 }
 
-interface FlatError {
+export interface FlatError {
   path: string;
   message: string;
   type: string;
 }
 
 /**
- * Extrait et aplatit toutes les erreurs actives de formState.errors
- * Gère les objets imbriqués et les listes (Field Arrays / Bulk)
+ * Recursively flattens React Hook Form error objects into a structured array.
+ * @param errors - Field errors object from React Hook Form.
+ * @param parentPath - Cumulative object key path for nested errors.
+ * @returns Array of flattened error objects.
  */
 export function getFormErrors(
   errors: FieldErrors,
@@ -204,11 +223,10 @@ export function getFormErrors(
       const error = currentError as FieldError;
       extractedErrors.push({
         path: currentPath,
-        message: error.message ?? "Aucun message",
+        message: error.message ?? "No message",
         type: String(error.type),
       });
     } else {
-      // Sinon, c'est un niveau d'imbrication supérieur (un sous-objet ou un tableau)
       extractedErrors = [
         ...extractedErrors,
         ...getFormErrors(currentError as FieldErrors, currentPath),

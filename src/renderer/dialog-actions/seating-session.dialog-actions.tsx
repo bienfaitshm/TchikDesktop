@@ -1,11 +1,4 @@
-import * as React from "react";
-import { DialogForm } from "@/renderer/components/dialog/form";
-import {
-  ConfirmDeleteDialog,
-  useAsyncConfirm,
-} from "@/renderer/components/dialog/confirm-delete";
-import { useConfirm } from "@/renderer/hooks/use-confirm";
-import { cloneElementWithProps } from "@/renderer/utils/react";
+import type { ReactNode } from "react";
 import {
   SeatingSessionForm,
   type SeatingSessionData,
@@ -16,121 +9,89 @@ import {
   useUpdateSeatingSessionForm,
   type SeatingSessionFormConfig,
 } from "@/renderer/libs/queries/seatings/seating-session.actions";
+import {
+  createBaseActionDialog,
+  createDeleteActionDialog,
+  type ActionDialogProps,
+} from "./base.dialog-actions";
 
-export type SeatingSessionDialogProps<
-  TExtraProps extends Record<string, any> = {},
-> = React.PropsWithChildren<
-  TExtraProps &
-    SeatingSessionFormConfig & {
-      defaultValues?: Partial<SeatingSessionData>;
-    }
+export type SeatingSessionDialogProps = ActionDialogProps<
+  SeatingSessionData,
+  SeatingSessionFormConfig
 >;
 
-/* ==========================================================================
-   1. CRÉATION
-   ========================================================================== */
-export const CreateSeatingSessionDialog: React.FC<
-  SeatingSessionDialogProps
-> = ({ children, defaultValues, ...config }) => {
-  const { formId, isSubmitting, onSubmit } =
-    useCreateSeatingSessionForm(config);
+export type CreateSeatingSessionDialogProps = SeatingSessionDialogProps;
 
-  return (
-    <DialogForm
-      trigger={children}
-      title="Nouvelle session de mise en place"
-      description="Configurez une nouvelle session d'examen ou de concours."
-      formId={formId}
-      isLoading={isSubmitting}
-    >
+export type UpdateSeatingSessionDialogProps = SeatingSessionDialogProps & {
+  sessionId: string;
+  sessionName?: string;
+};
+
+/**
+ * Action dialog component for creating a new seating session entity.
+ * @param props - Dialog properties containing initial values and callbacks.
+ * @returns Rendered creation dialog component.
+ */
+export const CreateSeatingSessionDialog = createBaseActionDialog<
+  CreateSeatingSessionDialogProps,
+  ReturnType<typeof useCreateSeatingSessionForm>
+>({
+  title: "Nouvelle session de mise en place",
+  description: "Configurez une nouvelle session d'examen ou de concours.",
+  useForm: useCreateSeatingSessionForm,
+  form({ formId, onSubmit, defaultValues }): ReactNode {
+    return (
       <SeatingSessionForm
         formId={formId}
         onSubmit={onSubmit}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-/* ==========================================================================
-   2. MODIFICATION
-   ========================================================================== */
-export const UpdateSeatingSessionDialog: React.FC<
-  SeatingSessionDialogProps<{ seatingSessionId: string }>
-> = ({ defaultValues, seatingSessionId, children, ...config }) => {
-  const { formId, isSubmitting, onSubmit } = useUpdateSeatingSessionForm({
-    ...config,
-    sessionId: seatingSessionId,
-  });
+CreateSeatingSessionDialog.displayName = "CreateSeatingSessionDialog";
 
-  return (
-    <DialogForm
-      trigger={children}
-      title="Modifier la session"
-      description={`Mettez à jour les paramètres de la session "${defaultValues?.sessionName ?? ""}".`}
-      formId={formId}
-      isLoading={isSubmitting}
-    >
+/**
+ * Action dialog component for updating an existing seating session entity.
+ * @param props - Dialog properties containing target sessionId and initial values.
+ * @returns Rendered update dialog component.
+ */
+export const UpdateSeatingSessionDialog = createBaseActionDialog<
+  UpdateSeatingSessionDialogProps,
+  ReturnType<typeof useUpdateSeatingSessionForm>
+>({
+  title: ({ sessionName, defaultValues }: UpdateSeatingSessionDialogProps) =>
+    `Modifier la session : ${sessionName ?? defaultValues?.sessionName ?? ""}`,
+  description: "Mettez à jour les paramètres de la session de placement.",
+  useForm: (config) =>
+    useUpdateSeatingSessionForm({
+      ...config,
+      sessionId: config.sessionId,
+    }),
+  form({ formId, onSubmit, defaultValues }): ReactNode {
+    return (
       <SeatingSessionForm
         formId={formId}
-        onSubmit={(value, helpers) =>
-          onSubmit?.({ id: seatingSessionId, data: value }, helpers as any)
-        }
+        onSubmit={onSubmit}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-/* ==========================================================================
-   3. SUPPRESSION
-   ========================================================================== */
-interface DeleteSeatingSessionProps {
-  seatingSessionId: string;
-  seatingSessionName: string;
-}
+UpdateSeatingSessionDialog.displayName = "UpdateSeatingSessionDialog";
 
-export const DeleteSeatingSessionDialog: React.FC<
-  SeatingSessionDialogProps<DeleteSeatingSessionProps>
-> = ({ children, seatingSessionId, seatingSessionName, ...config }) => {
-  const { isOpen, onOpen, onClose } = useConfirm<string>();
-
-  const { deleteSeatingSession, isDeleting } = useDeleteSeatingSessionForm({
-    ...config,
-    onSuccess: (id) => {
-      config.onSuccess?.(id as any);
-      onClose();
-    },
-  });
-
-  const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
-    id: seatingSessionId,
-    onOpenConfirm: onOpen,
-    onCloseConfirm: onClose,
-    onConfirmAction: deleteSeatingSession,
-    actionArgs: [seatingSessionName],
-    errorMessage: "Erreur lors de la suppression de la session:",
-  });
-
-  return (
-    <>
-      <ConfirmDeleteDialog
-        id={seatingSessionId}
-        isOpen={isOpen}
-        onClose={onClose}
-        onConfirm={handleConfirm}
-        isPending={isDeleting}
-        title="Supprimer la session ?"
-        description="Cette action est irréversible. Toutes les assignations de places et les plans de salle liés à cette session seront définitivement perdus."
-        itemName={seatingSessionName}
-      />
-
-      {cloneElementWithProps(children, {
-        onClick: handleTriggerClick,
-        disabled: isDeleting,
-      })}
-    </>
-  );
-};
+/**
+ * Action dialog component for confirming and executing seating session deletion.
+ * @returns Rendered delete confirmation dialog component.
+ */
+export const DeleteSeatingSessionDialog = createDeleteActionDialog({
+  title: "Supprimer la session ?",
+  description:
+    "Cette action est irréversible. Toutes les assignations de places et les plans de salle liés à cette session seront définitivement perdus.",
+  errorMessage: "Erreur lors de la suppression de la session:",
+  useDeleteForm: useDeleteSeatingSessionForm,
+});
 
 DeleteSeatingSessionDialog.displayName = "DeleteSeatingSessionDialog";

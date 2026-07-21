@@ -1,31 +1,38 @@
 import { getLogger } from "@/packages/logger";
-import { db } from "@/packages/@core/data-access/db/config";
-import { BaseRepository, type LibSqlClient } from "../base-repository";
+import { db, TDataBase } from "@/packages/@core/data-access/db/config";
 import {
   studyYears,
   type TableStudyYear,
-  type FindManyOptions,
 } from "@/packages/@core/data-access/db/schemas";
+import { betterSqlite, helpers } from "@/packages/drizzle-queries";
 
-const YEAR_DEFAULT_SORT: FindManyOptions<TableStudyYear> = {
+const _yearJoinTables = {
+  studyYears,
+} as const;
+
+export type BaseYEarStudyFilters = helpers.FindManyOptions<
+  typeof _yearJoinTables
+>;
+const YEAR_DEFAULT_SORT: BaseYEarStudyFilters = {
   orderBy: [
-    { column: "startDate", order: "desc" },
-    { column: "yearName", order: "asc" },
+    { table: "studyYears", column: "startDate", order: "desc" },
+    { table: "studyYears", column: "yearName", order: "asc" },
   ],
 };
 
-export class StudyYearRepository extends BaseRepository<
+export class StudyYearRepository extends betterSqlite.BaseRepository<
   TableStudyYear,
-  LibSqlClient
+  TDataBase
 > {
-  constructor(database: LibSqlClient = db) {
+  constructor(database: TDataBase = db) {
     super({
       db: database,
       table: studyYears,
       idColumn: studyYears.yearId,
-      entityName: "StudyYear",
+      baseTableName: "studyYears",
       logger: getLogger,
-      defaultSort: YEAR_DEFAULT_SORT,
+      defaultFilters: YEAR_DEFAULT_SORT,
+      joinTables: _yearJoinTables,
     });
   }
 }

@@ -1,50 +1,90 @@
 import { useCallback, useState } from "react";
 import {
   useCreateFeeAssignment,
-  useBulkCreateFeeAssignment, // <-- IMPORTÉ POUR LE TRAITEMENT PAR LOT
+  useBulkCreateFeeAssignment,
   useUpdateFeeAssignment,
   useDeleteFeeAssignment,
 } from "./finances";
-import { useFormBaseNotify } from "../base";
+import { useFormBaseNotify, useFormBase } from "../base";
 import { withNotifications } from "@/renderer/libs/notifications";
 import type {
   FeeAssignment,
   FeeAssignmentCreate,
   FeeAssignmentUpdate,
+  FeeBulkAssignmentData,
 } from "@/packages/@core/data-access/schema-validations";
 import type { BaseMutationConfig, QueryUpdatePayload } from "../base";
-import { useFormBase } from "../base";
 
-/* ==========================================================================
-   1. ASSIGNATION UNITAIRE (CRÉATION)
-   ========================================================================== */
+const CREATE_FEE_ASSIGNMENT_NOTIFICATIONS = {
+  success: {
+    title: "Attribution créée",
+    description: "L'attribution de frais a été enregistrée.",
+  },
+  error: { title: "Erreur lors de la création de l'attribution." },
+};
+
+const BULK_CREATE_FEE_ASSIGNMENT_NOTIFICATIONS = {
+  success: {
+    title: "Facturation collective réussie",
+    description:
+      "Les lignes de frais ont été propagées au lot d'élèves sélectionné.",
+  },
+  error: { title: "Erreur lors de l'assignation collective des frais." },
+};
+
+const UPDATE_FEE_ASSIGNMENT_NOTIFICATIONS = {
+  success: {
+    title: "Attribution mise à jour",
+    description: "L'attribution a été modifiée avec succès.",
+  },
+  error: { title: "Échec de la mise à jour de l'attribution." },
+};
+
+/**
+ * Builds deletion notifications based on student context.
+ * @param studentName - Optional student name to customize the success message.
+ * @returns Notification object for the deletion action.
+ */
+const getDeleteFeeAssignmentNotifications = (studentName?: string) => ({
+  success: {
+    title: "Attribution supprimée",
+    description: studentName
+      ? `L'attribution de ${studentName} a été supprimée.`
+      : "L'attribution a été supprimée.",
+  },
+});
+
+/**
+ * Custom hook for managing individual fee assignment creation.
+ * @param config - Optional base mutation configuration.
+ * @returns Form state and handlers bound to the creation mutation.
+ */
 export function useCreateFeeAssignmentForm(
   config?: BaseMutationConfig<FeeAssignment>,
 ) {
   const mutation = useCreateFeeAssignment();
-  return useFormBaseNotify<FeeAssignmentCreate, FeeAssignmentCreate>({
+  return useFormBaseNotify<
+    FeeAssignmentCreate,
+    FeeAssignmentCreate,
+    FeeAssignment
+  >({
     mutation,
     config,
-    getNotifications: () => ({
-      success: {
-        title: "Attribution créée",
-        description: "L'attribution de frais a été enregistrée.",
-      },
-      error: { title: "Erreur lors de la création de l'attribution." },
-    }),
+    getNotifications: () => CREATE_FEE_ASSIGNMENT_NOTIFICATIONS,
     adaptData: (data) => data,
   });
 }
 
-/* ==========================================================================
-   2. ASSIGNATION DE MASSE / BULK (NOUVEAU)
-   ========================================================================== */
+/**
+ * Custom hook for managing bulk fee assignment creation for multiple students.
+ * @param config - Optional base mutation configuration.
+ * @returns Combined form state and search handlers for multi-select inputs.
+ */
 export function useCreateBulkFeeAssignmentForm(
   config?: BaseMutationConfig<void>,
 ) {
   const mutation = useBulkCreateFeeAssignment();
 
-  // États locaux requis par les différents ComboboxSearch du formulaire Bulk
   const [configSearch, setConfigSearch] = useState("");
   const [scheduleSearch, setScheduleSearch] = useState("");
   const [classroomSearch, setClassroomSearch] = useState("");
@@ -52,29 +92,22 @@ export function useCreateBulkFeeAssignmentForm(
 
   const formBase = useFormBaseNotify<
     FeeBulkAssignmentData,
-    FeeBulkAssignmentData
+    FeeBulkAssignmentData,
+    void
   >({
     mutation,
     config,
-    getNotifications: () => ({
-      success: {
-        title: "Facturation collective réussie",
-        description:
-          "Les lignes de frais ont été propagées au lot d'élèves sélectionné.",
-      },
-      error: { title: "Erreur lors de l'assignation collective des frais." },
-    }),
+    getNotifications: () => BULK_CREATE_FEE_ASSIGNMENT_NOTIFICATIONS,
     adaptData: (data) => data,
   });
 
   return {
     ...formBase,
-    // Injection des structures de recherche attendues par les boutons de sélection asynchrone
     feeConfigSearch: {
       searchQuery: configSearch,
       setSearchQuery: setConfigSearch,
-      isSearching: false, // Relier au flag isLoading de tes requêtes d'options si nécessaire
-      options: [], // Charger via tes hooks d'options (ex: useGetFeeConfigurationAsOptions)
+      isSearching: false,
+      options: [],
     },
     scheduleSearch: {
       searchQuery: scheduleSearch,
@@ -97,35 +130,34 @@ export function useCreateBulkFeeAssignmentForm(
   };
 }
 
-/* ==========================================================================
-   3. ATTRIBUTION (MODIFICATION)
-   ========================================================================== */
+/**
+ * Custom hook for updating an existing fee assignment.
+ * @param config - Optional base mutation configuration.
+ * @returns Form state and handlers bound to the update mutation.
+ */
 export function useUpdateFeeAssignmentForm(
-  config?: BaseMutationConfig<FeeAssignment>,
+  config?: BaseMutationConfig<FeeAssignmentUpdate>,
 ) {
   const mutation = useUpdateFeeAssignment();
   return useFormBaseNotify<
     QueryUpdatePayload<FeeAssignmentUpdate>,
-    { data: FeeAssignmentUpdate; id: string }
+    { data: FeeAssignmentUpdate; id: string },
+    FeeAssignmentUpdate
   >({
     mutation,
     config,
-    getNotifications: () => ({
-      success: {
-        title: "Attribution mise à jour",
-        description: "L'attribution a été modifiée avec succès.",
-      },
-      error: { title: "Échec de la mise à jour de l'attribution." },
-    }),
+    getNotifications: () => UPDATE_FEE_ASSIGNMENT_NOTIFICATIONS,
     adaptData: ({ data, id }) => ({ data, id }),
   });
 }
 
-/* ==========================================================================
-   4. ATTRIBUTION (SUPPRESSION)
-   ========================================================================== */
+/**
+ * Custom hook for deleting a fee assignment entry.
+ * @param config - Optional base mutation configuration.
+ * @returns Deletion callback function and current pending state.
+ */
 export function useDeleteFeeAssignmentForm(config?: BaseMutationConfig<void>) {
-  const { notifyAndInvalidate } = useFormBase(config);
+  const { notifyAndInvalidate } = useFormBase<void>(config);
   const mutation = useDeleteFeeAssignment();
 
   const deleteFeeAssignment = useCallback(
@@ -133,16 +165,9 @@ export function useDeleteFeeAssignmentForm(config?: BaseMutationConfig<void>) {
       mutation.mutate(
         assignmentId,
         withNotifications({
-          notifications: {
-            success: {
-              title: "Attribution supprimée",
-              description: studentName
-                ? `L'attribution de ${studentName} a été supprimée.`
-                : "L'attribution a été supprimée.",
-            },
-          },
+          notifications: getDeleteFeeAssignmentNotifications(studentName),
           onSuccess: () => {
-            notifyAndInvalidate(undefined as void);
+            notifyAndInvalidate();
           },
         }),
       );
@@ -151,7 +176,7 @@ export function useDeleteFeeAssignmentForm(config?: BaseMutationConfig<void>) {
   );
 
   return {
-    deleteFeeAssignment,
+    onDelete: deleteFeeAssignment,
     isDeleting: mutation.isPending,
   };
 }

@@ -1,4 +1,3 @@
-import z from "zod";
 import { feeScheduleService } from "@/packages/@core/data-access/db/queries";
 import {
   FeeScheduleSchema,
@@ -6,7 +5,6 @@ import {
   FeeScheduleUpdateSchema,
   FeeScheduleFilterSchema,
   FeeScheduleBulkCreateSchema,
-  createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -16,14 +14,6 @@ import {
 import { FeeScheduleRoutes } from "../../routes-constant";
 
 const FeeScheduleIdSchema = FeeScheduleSchema.pick({ scheduleId: true });
-const FeeTypeIdFilterSchema = FeeScheduleSchema.pick({ feeTypeId: true });
-
-export const searchFeeScheduleOptionsSchema = createSearchOptionsSchema(
-  FeeScheduleFilterSchema,
-);
-export type SearchFeeScheduleOptionsParams = z.infer<
-  typeof searchFeeScheduleOptionsSchema
->;
 
 /**
  * Handles Inter-Process Communication (IPC) inbound requests for fee schedule management.
@@ -47,7 +37,7 @@ export class FeeScheduleController {
    * @returns A promise resolving to structured autocomplete selection options.
    */
   @IpcServer.register(HttpMethod.GET, FeeScheduleRoutes.SEARCH, {
-    params: searchFeeScheduleOptionsSchema,
+    params: FeeScheduleFilterSchema,
   })
   static async getOptions(req: IpcRequest) {
     return feeScheduleService.getOptions(req.params);
@@ -87,7 +77,7 @@ export class FeeScheduleController {
   @IpcServer.register(HttpMethod.GET, FeeScheduleRoutes.DETAIL, {
     params: FeeScheduleIdSchema,
   })
-  static async getById(req: IpcRequest) {
+  static async getById(req: IpcRequest<unknown, { scheduleId: string }>) {
     return feeScheduleService.findById(req.params.scheduleId);
   }
 
@@ -112,19 +102,7 @@ export class FeeScheduleController {
   @IpcServer.register(HttpMethod.DELETE, FeeScheduleRoutes.DETAIL, {
     params: FeeScheduleIdSchema,
   })
-  static async delete(req: IpcRequest) {
+  static async delete(req: IpcRequest<unknown, { scheduleId: string }>) {
     return feeScheduleService.delete(req.params.scheduleId);
-  }
-
-  /**
-   * Extracts subsets of fee schedules matching a targeted category classifier.
-   * @param req - The IPC request object holding category classification filters.
-   * @returns A promise resolving to categorized fee schedule collections.
-   */
-  @IpcServer.register(HttpMethod.GET, FeeScheduleRoutes.BY_FEE_TYPE, {
-    params: FeeTypeIdFilterSchema,
-  })
-  static async getByFeeType(req: IpcRequest) {
-    return feeScheduleService.findByFeeType(req.params.feeTypeId);
   }
 }

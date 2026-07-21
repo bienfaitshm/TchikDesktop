@@ -23,13 +23,9 @@ import {
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import {
-  ActionMenu,
-  MenuDialogItem,
-  MenuDialogWrapper,
-} from "@/renderer/components/menus/dropdown";
-import { DropdownMenuSeparator } from "@/renderer/components/ui/dropdown-menu";
-import { ButtonMenu } from "@/renderer/components/buttons/button-menu";
-
+  createActionMenus,
+  TActionMenu,
+} from "@/components/menus/action-menus";
 import {
   CreateOptionDialog,
   DeleteOptionDialog,
@@ -43,63 +39,57 @@ interface RowActionsProps extends Pick<OptionDialogProps, "mutationKey"> {
   option: Option;
 }
 
-export const RowAction: React.FC<RowActionsProps> = ({
-  mutationKey,
-  option,
-}) => (
-  <ActionMenu
-    trigger={<ButtonMenu />}
-    dialogs={
-      <>
-        <MenuDialogWrapper id="edit">
-          <UpdateOptionDialog
-            mutationKey={mutationKey}
-            optionId={option.optionId}
-            defaultValues={option}
-          />
-        </MenuDialogWrapper>
-        <MenuDialogWrapper id="duplicate">
-          <CreateOptionDialog
-            mutationKey={mutationKey}
-            defaultValues={option}
-          />
-        </MenuDialogWrapper>
-        <MenuDialogWrapper id="delete">
-          <DeleteOptionDialog
-            mutationKey={mutationKey}
-            optionId={option.optionId}
-            optionName={option.optionName}
-          />
-        </MenuDialogWrapper>
-      </>
-    }
-  >
-    <MenuDialogItem targetId="edit" className="gap-2 cursor-pointer">
-      <Pencil className="size-4 text-muted-foreground" />
-      <span>Modifier la filière</span>
-    </MenuDialogItem>
+const MENUS: TActionMenu<RowActionsProps>[] = [
+  {
+    id: "edit",
+    label: "Modifier la filière",
+    icon: Pencil,
+    dialog({ option, mutationKey }) {
+      return (
+        <UpdateOptionDialog
+          mutationKey={mutationKey}
+          optionId={option.optionId}
+          defaultValues={option}
+        />
+      );
+    },
+  },
 
-    <MenuDialogItem targetId="duplicate" className="gap-2 cursor-pointer">
-      <Copy className="size-4 text-muted-foreground" />
-      <span>Dupliquer la filière</span>
-    </MenuDialogItem>
+  {
+    id: "duplicate",
+    label: "Modifier la filière",
+    icon: Copy,
+    dialog({ option, mutationKey }) {
+      return (
+        <CreateOptionDialog mutationKey={mutationKey} defaultValues={option} />
+      );
+    },
+  },
 
-    <DropdownMenuSeparator />
+  {
+    id: "delete",
+    label: "Supprimer la filière",
+    icon: Trash2,
+    separator: true,
+    variant: "destructive",
+    dialog({ option, mutationKey }) {
+      return (
+        <DeleteOptionDialog
+          mutationKey={mutationKey}
+          optionId={option.optionId}
+          optionName={option.optionName}
+        />
+      );
+    },
+  },
+];
 
-    <MenuDialogItem
-      targetId="delete"
-      className="gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-    >
-      <Trash2 className="size-4" />
-      <span>Supprimer la filière</span>
-    </MenuDialogItem>
-  </ActionMenu>
-);
+export const RowAction: React.FC<RowActionsProps> = createActionMenus(MENUS);
 
 export const OptionPage = () => {
   const { schoolId } = useSchoolContext();
   const { data: options = [], queryKey: mutationKey } = useGetOptions({
-    where: { schoolId },
+    where: { options: { schoolId: { $eq: schoolId } } },
   });
   const columns = React.useMemo(
     () =>
@@ -113,7 +103,7 @@ export const OptionPage = () => {
   );
 
   return (
-    <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
+    <div className="flex-1 w-full overflow-hidden">
       <PageShell
         maxWidth="xl"
         header={

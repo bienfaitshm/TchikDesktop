@@ -28,7 +28,7 @@ export type EnrollmentDTO = ClassroomEnrollment & {
   yearName: string;
 };
 
-export const JOINED_TABLES = {
+const JOINED_TABLES = {
   classrooms,
   users,
   classroomEnrollments,

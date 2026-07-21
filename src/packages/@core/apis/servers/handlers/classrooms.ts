@@ -1,4 +1,7 @@
-import { classroomRepository } from "@/packages/@core/data-access/db/queries";
+import {
+  classroomRepository,
+  classroomService,
+} from "@/packages/@core/data-access/db/queries";
 import {
   ClassroomSchema,
   ClassroomCreateSchema,
@@ -41,7 +44,7 @@ export class ClassroomController {
     params: SearchOptionsSchema,
   })
   static async getOptions(req: IpcRequest) {
-    return classroomRepository.getOptions(req.params);
+    return classroomService.getOptions(req.params);
   }
 
   /**

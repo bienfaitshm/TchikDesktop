@@ -1,137 +1,92 @@
-import * as React from "react";
-import { DialogForm } from "@/renderer/components/dialog/form";
-import {
-  ConfirmDeleteDialog,
-  useAsyncConfirm,
-} from "@/renderer/components/dialog/confirm-delete";
-import { useConfirm } from "@/renderer/hooks/use-confirm";
-import { cloneElementWithProps } from "@/renderer/utils/react";
+import type { ReactNode } from "react";
 import {
   SchoolForm,
   type SchoolFormData,
 } from "@/renderer/components/form/school-form";
 import {
   useCreateSchoolForm,
-  useUpdateSchoolForm,
   useDeleteSchoolForm,
+  useUpdateSchoolForm,
   type SchoolFormConfig,
 } from "@/renderer/libs/queries/schools";
+import {
+  createBaseActionDialog,
+  createDeleteActionDialog,
+  type ActionDialogProps,
+} from "./base.dialog-actions";
 
-/* ==========================================================================
-   1. CRÉATION
-   ========================================================================== */
-
-export type CreateSchoolDialogProps<
-  TExtraProps extends Record<string, any> = {},
-> = React.PropsWithChildren<
-  TExtraProps &
-    SchoolFormConfig & {
-      defaultValues?: Partial<SchoolFormData>;
-    }
+export type SchoolDialogProps = ActionDialogProps<
+  SchoolFormData,
+  SchoolFormConfig
 >;
 
-export const CreateSchoolDialog: React.FC<CreateSchoolDialogProps> = ({
-  children,
-  defaultValues,
-  ...config
-}) => {
-  const { formId, onSubmit, isSubmitting } = useCreateSchoolForm(config);
+export type UpdateSchoolDialogProps = SchoolDialogProps & {
+  schoolId: string;
+  name?: string;
+};
 
-  return (
-    <DialogForm
-      trigger={children}
-      title="Nouvel établissement"
-      description="Renseignez les détails pour configurer votre établissement scolaire."
-      formId={formId}
-      isLoading={isSubmitting}
-    >
+/**
+ * Action dialog component for creating a new school entity.
+ * @param props - Dialog properties containing initial values and callbacks.
+ * @returns Rendered creation dialog component.
+ */
+export const CreateSchoolDialog = createBaseActionDialog<
+  SchoolDialogProps,
+  ReturnType<typeof useCreateSchoolForm>
+>({
+  title: "Nouvel établissement",
+  description:
+    "Renseignez les détails pour configurer votre établissement scolaire.",
+  useForm: useCreateSchoolForm,
+  form({ formId, onSubmit, defaultValues }): ReactNode {
+    return (
       <SchoolForm
         formId={formId}
         onSubmit={onSubmit}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-/* ==========================================================================
-   2. MODIFICATION
-   ========================================================================== */
-type UpdateSchoolDialogProps = {
-  schoolId: string;
-};
+CreateSchoolDialog.displayName = "CreateSchoolDialog";
 
-export const UpdateSchoolDialog: React.FC<
-  UpdateSchoolDialogProps & CreateSchoolDialogProps
-> = ({ schoolId, children, defaultValues, ...config }) => {
-  const { formId, isSubmitting, onSubmit } = useUpdateSchoolForm(config);
-
-  return (
-    <DialogForm
-      trigger={children}
-      title="Modifier l'établissement"
-      description={`Mettez à jour les informations de ${defaultValues?.name || "l'établissement"}.`}
-      formId={formId}
-      isLoading={isSubmitting}
-    >
+/**
+ * Action dialog component for updating an existing school record.
+ * @param props - Dialog properties containing target schoolId and initial values.
+ * @returns Rendered update dialog component.
+ */
+export const UpdateSchoolDialog = createBaseActionDialog<
+  UpdateSchoolDialogProps,
+  ReturnType<typeof useUpdateSchoolForm>
+>({
+  title: "Modifier l'établissement",
+  description: ({ name }: UpdateSchoolDialogProps) =>
+    `Mettez à jour les informations de ${name || "l'établissement"}.`,
+  useForm: useUpdateSchoolForm,
+  form({ formId, onSubmit, defaultValues }): ReactNode {
+    return (
       <SchoolForm
         formId={formId}
-        onSubmit={(data, helpers) =>
-          onSubmit({ id: schoolId, data }, helpers as any)
-        }
+        onSubmit={onSubmit}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-/* ==========================================================================
-   3. SUPPRESSION
-   ========================================================================== */
-interface DeleteSchoolDialogProps {
-  children: React.ReactNode;
-  schoolId: string;
-  schoolName: string;
-}
+UpdateSchoolDialog.displayName = "UpdateSchoolDialog";
 
-export const DeleteSchoolDialog: React.FC<
-  DeleteSchoolDialogProps & SchoolFormConfig
-> = ({ children, schoolId, schoolName, ...config }) => {
-  const { isOpen, onOpen, onClose } = useConfirm<string>();
-
-  const { deleteSchool, isDeleting } = useDeleteSchoolForm({
-    ...config,
-    onSuccess: () => onClose(),
-  });
-
-  const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
-    id: schoolId,
-    onOpenConfirm: onOpen,
-    onCloseConfirm: onClose,
-    onConfirmAction: deleteSchool,
-    actionArgs: [schoolName],
-    errorMessage: "Erreur lors de la suppression de l'établissement:",
-  });
-
-  return (
-    <>
-      <ConfirmDeleteDialog
-        id={schoolId}
-        isOpen={isOpen}
-        onClose={onClose}
-        onConfirm={handleConfirm}
-        isPending={isDeleting}
-        title="Supprimer l'établissement"
-        description="Attention : cette action est irréversible. Toutes les données liées (élèves, classes, années) seront définitivement supprimées."
-        itemName={schoolName}
-      />
-
-      {cloneElementWithProps(children, {
-        onClick: handleTriggerClick,
-        disabled: isDeleting,
-      })}
-    </>
-  );
-};
+/**
+ * Action dialog component for confirming and executing school deletion.
+ * @returns Rendered delete confirmation dialog component.
+ */
+export const DeleteSchoolDialog = createDeleteActionDialog({
+  title: "Supprimer l'établissement",
+  description:
+    "Attention : cette action est irréversible. Toutes les données liées (élèves, classes) seront définitivement supprimées.",
+  errorMessage: "Erreur lors de la suppression de l'établissement:",
+  useDeleteForm: useDeleteSchoolForm,
+});
 
 DeleteSchoolDialog.displayName = "DeleteSchoolDialog";

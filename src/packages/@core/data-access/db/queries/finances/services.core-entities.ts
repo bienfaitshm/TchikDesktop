@@ -1,7 +1,3 @@
-import {
-  SelectOptionFacade,
-  type SearchOptions,
-} from "@/packages/@core/data-access/db/queries/select-option.transformer";
 import type {
   Wallet,
   FeeType,
@@ -11,10 +7,11 @@ import {
   WalletRepository,
   FeeTypeRepository,
   FeeScheduleRepository,
-  type WalletOptionFilters,
-  type FeeScheduleOptionFilters,
-  type FeeTypeOptionFilters,
+  type BaseWalletOptionFilters,
+  type BaseFeeScheduleOptionFilters,
+  type BaseFeeTypeOptionFilters,
 } from "./repository";
+import { SelectOptionFacade } from "@/packages/drizzle-queries";
 
 export class WalletService extends WalletRepository {
   public readonly selectOptions: SelectOptionFacade<Wallet>;
@@ -29,7 +26,7 @@ export class WalletService extends WalletRepository {
     });
   }
 
-  async getOptions(args: SearchOptions<WalletOptionFilters>) {
+  getOptions(args?: BaseWalletOptionFilters) {
     return this.selectOptions.loadOptions(args);
   }
 }
@@ -49,7 +46,7 @@ export class FeeTypeService extends FeeTypeRepository {
     });
   }
 
-  async getOptions(args: SearchOptions<FeeTypeOptionFilters>) {
+  getOptions(args?: BaseFeeTypeOptionFilters) {
     return this.selectOptions.loadOptions(args);
   }
 }
@@ -69,10 +66,8 @@ export class FeeScheduleService extends FeeScheduleRepository {
     });
   }
 
-  async getOptions(args: SearchOptions<FeeScheduleOptionFilters>) {
-    const data = await this.selectOptions.loadOptions(args);
-    console.log("======>", data);
-    return [];
+  getOptions(args?: BaseFeeScheduleOptionFilters) {
+    return this.selectOptions.loadOptions(args);
   }
 }
 

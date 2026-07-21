@@ -1,12 +1,16 @@
 import { useCallback, useMemo } from "react";
+import type { FieldValues } from "react-hook-form";
 import type { FeeConfiguration } from "@/packages/@core/data-access/db";
 import {
   CURRENCY_OPTIONS,
   SECTION_OPTIONS,
 } from "@/packages/@core/data-access/db/options";
 import type {
+  ClassroomFilter,
   FeeConfigurationCreate,
   FeeConfigurationUpdate,
+  FeeTypeFilter,
+  OptionFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { withNotifications } from "@/renderer/libs/notifications";
 import { useSearchClassrooms } from "@/renderer/libs/queries/classrooms";
@@ -23,43 +27,86 @@ import {
   useUpdateFeeConfiguration,
 } from "./finances";
 import { useSearchFeeTypeOptions } from "./helpers";
-import { FieldValues } from "react-hook-form";
 
 export type FeeConfigurationFormConfig = BaseMutationConfig<FeeConfiguration>;
-export type FeeConfigurationFormData = FeeConfigurationCreate;
 
-interface FeeConfigContextParams {
+export interface FeeConfigContextParams {
   schoolId: string;
   yearId: string;
 }
 
+const CREATE_FEE_CONFIG_NOTIFICATIONS = {
+  success: {
+    title: "Configuration créée",
+    description: "La configuration de frais a été enregistrée.",
+  },
+  error: { title: "Erreur lors de la création de la configuration." },
+};
+
+const UPDATE_FEE_CONFIG_NOTIFICATIONS = {
+  success: {
+    title: "Configuration modifiée",
+    description: "La configuration de frais a été mise à jour.",
+  },
+  error: { title: "Échec de la mise à jour de la configuration." },
+};
+
 /**
- * 1. Hook de Base partagé (Shared Form Context)
- * Centralise la récupération des options de recherche pour les formulaires (Simple & Bulk)
+ * Builds deletion notifications for fee configurations.
+ * @param configName - Optional configuration name to include in the toast message.
+ * @returns Notification object for fee configuration deletion.
+ */
+const getDeleteFeeConfigNotifications = (configName?: string) => ({
+  success: {
+    title: "Configuration supprimée",
+    description: configName
+      ? `La configuration "${configName}" a été supprimée.`
+      : "La configuration a été supprimée.",
+  },
+});
+
+/**
+ * Shared base hook centralizing search options and context bindings for fee configuration forms.
+ * @template TFormData - The form input values structure.
+ * @template TMutateInput - The variable structure expected by the mutation.
+ * @template TReturnData - The response data type returned by the mutation.
+ * @param params - Combined school context parameters and base mutation hook options.
+ * @returns Form state, handlers, and option search states for UI selects.
  */
 export const useFeeConfigBaseForm = <
   TFormData extends FieldValues,
+  TMutateInput,
   TReturnData,
 >({
   schoolId,
   yearId,
   ...params
 }: FeeConfigContextParams &
-  UseBaseParams<TFormData, TFormData, TReturnData>) => {
-  const schoolFilter = useMemo(
-    () => ({ filters: { where: { schoolId } } }),
+  UseBaseParams<TFormData, TMutateInput, TReturnData>) => {
+  const schoolFilter: OptionFilter = useMemo(
+    () => ({ where: { options: { schoolId: { $eq: schoolId } } } }),
     [schoolId],
   );
-  const feeTypeFilter = useMemo(
-    () => ({ filters: { where: { schoolId, yearId } } }),
+
+  const classroomFilter: ClassroomFilter = useMemo(
+    () => ({ where: { classrooms: { schoolId: { $eq: schoolId } } } }),
+    [schoolId],
+  );
+
+  const feeTypeFilter: FeeTypeFilter = useMemo(
+    () => ({
+      where: {
+        feeTypes: { schoolId: { $eq: schoolId }, yearId: { $eq: yearId } },
+      },
+    }),
     [schoolId, yearId],
   );
 
-  const classroomSearch = useSearchClassrooms(schoolFilter);
+  const classroomSearch = useSearchClassrooms(classroomFilter);
   const optionSearch = useSearchOptions(schoolFilter);
   const feeTypeSearch = useSearchFeeTypeOptions(feeTypeFilter);
 
-  const base = useFormBaseNotify<TFormData, TFormData, TReturnData>(params);
+  const base = useFormBaseNotify<TFormData, TMutateInput, TReturnData>(params);
 
   return {
     currencyOptions: CURRENCY_OPTIONS,
@@ -72,67 +119,79 @@ export const useFeeConfigBaseForm = <
 };
 
 /**
- * 2. Hook pour la Création (Unitaire ou Bulk)
+ * Form hook for creating new fee configurations.
+ * @param context - Context parameters containing schoolId and yearId.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Form handlers and option lists for configuration creation.
  */
 export function useCreateFeeConfigurationForm(
-  // Ajout des identifiants nécessaires au contexte
   { schoolId, yearId }: FeeConfigContextParams,
   config?: FeeConfigurationFormConfig,
 ) {
   const mutation = useCreateFeeConfiguration();
 
-  // Utilisation du hook de base unifié
-  return useFeeConfigBaseForm<FeeConfigurationCreate, FeeConfiguration>({
-    schoolId,
-    yearId,
-    mutation,
-    config,
-    getNotifications: () => ({
-      success: {
-        title: "Configuration créée",
-        description: "La configuration de frais a été enregistrée.",
-      },
-      error: { title: "Erreur lors de la création de la configuration." },
-    }),
-    adaptData: (data) => ({ ...data, schoolId, yearId }),
-  });
-}
-
-/**
- * 3. Hook pour la Modification
- */
-export function useUpdateFeeConfigurationForm(
-  { schoolId, yearId }: FeeConfigContextParams,
-  config?: FeeConfigurationFormConfig,
-) {
-  const mutation = useUpdateFeeConfiguration();
+  const adaptData = useCallback(
+    (data: FeeConfigurationCreate) => ({ ...data, schoolId, yearId }),
+    [schoolId, yearId],
+  );
 
   return useFeeConfigBaseForm<
-    QueryUpdatePayload<FeeConfigurationUpdate>,
+    FeeConfigurationCreate,
+    FeeConfigurationCreate,
     FeeConfiguration
   >({
     schoolId,
     yearId,
     mutation,
     config,
-    getNotifications: () => ({
-      success: {
-        title: "Configuration modifiée",
-        description: "La configuration de frais a été mise à jour.",
-      },
-      error: { title: "Échec de la mise à jour de la configuration." },
-    }),
-    adaptData: ({ data, id }) => ({ data, id }),
+    getNotifications: () => CREATE_FEE_CONFIG_NOTIFICATIONS,
+    adaptData,
   });
 }
 
 /**
- * 4. Hook pour la Suppression
+ * Form hook for modifying existing fee configurations.
+ * @param context - Context parameters containing schoolId and yearId.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Form handlers and option lists for configuration modification.
+ */
+export function useUpdateFeeConfigurationForm(
+  { schoolId, yearId }: FeeConfigContextParams,
+  config?: BaseMutationConfig<FeeConfigurationUpdate>,
+) {
+  const mutation = useUpdateFeeConfiguration();
+
+  const adaptData = useCallback(
+    ({ data, id }: QueryUpdatePayload<FeeConfigurationUpdate>) => ({
+      data,
+      id,
+    }),
+    [],
+  );
+
+  return useFeeConfigBaseForm<
+    QueryUpdatePayload<FeeConfigurationUpdate>,
+    { data: FeeConfigurationUpdate; id: string },
+    FeeConfigurationUpdate
+  >({
+    schoolId,
+    yearId,
+    mutation,
+    config,
+    getNotifications: () => UPDATE_FEE_CONFIG_NOTIFICATIONS,
+    adaptData,
+  });
+}
+
+/**
+ * Hook for executing fee configuration deletion.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Object exposing deleteFeeConfiguration callback and pending status.
  */
 export function useDeleteFeeConfigurationForm(
   config?: BaseMutationConfig<void>,
 ) {
-  const { notifyAndInvalidate } = useFormBase(config);
+  const { notifyAndInvalidate } = useFormBase<void>(config);
   const mutation = useDeleteFeeConfiguration();
 
   const deleteFeeConfiguration = useCallback(
@@ -140,14 +199,7 @@ export function useDeleteFeeConfigurationForm(
       mutation.mutate(
         feeConfigId,
         withNotifications({
-          notifications: {
-            success: {
-              title: "Configuration supprimée",
-              description: configName
-                ? `La configuration "${configName}" a été supprimée.`
-                : "La configuration a été supprimée.",
-            },
-          },
+          notifications: getDeleteFeeConfigNotifications(configName),
           onSuccess: () => {
             notifyAndInvalidate();
           },
@@ -159,6 +211,7 @@ export function useDeleteFeeConfigurationForm(
 
   return {
     deleteFeeConfiguration,
+    onDelete: deleteFeeConfiguration,
     isDeleting: mutation.isPending,
   };
 }

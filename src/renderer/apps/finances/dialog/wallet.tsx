@@ -1,154 +1,106 @@
-import * as React from "react";
-import { DialogForm, DialogFormProps } from "@/renderer/components/dialog/form";
-import {
-  ConfirmDeleteDialog,
-  useAsyncConfirm,
-} from "@/renderer/components/dialog/confirm-delete";
-import { useConfirm } from "@/renderer/hooks/use-confirm";
-import { cloneElementWithProps } from "@/renderer/utils/react";
+import type { ReactNode } from "react";
 import { WalletForm } from "@/renderer/apps/finances/forms/wallet-form";
 import {
   useCreateWalletForm,
-  useUpdateWalletForm,
   useDeleteWalletForm,
+  useUpdateWalletForm,
   type WalletFormConfig,
   type WalletFormData,
 } from "@/renderer/libs/queries/finances";
+import {
+  createBaseActionDialog,
+  createDeleteActionDialog,
+  type ActionDialogProps,
+} from "./base.dialog-actions";
 
-export type WalletDialogProps<TExtraProps extends Record<string, any> = {}> =
-  React.PropsWithChildren<
-    TExtraProps &
-      Partial<DialogFormProps> &
-      WalletFormConfig & {
-        defaultValues?: Partial<WalletFormData>;
-      }
-  >;
+export type WalletDialogProps = ActionDialogProps<
+  WalletFormData,
+  WalletFormConfig
+>;
 
-/* ==========================================================================
-   CREATE WALLET
-   ========================================================================== */
-interface CreateWalletProps {
+export type CreateWalletDialogProps = WalletDialogProps & {
   schoolId: string;
-}
+};
 
-export const WalletDialogCreateForm: React.FC<
-  WalletDialogProps<CreateWalletProps>
-> = ({ schoolId, children, defaultValues, open, onOpenChange, ...config }) => {
-  const { formId, currencyOptions, isSubmitting, onSubmit } =
-    useCreateWalletForm(config);
+export type UpdateWalletDialogProps = WalletDialogProps & {
+  walletId: string;
+  schoolId: string;
+  name?: string;
+};
 
-  return (
-    <DialogForm
-      trigger={children}
-      title="Créer un portefeuille de caisse"
-      description="Ajoutez un nouveau compte ou une caisse physique pour percevoir les paiements."
-      formId={formId}
-      isLoading={isSubmitting}
-      open={open}
-      onOpenChange={onOpenChange}
-    >
+/**
+ * Action dialog component for creating a new financial wallet.
+ * @param props - Dialog properties containing school context and initial form values.
+ * @returns Rendered creation dialog component.
+ */
+export const CreateWalletDialog = createBaseActionDialog<
+  CreateWalletDialogProps,
+  ReturnType<typeof useCreateWalletForm>
+>({
+  title: "Créer un portefeuille de caisse",
+  description:
+    "Ajoutez un nouveau compte ou une caisse physique pour percevoir les paiements.",
+  useForm: useCreateWalletForm,
+  form({ formId, onSubmit, currencyOptions, defaultValues }): ReactNode {
+    return (
       <WalletForm
         formId={formId}
         onSubmit={onSubmit}
         currencyOptions={currencyOptions}
-        defaultValues={{ ...defaultValues, schoolId }}
+        defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-/* ==========================================================================
-   UPDATE WALLET
-   ========================================================================== */
-interface UpdateWalletProps {
-  schoolId: string;
-  walletId: string;
-}
+CreateWalletDialog.displayName = "CreateWalletDialog";
 
-export const WalletDialogUpdateForm: React.FC<
-  WalletDialogProps<UpdateWalletProps>
-> = ({
-  defaultValues,
-  walletId,
-  schoolId,
-  open,
-  onOpenChange,
-  children,
-  ...config
-}) => {
-  const { formId, isSubmitting, onSubmit, currencyOptions } =
-    useUpdateWalletForm(config);
-
-  return (
-    <DialogForm
-      trigger={children}
-      title={`Modifier la caisse : ${defaultValues?.name ?? ""}`}
-      description="Modifiez les informations de ce portefeuille comptable."
-      formId={formId}
-      isLoading={isSubmitting}
-      open={open}
-      onOpenChange={onOpenChange}
-    >
+/**
+ * Action dialog component for updating an existing financial wallet.
+ * @param props - Dialog properties containing target walletId, schoolId, and initial form values.
+ * @returns Rendered update dialog component.
+ */
+export const UpdateWalletDialog = createBaseActionDialog<
+  UpdateWalletDialogProps,
+  ReturnType<typeof useUpdateWalletForm>
+>({
+  title: ({ name, defaultValues }: UpdateWalletDialogProps) =>
+    `Modifier la caisse : ${name ?? defaultValues?.name ?? ""}`,
+  description: "Modifiez les informations de ce portefeuille comptable.",
+  useForm: (config) =>
+    useUpdateWalletForm({
+      ...config,
+      walletId: config.walletId,
+    }),
+  form({ formId, onSubmit, currencyOptions, defaultValues }): ReactNode {
+    return (
       <WalletForm
         formId={formId}
-        onSubmit={(data, helpers) =>
-          onSubmit?.({ id: walletId, data }, helpers as any)
-        }
+        onSubmit={onSubmit}
         currencyOptions={currencyOptions}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-/* ==========================================================================
-   DELETE WALLET
-   ========================================================================== */
-interface DeleteWalletProps {
-  walletId: string;
-  name: string;
-}
+UpdateWalletDialog.displayName = "UpdateWalletDialog";
 
-export const WalletDialogDeleteForm: React.FC<
-  WalletDialogProps<DeleteWalletProps>
-> = ({ children, walletId, name, open, onOpenChange, ...config }) => {
-  const { isOpen, onClose, onOpen } = useConfirm<string>({
-    open,
-    onOpenChange,
-  });
-  const { isDeleting, deleteWallet } = useDeleteWalletForm({
-    ...config,
-    onSuccess: (id) => {
-      config.onSuccess?.(id as any);
-      onClose();
-    },
-  });
+/**
+ * Action dialog component for confirming and executing financial wallet deletion.
+ * @returns Rendered delete confirmation dialog component.
+ */
+export const DeleteWalletDialog = createDeleteActionDialog({
+  title: "Supprimer le portefeuille de caisse",
+  description:
+    "Attention, cette action est irréversible. Toutes les écritures et soldes associés seront perdus.",
+  errorMessage: "Erreur lors de la suppression de la caisse :",
+  useDeleteForm: useDeleteWalletForm,
+});
 
-  const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
-    id: walletId,
-    onOpenConfirm: onOpen,
-    onCloseConfirm: onClose,
-    onConfirmAction: deleteWallet,
-    actionArgs: [name],
-    errorMessage: "Erreur lors de la suppression de la caisse :",
-  });
+DeleteWalletDialog.displayName = "DeleteWalletDialog";
 
-  return (
-    <>
-      <ConfirmDeleteDialog
-        id={walletId}
-        isOpen={isOpen}
-        onClose={onClose}
-        onConfirm={handleConfirm}
-        isPending={isDeleting}
-        title="Supprimer le portefeuille de caisse"
-        description="Attention, cette action est irréversible. Toutes les écritures et soldes associés seront perdus."
-        itemName={name}
-      />
-      {cloneElementWithProps(children, {
-        onClick: handleTriggerClick,
-        disabled: isDeleting,
-      })}
-    </>
-  );
-};
+/* Backward compatibility aliases */
+export const WalletDialogCreateForm = CreateWalletDialog;
+export const WalletDialogUpdateForm = UpdateWalletDialog;
+export const WalletDialogDeleteForm = DeleteWalletDialog;

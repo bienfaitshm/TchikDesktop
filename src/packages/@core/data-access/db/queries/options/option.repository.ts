@@ -1,89 +1,45 @@
-import { db } from "@/packages/@core/data-access/db/config";
+import { db, TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
   options,
   type TableOption,
   type Option,
-  type FindManyOptions,
 } from "@/packages/@core/data-access/db/schemas";
-
 import {
-  applyQueryOptions,
-  mergeQueryOptions,
-} from "@/packages/@core/data-access/db/queries/drizzle-builder";
-import type {
+  betterSqlite,
+  helpers,
   OptionProvider,
-  SearchOptions,
-} from "@/packages/@core/data-access/db/queries/select-option.transformer";
-import { createSQLiteSearchFilter } from "../drizzle-utility";
+} from "@/packages/drizzle-queries";
 
-import { BaseRepository, type LibSqlClient } from "../base-repository";
+const _optionJoinTables = {
+  options,
+} as const;
 
-export type BaseOptionFilters = Partial<FindManyOptions<TableOption>>;
-
-const DEFAULT_LIMIT_VALUE = 50;
+export type BaseOptionFilters = helpers.FindManyOptions<
+  typeof _optionJoinTables
+>;
 
 const OPTION_DEFAULT_SORT: BaseOptionFilters = {
-  orderBy: [{ column: "optionName", order: "asc" }],
+  orderBy: [{ table: "options", column: "optionName", order: "asc" }],
 };
 
 export class OptionRepository
-  extends BaseRepository<TableOption, LibSqlClient>
+  extends betterSqlite.BaseRepository<TableOption, TDataBase, BaseOptionFilters>
   implements OptionProvider<Option>
 {
-  constructor(database: LibSqlClient = db) {
+  constructor(database: TDataBase = db) {
     super({
       db: database,
       table: options,
       idColumn: options.optionId,
-      entityName: "Option",
+      baseTableName: "options",
       logger: getLogger,
-      defaultSort: OPTION_DEFAULT_SORT,
+      defaultFilters: OPTION_DEFAULT_SORT,
+      joinTables: _optionJoinTables,
     });
   }
 
-  /**
-   * Récupère les utilisateurs pour les composants Select / Combobox.
-   * Alterne intelligemment entre recherche textuelle filtrée et données par défaut.
-   */
-  async fetchOptions({
-    filters,
-    search,
-  }: SearchOptions<BaseOptionFilters> = {}): Promise<Option[]> {
-    try {
-      let query = this.getQuerySet();
-
-      const searchFilter = createSQLiteSearchFilter(
-        [this.table.optionName, this.table.optionShortName],
-        search,
-      );
-
-      if (searchFilter) {
-        const mergedOptions = mergeQueryOptions(filters, OPTION_DEFAULT_SORT);
-        query = query.where(searchFilter);
-
-        return (await applyQueryOptions(
-          query,
-          this.table,
-          mergedOptions,
-        )) as unknown as Option[];
-      }
-
-      const defaultOptions = mergeQueryOptions(
-        { limit: DEFAULT_LIMIT_VALUE, ...filters },
-        OPTION_DEFAULT_SORT,
-      );
-
-      return (await applyQueryOptions(
-        query,
-        this.table,
-        defaultOptions,
-      )) as unknown as Option[];
-    } catch (error) {
-      this.logError("fetchOptions", error, { filters, search });
-      throw new Error(
-        "Erreur lors de la récupération des options d'utilisateurs.",
-      );
-    }
+  fetchOptions(filters?: BaseOptionFilters) {
+    return this.findMany(filters);
   }
 }

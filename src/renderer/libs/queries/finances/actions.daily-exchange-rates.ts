@@ -4,7 +4,7 @@ import {
   useUpdateDailyExchangeRate,
   useDeleteDailyExchangeRate,
 } from "./finances";
-import { useFormBaseNotify } from "../base";
+import { useFormBaseNotify, useFormBase } from "../base";
 import { withNotifications } from "@/renderer/libs/notifications";
 import type {
   DailyExchangeRate,
@@ -12,68 +12,98 @@ import type {
   DailyExchangeRateUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import type { BaseMutationConfig, QueryUpdatePayload } from "../base";
-import { useFormBase } from "../base";
 
+const CREATE_EXCHANGE_RATE_NOTIFICATIONS = {
+  success: {
+    title: "Taux de change enregistré",
+    description: "Le taux de change quotidien a été ajouté.",
+  },
+  error: { title: "Erreur lors de l'ajout du taux de change." },
+};
+
+const UPDATE_EXCHANGE_RATE_NOTIFICATIONS = {
+  success: {
+    title: "Taux de change mis à jour",
+    description: "Le taux a été modifié.",
+  },
+  error: { title: "Échec de la mise à jour du taux de change." },
+};
+
+/**
+ * Creates notification options for daily exchange rate deletion.
+ * @param date - Optional date string to display in the notification body.
+ * @returns Notification configuration object.
+ */
+const getDeleteNotifications = (date?: string) => ({
+  success: {
+    title: "Taux supprimé",
+    description: date
+      ? `Le taux du ${date} a été supprimé.`
+      : "Le taux de change a été supprimé.",
+  },
+});
+
+/**
+ * Hook managing the creation form state and mutation for daily exchange rates.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Form configuration object bound to the creation mutation.
+ */
 export function useCreateDailyExchangeRateForm(
   config?: BaseMutationConfig<DailyExchangeRate>,
 ) {
   const mutation = useCreateDailyExchangeRate();
-  return useFormBaseNotify<DailyExchangeRateCreate, DailyExchangeRateCreate>({
+  return useFormBaseNotify<
+    DailyExchangeRateCreate,
+    DailyExchangeRateCreate,
+    DailyExchangeRate
+  >({
     mutation,
     config,
-    getNotifications: () => ({
-      success: {
-        title: "Taux de change enregistré",
-        description: "Le taux de change quotidien a été ajouté.",
-      },
-      error: { title: "Erreur lors de l'ajout du taux de change." },
-    }),
+    getNotifications: () => CREATE_EXCHANGE_RATE_NOTIFICATIONS,
     adaptData: (data) => data,
   });
 }
 
+/**
+ * Hook managing the update form state and mutation for daily exchange rates.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Form configuration object bound to the update mutation.
+ */
 export function useUpdateDailyExchangeRateForm(
-  config?: BaseMutationConfig<DailyExchangeRate>,
+  config?: BaseMutationConfig<DailyExchangeRateUpdate>,
 ) {
   const mutation = useUpdateDailyExchangeRate();
   return useFormBaseNotify<
     QueryUpdatePayload<DailyExchangeRateUpdate>,
-    { data: DailyExchangeRateUpdate; id: string }
+    { data: DailyExchangeRateUpdate; id: string },
+    DailyExchangeRateUpdate
   >({
     mutation,
     config,
-    getNotifications: () => ({
-      success: {
-        title: "Taux de change mis à jour",
-        description: "Le taux a été modifié.",
-      },
-      error: { title: "Échec de la mise à jour du taux de change." },
-    }),
+    getNotifications: () => UPDATE_EXCHANGE_RATE_NOTIFICATIONS,
     adaptData: ({ data, id }) => ({ data, id }),
   });
 }
 
+/**
+ * Hook managing exchange rate deletion actions and loading status.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Object exposing deletion function and pending state.
+ */
 export function useDeleteDailyExchangeRateForm(
   config?: BaseMutationConfig<void>,
 ) {
-  const { notifyAndInvalidate } = useFormBase(config);
+  const { notifyAndInvalidate } = useFormBase<void>(config);
   const mutation = useDeleteDailyExchangeRate();
 
-  const deleteDailyExchangeRate = useCallback(
+  const onDelete = useCallback(
     (rateId: string, date?: string) => {
       mutation.mutate(
         rateId,
         withNotifications({
-          notifications: {
-            success: {
-              title: "Taux supprimé",
-              description: date
-                ? `Le taux du ${date} a été supprimé.`
-                : "Le taux de change a été supprimé.",
-            },
-          },
+          notifications: getDeleteNotifications(date),
           onSuccess: () => {
-            notifyAndInvalidate(undefined as void);
+            notifyAndInvalidate();
           },
         }),
       );
@@ -82,7 +112,7 @@ export function useDeleteDailyExchangeRateForm(
   );
 
   return {
-    deleteDailyExchangeRate,
+    onDelete,
     isDeleting: mutation.isPending,
   };
 }

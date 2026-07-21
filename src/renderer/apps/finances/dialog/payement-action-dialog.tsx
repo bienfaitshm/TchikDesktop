@@ -1,42 +1,64 @@
-import React from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogFooter,
-  DialogHeader,
-  DialogClose,
-} from "@/renderer/components/ui/dialog";
-import { Button } from "@/renderer/components/ui/button";
-import { DialogForm } from "@/renderer/components/dialog/form";
-import {
-  ProcessPaymentFormConfig,
-  useProcessStudentPaymentForm,
-} from "@/renderer/libs/queries/finances";
-import { PaymentProcessForm } from "../forms/payment-process-form";
-import { Suspense } from "@/renderer/libs/queries/suspense";
-import { PaymentAssignHistory } from "../contents/payment-assign-hisotry.content";
+import type { ReactNode } from "react";
 import type { FeeAssignment } from "@/packages/@core/data-access/db";
 import { formatCurrency } from "@/packages/currency";
-import { cn } from "@/renderer/utils";
+import { Button } from "@/renderer/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/renderer/components/ui/dialog";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
+import { Suspense } from "@/renderer/libs/queries/suspense";
+import {
+  useProcessStudentPaymentForm,
+  type ProcessPaymentFormConfig,
+} from "@/renderer/libs/queries/finances";
+import { cn } from "@/renderer/utils";
 
-type DialogProps = Partial<React.ComponentProps<typeof Dialog>> & {
-  children?: React.ReactNode;
-  schoolId?: string;
-  yearId?: string;
-  assignmentId: string;
-};
-/* ==========================================================================
-   1. HISTORIQUE DES PAIEMENTS
-   ========================================================================== */
-interface PaymentHistoryDialogProps extends Partial<
+import { PaymentAssignHistory } from "../contents/payment-assign-history.content";
+import { PaymentProcessForm } from "../forms/payment-process-form";
+import {
+  createBaseActionDialog,
+  type ActionDialogProps,
+} from "./base.dialog-actions";
+
+export interface PaymentHistoryDialogProps extends Partial<
   React.ComponentProps<typeof Dialog>
 > {
   assignmentId: string;
 }
 
+export interface PaymentDetailDialogProps extends Partial<
+  React.ComponentProps<typeof Dialog>
+> {
+  assignment: FeeAssignment;
+}
+
+export interface DetailRowProps {
+  label: string;
+  value: string;
+  valueClassName?: string;
+}
+
+export type SavePaymentDialogProps = ActionDialogProps<
+  unknown,
+  ProcessPaymentFormConfig
+> & {
+  schoolId: string;
+  yearId: string;
+  assignmentId: string;
+  totalAmount?: number;
+};
+
+/**
+ * Modal dialog component displaying the payment history of a fee assignment.
+ * @param props - Dialog properties including the target assignment identifier.
+ * @returns Rendered payment history dialog component.
+ */
 export const PaymentHistoryDialog: React.FC<PaymentHistoryDialogProps> = ({
   assignmentId,
   ...props
@@ -67,15 +89,27 @@ export const PaymentHistoryDialog: React.FC<PaymentHistoryDialogProps> = ({
   </Dialog>
 );
 
-/* ==========================================================================
-   2. DÉTAILS DE L’ÉCHÉANCE
-   ========================================================================== */
-interface PaymentDetailDialogProps extends Partial<
-  React.ComponentProps<typeof Dialog>
-> {
-  assignment: FeeAssignment;
-}
+/**
+ * Helper component rendering a labeled key-value pair for financial breakdowns.
+ * @param props - Row label, formatted value, and optional custom styling class.
+ * @returns Rendered detail row element.
+ */
+const DetailRow: React.FC<DetailRowProps> = ({
+  label,
+  value,
+  valueClassName,
+}) => (
+  <div className="flex justify-between items-center border-b border-border/40 pb-2 last:border-b-0">
+    <span className="text-muted-foreground text-xs">{label}</span>
+    <span className={cn("font-mono font-medium", valueClassName)}>{value}</span>
+  </div>
+);
 
+/**
+ * Modal dialog component rendering fee assignment financial details and remaining balances.
+ * @param props - Dialog properties including the target FeeAssignment entity.
+ * @returns Rendered payment detail dialog component.
+ */
 export const PaymentDetailDialog: React.FC<PaymentDetailDialogProps> = ({
   assignment,
   ...props
@@ -127,56 +161,29 @@ export const PaymentDetailDialog: React.FC<PaymentDetailDialogProps> = ({
   );
 };
 
-// Petit composant utilitaire local
-const DetailRow: React.FC<{
-  label: string;
-  value: string;
-  valueClassName?: string;
-}> = ({ label, value, valueClassName }) => (
-  <div className="flex justify-between items-center border-b border-border/40 pb-2 last:border-b-0">
-    <span className="text-muted-foreground text-xs">{label}</span>
-    <span className={cn("font-mono font-medium", valueClassName)}>{value}</span>
-  </div>
-);
-
-/* ==========================================================================
-   3. ENREGISTRER UN PAIEMENT (DIALOGFORM + HOOK FORM)
-   ========================================================================== */
-export const SavePaymentDialog: React.FC<
-  DialogProps & {
-    assignmentId: string;
-    schoolId: string;
-    yearId: string;
-    totalAmount?: number;
-  } & ProcessPaymentFormConfig
-> = ({
-  assignmentId,
-  schoolId,
-  yearId,
-  totalAmount,
-  mutationKey,
-  onSuccess,
-  ...props
-}) => {
-  const {
-    currencyOptions,
-    formId,
-    isSubmitting,
-    paymentMethodOptions,
-    onSubmit,
-  } = useProcessStudentPaymentForm(
-    { schoolId, yearId },
-    { mutationKey, onSuccess },
-  );
-
-  return (
-    <DialogForm
-      formId={formId}
-      title="Enregistrer un paiement"
-      description="Saisissez le montant perçu et le mode de règlement pour mettre à jour le solde."
-      submitText={isSubmitting ? "Traitement..." : "Enregistrer le paiement"}
-      {...props}
-    >
+/**
+ * Action dialog component for processing student fee payments.
+ * @param props - Dialog properties including target assignment, school, and year context.
+ * @returns Rendered save payment dialog component.
+ */
+export const SavePaymentDialog = createBaseActionDialog<
+  SavePaymentDialogProps,
+  ReturnType<typeof useProcessStudentPaymentForm>
+>({
+  title: "Enregistrer un paiement",
+  description:
+    "Saisissez le montant perçu et le mode de règlement pour mettre à jour le solde.",
+  submitText: "Enregistrer le paiement",
+  useForm: (config) =>
+    useProcessStudentPaymentForm(
+      { schoolId: config.schoolId, yearId: config.yearId },
+      config,
+    ),
+  form(
+    { formId, onSubmit, currencyOptions, paymentMethodOptions },
+    { schoolId, yearId, assignmentId, totalAmount },
+  ): ReactNode {
+    return (
       <PaymentProcessForm
         formId={formId}
         currencyOptions={currencyOptions}
@@ -185,6 +192,8 @@ export const SavePaymentDialog: React.FC<
         totalAmount={totalAmount}
         defaultValues={{ schoolId, yearId, assignmentId }}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
+
+SavePaymentDialog.displayName = "SavePaymentDialog";

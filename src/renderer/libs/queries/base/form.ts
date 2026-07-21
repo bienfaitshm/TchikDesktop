@@ -5,6 +5,17 @@ import { type UseMutationResult } from "@tanstack/react-query";
 import { withNotifications } from "@/renderer/libs/notifications";
 import type { FieldValues } from "react-hook-form";
 
+export type NotificationConfig = {
+  success: { title: string; description?: string };
+  error: { title: string; description?: string };
+};
+
+/**
+ * Base hook providing common form state mechanisms, such as unique IDs and Query Client cache invalidation.
+ * @template TData - The expected response data type from the mutation.
+ * @param config - Optional configuration object containing mutation key and success callback.
+ * @returns Object containing a unique formId and a memoized notification/invalidation callback.
+ */
 export function useFormBase<TData = unknown>(
   config?: BaseMutationConfig<TData>,
 ) {
@@ -35,35 +46,41 @@ export function useFormBase<TData = unknown>(
   };
 }
 
-type NotificationConfig = {
-  success: { title: string; description: string };
-  error: { title: string };
-};
-
 export interface UseBaseParams<
   TFormData extends FieldValues,
   TMutateInput,
   TReturnData = unknown,
+  TError = Error,
 > {
-  mutation: UseMutationResult<any, any, TMutateInput, any>;
+  mutation: UseMutationResult<TReturnData, TError, TMutateInput, unknown>;
   config?: BaseMutationConfig<TReturnData>;
   getNotifications: (data: TFormData) => NotificationConfig;
   adaptData: (formData: TFormData) => TMutateInput;
-  onSuccess?: (data: any) => void;
+  onSuccess?: (data: TReturnData) => void;
 }
 
+/**
+ * Higher-level form hook binding React Hook Form submission handlers to React Query mutations with UI notifications.
+ * @template TFormData - The form field values structure.
+ * @template TMutateInput - The variable structure required by the mutation.
+ * @template TReturnData - The data type returned by the mutation response.
+ * @template TError - The error type thrown by the mutation.
+ * @param params - Parameters object containing mutation instance, data adapters, and notification resolvers.
+ * @returns Object exposing formId, submission handler, and submission pending state.
+ */
 export function useFormBaseNotify<
   TFormData extends FieldValues,
   TMutateInput,
   TReturnData = unknown,
+  TError = Error,
 >({
   mutation,
   config,
   getNotifications,
   adaptData,
   onSuccess,
-}: UseBaseParams<TFormData, TMutateInput, TReturnData>) {
-  const { formId, notifyAndInvalidate } = useFormBase(config);
+}: UseBaseParams<TFormData, TMutateInput, TReturnData, TError>) {
+  const { formId, notifyAndInvalidate } = useFormBase<TReturnData>(config);
 
   const onSubmit: BaseFormProps<TFormData>["onSubmit"] = useCallback(
     (data, helpers) => {

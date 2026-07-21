@@ -1,109 +1,110 @@
 import { useCallback } from "react";
-import { withNotifications } from "@/renderer/libs/notifications";
-import {
-  useCreateStudyYear,
-  useUpdateStudyYear,
-  useDeleteStudyYear,
-} from "./study-year";
 import type {
   StudyYear,
   StudyYearCreate,
   StudyYearUpdate,
 } from "@/packages/@core/data-access/schema-validations";
+import { withNotifications } from "@/renderer/libs/notifications";
+import type { BaseMutationConfig, QueryUpdatePayload } from "../base";
+import { useFormBase, useFormBaseNotify } from "../base";
 import {
-  type BaseFormProps,
-  type BaseMutationConfig,
-  type QueryUpdatePayload,
-  useFormBase,
-} from "../base";
+  useCreateStudyYear,
+  useDeleteStudyYear,
+  useUpdateStudyYear,
+} from "./study-year";
 
 export type StudyYearFormData = StudyYearCreate;
-
 export type StudyYearFormConfig = BaseMutationConfig<StudyYear>;
 
+const CREATE_STUDY_YEAR_NOTIFICATIONS = {
+  success: {
+    title: "Année scolaire créée !",
+    description: "L'année scolaire a été ajoutée avec succès.",
+  },
+  error: {
+    title: "Échec de la création.",
+  },
+};
+
+const UPDATE_STUDY_YEAR_NOTIFICATIONS = {
+  success: {
+    title: "Année scolaire mise à jour !",
+    description: "Les modifications ont été enregistrées.",
+  },
+  error: {
+    title: "Échec de la mise à jour.",
+  },
+};
+
 /**
- * Hook pour la CRÉATION d'une année scolaire
+ * Builds notification configurations for study year deletions.
+ * @param yearName - Optional name of the academic year being removed.
+ * @returns Notification configuration object.
+ */
+const getDeleteStudyYearNotifications = (yearName?: string) => ({
+  success: {
+    title: "Année scolaire supprimée",
+    description: yearName
+      ? `L'année '${yearName}' a été retirée.`
+      : "L'année scolaire a été supprimée.",
+  },
+  error: {
+    title: "Erreur de suppression",
+  },
+});
+
+/**
+ * Custom form hook for creating academic study year entities.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Form state, submit handler, and pending status.
  */
 export function useCreateStudyYearForm(config?: StudyYearFormConfig) {
-  const { formId, notifyAndInvalidate } = useFormBase(config);
   const mutation = useCreateStudyYear();
 
-  const onSubmit: BaseFormProps<StudyYearCreate>["onSubmit"] = useCallback(
-    (data, helpers) => {
-      mutation.mutate(
-        data,
-        withNotifications({
-          notifications: {
-            success: {
-              title: "Année scolaire créée !",
-              description: `L'année scolaire '${data.yearName}' a été ajoutée avec succès.`,
-            },
-            error: {
-              title: "Échec de la création.",
-            },
-          },
-          onSuccess: (res) => {
-            notifyAndInvalidate(res);
-            helpers.reset();
-          },
-        }),
-      );
-    },
-    [mutation, notifyAndInvalidate],
-  );
+  const adaptData = useCallback((data: StudyYearCreate) => data, []);
 
-  return {
-    formId,
-    onSubmit,
-    isSubmitting: mutation.isPending,
-  };
+  return useFormBaseNotify<StudyYearCreate, StudyYearCreate, StudyYear>({
+    mutation,
+    config,
+    getNotifications: () => CREATE_STUDY_YEAR_NOTIFICATIONS,
+    adaptData,
+  });
 }
 
 /**
- * Hook pour la MISE À JOUR d'une année scolaire
+ * Custom form hook for updating existing academic study year entities.
+ * @param config - Optional base mutation configuration settings for StudyYearUpdate.
+ * @returns Form state, submit handler, and pending status.
  */
-export function useUpdateStudyYearForm(config?: StudyYearFormConfig) {
-  const { formId, notifyAndInvalidate } = useFormBase(config);
+export function useUpdateStudyYearForm(
+  config?: BaseMutationConfig<StudyYearUpdate>,
+) {
   const mutation = useUpdateStudyYear();
 
-  const onSubmit: BaseFormProps<
-    QueryUpdatePayload<StudyYearUpdate>
-  >["onSubmit"] = useCallback(
-    ({ data, id }, helpers) => {
-      mutation.mutate(
-        { data, id },
-        withNotifications({
-          notifications: {
-            success: {
-              title: "Année scolaire mise à jour !",
-              description: `Les modifications de '${data.yearName}' ont été enregistrées.`,
-            },
-            error: {
-              title: "Échec de la mise à jour.",
-            },
-          },
-          onSuccess: (res) => {
-            notifyAndInvalidate(res);
-            helpers.reset();
-          },
-        }),
-      );
-    },
-    [mutation, notifyAndInvalidate],
+  const adaptData = useCallback(
+    ({ data, id }: QueryUpdatePayload<StudyYearUpdate>) => ({ data, id }),
+    [],
   );
 
-  return {
-    formId,
-    onSubmit,
-    isSubmitting: mutation.isPending,
-  };
+  return useFormBaseNotify<
+    QueryUpdatePayload<StudyYearUpdate>,
+    { data: StudyYearUpdate; id: string },
+    StudyYearUpdate
+  >({
+    mutation,
+    config,
+    getNotifications: () => UPDATE_STUDY_YEAR_NOTIFICATIONS,
+    adaptData,
+  });
 }
 
 /**
- * Hook pour la SUPPRESSION d'une année scolaire
+ * Custom hook managing academic study year deletion actions and pending state.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Object containing the delete callback and pending state.
  */
 export function useDeleteStudyYearForm(config?: BaseMutationConfig<void>) {
-  const { notifyAndInvalidate } = useFormBase(config);
+  const { notifyAndInvalidate } = useFormBase<void>(config);
   const mutation = useDeleteStudyYear();
 
   const deleteStudyYear = useCallback(
@@ -111,20 +112,9 @@ export function useDeleteStudyYearForm(config?: BaseMutationConfig<void>) {
       mutation.mutate(
         id,
         withNotifications({
-          notifications: {
-            success: {
-              title: "Année scolaire supprimée",
-              description: yearName
-                ? `L'année '${yearName}' a été retirée.`
-                : "L'année scolaire a été supprimée.",
-            },
-            error: {
-              title: "Erreur de suppression",
-            },
-          },
+          notifications: getDeleteStudyYearNotifications(yearName),
           onSuccess: () => {
-            // Signalement propre via le flux d'invalidation centralisé
-            notifyAndInvalidate(undefined as void);
+            notifyAndInvalidate();
           },
         }),
       );
@@ -135,5 +125,6 @@ export function useDeleteStudyYearForm(config?: BaseMutationConfig<void>) {
   return {
     deleteStudyYear,
     isDeleting: mutation.isPending,
+    onDelete: deleteStudyYear,
   };
 }

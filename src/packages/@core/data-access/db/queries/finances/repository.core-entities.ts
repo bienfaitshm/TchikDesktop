@@ -1,4 +1,4 @@
-import { db } from "@/packages/@core/data-access/db/config";
+import { db, TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
   wallets,
@@ -10,54 +10,50 @@ import {
   type FeeType,
   type TableFeeSchedule,
   type FeeSchedule,
-  type FindManyOptions,
 } from "@/packages/@core/data-access/db/schemas";
-import type {
-  OptionProvider,
-  SearchOptions,
-} from "@/packages/@core/data-access/db/queries/select-option.transformer";
+
 import {
-  BaseRepository,
   DatabaseError,
-  type DrizzleClient,
+  helpers,
+  betterSqlite,
+  OptionProvider,
 } from "@/packages/drizzle-queries";
 import { eq, sql } from "drizzle-orm";
 
-/* =========================================================================
-   1. WALLET REPOSITORY
-   ========================================================================= */
+const _walletJoinTables = {
+  wallets,
+} as const;
 
-export type WalletOptionFilters = Partial<FindManyOptions<TableWallet>>;
+export type BaseWalletOptionFilters = helpers.FindManyOptions<
+  typeof _walletJoinTables
+>;
 
-const WALLET_OPTION_DEFAULT_SORT: WalletOptionFilters = {
-  orderBy: [{ column: "name", order: "asc" }],
+const WALLET_OPTION_DEFAULT_SORT: BaseWalletOptionFilters = {
+  orderBy: [{ table: "wallets", column: "name", order: "asc" }],
 };
 
 export class WalletRepository
-  extends BaseRepository<TableWallet, DrizzleClient>
+  extends betterSqlite.BaseRepository<
+    TableWallet,
+    TDataBase,
+    BaseWalletOptionFilters
+  >
   implements OptionProvider<Wallet>
 {
-  constructor(database: DrizzleClient = db) {
+  constructor(database: TDataBase = db) {
     super({
       db: database,
       table: wallets,
       idColumn: wallets.walletId,
-      entityName: "Wallet",
+      baseTableName: "wallets",
       logger: getLogger,
-      defaultSort: WALLET_OPTION_DEFAULT_SORT,
+      defaultFilters: WALLET_OPTION_DEFAULT_SORT,
+      joinTables: _walletJoinTables,
     });
-
-    this.searchFiltersColumns = [wallets.name];
   }
 
-  /**
-   * Récupère les portefeuilles pour les composants Select / Combobox.
-   * Synchrone.
-   */
-  async fetchOptions(
-    params: SearchOptions<WalletOptionFilters> = {},
-  ): Promise<Wallet[]> {
-    return this.findForSelect(params);
+  fetchOptions(filters?: BaseWalletOptionFilters) {
+    return this.findMany(filters);
   }
 
   /**
@@ -67,17 +63,17 @@ export class WalletRepository
   incrementWalletBalance(
     walletId: string,
     amount: number,
-    tx: DrizzleClient = this.db,
+    tx: TDataBase = this.db,
   ) {
     try {
       this.getClient(tx)
-        .update(wallets)
+        .update(this.table)
         .set({
-          currentBalance: sql`${wallets.currentBalance} + ${Number(amount)}`,
+          currentBalance: sql`${this.table.currentBalance} + ${Number(amount)}`,
           updatedAt: sql`CURRENT_TIMESTAMP`,
         })
-        .where(eq(wallets.walletId, walletId))
-        .run(); // Exécution synchrone sans retour de données
+        .where(eq(this.table.walletId, walletId))
+        .run();
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
@@ -91,106 +87,87 @@ export class WalletRepository
 
 export const walletRepository = new WalletRepository(db);
 
-/* =========================================================================
-   2. FEE TYPE REPOSITORY
-   ========================================================================= */
+const _feeTypeJoinTables = {
+  feeTypes,
+} as const;
 
-export type FeeTypeOptionFilters = Partial<FindManyOptions<TableFeeType>>;
+export type BaseFeeTypeOptionFilters = helpers.FindManyOptions<
+  typeof _feeTypeJoinTables
+>;
 
-const FEE_TYPE_OPTION_DEFAULT_SORT: FeeTypeOptionFilters = {
-  orderBy: [{ column: "name", order: "asc" }],
+const FEE_TYPE_OPTION_DEFAULT_SORT: BaseFeeTypeOptionFilters = {
+  orderBy: [{ table: "feeTypes", column: "name", order: "asc" }],
 };
 
 export class FeeTypeRepository
-  extends BaseRepository<TableFeeType, DrizzleClient>
+  extends betterSqlite.BaseRepository<
+    TableFeeType,
+    TDataBase,
+    BaseFeeTypeOptionFilters
+  >
   implements OptionProvider<FeeType>
 {
-  constructor(database: DrizzleClient = db) {
+  constructor(database: TDataBase = db) {
     super({
       db: database,
       table: feeTypes,
       idColumn: feeTypes.feeTypeId,
-      entityName: "FeeType",
+      baseTableName: "feeTypes",
       logger: getLogger,
-      defaultSort: FEE_TYPE_OPTION_DEFAULT_SORT,
+      defaultFilters: FEE_TYPE_OPTION_DEFAULT_SORT,
+      joinTables: _feeTypeJoinTables,
     });
-
-    this.searchFiltersColumns = [feeTypes.name];
   }
 
   /**
    * Récupère les types de frais pour les composants Select / Combobox.
    * Synchrone.
    */
-  async fetchOptions(
-    params: SearchOptions<FeeTypeOptionFilters> = {},
-  ): Promise<FeeType[]> {
-    return this.findForSelect(params);
+  fetchOptions(filters?: BaseFeeTypeOptionFilters) {
+    return this.findMany(filters);
   }
 }
 
 export const feeTypeRepository = new FeeTypeRepository(db);
 
-/* =========================================================================
-   3. FEE SCHEDULE REPOSITORY
-   ========================================================================= */
+const _feeScheduleJoinTables = {
+  feeSchedules,
+} as const;
 
-export type FeeScheduleOptionFilters = Partial<
-  FindManyOptions<TableFeeSchedule>
+export type BaseFeeScheduleOptionFilters = helpers.FindManyOptions<
+  typeof _feeScheduleJoinTables
 >;
 
-const FEE_SCHEDULE_OPTION_DEFAULT_SORT: FeeScheduleOptionFilters = {
-  orderBy: [{ column: "createdAt", order: "asc" }],
+const FEE_SCHEDULE_OPTION_DEFAULT_SORT: BaseFeeScheduleOptionFilters = {
+  orderBy: [{ table: "feeSchedules", column: "createdAt", order: "asc" }],
 };
 
 export class FeeScheduleRepository
-  extends BaseRepository<TableFeeSchedule, DrizzleClient>
+  extends betterSqlite.BaseRepository<
+    TableFeeSchedule,
+    TDataBase,
+    BaseFeeScheduleOptionFilters
+  >
   implements OptionProvider<FeeSchedule>
 {
-  constructor(database: DrizzleClient = db) {
+  constructor(database: TDataBase = db) {
     super({
       db: database,
       table: feeSchedules,
       idColumn: feeSchedules.scheduleId,
-      entityName: "FeeSchedule",
+      baseTableName: "feeSchedules",
       logger: getLogger,
-      defaultSort: FEE_SCHEDULE_OPTION_DEFAULT_SORT,
+      defaultFilters: FEE_SCHEDULE_OPTION_DEFAULT_SORT,
+      joinTables: _feeScheduleJoinTables,
     });
-
-    this.searchFiltersColumns = [feeSchedules.installmentName];
   }
 
   /**
    * Récupère les échéances de paiement pour les composants Select / Combobox.
    * Synchrone.
    */
-  async fetchOptions(
-    params: SearchOptions<FeeScheduleOptionFilters> = {},
-  ): Promise<FeeSchedule[]> {
-    return this.findForSelect(params);
-  }
-
-  /**
-   * Récupère toutes les échéances liées à un type de frais spécifique.
-   * Synchrone.
-   */
-  async findByFeeType(
-    feeTypeId: string,
-    tx: DrizzleClient = this.db,
-  ): Promise<FeeSchedule[]> {
-    try {
-      return this.getClient(tx)
-        .select()
-        .from(feeSchedules)
-        .where(eq(feeSchedules.feeTypeId, feeTypeId));
-    } catch (error) {
-      const dbError = DatabaseError.from(
-        error,
-        `Failed to fetch schedules for fee type ID: ${feeTypeId}`,
-      );
-      this.logError("findByFeeType", dbError, { feeTypeId });
-      throw dbError;
-    }
+  async fetchOptions(filters?: BaseFeeScheduleOptionFilters) {
+    return this.findMany(filters);
   }
 }
 

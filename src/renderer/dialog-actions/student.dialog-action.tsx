@@ -1,138 +1,95 @@
-import * as React from "react";
-import { DialogForm } from "@/renderer/components/dialog/form";
-import {
-  ConfirmDeleteDialog,
-  useAsyncConfirm,
-} from "@/renderer/components/dialog/confirm-delete";
-import { useConfirm } from "@/renderer/hooks/use-confirm";
-import { cloneElementWithProps } from "@/renderer/utils/react";
+import type { ReactNode } from "react";
+import type { UserCreate } from "@/packages/@core/data-access/schema-validations";
 import { BaseUserForm } from "@/renderer/components/form/user-form";
 import {
   useCreateUserForm,
-  useUpdateUserForm,
   useDeleteUserForm,
+  useUpdateUserForm,
   type UserFormConfig,
 } from "@/renderer/libs/queries/users";
-import type { UserCreate } from "@/packages/@core/data-access/schema-validations";
+import {
+  createBaseActionDialog,
+  createDeleteActionDialog,
+  type ActionDialogProps,
+} from "./base.dialog-actions";
 
-export type DialogProps<TExtraProps extends Record<string, any> = {}> =
-  React.PropsWithChildren<
-    TExtraProps &
-      UserFormConfig & {
-        defaultValues?: Partial<UserCreate>;
-      }
-  >;
+export type UserDialogProps = ActionDialogProps<UserCreate, UserFormConfig>;
 
-/* ==========================================================================
-   1. INSCRIPTION (CRÉATION)
-   ========================================================================== */
-export const CreateStudentDialog: React.FC<DialogProps> = ({
-  children,
-  defaultValues,
-  ...config
-}) => {
-  const { formId, onSubmit, isSubmitting } = useCreateUserForm(config);
+export type CreateUserDialogProps = UserDialogProps;
 
-  return (
-    <DialogForm
-      trigger={children}
-      title="Inscrire un nouvel élève"
-      description="Renseignez les informations d'identité et les coordonnées pour créer le dossier scolaire."
-      formId={formId}
-      isLoading={isSubmitting}
-    >
+export type UpdateUserDialogProps = UserDialogProps & {
+  userId: string;
+  fullName?: string;
+};
+
+/**
+ * Action dialog component for enrolling a new user or student.
+ * @param props - Dialog properties containing initial form values and callbacks.
+ * @returns Rendered creation dialog component.
+ */
+export const CreateUserDialog = createBaseActionDialog<
+  CreateUserDialogProps,
+  ReturnType<typeof useCreateUserForm>
+>({
+  title: "Inscrire un nouvel élève",
+  description:
+    "Renseignez les informations d'identité et les coordonnées pour créer le dossier scolaire.",
+  useForm: useCreateUserForm,
+  form({ formId, onSubmit, defaultValues }): ReactNode {
+    return (
       <BaseUserForm
         formId={formId}
         onSubmit={onSubmit}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-type UpdateStudentDialogProps = {
-  studentId: string;
-  fullName?: string;
-};
+CreateUserDialog.displayName = "CreateUserDialog";
 
-export const UpdateStudentDialog: React.FC<
-  UpdateStudentDialogProps & DialogProps
-> = ({ defaultValues, studentId, fullName, children, ...config }) => {
-  const { formId, isSubmitting, onSubmit } = useUpdateUserForm(config);
-
-  return (
-    <DialogForm
-      trigger={children}
-      title={`Modifier le profil ${fullName ? ` : ${fullName}` : ""}`}
-      description="Mettez à jour les informations du dossier. Les modifications sont instantanées."
-      formId={formId}
-      isLoading={isSubmitting}
-    >
+/**
+ * Action dialog component for updating an existing user or student profile.
+ * @param props - Dialog properties containing target userId and initial form values.
+ * @returns Rendered update dialog component.
+ */
+export const UpdateUserDialog = createBaseActionDialog<
+  UpdateUserDialogProps,
+  ReturnType<typeof useUpdateUserForm>
+>({
+  title: ({ fullName }: UpdateUserDialogProps) =>
+    `Modifier le profil${fullName ? ` : ${fullName}` : ""}`,
+  description:
+    "Mettez à jour les informations du dossier. Les modifications sont instantanées.",
+  useForm: useUpdateUserForm,
+  form({ formId, onSubmit, defaultValues }): ReactNode {
+    return (
       <BaseUserForm
         formId={formId}
-        onSubmit={(data, helpers) =>
-          onSubmit({ id: studentId, data }, helpers as any)
-        }
+        onSubmit={onSubmit}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-interface DeleteStudentDialogProps {
-  children:
-    | React.ReactNode
-    | ((props: {
-        onOpen: (e: React.MouseEvent) => void;
-        isLoading: boolean;
-      }) => React.ReactNode);
-  studentId: string;
-  studentName: string;
-}
+UpdateUserDialog.displayName = "UpdateUserDialog";
 
-export const DeleteStudentDialog: React.FC<
-  DeleteStudentDialogProps & DialogProps
-> = ({ children, studentId, studentName, ...config }) => {
-  const { isOpen, onOpen, onClose } = useConfirm<string>();
+/**
+ * Action dialog component for confirming and executing user or student deletion.
+ * @returns Rendered delete confirmation dialog component.
+ */
+export const DeleteUserDialog = createDeleteActionDialog({
+  title: "Supprimer le dossier élève",
+  description:
+    "Cette action est irréversible. Toutes les notes, absences et données liées à cet élève seront perdues.",
+  errorMessage: "Erreur lors de la suppression du dossier élève:",
+  useDeleteForm: useDeleteUserForm,
+});
 
-  const { deleteUser, isDeleting } = useDeleteUserForm({
-    ...config,
-    onSuccess: (data) => {
-      config?.onSuccess?.(data);
-      onClose();
-    },
-  });
+DeleteUserDialog.displayName = "DeleteUserDialog";
 
-  const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
-    id: studentId,
-    onOpenConfirm: onOpen,
-    onCloseConfirm: onClose,
-    onConfirmAction: deleteUser,
-    actionArgs: [studentName],
-    errorMessage: "Erreur lors de la suppression du dossier élève:",
-  });
-
-  return (
-    <>
-      <ConfirmDeleteDialog
-        id={studentId}
-        isOpen={isOpen}
-        onClose={onClose}
-        onConfirm={handleConfirm}
-        isPending={isDeleting}
-        title="Supprimer le dossier élève"
-        description="Cette action est irréversible. Toutes les notes, absences et données liées à cet élève seront perdues."
-        itemName={studentName}
-      />
-
-      {typeof children === "function"
-        ? children({ onOpen: handleTriggerClick, isLoading: isDeleting })
-        : cloneElementWithProps(children, {
-            onClick: handleTriggerClick,
-            disabled: isDeleting,
-          })}
-    </>
-  );
-};
-
-DeleteStudentDialog.displayName = "DeleteStudentDialog";
+/* Component aliases for backward compatibility */
+export const CreateStudentDialog = CreateUserDialog;
+export const UpdateStudentDialog = UpdateUserDialog;
+export const DeleteStudentDialog = DeleteUserDialog;

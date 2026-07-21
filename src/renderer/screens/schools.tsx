@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { Button } from "@/renderer/components/ui/button";
 import { Plus } from "lucide-react";
 import { useGetSchools } from "@/renderer/libs/queries/schools";
@@ -15,78 +15,95 @@ import {
   DataTableColumnToggle,
 } from "@/renderer/components/tables/data-table";
 import {
-  enhanceColumnsExpandable,
+  enhanceColumns,
   schoolColumns,
 } from "@/renderer/components/tables/columns";
-import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
-import {
-  ActionContainer,
-  ActionTileCopy,
-  ActionTileDelete,
-  ActionTileEdit,
-} from "@/renderer/components/tables/data-table.action-tiles";
-
 import {
   CreateSchoolDialog,
   DeleteSchoolDialog,
   UpdateSchoolDialog,
-  type CreateSchoolDialogProps,
+  type SchoolDialogProps,
 } from "@/renderer/dialog-actions/school.dialog-actions";
-
-import type { Row } from "@tanstack/react-table";
 import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
+import {
+  createActionMenus,
+  TActionMenu,
+} from "@/components/menus/action-menus";
 
-interface RowActionsProps extends Pick<CreateSchoolDialogProps, "mutationKey"> {
+import { Pencil, Copy, Trash2 } from "lucide-react";
+
+interface RowActionsProps extends Pick<SchoolDialogProps, "mutationKey"> {
   school: School;
 }
 
+const MENUS: TActionMenu<RowActionsProps>[] = [
+  {
+    id: "edit",
+    label: "Modifier les infos de l'ecole",
+    icon: Pencil,
+    dialog({ school, mutationKey }) {
+      return (
+        <UpdateSchoolDialog
+          mutationKey={mutationKey}
+          schoolId={school.schoolId}
+          defaultValues={school}
+        />
+      );
+    },
+  },
+
+  {
+    id: "duplicate",
+    label: "Dupliquer",
+    icon: Copy,
+    dialog({ school, mutationKey }) {
+      return (
+        <CreateSchoolDialog mutationKey={mutationKey} defaultValues={school} />
+      );
+    },
+  },
+
+  {
+    id: "delete",
+    label: "Supprimer",
+    icon: Trash2,
+    separator: true,
+    variant: "destructive",
+    dialog({ school, mutationKey }) {
+      return (
+        <DeleteSchoolDialog
+          mutationKey={mutationKey}
+          id={school.schoolId}
+          name={school.name}
+        />
+      );
+    },
+  },
+];
 /**
  * Actions de ligne mémoïsées.
  * On utilise les props cohérentes : schoolId et schoolName.
  */
-const SchoolRowActions = React.memo(
-  ({ school, mutationKey }: RowActionsProps) => {
-    const initialData = useMemo(() => ({ ...school }), [school.schoolId]);
-
-    return (
-      <ActionContainer className="lg:grid-cols-3">
-        <UpdateSchoolDialog
-          mutationKey={mutationKey}
-          schoolId={school.schoolId}
-          defaultValues={initialData}
-        >
-          <ActionTileEdit />
-        </UpdateSchoolDialog>
-
-        <CreateSchoolDialog
-          mutationKey={mutationKey}
-          defaultValues={initialData}
-        >
-          <ActionTileCopy />
-        </CreateSchoolDialog>
-
-        <DeleteSchoolDialog
-          mutationKey={mutationKey}
-          schoolId={school.schoolId}
-          schoolName={school.name}
-        >
-          <ActionTileDelete />
-        </DeleteSchoolDialog>
-      </ActionContainer>
-    );
-  },
-);
-SchoolRowActions.displayName = "SchoolRowActions";
+const RowAction = createActionMenus(MENUS);
 
 export const SchoolsPage = () => {
   const { data: schools = [], queryKey: mutationKey } = useGetSchools();
-
+  const columns = React.useMemo(
+    () =>
+      enhanceColumns(schoolColumns, {
+        variant: "actions",
+        renderRowAction: (school) => (
+          <RowAction school={school} mutationKey={mutationKey} />
+        ),
+      }),
+    [mutationKey],
+  );
   return (
-    <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
+    <div className="flex-1 w-full overflow-hidden">
       <PageShell
         maxWidth="xl"
         header={
-          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4 ">
+          <section>
             <header className="space-y-1">
               <h1 className="text-2xl font-bold tracking-tight">
                 Gestion des établissements
@@ -100,7 +117,7 @@ export const SchoolsPage = () => {
       >
         <DataTable<School>
           data={schools}
-          columns={enhanceColumnsExpandable(schoolColumns)}
+          columns={columns}
           keyExtractor={(item) => item.schoolId}
         >
           <DataTableToolbar>
@@ -120,19 +137,7 @@ export const SchoolsPage = () => {
 
           <DataTableContent>
             <DataContentHead />
-            <DataContentBody<School>>
-              {({ row }) => (
-                <ExpandableRow
-                  row={row as Row<unknown>}
-                  renderDetail={
-                    <SchoolRowActions
-                      mutationKey={mutationKey}
-                      school={row.original}
-                    />
-                  }
-                />
-              )}
-            </DataContentBody>
+            <DataContentBody<School> />
           </DataTableContent>
           <DataTablePagination />
         </DataTable>

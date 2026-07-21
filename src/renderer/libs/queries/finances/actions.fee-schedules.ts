@@ -1,33 +1,78 @@
-import type { FeeSchedule } from "@/packages/@core/data-access/db";
 import { useCallback } from "react";
-import {
-  useCreateFeeSchedule,
-  useBulkCreateFeeSchedule,
-  useUpdateFeeSchedule,
-  useDeleteFeeSchedule,
-  useGetFeeTypeAsOptions,
-} from "./finances";
-import { useFormBaseNotify, useFormBase } from "../base";
-import { withNotifications } from "@/renderer/libs/notifications";
+import type { FieldValues } from "react-hook-form";
+import type { FeeSchedule } from "@/packages/@core/data-access/db";
 import type {
   FeeScheduleBulkCreate,
   FeeScheduleCreate,
   FeeScheduleUpdate,
   FeeType,
 } from "@/packages/@core/data-access/schema-validations";
+import { withNotifications } from "@/renderer/libs/notifications";
 import type {
   BaseMutationConfig,
   QueryUpdatePayload,
   UseBaseParams,
 } from "../base";
-import type { FieldValues } from "react-hook-form";
+import { useFormBase, useFormBaseNotify } from "../base";
+import {
+  useBulkCreateFeeSchedule,
+  useCreateFeeSchedule,
+  useDeleteFeeSchedule,
+  useGetFeeTypeAsOptions,
+  useUpdateFeeSchedule,
+} from "./finances";
 
-type SchoolID = Partial<Pick<FeeType, "schoolId">>;
-type HookActionsParams<T = FeeSchedule> = SchoolID & BaseMutationConfig<T>;
-export type FeeScheduleFormConfig<T = FeeSchedule> = BaseMutationConfig<T>;
+type SchoolContext = Partial<Pick<FeeType, "schoolId">>;
+export type HookActionsParams<T = FeeSchedule> = SchoolContext &
+  BaseMutationConfig<T>;
+
+const CREATE_FEE_SCHEDULE_NOTIFICATIONS = {
+  success: {
+    title: "Échéance ajoutée",
+    description:
+      "La nouvelle tranche d'échéancier a été enregistrée avec succès.",
+  },
+  error: { title: "Erreur lors de la création de l'échéance." },
+};
+
+const BULK_CREATE_FEE_SCHEDULE_NOTIFICATIONS = {
+  success: {
+    title: "Échéances ajoutées",
+    description:
+      "Les tranches d'échéancier ont été enregistrées en masse avec succès.",
+  },
+  error: { title: "Erreur lors de la création en masse des échéances." },
+};
+
+const UPDATE_FEE_SCHEDULE_NOTIFICATIONS = {
+  success: {
+    title: "Échéance mise à jour",
+    description: "Les détails de la tranche de paiement ont été modifiés.",
+  },
+  error: { title: "Échec de la mise à jour de l'échéance." },
+};
 
 /**
- * Hook de base partagé pour injecter les options de types de frais requis par les formulaires
+ * Builds deletion notifications for fee schedules.
+ * @param installmentName - Optional name of the installment being removed.
+ * @returns Notification object for fee schedule deletion.
+ */
+const getDeleteFeeScheduleNotifications = (installmentName?: string) => ({
+  success: {
+    title: "Échéance supprimée",
+    description: installmentName
+      ? `La tranche de versement "${installmentName}" a été retirée.`
+      : "La tranche d'échéance a été retirée.",
+  },
+});
+
+/**
+ * Shared base hook injecting fee type select options and binding base form state.
+ * @template TFormData - The form input values structure.
+ * @template TMutateInput - The mutation variable payload type.
+ * @template TReturnData - The response data type returned by the mutation.
+ * @param params - School context combined with base mutation parameters.
+ * @returns Object containing fee type options and form state handlers.
  */
 const useBaseFeeSchedule = <
   TFormData extends FieldValues,
@@ -36,9 +81,9 @@ const useBaseFeeSchedule = <
 >({
   schoolId,
   ...params
-}: SchoolID & UseBaseParams<TFormData, TMutateInput, TReturnData>) => {
+}: SchoolContext & UseBaseParams<TFormData, TMutateInput, TReturnData>) => {
   const { data: feeTypeOptions = [] } = useGetFeeTypeAsOptions({
-    where: { schoolId },
+    where: { feeTypes: { schoolId: { $eq: schoolId } } },
   });
   const form = useFormBaseNotify<TFormData, TMutateInput, TReturnData>(params);
 
@@ -46,33 +91,36 @@ const useBaseFeeSchedule = <
 };
 
 /**
- * Création unitaire
+ * Form hook for creating a single fee schedule.
+ * @param config - Optional configuration and school context parameters.
+ * @returns Form state and handlers bound to the single creation mutation.
  */
 export function useCreateFeeScheduleForm(config?: HookActionsParams) {
   const mutation = useCreateFeeSchedule();
+
+  const adaptData = useCallback((data: FeeScheduleCreate) => data, []);
+
   return useBaseFeeSchedule<FeeScheduleCreate, FeeScheduleCreate, FeeSchedule>({
     schoolId: config?.schoolId,
     mutation,
     config,
-    getNotifications: () => ({
-      success: {
-        title: "Échéance ajoutée",
-        description:
-          "La nouvelle tranche d'échéancier a été enregistrée avec succès.",
-      },
-      error: { title: "Erreur lors de la création de l'échéance." },
-    }),
-    adaptData: (data) => data,
+    getNotifications: () => CREATE_FEE_SCHEDULE_NOTIFICATIONS,
+    adaptData,
   });
 }
 
 /**
- * Création en masse (Bulk)
+ * Form hook for bulk creating fee schedules.
+ * @param config - Optional configuration and school context parameters.
+ * @returns Form state and handlers bound to the bulk creation mutation.
  */
 export function useBulkCreateFeeScheduleForm(
   config?: HookActionsParams<FeeSchedule[]>,
 ) {
   const mutation = useBulkCreateFeeSchedule();
+
+  const adaptData = useCallback((data: FeeScheduleBulkCreate) => data, []);
+
   return useBaseFeeSchedule<
     FeeScheduleBulkCreate,
     FeeScheduleBulkCreate,
@@ -81,49 +129,45 @@ export function useBulkCreateFeeScheduleForm(
     mutation,
     config,
     schoolId: config?.schoolId,
-    getNotifications: () => ({
-      success: {
-        title: "Échéances ajoutées",
-        description:
-          "Les tranches d'échéancier ont été enregistrées en masse avec succès.",
-      },
-      error: { title: "Erreur lors de la création en masse des échéances." },
-    }),
-    adaptData: (data) => data,
+    getNotifications: () => BULK_CREATE_FEE_SCHEDULE_NOTIFICATIONS,
+    adaptData,
   });
 }
 
 /**
- * Modification d'une échéance
+ * Form hook for updating an existing fee schedule.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Form state and handlers bound to the update mutation.
  */
 export function useUpdateFeeScheduleForm(
-  config?: BaseMutationConfig<FeeSchedule>,
+  config?: BaseMutationConfig<FeeScheduleUpdate>,
 ) {
   const mutation = useUpdateFeeSchedule();
+
+  const adaptData = useCallback(
+    ({ data, id }: QueryUpdatePayload<FeeScheduleUpdate>) => ({ data, id }),
+    [],
+  );
 
   return useBaseFeeSchedule<
     QueryUpdatePayload<FeeScheduleUpdate>,
     { data: FeeScheduleUpdate; id: string },
-    FeeSchedule
+    FeeScheduleUpdate
   >({
     mutation,
     config,
-    getNotifications: () => ({
-      success: {
-        title: "Échéance mise à jour",
-        description: "Les détails de la tranche de paiement ont été modifiés.",
-      },
-      error: { title: "Échec de la mise à jour de l'échéance." },
-    }),
-    adaptData: ({ data, id }) => ({ data, id }),
+    getNotifications: () => UPDATE_FEE_SCHEDULE_NOTIFICATIONS,
+    adaptData,
   });
 }
 
 /**
- * Suppression d'une échéance
+ * Hook for executing fee schedule deletion.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Object containing deletion trigger and pending state indicator.
  */
 export function useDeleteFeeScheduleForm(config?: BaseMutationConfig<void>) {
-  const { notifyAndInvalidate } = useFormBase(config);
+  const { notifyAndInvalidate } = useFormBase<void>(config);
   const mutation = useDeleteFeeSchedule();
 
   const deleteFeeSchedule = useCallback(
@@ -131,14 +175,7 @@ export function useDeleteFeeScheduleForm(config?: BaseMutationConfig<void>) {
       mutation.mutate(
         scheduleId,
         withNotifications({
-          notifications: {
-            success: {
-              title: "Échéance supprimée",
-              description: installmentName
-                ? `La tranche de versement "${installmentName}" a été retirée.`
-                : "La tranche d'échéance a été retirée.",
-            },
-          },
+          notifications: getDeleteFeeScheduleNotifications(installmentName),
           onSuccess: () => {
             notifyAndInvalidate();
           },
@@ -150,6 +187,7 @@ export function useDeleteFeeScheduleForm(config?: BaseMutationConfig<void>) {
 
   return {
     deleteFeeSchedule,
+    onDelete: deleteFeeSchedule,
     isDeleting: mutation.isPending,
   };
 }

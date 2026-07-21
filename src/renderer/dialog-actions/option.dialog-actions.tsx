@@ -1,154 +1,95 @@
-import * as React from "react";
-import { DialogForm, DialogFormProps } from "@/renderer/components/dialog/form";
-import {
-  ConfirmDeleteDialog,
-  useAsyncConfirm,
-} from "@/renderer/components/dialog/confirm-delete";
-import { useConfirm } from "@/renderer/hooks/use-confirm";
-import { cloneElementWithProps } from "@/renderer/utils/react";
+import type { ReactNode } from "react";
 import {
   OptionForm,
   type OptionFormData,
 } from "@/renderer/components/form/option-form";
 import {
   useCreateOptionForm,
-  useUpdateOptionForm,
   useDeleteOptionForm,
+  useUpdateOptionForm,
   type OptionFormConfig,
 } from "@/renderer/libs/queries/options";
+import {
+  createBaseActionDialog,
+  createDeleteActionDialog,
+  type ActionDialogProps,
+} from "./base.dialog-actions";
 
-export type OptionDialogProps<TExtraProps extends Record<string, any> = {}> =
-  React.PropsWithChildren<
-    TExtraProps &
-      Pick<DialogFormProps, "open" | "onOpenChange"> &
-      OptionFormConfig & {
-        defaultValues?: Partial<OptionFormData>;
-      }
-  >;
+export type OptionDialogProps = ActionDialogProps<
+  OptionFormData,
+  OptionFormConfig
+>;
 
-/* ==========================================================================
-   1. CRÉATION
-   ========================================================================== */
+export type CreateOptionDialogProps = OptionDialogProps;
 
-export const CreateOptionDialog: React.FC<OptionDialogProps> = ({
-  children,
-  defaultValues,
-  onOpenChange,
-  open,
-  ...config
-}) => {
-  const { formId, onSubmit, isSubmitting } = useCreateOptionForm(config);
+export type UpdateOptionDialogProps = OptionDialogProps & {
+  optionId: string;
+  optionName?: string;
+};
 
-  return (
-    <DialogForm
-      trigger={children}
-      title="Créer une filière"
-      description="Remplissez les informations ci-dessous pour ajouter une nouvelle filière à votre établissement."
-      formId={formId}
-      isLoading={isSubmitting}
-      open={open}
-      onOpenChange={onOpenChange}
-    >
+/**
+ * Action dialog component for creating a new academic option.
+ * @param props - Dialog properties containing initial form values and callbacks.
+ * @returns Rendered option creation dialog component.
+ */
+export const CreateOptionDialog = createBaseActionDialog<
+  CreateOptionDialogProps,
+  ReturnType<typeof useCreateOptionForm>
+>({
+  title: "Créer une filière",
+  description:
+    "Remplissez les informations ci-dessous pour ajouter une nouvelle filière à votre établissement.",
+  useForm: useCreateOptionForm,
+  form({ formId, onSubmit, defaultValues }): ReactNode {
+    return (
       <OptionForm
         formId={formId}
         onSubmit={onSubmit}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-/* ==========================================================================
-   2. MODIFICATION
-   ========================================================================== */
-interface UpdateOptionProps {
-  optionId: string;
-}
+CreateOptionDialog.displayName = "CreateOptionDialog";
 
-export const UpdateOptionDialog: React.FC<
-  OptionDialogProps<UpdateOptionProps>
-> = ({ defaultValues, optionId, children, onOpenChange, open, ...config }) => {
-  const { formId, isSubmitting, onSubmit } = useUpdateOptionForm(config);
-
-  const handleSubmit = React.useCallback(
-    (data, helpers) =>
-      onSubmit(
-        { id: optionId, data },
-        { reset: (updatedData) => helpers.reset(updatedData) },
-      ),
-    [onSubmit, optionId],
-  );
-  return (
-    <DialogForm
-      trigger={children}
-      title={`Modifier la filière : ${defaultValues?.optionName ?? ""}`}
-      description="Modifiez les détails de la filière. Les changements seront appliqués immédiatement."
-      formId={formId}
-      isLoading={isSubmitting}
-      open={open}
-      onOpenChange={onOpenChange}
-    >
+/**
+ * Action dialog component for updating an existing academic option.
+ * @param props - Dialog properties containing target optionId and initial form values.
+ * @returns Rendered option update dialog component.
+ */
+export const UpdateOptionDialog = createBaseActionDialog<
+  UpdateOptionDialogProps,
+  ReturnType<typeof useUpdateOptionForm>
+>({
+  title: ({ optionName, defaultValues }: UpdateOptionDialogProps) =>
+    `Modifier la filière : ${optionName ?? defaultValues?.optionName ?? ""}`,
+  description:
+    "Modifiez les détails de la filière. Les changements seront appliqués immédiatement.",
+  useForm: useUpdateOptionForm,
+  form({ formId, onSubmit, defaultValues }): ReactNode {
+    return (
       <OptionForm
         formId={formId}
-        onSubmit={handleSubmit}
+        onSubmit={onSubmit}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-/* ==========================================================================
-   3. SUPPRESSION
-   ========================================================================== */
-interface DeleteOptionProps {
-  optionId: string;
-  optionName: string;
-}
+UpdateOptionDialog.displayName = "UpdateOptionDialog";
 
-export const DeleteOptionDialog: React.FC<
-  OptionDialogProps<DeleteOptionProps>
-> = ({ children, optionId, optionName, onOpenChange, open, ...config }) => {
-  const { isOpen, onOpen, onClose } = useConfirm<string>({
-    open,
-    onOpenChange,
-  });
-
-  const { deleteOption, isDeleting } = useDeleteOptionForm({
-    ...config,
-    onSuccess: (id) => {
-      config.onSuccess?.(id as any);
-      onClose();
-    },
-  });
-
-  const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
-    id: optionId,
-    onOpenConfirm: onOpen,
-    onCloseConfirm: onClose,
-    onConfirmAction: deleteOption,
-    actionArgs: [optionName],
-    errorMessage: "Erreur lors de la suppression de la filière:",
-  });
-
-  return (
-    <>
-      <ConfirmDeleteDialog
-        id={optionId}
-        isOpen={isOpen}
-        onClose={onClose}
-        onConfirm={handleConfirm}
-        isPending={isDeleting}
-        title="Supprimer la filière"
-        description="Attention : tous les documents et données associés à cette filière seront définitivement supprimés."
-        itemName={optionName}
-      />
-
-      {cloneElementWithProps(children, {
-        onClick: handleTriggerClick,
-        disabled: isDeleting,
-      })}
-    </>
-  );
-};
+/**
+ * Action dialog component for confirming and executing academic option deletion.
+ * @returns Rendered delete confirmation dialog component.
+ */
+export const DeleteOptionDialog = createDeleteActionDialog({
+  title: "Supprimer la filière",
+  description:
+    "Attention : tous les documents et données associés à cette filière seront définitivement supprimés.",
+  errorMessage: "Erreur lors de la suppression de la filière:",
+  useDeleteForm: useDeleteOptionForm,
+});
 
 DeleteOptionDialog.displayName = "DeleteOptionDialog";

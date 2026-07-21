@@ -1,219 +1,197 @@
-import * as React from "react";
-import { DialogForm, DialogFormProps } from "@/renderer/components/dialog/form";
-import {
-  ConfirmDeleteDialog,
-  useAsyncConfirm,
-} from "@/renderer/components/dialog/confirm-delete";
-import { useConfirm } from "@/renderer/hooks/use-confirm";
-import { cloneElementWithProps } from "@/renderer/utils/react";
+import type { ReactNode } from "react";
+import type { FeeScheduleCreate } from "@/packages/@core/data-access/schema-validations";
 import {
   FeeScheduleBulkForm,
   FeeScheduleForm,
 } from "@/renderer/apps/finances/forms/fee-schedule-form";
 import {
-  useCreateFeeScheduleForm,
-  useBulkCreateFeeScheduleForm,
-  useUpdateFeeScheduleForm,
-  useDeleteFeeScheduleForm,
-  type FeeScheduleFormConfig,
-} from "@/renderer/libs/queries/finances";
-import {
   ButtonInsertMultipleToggle,
   useButtonInsertToggle,
 } from "@/renderer/components/buttons/button-insert-multiple-toogle";
-import type { FeeScheduleCreate } from "@/packages/@core/data-access/schema-validations";
+import {
+  useBulkCreateFeeScheduleForm,
+  useCreateFeeScheduleForm,
+  useDeleteFeeScheduleForm,
+  useUpdateFeeScheduleForm,
+  type FeeScheduleFormConfig,
+} from "@/renderer/libs/queries/finances";
+import {
+  createBaseActionDialog,
+  createDeleteActionDialog,
+  type ActionDialogProps,
+} from "./base.dialog-actions";
 
-export type FeeScheduleDialogProps<
-  TExtraProps extends Record<string, any> = {},
-> = React.PropsWithChildren<
-  TExtraProps &
-    Partial<DialogFormProps> &
-    FeeScheduleFormConfig & {
-      defaultValues?: Partial<FeeScheduleCreate>;
-    }
+export type FeeScheduleDialogProps = ActionDialogProps<
+  FeeScheduleCreate,
+  FeeScheduleFormConfig
 >;
 
-/* ==========================================================================
-   CREATE FEE SCHEDULE (UNITAIRE)
-   ========================================================================== */
-export const FeeScheduleDialogCreateForm: React.FC<
-  FeeScheduleDialogProps<{}>
-> = ({ children, defaultValues, open, onOpenChange, ...config }) => {
-  const { formId, feeTypeOptions, isSubmitting, onSubmit } =
-    useCreateFeeScheduleForm(config);
+export type CreateFeeScheduleDialogProps = FeeScheduleDialogProps;
 
-  return (
-    <DialogForm
-      trigger={children}
-      title="Ajouter une échéance de paiement"
-      description="Créez un point de passage obligatoire ou une tranche d'appel de fonds temporelle."
-      formId={formId}
-      isLoading={isSubmitting}
-      onOpenChange={onOpenChange}
-      open={open}
-    >
+export type CreateBulkFeeScheduleDialogProps = FeeScheduleDialogProps & {
+  schoolId: string;
+};
+
+export type UpdateFeeScheduleDialogProps = FeeScheduleDialogProps & {
+  scheduleId: string;
+  installmentName?: string;
+};
+
+/**
+ * Custom form hook wrapper enabling toggleable single/bulk creation modes for fee schedules.
+ * @param config - Target school and dialog configuration properties.
+ * @returns Form state, handlers, and toggle state for single or bulk operations.
+ */
+function useCreateFeeScheduleFormManager(
+  config: CreateBulkFeeScheduleDialogProps,
+) {
+  const { pressed, onPressedChange } = useButtonInsertToggle();
+  const bulkFormState = useBulkCreateFeeScheduleForm({
+    schoolId: config.schoolId,
+    ...config,
+  });
+  const singleFormState = useCreateFeeScheduleForm(config);
+
+  const activeFormState = pressed ? bulkFormState : singleFormState;
+
+  return {
+    ...activeFormState,
+    pressed,
+    onPressedChange,
+    bulkFormState,
+    singleFormState,
+  };
+}
+
+/**
+ * Action dialog component for creating a single fee schedule entry.
+ * @param props - Dialog properties containing initial form values and mutation callbacks.
+ * @returns Rendered creation dialog component.
+ */
+export const CreateFeeScheduleDialog = createBaseActionDialog<
+  CreateFeeScheduleDialogProps,
+  ReturnType<typeof useCreateFeeScheduleForm>
+>({
+  title: "Ajouter une échéance de paiement",
+  description:
+    "Créez un point de passage obligatoire ou une tranche d'appel de fonds temporelle.",
+  useForm: useCreateFeeScheduleForm,
+  form({ formId, onSubmit, feeTypeOptions, defaultValues }): ReactNode {
+    return (
       <FeeScheduleForm
         formId={formId}
         onSubmit={onSubmit}
         feeTypeOptions={feeTypeOptions}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-/* ==========================================================================
-   CREATE MULTIPLE FEE SCHEDULES (DYNAMIC TOGGLE)
-   ========================================================================== */
-interface CreateBulkToggleProps {
-  schoolId: string;
-}
+CreateFeeScheduleDialog.displayName = "CreateFeeScheduleDialog";
 
-export const FeeScheduleDialogBulkToggleForm: React.FC<
-  FeeScheduleDialogProps<CreateBulkToggleProps>
-> = ({ schoolId, children, defaultValues, open, onOpenChange, ...config }) => {
-  const { pressed, onPressedChange } = useButtonInsertToggle();
+/**
+ * Action dialog component supporting dynamic toggle between single and bulk fee schedule creation.
+ * @param props - Dialog properties including school identifier and configuration.
+ * @returns Rendered bulk creation dialog component.
+ */
+export const CreateBulkFeeScheduleDialog = createBaseActionDialog<
+  CreateBulkFeeScheduleDialogProps,
+  ReturnType<typeof useCreateFeeScheduleFormManager>
+>({
+  title: ({ pressed }: { pressed?: boolean }) =>
+    pressed ? "Créer des échéances en masse" : "Créer une échéance",
+  description:
+    "Configurez une ou plusieurs tranches de paiement pour vos frais scolaires.",
+  useForm: useCreateFeeScheduleFormManager,
+  form({
+    formId,
+    feeTypeOptions,
+    pressed,
+    onPressedChange,
+    bulkFormState,
+    singleFormState,
+    defaultValues,
+  }): ReactNode {
+    return (
+      <>
+        <div className="mb-4 flex justify-end">
+          <ButtonInsertMultipleToggle
+            pressed={pressed}
+            onPressedChange={onPressedChange}
+          />
+        </div>
 
-  const bulkFormState = useBulkCreateFeeScheduleForm({ schoolId, ...config });
-  const singleFormState = useCreateFeeScheduleForm({ schoolId, ...config });
+        {pressed ? (
+          <FeeScheduleBulkForm
+            formId={formId}
+            onSubmit={bulkFormState.onSubmit}
+            feeTypeOptions={feeTypeOptions}
+            defaultValues={defaultValues}
+          />
+        ) : (
+          <FeeScheduleForm
+            formId={formId}
+            onSubmit={singleFormState.onSubmit}
+            feeTypeOptions={feeTypeOptions}
+            defaultValues={defaultValues}
+          />
+        )}
+      </>
+    );
+  },
+});
 
-  const { formId, isSubmitting, feeTypeOptions } = pressed
-    ? bulkFormState
-    : singleFormState;
+CreateBulkFeeScheduleDialog.displayName = "CreateBulkFeeScheduleDialog";
 
-  return (
-    <DialogForm
-      trigger={children}
-      title={pressed ? "Créer des échéances en masse" : "Créer une échéance"}
-      description="Configurez une ou plusieurs tranches de paiement pour vos frais scolaires."
-      formId={formId}
-      isLoading={isSubmitting}
-      onOpenChange={onOpenChange}
-      open={open}
-    >
-      <div className="mb-4 flex justify-end">
-        <ButtonInsertMultipleToggle
-          pressed={pressed}
-          onPressedChange={onPressedChange}
-        />
-      </div>
-
-      {pressed ? (
-        <FeeScheduleBulkForm
-          formId={formId}
-          onSubmit={bulkFormState.onSubmit}
-          feeTypeOptions={feeTypeOptions}
-          defaultValues={defaultValues}
-        />
-      ) : (
-        <FeeScheduleForm
-          formId={formId}
-          onSubmit={singleFormState.onSubmit}
-          feeTypeOptions={feeTypeOptions}
-          defaultValues={defaultValues}
-        />
-      )}
-    </DialogForm>
-  );
-};
-
-/* ==========================================================================
-   UPDATE FEE SCHEDULE
-   ========================================================================== */
-interface UpdateFeeScheduleProps {
-  scheduleId: string;
-}
-
-export const FeeScheduleDialogUpdateForm: React.FC<
-  FeeScheduleDialogProps<UpdateFeeScheduleProps>
-> = ({
-  defaultValues,
-  scheduleId,
-  children,
-  open,
-  onOpenChange,
-  ...config
-}) => {
-  const { formId, isSubmitting, onSubmit, feeTypeOptions } =
-    useUpdateFeeScheduleForm(config);
-
-  return (
-    <DialogForm
-      trigger={children}
-      title={`Modifier l'échéance : ${defaultValues?.installmentName ?? ""}`}
-      description="Modifiez les termes ou renommez l'intitulé de la tranche de paiement."
-      formId={formId}
-      isLoading={isSubmitting}
-      onOpenChange={onOpenChange}
-      open={open}
-    >
+/**
+ * Action dialog component for updating an existing fee schedule record.
+ * @param props - Dialog properties containing target scheduleId and initial values.
+ * @returns Rendered update dialog component.
+ */
+export const UpdateFeeScheduleDialog = createBaseActionDialog<
+  UpdateFeeScheduleDialogProps,
+  ReturnType<typeof useUpdateFeeScheduleForm>
+>({
+  title: ({ installmentName, defaultValues }: UpdateFeeScheduleDialogProps) =>
+    `Modifier l'échéance : ${installmentName ?? defaultValues?.installmentName ?? ""}`,
+  description:
+    "Modifiez les termes ou renommez l'intitulé de la tranche de paiement.",
+  useForm: (config) =>
+    useUpdateFeeScheduleForm({
+      ...config,
+      scheduleId: config.scheduleId,
+    }),
+  form({ formId, onSubmit, feeTypeOptions, defaultValues }): ReactNode {
+    return (
       <FeeScheduleForm
         formId={formId}
-        onSubmit={(data, helpers) =>
-          onSubmit?.({ id: scheduleId, data }, helpers as any)
-        }
+        onSubmit={onSubmit}
         feeTypeOptions={feeTypeOptions}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-/* ==========================================================================
-   DELETE FEE SCHEDULE
-   ========================================================================== */
-interface DeleteFeeScheduleProps {
-  scheduleId: string;
-  installmentName: string;
-}
+UpdateFeeScheduleDialog.displayName = "UpdateFeeScheduleDialog";
 
-export const FeeScheduleDialogDeleteForm: React.FC<
-  FeeScheduleDialogProps<DeleteFeeScheduleProps>
-> = ({
-  children,
-  scheduleId,
-  installmentName,
-  open,
-  onOpenChange,
-  ...config
-}) => {
-  const { isOpen, onClose, onOpen } = useConfirm<string>({
-    open,
-    onOpenChange,
-  });
-  const { isDeleting, deleteFeeSchedule } = useDeleteFeeScheduleForm({
-    ...config,
-    onSuccess: (id) => {
-      config.onSuccess?.(id as any);
-      onClose();
-    },
-  });
+/**
+ * Action dialog component for confirming and executing fee schedule deletion.
+ * @returns Rendered delete confirmation dialog component.
+ */
+export const DeleteFeeScheduleDialog = createDeleteActionDialog({
+  title: "Supprimer la tranche d'échéance",
+  description:
+    "Supprimer cette tranche supprimera l'obligation financière correspondante chez tous les élèves assignés.",
+  errorMessage: "Erreur lors de la suppression de l'échéance :",
+  useDeleteForm: useDeleteFeeScheduleForm,
+});
 
-  const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
-    id: scheduleId,
-    onOpenConfirm: onOpen,
-    onCloseConfirm: onClose,
-    onConfirmAction: deleteFeeSchedule,
-    actionArgs: [installmentName],
-    errorMessage: "Erreur lors de la suppression de l'échéance :",
-  });
+DeleteFeeScheduleDialog.displayName = "DeleteFeeScheduleDialog";
 
-  return (
-    <>
-      <ConfirmDeleteDialog
-        id={scheduleId}
-        isOpen={isOpen}
-        onClose={onClose}
-        onConfirm={handleConfirm}
-        isPending={isDeleting}
-        title="Supprimer la tranche d'échéance"
-        description="Supprimer cette tranche supprimera l'obligation financière correspondante chez tous les élèves assignés."
-        itemName={installmentName}
-      />
-      {cloneElementWithProps(children, {
-        onClick: handleTriggerClick,
-        disabled: isDeleting,
-      })}
-    </>
-  );
-};
+/* Backward compatibility aliases */
+export const FeeScheduleDialogCreateForm = CreateFeeScheduleDialog;
+export const FeeScheduleDialogBulkToggleForm = CreateBulkFeeScheduleDialog;
+export const FeeScheduleDialogUpdateForm = UpdateFeeScheduleDialog;
+export const FeeScheduleDialogDeleteForm = DeleteFeeScheduleDialog;

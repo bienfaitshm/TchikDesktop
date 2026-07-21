@@ -81,6 +81,7 @@ export function useDeleteWalletForm(config?: BaseMutationConfig<void>) {
 
   return {
     deleteWallet,
+    onDelete: deleteWallet,
     isDeleting: mutation.isPending,
   };
 }

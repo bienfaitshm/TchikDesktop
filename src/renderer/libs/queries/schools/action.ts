@@ -1,124 +1,115 @@
 import { useCallback } from "react";
-import { useCreateSchool, useDeleteSchool, useUpdateSchool } from "./school";
 import type {
   School,
   SchoolCreate,
   SchoolUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import { withNotifications } from "@/renderer/libs/notifications";
-import {
-  type BaseFormProps,
-  type BaseMutationConfig,
-  type QueryUpdatePayload,
-  useFormBase,
-} from "../base";
+import type { BaseMutationConfig, QueryUpdatePayload } from "../base";
+import { useFormBase, useFormBaseNotify } from "../base";
+import { useCreateSchool, useDeleteSchool, useUpdateSchool } from "./school";
 
 export type SchoolFormConfig = BaseMutationConfig<School>;
 
+const CREATE_SCHOOL_NOTIFICATIONS = {
+  success: {
+    title: "Établissement créé !",
+    description: "L'établissement a été ajouté avec succès.",
+  },
+  error: {
+    title: "Échec de la création.",
+  },
+};
+
+const UPDATE_SCHOOL_NOTIFICATIONS = {
+  success: {
+    title: "Établissement mis à jour !",
+    description: "Les modifications ont été enregistrées.",
+  },
+  error: {
+    title: "Échec de la mise à jour.",
+  },
+};
+
 /**
- * Hook pour la CRÉATION d'un établissement.
+ * Builds notification configurations for school deletions.
+ * @param schoolName - Optional name of the school being removed.
+ * @returns Notification configuration object.
+ */
+const getDeleteSchoolNotifications = (schoolName?: string) => ({
+  success: {
+    title: "Établissement supprimé",
+    description: schoolName
+      ? `L'établissement '${schoolName}' a été définitivement retiré.`
+      : "L'établissement a été supprimé avec succès.",
+  },
+  error: {
+    title: "Erreur de suppression",
+    description:
+      "Impossible de supprimer l'établissement. Vérifiez s'il est lié à d'autres données.",
+  },
+});
+
+/**
+ * Custom form hook for creating school entities.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Form state, submit handler, and pending status.
  */
 export function useCreateSchoolForm(config?: SchoolFormConfig) {
-  const { formId, notifyAndInvalidate } = useFormBase(config);
   const mutation = useCreateSchool();
 
-  const onSubmit: BaseFormProps<SchoolCreate>["onSubmit"] = useCallback(
-    (data, helpers) => {
-      mutation.mutate(
-        data,
-        withNotifications({
-          notifications: {
-            success: {
-              title: "Établissement créé !",
-              description: `L'établissement '${data.name}' a été ajouté avec succès.`,
-            },
-            error: {
-              title: "Échec de la création.",
-            },
-          },
-          onSuccess: (res) => {
-            notifyAndInvalidate(res);
-            helpers.reset();
-          },
-        }),
-      );
-    },
-    [mutation, notifyAndInvalidate],
-  );
+  const adaptData = useCallback((data: SchoolCreate) => data, []);
 
-  return {
-    formId,
-    onSubmit,
-    isSubmitting: mutation.isPending,
-  };
+  return useFormBaseNotify<SchoolCreate, SchoolCreate, School>({
+    mutation,
+    config,
+    getNotifications: () => CREATE_SCHOOL_NOTIFICATIONS,
+    adaptData,
+  });
 }
 
 /**
- * Hook pour la MISE À JOUR d'un établissement.
+ * Custom form hook for updating existing school entities.
+ * @param config - Optional base mutation configuration settings for SchoolUpdate.
+ * @returns Form state, submit handler, and pending status.
  */
-export function useUpdateSchoolForm(config?: SchoolFormConfig) {
-  const { formId, notifyAndInvalidate } = useFormBase(config);
+export function useUpdateSchoolForm(config?: BaseMutationConfig<SchoolUpdate>) {
   const mutation = useUpdateSchool();
 
-  const onSubmit: BaseFormProps<QueryUpdatePayload<SchoolUpdate>>["onSubmit"] =
-    useCallback(
-      ({ data, id }, helpers) => {
-        mutation.mutate(
-          { data, id },
-          withNotifications({
-            notifications: {
-              success: {
-                title: "Établissement mis à jour !",
-                description: `Les modifications pour '${data.name}' ont été enregistrées.`,
-              },
-              error: {
-                title: "Échec de la mise à jour.",
-              },
-            },
-            onSuccess: (res) => {
-              notifyAndInvalidate(res);
-              helpers.reset();
-            },
-          }),
-        );
-      },
-      [mutation, notifyAndInvalidate],
-    );
+  const adaptData = useCallback(
+    ({ data, id }: QueryUpdatePayload<SchoolUpdate>) => ({ data, id }),
+    [],
+  );
 
-  return {
-    formId,
-    onSubmit,
-    isSubmitting: mutation.isPending,
-  };
+  return useFormBaseNotify<
+    QueryUpdatePayload<SchoolUpdate>,
+    { data: SchoolUpdate; id: string },
+    SchoolUpdate
+  >({
+    mutation,
+    config,
+    getNotifications: () => UPDATE_SCHOOL_NOTIFICATIONS,
+    adaptData,
+  });
 }
 
 /**
- * Hook pour la SUPPRESSION d'un établissement.
+ * Custom hook managing school deletion actions and pending state.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Object containing the delete callback and pending state.
  */
 export function useDeleteSchoolForm(config?: BaseMutationConfig<void>) {
-  const { notifyAndInvalidate } = useFormBase(config);
+  const { notifyAndInvalidate } = useFormBase<void>(config);
   const mutation = useDeleteSchool();
 
-  const deleteSchool = useCallback(
+  const onDelete = useCallback(
     (schoolId: string, schoolName?: string) => {
       mutation.mutate(
         schoolId,
         withNotifications({
-          notifications: {
-            success: {
-              title: "Établissement supprimé",
-              description: schoolName
-                ? `L'établissement '${schoolName}' a été définitivement retiré.`
-                : "L'établissement a été supprimé avec succès.",
-            },
-            error: {
-              title: "Erreur de suppression",
-              description:
-                "Impossible de supprimer l'établissement. Vérifiez s'il est lié à d'autres données.",
-            },
-          },
+          notifications: getDeleteSchoolNotifications(schoolName),
           onSuccess: () => {
-            notifyAndInvalidate(undefined as void);
+            notifyAndInvalidate();
           },
         }),
       );
@@ -127,7 +118,7 @@ export function useDeleteSchoolForm(config?: BaseMutationConfig<void>) {
   );
 
   return {
-    deleteSchool,
+    onDelete,
     isDeleting: mutation.isPending,
   };
 }

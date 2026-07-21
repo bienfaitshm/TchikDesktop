@@ -1,31 +1,46 @@
-import React from "react";
+import type { ReactNode } from "react";
+import { CreditCard } from "lucide-react";
+import { Button } from "@/renderer/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogTitle,
   DialogFooter,
   DialogHeader,
-  DialogClose,
+  DialogTitle,
   DialogTrigger,
 } from "@/renderer/components/ui/dialog";
 import { Spinner } from "@/renderer/components/ui/spinner";
+import {
+  useOnClassroomSyncProgress,
+  type SyncProgress,
+} from "@/renderer/libs/queries/finances";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-import { StudentSchedulePaymentTabs } from "../contents/student-schedule-payement-tab.contents";
-import { useOnClassroomSyncProgress } from "@/renderer/libs/queries/finances";
+import { StudentSchedulePaymentTabs } from "../contents/student-schedule-payment-tab.content";
 
-import { Button } from "@/renderer/components/ui/button";
-import { CreditCard } from "lucide-react";
+export interface SchedulePaymentDialogProps extends Partial<
+  React.ComponentProps<typeof Dialog>
+> {
+  children?: ReactNode;
+  schoolId: string;
+  yearId: string;
+  classId: string;
+  classroomName?: string;
+}
 
 /**
- * Fallback dynamique affichant la progression réelle de la synchronisation SQLite
+ * Fallback component showing real-time classroom data synchronization progress.
+ * @returns Rendered progress spinner with percentage bar.
  */
 const ClassroomProgressFallback: React.FC = () => {
-  const { progress } = useOnClassroomSyncProgress();
+  const { progress } = useOnClassroomSyncProgress() as {
+    progress?: SyncProgress & { pourcent?: number; percentage?: number };
+  };
 
   const currentMessage =
     progress?.message ?? "Chargement des données financières...";
-  const currentPercent = progress?.pourcent ?? 0;
+  const currentPercent = progress?.percentage ?? progress?.pourcent ?? 0;
 
   return (
     <div className="flex h-full min-h-[45vh] flex-col justify-center items-center gap-4 text-muted-foreground px-6">
@@ -46,7 +61,6 @@ const ClassroomProgressFallback: React.FC = () => {
           {currentMessage}
         </span>
 
-        {/* Barre de progression visuelle */}
         <div className="w-full bg-secondary h-1.5 rounded-full mt-2 overflow-hidden">
           <div
             className="bg-primary h-full transition-all duration-300 ease-out rounded-full"
@@ -58,16 +72,11 @@ const ClassroomProgressFallback: React.FC = () => {
   );
 };
 
-type SchedulePaymentDialogProps = Partial<
-  React.ComponentProps<typeof Dialog>
-> & {
-  children?: React.ReactNode;
-  schoolId: string;
-  yearId: string;
-  classId: string;
-  classroomName?: string;
-};
-
+/**
+ * Action dialog displaying the payment schedule and tracking interface for a classroom.
+ * @param props - Dialog properties including classId, schoolId, yearId, and trigger children.
+ * @returns Rendered schedule payment dialog component.
+ */
 export const SchedulePaymentDialog: React.FC<SchedulePaymentDialogProps> = ({
   children,
   schoolId,
@@ -81,7 +90,6 @@ export const SchedulePaymentDialog: React.FC<SchedulePaymentDialogProps> = ({
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
 
       <DialogContent className="sm:max-w-3xl md:max-w-5xl lg:max-w-[85vw] xl:max-w-[80vw] flex flex-col max-h-[85vh] h-[85vh]">
-        {/* Header avec design épuré et padding interne uniforme */}
         <DialogHeader className="p-6 border-b border-border/60 shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -100,8 +108,7 @@ export const SchedulePaymentDialog: React.FC<SchedulePaymentDialogProps> = ({
           </div>
         </DialogHeader>
 
-        {/* Zone de contenu scrollable indépendante */}
-        <div className="-mx-4 my-2 overflow-y-auto border-t border-border/60 px-4 py-4 flex-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
+        <div className="-mx-4 my-2 overflow-y-auto px-4 py-4 flex-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
           <Suspense fallback={<ClassroomProgressFallback />}>
             <StudentSchedulePaymentTabs
               classId={classId}
@@ -111,7 +118,6 @@ export const SchedulePaymentDialog: React.FC<SchedulePaymentDialogProps> = ({
           </Suspense>
         </div>
 
-        {/* Footer rigide, aligné sur la grille */}
         <DialogFooter className="p-4 border-t border-border/60 shrink-0">
           <DialogClose asChild>
             <Button variant="outline" className="min-w-25">
