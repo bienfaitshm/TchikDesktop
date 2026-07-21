@@ -1,21 +1,32 @@
 import { sql, eq, and, count, getTableColumns } from "drizzle-orm";
 import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
-import { BaseRepository, type LibSqlClient } from "../base-repository";
 import {
   seatingAssignments,
   seatingSessions,
   localrooms,
-  type FindManyOptions,
 } from "@/packages/@core/data-access/db/schemas";
 import { compareByFullName } from "@/packages/@core/data-access/db/queries/query-utils";
 import type { SeatingSessionWithAssignment } from "./type";
+import { helpers, betterSqlite } from "@/packages/drizzle-queries";
 
-const SESSION_SORT: FindManyOptions<typeof seatingSessions> = {
-  orderBy: [{ column: "sessionName", order: "asc" }],
+const _seatingSessionJoinTables = {
+  seatingAssignments,
+  seatingSessions,
+} as const;
+
+export type BaseSeatingSessionFilters = helpers.FindManyOptions<
+  typeof _seatingSessionJoinTables
+>;
+
+const SESSION_SORT: BaseSeatingSessionFilters = {
+  orderBy: [{ table: "seatingSessions", column: "sessionName", order: "asc" }],
 };
 
-export class SeatingSessionRepository extends BaseRepository<
+/**
+ * Repository for managing seating sessions and related analytical room status queries.
+ */
+export class SeatingSessionRepository extends betterSqlite.BaseRepository<
   typeof seatingSessions,
   TDataBase
 > {
@@ -24,13 +35,19 @@ export class SeatingSessionRepository extends BaseRepository<
       db,
       table: seatingSessions,
       idColumn: seatingSessions.sessionId,
-      entityName: "SeatingSession",
+      baseTableName: "seatingSessions",
       logger: getLogger,
-      defaultSort: SESSION_SORT,
+      defaultFilters: SESSION_SORT,
+      joinTables: _seatingSessionJoinTables,
     });
   }
 
-  override getQuerySet(tx?: LibSqlClient) {
+  /**
+   * Overrides the default query set to include computed assignment status flags.
+   * @param tx - Optional transaction client.
+   * @returns Dynamic select query builder.
+   */
+  override getQuerySet(tx?: TDataBase) {
     return this.getClient(tx)
       .select({
         ...getTableColumns(this.table),
@@ -46,17 +63,23 @@ export class SeatingSessionRepository extends BaseRepository<
       .$dynamic();
   }
 
-  async getSessionRoomsStatus(sessionId: string) {
+  /**
+   * Retrieves the occupancy status of rooms for a specific seating session.
+   * @param sessionId - Identifier of the seating session.
+   * @param tx - Optional transaction client.
+   * @returns Array of room status metrics including occupancy rates.
+   */
+  async getSessionRoomsStatus(sessionId: string, tx?: TDataBase) {
     if (!sessionId) return [];
 
     try {
-      return await this.db
+      const client = this.getClient(tx);
+      return await client
         .select({
           localroomId: localrooms.localroomId,
           roomName: localrooms.name,
           maxCapacity: localrooms.maxCapacity,
           assignedCount: count(seatingAssignments.assignmentId),
-          // Sécurisation contre la division par zéro via NULLIF en SQL
           occupancyRate: sql<number>`
             CAST(COUNT(${seatingAssignments.assignmentId}) AS FLOAT) / NULLIF(${localrooms.maxCapacity}, 0) * 100
           `,
@@ -77,17 +100,25 @@ export class SeatingSessionRepository extends BaseRepository<
         .orderBy(localrooms.name);
     } catch (error) {
       this.logError("getSessionRoomsStatus", error, { sessionId });
-      throw new Error("Impossible de récupérer l'état des salles.", {
+      throw new Error("Failed to retrieve room status.", {
         cause: error,
       });
     }
   }
 
+  /**
+   * Retrieves a seating session with all associated assignments and nested relations.
+   * @param sessionId - Identifier of the seating session.
+   * @param tx - Optional transaction client.
+   * @returns The session details with sorted assignments or null if not found.
+   */
   async getSessionWithAssignments(
     sessionId: string,
+    tx?: TDataBase,
   ): Promise<SeatingSessionWithAssignment | null> {
     try {
-      const sessionDetails = await this.db.query.seatingSessions.findFirst({
+      const client = this.getClient(tx);
+      const sessionDetails = await client.query.seatingSessions.findFirst({
         where: eq(seatingSessions.sessionId, sessionId),
         with: {
           assignments: {
