@@ -1,6 +1,8 @@
+"use client";
+
 import React from "react";
 import { Button } from "@/renderer/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Copy, Trash2 } from "lucide-react";
 import { useGetSchools } from "@/renderer/libs/queries/schools";
 import type { School } from "@/packages/@core/data-access/db/schemas";
 import {
@@ -27,19 +29,20 @@ import {
 import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import {
   createActionMenus,
-  TActionMenu,
+  type ActionMenuConfig,
 } from "@/components/menus/action-menus";
 
-import { Pencil, Copy, Trash2 } from "lucide-react";
-
-interface RowActionsProps extends Pick<SchoolDialogProps, "mutationKey"> {
+export interface RowActionsProps extends Pick<
+  SchoolDialogProps,
+  "mutationKey"
+> {
   school: School;
 }
 
-const MENUS: TActionMenu<RowActionsProps>[] = [
+const MENUS: ActionMenuConfig<RowActionsProps>[] = [
   {
     id: "edit",
-    label: "Modifier les infos de l'ecole",
+    label: "Modifier les infos de l'école",
     icon: Pencil,
     dialog({ school, mutationKey }) {
       return (
@@ -51,7 +54,6 @@ const MENUS: TActionMenu<RowActionsProps>[] = [
       );
     },
   },
-
   {
     id: "duplicate",
     label: "Dupliquer",
@@ -62,7 +64,6 @@ const MENUS: TActionMenu<RowActionsProps>[] = [
       );
     },
   },
-
   {
     id: "delete",
     label: "Supprimer",
@@ -80,13 +81,19 @@ const MENUS: TActionMenu<RowActionsProps>[] = [
     },
   },
 ];
-/**
- * Actions de ligne mémoïsées.
- * On utilise les props cohérentes : schoolId et schoolName.
- */
-const RowAction = createActionMenus(MENUS);
 
-export const SchoolsPage = () => {
+/**
+ * Renders contextual action menus for a given school row.
+ * @param props - Component properties containing the school entity and mutation key.
+ * @returns The rendered action menu component.
+ */
+export const RowAction = createActionMenus(MENUS);
+
+/**
+ * Main application screen component for viewing and managing registered schools.
+ * @returns Rendered school management page layout with data table and toolbars.
+ */
+export const SchoolsPage: React.FC = () => {
   const { data: schools = [], queryKey: mutationKey } = useGetSchools();
   const columns = React.useMemo(
     () =>
@@ -98,6 +105,7 @@ export const SchoolsPage = () => {
       }),
     [mutationKey],
   );
+
   return (
     <div className="flex-1 w-full overflow-hidden">
       <PageShell
@@ -122,7 +130,10 @@ export const SchoolsPage = () => {
         >
           <DataTableToolbar>
             <FilteredTableToolbarContainer>
-              <SearchTableToolbar searchColumn="name" placeholder="Recherche" />
+              <SearchTableToolbar
+                searchColumn="name"
+                placeholder="Recherche..."
+              />
             </FilteredTableToolbarContainer>
             <div className="flex items-center gap-4">
               <DataTableColumnToggle />

@@ -25,13 +25,21 @@ import {
   WalletDialogDeleteForm,
   WalletDialogUpdateForm,
   FeeTypeDialogCreateForm,
-  type FeeTypeDialogProps,
+  type WalletDialogProps,
 } from "@/renderer/apps/finances/dialog";
 
-interface WalletRowActionProps extends Pick<FeeTypeDialogProps, "mutationKey"> {
+export interface WalletRowActionProps extends Pick<
+  WalletDialogProps,
+  "mutationKey"
+> {
   wallet: Wallet;
 }
 
+/**
+ * Renders contextual action menus containing edit and delete options for a specific financial wallet.
+ * @param props - Component properties containing the wallet entity and mutation key.
+ * @returns The rendered action menu component.
+ */
 export const WalletRowAction: React.FC<WalletRowActionProps> = ({
   mutationKey,
   wallet,
@@ -66,7 +74,7 @@ export const WalletRowAction: React.FC<WalletRowActionProps> = ({
   >
     <MenuDialogItem targetId="edit" className="gap-2 cursor-pointer">
       <Pencil className="size-4 text-muted-foreground" />
-      <span>Modifier le portefeuille</span>
+      <span>Edit wallet</span>
     </MenuDialogItem>
 
     <DropdownMenuSeparator />
@@ -76,27 +84,31 @@ export const WalletRowAction: React.FC<WalletRowActionProps> = ({
       className="gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
     >
       <Trash2 className="size-4" />
-      <span>Supprimer le portefeuille</span>
+      <span>Delete wallet</span>
     </MenuDialogItem>
   </ActionMenu>
 );
 
-interface WalletGridProps {
+export interface WalletGridProps {
   wallets: Wallet[];
   mutationKey?: readonly unknown[];
 }
 
+/**
+ * Renders a responsive fluid grid layout displaying financial wallets with balances and currencies.
+ * @param props - Component properties containing the list of wallets and mutation key.
+ * @returns The rendered wallet grid component.
+ */
 export function WalletGrid({ wallets, mutationKey }: WalletGridProps) {
   if (!wallets?.length) {
     return (
       <div className="flex h-32 items-center justify-center rounded-2xl border border-dashed text-sm text-muted-foreground p-4 bg-zinc-50/50 dark:bg-zinc-900/10">
-        Aucun compte financier ou portefeuille configuré.
+        No financial accounts or wallets configured.
       </div>
     );
   }
 
   return (
-    /* GRID FLUIDE ET RESPONSIVE : S'adapte à toutes les tailles d'écrans sans casser le layout */
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {wallets.map((wallet) => (
         <div
@@ -127,6 +139,10 @@ export function WalletGrid({ wallets, mutationKey }: WalletGridProps) {
   );
 }
 
+/**
+ * Main application screen component for supervising institution treasury and managing fee structures.
+ * @returns Rendered school wallet page layout with grids, tables, and dialog triggers.
+ */
 export function SchoolWalletPage() {
   const { schoolId, yearId } = useSchoolContext();
 
@@ -145,26 +161,24 @@ export function SchoolWalletPage() {
   return (
     <div className="min-h-screen w-full py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-10 max-w-7xl">
-        {/* Top Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold tracking-tight">
-              Trésorerie & Structure Tarifaire
+              Treasury & Fee Structure
             </h1>
             <p className="text-sm text-muted-foreground">
-              Supervisez les liquidités de l'établissement et orchestrez la
-              politique de tarification.
+              Supervise institution liquidities and orchestrate pricing
+              policies.
             </p>
           </div>
 
-          {/* Actions globales groupées */}
           <div className="flex items-center gap-3 self-start md:self-center">
             <WalletDialogCreateForm
               schoolId={schoolId}
               mutationKey={walletQueryKey}
             >
               <Button variant="outline" size="sm" className="gap-2 shadow-xs">
-                <Plus className="w-4 h-4" /> Nouveau Compte
+                <Plus className="w-4 h-4" /> New Account
               </Button>
             </WalletDialogCreateForm>
             <FeeTypeDialogCreateForm
@@ -173,24 +187,23 @@ export function SchoolWalletPage() {
               mutationKey={feeTypeQueryKey}
             >
               <Button size="sm" className="gap-2 shadow-xs">
-                <Plus className="w-4 h-4" /> Créer un Type de Frais
+                <Plus className="w-4 h-4" /> Create Fee Type
               </Button>
             </FeeTypeDialogCreateForm>
           </div>
         </div>
 
-        {/* Section 1 : Comptes Financiers */}
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold tracking-tight">
-              Portefeuilles & Comptes Courants
+              Wallets & Current Accounts
             </h2>
           </div>
 
           {isLoadingWallets ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32  animate-pulse rounded-2xl" />
+                <div key={i} className="h-32 animate-pulse rounded-2xl" />
               ))}
             </div>
           ) : (
@@ -198,20 +211,18 @@ export function SchoolWalletPage() {
           )}
         </section>
 
-        {/* Section 2 : Tableau des types de frais */}
         <section className="space-y-4 pt-4">
           <div className="space-y-1">
             <h2 className="text-lg font-semibold tracking-tight">
-              Frais d'Études & Échéanciers
+              Tuition Fees & Schedules
             </h2>
             <p className="text-xs text-muted-foreground">
-              Configuration de la structure de facturation générale par année
-              scolaire.
+              Configuration of general billing structures per academic year.
             </p>
           </div>
 
           {isLoadingFees ? (
-            <div className="flex h-48 items-center justify-center border  rounded-2xl">
+            <div className="flex h-48 items-center justify-center border rounded-2xl">
               <Spinner className="w-6 h-6 text-primary" />
             </div>
           ) : (

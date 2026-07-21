@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { Plus } from "lucide-react";
+import * as React from "react";
+import { Plus, Pencil, Copy, Trash2 } from "lucide-react";
 import { useGetLocalRooms } from "@/renderer/libs/queries/seatings";
 import type { Localroom } from "@/packages/@core/data-access/db/schemas";
 import { Button } from "@/renderer/components/ui/button";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-
 import {
   DataTable,
   DataContentBody,
@@ -23,13 +22,6 @@ import {
 } from "@/renderer/components/tables/columns";
 import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import {
-  ActionContainer,
-  ActionTileCopy,
-  ActionTileDelete,
-  ActionTileEdit,
-} from "@/renderer/components/tables/data-table.action-tiles";
-
-import {
   CreateLocalRoomDialog,
   DeleteLocalRoomDialog,
   UpdateLocalRoomDialog,
@@ -37,60 +29,84 @@ import {
 } from "@/renderer/dialog-actions/localroom.dialog-action";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
+import {
+  createActionMenus,
+  type ActionMenuConfig,
+} from "@/components/menus/action-menus";
+import type { Row } from "@tanstack/react-table";
 
-const columns = enhanceColumnsExpandable(localRoomColumns);
-
-interface LocalRoomRowActionsProps extends Pick<
+export interface LocalRoomRowActionsProps extends Pick<
   LocalRoomDialogProps,
   "mutationKey"
 > {
   room: Localroom;
 }
 
-/**
- * @description Actions disponibles pour chaque ligne de local (salle).
- * Mémoïsé pour empêcher les recalculs lors du filtrage ou du scroll de la DataTable.
- */
-const LocalRoomRowActions: React.FC<LocalRoomRowActionsProps> = React.memo(
-  ({ room, mutationKey }) => {
-    return (
-      <ActionContainer className="justify-end">
-        {/* Modification : Alignement des props de initialData vers defaultValues */}
+const MENUS: ActionMenuConfig<LocalRoomRowActionsProps>[] = [
+  {
+    id: "edit",
+    label: "Modifier les infos du local",
+    icon: Pencil,
+    dialog({ room, mutationKey }) {
+      return (
         <UpdateLocalRoomDialog
+          mutationKey={mutationKey}
           localroomId={room.localroomId}
           defaultValues={room}
-          mutationKey={mutationKey}
-        >
-          <ActionTileEdit />
-        </UpdateLocalRoomDialog>
-
-        {/* Duplication pour créer rapidement une salle similaire */}
-        <CreateLocalRoomDialog defaultValues={room} mutationKey={mutationKey}>
-          <ActionTileCopy />
-        </CreateLocalRoomDialog>
-
-        {/* Suppression du local : Remplacement du Render Props par un clone direct */}
+        />
+      );
+    },
+  },
+  {
+    id: "duplicate",
+    label: "Dupliquer",
+    icon: Copy,
+    dialog({ room, mutationKey }) {
+      return (
+        <CreateLocalRoomDialog mutationKey={mutationKey} defaultValues={room} />
+      );
+    },
+  },
+  {
+    id: "delete",
+    label: "Supprimer",
+    icon: Trash2,
+    separator: true,
+    variant: "destructive",
+    dialog({ room, mutationKey }) {
+      return (
         <DeleteLocalRoomDialog
+          mutationKey={mutationKey}
           localRoomId={room.localroomId}
           roomName={room.name}
-          mutationKey={mutationKey}
-        >
-          <ActionTileDelete />
-        </DeleteLocalRoomDialog>
-      </ActionContainer>
-    );
+        />
+      );
+    },
   },
-);
+];
 
-LocalRoomRowActions.displayName = "LocalRoomRowActions";
+/**
+ * Renders contextual action menus for a given local room row.
+ * @param props - Component properties containing the room entity and mutation key.
+ * @returns The rendered action menu component.
+ */
+export const LocalRoomRowAction: React.FC<LocalRoomRowActionsProps> =
+  createActionMenus(MENUS);
 
-export const LocalRoomPage = () => {
+/**
+ * Main application screen component for viewing and managing physical rooms and facilities.
+ * @returns Rendered local room management page layout with data table and toolbars.
+ */
+export const LocalRoomPage: React.FC = () => {
   const { schoolId } = useSchoolContext();
-
   const { data: rawLocalRooms, queryKey: mutationKey } = useGetLocalRooms({
     where: { schoolId },
   });
-  const localRooms = useMemo(() => rawLocalRooms ?? [], [rawLocalRooms]);
+  const localRooms = React.useMemo(() => rawLocalRooms ?? [], [rawLocalRooms]);
+  const columns = React.useMemo(
+    () => enhanceColumnsExpandable(localRoomColumns),
+    [],
+  );
 
   return (
     <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
@@ -121,7 +137,6 @@ export const LocalRoomPage = () => {
               searchColumn="name"
               placeholder="Recherche Ex. Local 1"
             />
-
             <div className="flex items-center gap-4">
               <DataTableColumnToggle />
               <CreateLocalRoomDialog
@@ -146,11 +161,11 @@ export const LocalRoomPage = () => {
               <DataContentBody<Localroom>>
                 {({ row }) => (
                   <ExpandableRow
-                    row={row as any}
+                    row={row as Row<unknown>}
                     renderDetail={
-                      <LocalRoomRowActions
-                        room={row.original}
+                      <LocalRoomRowAction
                         mutationKey={mutationKey}
+                        room={row.original}
                       />
                     }
                   />

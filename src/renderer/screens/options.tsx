@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Copy, Trash2 } from "lucide-react";
 import { useGetOptions } from "@/renderer/libs/queries/options";
 import type { Option } from "@/packages/@core/data-access/db/schemas";
 import { Button } from "@/renderer/components/ui/button";
@@ -24,7 +24,7 @@ import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import {
   createActionMenus,
-  TActionMenu,
+  type ActionMenuConfig,
 } from "@/components/menus/action-menus";
 import {
   CreateOptionDialog,
@@ -33,16 +33,17 @@ import {
   type OptionDialogProps,
 } from "@/renderer/dialog-actions/option.dialog-actions";
 
-import { Pencil, Copy, Trash2 } from "lucide-react";
-
-interface RowActionsProps extends Pick<OptionDialogProps, "mutationKey"> {
+export interface RowActionsProps extends Pick<
+  OptionDialogProps,
+  "mutationKey"
+> {
   option: Option;
 }
 
-const MENUS: TActionMenu<RowActionsProps>[] = [
+const MENUS: ActionMenuConfig<RowActionsProps>[] = [
   {
     id: "edit",
-    label: "Modifier la filière",
+    label: "Edit option",
     icon: Pencil,
     dialog({ option, mutationKey }) {
       return (
@@ -57,7 +58,7 @@ const MENUS: TActionMenu<RowActionsProps>[] = [
 
   {
     id: "duplicate",
-    label: "Modifier la filière",
+    label: "Duplicate option",
     icon: Copy,
     dialog({ option, mutationKey }) {
       return (
@@ -68,7 +69,7 @@ const MENUS: TActionMenu<RowActionsProps>[] = [
 
   {
     id: "delete",
-    label: "Supprimer la filière",
+    label: "Delete option",
     icon: Trash2,
     separator: true,
     variant: "destructive",
@@ -76,17 +77,26 @@ const MENUS: TActionMenu<RowActionsProps>[] = [
       return (
         <DeleteOptionDialog
           mutationKey={mutationKey}
-          optionId={option.optionId}
-          optionName={option.optionName}
+          id={option.optionId}
+          name={option.optionName}
         />
       );
     },
   },
 ];
 
+/**
+ * Renders contextual action menus for a given option row.
+ * @param props - Component properties containing the option entity and mutation key.
+ * @returns The rendered action menu component.
+ */
 export const RowAction: React.FC<RowActionsProps> = createActionMenus(MENUS);
 
-export const OptionPage = () => {
+/**
+ * Main application screen component for viewing and managing academic options.
+ * @returns Rendered option management page layout with data table and toolbars.
+ */
+export const OptionPage: React.FC = () => {
   const { schoolId } = useSchoolContext();
   const { data: options = [], queryKey: mutationKey } = useGetOptions({
     where: { options: { schoolId: { $eq: schoolId } } },
@@ -110,11 +120,10 @@ export const OptionPage = () => {
           <section>
             <header className="space-y-1">
               <h1 className="text-2xl font-bold tracking-tight">
-                Gestion des filières
+                Option Management
               </h1>
               <p className="text-sm text-muted-foreground">
-                Visualisez et administrez les options et filières de votre
-                établissement.
+                View and administer options and majors for your institution.
               </p>
             </header>
           </section>
@@ -130,7 +139,7 @@ export const OptionPage = () => {
             <FilteredTableToolbarContainer>
               <SearchTableToolbar
                 searchColumn="optionName"
-                placeholder="Recherche Ex. HSC"
+                placeholder="Search Ex. HSC"
               />
             </FilteredTableToolbarContainer>
             <div className="flex items-center gap-4">
@@ -141,7 +150,7 @@ export const OptionPage = () => {
               >
                 <Button size="sm" className="rounded-full shadow-xs">
                   <Plus className="mr-2 size-4" />
-                  Ajouter une filière
+                  Add Option
                 </Button>
               </CreateOptionDialog>
             </div>
