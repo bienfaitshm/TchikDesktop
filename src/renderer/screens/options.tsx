@@ -21,7 +21,6 @@ import {
   enhanceColumns,
 } from "@/renderer/components/tables/columns";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import {
   createActionMenus,
   type ActionMenuConfig,
@@ -32,6 +31,14 @@ import {
   UpdateOptionDialog,
   type OptionDialogProps,
 } from "@/renderer/dialog-actions/option.dialog-actions";
+import {
+  PageContainer,
+  PageHeader,
+  PageHeaderTextContent,
+  PageHeadTitle,
+  PageHeadDescription,
+  PageContent,
+} from "@/renderer/containers/page-container";
 
 export interface RowActionsProps extends Pick<
   OptionDialogProps,
@@ -43,7 +50,7 @@ export interface RowActionsProps extends Pick<
 const MENUS: ActionMenuConfig<RowActionsProps>[] = [
   {
     id: "edit",
-    label: "Edit option",
+    label: "Modifier l'option",
     icon: Pencil,
     dialog({ option, mutationKey }) {
       return (
@@ -55,10 +62,9 @@ const MENUS: ActionMenuConfig<RowActionsProps>[] = [
       );
     },
   },
-
   {
     id: "duplicate",
-    label: "Duplicate option",
+    label: "Dupliquer l'option",
     icon: Copy,
     dialog({ option, mutationKey }) {
       return (
@@ -66,10 +72,9 @@ const MENUS: ActionMenuConfig<RowActionsProps>[] = [
       );
     },
   },
-
   {
     id: "delete",
-    label: "Delete option",
+    label: "Supprimer l'option",
     icon: Trash2,
     separator: true,
     variant: "destructive",
@@ -90,10 +95,11 @@ const MENUS: ActionMenuConfig<RowActionsProps>[] = [
  * @param props - Component properties containing the option entity and mutation key.
  * @returns The rendered action menu component.
  */
-export const RowAction: React.FC<RowActionsProps> = createActionMenus(MENUS);
+export const RowAction: React.FC<RowActionsProps> =
+  createActionMenus<RowActionsProps>(MENUS);
 
 /**
- * Main application screen component for viewing and managing academic options.
+ * Main application screen component for viewing and managing academic options in French.
  * @returns Rendered option management page layout with data table and toolbars.
  */
 export const OptionPage: React.FC = () => {
@@ -101,6 +107,7 @@ export const OptionPage: React.FC = () => {
   const { data: options = [], queryKey: mutationKey } = useGetOptions({
     where: { options: { schoolId: { $eq: schoolId } } },
   });
+
   const columns = React.useMemo(
     () =>
       enhanceColumns(optionColumns, {
@@ -113,33 +120,27 @@ export const OptionPage: React.FC = () => {
   );
 
   return (
-    <div className="flex-1 w-full overflow-hidden">
-      <PageShell
-        maxWidth="xl"
-        header={
-          <section>
-            <header className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight">
-                Option Management
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                View and administer options and majors for your institution.
-              </p>
-            </header>
-          </section>
-        }
-      >
+    <PageContainer>
+      <PageHeader>
+        <PageHeaderTextContent>
+          <PageHeadTitle>Gestion des options</PageHeadTitle>
+          <PageHeadDescription>
+            Consultez et administrez les options et filières de votre
+            établissement.
+          </PageHeadDescription>
+        </PageHeaderTextContent>
+      </PageHeader>
+      <PageContent>
         <DataTable<Option>
           data={options}
           columns={columns}
           keyExtractor={(item) => item.optionId}
         >
-          <DataTableToolbar></DataTableToolbar>
           <DataTableToolbar>
             <FilteredTableToolbarContainer>
               <SearchTableToolbar
                 searchColumn="optionName"
-                placeholder="Search Ex. HSC"
+                placeholder="Rechercher ex. Math-Physique"
               />
             </FilteredTableToolbarContainer>
             <div className="flex items-center gap-4">
@@ -150,7 +151,7 @@ export const OptionPage: React.FC = () => {
               >
                 <Button size="sm" className="rounded-full shadow-xs">
                   <Plus className="mr-2 size-4" />
-                  Add Option
+                  Ajouter une option
                 </Button>
               </CreateOptionDialog>
             </div>
@@ -158,11 +159,11 @@ export const OptionPage: React.FC = () => {
 
           <DataTableContent>
             <DataContentHead />
-            <DataContentBody<Option>></DataContentBody>
+            <DataContentBody<Option> />
           </DataTableContent>
           <DataTablePagination />
         </DataTable>
-      </PageShell>
-    </div>
+      </PageContent>
+    </PageContainer>
   );
 };

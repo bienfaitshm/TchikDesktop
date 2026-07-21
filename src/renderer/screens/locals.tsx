@@ -5,7 +5,6 @@ import { Plus, Pencil, Copy, Trash2 } from "lucide-react";
 import { useGetLocalRooms } from "@/renderer/libs/queries/seatings";
 import type { Localroom } from "@/packages/@core/data-access/db/schemas";
 import { Button } from "@/renderer/components/ui/button";
-import { Suspense } from "@/renderer/libs/queries/suspense";
 import {
   DataTable,
   DataContentBody,
@@ -17,10 +16,9 @@ import {
   DataTableColumnToggle,
 } from "@/renderer/components/tables/data-table";
 import {
+  enhanceColumns,
   localRoomColumns,
-  enhanceColumnsExpandable,
 } from "@/renderer/components/tables/columns";
-import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import {
   CreateLocalRoomDialog,
   DeleteLocalRoomDialog,
@@ -28,12 +26,18 @@ import {
   type LocalRoomDialogProps,
 } from "@/renderer/dialog-actions/localroom.dialog-action";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import {
   createActionMenus,
   type ActionMenuConfig,
 } from "@/components/menus/action-menus";
-import type { Row } from "@tanstack/react-table";
+import {
+  PageContainer,
+  PageHeader,
+  PageHeaderTextContent,
+  PageHeadTitle,
+  PageHeadDescription,
+  PageContent,
+} from "@/renderer/containers/page-container";
 
 export interface LocalRoomRowActionsProps extends Pick<
   LocalRoomDialogProps,
@@ -77,8 +81,8 @@ const MENUS: ActionMenuConfig<LocalRoomRowActionsProps>[] = [
       return (
         <DeleteLocalRoomDialog
           mutationKey={mutationKey}
-          localRoomId={room.localroomId}
-          roomName={room.name}
+          id={room.localroomId}
+          name={room.name}
         />
       );
     },
@@ -100,33 +104,31 @@ export const LocalRoomRowAction: React.FC<LocalRoomRowActionsProps> =
 export const LocalRoomPage: React.FC = () => {
   const { schoolId } = useSchoolContext();
   const { data: rawLocalRooms, queryKey: mutationKey } = useGetLocalRooms({
-    where: { schoolId },
+    where: { localrooms: { schoolId: { $eq: schoolId } } },
   });
   const localRooms = React.useMemo(() => rawLocalRooms ?? [], [rawLocalRooms]);
   const columns = React.useMemo(
-    () => enhanceColumnsExpandable(localRoomColumns),
-    [],
+    () =>
+      enhanceColumns(localRoomColumns, {
+        variant: "actions",
+        renderRowAction: (room) => (
+          <LocalRoomRowAction room={room} mutationKey={mutationKey} />
+        ),
+      }),
+    [mutationKey],
   );
 
   return (
-    <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
-      <PageShell
-        maxWidth="xl"
-        header={
-          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
-            <header className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-semibold tracking-tight">
-                  Gestion des locaux
-                </h1>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Administrez les salles physiques, laboratoires et amphithéâtres.
-              </p>
-            </header>
-          </section>
-        }
-      >
+    <PageContainer>
+      <PageHeader>
+        <PageHeaderTextContent>
+          <PageHeadTitle> Gestion des locaux</PageHeadTitle>
+          <PageHeadDescription>
+            Administrez les salles physiques, laboratoires et amphithéâtres.
+          </PageHeadDescription>
+        </PageHeaderTextContent>
+      </PageHeader>
+      <PageContent>
         <DataTable<Localroom>
           data={localRooms}
           columns={columns}
@@ -150,32 +152,13 @@ export const LocalRoomPage: React.FC = () => {
               </CreateLocalRoomDialog>
             </div>
           </DataTableToolbar>
-
-          <Suspense
-            fallback={
-              <div className="h-64 w-full animate-pulse bg-muted/10 rounded-xl border border-dashed" />
-            }
-          >
-            <DataTableContent>
-              <DataContentHead />
-              <DataContentBody<Localroom>>
-                {({ row }) => (
-                  <ExpandableRow
-                    row={row as Row<unknown>}
-                    renderDetail={
-                      <LocalRoomRowAction
-                        mutationKey={mutationKey}
-                        room={row.original}
-                      />
-                    }
-                  />
-                )}
-              </DataContentBody>
-            </DataTableContent>
-            <DataTablePagination />
-          </Suspense>
+          <DataTableContent>
+            <DataContentHead />
+            <DataContentBody />
+          </DataTableContent>
+          <DataTablePagination />
         </DataTable>
-      </PageShell>
-    </div>
+      </PageContent>
+    </PageContainer>
   );
 };

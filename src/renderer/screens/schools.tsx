@@ -26,11 +26,18 @@ import {
   UpdateSchoolDialog,
   type SchoolDialogProps,
 } from "@/renderer/dialog-actions/school.dialog-actions";
-import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import {
   createActionMenus,
   type ActionMenuConfig,
 } from "@/components/menus/action-menus";
+import {
+  PageContainer,
+  PageHeader,
+  PageHeaderTextContent,
+  PageHeadTitle,
+  PageHeadDescription,
+  PageContent,
+} from "@/renderer/containers/page-container";
 
 export interface RowActionsProps extends Pick<
   SchoolDialogProps,
@@ -107,22 +114,16 @@ export const SchoolsPage: React.FC = () => {
   );
 
   return (
-    <div className="flex-1 w-full overflow-hidden">
-      <PageShell
-        maxWidth="xl"
-        header={
-          <section>
-            <header className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight">
-                Gestion des établissements
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Visualisez et administrez la liste des écoles enregistrées.
-              </p>
-            </header>
-          </section>
-        }
-      >
+    <PageContainer>
+      <PageHeader>
+        <PageHeaderTextContent>
+          <PageHeadTitle> Gestion des établissements</PageHeadTitle>
+          <PageHeadDescription>
+            Visualisez et administrez la liste des écoles enregistrées.
+          </PageHeadDescription>
+        </PageHeaderTextContent>
+      </PageHeader>
+      <PageContent>
         <DataTable<School>
           data={schools}
           columns={columns}
@@ -152,7 +153,7 @@ export const SchoolsPage: React.FC = () => {
           </DataTableContent>
           <DataTablePagination />
         </DataTable>
-      </PageShell>
-    </div>
+      </PageContent>
+    </PageContainer>
   );
 };

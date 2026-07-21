@@ -24,7 +24,7 @@ export type ActionMenuConfig<TProps> = {
  * @returns A functional component accepting props passed down to dialog renders.
  */
 export function createActionMenus<
-  ActionProps extends Record<string, unknown> = Record<string, unknown>,
+  ActionProps extends {} = Record<string, unknown>,
 >(menus: ActionMenuConfig<ActionProps>[]): React.FC<ActionProps> {
   const ActionMenuComponent: React.FC<ActionProps> = (props) => {
     return (
