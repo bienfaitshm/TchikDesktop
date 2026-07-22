@@ -52,6 +52,7 @@ export type SavePaymentDialogProps = ActionDialogProps<
   yearId: string;
   assignmentId: string;
   totalAmount?: number;
+  amountPaid?: number;
 };
 
 /**
@@ -174,14 +175,10 @@ export const SavePaymentDialog = createBaseActionDialog<
   description:
     "Saisissez le montant perçu et le mode de règlement pour mettre à jour le solde.",
   submitText: "Enregistrer le paiement",
-  useForm: (config) =>
-    useProcessStudentPaymentForm(
-      { schoolId: config.schoolId, yearId: config.yearId },
-      config,
-    ),
+  useForm: useProcessStudentPaymentForm,
   form(
-    { formId, onSubmit, currencyOptions, paymentMethodOptions },
-    { schoolId, yearId, assignmentId, totalAmount },
+    { formId, onSubmit, currencyOptions, paymentMethodOptions, defaultValues },
+    { schoolId, yearId, assignmentId, totalAmount, amountPaid },
   ): ReactNode {
     return (
       <PaymentProcessForm
@@ -190,7 +187,8 @@ export const SavePaymentDialog = createBaseActionDialog<
         paymentMethodOptions={paymentMethodOptions}
         onSubmit={onSubmit}
         totalAmount={totalAmount}
-        defaultValues={{ schoolId, yearId, assignmentId }}
+        amountPaid={amountPaid}
+        defaultValues={{ ...defaultValues, schoolId, yearId, assignmentId }}
       />
     );
   },

@@ -1,6 +1,8 @@
+import React from "react";
 import type {
   AssignmentTableOfClassroom,
   TableClassroomPaymentAssignment,
+  FeeAssignment,
 } from "@/packages/@core/data-access/db";
 import {
   DataContentBody,
@@ -9,135 +11,119 @@ import {
   DataTableContent,
   DataTablePagination,
 } from "@/renderer/components/tables";
-
-import type { FeeAssignment } from "@/packages/@core/data-access/db";
 import { createPaymentColumns } from "./payment-table.column";
-import React from "react";
 import { formatCurrency } from "@/packages/currency";
-import {
-  FEE_SCHEDULES_ENUM,
-  getFeeScheduleLabel,
-} from "@/packages/@core/data-access/db/options";
+import { getFeeScheduleLabel } from "@/packages/@core/data-access/db/options";
 import { cn } from "@/renderer/utils";
 import { Button } from "@/renderer/components/ui/button";
-import {
-  ActionMenu,
-  MenuDialogItem,
-  MenuDialogWrapper,
-} from "@/renderer/components/menus/dropdown";
 import { Eye, CreditCard, Info, MoreVerticalIcon } from "lucide-react";
 import {
   SavePaymentDialog,
   PaymentHistoryDialog,
   PaymentDetailDialog,
 } from "../dialog";
+import { STATUS_INDICATORS } from "../components/payment-legend-colors";
+import {
+  createActionMenus,
+  type ActionMenuConfig,
+} from "@/renderer/components/menus/action-menus";
 
-// Configuration des pastilles de statut discrètes (Style Vercel/Linear)
-export const STATUS_INDICATORS: Record<FEE_SCHEDULES_ENUM, string> = {
-  [FEE_SCHEDULES_ENUM.PAID]: "bg-emerald-500",
-  [FEE_SCHEDULES_ENUM.UNPAID]: "bg-rose-500",
-  [FEE_SCHEDULES_ENUM.PARTIALLY_PAID]: "bg-amber-500",
-  [FEE_SCHEDULES_ENUM.EXEMPTED]: "bg-slate-400",
-  [FEE_SCHEDULES_ENUM.OVERPAID]: "bg-indigo-500",
-};
-
-interface FeeTypeRowActionsProps {
+export interface FeeTypeRowActionsProps {
   feeAssignment: FeeAssignment;
   schoolId: string;
   yearId: string;
   mutationKey?: readonly unknown[];
 }
 
-// Bouton d'action contextuel à la cellule (apparaît au survol de la cellule)
-export const CellAction: React.FC<FeeTypeRowActionsProps> = ({
-  feeAssignment,
-  schoolId,
-  yearId,
-  mutationKey,
-}) => (
-  <ActionMenu
-    trigger={
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-7 opacity-0 group-hover/cell:opacity-100 transition-opacity bg-background/80 backdrop-blur-xs shadow-sm border border-border/40"
-      >
-        <MoreVerticalIcon className="size-3.5" />
-      </Button>
-    }
-    dialogs={
-      <>
-        <MenuDialogWrapper id="infos">
-          <PaymentDetailDialog assignment={feeAssignment} />
-        </MenuDialogWrapper>
-        <MenuDialogWrapper id="view-history">
-          <PaymentHistoryDialog assignmentId={feeAssignment.assignmentId} />
-        </MenuDialogWrapper>
-        <MenuDialogWrapper id="pay">
-          <SavePaymentDialog
-            yearId={yearId}
-            schoolId={schoolId}
-            totalAmount={feeAssignment.totalAmount}
-            assignmentId={feeAssignment.assignmentId}
-            mutationKey={mutationKey}
-          />
-        </MenuDialogWrapper>
-      </>
-    }
+const CELL_CONTEXT_MENUS: ActionMenuConfig<FeeTypeRowActionsProps>[] = [
+  {
+    id: "infos",
+    icon: Info,
+    label: "Détails de l'échéance",
+    dialog: ({ feeAssignment }) => (
+      <PaymentDetailDialog assignment={feeAssignment} />
+    ),
+  },
+  {
+    id: "view-history",
+    icon: Eye,
+    label: "Historique des paiements",
+    dialog: ({ feeAssignment }) => (
+      <PaymentHistoryDialog assignmentId={feeAssignment.assignmentId} />
+    ),
+  },
+  {
+    id: "pay",
+    icon: CreditCard,
+    label: "Enregistrer un paiement",
+    dialog: ({ yearId, schoolId, feeAssignment, mutationKey }) => (
+      <SavePaymentDialog
+        yearId={yearId}
+        schoolId={schoolId}
+        totalAmount={feeAssignment.totalAmount}
+        assignmentId={feeAssignment.assignmentId}
+        amountPaid={feeAssignment.amountPaid}
+        mutationKey={mutationKey}
+      />
+    ),
+    disabled: ({ feeAssignment }) =>
+      feeAssignment.amountPaid >= feeAssignment.totalAmount,
+  },
+];
+
+/**
+ * Action menu component rendered for an individual payment cell.
+ */
+export const CellAction = createActionMenus<FeeTypeRowActionsProps>(
+  CELL_CONTEXT_MENUS,
+  <Button
+    variant="ghost"
+    size="icon-sm"
+    aria-label="Menu d'actions de paiement"
+    className="opacity-0 group-hover/cell:opacity-100 focus-visible:opacity-100 transition-opacity"
   >
-    <MenuDialogItem targetId="infos" className="gap-2">
-      <Info className="size-4 text-muted-foreground" />
-      <span>Détails de l'échéance</span>
-    </MenuDialogItem>
-    <MenuDialogItem targetId="view-history" className="gap-2">
-      <Eye className="size-4 text-muted-foreground" />
-      <span>Historique des paiements</span>
-    </MenuDialogItem>
-    <MenuDialogItem
-      targetId="pay"
-      className="gap-2"
-      disabled={feeAssignment.totalAmount === feeAssignment.amountPaid}
-    >
-      <CreditCard className="size-4 text-muted-foreground" />
-      <span>Enregistrer un paiement</span>
-    </MenuDialogItem>
-  </ActionMenu>
+    <MoreVerticalIcon data-icon="inline-start" />
+  </Button>,
 );
 
-const RenderPaymentCell: React.FC<FeeTypeRowActionsProps> = ({
+/**
+ * Renders a table cell displaying formatted currency and fee schedule status indicators in French.
+ * @param props - Component properties containing fee assignment details and context parameters.
+ * @returns The rendered payment cell component.
+ */
+export const RenderPaymentCell: React.FC<FeeTypeRowActionsProps> = ({
   feeAssignment,
   schoolId,
   yearId,
   mutationKey,
 }) => {
+  const statusLabel = getFeeScheduleLabel(feeAssignment.status);
+
   return (
-    <div className="group/cell relative flex items-left justify-start py-2 pr-8 min-h-10 text-right select-none gap-3">
-      {/* Informations financières compactes */}
-      <div className="flex flex-col items-end">
-        <span className="font-mono text-sm font-medium text-foreground">
-          {formatCurrency(feeAssignment.amountPaid)}
-        </span>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          {/* Point de couleur minimaliste pour le statut */}
-          <span
-            className={cn(
-              "size-1.5 rounded-full shrink-0",
-              STATUS_INDICATORS[feeAssignment.status],
-            )}
-          />
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-            {getFeeScheduleLabel(feeAssignment.status)}
-          </span>
-        </div>
+    <div className="group/cell relative flex items-center justify-end gap-2 px-2 py-1.5 min-h-9 select-none rounded-md transition-colors hover:bg-muted/40">
+      <div className="flex items-center">
+        <CellAction
+          feeAssignment={feeAssignment}
+          schoolId={schoolId}
+          yearId={yearId}
+          mutationKey={mutationKey}
+        />
       </div>
 
-      {/* Action contextuelle masquée, ne pope qu'au survol de la cellule */}
-      <CellAction
-        feeAssignment={feeAssignment}
-        schoolId={schoolId}
-        yearId={yearId}
-        mutationKey={mutationKey}
-      />
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-xs font-medium tabular-nums text-foreground">
+          {formatCurrency(feeAssignment.amountPaid, feeAssignment.currency)}
+        </span>
+
+        <span
+          title={statusLabel}
+          aria-label={`Statut : ${statusLabel}`}
+          className={cn(
+            "size-2 rounded-full shrink-0 ring-2 ring-background transition-transform group-hover/cell:scale-110",
+            STATUS_INDICATORS[feeAssignment.status],
+          )}
+        />
+      </div>
     </div>
   );
 };
@@ -149,14 +135,19 @@ export type FeeConfigTableProps = {
   yearId: string;
 };
 
-export const FeeClassroomPayementTable: React.FC<FeeConfigTableProps> = ({
+/**
+ * Renders a data table representing payment assignments for a classroom.
+ * @param props - Properties including dataset, school ID, year ID, and optional mutation keys.
+ * @returns The rendered classroom payment table component.
+ */
+export const FeeClassroomPaymentTable: React.FC<FeeConfigTableProps> = ({
   data,
   schoolId,
   yearId,
   mutationKey,
 }) => {
   const columns = React.useMemo(() => {
-    const _columns = createPaymentColumns(data?.head ?? [], (feeAssignment) => (
+    return createPaymentColumns(data?.head ?? [], (feeAssignment) => (
       <RenderPaymentCell
         feeAssignment={feeAssignment}
         schoolId={schoolId}
@@ -164,13 +155,7 @@ export const FeeClassroomPayementTable: React.FC<FeeConfigTableProps> = ({
         mutationKey={mutationKey}
       />
     ));
-    console.log(
-      "[FeeClassroomPayementTable]: columns of tables, ",
-      _columns.length,
-      " created",
-    );
-    return _columns;
-  }, []);
+  }, [data?.head, schoolId, yearId, mutationKey]);
 
   return (
     <div className="w-full">

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { JSXElementConstructor, ReactElement, useMemo } from "react";
 import { Link } from "react-router";
 import {
   ActionMenu,
@@ -11,6 +11,8 @@ import {
 } from "@/renderer/components/ui/dropdown-menu";
 import { ButtonMenu } from "@/renderer/components/buttons/button-menu";
 import { cn } from "@/renderer/utils";
+import type { ComponentRenderFn, HTMLProps } from "@base-ui/react/types";
+import type { MenuTriggerState } from "@base-ui/react";
 
 export type ActionMenuConfig<TProps> = {
   id: string;
@@ -21,6 +23,7 @@ export type ActionMenuConfig<TProps> = {
   iconClassName?: string;
   separator?: boolean;
   variant?: "destructive";
+  disabled?: boolean | ((props: TProps) => boolean);
 };
 
 /**
@@ -30,7 +33,12 @@ export type ActionMenuConfig<TProps> = {
  */
 export function createActionMenus<
   ActionProps extends object = Record<string, unknown>,
->(menus: ActionMenuConfig<ActionProps>[]): React.FC<ActionProps> {
+>(
+  menus: ActionMenuConfig<ActionProps>[],
+  trigger?:
+    | ReactElement<unknown, string | JSXElementConstructor<any>>
+    | ComponentRenderFn<HTMLProps, MenuTriggerState>,
+): React.FC<ActionProps> {
   const dialogMenus = menus.filter(
     (
       menu,
@@ -51,7 +59,7 @@ export function createActionMenus<
     );
 
     return (
-      <ActionMenu trigger={<ButtonMenu />} dialogs={renderedDialogs}>
+      <ActionMenu trigger={trigger ?? <ButtonMenu />} dialogs={renderedDialogs}>
         {menus.map((menu) => {
           const itemClasses = cn(
             "gap-2 cursor-pointer w-full flex items-center",
@@ -64,6 +72,10 @@ export function createActionMenus<
           );
 
           const href = menu.link ? menu.link(props) : undefined;
+          const _disabled =
+            typeof menu.disabled === "function"
+              ? menu.disabled?.(props)
+              : menu.disabled;
 
           return (
             <React.Fragment key={menu.id}>
@@ -78,14 +90,19 @@ export function createActionMenus<
                     </Link>
                   }
                   className={itemClasses}
+                  disabled={_disabled}
                 />
               ) : menu.dialog ? (
-                <MenuDialogItem targetId={menu.id} className={itemClasses}>
+                <MenuDialogItem
+                  targetId={menu.id}
+                  className={itemClasses}
+                  disabled={_disabled}
+                >
                   {iconElement}
                   <span>{menu.label}</span>
                 </MenuDialogItem>
               ) : (
-                <DropdownMenuItem className={itemClasses}>
+                <DropdownMenuItem className={itemClasses} disabled={_disabled}>
                   {iconElement}
                   <span>{menu.label}</span>
                 </DropdownMenuItem>

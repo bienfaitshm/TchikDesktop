@@ -14,7 +14,7 @@ import {
 import { Spinner } from "@/renderer/components/ui/spinner";
 import { useOnClassroomSyncProgress } from "@/renderer/libs/queries/finances";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-import { StudentSchedulePaymentTabs } from "../contents/student-schedule-payement-tab.contents";
+import { StudentSchedulePaymentTabs } from "../contents/student-schedule-payment-tab.contents";
 
 export interface SchedulePaymentDialogProps extends Partial<
   React.ComponentProps<typeof Dialog>
@@ -35,7 +35,7 @@ const ClassroomProgressFallback: React.FC = () => {
 
   const currentMessage =
     progress?.message ?? "Chargement des données financières...";
-  const currentPercent = progress?.percentage ?? progress?.pourcent ?? 0;
+  const currentPercent = progress?.pourcent ?? 0;
 
   return (
     <div className="flex h-full min-h-[45vh] flex-col justify-center items-center gap-4 text-muted-foreground px-6">
@@ -83,9 +83,8 @@ export const SchedulePaymentDialog: React.FC<SchedulePaymentDialogProps> = ({
   return (
     <Dialog modal={false} {...props}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-
       <DialogContent className="sm:max-w-3xl md:max-w-5xl lg:max-w-[85vw] xl:max-w-[80vw] flex flex-col max-h-[85vh] h-[85vh]">
-        <DialogHeader className="p-6 border-b border-border/60 shrink-0">
+        <DialogHeader className="pt-6 shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <CreditCard className="h-5 w-5" />
@@ -103,7 +102,7 @@ export const SchedulePaymentDialog: React.FC<SchedulePaymentDialogProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="-mx-4 my-2 overflow-y-auto px-4 py-4 flex-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
+        <div className="-mx-4 overflow-y-auto px-4 flex-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
           <Suspense fallback={<ClassroomProgressFallback />}>
             <StudentSchedulePaymentTabs
               classId={classId}
@@ -113,7 +112,7 @@ export const SchedulePaymentDialog: React.FC<SchedulePaymentDialogProps> = ({
           </Suspense>
         </div>
 
-        <DialogFooter className="p-4 border-t border-border/60 shrink-0">
+        <DialogFooter className="border-t border-border/60 shrink-0 mt-0">
           <DialogClose asChild>
             <Button variant="outline" className="min-w-25">
               Fermer
