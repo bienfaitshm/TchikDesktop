@@ -58,6 +58,7 @@ const MENUS: ActionMenuConfig<RowActionsProps>[] = [
           mutationKey={mutationKey}
           optionId={option.optionId}
           defaultValues={option}
+          optionName={option.optionName}
         />
       );
     },

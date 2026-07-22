@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useParams } from "react-router";
-import { Edit2, UserPen, UserPlus, Banknote, Eye, Trash2 } from "lucide-react";
+import { Edit2, UserPen, UserPlus, Banknote, Trash2 } from "lucide-react";
 
 import {
   GENDER_OPTIONS,
@@ -26,46 +26,33 @@ import {
   CreateEnrollmentDialog,
   DeleteEnrollmentDialog,
   UpdateEnrollmentDialog,
-  type DialogProps,
+  type CreateEnrollmentDialogProps,
 } from "@/renderer/dialog-actions/enrollment.dialog-actions";
 import { UpdateStudentDialog } from "@/renderer/dialog-actions/student.dialog-action";
-
-import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
-import { enhanceColumnsExpandable } from "@/renderer/components/tables/columns";
+import { enhanceColumns } from "@/renderer/components/tables/columns";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { Button } from "@/renderer/components/ui/button";
 import { SchedulePaymentDialog } from "@/renderer/apps/finances/dialog/student-payement-schedule.dialog";
-import type { Classroom, EnrollmentTDO } from "@/packages/@core/data-access/db";
+import type { Classroom, EnrollmentDTO } from "@/packages/@core/data-access/db";
 import {
   createActionMenus,
   type ActionMenuConfig,
 } from "@/components/menus/action-menus";
-import type { Row } from "@tanstack/react-table";
 
-const enrollmentStudentColumns = enhanceColumnsExpandable(studentColumns);
-
-export interface EnrollmentRowActionsProps extends DialogProps {
-  enrollmentItem: EnrollmentTDO;
+export interface EnrollmentRowActionsProps extends CreateEnrollmentDialogProps {
+  enrollment: EnrollmentDTO;
 }
 
 const MENUS: ActionMenuConfig<EnrollmentRowActionsProps>[] = [
   {
-    id: "details",
-    label: "View details",
-    icon: Eye,
-    dialog({ enrollmentItem }) {
-      return <span>View details</span>;
-    },
-  },
-  {
     id: "edit-student",
-    label: "Edit student profile",
+    label: "Modifier le profil de l'élève",
     icon: UserPen,
-    dialog({ enrollmentItem, mutationKey }) {
-      const { student } = enrollmentItem;
+    dialog({ enrollment, mutationKey }) {
+      const { student } = enrollment;
       return (
         <UpdateStudentDialog
-          studentId={student.userId}
+          userId={student.userId}
           mutationKey={mutationKey}
           defaultValues={student}
         />
@@ -74,10 +61,14 @@ const MENUS: ActionMenuConfig<EnrollmentRowActionsProps>[] = [
   },
   {
     id: "edit-enrollment",
-    label: "Manage enrollment",
+    label: "Gérer l'inscription",
     icon: Edit2,
-    dialog({ enrollmentItem, schoolId, yearId, mutationKey }) {
-      const { student, classroom, ...enrollment } = enrollmentItem;
+    dialog({
+      enrollment: { student, classroom, ...enrollment },
+      schoolId,
+      yearId,
+      mutationKey,
+    }) {
       return (
         <UpdateEnrollmentDialog
           defaultValues={enrollment}
@@ -92,18 +83,15 @@ const MENUS: ActionMenuConfig<EnrollmentRowActionsProps>[] = [
   },
   {
     id: "delete",
-    label: "Delete enrollment",
+    label: "Supprimer l'inscription",
     icon: Trash2,
     separator: true,
     variant: "destructive",
-    dialog({ enrollmentItem, schoolId, yearId, mutationKey }) {
-      const { student, classroom, ...enrollment } = enrollmentItem;
+    dialog({ enrollment: { student, classroom, ...enrollment }, mutationKey }) {
       return (
         <DeleteEnrollmentDialog
-          studentName={student.fullName!}
-          enrollmentId={enrollment.enrollmentId}
-          schoolId={schoolId}
-          yearId={yearId}
+          name={student.fullName ?? student.lastName}
+          id={enrollment.enrollmentId}
           mutationKey={mutationKey}
         />
       );
@@ -116,7 +104,8 @@ const MENUS: ActionMenuConfig<EnrollmentRowActionsProps>[] = [
  * @param props - Component properties containing the enrollment entity, school ID, year ID, and mutation key.
  * @returns The rendered action menu component.
  */
-export const EnrollmentRowAction = createActionMenus(MENUS);
+export const EnrollmentRowAction: React.FC<EnrollmentRowActionsProps> =
+  createActionMenus<EnrollmentRowActionsProps>(MENUS);
 
 /**
  * Main application screen component for viewing and managing student enrollments.
@@ -128,79 +117,84 @@ export const StudentPage: React.FC = () => {
   }>();
   const { classroomId } = useParams();
   const { data: students = [], queryKey: mutationKey } = useGetEnrollments({
-    where: { schoolId, yearId, classroomId: classroomId! },
+    where: {
+      classroomEnrollments: {
+        classroomId: { $eq: classroomId },
+        schoolId: { $eq: schoolId },
+        yearId: { $eq: yearId },
+      },
+    },
   });
 
+  const columns = React.useMemo(
+    () =>
+      enhanceColumns(studentColumns, {
+        variant: "actions",
+        renderRowAction: (enrollment) => (
+          <EnrollmentRowAction
+            schoolId={schoolId}
+            yearId={yearId}
+            enrollment={enrollment}
+            mutationKey={mutationKey}
+          />
+        ),
+      }),
+    [mutationKey, schoolId, yearId],
+  );
+
   return (
-    <div className="overflow-hidden">
-      <DataTable
-        data={students}
-        columns={enrollmentStudentColumns}
-        keyExtractor={(s: any) => s.enrollmentId ?? s.enrolementId}
-      >
-        <DataTableToolbar>
-          <FilteredTableToolbarContainer>
-            <SearchTableToolbar
-              searchColumn="student_fullName"
-              placeholder="Search Ex. SHOMARI"
-            />
-            <TableFacetedFilterItem
-              columnId="student_gender"
-              title="Gender"
-              options={GENDER_OPTIONS}
-            />
-            <TableFacetedFilterItem
-              columnId="status"
-              title="Status"
-              options={STUDENT_STATUS_OPTIONS}
-            />
-          </FilteredTableToolbarContainer>
-          <div className="flex items-center gap-4">
-            <SchedulePaymentDialog
-              schoolId={schoolId}
-              yearId={yearId}
-              classId={classroomId as string}
-              classroomName={classroom.shortIdentifier}
-            >
-              <Button variant="outline">
-                <Banknote />
-                <span>Payments</span>
-              </Button>
-            </SchedulePaymentDialog>
-            <CreateEnrollmentDialog
-              schoolId={schoolId}
-              yearId={yearId}
-              defaultValues={{ schoolId, yearId, classroomId }}
-            >
-              <Button size="sm" className="gap-2 shadow-xs">
-                <UserPlus className="h-4 w-4" />
-                <span>New Enrollment</span>
-              </Button>
-            </CreateEnrollmentDialog>
-            <DataTableColumnToggle />
-          </div>
-        </DataTableToolbar>
-        <DataTableContent>
-          <DataContentHead className="bg-muted/10" />
-          <DataContentBody>
-            {({ row }) => (
-              <ExpandableRow
-                row={row as Row<unknown>}
-                className="hover:bg-muted/5 transition-colors cursor-pointer"
-                renderDetail={
-                  <EnrollmentRowAction
-                    enrollmentItem={row.original as any}
-                    schoolId={schoolId}
-                    yearId={yearId}
-                    mutationKey={mutationKey}
-                  />
-                }
-              />
-            )}
-          </DataContentBody>
-        </DataTableContent>
-        <DataTablePagination />
-      </DataTable>
-    </div>
+    <DataTable<EnrollmentDTO>
+      data={students}
+      columns={columns}
+      keyExtractor={(s) => s.enrollmentId}
+    >
+      <DataTableToolbar>
+        <FilteredTableToolbarContainer>
+          <SearchTableToolbar
+            searchColumn="student_fullName"
+            placeholder="Rechercher ex. SHOMARI"
+          />
+          <TableFacetedFilterItem
+            columnId="student_gender"
+            title="Genre"
+            options={GENDER_OPTIONS}
+          />
+          <TableFacetedFilterItem
+            columnId="status"
+            title="Statut"
+            options={STUDENT_STATUS_OPTIONS}
+          />
+        </FilteredTableToolbarContainer>
+        <div className="flex items-center gap-4">
+          <SchedulePaymentDialog
+            schoolId={schoolId}
+            yearId={yearId}
+            classId={classroomId as string}
+            classroomName={classroom.shortIdentifier}
+          >
+            <Button variant="outline">
+              <Banknote />
+              <span>Paiements</span>
+            </Button>
+          </SchedulePaymentDialog>
+          <CreateEnrollmentDialog
+            schoolId={schoolId}
+            yearId={yearId}
+            defaultValues={{ schoolId, yearId, classroomId }}
+          >
+            <Button size="sm" className="gap-2 shadow-xs">
+              <UserPlus className="h-4 w-4" />
+              <span>Nouvelle inscription</span>
+            </Button>
+          </CreateEnrollmentDialog>
+          <DataTableColumnToggle />
+        </div>
+      </DataTableToolbar>
+      <DataTableContent>
+        <DataContentHead className="bg-muted/10" />
+        <DataContentBody />
+      </DataTableContent>
+      <DataTablePagination />
+    </DataTable>
   );
 };

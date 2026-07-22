@@ -68,8 +68,8 @@ export const UserSchema = z
       .describe("Mot de passe"),
     gender: ZUSER_GENDER_ENUM.describe("Sexe de l'utilisateur"),
     role: ZUSER_ROLE_ENUM.describe("Rôle au sein de l'établissement"),
-    birthDate: z.iso
-      .datetime()
+    birthDate: z
+      .date()
       .nullable()
       .optional()
       .describe("Date de naissance (Format ISO)"),

@@ -17,7 +17,7 @@ export type BaseFormConfig<TData = unknown> = {
 
 export type ActionDialogProps<
   TFieldValues extends FieldValues = FieldValues,
-  TExtraProps extends {} = Record<string, unknown>,
+  TExtraProps extends object = {},
 > = React.PropsWithChildren<
   TExtraProps &
     Pick<DialogFormProps, "open" | "onOpenChange"> & {
@@ -30,15 +30,13 @@ export type ActionDialogProps<
 export type DialogLabel<TProps> = string | ((props: TProps) => string);
 
 export type CreateBaseActionDialogConfig<
-  TProps extends ActionDialogProps<FieldValues, Record<string, unknown>>,
+  TProps extends ActionDialogProps<FieldValues, object>,
   TFormProps extends BaseFormProps<FieldValues>,
-  TMutationConfig extends BaseMutationConfig = BaseMutationConfig,
 > = {
   title: DialogLabel<TProps>;
   description: DialogLabel<TProps>;
-  useForm: (
-    config?: TMutationConfig,
-  ) => TFormProps & { isSubmitting?: boolean };
+  submitText?: string;
+  useForm: (config?: TProps) => TFormProps & { isSubmitting?: boolean };
   form: (
     actions: TFormProps & Pick<TProps, "defaultValues">,
     props: TProps,
@@ -51,33 +49,19 @@ export type CreateBaseActionDialogConfig<
  * @returns A React functional component rendering the modal form dialog.
  */
 export function createBaseActionDialog<
-  TProps extends ActionDialogProps<FieldValues, Record<string, unknown>>,
+  TProps extends ActionDialogProps<FieldValues, object>,
   TFormProps extends BaseFormProps<FieldValues>,
-  TMutationConfig extends BaseMutationConfig = BaseMutationConfig,
 >({
   description,
   form,
   title,
+  submitText,
   useForm,
-}: CreateBaseActionDialogConfig<
-  TProps,
-  TFormProps,
-  TMutationConfig
->): React.FC<TProps> {
+}: CreateBaseActionDialogConfig<TProps, TFormProps>): React.FC<TProps> {
   const ActionDialog: React.FC<TProps> = (props) => {
-    const {
-      children,
-      defaultValues,
-      onOpenChange,
-      open,
-      mutationKey,
-      onSuccess,
-    } = props;
+    const { children, defaultValues, onOpenChange, open } = props;
 
-    const actions = useForm({
-      mutationKey,
-      onSuccess,
-    } as TMutationConfig);
+    const actions = useForm(props);
 
     const formActions = {
       ...actions,
@@ -97,6 +81,7 @@ export function createBaseActionDialog<
         isLoading={actions.isSubmitting}
         open={open}
         onOpenChange={onOpenChange}
+        submitText={submitText}
       >
         {form(formActions, props)}
       </DialogForm>

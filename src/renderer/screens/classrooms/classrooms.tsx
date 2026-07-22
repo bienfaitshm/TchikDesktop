@@ -5,7 +5,6 @@ import { Plus, Eye, Pencil, Copy, Trash2 } from "lucide-react";
 import { useGetClassrooms } from "@/renderer/libs/queries/classrooms";
 import type { ClassroomDTO } from "@/packages/@core/data-access/db/queries";
 import { Button } from "@/renderer/components/ui/button";
-import { Suspense } from "@/renderer/libs/queries/suspense";
 import {
   DataTable,
   DataContentBody,
@@ -20,25 +19,30 @@ import {
 } from "@/renderer/components/tables/data-table";
 import {
   classroomColumns,
-  enhanceColumnsExpandable,
+  enhanceColumns,
 } from "@/renderer/components/tables/columns";
-import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import {
-  ClassroomDialogCreateForm,
-  ClassroomDialogDeleteForm,
-  ClassroomDialogUpdateForm,
+  CreateClassroomDialog,
+  DeleteClassroomDialog,
+  UpdateClassroomDialog,
   type ClassroomDialogProps,
 } from "@/renderer/dialog-actions/classroom.dialog-actions";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { useGetOptionAsOptions } from "@/renderer/hooks/data-as-options";
-import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import { APP_ROUTES } from "@/renderer/constants";
 import {
   createActionMenus,
   type ActionMenuConfig,
 } from "@/components/menus/action-menus";
-import { Link } from "react-router";
-import type { Row } from "@tanstack/react-table";
+import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
+import {
+  PageContainer,
+  PageHeader,
+  PageHeaderTextContent,
+  PageHeadTitle,
+  PageHeadDescription,
+  PageContent,
+} from "@/renderer/containers/page-container";
 
 export interface ClassroomRowActionsProps extends Pick<
   ClassroomDialogProps,
@@ -51,26 +55,17 @@ export interface ClassroomRowActionsProps extends Pick<
 const MENUS: ActionMenuConfig<ClassroomRowActionsProps>[] = [
   {
     id: "details",
-    label: "View students",
+    label: "Voir les élèves",
     icon: Eye,
-    dialog({ classroom }) {
-      return (
-        <Link
-          to={APP_ROUTES.CLASSROOMS.STUDENTS(classroom.classId)}
-          className="contents"
-        >
-          View students
-        </Link>
-      );
-    },
+    link: ({ classroom }) => APP_ROUTES.CLASSROOMS.STUDENTS(classroom.classId),
   },
   {
     id: "edit",
-    label: "Edit classroom",
+    label: "Modifier la classe",
     icon: Pencil,
     dialog({ classroom, schoolId, mutationKey }) {
       return (
-        <ClassroomDialogUpdateForm
+        <UpdateClassroomDialog
           classId={classroom.classId}
           schoolId={schoolId}
           defaultValues={classroom}
@@ -81,11 +76,11 @@ const MENUS: ActionMenuConfig<ClassroomRowActionsProps>[] = [
   },
   {
     id: "duplicate",
-    label: "Duplicate classroom",
+    label: "Dupliquer la classe",
     icon: Copy,
     dialog({ classroom, schoolId, mutationKey }) {
       return (
-        <ClassroomDialogCreateForm
+        <CreateClassroomDialog
           schoolId={schoolId}
           defaultValues={{ ...classroom, schoolId }}
           mutationKey={mutationKey}
@@ -95,15 +90,15 @@ const MENUS: ActionMenuConfig<ClassroomRowActionsProps>[] = [
   },
   {
     id: "delete",
-    label: "Delete classroom",
+    label: "Supprimer la classe",
     icon: Trash2,
     separator: true,
     variant: "destructive",
     dialog({ classroom, mutationKey }) {
       return (
-        <ClassroomDialogDeleteForm
-          classId={classroom.classId}
-          identifier={classroom.identifier}
+        <DeleteClassroomDialog
+          id={classroom.classId}
+          name={classroom.identifier}
           mutationKey={mutationKey}
         />
       );
@@ -116,7 +111,8 @@ const MENUS: ActionMenuConfig<ClassroomRowActionsProps>[] = [
  * @param props - Component properties containing the classroom entity, school ID, and mutation key.
  * @returns The rendered action menu component.
  */
-export const ClassroomRowAction = createActionMenus(MENUS);
+export const ClassroomRowAction: React.FC<ClassroomRowActionsProps> =
+  createActionMenus<ClassroomRowActionsProps>(MENUS);
 
 /**
  * Main application screen component for viewing and managing classrooms.
@@ -137,27 +133,31 @@ export const ClassroomPage: React.FC = () => {
   });
 
   const columns = React.useMemo(
-    () => enhanceColumnsExpandable(classroomColumns),
-    [],
+    () =>
+      enhanceColumns(classroomColumns, {
+        variant: "actions",
+        renderRowAction: (classroom) => (
+          <ClassroomRowAction
+            mutationKey={mutationKey}
+            classroom={classroom}
+            schoolId={schoolId}
+          />
+        ),
+      }),
+    [mutationKey, schoolId],
   );
 
   return (
-    <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
-      <PageShell
-        maxWidth="xl"
-        header={
-          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
-            <header className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight">
-                Classroom Management
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Administer rooms and classes.
-              </p>
-            </header>
-          </section>
-        }
-      >
+    <PageContainer>
+      <PageHeader className="mt-10">
+        <PageHeaderTextContent>
+          <PageHeadTitle>Gestion des classes</PageHeadTitle>
+          <PageHeadDescription>
+            Administrez les classes de votre établissement.
+          </PageHeadDescription>
+        </PageHeaderTextContent>
+      </PageHeader>
+      <PageContent>
         <DataTable<ClassroomDTO>
           data={classrooms}
           columns={columns}
@@ -167,7 +167,7 @@ export const ClassroomPage: React.FC = () => {
             <FilteredTableToolbarContainer>
               <SearchTableToolbar
                 searchColumn="identifier"
-                placeholder="Search Ex. 1st MA"
+                placeholder="Rechercher ex. 1ère MA"
               />
               <TableFacetedFilterItem
                 title="Section"
@@ -182,45 +182,25 @@ export const ClassroomPage: React.FC = () => {
             </FilteredTableToolbarContainer>
             <div className="flex items-center gap-4">
               <DataTableColumnToggle />
-              <ClassroomDialogCreateForm
+              <CreateClassroomDialog
                 schoolId={schoolId}
                 defaultValues={{ schoolId }}
                 mutationKey={mutationKey}
               >
                 <Button size="sm" className="rounded-full shadow-xs">
                   <Plus className="size-4 mr-2" />
-                  <span>Add Classroom</span>
+                  <span>Ajouter une classe</span>
                 </Button>
-              </ClassroomDialogCreateForm>
+              </CreateClassroomDialog>
             </div>
           </DataTableToolbar>
-
-          <Suspense
-            fallback={
-              <div className="h-64 w-full animate-pulse bg-muted/20 rounded-lg" />
-            }
-          >
-            <DataTableContent>
-              <DataContentHead />
-              <DataContentBody<ClassroomDTO>>
-                {({ row }) => (
-                  <ExpandableRow
-                    row={row as Row<unknown>}
-                    renderDetail={
-                      <ClassroomRowAction
-                        classroom={row.original}
-                        schoolId={schoolId}
-                        mutationKey={mutationKey}
-                      />
-                    }
-                  />
-                )}
-              </DataContentBody>
-            </DataTableContent>
-            <DataTablePagination />
-          </Suspense>
+          <DataTableContent>
+            <DataContentHead />
+            <DataContentBody />
+          </DataTableContent>
+          <DataTablePagination />
         </DataTable>
-      </PageShell>
-    </div>
+      </PageContent>
+    </PageContainer>
   );
 };

@@ -41,7 +41,7 @@ export const CreateClassroomDialog = createBaseActionDialog<
   title: "Créer une salle de classe",
   description:
     "Remplissez les informations ci-dessous pour ajouter une nouvelle salle à votre établissement.",
-  useForm: (config) => useCreateClassroomForm(config.schoolId, config),
+  useForm: useCreateClassroomForm,
   form({
     formId,
     onSubmit,
@@ -83,20 +83,18 @@ export const UpdateClassroomDialog = createBaseActionDialog<
     `Modifier la salle : ${identifier ?? ""}`,
   description:
     "Modifiez les détails de la salle de classe. Les changements seront appliqués immédiatement après l'enregistrement.",
-  useForm: (config) =>
-    useUpdateClassroomForm({
-      ...config,
-      schoolId: config.schoolId,
-      classroomId: config.classId,
-    }),
-  form({
-    formId,
-    onSubmit,
-    searchOptions,
-    sectionOptions,
-    generateSuggestion,
-    defaultValues,
-  }): ReactNode {
+  useForm: useUpdateClassroomForm,
+  form(
+    {
+      formId,
+      onSubmit,
+      searchOptions,
+      sectionOptions,
+      generateSuggestion,
+      defaultValues,
+    },
+    { classId: id },
+  ): ReactNode {
     const { handleGenerate, isGenerating } = useGenerateClassroomSuggestion({
       onGenerateSuggestion: generateSuggestion,
     });
@@ -104,7 +102,7 @@ export const UpdateClassroomDialog = createBaseActionDialog<
     return (
       <ClassroomForm
         formId={formId}
-        onSubmit={onSubmit}
+        onSubmit={(data, helpers) => onSubmit({ data, id }, helpers as any)}
         isGenerating={isGenerating}
         onGenerateSuggestion={handleGenerate}
         searchOption={searchOptions}

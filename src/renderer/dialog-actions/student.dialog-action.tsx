@@ -62,11 +62,11 @@ export const UpdateUserDialog = createBaseActionDialog<
   description:
     "Mettez à jour les informations du dossier. Les modifications sont instantanées.",
   useForm: useUpdateUserForm,
-  form({ formId, onSubmit, defaultValues }): ReactNode {
+  form({ formId, onSubmit, defaultValues }, { userId: id }): ReactNode {
     return (
       <BaseUserForm
         formId={formId}
-        onSubmit={onSubmit}
+        onSubmit={(data, helpers) => onSubmit({ data, id }, helpers as any)}
         defaultValues={defaultValues}
       />
     );

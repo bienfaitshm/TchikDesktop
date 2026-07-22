@@ -64,16 +64,12 @@ export const UpdateLocalRoomDialog = createBaseActionDialog<
     `Modifier le local : ${name ?? defaultValues?.name ?? ""}`,
   description:
     "Modifiez la capacité ou les dimensions du local. Ces changements affecteront les futurs placements.",
-  useForm: (config) =>
-    useUpdateLocalRoomForm({
-      ...config,
-      localroomId: config.localroomId,
-    }),
-  form({ formId, onSubmit, defaultValues }): ReactNode {
+  useForm: useUpdateLocalRoomForm,
+  form({ formId, onSubmit, defaultValues }, { localroomId: id }): ReactNode {
     return (
       <LocalRoomForm
         formId={formId}
-        onSubmit={onSubmit}
+        onSubmit={(data, helpers) => onSubmit({ data, id }, helpers as any)}
         defaultValues={defaultValues}
       />
     );

@@ -160,7 +160,9 @@ export const PageContent: React.FC<PageContentProps> = ({
   const defaultFallback = (
     <div className="flex-1 flex h-full w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/10">
       <LoadingSpinner className="text-primary" />
-      <p className="text-sm text-muted-foreground animate-pulse">Loading...</p>
+      <p className="text-sm text-muted-foreground animate-pulse">
+        Chargement...
+      </p>
     </div>
   );
 

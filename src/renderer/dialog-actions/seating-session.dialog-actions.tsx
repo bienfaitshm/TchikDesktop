@@ -67,13 +67,13 @@ export const UpdateSeatingSessionDialog = createBaseActionDialog<
   useForm: (config) =>
     useUpdateSeatingSessionForm({
       ...config,
-      sessionId: config.sessionId,
+      sessionId: config?.sessionId,
     }),
-  form({ formId, onSubmit, defaultValues }): ReactNode {
+  form({ formId, onSubmit, defaultValues }, { sessionId: id }): ReactNode {
     return (
       <SeatingSessionForm
         formId={formId}
-        onSubmit={onSubmit}
+        onSubmit={(data, helpers) => onSubmit({ data, id }, helpers as any)}
         defaultValues={defaultValues}
       />
     );

@@ -64,11 +64,11 @@ export const UpdateSchoolDialog = createBaseActionDialog<
   description: ({ name }: UpdateSchoolDialogProps) =>
     `Mettez à jour les informations de ${name || "l'établissement"}.`,
   useForm: useUpdateSchoolForm,
-  form({ formId, onSubmit, defaultValues }): ReactNode {
+  form({ formId, onSubmit, defaultValues }, { schoolId: id }): ReactNode {
     return (
       <SchoolForm
         formId={formId}
-        onSubmit={onSubmit}
+        onSubmit={(data, helpers) => onSubmit({ data, id }, helpers as any)}
         defaultValues={defaultValues}
       />
     );

@@ -65,11 +65,13 @@ export const UpdateStudyYearDialog = createBaseActionDialog<
     `Modifier l'année scolaire : ${yearName ?? defaultValues?.yearName ?? ""}`,
   description: "Modifiez les dates ou l'intitulé de l'année scolaire.",
   useForm: useUpdateStudyYearForm,
-  form({ formId, onSubmit, defaultValues }): ReactNode {
+  form({ formId, onSubmit, defaultValues }, { studyYearId }): ReactNode {
     return (
       <StudyYearForm
         formId={formId}
-        onSubmit={onSubmit}
+        onSubmit={(data, helpers) =>
+          onSubmit({ data, id: studyYearId }, helpers as any)
+        }
         defaultValues={defaultValues}
       />
     );

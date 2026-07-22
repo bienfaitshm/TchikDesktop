@@ -28,7 +28,7 @@ import type {
 } from "@/renderer/components/app-sidebar/app-sidebar";
 
 // ==========================================
-// 🛠️ HELPER SENIOR POUR IMPORTS DE TYPE LAZY
+//  HELPER SENIOR POUR IMPORTS DE TYPE LAZY
 // ==========================================
 /**
  * Permet de charger à la demande des exports nommés (ex: export { HomePage })
@@ -138,10 +138,7 @@ const SchoolPaymentConfigPage = lazyNamed(
   () => import("@/renderer/apps/finances"),
   "SchoolPaymentConfigPage",
 );
-const ClassroomsFinPage = lazyNamed(
-  () => import("@/renderer/apps/finances"),
-  "ClassroomsFinPage",
-);
+
 const PaymentPage = lazyNamed(
   () => import("@/renderer/apps/finances"),
   "FastPaymentPage",
@@ -170,7 +167,7 @@ const AboutPage = lazyNamed(
 );
 
 // ==========================================
-// 🗺️ CONFIGURATIONS MENUS (NAVIGATION)
+// CONFIGURATIONS MENUS (NAVIGATION)
 // ==========================================
 export const SCHOOL_SUB_MENUS: NavItem[] = [
   {
@@ -323,7 +320,7 @@ export default function RouterProvider(): JSX.Element {
                 />
               </Route>
 
-              {/* Gestion financière par classe */}
+              {/* Gestion financière par classe
               <Route path={ROUTES.FIN.CLASSROOMS}>
                 <Route index element={<ClassroomsFinPage />} />
                 <Route path={ROUTES.PARAMS.CLASSROOM_ID}>
@@ -347,7 +344,7 @@ export default function RouterProvider(): JSX.Element {
                     />
                   </Route>
                 </Route>
-              </Route>
+              </Route> */}
 
               {/* Historique global des paiements */}
               <Route path={ROUTES.FIN.PAYMENTS}>

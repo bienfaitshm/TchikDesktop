@@ -13,7 +13,7 @@ import {
   useUpdateEnrollmentForm,
   type EnrollmentFormConfig,
   type EnrollmentFormContext,
-} from "@/renderer/libs/queries/enrollments";
+} from "@/renderer/libs/queries/enrollements";
 import {
   createBaseActionDialog,
   createDeleteActionDialog,
@@ -88,17 +88,16 @@ export const UpdateEnrollmentDialog = createBaseActionDialog<
   description:
     "Mettez à jour les informations de l'élève pour l'année scolaire en cours.",
   submitText: "Mettre à jour",
-  useForm: (config) =>
-    useUpdateEnrollmentForm(config, {
-      schoolId: config.schoolId,
-      yearId: config.yearId,
-    }),
-  form({ formId, onSubmit, searchClassroom, defaultValues }): ReactNode {
+  useForm: useUpdateEnrollmentForm,
+  form(
+    { formId, onSubmit, searchClassroom, defaultValues },
+    { enrollmentId: id },
+  ): ReactNode {
     return (
       <div className="py-4">
         <EnrollmentForm
           formId={formId}
-          onSubmit={onSubmit}
+          onSubmit={(data, helpers) => onSubmit({ data, id }, helpers as any)}
           defaultValues={defaultValues}
           classrooms={searchClassroom.options}
         />

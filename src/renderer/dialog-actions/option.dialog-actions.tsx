@@ -67,11 +67,13 @@ export const UpdateOptionDialog = createBaseActionDialog<
   description:
     "Modifiez les détails de la filière. Les changements seront appliqués immédiatement.",
   useForm: useUpdateOptionForm,
-  form({ formId, onSubmit, defaultValues }): ReactNode {
+  form({ formId, onSubmit, defaultValues }, { optionId }): ReactNode {
     return (
       <OptionForm
         formId={formId}
-        onSubmit={onSubmit}
+        onSubmit={(data, helpers) =>
+          onSubmit({ data, id: optionId }, helpers as any)
+        }
         defaultValues={defaultValues}
       />
     );
