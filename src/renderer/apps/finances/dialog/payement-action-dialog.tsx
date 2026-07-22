@@ -24,7 +24,7 @@ import { PaymentProcessForm } from "../forms/payment-process-form";
 import {
   createBaseActionDialog,
   type ActionDialogProps,
-} from "./base.dialog-actions";
+} from "@/renderer/dialog-actions/base.dialog-actions";
 
 export interface PaymentHistoryDialogProps extends Partial<
   React.ComponentProps<typeof Dialog>
@@ -64,7 +64,7 @@ export const PaymentHistoryDialog: React.FC<PaymentHistoryDialogProps> = ({
   ...props
 }) => (
   <Dialog {...props}>
-    <DialogContent className="sm:max-w-[425px]">
+    <DialogContent className="sm:max-w-106.25">
       <DialogHeader>
         <DialogTitle className="text-base font-semibold tracking-tight">
           Historique des paiements

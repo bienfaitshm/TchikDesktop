@@ -131,7 +131,7 @@ export const PaymentAssignHistory: React.FC<PaymentAssignHistoryProps> = ({
   assignmentId,
 }) => {
   const { data: payments, isLoading } = useGetStudentPayments({
-    where: { assignmentId },
+    where: { studentPayments: { assignmentId: { $eq: assignmentId } } },
   });
 
   if (isLoading) return <LoadingSkeleton />;

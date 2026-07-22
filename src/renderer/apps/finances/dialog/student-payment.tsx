@@ -10,7 +10,7 @@ import {
   createBaseActionDialog,
   createDeleteActionDialog,
   type ActionDialogProps,
-} from "./base.dialog-actions";
+} from "@/renderer/dialog-actions/base.dialog-actions";
 
 export type StudentPaymentDialogProps = ActionDialogProps<
   StudentPaymentFormData,

@@ -10,7 +10,7 @@ import {
 import {
   createBaseActionDialog,
   type ActionDialogProps,
-} from "./base.dialog-actions";
+} from "@/renderer/dialog-actions/base.dialog-actions";
 
 export type FeeBulkAssignmentDialogProps = ActionDialogProps<
   FeeBulkAssignmentData,

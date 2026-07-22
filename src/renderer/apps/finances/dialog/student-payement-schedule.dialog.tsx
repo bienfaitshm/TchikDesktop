@@ -12,12 +12,9 @@ import {
   DialogTrigger,
 } from "@/renderer/components/ui/dialog";
 import { Spinner } from "@/renderer/components/ui/spinner";
-import {
-  useOnClassroomSyncProgress,
-  type SyncProgress,
-} from "@/renderer/libs/queries/finances";
+import { useOnClassroomSyncProgress } from "@/renderer/libs/queries/finances";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-import { StudentSchedulePaymentTabs } from "../contents/student-schedule-payment-tab.content";
+import { StudentSchedulePaymentTabs } from "../contents/student-schedule-payement-tab.contents";
 
 export interface SchedulePaymentDialogProps extends Partial<
   React.ComponentProps<typeof Dialog>
@@ -34,9 +31,7 @@ export interface SchedulePaymentDialogProps extends Partial<
  * @returns Rendered progress spinner with percentage bar.
  */
 const ClassroomProgressFallback: React.FC = () => {
-  const { progress } = useOnClassroomSyncProgress() as {
-    progress?: SyncProgress & { pourcent?: number; percentage?: number };
-  };
+  const { progress } = useOnClassroomSyncProgress();
 
   const currentMessage =
     progress?.message ?? "Chargement des données financières...";
