@@ -14,17 +14,14 @@ import {
 import { feeTypeColumns } from "./fee-types.columns";
 import { enhanceColumns } from "@/renderer/components/tables/columns";
 import React from "react";
-import {
-  ActionMenu,
-  MenuDialogItem,
-  MenuDialogWrapper,
-} from "@/renderer/components/menus/dropdown";
-import { DropdownMenuSeparator } from "@/renderer/components/ui/dropdown-menu";
-import { ButtonMenu } from "@/renderer/components/buttons/button-menu";
 import { Pencil, Trash2, ListOrdered } from "lucide-react";
 import { ScheduleViewDialog } from "../dialog/schedule.detail-dialog";
+import {
+  ActionMenuConfig,
+  createActionMenus,
+} from "@/renderer/components/menus/action-menus";
 
-interface FeeTypeRowActionsProps extends Pick<
+export interface FeeTypeRowActionsProps extends Pick<
   FeeTypeDialogProps,
   "mutationKey"
 > {
@@ -32,57 +29,55 @@ interface FeeTypeRowActionsProps extends Pick<
   schoolId: string;
 }
 
-export const RowAction: React.FC<FeeTypeRowActionsProps> = ({
-  mutationKey,
-  feeType,
-  schoolId,
-}) => (
-  <ActionMenu
-    trigger={<ButtonMenu />}
-    dialogs={
-      <>
-        <MenuDialogWrapper id="edit">
-          <FeeTypeDialogUpdateForm
-            schoolId={schoolId}
-            mutationKey={mutationKey}
-            feeTypeId={feeType.feeTypeId}
-            defaultValues={feeType}
-          />
-        </MenuDialogWrapper>
-        <MenuDialogWrapper id="create-schedule">
-          <ScheduleViewDialog feeType={feeType} />
-        </MenuDialogWrapper>
-        <MenuDialogWrapper id="delete">
-          <FeeTypeDialogDeleteForm
-            mutationKey={mutationKey}
-            feeTypeId={feeType.feeTypeId}
-            name={feeType.name}
-          />
-        </MenuDialogWrapper>
-      </>
-    }
-  >
-    <MenuDialogItem targetId="create-schedule" className="gap-2 cursor-pointer">
-      <ListOrdered className="size-4 text-muted-foreground" />
-      <span>Voir les échéanciers</span>
-    </MenuDialogItem>
+const MENUS: ActionMenuConfig<FeeTypeRowActionsProps>[] = [
+  {
+    id: "edit",
+    label: "Modifier le type de frais",
+    icon: Pencil,
+    dialog({ feeType, schoolId, mutationKey }) {
+      return (
+        <FeeTypeDialogUpdateForm
+          schoolId={schoolId}
+          mutationKey={mutationKey}
+          feeTypeId={feeType.feeTypeId}
+          defaultValues={feeType}
+        />
+      );
+    },
+  },
+  {
+    id: "create-schedule",
+    label: "Voir les échéanciers",
+    icon: ListOrdered,
+    dialog({ feeType }) {
+      return <ScheduleViewDialog feeType={feeType} />;
+    },
+  },
+  {
+    id: "delete",
+    label: "Supprimer le type de frais",
+    icon: Trash2,
+    separator: true,
+    variant: "destructive",
+    dialog({ feeType, mutationKey }) {
+      return (
+        <FeeTypeDialogDeleteForm
+          mutationKey={mutationKey}
+          id={feeType.feeTypeId}
+          name={feeType.name}
+        />
+      );
+    },
+  },
+];
 
-    <MenuDialogItem targetId="edit" className="gap-2 cursor-pointer">
-      <Pencil className="size-4 text-muted-foreground" />
-      <span>Modifier le type de frais</span>
-    </MenuDialogItem>
-
-    <DropdownMenuSeparator />
-
-    <MenuDialogItem
-      targetId="delete"
-      className="gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-    >
-      <Trash2 className="size-4" />
-      <span>Supprimer le type de frais</span>
-    </MenuDialogItem>
-  </ActionMenu>
-);
+/**
+ * Renders contextual action menus for a given fee type row.
+ * @param props - Component properties containing the fee type entity, school ID, and mutation key.
+ * @returns The rendered action menu component.
+ */
+export const RowAction: React.FC<FeeTypeRowActionsProps> =
+  createActionMenus<FeeTypeRowActionsProps>(MENUS);
 
 export type FeeTypeTableProps = {
   feeTypes?: FeeType[];

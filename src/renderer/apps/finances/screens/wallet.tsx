@@ -13,13 +13,6 @@ import { FeeTypeTable } from "../tables/fee-types";
 import { Spinner } from "@/renderer/components/ui/spinner";
 import { cn } from "@/renderer/utils";
 import { formatCurrency } from "@/packages/currency";
-import { DropdownMenuSeparator } from "@/renderer/components/ui/dropdown-menu";
-import { ButtonMenu } from "@/renderer/components/buttons/button-menu";
-import {
-  ActionMenu,
-  MenuDialogItem,
-  MenuDialogWrapper,
-} from "@/renderer/components/menus/dropdown";
 import {
   WalletDialogCreateForm,
   WalletDialogDeleteForm,
@@ -27,6 +20,20 @@ import {
   FeeTypeDialogCreateForm,
   type WalletDialogProps,
 } from "@/renderer/apps/finances/dialog";
+import {
+  PageContainer,
+  PageContent,
+  PageHeadAction,
+  PageHeadDescription,
+  PageHeader,
+  PageHeaderTextContent,
+  PageHeadTitle,
+} from "@/renderer/containers/page-container";
+import { Separator } from "@/renderer/components/ui/separator";
+import {
+  ActionMenuConfig,
+  createActionMenus,
+} from "@/renderer/components/menus/action-menus";
 
 export interface WalletRowActionProps extends Pick<
   WalletDialogProps,
@@ -35,59 +42,53 @@ export interface WalletRowActionProps extends Pick<
   wallet: Wallet;
 }
 
+const MENUS: ActionMenuConfig<WalletRowActionProps>[] = [
+  {
+    id: "edit",
+    label: "Modifier le portefeuille",
+    icon: Pencil,
+    dialog({ wallet, mutationKey }) {
+      return (
+        <WalletDialogUpdateForm
+          mutationKey={mutationKey}
+          defaultValues={{
+            currentBalance: wallet.currentBalance,
+            currency: wallet.currency,
+            schoolId: wallet.schoolId,
+            walletId: wallet.walletId,
+            name: wallet.name,
+          }}
+          walletId={wallet.walletId}
+          schoolId={wallet.schoolId ?? ""}
+        />
+      );
+    },
+  },
+  {
+    id: "delete",
+    label: "Supprimer le portefeuille",
+    icon: Trash2,
+    separator: true,
+    variant: "destructive",
+    dialog({ wallet, mutationKey }) {
+      return (
+        <WalletDialogDeleteForm
+          mutationKey={mutationKey}
+          id={wallet.walletId}
+          name={wallet.name}
+        />
+      );
+    },
+  },
+];
+
 /**
  * Renders contextual action menus containing edit and delete options for a specific financial wallet.
  * @param props - Component properties containing the wallet entity and mutation key.
  * @returns The rendered action menu component.
  */
-export const WalletRowAction: React.FC<WalletRowActionProps> = ({
-  mutationKey,
-  wallet,
-}) => (
-  <ActionMenu
-    trigger={<ButtonMenu />}
-    dialogs={
-      <>
-        <MenuDialogWrapper id="edit">
-          <WalletDialogUpdateForm
-            mutationKey={mutationKey}
-            defaultValues={{
-              currentBalance: wallet.currentBalance,
-              currency: wallet.currency,
-              schoolId: wallet.schoolId,
-              walletId: wallet.walletId,
-              name: wallet.name,
-            }}
-            walletId={wallet.walletId}
-            schoolId={wallet.schoolId as string}
-          />
-        </MenuDialogWrapper>
-        <MenuDialogWrapper id="delete">
-          <WalletDialogDeleteForm
-            mutationKey={mutationKey}
-            walletId={wallet.walletId}
-            name={wallet.name}
-          />
-        </MenuDialogWrapper>
-      </>
-    }
-  >
-    <MenuDialogItem targetId="edit" className="gap-2 cursor-pointer">
-      <Pencil className="size-4 text-muted-foreground" />
-      <span>Edit wallet</span>
-    </MenuDialogItem>
-
-    <DropdownMenuSeparator />
-
-    <MenuDialogItem
-      targetId="delete"
-      className="gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-    >
-      <Trash2 className="size-4" />
-      <span>Delete wallet</span>
-    </MenuDialogItem>
-  </ActionMenu>
-);
+export const WalletRowAction: React.FC<WalletRowActionProps> =
+  createActionMenus<WalletRowActionProps>(MENUS);
 
 export interface WalletGridProps {
   wallets: Wallet[];
@@ -102,24 +103,24 @@ export interface WalletGridProps {
 export function WalletGrid({ wallets, mutationKey }: WalletGridProps) {
   if (!wallets?.length) {
     return (
-      <div className="flex h-32 items-center justify-center rounded-2xl border border-dashed text-sm text-muted-foreground p-4 bg-zinc-50/50 dark:bg-zinc-900/10">
-        No financial accounts or wallets configured.
+      <div className="flex h-32 items-center justify-center rounded-2xl border border-dashed text-sm text-muted-foreground p-6 bg-zinc-50/50 dark:bg-zinc-900/10">
+        Aucun compte financier ou portefeuille configuré.
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {wallets.map((wallet) => (
         <div
           key={wallet.walletId}
           className={cn(
-            "p-5 rounded-2xl border ",
-            "hover:shadow-md transition-all duration-200",
+            "p-6 rounded-2xl border bg-card text-card-foreground",
+            "hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-4",
           )}
         >
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-2 rounded-xl">
+          <div className="flex justify-between items-start">
+            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
               <WalletIcon className="w-5 h-5" />
             </div>
             <WalletRowAction wallet={wallet} mutationKey={mutationKey} />
@@ -150,35 +151,32 @@ export function SchoolWalletPage() {
     data: wallets,
     queryKey: walletQueryKey,
     isLoading: isLoadingWallets,
-  } = useGetWallets({ where: { wallets: { schoolId: { $eq: schoolId } } } });
+  } = useGetWallets({ where: { wallets: { schoolId } } });
 
   const {
     data: feeTypes,
     queryKey: feeTypeQueryKey,
     isLoading: isLoadingFees,
-  } = useGetFeeTypes({ where: { feeTypes: { schoolId: { $eq: schoolId } } } });
+  } = useGetFeeTypes({ where: { feeTypes: { schoolId } } });
 
   return (
-    <div className="min-h-screen w-full py-8">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-10 max-w-7xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight">
-              Treasury & Fee Structure
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Supervise institution liquidities and orchestrate pricing
-              policies.
-            </p>
-          </div>
-
+    <PageContainer>
+      <PageHeader>
+        <PageHeaderTextContent>
+          <PageHeadTitle>Trésorerie & Structure de Frais</PageHeadTitle>
+          <PageHeadDescription>
+            Supervisez les liquidités de l'établissement et organisez les
+            politiques tarifaires.
+          </PageHeadDescription>
+        </PageHeaderTextContent>
+        <PageHeadAction>
           <div className="flex items-center gap-3 self-start md:self-center">
             <WalletDialogCreateForm
               schoolId={schoolId}
               mutationKey={walletQueryKey}
             >
               <Button variant="outline" size="sm" className="gap-2 shadow-xs">
-                <Plus className="w-4 h-4" /> New Account
+                <Plus className="w-4 h-4" /> Nouveau compte
               </Button>
             </WalletDialogCreateForm>
             <FeeTypeDialogCreateForm
@@ -187,23 +185,28 @@ export function SchoolWalletPage() {
               mutationKey={feeTypeQueryKey}
             >
               <Button size="sm" className="gap-2 shadow-xs">
-                <Plus className="w-4 h-4" /> Create Fee Type
+                <Plus className="w-4 h-4" /> Créer un type de frais
               </Button>
             </FeeTypeDialogCreateForm>
           </div>
-        </div>
-
+        </PageHeadAction>
+      </PageHeader>
+      <Separator />
+      <PageContent className="space-y-8 mt-6">
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold tracking-tight">
-              Wallets & Current Accounts
+              Portefeuilles & Comptes Courants
             </h2>
           </div>
 
           {isLoadingWallets ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 animate-pulse rounded-2xl" />
+                <div
+                  key={i}
+                  className="h-32 animate-pulse rounded-2xl bg-muted/50"
+                />
               ))}
             </div>
           ) : (
@@ -211,18 +214,19 @@ export function SchoolWalletPage() {
           )}
         </section>
 
-        <section className="space-y-4 pt-4">
-          <div className="space-y-1">
+        <section className="space-y-4 pt-2">
+          <div className="space-y-1 mb-4">
             <h2 className="text-lg font-semibold tracking-tight">
-              Tuition Fees & Schedules
+              Frais de Scolarité & Échéanciers
             </h2>
             <p className="text-xs text-muted-foreground">
-              Configuration of general billing structures per academic year.
+              Configuration des structures générales de facturation par année
+              académique.
             </p>
           </div>
 
           {isLoadingFees ? (
-            <div className="flex h-48 items-center justify-center border rounded-2xl">
+            <div className="flex h-48 items-center justify-center border rounded-2xl bg-muted/20">
               <Spinner className="w-6 h-6 text-primary" />
             </div>
           ) : (
@@ -235,7 +239,7 @@ export function SchoolWalletPage() {
             </div>
           )}
         </section>
-      </div>
-    </div>
+      </PageContent>
+    </PageContainer>
   );
 }

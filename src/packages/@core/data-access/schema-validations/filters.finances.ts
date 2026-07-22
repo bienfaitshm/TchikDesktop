@@ -14,7 +14,7 @@ import { withQueryOptions } from "./helpers";
    WALLET FILTER
    ========================================================================= */
 export const WalletFilterSchema = withQueryOptions({
-  wallets: WalletSchema,
+  wallets: WalletSchema.omit({ currentBalance: true }),
 });
 export type WalletFilter = z.infer<typeof WalletFilterSchema>;
 

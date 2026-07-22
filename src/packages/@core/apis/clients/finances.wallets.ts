@@ -41,7 +41,6 @@ export function createWalletApis(ipcClient: IpcClient): WalletApi {
       return ipcClient.post(WalletRoutes.BULK, data);
     },
     updateWallet(walletId, data) {
-      console.log("updateWallet", { walletId, data });
       return ipcClient.put(WalletRoutes.DETAIL, data, {
         params: { walletId },
       });

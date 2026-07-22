@@ -18,7 +18,7 @@ import {
   betterSqlite,
   OptionProvider,
 } from "@/packages/drizzle-queries";
-import { eq, sql } from "drizzle-orm";
+import { eq, getTableColumns, sql } from "drizzle-orm";
 
 const _walletJoinTables = {
   wallets,
@@ -87,8 +87,13 @@ export class WalletRepository
 
 export const walletRepository = new WalletRepository(db);
 
+export type FeeTypeDTO = FeeType & {
+  wallet: Wallet;
+};
+
 const _feeTypeJoinTables = {
   feeTypes,
+  wallets,
 } as const;
 
 export type BaseFeeTypeOptionFilters = helpers.FindManyOptions<
@@ -105,7 +110,7 @@ export class FeeTypeRepository
     TDataBase,
     BaseFeeTypeOptionFilters
   >
-  implements OptionProvider<FeeType>
+  implements OptionProvider<FeeTypeDTO>
 {
   constructor(database: TDataBase = db) {
     super({
@@ -117,6 +122,17 @@ export class FeeTypeRepository
       defaultFilters: FEE_TYPE_OPTION_DEFAULT_SORT,
       joinTables: _feeTypeJoinTables,
     });
+  }
+
+  protected getQuerySet(tx?: TDataBase | undefined) {
+    return this.getClient(tx)
+      .select({
+        ...getTableColumns(this.table),
+        wallet: getTableColumns(wallets),
+      })
+      .from(this.table)
+      .leftJoin(wallets, eq(wallets.walletId, this.table.walletId))
+      .$dynamic();
   }
 
   /**

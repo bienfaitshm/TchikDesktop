@@ -1,4 +1,4 @@
-import type { StudentPaymentTDO } from "@/packages/@core/data-access/db";
+import type { StudentPaymentDTO } from "@/packages/@core/data-access/db";
 import {
   DataContentBody,
   DataContentHead,
@@ -11,7 +11,7 @@ import { enhanceColumns } from "@/renderer/components/tables/columns";
 import React from "react";
 
 export type PaymentTableProps = {
-  payments?: StudentPaymentTDO[];
+  payments?: StudentPaymentDTO[];
   mutationKey?: readonly unknown[];
 };
 
@@ -25,14 +25,14 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
 
   return (
     <div className="w-full flex-1">
-      <DataTable<StudentPaymentTDO>
+      <DataTable<StudentPaymentDTO>
         data={payments}
         columns={columns}
         keyExtractor={(item) => item.paymentId}
       >
         <DataTableContent>
           <DataContentHead />
-          <DataContentBody<StudentPaymentTDO> />
+          <DataContentBody<StudentPaymentDTO> />
         </DataTableContent>
         <DataTablePagination />
       </DataTable>
