@@ -5,18 +5,18 @@ import type {
   FeeTypeUpdate,
   FeeTypeFilter,
 } from "@/packages/@core/data-access/schema-validations";
-import type { FeeType } from "@/packages/@core/data-access/db/schemas";
+import type { FeeType, FeeTypeDTO } from "@/packages/@core/data-access/db";
 import type { SelectOption } from "@/packages/@core/data-access/db/queries";
 import { FeeTypeRoutes } from "../routes-constant";
 
 export type FeeTypeSearchParams = FeeTypeFilter;
 
 export type FeeTypeApi = Readonly<{
-  fetchFeeTypes(params?: FeeTypeFilter): Promise<FeeType[]>;
+  fetchFeeTypes(params?: FeeTypeFilter): Promise<FeeTypeDTO[]>;
   fetchFeeTypesAsOptions(
     params?: FeeTypeSearchParams,
-  ): Promise<(SelectOption & FeeType)[]>;
-  fetchFeeTypeById(feeTypeId: string): Promise<FeeType>;
+  ): Promise<(SelectOption & FeeTypeDTO)[]>;
+  fetchFeeTypeById(feeTypeId: string): Promise<FeeTypeDTO>;
   createFeeType(data: FeeTypeCreate): Promise<FeeType>;
   bulkCreateFeeType(data: FeeTypeBulkCreate): Promise<FeeType[]>;
   updateFeeType(feeTypeId: string, data: FeeTypeUpdate): Promise<FeeType>;

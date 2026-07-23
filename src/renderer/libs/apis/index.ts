@@ -1,7 +1,9 @@
 import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import * as apis from "@/packages/@core/apis/clients";
-import type { IpcRenderer } from "@electron-toolkit/preload";
 
+/**
+ * Registry mapping domain keys to their respective API client factory functions.
+ */
 const API_REGISTRY = {
   users: apis.createUserApis,
   classroom: apis.createClassroomApis,
@@ -20,16 +22,26 @@ const API_REGISTRY = {
   studentPayment: apis.createStudentPaymentApis,
   dailyExchangeRate: apis.createDailyExchangeRateApis,
   payment: apis.createPaymentApis,
+  dashboard: apis.createDashboardApis,
 } as const;
 
+type ApiRegistry = typeof API_REGISTRY;
+
+/**
+ * Mapped type representing all available domain API client instances.
+ */
 export type AppClients = {
-  readonly [K in keyof typeof API_REGISTRY]: ReturnType<
-    (typeof API_REGISTRY)[K]
-  >;
+  readonly [K in keyof ApiRegistry]: ReturnType<ApiRegistry[K]>;
 };
 
+/**
+ * Creates a lazy-loaded application API client proxy.
+ *
+ * @param ipcClient - The IPC client instance passed to API factories upon initialization.
+ * @returns A proxy object exposing lazily-instantiated domain API clients.
+ */
 export function createLazyAppClients(ipcClient: IpcClient): AppClients {
-  const cache: Partial<Record<keyof AppClients, any>> = {};
+  const cache: Partial<AppClients> = {};
 
   return new Proxy({} as AppClients, {
     get(target, prop: string | symbol) {
@@ -41,37 +53,47 @@ export function createLazyAppClients(ipcClient: IpcClient): AppClients {
         return undefined;
       }
 
-      const key = prop as keyof AppClients;
+      const key = prop as keyof ApiRegistry;
 
       if (!cache[key]) {
-        const factory = (API_REGISTRY as any)[key];
-        if (typeof factory === "function") {
-          cache[key] = factory(ipcClient);
-          console.log(`[LazyAPI] Initialized client: ${String(prop)}`);
-        }
+        const factory = API_REGISTRY[key];
+        cache[key] = factory(ipcClient) as AppClients[typeof key];
       }
 
       return cache[key];
     },
+
     set() {
       return false;
     },
+
     ownKeys() {
       return Reflect.ownKeys(API_REGISTRY);
     },
-    getOwnPropertyDescriptor(_, prop) {
-      return {
-        enumerable: true,
-        configurable: true,
-        value: undefined,
-        prop,
-      };
+
+    getOwnPropertyDescriptor(_, prop: string | symbol) {
+      if (typeof prop === "string" && prop in API_REGISTRY) {
+        return {
+          enumerable: true,
+          configurable: true,
+          writable: false,
+        };
+      }
+      return undefined;
     },
   });
 }
+
+/**
+ * Default IPC client connected to the Electron renderer process.
+ */
 export const apiClient = new IpcClient(window.electron.ipcRenderer);
 
+/**
+ * Singleton proxy providing access to lazily initialized domain API clients.
+ */
 export const api = createLazyAppClients(apiClient);
+
 export const {
   classroom,
   enrollment,
@@ -90,4 +112,5 @@ export const {
   studentPayment,
   dailyExchangeRate,
   payment,
+  dashboard,
 } = api;

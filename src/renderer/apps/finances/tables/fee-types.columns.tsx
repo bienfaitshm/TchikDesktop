@@ -1,4 +1,4 @@
-import type { FeeType } from "@/packages/@core/data-access/db/schemas";
+import type { FeeTypeDTO } from "@/packages/@core/data-access/db";
 import type { ColumnDef, CellContext } from "@tanstack/react-table";
 import { TypographySmall } from "@/renderer/components/ui/typography";
 import { DataTableColumnHeader } from "@/renderer/components/tables/data-table.column-header";
@@ -8,7 +8,7 @@ import { DataTableColumnHeader } from "@/renderer/components/tables/data-table.c
  * @param context - The cell context containing the cell's raw value.
  * @returns The formatted JSX element displaying the stringified value or 'N/A'.
  */
-const renderDefaultCell = (context: CellContext<FeeType, unknown>) => (
+const renderDefaultCell = (context: CellContext<FeeTypeDTO, unknown>) => (
   <TypographySmall className="text-sm">
     {String(context.getValue() ?? "N/A")}
   </TypographySmall>
@@ -17,7 +17,7 @@ const renderDefaultCell = (context: CellContext<FeeType, unknown>) => (
 /**
  * Column definitions configuration for the FeeType data table.
  */
-export const feeTypeColumns: ColumnDef<FeeType>[] = [
+export const feeTypeColumns: ColumnDef<FeeTypeDTO>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -34,7 +34,13 @@ export const feeTypeColumns: ColumnDef<FeeType>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Portefeuille" />
     ),
-    cell: renderDefaultCell,
+    cell: ({ row: { original } }) => {
+      return (
+        <TypographySmall className="text-sm">
+          {original.wallet.name}
+        </TypographySmall>
+      );
+    },
     enableSorting: false,
     enableHiding: false,
     enableColumnFilter: true,

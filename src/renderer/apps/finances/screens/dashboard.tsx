@@ -30,6 +30,8 @@ import {
 import { ScrollArea } from "@/renderer/components/ui/scroll-area";
 import { Link } from "react-router";
 import { APP_ROUTES } from "@/renderer/constants";
+import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
+import { useGetFinancialDashboardData } from "@/renderer/libs/queries/dashboard/dashboard";
 
 // --- Données factices basées sur ta DB (studentPayments) ---
 const revenueChartData = [
@@ -113,37 +115,6 @@ const feeTypesData = [
   },
 ];
 
-// --- Données factices basées sur (studentPayments & feeAssignments) ---
-// const recentPaymentsData = [
-//   {
-//     student: "Alice Mutombo",
-//     classroom: "3ème Primaire A",
-//     amount: 150,
-//     currency: "USD",
-//     feeType: "Minerval - Trimestre 2",
-//     method: "M-Pesa",
-//     reference: "MP-9843A",
-//   },
-//   {
-//     student: "David Kasongo",
-//     classroom: "1ère Secondaire B",
-//     amount: 85500,
-//     currency: "CDF",
-//     feeType: "Frais de l'État",
-//     method: "Cash",
-//     reference: "RECU-1024",
-//   },
-//   {
-//     student: "Sarah Ilunga",
-//     classroom: "6ème Primaire",
-//     amount: 50,
-//     currency: "USD",
-//     feeType: "Transport - Février",
-//     method: "Banque",
-//     reference: "BK-TR001",
-//   },
-// ];
-
 // --- Données factices basées sur (feeAssignments groupé par feeTypes) ---
 const collectionRatesData = [
   { name: "Minerval", paid: 78, unpaid: 22 },
@@ -153,8 +124,11 @@ const collectionRatesData = [
 ];
 
 export function SchoolFinanceDashboard() {
+  const { schoolId, yearId } = useCurrentConfig();
+  const { data } = useGetFinancialDashboardData({ schoolId, yearId });
   const [exchangeRate, setExchangeRate] = useState(2850);
 
+  console.log("Fin dashboard", data);
   return (
     <ScrollArea className="h-full flex-1">
       {/* --- Contenu Principal --- */}
@@ -432,7 +406,7 @@ export function SchoolFinanceDashboard() {
             {/* Cartes Récapitulatives des Wallets */}
             <div className="space-y-4">
               {/* Cartes Récapitulatives des Wallets */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
                 {/* Attendu Total */}
                 <Card className="bg-muted border border-border shadow-sm rounded-2xl transition-colors hover:bg-muted/80">
                   <CardContent className="p-4 flex flex-col h-full justify-between">
@@ -463,23 +437,6 @@ export function SchoolFinanceDashboard() {
                     </div>
                     <p className="text-lg font-bold text-background mt-2">
                       $24,850
-                    </p>
-                  </CardContent>
-                </Card>
-
-                {/* Taux du jour (dailyExchangeRates) */}
-                <Card className="bg-primary/10 border border-primary/20 shadow-sm rounded-2xl">
-                  <CardContent className="p-4 flex flex-col h-full justify-between">
-                    <div>
-                      <div className="bg-primary w-8 h-8 rounded-full flex items-center justify-center mb-2 shadow-sm">
-                        <TrendingUp className="w-4 h-4 text-primary-foreground" />
-                      </div>
-                      <p className="text-[11px] uppercase tracking-wider text-primary/80 font-semibold">
-                        Taux Fixé
-                      </p>
-                    </div>
-                    <p className="text-lg font-bold text-foreground mt-2 font-mono">
-                      {exchangeRate.toLocaleString()} FC
                     </p>
                   </CardContent>
                 </Card>

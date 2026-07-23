@@ -14,3 +14,4 @@ export * from "./student-payments";
 export * from "./user";
 export * from "./wallets";
 export * from "./statistics";
+export * from "./dashboard";

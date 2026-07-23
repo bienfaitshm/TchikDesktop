@@ -228,6 +228,11 @@ export const DailyExchangeRateRoutes = {
   LTS: "daily-exchange-rates/lts",
 } as const;
 
+export const DashboardRoutes = {
+  FIN_DASHBOARD: "dashboard/fin",
+  SCHOOL_DASHBOARD: "dashboard/school",
+};
+
 /**
  * Export global mis à jour avec les nouveaux modules
  */
@@ -252,4 +257,5 @@ export const IpcRoutes = {
   STUDENT_PAYMENTS: StudentPaymentRoutes,
   DAILY_EXCHANGE_RATES: DailyExchangeRateRoutes,
   PAYMENT: PaymentRoutes,
+  DASHBOARD: DashboardRoutes,
 } as const;
