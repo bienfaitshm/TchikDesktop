@@ -32,10 +32,13 @@ export function FastPaymentPage() {
     isSubmitting,
     onSubmit,
     paymentMethodOptions,
-  } = useProcessStudentPaymentForm({
-    schoolId,
-    yearId,
-  });
+  } = useProcessStudentPaymentForm(
+    {
+      schoolId,
+      yearId,
+    },
+    { process: "fast" },
+  );
 
   return (
     <PageContainer className="flex flex-col gap-6 mt-10">

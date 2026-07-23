@@ -18,7 +18,11 @@ import type {
 } from "@/packages/@core/apis/clients/finances.payment";
 import type { BaseMutationConfig } from "../base";
 import { useFormBaseNotify } from "../base";
-import { useAssignFeesToStudent, useProcessStudentPayment } from "./finances";
+import {
+  paymentKeys,
+  useAssignFeesToStudent,
+  useProcessStudentPayment,
+} from "./finances";
 
 export type ReturnPaymentProcessData = FeeAssignment & {
   payment: StudentPayment;
@@ -26,8 +30,9 @@ export type ReturnPaymentProcessData = FeeAssignment & {
 };
 
 export type AssignFeesFormConfig = BaseMutationConfig<void>;
-export type ProcessPaymentFormConfig =
-  BaseMutationConfig<ReturnPaymentProcessData>;
+export type ProcessPaymentFormConfig = {
+  process?: "fast";
+} & BaseMutationConfig<ReturnPaymentProcessData>;
 
 export interface PaymentContextParams {
   schoolId: string;
@@ -93,8 +98,11 @@ export function useUpdateTableClassroomPayment(
     onSuccess: (responseData) => {
       const { feeConfig, payment, ...data } = responseData;
       const targetCacheKey = config?.mutationKey;
+      if (config?.process === "fast" && !targetCacheKey) {
+        queryClient.invalidateQueries({ queryKey: paymentKeys.all });
+      }
 
-      if (targetCacheKey) {
+      if (targetCacheKey && config.process !== "fast") {
         queryClient.setQueryData<TableClassroomPaymentAssignment[]>(
           targetCacheKey,
           (oldCache) => {
