@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useCallback } from "react";
 import { CreditCard, Receipt } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -20,7 +20,7 @@ import {
   FastPaymentLoading,
 } from "@/renderer/apps/finances/components/fast-payment-empty";
 import { useFastPaymentState } from "./hooks";
-import type { FastPaymentFormProps } from "./types";
+import type { FastPaymentFormProps, FastPaymentSubmiter } from "./types";
 
 export function FastPaymentForm({
   schoolId,
@@ -41,7 +41,17 @@ export function FastPaymentForm({
     handleStudentChange,
     handleFeeTypeChange,
     handleScheduleChange,
+    handleReset,
   } = useFastPaymentState();
+
+  const handleSubmit: FastPaymentSubmiter = useCallback((payload, helpers) => {
+    onSubmit(payload, {
+      reset: (value) => {
+        helpers.reset(value);
+        handleReset();
+      },
+    });
+  }, []);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-24 items-start">
@@ -96,7 +106,7 @@ export function FastPaymentForm({
                         {({ amountPaid, assignmentId, totalAmount }) => (
                           <div className="mt-4">
                             <PaymentProcessForm
-                              onSubmit={onSubmit}
+                              onSubmit={handleSubmit}
                               currencyOptions={currencyOptions}
                               paymentMethodOptions={paymentMethodOptions}
                               formId={formId}

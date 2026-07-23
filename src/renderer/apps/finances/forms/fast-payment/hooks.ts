@@ -43,6 +43,12 @@ export function useFastPaymentState() {
     return Boolean(selectedSchedule) && amountDue > 0;
   }, [selectedSchedule, amountDue]);
 
+  const handleReset = useCallback(() => {
+    setSelectedStudent(undefined);
+    setSelectedFeeType(undefined);
+    setSelectedSchedule(undefined);
+  }, []);
+
   return {
     selectedStudent,
     selectedFeeType,
@@ -52,5 +58,6 @@ export function useFastPaymentState() {
     handleStudentChange,
     handleFeeTypeChange,
     handleScheduleChange,
+    handleReset,
   };
 }
