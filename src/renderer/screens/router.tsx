@@ -18,8 +18,8 @@ import {
   Calendar,
   GraduationCap,
 } from "lucide-react";
-
 import * as Layout from "@/renderer/screens/layouts";
+import { SubNavLayout } from "@/renderer/layouts/submenu.layout";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 import { ROUTES, APP_ROUTES } from "@/renderer/constants";
 import type {
@@ -261,7 +261,7 @@ export default function RouterProvider(): JSX.Element {
             {/* ========== SCHOOL ========== */}
             <Route
               path={ROUTES.SCHOOLS.ROOT}
-              element={<Layout.SubNavigationLayout items={SCHOOL_SUB_MENUS} />}
+              element={<SubNavLayout navItems={SCHOOL_SUB_MENUS} />}
             >
               <Route index element={<DashBoardPage />} />
               <Route path={ROUTES.SCHOOLS.LIST} element={<SchoolsPage />} />
@@ -280,9 +280,7 @@ export default function RouterProvider(): JSX.Element {
             {/* ========== FINANCES ========== */}
             <Route
               path={ROUTES.FIN.ROOT}
-              element={
-                <Layout.SubNavigationLayout items={FINANCES_SUB_MENUS} />
-              }
+              element={<SubNavLayout navItems={FINANCES_SUB_MENUS} />}
             >
               <Route index element={<SchoolFinanceDashboard />} />
 

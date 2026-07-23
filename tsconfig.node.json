@@ -2,23 +2,21 @@
   "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
   "include": [
     "electron.vite.config.*",
-    "src/main/*",
     "src/main/**/*",
-    "src/preload/*",
-    "src/packages/*",
+    "src/preload/**/*",
     "src/packages/**/*"
   ],
   "compilerOptions": {
     "composite": true,
-    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "target": "ES2022",
     "types": ["electron-vite/node"],
-    "baseUrl": "./",
     "paths": {
       "@/main/*": ["./src/main/*"],
       "@/packages/*": ["./src/packages/*"]
     },
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "ignoreDeprecations": "6.0"
+    "emitDecoratorMetadata": true
   }
 }
