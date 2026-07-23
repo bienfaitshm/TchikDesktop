@@ -27,6 +27,7 @@ import type {
   NavItem,
 } from "@/renderer/components/app-sidebar/app-sidebar";
 
+import * as FinApp from "@/renderer/apps/finances";
 // ==========================================
 //  HELPER SENIOR POUR IMPORTS DE TYPE LAZY
 // ==========================================
@@ -123,29 +124,6 @@ const SeatingSessionDetailPage = lazyNamed(
 const SeatingSessionAssignmentPage = lazyNamed(
   () => import("@/renderer/screens/seating"),
   "SeatingSessionAssignmentPage",
-);
-
-// Finances (L'application la plus lourde, désormais segmentée !)
-const SchoolFinanceDashboard = lazyNamed(
-  () => import("@/renderer/apps/finances"),
-  "SchoolFinanceDashboard",
-);
-const SchoolWalletPage = lazyNamed(
-  () => import("@/renderer/apps/finances"),
-  "SchoolWalletPage",
-);
-const SchoolPaymentConfigPage = lazyNamed(
-  () => import("@/renderer/apps/finances"),
-  "SchoolPaymentConfigPage",
-);
-
-const PaymentPage = lazyNamed(
-  () => import("@/renderer/apps/finances"),
-  "FastPaymentPage",
-);
-const PaymentsHistoryPage = lazyNamed(
-  () => import("@/renderer/apps/finances"),
-  "PaymentsHistoryPage",
 );
 
 // Paramètres
@@ -256,7 +234,7 @@ export default function RouterProvider(): JSX.Element {
             {/* Base Routes */}
             <Route index element={<HomePage />} />
             <Route path={ROUTES.ENROLLMENTS} element={<EnrollmentPage />} />
-            <Route path={ROUTES.PAYMENTS} element={<PaymentPage />} />
+            <Route path={ROUTES.PAYMENTS} element={<FinApp.PaymentPage />} />
 
             {/* ========== SCHOOL ========== */}
             <Route
@@ -278,84 +256,67 @@ export default function RouterProvider(): JSX.Element {
             </Route>
 
             {/* ========== FINANCES ========== */}
+            <Route path={ROUTES.FIN.ROOT}>
+              <Route
+                path={ROUTES.FIN.CLASSROOMS}
+                element={<FinApp.ClassroomPaymentLayout />}
+              >
+                <Route index element={<FinApp.ClassroomPaymentEmptyPage />} />
+                <Route
+                  path={ROUTES.PARAMS.CLASSROOM_ID}
+                  element={<FinApp.ClassroomPaymentDetailPage />}
+                />
+              </Route>
+            </Route>
             <Route
               path={ROUTES.FIN.ROOT}
               element={<SubNavLayout navItems={FINANCES_SUB_MENUS} />}
             >
-              <Route index element={<SchoolFinanceDashboard />} />
-
+              <Route index element={<FinApp.SchoolFinanceDashboard />} />
               {/* Portefeuilles */}
               <Route path={ROUTES.FIN.WALLET}>
-                <Route index element={<SchoolWalletPage />} />
+                <Route index element={<FinApp.SchoolWalletPage />} />
                 <Route
                   path={ROUTES.ACTIONS.NEW}
-                  element={<SchoolWalletPage />}
+                  element={<FinApp.SchoolWalletPage />}
                 />
                 <Route
                   path={ROUTES.PARAMS.WALLET_ID}
-                  element={<SchoolWalletPage />}
+                  element={<FinApp.SchoolWalletPage />}
                 />
                 <Route
                   path={`${ROUTES.PARAMS.WALLET_ID}/${ROUTES.ACTIONS.EDIT}`}
-                  element={<SchoolWalletPage />}
+                  element={<FinApp.SchoolWalletPage />}
                 />
               </Route>
-
-              {/* Configurations de frais */}
-              <Route path={ROUTES.FIN.PAYMENT_CONFIG}>
-                <Route index element={<SchoolPaymentConfigPage />} />
-                <Route
-                  path={ROUTES.ACTIONS.NEW}
-                  element={<SchoolPaymentConfigPage />}
-                />
-                <Route
-                  path={ROUTES.PARAMS.FEE_CONFIG_ID}
-                  element={<SchoolPaymentConfigPage />}
-                />
-                <Route
-                  path={`${ROUTES.PARAMS.FEE_CONFIG_ID}/${ROUTES.ACTIONS.EDIT}`}
-                  element={<SchoolPaymentConfigPage />}
-                />
-              </Route>
-
-              {/* Gestion financière par classe
-              <Route path={ROUTES.FIN.CLASSROOMS}>
-                <Route index element={<ClassroomsFinPage />} />
-                <Route path={ROUTES.PARAMS.CLASSROOM_ID}>
-                  <Route index element={<ClassroomsFinPage />} />
-                  <Route path={ROUTES.ACTIONS.ASSIGNMENTS}>
-                    <Route index element={<ClassroomsFinPage />} />
-                    <Route
-                      path={ROUTES.ACTIONS.NEW}
-                      element={<ClassroomsFinPage />}
-                    />
-                    <Route
-                      path={`${ROUTES.PARAMS.ASSIGNMENT_ID}/${ROUTES.ACTIONS.EDIT}`}
-                      element={<ClassroomsFinPage />}
-                    />
-                  </Route>
-                  <Route path={ROUTES.ACTIONS.PAYMENTS}>
-                    <Route index element={<ClassroomsFinPage />} />
-                    <Route
-                      path={ROUTES.PARAMS.PAYMENT_ID}
-                      element={<ClassroomsFinPage />}
-                    />
-                  </Route>
-                </Route>
-              </Route> */}
-
               {/* Historique global des paiements */}
               <Route path={ROUTES.FIN.PAYMENTS}>
                 <Route
                   path={ROUTES.FIN.PAYMENTS_HISTORIES}
-                  element={<PaymentsHistoryPage />}
+                  element={<FinApp.PaymentsHistoryPage />}
                 />
                 {/* <Route
                   path={ROUTES.PARAMS.PAYMENT_ID}
                   element={<PaymentsJournalPage />}
                 /> */}
               </Route>
-
+              {/* Configurations de frais */}
+              <Route path={ROUTES.FIN.PAYMENT_CONFIG}>
+                <Route index element={<FinApp.SchoolPaymentConfigPage />} />
+                <Route
+                  path={ROUTES.ACTIONS.NEW}
+                  element={<FinApp.SchoolPaymentConfigPage />}
+                />
+                <Route
+                  path={ROUTES.PARAMS.FEE_CONFIG_ID}
+                  element={<FinApp.SchoolPaymentConfigPage />}
+                />
+                <Route
+                  path={`${ROUTES.PARAMS.FEE_CONFIG_ID}/${ROUTES.ACTIONS.EDIT}`}
+                  element={<FinApp.SchoolPaymentConfigPage />}
+                />
+              </Route>
+              {/* Gestion financière par classe */}
               {/* Taux de change */}
               <Route path={ROUTES.FIN.EXCHANGE_RATES}>
                 <Route index element={<WorkInProgressPage />} />

@@ -14,7 +14,7 @@ import {
 import { Spinner } from "@/renderer/components/ui/spinner";
 import { useOnClassroomSyncProgress } from "@/renderer/libs/queries/finances";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-import { StudentSchedulePaymentTabs } from "../contents/student-schedule-payment-tab.contents";
+import { StudentSchedulePaymentTabs } from "../contents/student-schedule-payment-tab";
 
 export interface SchedulePaymentDialogProps extends Partial<
   React.ComponentProps<typeof Dialog>

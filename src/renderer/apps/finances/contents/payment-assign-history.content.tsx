@@ -2,10 +2,7 @@ import React from "react";
 import { formatDate } from "@/packages/times";
 import { useGetStudentPayments } from "@/renderer/libs/queries/finances";
 import { Calendar, Receipt, Coins } from "lucide-react";
-import {
-  CURRENCY_ENUM,
-  PAYMENT_METHOD_ENUM,
-} from "@/packages/@core/data-access/db/options";
+import { PAYMENT_METHOD_ENUM } from "@/packages/@core/data-access/db/options";
 import { cn } from "@/renderer/utils";
 import { formatCurrency } from "@/packages/currency";
 
@@ -53,7 +50,7 @@ const PaymentItem: React.FC<{ payment: StudentPayment }> = ({ payment }) => {
             Reçu #{payment.paymentId.slice(-6).toUpperCase()}
             {payment.transactionReference && (
               <span
-                className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded truncate max-w-[120px]"
+                className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded truncate max-w-30"
                 title={payment.transactionReference}
               >
                 {payment.transactionReference}

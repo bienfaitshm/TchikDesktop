@@ -4,9 +4,13 @@ import * as React from "react";
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
 import type { Classroom } from "@/packages/@core/data-access/db/";
 import { convertGroupedObjectToArray, groupBy } from "@/renderer/utils";
-import type { Section } from "@/renderer/components/sidebar-section-menus";
 
-interface ClassroomSidebar<TData> {
+export interface Section<TData> {
+  title?: string;
+  data: TData[];
+}
+
+interface ClassroomNavItem<TData> {
   searchTerm: string;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
   selectedSection: string;
@@ -16,9 +20,9 @@ interface ClassroomSidebar<TData> {
   handleClearSearch: () => void;
 }
 
-export function useClassroomSidebar<TData extends Classroom>(
+export function useClassroomNavItem<TData extends Classroom>(
   data: TData[],
-): ClassroomSidebar<TData> {
+): ClassroomNavItem<TData> {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedSection, setSelectedSection] = React.useState("all");
 
