@@ -54,7 +54,7 @@ export const RowAction: React.FC<FeeConfigurationRowActionsProps> = ({
         <MenuDialogWrapper id="delete">
           <FeeConfigurationDialogDeleteForm
             mutationKey={mutationKey}
-            feeConfigId={feeConfiguration.feeConfigId}
+            id={feeConfiguration.feeConfigId}
             name={feeConfiguration.name}
           />
         </MenuDialogWrapper>
