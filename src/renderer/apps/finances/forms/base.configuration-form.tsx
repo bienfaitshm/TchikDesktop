@@ -8,7 +8,7 @@ import {
 import { Input } from "@/renderer/components/ui/input";
 import { SelectInput } from "@/renderer/components/form/fields/select-input";
 import { ComboboxSearch } from "@/renderer/components/form/fields/generic-search-combo-box";
-import { SearchOption } from "@/renderer/libs/queries/base";
+import { SearchOption, SearchOptionReturn } from "@/renderer/libs/queries/base";
 import { FieldValues, Path, UseFormReturn } from "react-hook-form";
 import { getFormFieldName } from "@/renderer/components/form/generic-bulk-form";
 import { useCallback } from "react";
@@ -246,21 +246,29 @@ export const FeeConfigurationBaseForm = <
           />
         </div>
         <div>
-          <div className="text-xs text-muted-foreground space-y-1 list-disc pl-4 bg-muted/40 p-6 rounded-md border border-border/50">
-            <p>
-              <strong className="text-foreground">Section :</strong> Applique le
-              frais à tous les élèves de la section entière (ex :{" "}
-              <em>Primaire</em>).
+          <div className="text-xs text-muted-foreground space-y-2 bg-muted/40 p-6 rounded-md border border-border/50">
+            <p className="font-medium text-foreground">
+              Attention ! Le nom de la configuration doit obligatoirement
+              inclure son champ d'application (exemple :{" "}
+              <span className="italic">Minerval 4eme HP</span>) :
             </p>
-            <p>
-              <strong className="text-foreground">Option / Filière :</strong>{" "}
-              Cible uniquement une spécialité (ex :{" "}
-              <em>Humanités Scientifiques</em>).
-            </p>
-            <p>
-              <strong className="text-foreground">Classe :</strong> Restreint le
-              frais à un groupe précis (ex : <em>1ère Année A</em>).
-            </p>
+            <ul className="list-disc pl-4 space-y-1">
+              <li>
+                <strong className="text-foreground">Section :</strong> Applique
+                le frais à tous les élèves de la section entière (ex. :{" "}
+                <span className="italic">Primaire</span>).
+              </li>
+              <li>
+                <strong className="text-foreground">Option / Filière :</strong>{" "}
+                Cible uniquement une spécialité (ex. :{" "}
+                <span className="italic">Humanités Scientifiques</span>).
+              </li>
+              <li>
+                <strong className="text-foreground">Classe :</strong> Restreint
+                le frais à un groupe précis (ex. :{" "}
+                <span className="italic">1ère Année A</span>).
+              </li>
+            </ul>
           </div>
         </div>
       </div>
