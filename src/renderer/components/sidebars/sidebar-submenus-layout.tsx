@@ -60,7 +60,7 @@ export const SubNavMenu = ({
       <nav className={cn("flex-1 space-y-1 px-4", className)} {...props}>
         {children ??
           items.map(({ icon: Icon, name, url }) => (
-            <SubNavItem key={url} to={url}>
+            <SubNavItem key={url} to={url} prefetch="intent" end>
               {Icon && <Icon />}
               <span>{name}</span>
             </SubNavItem>
