@@ -11,8 +11,11 @@ import {
   type ProcessPaymentPayload,
   ProcessPaymentSchema,
 } from "@/packages/@core/data-access/schema-validations";
-import { defaultPrinterManagementService } from "@/packages/electron-utility";
-import { printReceipt } from "@/packages/pos-printer";
+import {
+  // defaultPrinterManagementService,
+  notify,
+} from "@/packages/electron-utility";
+// import { printReceipt } from "@/packages/pos-printer";
 
 /* =========================================================================
    SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
@@ -82,18 +85,44 @@ export class PaymentController {
     const payment = await paymentService.processStudentPayment(req.body);
 
     if (payment && req.context.window) {
-      const printers = await defaultPrinterManagementService.getSystemPrinters(
-        req.context.window,
-      );
-      console.log("System printers retrieved:", printers);
+      notifyPaymentSuccess({ transactionId: payment.assignmentId });
+      // const printers = await defaultPrinterManagementService.getSystemPrinters(
+      //   req.context.window,
+      // );
+      // console.log("System printers retrieved:", printers);
 
-      try {
-        printReceipt();
-      } catch (error) {
-        console.error("Hardware printing execution pipeline failed:", error);
-      }
+      // try {
+      //   printReceipt();
+      // } catch (error) {
+      //   console.error("Hardware printing execution pipeline failed:", error);
+      // }
     }
 
     return payment;
   }
+}
+
+/**
+ * Interface defining the options for payment notification payload.
+ */
+interface PaymentNotificationOptions {
+  /** Optional transaction identifier to display in the body. */
+  transactionId?: string;
+}
+
+/**
+ * Displays a success notification following a completed payment process.
+ * @param options - Additional display options such as transaction ID.
+ */
+export function notifyPaymentSuccess(
+  options?: PaymentNotificationOptions,
+): void {
+  const bodyText = options?.transactionId
+    ? `Transaction #${options.transactionId} enregistrée avec succès.`
+    : "La transaction a été enregistrée avec succès.";
+
+  notify({
+    title: "Paiement réussi !",
+    body: bodyText,
+  });
 }
