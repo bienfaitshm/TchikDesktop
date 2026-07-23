@@ -4,13 +4,6 @@ import { Suspense } from "react";
 import { CreditCard, Receipt } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Field,
   FieldDescription,
   FieldGroup,
@@ -51,24 +44,24 @@ export function FastPaymentForm({
   } = useFastPaymentState();
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-24 items-start">
       {/* Zone Formulaire */}
-      <div className="lg:col-span-7 flex flex-col gap-6">
-        <Card className="border-muted shadow-md">
-          <CardHeader className="flex flex-col gap-1">
+      <div className="lg:col-span-8 flex flex-col gap-6">
+        <div className="space-y-2">
+          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 text-foreground">
               <CreditCard className="size-5 text-primary" />
-              <CardTitle className="text-xl font-bold tracking-tight">
+              <h3 className="text-xl font-bold tracking-tight">
                 Caisse : Paiement Rapide
-              </CardTitle>
+              </h3>
             </div>
-            <CardDescription>
+            <p className="text-xs text-muted-foreground">
               Enregistrez un encaissement direct et générez la facture
               instantanément.
-            </CardDescription>
-          </CardHeader>
+            </p>
+          </div>
 
-          <CardContent>
+          <div className="mt-6">
             <FieldGroup className="flex flex-col gap-5">
               <Field>
                 <FieldLabel htmlFor="student">Élève au guichet</FieldLabel>
@@ -78,7 +71,7 @@ export function FastPaymentForm({
                   enrollment={selectedStudent}
                   onChange={handleStudentChange}
                 />
-                <FieldDescription>
+                <FieldDescription className="text-xs text-muted-foreground">
                   Apparaît sur les factures et reçus imprimés.
                 </FieldDescription>
               </Field>
@@ -137,12 +130,12 @@ export function FastPaymentForm({
               <Receipt data-icon="inline-start" className="mr-2" /> Valider
               l'encaissement & Archiver
             </LoadingButton>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Zone Reçu / Live Preview */}
-      <div className="lg:col-span-5">
+      <div className="lg:col-span-4">
         <InvoiceLivePreview
           school={school}
           selectedStudent={selectedStudent}

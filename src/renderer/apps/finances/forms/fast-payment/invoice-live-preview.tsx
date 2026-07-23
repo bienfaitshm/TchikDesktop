@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react";
-import { Landmark, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type {
   School,
@@ -12,7 +12,6 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { formatCurrency } from "@/packages/currency";
 import { formatDate } from "@/packages/times";
@@ -38,6 +37,14 @@ export const InvoiceLivePreview = memo<InvoiceLivePreviewProps>(
       () => new Date().toLocaleDateString("fr-FR"),
       [],
     );
+    const currentTimeFormatted = useMemo(
+      () =>
+        new Date().toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      [],
+    );
     const currentYearFormatted = useMemo(
       () => formatDate(new Date(), "yyyy"),
       [],
@@ -49,143 +56,156 @@ export const InvoiceLivePreview = memo<InvoiceLivePreviewProps>(
           <div className="flex justify-between items-center">
             <Badge
               variant="outline"
-              className="border-emerald-500/30 text-emerald-600 bg-emerald-50/50 font-mono tracking-tight text-[11px]"
+              className="border-primary/30 text-primary bg-primary/10 font-mono tracking-tight text-[11px]"
             >
-              APERÇU LIVE FACTURE
+              <span>APERÇU TICKET</span>
             </Badge>
-            <Landmark className="size-4 text-muted-foreground" />
           </div>
         </CardHeader>
 
-        <CardContent className="flex flex-col gap-4 font-sans text-xs">
-          <div className="text-center flex flex-col gap-1">
-            <h3 className="font-extrabold text-sm tracking-wide uppercase text-foreground">
-              {school?.name}
-            </h3>
-            <p className="text-muted-foreground text-[10px]">
-              {school?.address}
-            </p>
-            <div className="text-[10px] font-mono text-muted-foreground pt-1">
-              Date: {currentDateFormatted}
+        <CardContent className="flex flex-col gap-4 font-mono text-xs">
+          {/* Effet papier thermique : conteneur blanc/crème avec texture de ticket */}
+          <div className="bg-white dark:bg-zinc-950 text-slate-900 dark:text-slate-100 p-4 rounded shadow-md border border-slate-200 dark:border-zinc-800 flex flex-col gap-3 relative before:absolute before:-top-2 before:left-0 before:right-0 before:h-2 before:bg-[radial-gradient(circle,transparent_50%,#ffffff_50%)] before:bg-size-[8px_8px]">
+            {/* En-tête ticket */}
+            <div className="text-center flex flex-col gap-1 pb-2 border-b border-dashed border-slate-300 dark:border-zinc-800">
+              <h3 className="font-bold text-xs tracking-wider uppercase">
+                {school?.name || "ÉCOLE"}
+              </h3>
+              <p className="text-[10px] text-slate-500 dark:text-zinc-400">
+                {school?.address || "Adresse de l'établissement"}
+              </p>
+              <div className="flex justify-between text-[10px] text-slate-500 dark:text-zinc-400 pt-1">
+                <span>Date: {currentDateFormatted}</span>
+                <span>Heure: {currentTimeFormatted}</span>
+              </div>
+              <div className="text-[10px] text-slate-500 dark:text-zinc-400 text-left">
+                Ticket:{" "}
+                <span className="uppercase">
+                  #POS-{currentYearFormatted}-
+                  {Math.floor(1000 + Math.random() * 9000)}
+                </span>
+              </div>
             </div>
-          </div>
 
-          <Separator className="border-dashed" />
+            {/* Infos Élève */}
+            <div className="flex flex-col gap-1.5 min-h-15 py-1 text-[11px] border-b border-dashed border-slate-300 dark:border-zinc-800">
+              <AnimatePresence mode="popLayout">
+                {selectedStudent ? (
+                  <motion.div
+                    key={selectedStudent.enrollmentId}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex flex-col gap-1"
+                  >
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 dark:text-zinc-400">
+                        NOM :
+                      </span>
+                      <span className="font-bold text-right truncate max-w-40">
+                        {selectedStudent.student.fullName}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 dark:text-zinc-400">
+                        CODE :
+                      </span>
+                      <span className="text-right">
+                        {selectedStudent.studentCode || "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 dark:text-zinc-400">
+                        CLASSE :
+                      </span>
+                      <span className="text-right">
+                        {selectedStudent.classroom?.shortIdentifier || "—"}
+                      </span>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="empty-student"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex items-center justify-center h-full text-slate-400 italic text-[10px] py-2"
+                  >
+                    En attente de sélection d'un élève...
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-          <div className="flex flex-col gap-2 min-h-15">
-            <AnimatePresence mode="popLayout">
-              {selectedStudent ? (
-                <motion.div
-                  key={selectedStudent.enrollmentId}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex flex-col gap-2"
-                >
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      Nom, Postnom et Prénom
-                    </span>
-                    <span className="font-bold text-right text-foreground">
-                      {selectedStudent.student.fullName}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      Code de l'élève :
-                    </span>
-                    <span className="font-mono text-right">
-                      {selectedStudent.studentCode || "—"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      Classe / Option :
-                    </span>
-                    <span className="font-medium text-right text-foreground">
-                      {selectedStudent.classroom?.shortIdentifier || "—"}
-                    </span>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="empty-student"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center justify-center h-full text-muted-foreground italic text-[11px]"
-                >
-                  En attente de sélection d'un élève...
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+            {/* Détails Paiement (style ticket de caisse en colonnes) */}
+            <div className="flex flex-col gap-2 min-h-10 py-1">
+              <div className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
+                Désignation
+              </div>
+              <AnimatePresence mode="popLayout">
+                {selectedFeeType && selectedSchedule && (
+                  <motion.div
+                    key={selectedSchedule.scheduleId}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex justify-between items-start text-[11px]"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-bold">{selectedFeeType.label}</span>
+                      <span className="text-[10px] text-slate-500 dark:text-zinc-400">
+                        [{selectedSchedule.label}]
+                      </span>
+                    </div>
+                    <motion.span
+                      key={amountDue}
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="font-bold text-right"
+                    >
+                      {formatCurrency(amountDue)}
+                    </motion.span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-          <Separator className="border-dashed" />
-
-          <div className="flex flex-col gap-2 min-h-10">
-            <AnimatePresence mode="popLayout">
-              {selectedFeeType && selectedSchedule && (
-                <motion.div
-                  key={selectedSchedule.scheduleId}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex justify-between items-start"
-                >
-                  <div>
-                    <p className="font-bold text-foreground">
-                      {selectedFeeType.label}
-                    </p>
-                    <p className="text-muted-foreground text-[10px] mt-0.5">
-                      Échéance : {selectedSchedule.label}
-                    </p>
-                  </div>
+            {/* Total / Net Payé */}
+            <div className="border-t-2 border-dashed border-slate-900 dark:border-zinc-100 pt-3 mt-1">
+              <div className="flex justify-between items-center bg-slate-100 dark:bg-zinc-900 p-2 rounded">
+                <span className="text-xs font-black uppercase tracking-wider">
+                  TOTAL À PAYER
+                </span>
+                <AnimatePresence mode="popLayout">
                   <motion.span
                     key={amountDue}
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="font-mono font-bold text-sm text-foreground"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="font-black text-sm text-emerald-600 dark:text-emerald-400"
                   >
                     {formatCurrency(amountDue)}
                   </motion.span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                </AnimatePresence>
+              </div>
+            </div>
 
-          <Separator className="border-neutral-300 dark:border-neutral-700 my-2" />
-
-          <div className="flex justify-between items-center bg-white dark:bg-black p-3 rounded-lg border shadow-xs">
-            <span className="text-xs font-black uppercase tracking-wider text-foreground">
-              Net Payé
-            </span>
-            <AnimatePresence mode="popLayout">
-              <motion.span
-                key={amountDue}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="font-mono font-black text-lg text-primary"
-              >
-                {formatCurrency(amountDue)}
-              </motion.span>
-            </AnimatePresence>
-          </div>
-
-          <div className="text-center text-[10px] text-muted-foreground pt-2 flex flex-col gap-1">
-            <p className="font-mono text-[9px]">
-              ID Caisse: CAISSE_A_{currentYearFormatted}
-            </p>
+            {/* Pied de page thermique */}
+            <div className="text-center text-[9px] text-slate-400 pt-2 flex flex-col gap-0.5">
+              <p>CAISSE: CAISSE_A_{currentYearFormatted}</p>
+              <p className="tracking-widest mt-1">
+                *** MERCI DE VOTRE VISITE ***
+              </p>
+            </div>
           </div>
 
           <Alert variant="destructive" className="mt-2">
             <AlertTriangle className="size-4" />
             <AlertTitle>Attention</AlertTitle>
             <AlertDescription className="text-[11px] leading-relaxed">
-              Ce montant sera imputé immédiatement. Les transactions archivées
-              ne sont plus modifiables sans droits d'administration.
+              Ce montant sera débité immédiatement. Cette opération est
+              irréversible.
             </AlertDescription>
           </Alert>
         </CardContent>

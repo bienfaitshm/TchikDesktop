@@ -25,8 +25,8 @@ export function FastPaymentPage() {
   });
 
   return (
-    <PageContainer>
-      <PageHeader className="pt-5">
+    <PageContainer className="space-y-4">
+      <PageHeader className="pt-10">
         <PageHeaderTextContent>
           <PageHeadTitle>Terminal de Caisse</PageHeadTitle>
           <PageHeadDescription>
@@ -35,7 +35,7 @@ export function FastPaymentPage() {
           </PageHeadDescription>
         </PageHeaderTextContent>
       </PageHeader>
-      <PageContent>
+      <PageContent className="mt-4">
         <FastPaymentForm
           school={school}
           formId={formId}
