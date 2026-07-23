@@ -153,11 +153,11 @@ export class FeeConfigurationRepository
             yearId: { $eq: ctx.yearId },
           },
         },
-        or: [
-          { feeConfigurations: { optionId: { $eq: ctx.optionId } } },
-          { feeConfigurations: { classroomId: { $eq: ctx.classroomId } } },
-          { feeConfigurations: { section: { $eq: ctx.section } } },
-        ],
+        // or: [
+        //   { feeConfigurations: { classroomId: { $eq: ctx.classroomId } } },
+        //   { feeConfigurations: { optionId: { $eq: ctx.optionId } } },
+        //   { feeConfigurations: { section: { $eq: ctx.section } } },
+        // ],
       };
 
       const queryPayload = helpers.extractQueryPayload(
@@ -198,10 +198,10 @@ export class FeeConfigurationRepository
       >();
 
       for (const config of configs) {
+        if (!config.feeTypeId) continue;
         const currentWeight = getWeight(config);
         const existingConfig = bestConfigsMap.get(config.feeTypeId);
-
-        if (!existingConfig || currentWeight > getWeight(existingConfig)) {
+        if (!existingConfig || currentWeight >= getWeight(existingConfig)) {
           bestConfigsMap.set(config.feeTypeId, config);
         }
       }

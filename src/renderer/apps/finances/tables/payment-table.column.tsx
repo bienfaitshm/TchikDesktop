@@ -15,7 +15,7 @@ import { createSelectColumn } from "@/renderer/components/tables/columns.utils";
  */
 const formatStudentName = (student: User): string => {
   return (
-    [student.firstName, student.middleName, student.lastName]
+    [student.lastName, student.middleName, student.firstName]
       .filter(Boolean)
       .join(" ") || "Élève sans nom"
   );

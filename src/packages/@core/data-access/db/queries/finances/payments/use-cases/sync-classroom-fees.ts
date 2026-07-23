@@ -227,6 +227,11 @@ export class FeeManagementService {
             schoolId: { $eq: schoolId },
           },
         },
+        orderBy: [
+          { table: "users", column: "lastName", order: "asc" },
+          { table: "users", column: "middleName", order: "asc" },
+          { table: "users", column: "firstName", order: "asc" },
+        ],
       },
       this.clientDb,
     );
