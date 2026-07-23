@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/renderer/utils";
 import {
   Command,
@@ -43,6 +42,7 @@ export interface ComboboxSearchProps<T extends ObjectRecord = ObjectRecord> {
   className?: string;
   contentClassName?: string;
   selectedItem?: ComboboxOption<T>;
+  maxDisplayedOptions?: number;
   renderTrigger?: (selected: ComboboxOption<T> | undefined) => React.ReactNode;
   renderItem?: (
     item: ComboboxOption<T>,
@@ -50,14 +50,6 @@ export interface ComboboxSearchProps<T extends ObjectRecord = ObjectRecord> {
   ) => React.ReactNode;
 }
 
-/**
- * Core implementation of the ComboboxSearch.
- * Handles state, hybrid filtering (local to remote threshold), and smooth animations.
- *
- * @param props - The properties applied to the combobox.
- * @param ref - Forwarded reference to the trigger button element.
- * @returns The rendered combobox component.
- */
 function ComboboxSearchInner<T extends ObjectRecord>(
   {
     id,
@@ -73,6 +65,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
     className,
     contentClassName,
     selectedItem,
+    maxDisplayedOptions = 40,
     renderTrigger,
     renderItem,
   }: ComboboxSearchProps<T>,
@@ -103,22 +96,25 @@ function ComboboxSearchInner<T extends ObjectRecord>(
     }
   }, [value, options]);
 
-  // Handle local filtering and relevance sorting
   const filteredOptions = React.useMemo(() => {
     const lowerSearch = search?.toLowerCase().trim();
-    if (!lowerSearch) return options;
 
-    return [...options]
-      .filter((option) => option.label.toLowerCase().includes(lowerSearch))
-      .sort((a, b) => {
-        // Sort items by relevance: Starts with search term > just includes it
-        const aStarts = a.label.toLowerCase().startsWith(lowerSearch);
-        const bStarts = b.label.toLowerCase().startsWith(lowerSearch);
-        if (aStarts && !bStarts) return -1;
-        if (!aStarts && bStarts) return 1;
-        return 0;
-      });
-  }, [options, search]);
+    let result = options;
+
+    if (lowerSearch) {
+      result = [...options]
+        .filter((option) => option.label.toLowerCase().includes(lowerSearch))
+        .sort((a, b) => {
+          const aStarts = a.label.toLowerCase().startsWith(lowerSearch);
+          const bStarts = b.label.toLowerCase().startsWith(lowerSearch);
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+          return 0;
+        });
+    }
+
+    return result.slice(0, maxDisplayedOptions);
+  }, [options, search, maxDisplayedOptions]);
 
   const handleSelect = React.useCallback(
     (option: ComboboxOption<T>) => {
@@ -171,7 +167,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
         <Command
-          shouldFilter={false} // Disabled because filtering and sorting is handled locally
+          shouldFilter={false}
           className="flex flex-col space-y-4 relative"
         >
           <div className="relative flex items-center border-b mb-2 pb-2">
@@ -197,46 +193,37 @@ function ComboboxSearchInner<T extends ObjectRecord>(
             )}
 
             <CommandGroup className="p-1">
-              <AnimatePresence initial={false}>
-                {filteredOptions.map((option) => {
-                  const isSelected = value === option.value;
-                  return (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onSelect={() => handleSelect(option)}
-                      className={cn(
-                        "p-0 mb-1 cursor-pointer rounded-sm text-xs",
-                        isSelected ? "bg-accent/50 text-accent-foreground" : "",
+              {filteredOptions.map((option) => {
+                const isSelected = value === option.value;
+                return (
+                  <CommandItem
+                    key={option.value}
+                    value={option.value}
+                    onSelect={() => handleSelect(option)}
+                    className={cn(
+                      "p-0 mb-1 cursor-pointer rounded-sm text-xs",
+                      isSelected ? "bg-accent/50 text-accent-foreground" : "",
+                    )}
+                  >
+                    <div className="flex w-full items-center gap-2 px-2 py-1.5">
+                      {renderItem ? (
+                        renderItem(option, isSelected)
+                      ) : (
+                        <RenderItem
+                          label={option.label}
+                          description={option.description}
+                          subLabel={option.sublabel}
+                        />
                       )}
-                    >
-                      <motion.div
-                        layout
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="flex w-full items-center gap-2 px-2 py-1.5"
-                      >
-                        {renderItem ? (
-                          renderItem(option, isSelected)
-                        ) : (
-                          <RenderItem
-                            label={option.label}
-                            description={option.description}
-                            subLabel={option.sublabel}
-                          />
-                        )}
-                        {isSelected && (
-                          <CommandShortcut>
-                            <Check className="h-4 w-4 text-primary shrink-0" />
-                          </CommandShortcut>
-                        )}
-                      </motion.div>
-                    </CommandItem>
-                  );
-                })}
-              </AnimatePresence>
+                      {isSelected && (
+                        <CommandShortcut>
+                          <Check className="h-4 w-4 text-primary shrink-0" />
+                        </CommandShortcut>
+                      )}
+                    </div>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>
@@ -255,17 +242,11 @@ export const ComboboxSearch = React.forwardRef(ComboboxSearchInner) as <
 
 (ComboboxSearch as { displayName?: string }).displayName = "ComboboxSearch";
 
-/**
- * Reusable component to render the standard text layout for an option item.
- *
- * @param props - Display values for the item (label, subLabel, description).
- * @returns The structured label element.
- */
 export const RenderItem: React.FC<{
   label: string;
   subLabel?: string;
   description?: string;
-}> = ({ label, subLabel, description }) => (
+}> = React.memo(({ label, subLabel, description }) => (
   <div className="flex-1 truncate gap-0.5">
     <span className="font-medium">{label}</span>
     {(description || subLabel) && (
@@ -274,4 +255,5 @@ export const RenderItem: React.FC<{
       </p>
     )}
   </div>
-);
+));
+RenderItem.displayName = "RenderItem";

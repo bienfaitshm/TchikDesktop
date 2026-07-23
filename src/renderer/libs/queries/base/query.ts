@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   useMutation as useMutationTQ,
   useSuspenseQuery as useSuspenseQueryTQ,
@@ -91,13 +91,14 @@ export interface SearchHookOptions<TFilters = Record<string, unknown>> {
  * @param options - Search configuration options including filters and debounce timing.
  * @returns Search query state, formatted options, loading indicators, and setter function.
  */
+
 export function useGenericSearchOptions<TData, TFilters>(
   useQueryHook: (filters?: TFilters) => {
     data?: TData[];
     isLoading: boolean;
     isFetching: boolean;
   },
-  querySearch: (search: string) => TFilters,
+  querySearch: (search: string, extraFilters?: TFilters) => TFilters,
   options: SearchHookOptions<TFilters> = {},
 ): SearchOptionReturn<TData> {
   const { filters, debounceMs = 300 } = options;
@@ -105,11 +106,17 @@ export function useGenericSearchOptions<TData, TFilters>(
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, debounceMs);
 
-  const serializedFilters = JSON.stringify(filters);
+  // 1. Référence stable pour querySearch (évite que les fonctions anonymes n'invalident le mémo)
+  const querySearchRef = useRef(querySearch);
+  querySearchRef.current = querySearch;
 
+  // 2. Sérialisation optimisée des filtres
+  const serializedFilters = useMemo(() => JSON.stringify(filters), [filters]);
+
+  // 3. Calcul des paramètres combinant la recherche et les filtres
   const queryParams = useMemo(
-    () => querySearch(debouncedSearch),
-    [debouncedSearch, serializedFilters, querySearch],
+    () => querySearchRef.current(debouncedSearch, filters),
+    [debouncedSearch, serializedFilters],
   );
 
   const { data = [], isLoading, isFetching } = useQueryHook(queryParams);

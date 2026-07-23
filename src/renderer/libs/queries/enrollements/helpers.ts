@@ -13,9 +13,10 @@ export interface EnrollmentSearchContextParams {
  * @param params - Contextual filter parameters containing schoolId and yearId.
  * @returns Search query state, matching enrollment options, loading state, and search query setter.
  */
-export function useSearchEnrollments(params: EnrollmentSearchContextParams) {
-  const { schoolId, yearId } = params;
-
+export function useSearchEnrollments({
+  schoolId,
+  yearId,
+}: EnrollmentSearchContextParams) {
   const buildSearchQuery = useCallback(
     (search: string): EnrollmentFilter => ({
       limit: 25,
@@ -61,5 +62,7 @@ export function useSearchEnrollments(params: EnrollmentSearchContextParams) {
     [schoolId, yearId],
   );
 
-  return useGenericSearchOptions(useFetchEnrollments, buildSearchQuery);
+  return useGenericSearchOptions(useFetchEnrollments, buildSearchQuery, {
+    debounceMs: 300,
+  });
 }
