@@ -15,12 +15,13 @@ import { CURRENCY_ENUM } from "../../options";
 export interface TreasuryKpiResult {
   totalExpected: number;
   totalCollected: number;
-  currency: CURRENCY_ENUM;
+  currency?: CURRENCY_ENUM;
 }
 
 export interface RevenueChartDataResult {
   date: Date;
   collected: number;
+  currency: CURRENCY_ENUM;
 }
 
 export interface RecentPaymentResult {
@@ -73,10 +74,7 @@ export class FinancialStatisticsService {
     currentYearId: string,
   ): FinDashBoard {
     const kpis = this.getTreasuryKpis(currentSchoolId, currentYearId);
-    const revenueChart = this.getRevenueChartData(
-      currentSchoolId,
-      currentYearId,
-    );
+    const revenueChart = this.getDailyRevenue(currentSchoolId, currentYearId);
     const recentPayments = this.getRecentPayments(
       currentSchoolId,
       currentYearId,
@@ -130,19 +128,19 @@ export class FinancialStatisticsService {
   }
 
   /**
-   * Retrieves temporal data for the revenue chart grouped by day.
-   * @param currentSchoolId - The identifier of the school.
-   * @param currentYearId - The identifier of the current academic year.
-   * @returns An array of aggregated daily revenue records.
+   * Retrieves daily collected revenue grouped by date and currency for a specific school and academic year.
+   * @param currentSchoolId - Unique identifier of the target school.
+   * @param currentYearId - Unique identifier of the academic year.
+   * @returns An array of aggregated daily payment records containing date, total collected amount, and currency.
    */
-  public getRevenueChartData(
-    currentSchoolId: string,
-    currentYearId: string,
-  ): RevenueChartDataResult[] {
+  getDailyRevenue(currentSchoolId: string, currentYearId: string) {
+    const dateExpression = sql<Date>`DATE(${studentPayments.createdAt}, 'unixepoch')`;
+
     return this.db
       .select({
-        date: studentPayments.createdAt,
+        date: dateExpression,
         collected: sql<number>`COALESCE(SUM(${studentPayments.amountConverted}), 0)`,
+        currency: studentPayments.currencyReceived,
       })
       .from(studentPayments)
       .where(
@@ -151,8 +149,8 @@ export class FinancialStatisticsService {
           eq(studentPayments.yearId, currentYearId),
         ),
       )
-      .groupBy(sql`DATE(${studentPayments.createdAt})`)
-      .orderBy(sql`DATE(${studentPayments.createdAt})`)
+      .groupBy(dateExpression, studentPayments.currencyReceived)
+      .orderBy(dateExpression)
       .all();
   }
 
