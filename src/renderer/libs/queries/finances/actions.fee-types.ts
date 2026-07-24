@@ -181,5 +181,6 @@ export function useDeleteFeeTypeForm(config?: BaseMutationConfig<void>) {
   return {
     deleteFeeType,
     isDeleting: mutation.isPending,
+    onDelete: deleteFeeType,
   };
 }

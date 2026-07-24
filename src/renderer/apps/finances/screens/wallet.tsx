@@ -29,7 +29,6 @@ import {
   PageHeaderTextContent,
   PageHeadTitle,
 } from "@/renderer/containers/page-container";
-import { Separator } from "@/renderer/components/ui/separator";
 import {
   ActionMenuConfig,
   createActionMenus,
@@ -161,7 +160,7 @@ export function SchoolWalletPage() {
 
   return (
     <PageContainer>
-      <PageHeader>
+      <PageHeader className="border-b">
         <PageHeaderTextContent>
           <PageHeadTitle>Trésorerie & Structure de Frais</PageHeadTitle>
           <PageHeadDescription>
@@ -191,7 +190,6 @@ export function SchoolWalletPage() {
           </div>
         </PageHeadAction>
       </PageHeader>
-      <Separator />
       <PageContent className="space-y-8 mt-6">
         <section className="space-y-4">
           <div className="flex items-center gap-2">
