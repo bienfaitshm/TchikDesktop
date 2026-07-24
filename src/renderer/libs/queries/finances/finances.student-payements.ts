@@ -8,7 +8,7 @@ import type {
 import type { TQueryUpdate } from "../type";
 import type {
   SelectOption,
-  StudentPaymentTDO,
+  StudentPaymentDTO,
 } from "@/packages/@core/data-access/db/queries";
 import type {
   UseMutationOptions,
@@ -32,7 +32,7 @@ export const studentPaymentKeys = {
 
 export function useGetStudentPayments(
   params?: StudentPaymentFilter,
-  options?: Partial<UseSuspenseQueryOptions<StudentPaymentTDO[]>>,
+  options?: Partial<UseSuspenseQueryOptions<StudentPaymentDTO[]>>,
 ) {
   return useSuspenseQuery({
     queryKey: studentPaymentKeys.lists(params),
@@ -44,7 +44,7 @@ export function useGetStudentPayments(
 export function useGetStudentPaymentAsOptions(
   params?: StudentPaymentFilter,
   options?: Partial<
-    UseSuspenseQueryOptions<(SelectOption & StudentPaymentTDO)[]>
+    UseSuspenseQueryOptions<(SelectOption & StudentPaymentDTO)[]>
   >,
 ) {
   return useSuspenseQuery({
@@ -56,7 +56,7 @@ export function useGetStudentPaymentAsOptions(
 
 export function useGetStudentPaymentById(
   paymentId: string,
-  options?: Partial<UseSuspenseQueryOptions<StudentPaymentTDO>>,
+  options?: Partial<UseSuspenseQueryOptions<StudentPaymentDTO>>,
 ) {
   return useSuspenseQuery({
     queryKey: studentPaymentKeys.detail(paymentId),
@@ -67,7 +67,7 @@ export function useGetStudentPaymentById(
 
 export function useCreateStudentPayment(
   options?: Partial<
-    UseMutationOptions<StudentPaymentTDO, Error, StudentPaymentCreate>
+    UseMutationOptions<StudentPaymentDTO, Error, StudentPaymentCreate>
   >,
 ) {
   return useMutation({
@@ -80,7 +80,7 @@ export function useCreateStudentPayment(
 export function useUpdateStudentPayment(
   options?: Partial<
     UseMutationOptions<
-      StudentPaymentTDO,
+      StudentPaymentDTO,
       Error,
       TQueryUpdate<StudentPaymentUpdate>
     >

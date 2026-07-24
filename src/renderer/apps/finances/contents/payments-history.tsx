@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/empty";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RecentPaymentView } from "../components/recent-payment-view";
 
 const DEFAULT_PAYMENTS_LIMIT = 50;
 
@@ -25,12 +26,18 @@ interface EmptyHistoryProps {
   onRefresh?: () => void;
 }
 
+export type PaymentHistoryContentProps = {
+  isTable?: boolean;
+};
+
 /**
  * Displays the payment history table for the current school and academic year.
  * Handles loading, empty, and data-loaded states automatically.
  * @returns The rendered React element corresponding to the current state.
  */
-export const PaymentHistoryContent = () => {
+export const PaymentHistoryContent = ({
+  isTable,
+}: PaymentHistoryContentProps) => {
   const { schoolId, yearId } = useCurrentConfig();
   const {
     data: payments,
@@ -52,6 +59,33 @@ export const PaymentHistoryContent = () => {
 
   if (!payments || payments.length === 0) {
     return <EmptyHistory onRefresh={refetch} />;
+  }
+
+  if (payments && payments.length > 0 && !isTable) {
+    return (
+      <RecentPaymentView
+        payments={payments}
+        formatData={({
+          classroom,
+          paymentId,
+          feeType,
+          amountReceived,
+          student,
+          currencyReceived,
+          paymentMethod,
+          transactionReference,
+        }) => ({
+          amount: amountReceived,
+          classroomName: classroom.identifier,
+          currency: currencyReceived,
+          feeTypeName: feeType.name,
+          paymentId: paymentId,
+          studentName: student.fullName,
+          method: paymentMethod,
+          reference: transactionReference,
+        })}
+      />
+    );
   }
 
   return <PaymentTable payments={payments} />;

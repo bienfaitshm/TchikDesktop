@@ -17,6 +17,8 @@ import {
   PaymentHistoryContent,
   PaymentHistorySkeleton,
 } from "@/renderer/apps/finances/contents/payments-history";
+import { Link } from "react-router";
+import { APP_ROUTES } from "@/renderer/constants";
 
 /**
  * Props for the PaymentHistoryDialog component.
@@ -36,7 +38,7 @@ export function PaymentHistoryDialog({ children }: PaymentHistoryDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-2xl sm:max-w-3xl">
+      <DialogContent className="sm:max-w-lg md:max-w-2xl lg:max-w-4xl flex flex-col max-h-[85vh]">
         <DialogHeader>
           <DialogTitle>Historique des paiements</DialogTitle>
           <DialogDescription>
@@ -45,7 +47,7 @@ export function PaymentHistoryDialog({ children }: PaymentHistoryDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[60vh] min-h-75 overflow-y-auto pr-1">
+        <div className="-mx-4 my-2 overflow-y-auto border-t border-border/60 px-4 max-h-[40vh] scrollbar-thin scrollbar-thumb-muted-foreground/20">
           <Suspense fallback={<PaymentHistorySkeleton />}>
             <PaymentHistoryContent />
           </Suspense>
@@ -55,16 +57,23 @@ export function PaymentHistoryDialog({ children }: PaymentHistoryDialogProps) {
           <p className="self-center text-xs text-muted-foreground">
             Mise à jour en temps réel
           </p>
-          <DialogClose asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="text-xs"
-            >
-              Fermer
-            </Button>
-          </DialogClose>
+          <div className="flex items-center gap-4">
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-xs"
+              >
+                Fermer
+              </Button>
+            </DialogClose>
+            <Link to={APP_ROUTES.FIN.PAYMENTS.HISTORIES}>
+              <Button size="sm" className="text-xs">
+                Voir plus
+              </Button>
+            </Link>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -11,9 +11,7 @@ import {
   WalletCards,
   Receipt,
   Landmark,
-  Plus,
   Coins,
-  Settings,
   Layers,
   Loader2,
 } from "lucide-react";
@@ -31,12 +29,13 @@ import { APP_ROUTES } from "@/renderer/constants";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { useGetFinancialDashboardData } from "@/renderer/libs/queries/dashboard/dashboard";
 import { formatCurrency } from "@/packages/currency";
+import { RecentPaymentView } from "../components/recent-payment-view";
 
 export function SchoolFinanceDashboard() {
   const { schoolId, yearId } = useCurrentConfig();
   const { data, isLoading } = useGetFinancialDashboardData({
-    schoolId,
-    yearId,
+    schoolId: schoolId!,
+    yearId: yearId!,
   });
 
   // Déstructuration sécurisée avec données de repli
@@ -259,24 +258,6 @@ export function SchoolFinanceDashboard() {
               <h2 className="text-2xl font-bold tracking-tight text-foreground">
                 Trésorerie
               </h2>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full w-9 h-9 border-border shadow-sm"
-                  title="Ajouter une configuration"
-                >
-                  <Plus className="w-4 h-4 text-foreground" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full w-9 h-9 border-border shadow-sm"
-                  title="Ajuster les taux"
-                >
-                  <Settings className="w-4 h-4 text-muted-foreground" />
-                </Button>
-              </div>
             </div>
 
             {/* Cartes Récapitulatives */}
@@ -291,8 +272,8 @@ export function SchoolFinanceDashboard() {
                       Frais Attendus
                     </p>
                   </div>
-                  <p className="text-lg font-bold text-foreground mt-2">
-                    {formatCurrency(kpis.totalExpected, "USD")}
+                  <p className="text-md font-bold text-foreground mt-2">
+                    {formatCurrency(kpis.totalExpected, kpis.currency)}
                   </p>
                 </CardContent>
               </Card>
@@ -307,8 +288,8 @@ export function SchoolFinanceDashboard() {
                       Total Encaissé
                     </p>
                   </div>
-                  <p className="text-lg font-bold text-background mt-2">
-                    {formatCurrency(kpis.totalCollected, "USD")}
+                  <p className="text-md font-bold text-background mt-2">
+                    {formatCurrency(kpis.totalCollected, kpis.currency)}
                   </p>
                 </CardContent>
               </Card>
@@ -329,47 +310,10 @@ export function SchoolFinanceDashboard() {
                   </Button>
                 </Link>
               </div>
-              <div className="space-y-3">
-                {recentPayments.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-2">
-                    Aucun paiement récent enregistré.
-                  </p>
-                ) : (
-                  recentPayments.map((payment) => (
-                    <div
-                      key={payment.paymentId}
-                      className="flex items-center justify-between p-2 rounded-xl hover:bg-muted/50 transition-colors -mx-2"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full border border-border bg-background flex items-center justify-center text-xs font-bold text-foreground shadow-xs">
-                          {payment.studentName
-                            ? payment.studentName[0].toUpperCase()
-                            : "?"}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-sm text-foreground leading-snug">
-                            {payment.studentName}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground line-clamp-1">
-                            {payment.feeTypeName} •{" "}
-                            <span className="text-primary font-medium">
-                              {payment.classroomName}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-sm text-foreground whitespace-nowrap">
-                          {formatCurrency(payment.amount, payment.currency)}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground font-mono">
-                          {payment.reference || payment.method}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+              <RecentPaymentView
+                payments={recentPayments}
+                formatData={(payment) => payment}
+              />
             </div>
 
             {/* Taux de Recouvrement par Type de Frais */}

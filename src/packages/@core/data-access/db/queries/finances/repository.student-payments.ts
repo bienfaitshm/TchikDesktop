@@ -13,11 +13,10 @@ import {
   classroomEnrollments,
   users,
   StudentPayment,
-  User,
 } from "@/packages/@core/data-access/db/schemas";
 import { helpers, betterSqlite } from "@/packages/drizzle-queries";
 import { eq, getTableColumns } from "drizzle-orm";
-import { UserRepository } from "../users";
+import { UserDTO, UserRepository } from "../users";
 
 const TABLES = {
   classrooms,
@@ -35,7 +34,7 @@ export type BaseStudentPaymentFilters = helpers.FindManyOptions<typeof TABLES>;
 export type StudentPaymentDTO = StudentPayment & {
   feeType: FeeType;
   classroom: Classroom;
-  student: User;
+  student: UserDTO;
 };
 
 const DEFAULT_SORT: BaseStudentPaymentFilters = {
