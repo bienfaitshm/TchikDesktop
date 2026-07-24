@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import type { FieldValues } from "react-hook-form";
 import type { FeeConfiguration } from "@/packages/@core/data-access/db";
 import {
@@ -6,11 +6,8 @@ import {
   SECTION_OPTIONS,
 } from "@/packages/@core/data-access/db/options";
 import type {
-  ClassroomFilter,
   FeeConfigurationCreate,
   FeeConfigurationUpdate,
-  FeeTypeFilter,
-  OptionFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { withNotifications } from "@/renderer/libs/notifications";
 import { useSearchClassrooms } from "@/renderer/libs/queries/classrooms";
@@ -29,6 +26,7 @@ import {
 import { useSearchFeeTypeOptions } from "./helpers";
 
 export type FeeConfigurationFormConfig = BaseMutationConfig<FeeConfiguration>;
+export type FeeConfigurationFormData = FeeConfiguration;
 
 export interface FeeConfigContextParams {
   schoolId: string;
@@ -83,28 +81,9 @@ export const useFeeConfigBaseForm = <
   ...params
 }: FeeConfigContextParams &
   UseBaseParams<TFormData, TMutateInput, TReturnData>) => {
-  const schoolFilter: OptionFilter = useMemo(
-    () => ({ where: { options: { schoolId: { $eq: schoolId } } } }),
-    [schoolId],
-  );
-
-  const classroomFilter: ClassroomFilter = useMemo(
-    () => ({ where: { classrooms: { schoolId: { $eq: schoolId } } } }),
-    [schoolId],
-  );
-
-  const feeTypeFilter: FeeTypeFilter = useMemo(
-    () => ({
-      where: {
-        feeTypes: { schoolId: { $eq: schoolId }, yearId: { $eq: yearId } },
-      },
-    }),
-    [schoolId, yearId],
-  );
-
-  const classroomSearch = useSearchClassrooms(classroomFilter);
-  const optionSearch = useSearchOptions(schoolFilter);
-  const feeTypeSearch = useSearchFeeTypeOptions(feeTypeFilter);
+  const classroomSearch = useSearchClassrooms({ schoolId });
+  const optionSearch = useSearchOptions({ schoolId });
+  const feeTypeSearch = useSearchFeeTypeOptions({ schoolId, yearId });
 
   const base = useFormBaseNotify<TFormData, TMutateInput, TReturnData>(params);
 

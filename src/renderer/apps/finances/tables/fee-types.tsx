@@ -90,8 +90,6 @@ export const FeeTypeTable: React.FC<FeeTypeTableProps> = ({
   mutationKey,
   schoolId,
 }) => {
-  const serializedMutationKey = JSON.stringify(mutationKey);
-
   const columns = React.useMemo(
     () =>
       enhanceColumns(feeTypeColumns, {
@@ -104,7 +102,7 @@ export const FeeTypeTable: React.FC<FeeTypeTableProps> = ({
           />
         ),
       }),
-    [serializedMutationKey, schoolId],
+    [mutationKey, schoolId],
   );
 
   return (

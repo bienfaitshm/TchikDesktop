@@ -15,9 +15,7 @@ export function useSearchClassrooms(options: ClassroomSearchContextParams) {
       limit: 25,
       where: {
         classrooms: {
-          schoolId: {
-            $eq: schoolId,
-          },
+          schoolId,
         },
       },
       or: [

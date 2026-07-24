@@ -1,4 +1,4 @@
-import type { FeeConfiguration } from "@/packages/@core/data-access/db";
+import type { FeeConfigurationDTO } from "@/packages/@core/data-access/db";
 import {
   DataContentBody,
   DataContentHead,
@@ -14,72 +14,66 @@ import {
 import { feeConfigColumns } from "./fee-config-table.columns";
 import { enhanceColumns } from "@/renderer/components/tables/columns";
 import React from "react";
-import {
-  ActionMenu,
-  MenuDialogItem,
-  MenuDialogWrapper,
-} from "@/renderer/components/menus/dropdown";
-import { DropdownMenuSeparator } from "@/renderer/components/ui/dropdown-menu";
-import { ButtonMenu } from "@/renderer/components/buttons/button-menu";
 import { Pencil, Trash2 } from "lucide-react";
+import {
+  ActionMenuConfig,
+  createActionMenus,
+} from "@/renderer/components/menus/action-menus";
 
 interface FeeConfigurationRowActionsProps extends Pick<
   FeeConfigDialogProps,
   "mutationKey"
 > {
-  feeConfiguration: FeeConfiguration;
+  feeConfiguration: FeeConfigurationDTO;
   schoolId: string;
   yearId: string;
 }
 
-export const RowAction: React.FC<FeeConfigurationRowActionsProps> = ({
-  mutationKey,
-  feeConfiguration,
-  schoolId,
-  yearId,
-}) => (
-  <ActionMenu
-    trigger={<ButtonMenu />}
-    dialogs={
-      <>
-        <MenuDialogWrapper id="edit">
-          <FeeConfigurationDialogUpdateForm
-            schoolId={schoolId}
-            yearId={yearId}
-            mutationKey={mutationKey}
-            feeConfigId={feeConfiguration.feeConfigId}
-            defaultValues={feeConfiguration}
-          />
-        </MenuDialogWrapper>
-        <MenuDialogWrapper id="delete">
-          <FeeConfigurationDialogDeleteForm
-            mutationKey={mutationKey}
-            id={feeConfiguration.feeConfigId}
-            name={feeConfiguration.name}
-          />
-        </MenuDialogWrapper>
-      </>
-    }
-  >
-    <MenuDialogItem targetId="edit" className="gap-2 cursor-pointer">
-      <Pencil className="size-4 text-muted-foreground" />
-      <span>Modifier le type de frais</span>
-    </MenuDialogItem>
+const MENUS: ActionMenuConfig<FeeConfigurationRowActionsProps>[] = [
+  {
+    id: "edit",
+    label: "Modifier le type de frais",
+    icon: Pencil,
+    dialog({ feeConfiguration, schoolId, yearId, mutationKey }) {
+      return (
+        <FeeConfigurationDialogUpdateForm
+          schoolId={schoolId}
+          yearId={yearId}
+          mutationKey={mutationKey}
+          feeConfigId={feeConfiguration.feeConfigId}
+          defaultValues={feeConfiguration}
+        />
+      );
+    },
+  },
+  {
+    id: "delete",
+    label: "Supprimer le type de frais",
+    icon: Trash2,
+    separator: true,
+    variant: "destructive",
+    dialog({ feeConfiguration, mutationKey }) {
+      return (
+        <FeeConfigurationDialogDeleteForm
+          mutationKey={mutationKey}
+          id={feeConfiguration.feeConfigId}
+          name={feeConfiguration.name}
+        />
+      );
+    },
+  },
+];
 
-    <DropdownMenuSeparator />
-
-    <MenuDialogItem
-      targetId="delete"
-      className="gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-    >
-      <Trash2 className="size-4" />
-      <span>Supprimer le type de frais</span>
-    </MenuDialogItem>
-  </ActionMenu>
-);
+/**
+ * Renders contextual action menus for a given fee type row.
+ * @param props - Component properties containing the fee type entity, school ID, and mutation key.
+ * @returns The rendered action menu component.
+ */
+export const RowAction: React.FC<FeeConfigurationRowActionsProps> =
+  createActionMenus<FeeConfigurationRowActionsProps>(MENUS);
 
 export type FeeConfigTableProps = {
-  feeConfigurations?: FeeConfiguration[];
+  feeConfigurations?: FeeConfigurationDTO[];
   mutationKey?: readonly unknown[];
   schoolId: string;
   yearId: string;
@@ -111,14 +105,14 @@ export const FeeConfigTable: React.FC<FeeConfigTableProps> = ({
 
   return (
     <div className="w-full">
-      <DataTable<FeeConfiguration>
+      <DataTable<FeeConfigurationDTO>
         data={feeConfigurations}
         columns={columns}
         keyExtractor={(item) => item.feeConfigId}
       >
         <DataTableContent>
           <DataContentHead />
-          <DataContentBody<FeeConfiguration> />
+          <DataContentBody<FeeConfigurationDTO> />
         </DataTableContent>
         <DataTablePagination />
       </DataTable>

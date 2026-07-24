@@ -42,7 +42,7 @@ export const CreateFeeConfigurationDialog = createBaseActionDialog<
     "Configurez une nouvelle grille de frais (montant, devise) appliquée à une cible spécifique.",
   useForm: (config) =>
     useCreateFeeConfigurationForm(
-      { schoolId: config.schoolId, yearId: config.yearId },
+      { schoolId: config?.schoolId!, yearId: config?.yearId! },
       config,
     ),
   form({
@@ -86,25 +86,27 @@ export const UpdateFeeConfigurationDialog = createBaseActionDialog<
   description:
     "Modifiez les montants ou les cibles. Attention aux impacts sur les calculs de dettes d'élèves.",
   useForm: (config) =>
-    useUpdateFeeConfigurationForm({
-      ...config,
-      schoolId: config.schoolId,
-      yearId: config.yearId,
-    }),
-  form({
-    formId,
-    onSubmit,
-    currencyOptions,
-    sectionOptions,
-    feeTypeSearch,
-    optionSearch,
-    classroomSearch,
-    defaultValues,
-  }): ReactNode {
+    useUpdateFeeConfigurationForm(
+      { schoolId: config?.schoolId!, yearId: config?.yearId! },
+      config,
+    ),
+  form(
+    {
+      formId,
+      onSubmit,
+      currencyOptions,
+      sectionOptions,
+      feeTypeSearch,
+      optionSearch,
+      classroomSearch,
+      defaultValues,
+    },
+    { feeConfigId: id },
+  ): ReactNode {
     return (
       <FeeConfigurationForm
         formId={formId}
-        onSubmit={onSubmit}
+        onSubmit={(data, helpers) => onSubmit({ data, id }, helpers as any)}
         currencyOptions={currencyOptions}
         sectionOptions={sectionOptions}
         feeTypeSearch={feeTypeSearch}

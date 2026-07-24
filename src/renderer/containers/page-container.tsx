@@ -21,7 +21,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
     <ScrollArea className="h-full w-full flex-1">
       <div
         className={cn(
-          "mx-auto flex-1 w-full px-6 lg:px-10 lg:pt-5 max-w-(--breakpoint-xl)",
+          "mx-auto flex-1 w-full px-6 lg:px-10 lg:pt-16 max-w-(--breakpoint-xl)",
           className,
         )}
         {...props}
@@ -47,7 +47,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 }) => {
   return (
     <div
-      className={cn("flex justify-between items-end gap-4 mb-10", className)}
+      className={cn(
+        "flex justify-between items-end gap-4 mb-10 pb-5",
+        className,
+      )}
       {...props}
     >
       {children}
