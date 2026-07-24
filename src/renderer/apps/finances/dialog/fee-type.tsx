@@ -43,12 +43,12 @@ export type UpdateFeeTypeDialogProps = FeeTypeDialogProps & {
 function useCreateFeeTypeFormManager(config: CreateFeeTypeDialogProps) {
   const { pressed, onPressedChange } = useButtonInsertToggle();
   const bulkFormState = useBulkCreateFeeTypeForm({
-    schoolId: config.schoolId,
     ...config,
+    schoolId: config.schoolId,
   });
   const singleFormState = useCreateFeeTypeForm({
-    schoolId: config.schoolId,
     ...config,
+    schoolId: config.schoolId,
   });
 
   const activeFormState = pressed ? bulkFormState : singleFormState;
@@ -128,13 +128,16 @@ export const UpdateFeeTypeDialog = createBaseActionDialog<
   useForm: (config) =>
     useUpdateFeeTypeForm({
       ...config,
-      schoolId: config.schoolId,
+      schoolId: config?.schoolId!,
     }),
-  form({ formId, onSubmit, options, defaultValues }): ReactNode {
+  form(
+    { formId, onSubmit, options, defaultValues },
+    { feeTypeId: id },
+  ): ReactNode {
     return (
       <FeeTypeForm
         formId={formId}
-        onSubmit={onSubmit}
+        onSubmit={(data, helpers) => onSubmit({ data, id }, helpers as any)}
         walletsOptions={options}
         defaultValues={defaultValues}
       />

@@ -22,9 +22,8 @@ import {
 } from "./finances";
 
 type SchoolContext = Partial<Pick<FeeType, "schoolId">>;
-export type HookActionsParams<T = FeeType> = SchoolContext &
+export type FeeTypeFormConfig<T = FeeType> = SchoolContext &
   BaseMutationConfig<T>;
-
 const CREATE_FEE_TYPE_NOTIFICATIONS = {
   success: {
     title: "Type de frais créé",
@@ -92,7 +91,7 @@ const useBaseFeeType = <
  * @param config - Optional configuration and school context parameters.
  * @returns Form state, handlers, and wallet selection options.
  */
-export function useCreateFeeTypeForm(config?: HookActionsParams) {
+export function useCreateFeeTypeForm(config?: FeeTypeFormConfig) {
   const mutation = useCreateFeeType();
 
   const adaptData = useCallback((data: FeeTypeCreate) => data, []);
@@ -112,7 +111,7 @@ export function useCreateFeeTypeForm(config?: HookActionsParams) {
  * @returns Form state, handlers, and wallet selection options.
  */
 export function useBulkCreateFeeTypeForm(
-  config?: HookActionsParams<FeeType[]>,
+  config?: FeeTypeFormConfig<FeeType[]>,
 ) {
   const mutation = useBulkCreateFeeType();
 
@@ -133,7 +132,7 @@ export function useBulkCreateFeeTypeForm(
  * @returns Form state, handlers, and wallet selection options.
  */
 export function useUpdateFeeTypeForm(
-  config?: HookActionsParams<FeeTypeUpdate>,
+  config?: FeeTypeFormConfig<FeeTypeUpdate>,
 ) {
   const mutation = useUpdateFeeType();
 

@@ -32,7 +32,7 @@ interface FeeConfigurationRowActionsProps extends Pick<
 const MENUS: ActionMenuConfig<FeeConfigurationRowActionsProps>[] = [
   {
     id: "edit",
-    label: "Modifier le type de frais",
+    label: "Modifier la configuration",
     icon: Pencil,
     dialog({ feeConfiguration, schoolId, yearId, mutationKey }) {
       return (
@@ -48,7 +48,7 @@ const MENUS: ActionMenuConfig<FeeConfigurationRowActionsProps>[] = [
   },
   {
     id: "delete",
-    label: "Supprimer le type de frais",
+    label: "Supprimer la configuration",
     icon: Trash2,
     separator: true,
     variant: "destructive",
