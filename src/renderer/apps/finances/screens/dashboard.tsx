@@ -1,28 +1,7 @@
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import {
-  WalletCards,
-  Receipt,
-  Landmark,
-  Coins,
-  Layers,
-  Loader2,
-} from "lucide-react";
+import { WalletCards, Receipt, Landmark, Layers, Loader2 } from "lucide-react";
 import { Button } from "@/renderer/components/ui/button";
 import { Card, CardContent } from "@/renderer/components/ui/card";
 import { Badge } from "@/renderer/components/ui/badge";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/renderer/components/ui/toggle-group";
-
 import { ScrollArea } from "@/renderer/components/ui/scroll-area";
 import { Link } from "react-router";
 import { APP_ROUTES } from "@/renderer/constants";
@@ -30,6 +9,7 @@ import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { useGetFinancialDashboardData } from "@/renderer/libs/queries/dashboard/dashboard";
 import { formatCurrency } from "@/packages/currency";
 import { RecentPaymentView } from "../components/recent-payment-view";
+import { RevenueChart } from "../components/revenu-chart";
 
 export function SchoolFinanceDashboard() {
   const { schoolId, yearId } = useCurrentConfig();
@@ -62,135 +42,31 @@ export function SchoolFinanceDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* --- COLONNE GAUCHE (Graphique & Performance par classe) --- */}
           <div className="lg:col-span-2 space-y-10">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                Aperçu Financier
-              </h1>
-              <Button
-                size="sm"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 font-medium shadow-sm self-start sm:self-auto"
-              >
-                <Coins className="w-4 h-4" /> Encaisser un Paiement
-              </Button>
-            </div>
-
             {/* Header Graphique */}
-            <div className="flex justify-between items-end flex-wrap gap-4">
+            <div className="flex flex-col gap-2">
+              <h3 className="font-bold text-xl text-foreground tracking-tight">
+                Aperçu Financier
+              </h3>
               <div>
                 <div className="flex items-center gap-4">
-                  <h2 className="text-4xl font-bold text-foreground">
-                    {formatCurrency(kpis.totalCollected, "USD")}
+                  <h2 className="text-3xl font-bold text-foreground">
+                    {formatCurrency(kpis.totalCollected, kpis.currency)}
                   </h2>
                   <Badge className="bg-primary text-primary-foreground hover:bg-primary/90 px-2 py-0.5 text-xs font-semibold">
                     Global
                   </Badge>
                 </div>
-                <p className="text-lg font-medium text-muted-foreground mt-1">
+                <p className="text-sm font-medium text-muted-foreground mt-1">
                   Total encaissé global
                 </p>
               </div>
             </div>
 
             {/* Graphique des Revenus */}
-            <div className="bg-card rounded-xl p-4 h-88 border border-border shadow-sm">
-              {revenueChart.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
-                  Aucune donnée de paiement disponible pour la période.
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={revenueChart}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      vertical={true}
-                      horizontal={true}
-                      stroke="var(--color-border)"
-                      opacity={0.5}
-                    />
-                    <XAxis
-                      dataKey="dateString"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{
-                        fill: "var(--color-muted-foreground)",
-                        fontSize: 12,
-                      }}
-                      tickMargin={10}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{
-                        fill: "var(--color-muted-foreground)",
-                        fontSize: 12,
-                      }}
-                      tickFormatter={(value) => `$${value}`}
-                      domain={["auto", "auto"]}
-                      width={60}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "var(--color-popover)",
-                        borderColor: "var(--color-border)",
-                        color: "var(--color-popover-foreground)",
-                        borderRadius: "var(--radius-md)",
-                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                      }}
-                      itemStyle={{
-                        color: "var(--color-foreground)",
-                        fontWeight: 500,
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="collected"
-                      stroke="var(--color-primary)"
-                      strokeWidth={3}
-                      dot={false}
-                      name="Encaissé"
-                      activeDot={{
-                        r: 6,
-                        strokeWidth: 2,
-                        stroke: "var(--color-background)",
-                        fill: "var(--color-primary)",
-                      }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-
-              {/* Contrôles du graphique */}
-              <div className="flex justify-between items-center mt-4 flex-wrap gap-2">
-                <ToggleGroup
-                  type="single"
-                  defaultValue="30d"
-                  variant="outline"
-                  className="p-1 rounded-lg bg-muted/50 border border-border"
-                >
-                  <ToggleGroupItem
-                    value="7d"
-                    className="text-xs px-3 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground rounded-md border-0"
-                  >
-                    7J
-                  </ToggleGroupItem>
-                  <ToggleGroupItem
-                    value="30d"
-                    className="text-xs px-3 py-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground rounded-md border-0"
-                  >
-                    30J
-                  </ToggleGroupItem>
-                  <ToggleGroupItem
-                    value="year"
-                    className="text-xs px-3 py-1 data-[state=on]:bg-background data-[state=on]:text-foreground rounded-md border-0"
-                  >
-                    Année
-                  </ToggleGroupItem>
-                </ToggleGroup>
-              </div>
-            </div>
+            <RevenueChart revenueChart={revenueChart} />
 
             {/* Suivi par Classe */}
-            <div className="pt-4 space-y-4">
+            <div className="pt-10 space-y-4">
               <div className="flex justify-between items-center">
                 <div>
                   <h3 className="font-bold text-xl text-foreground tracking-tight">
@@ -200,10 +76,16 @@ export function SchoolFinanceDashboard() {
                     Pourcentage de perception des frais par salle de classe.
                   </p>
                 </div>
+                <Button
+                  variant="link"
+                  className="text-xs text-primary h-auto p-0 hover:text-primary/80"
+                >
+                  Voir tout
+                </Button>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {classroomPerformance.map((item) => {
+                {classroomPerformance.slice(0, 4).map((item) => {
                   const paidPercentage =
                     item.totalExpected > 0
                       ? Math.min(
@@ -255,9 +137,9 @@ export function SchoolFinanceDashboard() {
           {/* --- COLONNE DROITE (Trésorerie, Derniers Paiements & Types de Frais) --- */}
           <div className="lg:col-span-1 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">
+              <h3 className="font-bold text-xl text-foreground tracking-tight">
                 Trésorerie
-              </h2>
+              </h3>
             </div>
 
             {/* Cartes Récapitulatives */}
