@@ -29,7 +29,7 @@ export const ClassroomPaymentDetailPage = () => {
 
   return (
     <PageContainer>
-      <PageHeader className="mt-10">
+      <PageHeader>
         <PageHeaderTextContent>
           <PageHeadTitle>
             Tableau de paiement de{" "}
