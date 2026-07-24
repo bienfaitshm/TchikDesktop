@@ -1,11 +1,5 @@
 import type { FeeSchedule, FeeType } from "@/packages/@core/data-access/db";
 import { LoadingButton } from "@/renderer/components/buttons/button-loading";
-import { ButtonMenu } from "@/renderer/components/buttons/button-menu";
-import {
-  ActionMenu,
-  MenuDialogItem,
-  MenuDialogWrapper,
-} from "@/renderer/components/menus/dropdown";
 import {
   Dialog,
   DialogClose,
@@ -15,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/renderer/components/ui/dialog";
-import { DropdownMenuSeparator } from "@/renderer/components/ui/dropdown-menu";
 import { Spinner } from "@/renderer/components/ui/spinner";
 import {
   Table,
@@ -39,6 +32,10 @@ import {
   type FeeScheduleDialogProps,
 } from "./schedule";
 import { Button } from "@/renderer/components/ui/button";
+import {
+  ActionMenuConfig,
+  createActionMenus,
+} from "@/renderer/components/menus/action-menus";
 
 const EMPTY_SCHEDULES: FeeSchedule[] = [];
 
@@ -49,55 +46,49 @@ export interface FeeScheduleRowActionProps extends Pick<
   feeSchedule: FeeSchedule;
 }
 
+const MENUS: ActionMenuConfig<FeeScheduleRowActionProps>[] = [
+  {
+    id: "edit",
+    label: "Edit Schedule",
+    icon: Pencil,
+    dialog({ feeSchedule, mutationKey }) {
+      return (
+        <FeeScheduleDialogUpdateForm
+          mutationKey={mutationKey}
+          defaultValues={{
+            feeTypeId: feeSchedule.feeTypeId,
+            installmentName: feeSchedule.installmentName,
+          }}
+          scheduleId={feeSchedule.scheduleId}
+        />
+      );
+    },
+  },
+  {
+    id: "delete",
+    label: "Delete Schedule",
+    icon: Trash2,
+    separator: true,
+    variant: "destructive",
+    dialog({ feeSchedule, mutationKey }) {
+      return (
+        <FeeScheduleDialogDeleteForm
+          mutationKey={mutationKey}
+          name={feeSchedule.installmentName}
+          id={feeSchedule.scheduleId}
+        />
+      );
+    },
+  },
+];
+
 /**
  * Renders an action menu for a fee schedule table row with edit and delete options.
  * @param props - Row action properties containing mutation keys and target fee schedule.
  * @returns Rendered dropdown action menu component.
  */
-export const FeeScheduleRowAction: React.FC<FeeScheduleRowActionProps> = ({
-  mutationKey,
-  feeSchedule,
-}) => (
-  <ActionMenu
-    trigger={<ButtonMenu />}
-    dialogs={
-      <>
-        <MenuDialogWrapper id="edit">
-          <FeeScheduleDialogUpdateForm
-            mutationKey={mutationKey}
-            defaultValues={{
-              feeTypeId: feeSchedule.feeTypeId,
-              installmentName: feeSchedule.installmentName,
-            }}
-            scheduleId={feeSchedule.scheduleId}
-          />
-        </MenuDialogWrapper>
-        <MenuDialogWrapper id="delete">
-          <FeeScheduleDialogDeleteForm
-            mutationKey={mutationKey}
-            installmentName={feeSchedule.installmentName}
-            scheduleId={feeSchedule.scheduleId}
-          />
-        </MenuDialogWrapper>
-      </>
-    }
-  >
-    <MenuDialogItem targetId="edit" className="gap-2 cursor-pointer">
-      <Pencil className="size-4 text-muted-foreground" />
-      <span>Edit Schedule</span>
-    </MenuDialogItem>
-
-    <DropdownMenuSeparator />
-
-    <MenuDialogItem
-      targetId="delete"
-      className="gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-    >
-      <Trash2 className="size-4" />
-      <span>Delete Schedule</span>
-    </MenuDialogItem>
-  </ActionMenu>
-);
+export const RowAction: React.FC<FeeScheduleRowActionProps> =
+  createActionMenus<FeeScheduleRowActionProps>(MENUS);
 
 export type CreateFeeScheduleFormProps = {
   schoolId: string;
@@ -149,7 +140,7 @@ export interface FeeScheduleManagerProps {
 const FeeScheduleManager: React.FC<FeeScheduleManagerProps> = ({ feeType }) => {
   const { data: feeSchedules = EMPTY_SCHEDULES, queryKey } = useGetFeeSchedules(
     {
-      where: { feeTypeId: feeType.feeTypeId },
+      where: { feeSchedules: { feeTypeId: feeType.feeTypeId } },
     },
   );
 
@@ -185,7 +176,7 @@ const FeeScheduleManager: React.FC<FeeScheduleManagerProps> = ({ feeType }) => {
                     {feeSchedule.installmentName}
                   </TableCell>
                   <TableCell className="text-right">
-                    <FeeScheduleRowAction
+                    <RowAction
                       mutationKey={queryKey}
                       feeSchedule={feeSchedule}
                     />

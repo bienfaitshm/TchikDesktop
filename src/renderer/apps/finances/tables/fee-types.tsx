@@ -1,4 +1,4 @@
-import type { FeeType } from "@/packages/@core/data-access/db/schemas";
+import type { FeeTypeDTO } from "@/packages/@core/data-access/db";
 import {
   DataContentBody,
   DataContentHead,
@@ -25,7 +25,7 @@ export interface FeeTypeRowActionsProps extends Pick<
   FeeTypeDialogProps,
   "mutationKey"
 > {
-  feeType: FeeType;
+  feeType: FeeTypeDTO;
   schoolId: string;
 }
 
@@ -80,7 +80,7 @@ export const RowAction: React.FC<FeeTypeRowActionsProps> =
   createActionMenus<FeeTypeRowActionsProps>(MENUS);
 
 export type FeeTypeTableProps = {
-  feeTypes?: FeeType[];
+  feeTypes?: FeeTypeDTO[];
   mutationKey?: readonly unknown[];
   schoolId: string;
 };
@@ -107,14 +107,14 @@ export const FeeTypeTable: React.FC<FeeTypeTableProps> = ({
 
   return (
     <div className="w-full">
-      <DataTable<FeeType>
+      <DataTable<FeeTypeDTO>
         data={feeTypes}
         columns={columns}
         keyExtractor={(item) => item.feeTypeId}
       >
         <DataTableContent>
           <DataContentHead />
-          <DataContentBody<FeeType> />
+          <DataContentBody />
         </DataTableContent>
         <DataTablePagination />
       </DataTable>
