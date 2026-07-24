@@ -44,6 +44,7 @@ export function SchoolPaymentConfigPage() {
             mutationKey={mutationKey}
             schoolId={schoolId}
             yearId={yearId}
+            defaultValues={{ schoolId, yearId }}
           >
             <Button size="sm" className="shadow-xs gap-2 font-medium">
               <Plus className="w-4 h-4" />

@@ -22,7 +22,7 @@ const DEFAULT_VALUES = {
   currencyFrom: CURRENCY_ENUM.USD,
   currencyTo: CURRENCY_ENUM.CDF,
   schoolId: "",
-  date: new Date().toISOString(),
+  date: new Date(),
   rate: 0,
 } satisfies DailyExchangeRateCreate;
 

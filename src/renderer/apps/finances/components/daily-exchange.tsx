@@ -14,6 +14,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Suspense } from "@/renderer/libs/queries/suspense";
+import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 
 type DailySyncProps = { schoolId: string };
 
@@ -23,7 +25,7 @@ const DailySync: React.FC<DailySyncProps> = ({ schoolId }) => {
     isLoading,
     queryKey,
   } = useGetLatestDailyExchangeRate({
-    where: { schoolId },
+    where: { dailyExchangeRates: { schoolId } },
   });
   const { formId, isSubmitting, onSubmit } = useCreateDailyExchangeRateForm({
     mutationKey: queryKey,
@@ -84,8 +86,8 @@ const DailySync: React.FC<DailySyncProps> = ({ schoolId }) => {
             <div className="flex items-start gap-2">
               <div className="flex-1">
                 <DailyExchangeSyncForm
-                  defaultValues={{ schoolId }}
                   formId={formId}
+                  defaultValues={{ schoolId }}
                   onSubmit={onSubmit}
                 />
               </div>
@@ -133,7 +135,15 @@ export function DailyExchange({ schoolId }: DailyExchangeProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="min-w-md transition-all animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 duration-200">
-        <DailySync schoolId={schoolId} />
+        <Suspense
+          fallback={
+            <div className="min-h-36 flex justify-center items-center">
+              <LoadingSpinner />
+            </div>
+          }
+        >
+          <DailySync schoolId={schoolId} />
+        </Suspense>
       </PopoverContent>
     </Popover>
   );

@@ -45,16 +45,19 @@ export const CreateFeeConfigurationDialog = createBaseActionDialog<
       { schoolId: config?.schoolId!, yearId: config?.yearId! },
       config,
     ),
-  form({
-    formId,
-    onSubmit,
-    currencyOptions,
-    sectionOptions,
-    feeTypeSearch,
-    optionSearch,
-    classroomSearch,
-    defaultValues,
-  }): ReactNode {
+  form(
+    {
+      formId,
+      onSubmit,
+      currencyOptions,
+      sectionOptions,
+      feeTypeSearch,
+      optionSearch,
+      classroomSearch,
+      defaultValues,
+    },
+    { schoolId, yearId },
+  ): ReactNode {
     return (
       <FeeConfigurationForm
         formId={formId}
@@ -64,7 +67,7 @@ export const CreateFeeConfigurationDialog = createBaseActionDialog<
         feeTypeSearch={feeTypeSearch}
         optionSearch={optionSearch}
         classroomSearch={classroomSearch}
-        defaultValues={defaultValues}
+        defaultValues={{ ...defaultValues, schoolId, yearId }}
       />
     );
   },

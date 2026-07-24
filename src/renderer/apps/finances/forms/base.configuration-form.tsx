@@ -8,7 +8,7 @@ import {
 import { Input } from "@/renderer/components/ui/input";
 import { SelectInput } from "@/renderer/components/form/fields/select-input";
 import { ComboboxSearch } from "@/renderer/components/form/fields/generic-search-combo-box";
-import { SearchOption, SearchOptionReturn } from "@/renderer/libs/queries/base";
+import { SearchOptionReturn } from "@/renderer/libs/queries/base";
 import { FieldValues, Path, UseFormReturn } from "react-hook-form";
 import { getFormFieldName } from "@/renderer/components/form/generic-bulk-form";
 import { useCallback } from "react";
@@ -21,9 +21,9 @@ type FeeConfigBaseFromProps<
 > = {
   currencyOptions: { label: string; value: string }[];
   sectionOptions: { label: string; value: string }[];
-  feeTypeSearch: SearchOption;
-  optionSearch: SearchOption;
-  classroomSearch: SearchOption;
+  feeTypeSearch: SearchOptionReturn<{ label: string; value: string }>;
+  optionSearch: SearchOptionReturn<{ label: string; value: string }>;
+  classroomSearch: SearchOptionReturn<{ label: string; value: string }>;
   form: UseFormReturn<TFieldValues>;
   prefixName?: `items.${number}.value` | string;
 };
@@ -68,8 +68,8 @@ export const FeeConfigurationBaseForm = <
   };
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         <FormField
           control={form.control}
           name={getName("name")}

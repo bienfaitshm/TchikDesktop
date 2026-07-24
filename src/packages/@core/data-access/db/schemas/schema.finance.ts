@@ -27,6 +27,7 @@ import {
   foreignKeyIdNoNull,
   enumColumn,
   timestamps,
+  timestampColumn,
 } from "../drizzle-fields";
 import type { AsUpdatePayload } from "./types";
 
@@ -238,7 +239,7 @@ export const dailyExchangeRates = sqliteTable(
   "daily_exchange_rates",
   {
     rateId: primaryKeyId("rate_id"),
-    date: text("date").notNull(),
+    date: timestampColumn("date").notNull(),
 
     currencyFrom: enumColumn("currency_from", CURRENCY_ENUM).notNull(),
     currencyTo: enumColumn("currency_to", CURRENCY_ENUM).notNull(),

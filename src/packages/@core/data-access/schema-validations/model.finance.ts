@@ -328,10 +328,7 @@ export const DailyExchangeRateSchema = z
       .string()
       .min(1, "L'ID du taux est requis.")
       .describe("ID unique du taux (UUID)"),
-    date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Format de date YYYY-MM-DD requis.")
-      .describe("Date du taux"),
+    date: z.date(),
     currencyFrom: ZCURRENCY_ENUM.describe("Devise source"),
     currencyTo: ZCURRENCY_ENUM.describe("Devise cible"),
     rate: z.coerce
