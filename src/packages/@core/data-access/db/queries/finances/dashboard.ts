@@ -216,12 +216,14 @@ export class FinancialStatisticsService {
     currentSchoolId: string,
     currentYearId: string,
   ): ClassroomPerformanceResult[] {
-    return this.db
+    const totalPaidExpression = sql<number>`COALESCE(SUM(${feeAssignments.amountPaid}), 0)`;
+
+    return db
       .select({
         classroomName: classrooms.identifier,
         totalStudents: sql<number>`COUNT(DISTINCT ${classroomEnrollments.studentId})`,
         totalExpected: sql<number>`COALESCE(SUM(${feeAssignments.totalAmount}), 0)`,
-        totalPaid: sql<number>`COALESCE(SUM(${feeAssignments.amountPaid}), 0)`,
+        totalPaid: totalPaidExpression,
       })
       .from(classroomEnrollments)
       .innerJoin(
@@ -239,6 +241,7 @@ export class FinancialStatisticsService {
         ),
       )
       .groupBy(classrooms.classId, classrooms.identifier)
+      .orderBy(desc(totalPaidExpression))
       .all();
   }
 

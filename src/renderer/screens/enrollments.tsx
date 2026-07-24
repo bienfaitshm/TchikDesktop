@@ -18,7 +18,7 @@ import { enrollmentHistoryColumns } from "@/renderer/components/tables/columns";
 import { CreateEnrollmentDialog } from "@/renderer/dialog-actions/enrollment.dialog-actions";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrollements";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import type { EnrollmentData } from "@/packages/@core/apis/clients";
+import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
 
 interface SchoolYearProps {
   schoolId: string;
@@ -27,7 +27,7 @@ interface SchoolYearProps {
 }
 
 interface EnrollmentHistoryProps extends SchoolYearProps {
-  enrollments?: EnrollmentData[];
+  enrollments?: EnrollmentDTO[];
 }
 
 export const EnrollmentHistory = ({
@@ -118,9 +118,11 @@ export const EmptyEnrollmentHistory = ({
 export const EnrollmentPage = () => {
   const { schoolId, yearId } = useSchoolContext();
   const { data: enrollments = [], queryKey: mutationKey } = useGetEnrollments({
-    where: { schoolId, yearId },
+    where: { classroomEnrollments: { schoolId, yearId } },
     limit: 20,
-    orderBy: [{ column: "createdAt", order: "desc" }],
+    orderBy: [
+      { table: "classroomEnrollments", column: "createdAt", order: "desc" },
+    ],
   });
 
   return (

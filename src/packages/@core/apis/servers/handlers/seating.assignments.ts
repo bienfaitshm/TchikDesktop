@@ -72,7 +72,7 @@ export class SeatingAssignmentController {
     params: RoomLayoutParamSchema,
   })
   static async getRoomLayout(req: IpcRequest<unknown, RoomLayoutParam>) {
-    return seatingSessionService.getRoomLayout(req.params);
+    return seatingAssignmentRepository.getRoomLayout(req.params);
   }
 
   /**
@@ -84,7 +84,7 @@ export class SeatingAssignmentController {
     body: BulkSeatingAssignmentSchema,
   })
   static async bulkAssign(req: IpcRequest<BulkSeatingAssignment>) {
-    return seatingSessionService.bulkAssign(req.body);
+    return seatingAssignmentRepository.bulkAssign(req.body);
   }
 
   /**
@@ -110,7 +110,7 @@ export class SeatingAssignmentController {
   static async getUnassignedStudents(
     req: IpcRequest<unknown, UnassignedParam>,
   ) {
-    return seatingSessionService.getUnassignedStudents(req.params);
+    return seatingAssignmentRepository.getUnassignedStudents(req.params);
   }
 
   /**
