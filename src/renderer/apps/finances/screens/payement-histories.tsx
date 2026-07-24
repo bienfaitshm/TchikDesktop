@@ -1,44 +1,42 @@
 "use client";
-import { Separator } from "@/renderer/components/ui/separator";
 import { useGetStudentPayments } from "@/renderer/libs/queries/finances";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { PaymentTable } from "../tables/payement-history";
+import {
+  PageContainer,
+  PageContent,
+  PageHeadDescription,
+  PageHeader,
+  PageHeaderTextContent,
+  PageHeadTitle,
+} from "@/renderer/containers/page-container";
 
 export function PaymentsHistoryPage() {
   const { schoolId, yearId } = useCurrentConfig();
   const { data: payments = [] } = useGetStudentPayments({
     where: {
       studentPayments: {
-        schoolId: { $eq: schoolId },
-        yearId: { $eq: yearId },
+        schoolId,
+        yearId,
       },
     },
     limit: 50,
   });
 
   return (
-    <div className="p-6 lg:p-8 flex flex-col gap-4">
-      {/* En-tête de page & Lien de retour */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Historique des Reçus
-          </h1>
-          <p className="text-sm text-muted-foreground">
+    <PageContainer>
+      <PageHeader className="border-b">
+        <PageHeaderTextContent>
+          <PageHeadTitle> Historique des Reçus</PageHeadTitle>
+          <PageHeadDescription>
             Registre complet des pièces comptables et paiements effectués par
             les élèves.
-          </p>
-        </div>
-
-        {/* Actions utilitaires de comptabilité */}
-        <div className="flex items-center gap-2 self-start sm:self-auto"></div>
-      </div>
-
-      <Separator />
-
-      <div className="mt-4">
+          </PageHeadDescription>
+        </PageHeaderTextContent>
+      </PageHeader>
+      <PageContent>
         <PaymentTable payments={payments} />
-      </div>
-    </div>
+      </PageContent>
+    </PageContainer>
   );
 }
