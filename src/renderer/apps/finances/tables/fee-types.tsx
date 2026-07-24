@@ -31,6 +31,14 @@ export interface FeeTypeRowActionsProps extends Pick<
 
 const MENUS: ActionMenuConfig<FeeTypeRowActionsProps>[] = [
   {
+    id: "create-schedule",
+    label: "Voir les échéanciers",
+    icon: ListOrdered,
+    dialog({ feeType }) {
+      return <ScheduleViewDialog feeType={feeType} />;
+    },
+  },
+  {
     id: "edit",
     label: "Modifier le type de frais",
     icon: Pencil,
@@ -43,14 +51,6 @@ const MENUS: ActionMenuConfig<FeeTypeRowActionsProps>[] = [
           defaultValues={feeType}
         />
       );
-    },
-  },
-  {
-    id: "create-schedule",
-    label: "Voir les échéanciers",
-    icon: ListOrdered,
-    dialog({ feeType }) {
-      return <ScheduleViewDialog feeType={feeType} />;
     },
   },
   {

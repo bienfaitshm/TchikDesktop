@@ -1,5 +1,6 @@
 import type { FeeSchedule, FeeType } from "@/packages/@core/data-access/db";
 import { LoadingButton } from "@/renderer/components/buttons/button-loading";
+import { Button } from "@/renderer/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -10,34 +11,41 @@ import {
   DialogTitle,
 } from "@/renderer/components/ui/dialog";
 import { Spinner } from "@/renderer/components/ui/spinner";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/renderer/components/ui/table";
-import { FeeScheduleForm } from "@/renderer/apps/finances/forms";
+import { FeeScheduleNameForm } from "@/renderer/apps/finances/forms";
 import {
   useCreateFeeScheduleForm,
   useGetFeeSchedules,
 } from "@/renderer/libs/queries/finances";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-import { CalendarX2, Pencil, Trash2 } from "lucide-react";
+import { CalendarX2, List, Pencil, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import {
   FeeScheduleDialogDeleteForm,
   FeeScheduleDialogUpdateForm,
   type FeeScheduleDialogProps,
 } from "./schedule";
-import { Button } from "@/renderer/components/ui/button";
 import {
   ActionMenuConfig,
   createActionMenus,
 } from "@/renderer/components/menus/action-menus";
 
 const EMPTY_SCHEDULES: FeeSchedule[] = [];
+
+/**
+ * Localization strings dictionary for FeeSchedule interface elements.
+ */
+const I18N = {
+  editSchedule: "Modifier la tranche",
+  deleteSchedule: "Supprimer la tranche",
+  addButton: "Ajouter",
+  noSchedulesTitle: "Aucune tranche configurée",
+  noSchedulesDescription:
+    "Utilisez le formulaire ci-dessus pour créer la première tranche.",
+  dialogTitle: (name: string) => `Échéancier pour ${name}`,
+  dialogDescription: "Gérer les tranches de paiement et les dates d'échéance.",
+  loading: "Chargement des échéanciers...",
+  closeButton: "Fermer",
+} as const;
 
 export interface FeeScheduleRowActionProps extends Pick<
   FeeScheduleDialogProps,
@@ -49,7 +57,7 @@ export interface FeeScheduleRowActionProps extends Pick<
 const MENUS: ActionMenuConfig<FeeScheduleRowActionProps>[] = [
   {
     id: "edit",
-    label: "Edit Schedule",
+    label: I18N.editSchedule,
     icon: Pencil,
     dialog({ feeSchedule, mutationKey }) {
       return (
@@ -66,7 +74,7 @@ const MENUS: ActionMenuConfig<FeeScheduleRowActionProps>[] = [
   },
   {
     id: "delete",
-    label: "Delete Schedule",
+    label: I18N.deleteSchedule,
     icon: Trash2,
     separator: true,
     variant: "destructive",
@@ -112,21 +120,31 @@ const CreateFeeScheduleForm: React.FC<CreateFeeScheduleFormProps> = ({
   const defaultValues = useMemo(() => ({ feeTypeId }), [feeTypeId]);
 
   return (
-    <div className="space-y-4">
-      <FeeScheduleForm
+    <div className="flex items-center gap-4">
+      <FeeScheduleNameForm
         formId={formId}
         feeTypeOptions={feeTypeOptions}
         onSubmit={onSubmit}
         defaultValues={defaultValues}
       />
-      <div className="flex items-center justify-end">
-        <LoadingButton loading={isSubmitting} type="submit" form={formId}>
-          Add
-        </LoadingButton>
-      </div>
+      <LoadingButton loading={isSubmitting} type="submit" form={formId}>
+        {I18N.addButton}
+      </LoadingButton>
     </div>
   );
 };
+
+/**
+ * Empty state component displayed when no fee schedules are available.
+ * @returns Rendered empty state illustration with messaging.
+ */
+const EmptyScheduleState: React.FC = () => (
+  <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+    <CalendarX2 className="size-10 mb-2 opacity-40" />
+    <p className="font-medium text-foreground">{I18N.noSchedulesTitle}</p>
+    <p className="text-sm">{I18N.noSchedulesDescription}</p>
+  </div>
+);
 
 export interface FeeScheduleManagerProps {
   feeType: FeeType;
@@ -145,7 +163,7 @@ const FeeScheduleManager: React.FC<FeeScheduleManagerProps> = ({ feeType }) => {
   );
 
   return (
-    <div className="relative -mx-4 my-2 overflow-y-auto border-t border-border/60 px-4 py-4 max-h-[60vh] scrollbar-thin scrollbar-thumb-muted-foreground/20">
+    <div className="relative -mx-4 my-2 space-y-4 overflow-y-auto border-t border-border/60 px-4 py-4 max-h-[60vh] min-h-[40vh] scrollbar-thin scrollbar-thumb-muted-foreground/20">
       <div className="sticky top-0 z-10 pb-4 border-b border-border/40 mb-4">
         <CreateFeeScheduleForm
           schoolId={feeType.schoolId}
@@ -154,37 +172,35 @@ const FeeScheduleManager: React.FC<FeeScheduleManagerProps> = ({ feeType }) => {
         />
       </div>
 
-      <div>
+      <div className="my-4">
         {feeSchedules.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
-            <CalendarX2 className="size-10 mb-2 opacity-50" />
-            <p>No schedules configured.</p>
-            <p className="text-sm">Add one using the form above.</p>
-          </div>
+          <EmptyScheduleState />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Installment Name</TableHead>
-                <TableHead className="text-right w-25">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <List className="size-4" />
+              <p>Liste des tranches</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {feeSchedules.map((feeSchedule) => (
-                <TableRow key={feeSchedule.scheduleId}>
-                  <TableCell className="font-medium">
+                <div
+                  key={feeSchedule.scheduleId}
+                  className="group relative flex items-center justify-between rounded-lg border border-border/60 bg-card p-3.5 shadow-xs transition-all duration-200 hover:border-border hover:bg-accent/50 hover:shadow-sm"
+                >
+                  <span className="truncate pr-2 text-sm font-medium text-foreground transition-colors group-hover:text-primary">
                     {feeSchedule.installmentName}
-                  </TableCell>
-                  <TableCell className="text-right">
+                  </span>
+
+                  <div className="flex shrink-0 items-center opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100">
                     <RowAction
                       mutationKey={queryKey}
                       feeSchedule={feeSchedule}
                     />
-                  </TableCell>
-                </TableRow>
+                  </div>
+                </div>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -199,7 +215,7 @@ export type ScheduleViewDialogProps = Partial<
 
 /**
  * Modal dialog component displaying and managing payment schedules for a fee type.
- * @param props - Dialog properties including target FeeType entity context.
+ * @param props - Dialog properties including target FeeType entity context and handlers.
  * @returns Rendered schedule view dialog component.
  */
 export const ScheduleViewDialog: React.FC<ScheduleViewDialogProps> = ({
@@ -210,16 +226,14 @@ export const ScheduleViewDialog: React.FC<ScheduleViewDialogProps> = ({
     <Dialog modal={false} {...props}>
       <DialogContent className="sm:max-w-lg md:max-w-2xl lg:max-w-4xl flex flex-col max-h-[85vh]">
         <DialogHeader>
-          <DialogTitle>Schedules for {feeType.name}</DialogTitle>
-          <DialogDescription>
-            Manage payment installments and due dates.
-          </DialogDescription>
+          <DialogTitle>{I18N.dialogTitle(feeType.name)}</DialogTitle>
+          <DialogDescription>{I18N.dialogDescription}</DialogDescription>
         </DialogHeader>
         <Suspense
           fallback={
             <div className="flex justify-center items-center py-10 gap-2 text-muted-foreground">
               <Spinner className="size-5" />
-              <span>Loading schedules...</span>
+              <span>{I18N.loading}</span>
             </div>
           }
         >
@@ -227,7 +241,7 @@ export const ScheduleViewDialog: React.FC<ScheduleViewDialogProps> = ({
         </Suspense>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">Close</Button>
+            <Button variant="outline">{I18N.closeButton}</Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

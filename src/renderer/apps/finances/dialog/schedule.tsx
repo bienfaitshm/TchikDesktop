@@ -157,16 +157,15 @@ export const UpdateFeeScheduleDialog = createBaseActionDialog<
     `Modifier l'échéance : ${installmentName ?? defaultValues?.installmentName ?? ""}`,
   description:
     "Modifiez les termes ou renommez l'intitulé de la tranche de paiement.",
-  useForm: (config) =>
-    useUpdateFeeScheduleForm({
-      ...config,
-      scheduleId: config.scheduleId,
-    }),
-  form({ formId, onSubmit, feeTypeOptions, defaultValues }): ReactNode {
+  useForm: useUpdateFeeScheduleForm,
+  form(
+    { formId, onSubmit, feeTypeOptions, defaultValues },
+    { scheduleId: id },
+  ): ReactNode {
     return (
       <FeeScheduleForm
         formId={formId}
-        onSubmit={onSubmit}
+        onSubmit={(data, helpers) => onSubmit({ data, id }, helpers as any)}
         feeTypeOptions={feeTypeOptions}
         defaultValues={defaultValues}
       />

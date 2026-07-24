@@ -47,10 +47,10 @@ export const FeeScheduleBaseForm = <
             <FormControl>
               <Input
                 {...field}
-                placeholder="Ex: Acompte Inscription, 1er Trimestre, Tranche Unique"
+                placeholder="Ex: Septembre, 1er Trimestre, Tranche Unique"
               />
             </FormControl>
-            <FormDescription>
+            <FormDescription className="text-xs">
               Le nom du versement attendu de l'élève (affiché sur les reçus).
             </FormDescription>
             <FormMessage />
