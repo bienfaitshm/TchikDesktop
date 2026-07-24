@@ -63,7 +63,7 @@ export class EnrollmentService {
   quickCreate(payload: EnrollmentQuickCreate) {
     this.validateContext(payload.schoolId, payload.yearId);
 
-    return this.clientDb.transaction(async (tx) => {
+    return this.clientDb.transaction((tx) => {
       let targetStudentId = payload.studentId;
 
       if (payload.student) {
@@ -99,7 +99,7 @@ export class EnrollmentService {
       );
 
       // // APPEL DE L'ACTION DE PAIEMENT AUTOMATIQUE
-      // await this.paymentService.assignFeesToStudent({
+      // this.paymentService.assignFeesToStudent({
       //   schoolId: payload.schoolId,
       //   yearId: payload.yearId,
       //   enrollmentId: enrollment.enrollmentId,

@@ -48,8 +48,8 @@ export const CreateEnrollmentDialog = createBaseActionDialog<
   submitText: "Valider l'inscription",
   useForm: (config) =>
     useCreateQuickEnrollmentForm(config, {
-      schoolId: config.schoolId,
-      yearId: config.yearId,
+      schoolId: config?.schoolId,
+      yearId: config?.yearId,
     }),
   form({
     formId,

@@ -271,6 +271,7 @@ export type EnrollmentActionCreate = z.infer<
 export const BaseStudentSchema = UserCreateSchema.omit({
   schoolId: true,
   role: true,
+  password: true,
 });
 export type BaseStudent = z.infer<typeof BaseStudentSchema>;
 
@@ -291,13 +292,13 @@ export const EnrollmentQuickCreateSchema = z.discriminatedUnion("isInSystem", [
         1,
         "L'identifiant `studentId` est obligatoire lorsque l'élève existe.",
       ),
-    student: z.undefined().optional(),
+    student: z.preprocess((_) => undefined, z.undefined().optional()),
   }),
 
   // Cas B : Nouvel élève à inscrire
   BaseEnrollmentSchemaWithoutStudent.extend({
     isInSystem: z.literal(false),
-    studentId: z.undefined().optional(),
+    studentId: z.preprocess((_) => undefined, z.undefined().optional()),
     student: BaseStudentSchema,
   }),
 ]);
