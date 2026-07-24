@@ -151,10 +151,7 @@ export const EnrollmentSchema = z
       .min(1, "L'étudiant est requis.")
       .describe("Éléve rattaché"),
     status: ZSTUDENT_STATUS_ENUM.describe("Statut de l'étudiant"),
-    isNewStudent: z
-      .boolean()
-      .default(false)
-      .describe("Indique si c'est un nouvel étudiant"),
+    isNewStudent: z.boolean().describe("Indique si c'est un nouvel étudiant"),
     studentCode: z.string().max(50).describe("Code ou matricule d'inscription"),
   })
   .extend(schoolYearIdBaseSchema.shape)

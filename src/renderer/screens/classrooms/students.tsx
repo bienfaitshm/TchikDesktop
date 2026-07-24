@@ -119,9 +119,9 @@ export const StudentPage: React.FC = () => {
   const { data: students = [], queryKey: mutationKey } = useGetEnrollments({
     where: {
       classroomEnrollments: {
-        classroomId: { $eq: classroomId },
-        schoolId: { $eq: schoolId },
-        yearId: { $eq: yearId },
+        classroomId,
+        schoolId,
+        yearId,
       },
     },
   });
