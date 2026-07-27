@@ -130,9 +130,7 @@ export const PaymentProcessForm: React.FC<
                         placeholder="0.00"
                         className="h-9 font-mono pr-14 text-sm focus-visible:ring-1 focus-visible:ring-ring"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(e.target.valueAsNumber || 0)
-                        }
+                        onChange={(e) => field.onChange(e.target.valueAsNumber)}
                       />
                       <span className="absolute right-3 font-mono text-xs font-semibold text-muted-foreground/70 select-none">
                         {currentCurrency}
@@ -209,6 +207,7 @@ export const PaymentProcessForm: React.FC<
                     placeholder="N° reçu, bordereau..."
                     className="h-9 text-xs focus-visible:ring-1 focus-visible:ring-ring"
                     {...field}
+                    value={field.value ?? ""}
                   />
                 </FormControl>
                 <FormMessage className="text-[11px]" />
