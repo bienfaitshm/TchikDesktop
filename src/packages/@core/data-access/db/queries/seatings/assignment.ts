@@ -229,14 +229,13 @@ export class SeatingAssignmentRepository extends betterSqlite.BaseRepository<
    * @param tx - Optional transaction database client.
    * @returns True if at least one assignment was deleted.
    */
-  deleteAssignmentsBySession(sessionId: string, tx?: TDataBase): boolean {
+  deleteAssignmentsBySession(sessionId: string, tx?: TDataBase) {
     const client = this.getClient(tx);
-    const result = client
+    return client
       .delete(seatingAssignments)
       .where(eq(seatingAssignments.sessionId, sessionId))
       .returning()
-      .get();
-    return !!result;
+      .all();
   }
 
   /**
@@ -258,17 +257,9 @@ export class SeatingAssignmentRepository extends betterSqlite.BaseRepository<
     const baseClient = this.getClient(tx);
 
     return baseClient.transaction((innerTx) => {
-      const isDeletionSuccessful = this.deleteAssignmentsBySession(
-        sessionId,
-        innerTx,
-      );
+      this.deleteAssignmentsBySession(sessionId, innerTx);
 
-      if (!isDeletionSuccessful) {
-        throw new Error(
-          `Failed to clear assignments for session: ${sessionId}`,
-        );
-      }
-
+      if (assignments.length === 0) return [];
       return this.bulkAssign(assignments, innerTx);
     });
   }
