@@ -2,13 +2,11 @@
 
 import * as React from "react";
 import { Plus, Eye, Pencil, Copy, Trash2 } from "lucide-react";
-import { Link } from "react-router";
 import type { SeatingSession } from "@/packages/@core/data-access/db/schemas";
 import { useGetSeatingSessions } from "@/renderer/libs/queries/seatings";
 import { Button } from "@/renderer/components/ui/button";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
-import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import {
   DataTable,
@@ -23,9 +21,8 @@ import {
 } from "@/renderer/components/tables/data-table";
 import {
   seatingSessionColumns,
-  enhanceColumnsExpandable,
+  enhanceColumns,
 } from "@/renderer/components/tables/columns";
-import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
 import {
   CreateSeatingSessionDialog,
   DeleteSeatingSessionDialog,
@@ -37,7 +34,14 @@ import {
   createActionMenus,
   type ActionMenuConfig,
 } from "@/components/menus/action-menus";
-import type { Row } from "@tanstack/react-table";
+import {
+  PageContainer,
+  PageContent,
+  PageHeadDescription,
+  PageHeadTitle,
+  PageHeader,
+  PageHeaderTextContent,
+} from "@/renderer/containers/page-container";
 
 export interface SessionRowActionsProps extends Pick<
   SeatingSessionDialogProps,
@@ -51,16 +55,7 @@ const MENUS: ActionMenuConfig<SessionRowActionsProps>[] = [
     id: "details",
     label: "View session details",
     icon: Eye,
-    dialog({ session }) {
-      return (
-        <Link
-          to={APP_ROUTES.SEATING.SESSION(session.sessionId)}
-          className="contents"
-        >
-          View details
-        </Link>
-      );
-    },
+    link: ({ session }) => APP_ROUTES.SEATING.SESSION(session.sessionId),
   },
   {
     id: "edit",
@@ -69,7 +64,8 @@ const MENUS: ActionMenuConfig<SessionRowActionsProps>[] = [
     dialog({ session, mutationKey }) {
       return (
         <UpdateSeatingSessionDialog
-          seatingSessionId={session.sessionId}
+          sessionId={session.sessionId}
+          sessionName={session.sessionName}
           defaultValues={session}
           mutationKey={mutationKey}
         />
@@ -98,8 +94,8 @@ const MENUS: ActionMenuConfig<SessionRowActionsProps>[] = [
     dialog({ session, mutationKey }) {
       return (
         <DeleteSeatingSessionDialog
-          seatingSessionId={session.sessionId}
-          seatingSessionName={session.sessionName}
+          id={session.sessionId}
+          name={session.sessionName}
           mutationKey={mutationKey}
         />
       );
@@ -121,30 +117,33 @@ export const SessionRowAction = createActionMenus(MENUS);
 export const SeatingPage: React.FC = () => {
   const { schoolId, yearId } = useSchoolContext();
   const { data: sessions = [], queryKey: mutationKey } = useGetSeatingSessions({
-    where: { schoolId, yearId },
+    where: { seatingSessions: { schoolId, yearId } },
   });
   const columns = React.useMemo(
-    () => enhanceColumnsExpandable(seatingSessionColumns),
-    [],
+    () =>
+      enhanceColumns(seatingSessionColumns, {
+        variant: "actions",
+        renderRowAction(session) {
+          return (
+            <SessionRowAction session={session} mutationKey={mutationKey} />
+          );
+        },
+      }),
+    [mutationKey],
   );
 
   return (
-    <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
-      <PageShell
-        maxWidth="xl"
-        header={
-          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
-            <header className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight">
-                Seating Sessions
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Organize seating plans and candidate distribution.
-              </p>
-            </header>
-          </section>
-        }
-      >
+    <PageContainer>
+      <PageHeader>
+        <PageHeaderTextContent>
+          <PageHeadTitle> Seating Sessions</PageHeadTitle>
+          <PageHeadDescription>
+            {" "}
+            Organize seating plans and candidate distribution.
+          </PageHeadDescription>
+        </PageHeaderTextContent>
+      </PageHeader>
+      <PageContent>
         <DataTable<SeatingSession>
           data={sessions}
           columns={columns}
@@ -186,25 +185,12 @@ export const SeatingPage: React.FC = () => {
           >
             <DataTableContent>
               <DataContentHead />
-              <DataContentBody<SeatingSession>>
-                {({ row }) => (
-                  <ExpandableRow
-                    row={row as Row<unknown>}
-                    renderDetail={
-                      <SessionRowAction
-                        session={row.original}
-                        mutationKey={mutationKey}
-                      />
-                    }
-                  />
-                )}
-              </DataContentBody>
+              <DataContentBody />
             </DataTableContent>
-
             <DataTablePagination />
           </Suspense>
         </DataTable>
-      </PageShell>
-    </div>
+      </PageContent>
+    </PageContainer>
   );
 };

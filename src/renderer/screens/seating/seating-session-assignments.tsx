@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo } from "react";
 import { useParams } from "react-router";
-import type { Row } from "@tanstack/react-table";
 import {
   useGetLocalRoomById,
   useGetRoomLayout,
@@ -18,10 +17,8 @@ import {
 } from "@/renderer/components/tables/data-table";
 import {
   seatingStudentColumns,
-  enhanceColumnsExpandable,
+  enhanceColumns,
 } from "@/renderer/components/tables/columns";
-import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
-import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 import type { StudentSeating } from "@/renderer/components/tables/columns.seating-student";
@@ -29,10 +26,18 @@ import type { Assignment } from "@/packages/@core/apis/clients/seatings";
 import type { Localroom } from "@/packages/@core/data-access/db/schemas";
 import { GENDER_OPTIONS } from "@/packages/@core/data-access/db/options";
 import { Separator } from "@/renderer/components/ui/separator";
-import { DoorOpen, Layout, Users } from "lucide-react";
-import { Badge } from "@/renderer/components/ui/badge";
+import { Users } from "lucide-react";
+import {
+  PageContainer,
+  PageContent,
+  PageHeadAction,
+  PageHeadDescription,
+  PageHeadTitle,
+  PageHeader,
+  PageHeaderTextContent,
+} from "@/renderer/containers/page-container";
 
-const columns = enhanceColumnsExpandable(seatingStudentColumns);
+const columns = enhanceColumns(seatingStudentColumns);
 
 /**
  * Main application screen component for viewing and managing student seating assignments.
@@ -43,7 +48,7 @@ export const SeatingSessionAssignmentPage: React.FC = () => {
     localroomId: string;
     sessionId: string;
   }>();
-  const { data: localroom } = useGetLocalRoomById(localroomId as string);
+  const { data: localroom } = useGetLocalRoomById(localroomId!);
   const { data: layoutAssignments = [] } = useGetRoomLayout(
     sessionId!,
     localroomId!,
@@ -55,7 +60,7 @@ export const SeatingSessionAssignmentPage: React.FC = () => {
         classroomId: layout.classroom.classId,
         identifier: layout.classroom.identifier,
         fullName:
-          `${layout.student.lastName} ${layout.student.middleName} ${layout.student.firstName}`.trim(),
+          `${layout.student.lastName} ${layout.student.middleName} ${layout.student.firstName ?? ""}`.trim(),
         gender: layout.student.gender,
         column: layout.column,
         row: layout.row,
@@ -70,40 +75,34 @@ export const SeatingSessionAssignmentPage: React.FC = () => {
   );
 
   return (
-    <PageShell
-      maxWidth="2xl"
-      header={
-        <RoomHeaderInfo
-          localroom={localroom}
-          layoutAssignments={layoutAssignments}
-        />
-      }
-    >
-      <DataTable<StudentSeating>
-        data={formattedData}
-        columns={columns}
-        keyExtractor={keyExtractor}
-      >
-        <DataTableToolbar searchColumn="fullName" className="flex-wrap gap-4">
-          <TableFacetedFilterItem
-            columnId="gender"
-            title="Gender"
-            options={GENDER_OPTIONS}
-          />
-        </DataTableToolbar>
-
-        <Suspense fallback={<TableSkeleton />}>
-          <DataTableContent>
-            <DataContentHead />
-            <DataContentBody<StudentSeating>>
-              {({ row }) => <ExpandableRow row={row as Row<unknown>} />}
-            </DataContentBody>
-          </DataTableContent>
-
-          <DataTablePagination />
-        </Suspense>
-      </DataTable>
-    </PageShell>
+    <PageContainer>
+      <RoomHeaderInfo
+        layoutAssignments={layoutAssignments}
+        localroom={localroom}
+      />
+      <PageContent>
+        <DataTable<StudentSeating>
+          data={formattedData}
+          columns={columns}
+          keyExtractor={keyExtractor}
+        >
+          <DataTableToolbar className="flex-wrap gap-4">
+            <TableFacetedFilterItem
+              columnId="gender"
+              title="Gender"
+              options={GENDER_OPTIONS}
+            />
+          </DataTableToolbar>
+          <Suspense fallback={<TableSkeleton />}>
+            <DataTableContent>
+              <DataContentHead />
+              <DataContentBody />
+            </DataTableContent>
+            <DataTablePagination />
+          </Suspense>
+        </DataTable>
+      </PageContent>
+    </PageContainer>
   );
 };
 
@@ -139,51 +138,40 @@ export const RoomHeaderInfo: React.FC<RoomHeaderInfoProps> = ({
     maxCapacity > 0 ? (layoutAssignments.length / maxCapacity) * 100 : 0;
 
   return (
-    <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-(--breakpoint-2xl) mt-2 gap-4">
-      <header className="space-y-1.5">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-md bg-primary/10 text-primary">
-            <DoorOpen className="h-5 w-5" />
-          </div>
-          <h2 className="text-xl font-bold tracking-tight">
-            {localroom?.name ?? "Room"}
-          </h2>
-          <Badge variant="outline" className="ml-2 font-mono">
-            {maxCapacity} seats
-          </Badge>
-        </div>
-        <p className="text-sm text-muted-foreground flex items-center gap-2">
-          <Layout className="h-3.5 w-3.5" />
+    <PageHeader>
+      <PageHeaderTextContent>
+        <PageHeadTitle> {localroom?.name ?? "Room"}</PageHeadTitle>
+        <PageHeadDescription>
+          {" "}
           View student distribution within the room.
-        </p>
-      </header>
-
-      <div className="flex items-center gap-6 bg-muted/30 px-4 py-2 rounded-xl border border-border/50">
-        <div className="flex flex-col">
-          <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">
-            Assigned
-          </span>
-          <div className="flex items-center gap-1.5">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-lg font-semibold tabular-nums">
-              {layoutAssignments.length}
+        </PageHeadDescription>
+      </PageHeaderTextContent>
+      <PageHeadAction>
+        <div className="flex items-center gap-6 bg-muted/30 px-4 py-2 rounded-xl border border-border/50">
+          <div className="flex flex-col justify-center items-center">
+            <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">
+              Assigned
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="text-lg font-semibold tabular-nums">
+                {layoutAssignments.length} / {maxCapacity}
+              </span>
+            </div>
+          </div>
+          <Separator orientation="vertical" className="h-8" />
+          <div className="flex flex-col justify-center items-center">
+            <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">
+              Occupancy
+            </span>
+            <span
+              className={`text-lg font-semibold tabular-nums ${occupancyRate > 90 ? "text-destructive" : "text-foreground"}`}
+            >
+              {Math.round(occupancyRate)}%
             </span>
           </div>
         </div>
-
-        <Separator orientation="vertical" className="h-8" />
-
-        <div className="flex flex-col">
-          <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">
-            Occupancy
-          </span>
-          <span
-            className={`text-lg font-semibold tabular-nums ${occupancyRate > 90 ? "text-destructive" : "text-foreground"}`}
-          >
-            {Math.round(occupancyRate)}%
-          </span>
-        </div>
-      </div>
-    </section>
+      </PageHeadAction>
+    </PageHeader>
   );
 };
