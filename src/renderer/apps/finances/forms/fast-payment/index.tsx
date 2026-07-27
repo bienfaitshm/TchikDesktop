@@ -19,8 +19,9 @@ import {
   EmptySelectStudent,
   FastPaymentLoading,
 } from "@/renderer/apps/finances/components/fast-payment-empty";
-import { useFastPaymentState } from "./hooks";
+import { useFastPaymentStore, selectIsValidForSubmission } from "./hooks";
 import type { FastPaymentFormProps, FastPaymentSubmiter } from "./types";
+import type { EnrollmentOption } from "./types";
 
 export function FastPaymentForm({
   schoolId,
@@ -32,26 +33,36 @@ export function FastPaymentForm({
   isSubmitting,
   school,
 }: FastPaymentFormProps) {
-  const {
-    selectedStudent,
-    selectedFeeType,
-    selectedSchedule,
-    amountDue,
-    isValidForSubmission,
-    handleStudentChange,
-    handleFeeTypeChange,
-    handleScheduleChange,
-    handleReset,
-  } = useFastPaymentState();
+  // Connexion ciblée au Store
+  const selectedStudent = useFastPaymentStore((s) => s.selectedStudent);
+  const setSelectedStudent = useFastPaymentStore((s) => s.setSelectedStudent);
+  const resetForm = useFastPaymentStore((s) => s.resetForm);
+  const isValidForSubmission = useFastPaymentStore(selectIsValidForSubmission);
 
-  const handleSubmit: FastPaymentSubmiter = useCallback((payload, helpers) => {
-    onSubmit(payload, {
-      reset: (value) => {
-        helpers.reset(value);
-        handleReset();
-      },
-    });
-  }, []);
+  // Callback stable pour la recherche d'élève
+  const handleStudentChange = useCallback(
+    (_: unknown, student?: EnrollmentOption) => {
+      setSelectedStudent(student);
+    },
+    [setSelectedStudent],
+  );
+
+  const handleSubmit: FastPaymentSubmiter = useCallback(
+    (payload, helpers) => {
+      onSubmit(payload, {
+        reset: (value) => {
+          console.log("value", value);
+          helpers.reset();
+          resetForm(value, {
+            name: school?.name!,
+            address: school?.name!,
+            yearName: "",
+          });
+        },
+      });
+    },
+    [onSubmit, resetForm],
+  );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-24 items-start">
@@ -96,13 +107,7 @@ export function FastPaymentForm({
                     transition={{ duration: 0.2 }}
                   >
                     <Suspense fallback={<FastPaymentLoading />}>
-                      <FeeSelection
-                        enrollmentId={selectedStudent.enrollmentId}
-                        selectedFeeType={selectedFeeType}
-                        onFeeTypeChange={handleFeeTypeChange}
-                        selectedSchedule={selectedSchedule}
-                        onScheduleChange={handleScheduleChange}
-                      >
+                      <FeeSelection enrollmentId={selectedStudent.enrollmentId}>
                         {({ amountPaid, assignmentId, totalAmount }) => (
                           <div className="mt-4">
                             <PaymentProcessForm
@@ -146,13 +151,7 @@ export function FastPaymentForm({
 
       {/* Zone Reçu / Live Preview */}
       <div className="lg:col-span-4">
-        <InvoiceLivePreview
-          school={school}
-          selectedStudent={selectedStudent}
-          selectedFeeType={selectedFeeType}
-          selectedSchedule={selectedSchedule}
-          amountDue={amountDue}
-        />
+        <InvoiceLivePreview school={school} />
       </div>
     </div>
   );

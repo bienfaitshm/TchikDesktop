@@ -1,6 +1,7 @@
+"use client";
+
 import React, { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { EnrollmentPayment } from "@/packages/@core/data-access/db";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   ComboboxSearch,
@@ -12,14 +13,10 @@ import {
   PaymentOverview,
 } from "@/renderer/apps/finances/components/fast-payment-empty";
 import { formatScheduleStatus } from "./formatters";
-import type { ScheduleOption } from "./types";
+import { useFastPaymentStore } from "./hooks";
 
 type FeeSelectionProps = {
   enrollmentId: string;
-  selectedFeeType?: EnrollmentPayment;
-  onFeeTypeChange: (feeType?: EnrollmentPayment) => void;
-  selectedSchedule?: ScheduleOption;
-  onScheduleChange: (schedule?: ScheduleOption) => void;
   children?: (defaultValue: {
     totalAmount: number;
     amountPaid: number;
@@ -28,15 +25,16 @@ type FeeSelectionProps = {
 };
 
 export const FeeSelection = memo<FeeSelectionProps>(
-  ({
-    enrollmentId,
-    selectedFeeType,
-    onFeeTypeChange,
-    selectedSchedule,
-    onScheduleChange,
-    children,
-  }) => {
+  ({ enrollmentId, children }) => {
     const { data: feeOverview } = useGetStudentPaymentOverview(enrollmentId);
+
+    // Connexion directe au store Zustand
+    const selectedFeeType = useFastPaymentStore((s) => s.selectedFeeType);
+    const selectedSchedule = useFastPaymentStore((s) => s.selectedSchedule);
+    const setSelectedFeeType = useFastPaymentStore((s) => s.setSelectedFeeType);
+    const setSelectedSchedule = useFastPaymentStore(
+      (s) => s.setSelectedSchedule,
+    );
 
     return (
       <motion.div
@@ -51,7 +49,7 @@ export const FeeSelection = memo<FeeSelectionProps>(
               selectedItem={selectedFeeType}
               value={selectedFeeType?.value}
               options={feeOverview?.payments ?? []}
-              onChange={(_, feeType) => onFeeTypeChange(feeType)}
+              onChange={(_, feeType) => setSelectedFeeType(feeType)}
             />
           </Field>
 
@@ -61,7 +59,7 @@ export const FeeSelection = memo<FeeSelectionProps>(
               selectedItem={selectedSchedule}
               value={selectedSchedule?.scheduleId}
               options={selectedFeeType?.schedules ?? []}
-              onChange={(_, schedule) => onScheduleChange(schedule)}
+              onChange={(_, schedule) => setSelectedSchedule(schedule)}
               renderItem={({ label, status, amountPaid, totalAmount }) => (
                 <RenderItem
                   label={label}

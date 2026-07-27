@@ -68,7 +68,7 @@ export function FastPaymentPage() {
 
       <PageContent>
         <FastPaymentForm
-          school={school}
+          school={school!}
           formId={formId}
           isSubmitting={isSubmitting}
           schoolId={schoolId}

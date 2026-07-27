@@ -1,6 +1,7 @@
 import installExtension, {
   type ExtensionReference,
   REACT_DEVELOPER_TOOLS,
+  REDUX_DEVTOOLS,
 } from "electron-devtools-installer";
 import { is } from "@electron-toolkit/utils";
 
@@ -26,7 +27,10 @@ export async function setupDevelopmentEnvironment(
 
   const logger = config?.logger ?? console;
   const forceDownload = config?.forceDownload ?? false;
-  const extensions = config?.extensions ?? [REACT_DEVELOPER_TOOLS];
+  const extensions = config?.extensions ?? [
+    REACT_DEVELOPER_TOOLS,
+    REDUX_DEVTOOLS,
+  ];
 
   const installationPromises = extensions.map(async (extId) => {
     try {
@@ -34,7 +38,7 @@ export async function setupDevelopmentEnvironment(
         loadExtensionOptions: { allowFileAccess: true },
         forceDownload,
       });
-      logger.info(`[DevTools] Installée avec succès : ${name}`);
+      logger.info(`[DevTools] Installée avec succès : ${name.name}`);
     } catch (e) {
       logger.error(
         `[DevTools] Échec de l'installation pour l'ID : ${extId}`,

@@ -71,7 +71,7 @@ export interface UseBaseParams<
 export function useFormBaseNotify<
   TFormData extends FieldValues,
   TMutateInput,
-  TReturnData = unknown,
+  TReturnData extends FieldValues = {},
   TError = Error,
 >({
   mutation,
@@ -82,25 +82,26 @@ export function useFormBaseNotify<
 }: UseBaseParams<TFormData, TMutateInput, TReturnData, TError>) {
   const { formId, notifyAndInvalidate } = useFormBase<TReturnData>(config);
 
-  const onSubmit: BaseFormProps<TFormData>["onSubmit"] = useCallback(
-    (data, helpers) => {
-      const input = adaptData(data);
-      const notificationsConfig = getNotifications(data);
+  const onSubmit: BaseFormProps<TFormData, TReturnData>["onSubmit"] =
+    useCallback(
+      (data, helpers) => {
+        const input = adaptData(data);
+        const notificationsConfig = getNotifications(data);
 
-      mutation.mutate(
-        input,
-        withNotifications({
-          notifications: notificationsConfig,
-          onSuccess: (res) => {
-            notifyAndInvalidate(res);
-            helpers.reset();
-            onSuccess?.(res);
-          },
-        }),
-      );
-    },
-    [mutation, notifyAndInvalidate, adaptData, getNotifications, onSuccess],
-  );
+        mutation.mutate(
+          input,
+          withNotifications({
+            notifications: notificationsConfig,
+            onSuccess: (res) => {
+              notifyAndInvalidate(res);
+              helpers.reset(res);
+              onSuccess?.(res);
+            },
+          }),
+        );
+      },
+      [mutation, notifyAndInvalidate, adaptData, getNotifications, onSuccess],
+    );
 
   return {
     formId,
