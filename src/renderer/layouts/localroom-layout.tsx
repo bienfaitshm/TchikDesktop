@@ -56,7 +56,6 @@ export function LocalRoomsLayout({
  */
 function SidebarContent({ sessionId, navigateTo }: LayoutProps) {
   const { data: localrooms = [] } = useGetSessionRoomsStatus(sessionId!);
-  console.log("localrooms", localrooms);
   return (
     <nav aria-label="Navigation des classes" className="h-full w-full">
       <LocalroomNavItems localrooms={localrooms} to={navigateTo} />
