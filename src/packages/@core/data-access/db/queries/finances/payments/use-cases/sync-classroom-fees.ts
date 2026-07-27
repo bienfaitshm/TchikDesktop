@@ -259,10 +259,8 @@ export class FeeManagementService {
     enrollments: { enrollmentId: string }[],
   ): Set<string> {
     const enrollmentIds = enrollments.map((e) => e.enrollmentId);
-    const existing = this.feeAssignmentRepo.findMany({
-      where: { feeAssignments: { enrollmentId: { $in: enrollmentIds } } },
-    });
-
+    const existing =
+      this.feeAssignmentRepo.getEnrollmentAssignments(enrollmentIds);
     return new Set(
       existing.map((e) =>
         buildAssignmentKey(

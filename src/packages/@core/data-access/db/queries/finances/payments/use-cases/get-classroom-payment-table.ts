@@ -50,11 +50,8 @@ export class GetClassroomPaymentTable {
 
     // Retrieve database assignments for classroom students
     const enrollmentIds = enrollments.map((e) => e.enrollmentId);
-    const assignments = this.feeAssignmentRepo.findMany({
-      where: {
-        feeAssignments: { enrollmentId: { $in: enrollmentIds } },
-      },
-    });
+    const assignments =
+      this.feeAssignmentRepo.getEnrollmentAssignments(enrollmentIds);
 
     // Fast O(1) indexing map
     const assignmentMap = this.groupAssignmentsByKey(assignments);

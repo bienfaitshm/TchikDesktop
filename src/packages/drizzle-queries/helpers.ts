@@ -20,8 +20,8 @@ import {
 } from "drizzle-orm";
 import { merge } from "ts-deepmerge";
 
-export const DEFAULT_MAX_LIMIT = 500;
-export const DEFAULT_MAX_OFFSET = 50000;
+export const DEFAULT_MAX_LIMIT = 10000;
+export const DEFAULT_MAX_OFFSET = 500000;
 
 const OPERATOR_MAP: Record<
   string,

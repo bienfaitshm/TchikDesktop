@@ -45,4 +45,5 @@ export type FastPaymentFormProps = {
   isSubmitting?: boolean;
   /** Optional HTML form ID attribute. */
   formId?: string;
+  yearName: string;
 };

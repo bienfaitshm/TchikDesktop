@@ -39,6 +39,7 @@ export function FastPaymentForm({
   formId,
   isSubmitting,
   school,
+  yearName,
 }: FastPaymentFormProps) {
   const { selectedStudent, setSelectedStudent, resetForm } =
     useFastPaymentStore(
@@ -64,7 +65,7 @@ export function FastPaymentForm({
           resetForm(value, {
             name: school?.name ?? "—",
             address: school?.address ?? "—",
-            yearName: school?.yearName ?? "",
+            yearName: yearName ?? "",
           });
         },
       });

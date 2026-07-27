@@ -37,7 +37,7 @@ import { FormSubmitHandler } from "@/renderer/libs/queries/base";
  * @returns The fast payment page view element.
  */
 export function FastPaymentPage() {
-  const { schoolId = "", yearId = "", school } = useCurrentConfig();
+  const { schoolId = "", yearId = "", school, year } = useCurrentConfig();
   const printTicket = usePrintTicketForm();
 
   const {
@@ -67,7 +67,7 @@ export function FastPaymentPage() {
   );
 
   return (
-    <PageContainer className="flex flex-col gap-6 mt-10">
+    <PageContainer className="flex flex-col gap-6">
       <PageHeader className="border-b pb-5">
         <PageHeaderTextContent>
           <PageHeadTitle>Terminal de Caisse</PageHeadTitle>
@@ -96,6 +96,7 @@ export function FastPaymentPage() {
         <FastPaymentContainer>
           <FastPaymentFormContainer>
             <FastPaymentForm
+              yearName={year?.yearName!}
               school={school!}
               formId={formId}
               isSubmitting={isSubmitting}

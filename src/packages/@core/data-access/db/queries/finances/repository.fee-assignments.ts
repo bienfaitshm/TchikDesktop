@@ -44,6 +44,15 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
     });
   }
 
+  getEnrollmentAssignments(enrollmentIds: string[]) {
+    return this.findMany({
+      where: {
+        feeAssignments: { enrollmentId: { $in: enrollmentIds } },
+      },
+      limit: 20000,
+    });
+  }
+
   /**
    * Determines the payment status based on the paid amount and the total expected amount.
    * @param amount - The current paid amount.
