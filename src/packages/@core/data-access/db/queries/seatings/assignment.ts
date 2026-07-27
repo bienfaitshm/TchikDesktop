@@ -11,7 +11,11 @@ import {
   type InsertSeatingAssignment,
 } from "@/packages/@core/data-access/db/schemas";
 import { getLogger } from "@/packages/logger";
-import { betterSqlite, helpers } from "@/packages/drizzle-queries";
+import {
+  betterSqlite,
+  DatabaseError,
+  helpers,
+} from "@/packages/drizzle-queries";
 
 const _seatingSessionJoinTables = {
   seatingAssignments,
@@ -175,8 +179,15 @@ export class SeatingAssignmentRepository extends betterSqlite.BaseRepository<
         .run();
       return true;
     } catch (error) {
-      this.logError("clearRoomAssignments", error, { sessionId, localroomId });
-      throw new Error("Failed to clear room assignments.");
+      const dbError = DatabaseError.from(
+        error,
+        "Failed to clear room assignments",
+      );
+      this.logError("clearRoomAssignments", dbError, {
+        sessionId,
+        localroomId,
+      });
+      throw dbError;
     }
   }
 
@@ -186,21 +197,29 @@ export class SeatingAssignmentRepository extends betterSqlite.BaseRepository<
    * @param tx - Optional transaction database client.
    * @returns Array of inserted seating assignments.
    */
-  async bulkAssign(assignments: InsertSeatingAssignment[], tx?: TDataBase) {
+  bulkAssign(
+    assignments: InsertSeatingAssignment[],
+    tx?: TDataBase,
+  ): SeatingAssignment[] {
     if (assignments.length === 0) return [];
 
     const client = this.getClient(tx);
 
     try {
-      return await client
+      return client
         .insert(seatingAssignments)
         .values(assignments)
-        .returning();
+        .returning()
+        .all();
     } catch (error) {
-      this.logError("bulkAssign", error, { count: assignments.length });
-      throw new Error(
+      const dbError = DatabaseError.from(
+        error,
         "Placement conflict: A seat or a student is already assigned.",
       );
+      this.logError("clearRoomAssignments", dbError, {
+        count: assignments.length,
+      });
+      throw dbError;
     }
   }
 
@@ -227,19 +246,19 @@ export class SeatingAssignmentRepository extends betterSqlite.BaseRepository<
    * @param tx - Optional transaction database client.
    * @returns Array of newly created seating assignments.
    */
-  async rebuildAssignments(
+  rebuildAssignments(
     sessionId: string,
     assignments: InsertSeatingAssignment[],
     tx?: TDataBase,
-  ): Promise<SeatingAssignment[]> {
+  ): SeatingAssignment[] {
     if (assignments.length === 0) {
       return [];
     }
 
     const baseClient = this.getClient(tx);
 
-    return await baseClient.transaction(async (innerTx) => {
-      const isDeletionSuccessful = await this.deleteAssignmentsBySession(
+    return baseClient.transaction((innerTx) => {
+      const isDeletionSuccessful = this.deleteAssignmentsBySession(
         sessionId,
         innerTx,
       );
@@ -250,7 +269,7 @@ export class SeatingAssignmentRepository extends betterSqlite.BaseRepository<
         );
       }
 
-      return await this.bulkAssign(assignments, innerTx);
+      return this.bulkAssign(assignments, innerTx);
     });
   }
 }

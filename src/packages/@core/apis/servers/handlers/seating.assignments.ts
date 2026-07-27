@@ -71,8 +71,10 @@ export class SeatingAssignmentController {
   @IpcServer.register(HttpMethod.GET, SeatingAssignmentRoutes.LAYOUT, {
     params: RoomLayoutParamSchema,
   })
-  static async getRoomLayout(req: IpcRequest<unknown, RoomLayoutParam>) {
-    return seatingAssignmentRepository.getRoomLayout(req.params);
+  static async getRoomLayout({
+    params: { localroomId, sessionId },
+  }: IpcRequest<unknown, RoomLayoutParam>) {
+    return seatingAssignmentRepository.getRoomLayout(sessionId, localroomId);
   }
 
   /**
@@ -83,8 +85,8 @@ export class SeatingAssignmentController {
   @IpcServer.register(HttpMethod.POST, SeatingAssignmentRoutes.BULK, {
     body: BulkSeatingAssignmentSchema,
   })
-  static async bulkAssign(req: IpcRequest<BulkSeatingAssignment>) {
-    return seatingAssignmentRepository.bulkAssign(req.body);
+  static async bulkAssign({ body }: IpcRequest<BulkSeatingAssignment>) {
+    return seatingAssignmentRepository.bulkAssign(body.assignments);
   }
 
   /**
@@ -95,8 +97,13 @@ export class SeatingAssignmentController {
   @IpcServer.register(HttpMethod.POST, SeatingAssignmentRoutes.RE_ASSIGNED, {
     body: BulkSeatingAssignmentSchema,
   })
-  static async rebuildAssignments(req: IpcRequest<BulkSeatingAssignment>) {
-    return seatingAssignmentRepository.rebuildAssignments(req.body);
+  static async rebuildAssignments({
+    body: { assignments, sessionId },
+  }: IpcRequest<BulkSeatingAssignment>) {
+    return seatingAssignmentRepository.rebuildAssignments(
+      sessionId,
+      assignments,
+    );
   }
 
   /**
@@ -107,10 +114,10 @@ export class SeatingAssignmentController {
   @IpcServer.register(HttpMethod.GET, SeatingAssignmentRoutes.UNASSIGNED, {
     params: UnassignedParamSchema,
   })
-  static async getUnassignedStudents(
-    req: IpcRequest<unknown, UnassignedParam>,
-  ) {
-    return seatingAssignmentRepository.getUnassignedStudents(req.params);
+  static async getUnassignedStudents({
+    params: { sessionId, yearId },
+  }: IpcRequest<unknown, UnassignedParam>) {
+    return seatingAssignmentRepository.getUnassignedStudents(sessionId, yearId);
   }
 
   /**
@@ -121,8 +128,13 @@ export class SeatingAssignmentController {
   @IpcServer.register(HttpMethod.DELETE, SeatingAssignmentRoutes.CLEAR_ROOM, {
     body: RoomLayoutParamSchema,
   })
-  static async clearRoomAssignments(req: IpcRequest<RoomLayoutParam>) {
-    const success = await seatingSessionService.clearRoomAssignments(req.body);
+  static async clearRoomAssignments({
+    body: { localroomId, sessionId },
+  }: IpcRequest<RoomLayoutParam>) {
+    const success = await seatingAssignmentRepository.clearRoomAssignments(
+      sessionId,
+      localroomId,
+    );
     return { success };
   }
 
@@ -134,7 +146,9 @@ export class SeatingAssignmentController {
   @IpcServer.register(HttpMethod.GET, SeatingAssignmentRoutes.FIND_STUDENT, {
     params: FindStudentParamSchema,
   })
-  static async findStudentSeat(req: IpcRequest<unknown, FindStudentParam>) {
-    return seatingSessionService.findStudentSeat(req.params);
+  static async findStudentSeat({
+    params: { enrollmentId, sessionId },
+  }: IpcRequest<unknown, FindStudentParam>) {
+    return seatingAssignmentRepository.findStudentSeat(sessionId, enrollmentId);
   }
 }

@@ -8,7 +8,11 @@ import {
 } from "@/packages/@core/data-access/db/schemas";
 import { compareByFullName } from "@/packages/@core/data-access/db/queries/query-utils";
 import type { SeatingSessionWithAssignment } from "./type";
-import { helpers, betterSqlite } from "@/packages/drizzle-queries";
+import {
+  helpers,
+  betterSqlite,
+  DatabaseError,
+} from "@/packages/drizzle-queries";
 
 const _seatingSessionJoinTables = {
   seatingAssignments,
@@ -99,10 +103,14 @@ export class SeatingSessionRepository extends betterSqlite.BaseRepository<
         )
         .orderBy(localrooms.name);
     } catch (error) {
-      this.logError("getSessionRoomsStatus", error, { sessionId });
-      throw new Error("Failed to retrieve room status.", {
-        cause: error,
+      const dbError = DatabaseError.from(
+        error,
+        "Failed to retrieve room status.",
+      );
+      this.logError("clearRoomAssignments", dbError, {
+        sessionId,
       });
+      throw dbError;
     }
   }
 
@@ -148,8 +156,14 @@ export class SeatingSessionRepository extends betterSqlite.BaseRepository<
 
       return typedSession;
     } catch (error) {
-      this.logError("getSessionWithAssignments", error, { sessionId });
-      throw error;
+      const dbError = DatabaseError.from(
+        error,
+        "Failed to retrieve room with students.",
+      );
+      this.logError("clearRoomAssignments", dbError, {
+        sessionId,
+      });
+      throw dbError;
     }
   }
 }
