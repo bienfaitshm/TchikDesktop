@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import { useShallow } from "zustand/react/shallow";
 import type {
   EnrollmentPayment,
   FeeAssignment,
@@ -12,23 +13,25 @@ import {
 } from "@/packages/@core/data-access/db/options";
 import type { EnrollmentOption, ScheduleOption } from "./types";
 
-// ---------------------------------------------------------------------------
-// UTILITAIRE : Génération aléatoire de la référence
-// ---------------------------------------------------------------------------
-export const generateTicketRef = (year = new Date().getFullYear()): string => {
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let randomPart = "";
-  for (let i = 0; i < 4; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    randomPart += characters.charAt(randomIndex);
-  }
-  return `POS-${year}-${randomPart}`;
-};
-
-type ReturnDataPayment = FeeAssignment & {
+/**
+ * Payment transaction result containing fee assignment and associated student payment.
+ */
+export type ReturnDataPayment = FeeAssignment & {
   payment: StudentPayment;
 };
 
+/**
+ * Contextual school information required for ticket issuance.
+ */
+export type SchoolContext = {
+  name: string;
+  address: string;
+  yearName: string;
+};
+
+/**
+ * Represents a point-of-sale receipt ticket entity.
+ */
 export type Ticket = {
   ticketRef: string;
   schoolName: string;
@@ -47,7 +50,9 @@ export type Ticket = {
   isPrinted: boolean;
 };
 
-// --- STATE SHAPE ---
+/**
+ * State properties for the fast payment POS process.
+ */
 export type FastPaymentState = {
   tickets: Ticket[];
   selectedStudent: EnrollmentOption | undefined;
@@ -55,7 +60,9 @@ export type FastPaymentState = {
   selectedSchedule: ScheduleOption | undefined;
 };
 
-// --- ACTIONS SHAPE ---
+/**
+ * Available actions to update the fast payment store state.
+ */
 export type FastPaymentActions = {
   setSelectedStudent: (student?: EnrollmentOption) => void;
   setSelectedFeeType: (feeType?: EnrollmentPayment) => void;
@@ -65,14 +72,93 @@ export type FastPaymentActions = {
   markTicketAsPrinted: (ticketRef: string) => void;
   clearTickets: () => void;
 
-  resetForm: (
-    data: ReturnDataPayment,
-    school: { name: string; address: string; yearName: string },
-  ) => void;
+  resetForm: (data: ReturnDataPayment, school: SchoolContext) => void;
   resetAll: () => void;
 };
 
 export type FastPaymentStore = FastPaymentState & FastPaymentActions;
+
+/**
+ * Extracts student display name with a default fallback value.
+ * @param student - Selected student option.
+ * @returns Human-readable student name.
+ */
+const getStudentDisplayName = (student?: EnrollmentOption): string =>
+  student?.student?.fullName ?? student?.label ?? "—";
+
+/**
+ * Extracts fee type display name with a default fallback value.
+ * @param feeType - Selected fee type option.
+ * @returns Human-readable fee type name.
+ */
+const getFeeTypeDisplayName = (feeType?: EnrollmentPayment): string =>
+  feeType?.name ?? feeType?.label ?? "—";
+
+/**
+ * Extracts schedule display name with a default fallback value.
+ * @param schedule - Selected schedule option.
+ * @returns Human-readable schedule installment name.
+ */
+const getScheduleDisplayName = (schedule?: ScheduleOption): string =>
+  schedule?.installmentName ?? schedule?.label ?? "—";
+
+/**
+ * Generates a unique reference string for POS receipts using secure random bytes.
+ * @param year - Reference year for prefix formatting (defaults to current year).
+ * @returns Formatted reference string (e.g., POS-2026-A1B2).
+ */
+export const generateTicketRef = (year = new Date().getFullYear()): string => {
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const randomBytes = new Uint8Array(4);
+
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(randomBytes);
+  } else {
+    for (let i = 0; i < 4; i++) {
+      randomBytes[i] = Math.floor(Math.random() * 256);
+    }
+  }
+
+  let randomPart = "";
+  for (let i = 0; i < 4; i++) {
+    randomPart += characters[randomBytes[i] % characters.length];
+  }
+
+  return `POS-${year}-${randomPart}`;
+};
+
+/**
+ * Constructs a new Ticket object from payment response and active selection context.
+ * @param studentName - Resolved student display name.
+ * @param payment - Transaction payment result payload.
+ * @param school - Active school context metadata.
+ * @param fee - Fee type and schedule name metadata.
+ * @returns Complete Ticket object ready for store persistence.
+ */
+function createTicket(
+  studentName: string,
+  payment: ReturnDataPayment,
+  school: SchoolContext,
+  fee: { feeTypeName: string; scheduleName: string },
+): Ticket {
+  return {
+    address: school.address,
+    schoolName: school.name,
+    amountPaid: payment.payment.amountReceived,
+    currency: payment.payment.currencyReceived,
+    paymentMethod: payment.payment.paymentMethod,
+    transactionReference: payment.payment.transactionReference,
+    studentName,
+    feeTypeName: fee.feeTypeName,
+    scheduleName: fee.scheduleName,
+    status: payment.status,
+    ticketRef: generateTicketRef(),
+    totalDue: payment.totalAmount,
+    yearName: school.yearName,
+    date: payment.createdAt,
+    isPrinted: false,
+  };
+}
 
 const initialState: FastPaymentState = {
   tickets: [],
@@ -81,7 +167,9 @@ const initialState: FastPaymentState = {
   selectedSchedule: undefined,
 };
 
-// --- LE STORE ---
+/**
+ * Zustand store managing point-of-sale fast payment workflow state.
+ */
 export const useFastPaymentStore = create<FastPaymentStore>()(
   devtools(
     (set, get) => ({
@@ -129,8 +217,10 @@ export const useFastPaymentStore = create<FastPaymentStore>()(
       markTicketAsPrinted: (ticketRef) =>
         set(
           (state) => ({
-            tickets: state.tickets.map((t) =>
-              t.ticketRef === ticketRef ? { ...t, isPrinted: true } : t,
+            tickets: state.tickets.map((ticket) =>
+              ticket.ticketRef === ticketRef
+                ? { ...ticket, isPrinted: true }
+                : ticket,
             ),
           }),
           false,
@@ -148,15 +238,12 @@ export const useFastPaymentStore = create<FastPaymentStore>()(
         } = get();
 
         const ticket = createTicket(
-          selectedStudent?.student?.fullName ?? selectedStudent?.label ?? "—",
+          getStudentDisplayName(selectedStudent),
           data,
           school,
           {
-            feeTypeName: selectedFeeType?.name ?? selectedFeeType?.label ?? "—",
-            scheduleName:
-              selectedSchedule?.installmentName ??
-              selectedSchedule?.label ??
-              "—",
+            feeTypeName: getFeeTypeDisplayName(selectedFeeType),
+            scheduleName: getScheduleDisplayName(selectedSchedule),
           },
         );
 
@@ -179,10 +266,11 @@ export const useFastPaymentStore = create<FastPaymentStore>()(
   ),
 );
 
-// ---------------------------------------------------------------------------
-// SÉLECTEURS PURS (Empêchent les boucles infinies de re-render)
-// ---------------------------------------------------------------------------
-
+/**
+ * Calculates remaining balance due for currently selected schedule.
+ * @param state - Fast payment store state.
+ * @returns Remaining balance amount (non-negative).
+ */
 export const selectAmountDue = (state: FastPaymentState): number => {
   if (!state.selectedSchedule) return 0;
   return Math.max(
@@ -191,6 +279,11 @@ export const selectAmountDue = (state: FastPaymentState): number => {
   );
 };
 
+/**
+ * Evaluates whether form selections are valid and ready for checkout.
+ * @param state - Fast payment store state.
+ * @returns True if schedule is selected and balance due > 0.
+ */
 export const selectIsValidForSubmission = (
   state: FastPaymentState,
 ): boolean => {
@@ -198,28 +291,30 @@ export const selectIsValidForSubmission = (
   return Boolean(state.selectedSchedule) && amountDue > 0;
 };
 
+/**
+ * Pure selector generating preview data for the live ticket component.
+ * @param state - Fast payment store state.
+ * @returns Partial ticket preview or undefined.
+ */
 export const selectPreviewTicket = (
   state: FastPaymentState,
 ): Partial<Ticket> | undefined => {
   const { selectedStudent, selectedFeeType, selectedSchedule, tickets } = state;
+  const currentYear = new Date().getFullYear();
 
-  // 1. Si une sélection est active
   if (selectedStudent || selectedFeeType || selectedSchedule) {
     const amountDue = selectAmountDue(state);
     return {
-      ticketRef: "POS-2026-PREV", // Reste fixe pour le preview pour éviter de changer à chaque rendu
-      studentName:
-        selectedStudent?.student?.fullName ?? selectedStudent?.label ?? "—",
-      feeTypeName: selectedFeeType?.label ?? selectedFeeType?.name ?? "—",
-      scheduleName:
-        selectedSchedule?.label ?? selectedSchedule?.installmentName ?? "—",
+      ticketRef: `POS-${currentYear}-PREV`,
+      studentName: getStudentDisplayName(selectedStudent),
+      feeTypeName: getFeeTypeDisplayName(selectedFeeType),
+      scheduleName: getScheduleDisplayName(selectedSchedule),
       amountPaid: amountDue,
       totalDue: selectedSchedule?.totalAmount ?? 0,
       isPrinted: false,
     };
   }
 
-  // 2. Sinon, retourner le dernier ticket non imprimé
   const lastTicket = tickets[0];
   if (lastTicket && !lastTicket.isPrinted) {
     return lastTicket;
@@ -228,27 +323,25 @@ export const selectPreviewTicket = (
   return undefined;
 };
 
-function createTicket(
-  studentName: string,
-  payment: ReturnDataPayment,
-  school: { name: string; address: string; yearName: string },
-  fee: { feeTypeName: string; scheduleName: string },
-): Ticket {
-  return {
-    address: school.address,
-    schoolName: school.name,
-    amountPaid: payment.payment.amountReceived,
-    currency: payment.payment.currencyReceived,
-    paymentMethod: payment.payment.paymentMethod,
-    transactionReference: payment.payment.transactionReference,
-    studentName,
-    feeTypeName: fee.feeTypeName,
-    scheduleName: fee.scheduleName,
-    status: payment.status,
-    ticketRef: generateTicketRef(),
-    totalDue: payment.totalAmount,
-    yearName: school.yearName,
-    date: payment.createdAt,
-    isPrinted: false,
-  };
-}
+/**
+ * Performance-optimized React hook providing shallow-memoized ticket preview state.
+ * Prevents redundant component re-renders during POS state updates.
+ * @returns Shallow-compared ticket preview object or undefined.
+ */
+export const useFastPaymentPreviewTicket = (): Partial<Ticket> | undefined => {
+  return useFastPaymentStore(useShallow(selectPreviewTicket));
+};
+
+/**
+ * Performance-optimized React hook providing shallow-memoized form selections state.
+ * @returns Shallow-compared active student, fee, and schedule selections.
+ */
+export const useFastPaymentFormState = () => {
+  return useFastPaymentStore(
+    useShallow((state) => ({
+      selectedStudent: state.selectedStudent,
+      selectedFeeType: state.selectedFeeType,
+      selectedSchedule: state.selectedSchedule,
+    })),
+  );
+};

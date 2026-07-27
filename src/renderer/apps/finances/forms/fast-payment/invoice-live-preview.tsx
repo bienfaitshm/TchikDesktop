@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo, useCallback, useState } from "react";
+import { memo, useMemo, useCallback } from "react";
 import { AlertTriangle, Printer, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { School } from "@/packages/@core/data-access/db";
@@ -15,76 +15,97 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { formatCurrency } from "@/packages/currency";
 import { formatDate } from "@/packages/times";
 import { useShallow } from "zustand/react/shallow";
-import { useFastPaymentStore, selectPreviewTicket } from "./hooks";
+import {
+  useFastPaymentStore,
+  useFastPaymentPreviewTicket,
+  type Ticket,
+} from "./hooks";
 import { LoadingButton } from "@/renderer/components/buttons/button-loading";
+import type { FormSubmitHandler } from "@/renderer/libs/forms";
 
-type InvoiceLivePreviewProps = {
+/**
+ * Props interface for the InvoiceLivePreview component.
+ */
+export type InvoiceLivePreviewProps = {
+  /** School entity information displayed on the ticket header. */
   school?: School;
-  onPrint?: (ticketRef: string) => void | Promise<void>;
+  /** Callback triggered to execute the ticket printing process. */
+  onPrint?: FormSubmitHandler<Ticket>;
+  /** Indicates whether the print process is currently in progress. */
+  isPrinting?: boolean;
 };
 
+/**
+ * Validates whether a partial ticket contains all required properties for physical printing.
+ * @param ticket - Partial ticket object to validate.
+ * @returns Boolean indicating whether the ticket is valid and printable.
+ */
+const isPrintableTicket = (
+  ticket: Partial<Ticket> | undefined,
+): ticket is Ticket => {
+  return Boolean(
+    ticket &&
+    ticket.ticketRef &&
+    !ticket.ticketRef.endsWith("-PREV") &&
+    ticket.studentName &&
+    ticket.feeTypeName,
+  );
+};
+
+/**
+ * Formats a raw date or string into localized date, time, and year representations.
+ * @param dateInput - Optional date object or ISO date string.
+ * @returns Object containing formatted date, time, and year strings.
+ */
+const formatTicketDateTime = (dateInput?: string | Date | null) => {
+  const targetDate = dateInput ? new Date(dateInput) : new Date();
+  const validDate = Number.isNaN(targetDate.getTime())
+    ? new Date()
+    : targetDate;
+
+  return {
+    date: validDate.toLocaleDateString("fr-FR"),
+    time: validDate.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    year: formatDate(validDate, "yyyy"),
+  };
+};
+
+/**
+ * Component rendering a real-time thermal receipt live preview card.
+ * @param props - School details, print event handler, and printing state.
+ * @returns Memoized React component presenting ticket details and print controls.
+ */
 export const InvoiceLivePreview = memo<InvoiceLivePreviewProps>(
-  ({ school, onPrint }) => {
-    const [isPrinting, setIsPrinting] = useState(false);
-
-    // Connexion Zustand
-    const ticketPreview = useFastPaymentStore(useShallow(selectPreviewTicket));
-    const selectedStudent = useFastPaymentStore((s) => s.selectedStudent);
-    const markTicketAsPrinted = useFastPaymentStore(
-      (s) => s.markTicketAsPrinted,
+  ({ school, onPrint, isPrinting }) => {
+    const ticketPreview = useFastPaymentPreviewTicket();
+    const { selectedStudent, markTicketAsPrinted } = useFastPaymentStore(
+      useShallow((state) => ({
+        selectedStudent: state.selectedStudent,
+        markTicketAsPrinted: state.markTicketAsPrinted,
+      })),
     );
 
-    // Vérification : est-ce un vrai ticket prêt pour l'impression ?
-    const isRealTicket = Boolean(
-      ticketPreview && ticketPreview.ticketRef !== "POS-2026-PREV",
+    const isRealTicket = isPrintableTicket(ticketPreview);
+
+    const formattedDateTime = useMemo(
+      () => formatTicketDateTime(ticketPreview?.date),
+      [ticketPreview?.date],
     );
 
-    // Dates et heures dynamiques
-    const ticketDate = ticketPreview?.date
-      ? new Date(ticketPreview.date)
-      : new Date();
+    const handlePrint = useCallback(() => {
+      if (!isPrintableTicket(ticketPreview)) return;
 
-    const currentDateFormatted = useMemo(
-      () => ticketDate.toLocaleDateString("fr-FR"),
-      [ticketDate],
-    );
+      const activeTicket = ticketPreview;
 
-    const currentTimeFormatted = useMemo(
-      () =>
-        ticketDate.toLocaleTimeString("fr-FR", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      [ticketDate],
-    );
-
-    const currentYearFormatted = useMemo(
-      () => formatDate(ticketDate, "yyyy"),
-      [ticketDate],
-    );
-
-    // Action d'impression
-    const handlePrint = useCallback(async () => {
-      if (!ticketPreview?.ticketRef || !isRealTicket) return;
-
-      try {
-        setIsPrinting(true);
-
-        // Appel du callback d'impression s'il existe (ex: Electron IPC ou window.print)
-        if (onPrint) {
-          await onPrint(ticketPreview.ticketRef);
-        } else {
-          window.print();
-        }
-
-        // Marquer comme imprimé dans le Store Zustand
-        markTicketAsPrinted(ticketPreview.ticketRef);
-      } catch (error) {
-        console.error("Erreur lors de l'impression :", error);
-      } finally {
-        setIsPrinting(false);
-      }
-    }, [ticketPreview?.ticketRef, isRealTicket, onPrint, markTicketAsPrinted]);
+      onPrint?.(activeTicket, {
+        reset() {
+          markTicketAsPrinted(activeTicket.ticketRef);
+        },
+      });
+    }, [ticketPreview, onPrint, markTicketAsPrinted]);
 
     return (
       <Card className="border-dashed bg-slate-50/50 dark:bg-zinc-900/40 shadow-sm sticky top-6 overflow-hidden">
@@ -119,7 +140,7 @@ export const InvoiceLivePreview = memo<InvoiceLivePreviewProps>(
 
         <CardContent className="flex flex-col gap-4 font-mono text-xs">
           <div className="bg-white dark:bg-zinc-950 text-slate-900 dark:text-slate-100 p-4 rounded shadow-md border border-slate-200 dark:border-zinc-800 flex flex-col gap-3 relative before:absolute before:-top-2 before:left-0 before:right-0 before:h-2 before:bg-[radial-gradient(circle,transparent_50%,#ffffff_50%)] before:bg-size-[8px_8px]">
-            {/* En-tête ticket */}
+            {/* Header section */}
             <div className="text-center flex flex-col gap-1 pb-2 border-b border-dashed border-slate-300 dark:border-zinc-800">
               <h3 className="font-bold text-xs tracking-wider uppercase">
                 {school?.name || ticketPreview?.schoolName || "ÉCOLE"}
@@ -130,19 +151,19 @@ export const InvoiceLivePreview = memo<InvoiceLivePreviewProps>(
                   "Adresse de l'établissement"}
               </p>
               <div className="flex justify-between text-[10px] text-slate-500 dark:text-zinc-400 pt-1">
-                <span>Date: {currentDateFormatted}</span>
-                <span>Heure: {currentTimeFormatted}</span>
+                <span>Date: {formattedDateTime.date}</span>
+                <span>Heure: {formattedDateTime.time}</span>
               </div>
               <div className="text-[10px] text-slate-500 dark:text-zinc-400 text-left">
                 Réf:{" "}
                 <span className="uppercase font-bold">
                   {ticketPreview?.ticketRef ||
-                    `POS-${currentYearFormatted}-XXXX`}
+                    `POS-${formattedDateTime.year}-XXXX`}
                 </span>
               </div>
             </div>
 
-            {/* Infos Élève */}
+            {/* Student information */}
             <div className="flex flex-col gap-1.5 min-h-15 py-1 text-[11px] border-b border-dashed border-slate-300 dark:border-zinc-800">
               <AnimatePresence mode="popLayout">
                 {ticketPreview ? (
@@ -193,7 +214,7 @@ export const InvoiceLivePreview = memo<InvoiceLivePreviewProps>(
               </AnimatePresence>
             </div>
 
-            {/* Détails Paiement */}
+            {/* Fee and payment details */}
             <div className="flex flex-col gap-2 min-h-10 py-1">
               <div className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
                 Désignation
@@ -229,7 +250,7 @@ export const InvoiceLivePreview = memo<InvoiceLivePreviewProps>(
               </AnimatePresence>
             </div>
 
-            {/* Total Payé */}
+            {/* Total paid */}
             <div className="border-t-2 border-dashed border-slate-900 dark:border-zinc-100 pt-3 mt-1">
               <div className="flex justify-between items-center bg-slate-100 dark:bg-zinc-900 p-2 rounded">
                 <span className="text-xs font-black uppercase tracking-wider">
@@ -248,9 +269,9 @@ export const InvoiceLivePreview = memo<InvoiceLivePreviewProps>(
               </div>
             </div>
 
-            {/* Pied de page */}
+            {/* Footer notice */}
             <div className="text-center text-[9px] text-slate-400 pt-2 flex flex-col gap-0.5">
-              <p>CAISSE: CAISSE_A_{currentYearFormatted}</p>
+              <p>CAISSE: CAISSE_A_{formattedDateTime.year}</p>
               <p className="tracking-widest mt-1">
                 *** MERCI DE VOTRE VISITE ***
               </p>
@@ -274,6 +295,7 @@ export const InvoiceLivePreview = memo<InvoiceLivePreviewProps>(
             loading={isPrinting}
             className="w-full font-sans text-xs font-semibold"
             size="sm"
+            variant="outline"
           >
             <Printer className="size-3.5 mr-2" />
             {isRealTicket

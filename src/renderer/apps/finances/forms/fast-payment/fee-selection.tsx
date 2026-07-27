@@ -2,6 +2,7 @@
 
 import React, { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useShallow } from "zustand/react/shallow";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   ComboboxSearch,
@@ -15,25 +16,48 @@ import {
 import { formatScheduleStatus } from "./formatters";
 import { useFastPaymentStore } from "./hooks";
 
-type FeeSelectionProps = {
-  enrollmentId: string;
-  children?: (defaultValue: {
-    totalAmount: number;
-    amountPaid: number;
-    assignmentId: string;
-  }) => React.ReactNode;
+/**
+ * Arguments provided to the children render prop function.
+ */
+export type FeeSelectionChildrenArgs = {
+  totalAmount: number;
+  amountPaid: number;
+  assignmentId: string;
 };
 
+/**
+ * Props interface for the FeeSelection component.
+ */
+export type FeeSelectionProps = {
+  /** Unique enrollment identifier for student payment query. */
+  enrollmentId: string;
+  /** Optional render prop children function to display schedule details. */
+  children?: (defaultValue: FeeSelectionChildrenArgs) => React.ReactNode;
+};
+
+/**
+ * Fee selection component handling fee type and schedule options.
+ * Connects to payment store and displays selected schedule overview.
+ *
+ * @param props - Properties including enrollmentId and optional children render function.
+ * @returns Interactive fee type and schedule selection UI component.
+ */
 export const FeeSelection = memo<FeeSelectionProps>(
   ({ enrollmentId, children }) => {
     const { data: feeOverview } = useGetStudentPaymentOverview(enrollmentId);
 
-    // Connexion directe au store Zustand
-    const selectedFeeType = useFastPaymentStore((s) => s.selectedFeeType);
-    const selectedSchedule = useFastPaymentStore((s) => s.selectedSchedule);
-    const setSelectedFeeType = useFastPaymentStore((s) => s.setSelectedFeeType);
-    const setSelectedSchedule = useFastPaymentStore(
-      (s) => s.setSelectedSchedule,
+    const {
+      selectedFeeType,
+      selectedSchedule,
+      setSelectedFeeType,
+      setSelectedSchedule,
+    } = useFastPaymentStore(
+      useShallow((state) => ({
+        selectedFeeType: state.selectedFeeType,
+        selectedSchedule: state.selectedSchedule,
+        setSelectedFeeType: state.setSelectedFeeType,
+        setSelectedSchedule: state.setSelectedSchedule,
+      })),
     );
 
     return (
@@ -44,8 +68,9 @@ export const FeeSelection = memo<FeeSelectionProps>(
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
           <Field className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="fee-type">Type de Frais</FieldLabel>
+            <FieldLabel htmlFor="fee-type-select">Type de Frais</FieldLabel>
             <ComboboxSearch
+              id="fee-type-select"
               selectedItem={selectedFeeType}
               value={selectedFeeType?.value}
               options={feeOverview?.payments ?? []}
@@ -54,8 +79,11 @@ export const FeeSelection = memo<FeeSelectionProps>(
           </Field>
 
           <Field className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor="fee-schedule">Échéancier / Période</FieldLabel>
+            <FieldLabel htmlFor="fee-schedule-select">
+              Échéancier / Période
+            </FieldLabel>
             <ComboboxSearch
+              id="fee-schedule-select"
               selectedItem={selectedSchedule}
               value={selectedSchedule?.scheduleId}
               options={selectedFeeType?.schedules ?? []}
@@ -76,7 +104,7 @@ export const FeeSelection = memo<FeeSelectionProps>(
 
         <AnimatePresence mode="wait">
           {selectedSchedule ? (
-            <PaymentOverview assignment={{ ...selectedSchedule }}>
+            <PaymentOverview assignment={selectedSchedule}>
               <motion.div
                 key={selectedSchedule.scheduleId}
                 initial={{ opacity: 0, height: 0 }}

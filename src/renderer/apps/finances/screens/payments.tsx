@@ -1,10 +1,18 @@
 "use client";
 
+import { useCallback } from "react";
 import { Link } from "react-router";
 import { HistoryIcon, UsersIcon } from "lucide-react";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { useProcessStudentPaymentForm } from "@/renderer/libs/queries/finances";
-import { FastPaymentForm } from "@/renderer/apps/finances/forms/fast-payment";
+import {
+  FastPaymentForm,
+  InvoiceLivePreview,
+  FastPaymentContainer,
+  FastPaymentFormContainer,
+  FastPaymentPreviewContainer,
+  type Ticket,
+} from "@/renderer/apps/finances/forms/fast-payment";
 import { PaymentHistoryDialog } from "@/renderer/apps/finances/dialog/payment-history-dialog";
 import { Button } from "@/renderer/components/ui/button";
 import {
@@ -17,11 +25,13 @@ import {
   PageHeadAction,
 } from "@/renderer/containers/page-container";
 import { APP_ROUTES } from "@/renderer/constants";
+import { FormSubmitHandler } from "@/renderer/libs/queries/base";
 
 /**
- * Main layout component for the POS counter terminal.
- * Coordinates global app configurations and orchestrates the fast payment workflow.
- * @returns The rendered fast payment page UI.
+ * Point-of-sale terminal page component for processing student payments.
+ * Integrates checkout form management, live ticket previews, and navigation shortcuts.
+ *
+ * @returns The fast payment page view element.
  */
 export function FastPaymentPage() {
   const { schoolId = "", yearId = "", school } = useCurrentConfig();
@@ -38,6 +48,14 @@ export function FastPaymentPage() {
       yearId,
     },
     { process: "fast" },
+  );
+
+  const handlePrintTicket: FormSubmitHandler<Ticket, any> = useCallback(
+    (_payload, helpers) => {
+      console.log("handlePrintTicket", _payload);
+      helpers.reset();
+    },
+    [],
   );
 
   return (
@@ -67,16 +85,23 @@ export function FastPaymentPage() {
       </PageHeader>
 
       <PageContent>
-        <FastPaymentForm
-          school={school!}
-          formId={formId}
-          isSubmitting={isSubmitting}
-          schoolId={schoolId}
-          yearId={yearId}
-          onSubmit={onSubmit}
-          currencyOptions={currencyOptions}
-          paymentMethodOptions={paymentMethodOptions}
-        />
+        <FastPaymentContainer>
+          <FastPaymentFormContainer>
+            <FastPaymentForm
+              school={school!}
+              formId={formId}
+              isSubmitting={isSubmitting}
+              schoolId={schoolId}
+              yearId={yearId}
+              onSubmit={onSubmit}
+              currencyOptions={currencyOptions}
+              paymentMethodOptions={paymentMethodOptions}
+            />
+          </FastPaymentFormContainer>
+          <FastPaymentPreviewContainer>
+            <InvoiceLivePreview school={school!} onPrint={handlePrintTicket} />
+          </FastPaymentPreviewContainer>
+        </FastPaymentContainer>
       </PageContent>
     </PageContainer>
   );
