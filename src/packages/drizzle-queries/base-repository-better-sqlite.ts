@@ -300,7 +300,7 @@ export abstract class BaseRepository<
           .update(this.table)
           .set({
             ...payload,
-            updatedAt: sql`CURRENT_TIMESTAMP`,
+            updatedAt: new Date(),
           })
           .$dynamic();
 
