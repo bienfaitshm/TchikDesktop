@@ -73,12 +73,12 @@ export class SeatingSessionRepository extends betterSqlite.BaseRepository<
    * @param tx - Optional transaction client.
    * @returns Array of room status metrics including occupancy rates.
    */
-  async getSessionRoomsStatus(sessionId: string, tx?: TDataBase) {
+  getSessionRoomsStatus(sessionId: string, tx?: TDataBase) {
     if (!sessionId) return [];
 
     try {
       const client = this.getClient(tx);
-      return await client
+      return client
         .select({
           localroomId: localrooms.localroomId,
           roomName: localrooms.name,
@@ -101,7 +101,7 @@ export class SeatingSessionRepository extends betterSqlite.BaseRepository<
           localrooms.name,
           localrooms.maxCapacity,
         )
-        .orderBy(localrooms.name);
+        .orderBy(sql`LENGTH(${localrooms.name})`, localrooms.name);
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
