@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback } from "react";
+import { Suspense, useCallback, useMemo } from "react";
 import { CreditCard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useShallow } from "zustand/react/shallow";
@@ -18,7 +18,7 @@ import {
   EmptySelectStudent,
   FastPaymentLoading,
 } from "@/renderer/apps/finances/components/fast-payment-empty";
-import { useFastPaymentStore } from "./hooks";
+import { generateTicketRef, useFastPaymentStore } from "./hooks";
 import type { FastPaymentFormProps, FastPaymentSubmitter } from "./types";
 import type { EnrollmentOption } from "./types";
 import { PaymentButton } from "./payment-submit-button";
@@ -73,6 +73,8 @@ export function FastPaymentForm({
     [onSubmit, resetForm, school],
   );
 
+  const transactionReference = useMemo(generateTicketRef, []);
+
   return (
     <div className="space-y-2">
       <div className="flex flex-col gap-1">
@@ -126,6 +128,7 @@ export function FastPaymentForm({
                             schoolId,
                             yearId,
                             assignmentId,
+                            transactionReference,
                           }}
                           totalAmount={totalAmount}
                           amountPaid={amountPaid}

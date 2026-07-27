@@ -110,10 +110,10 @@ export const InvoiceLivePreview = memo<InvoiceLivePreviewProps>(
     return (
       <Card className="border-dashed bg-slate-50/50 dark:bg-zinc-900/40 shadow-sm sticky top-6 overflow-hidden">
         <CardHeader className="pb-3 flex flex-col gap-2">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center w-full">
             <Badge
               variant="outline"
-              className="border-primary/30 text-primary bg-primary/10 font-mono tracking-tight text-[11px]"
+              className="border-primary/30 text-primary bg-primary/10 font-mono tracking-tight text-[10px]"
             >
               <span>
                 {selectedStudent ? "APERÇU TICKET" : "DERNIER TICKET ÉMIS"}
@@ -130,7 +130,7 @@ export const InvoiceLivePreview = memo<InvoiceLivePreviewProps>(
             ) : isRealTicket ? (
               <Badge
                 variant="outline"
-                className="text-[10px] gap-1 border-amber-500/30 text-amber-600 bg-amber-500/10"
+                className="text-[10px] gap-1 border-amber-500/30 text-amber-600 bg-amber-500/10 animate-pulse"
               >
                 En attente d'impression
               </Badge>

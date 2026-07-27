@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { Link } from "react-router";
-import { HistoryIcon, UsersIcon } from "lucide-react";
+import { HistoryIcon, Table2Icon } from "lucide-react";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import {
   usePrintTicketForm,
@@ -68,7 +68,7 @@ export function FastPaymentPage() {
 
   return (
     <PageContainer className="flex flex-col gap-6">
-      <PageHeader className="border-b pb-5">
+      <PageHeader className="border-b pb-5 mb-2">
         <PageHeaderTextContent>
           <PageHeadTitle>Terminal de Caisse</PageHeadTitle>
           <PageHeadDescription>
@@ -79,8 +79,8 @@ export function FastPaymentPage() {
         <PageHeadAction className="flex items-center gap-2">
           <Link to={APP_ROUTES.FIN.CLASSROOMS.LIST}>
             <Button variant="outline" size="sm">
-              <UsersIcon data-icon="inline-start" />
-              Liste des élèves
+              <Table2Icon data-icon="inline-start" />
+              Tableau de paiement
             </Button>
           </Link>
           <PaymentHistoryDialog>

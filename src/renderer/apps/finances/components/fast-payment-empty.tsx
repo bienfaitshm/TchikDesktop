@@ -80,6 +80,7 @@ export interface AssignmentOverviewData {
   amountPaid: number;
   totalAmount: number;
   updatedAt?: Date | string | null;
+  createdAt?: Date | string | null;
   currency?: CURRENCY_ENUM;
 }
 
@@ -93,9 +94,9 @@ export interface PaymentOverviewProps {
  * @param date - Date object, ISO string, or null/undefined.
  * @returns Formatted date string.
  */
-function defaultFormatDate(date?: Date | string | null): string {
+function defaultFormatDate(date?: Date | string | number | null): string {
   if (!date) return "—";
-  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const dateObj = date instanceof Date ? date : new Date(date);
   return dateObj.toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "short",
@@ -116,6 +117,7 @@ export const PaymentOverview: React.FC<
     amountPaid,
     totalAmount,
     updatedAt,
+    createdAt,
     currency = CURRENCY_ENUM.CDF,
   } = assignment;
   const remainingAmount = Math.max(0, totalAmount - amountPaid);
@@ -167,7 +169,7 @@ export const PaymentOverview: React.FC<
               variant="outline"
               className="border-emerald-300 text-emerald-700 dark:text-emerald-300 text-[10px]"
             >
-              Dernier règlement : {formatDate(updatedAt)}
+              Dernier règlement : {formatDate(updatedAt || createdAt)}
             </Badge>
           </CardContent>
         </Card>
