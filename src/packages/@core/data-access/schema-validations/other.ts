@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  ZCURRENCY_ENUM,
+  ZPAYMENT_METHOD_ENUM,
+  ZFEE_SCHEDULES_ENUM,
+} from "./model.base";
 
 /* =========================================================================
    SEATING GENERATOR SCHEMA
@@ -93,3 +98,23 @@ export function createBulkCreateSchema<T extends z.ZodTypeAny>(
 export type BulkCreatePayload<T extends z.ZodTypeAny> = z.infer<
   ReturnType<typeof createBulkCreateSchema<T>>
 >;
+
+export const TicketSchema = z.object({
+  ticketRef: z.string(),
+  schoolName: z.string(),
+  address: z.string(),
+  studentName: z.string(),
+  feeTypeName: z.string(),
+  scheduleName: z.string(),
+  status: ZFEE_SCHEDULES_ENUM,
+  currency: ZCURRENCY_ENUM,
+  amountPaid: z.number(),
+  totalDue: z.number(),
+  yearName: z.string(),
+  paymentMethod: ZPAYMENT_METHOD_ENUM,
+  transactionReference: z.string().nullable(),
+  date: z.date().optional(),
+  isPrinted: z.boolean(),
+});
+
+export type Ticket = z.infer<typeof TicketSchema>;

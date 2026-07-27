@@ -17,6 +17,8 @@ import type {
 import React from "react";
 import type { ProgressPayload } from "@/packages/electron-ipc-rest/ipc.client";
 
+import { Ticket } from "@/packages/@core/data-access/schema-validations/other";
+
 /**
  * Query key factory for payment operations cache management.
  */
@@ -31,6 +33,7 @@ export const paymentKeys = {
   mutations: {
     assignFees: () => [...paymentKeys.all, "assign-fees"] as const,
     processPayment: () => [...paymentKeys.all, "process-payment"] as const,
+    printTicket: () => [...paymentKeys.all, "print-ticket"] as const,
   },
 } as const;
 
@@ -124,4 +127,14 @@ export function useOnClassroomSyncProgress() {
   }, []);
 
   return { progress, resetProgress };
+}
+
+export function usePrintTicket(
+  options?: Partial<UseMutationOptions<Ticket, Error, Ticket>>,
+) {
+  return useMutation({
+    mutationKey: paymentKeys.mutations.printTicket(),
+    mutationFn: (data) => paymentApi.printTicket(data),
+    ...options,
+  });
 }

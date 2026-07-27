@@ -4,7 +4,10 @@ import { useCallback } from "react";
 import { Link } from "react-router";
 import { HistoryIcon, UsersIcon } from "lucide-react";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
-import { useProcessStudentPaymentForm } from "@/renderer/libs/queries/finances";
+import {
+  usePrintTicketForm,
+  useProcessStudentPaymentForm,
+} from "@/renderer/libs/queries/finances";
 import {
   FastPaymentForm,
   InvoiceLivePreview,
@@ -35,6 +38,7 @@ import { FormSubmitHandler } from "@/renderer/libs/queries/base";
  */
 export function FastPaymentPage() {
   const { schoolId = "", yearId = "", school } = useCurrentConfig();
+  const printTicket = usePrintTicketForm();
 
   const {
     currencyOptions,
@@ -53,7 +57,11 @@ export function FastPaymentPage() {
   const handlePrintTicket: FormSubmitHandler<Ticket, any> = useCallback(
     (_payload, helpers) => {
       console.log("handlePrintTicket", _payload);
-      helpers.reset();
+      printTicket.onSubmit(_payload, {
+        reset() {
+          helpers.reset();
+        },
+      });
     },
     [],
   );

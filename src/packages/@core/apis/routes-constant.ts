@@ -152,6 +152,7 @@ export const PaymentRoutes = {
    * Route POST centrale pour traiter un encaissement au guichet (Ledger + Wallet sync).
    */
   PROCESS_PAYMENT: "payments/process",
+  PRINT_TICKET: "payments/ticket/print",
 } as const;
 
 /**

@@ -2,7 +2,7 @@ import {
   IpcClient,
   ProgressPayload,
 } from "@/packages/electron-ipc-rest/ipc.client";
-import type { StudentPayment } from "@/packages/@core/data-access/db/schemas";
+import type { StudentPayment } from "@/packages/@core/data-access/db";
 import type {
   TableClassroomPaymentAssignment,
   StudentPaymentTable,
@@ -12,6 +12,8 @@ import {
   CURRENCY_ENUM,
   PAYMENT_METHOD_ENUM,
 } from "@/packages/@core/data-access/db/options";
+
+import type { Ticket } from "@/packages/@core/data-access/schema-validations";
 
 export type ClassroomPaymentFilterParams = {
   schoolId: string;
@@ -78,6 +80,8 @@ export type PaymentApi = Readonly<{
   processStudentPayment(
     data: ProcessStudentPaymentPayload,
   ): Promise<StudentPayment>;
+
+  printTicket(data: Ticket): Promise<any>;
 }>;
 
 /**
@@ -106,6 +110,10 @@ export function createPaymentApis(ipcClient: IpcClient): PaymentApi {
     },
     processStudentPayment(data) {
       return ipcClient.post(PaymentRoutes.PROCESS_PAYMENT, data);
+    },
+
+    printTicket(data) {
+      return ipcClient.post(PaymentRoutes.PRINT_TICKET, data);
     },
   };
 }

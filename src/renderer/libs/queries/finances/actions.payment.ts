@@ -21,8 +21,10 @@ import { useFormBaseNotify } from "../base";
 import {
   paymentKeys,
   useAssignFeesToStudent,
+  usePrintTicket,
   useProcessStudentPayment,
 } from "./finances";
+import { Ticket } from "@/packages/@core/data-access/schema-validations";
 
 export type ReturnPaymentProcessData = FeeAssignment & {
   payment: StudentPayment;
@@ -48,6 +50,14 @@ const ASSIGN_FEES_NOTIFICATIONS = {
 };
 
 const PROCESS_PAYMENT_NOTIFICATIONS = {
+  success: {
+    title: "Paiement enregistré",
+    description: "Le reçu immuable a été généré et la dette a été mise à jour.",
+  },
+  error: { title: "Échec du traitement du versement au guichet." },
+};
+
+const PRINT_TICKET_NOTIFICATION = {
   success: {
     title: "Paiement enregistré",
     description: "Le reçu immuable a été généré et la dette a été mise à jour.",
@@ -178,4 +188,16 @@ export function useProcessStudentPaymentForm(
     paymentMethodOptions: PAYMENT_METHOD_OPTIONS,
     ...base,
   };
+}
+
+export function usePrintTicketForm() {
+  const mutation = usePrintTicket();
+
+  const adaptData = useCallback((data: Ticket) => data, []);
+
+  return useFormBaseNotify<Ticket, Ticket, Ticket>({
+    mutation,
+    getNotifications: () => PRINT_TICKET_NOTIFICATION,
+    adaptData,
+  });
 }
