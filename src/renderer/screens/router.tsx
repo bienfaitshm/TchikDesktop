@@ -19,6 +19,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import * as Layout from "@/renderer/screens/layouts";
+import * as Seating from "@/renderer/apps/seatings";
 import { SubNavLayout } from "@/renderer/layouts/submenu.layout";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 import { ROUTES, APP_ROUTES } from "@/renderer/constants";
@@ -336,7 +337,7 @@ export default function RouterProvider(): JSX.Element {
               <Route index element={<SeatingPage />} />
               <Route
                 path={ROUTES.SEATING.SESSION}
-                element={<Layout.SeatingSessionLayout />}
+                element={<Seating.LocalroomLayout />}
               >
                 <Route index element={<SeatingSessionDetailPage />} />
                 <Route

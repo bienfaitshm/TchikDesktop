@@ -17,23 +17,16 @@ export const LocalroomSchema = z
       .min(1, "Le nom du local est requis.")
       .max(100)
       .describe("Nom de la salle"),
-    maxCapacity: z.coerce
-      .number()
-      .int()
-      .min(0)
-      .default(0)
-      .describe("Capacité maximale"),
+    maxCapacity: z.coerce.number().int().min(0).describe("Capacité maximale"),
     totalRows: z.coerce
       .number()
       .int()
       .min(0)
-      .default(0)
       .describe("Nombre total de rangées"),
     totalColumns: z.coerce
       .number()
       .int()
       .min(0)
-      .default(0)
       .describe("Nombre total de colonnes"),
   })
   .extend(schoolIdBaseSchema.shape)
