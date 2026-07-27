@@ -169,21 +169,41 @@ export class ExamOptimizer {
     return selectedRooms;
   }
 
+  sortByName<T extends Student>(
+    seatingPlan: OccupiedSeat<T>[],
+  ): OccupiedSeat<T>[] {
+    return [...seatingPlan].sort((a, b) =>
+      a.student.name.localeCompare(b.student.name),
+    );
+  }
+
+  assignSeat<T extends Student>(
+    student: T,
+    index: number,
+    effectiveColumns: number,
+  ): OccupiedSeat<T> {
+    const row = Math.floor(index / effectiveColumns) + 1; // Base 1 pour la lisibilité UI
+    const column = (index % effectiveColumns) + 1; // Base 1
+    return {
+      row,
+      column,
+      student,
+    };
+  }
+
   /**
    * Construit le rapport final d'une salle en plaçant les étudiants sous forme de matrice (lignes/colonnes).
    */
   private buildRoomReport<T extends Student>(
     room: Room,
     students: T[],
-    columns: number,
+    columnsCount: number,
   ): RoomReport<T> {
-    const seatingPlan: OccupiedSeat<T>[] = students
-      .map((student, index) => ({
-        row: Math.floor(index / columns),
-        column: index % columns,
-        student,
-      }))
-      .sort((a, b) => a.student.name.localeCompare(b.student.name));
+    const effectiveColumns = Math.max(2, columnsCount);
+    const occupiedSeat: OccupiedSeat<T>[] = students.map((student, index) =>
+      this.assignSeat(student, index, effectiveColumns),
+    );
+    const seatingPlan = this.sortByName(occupiedSeat);
 
     const occupancyRate = students.length / room.maxCapacity;
 
