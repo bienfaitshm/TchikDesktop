@@ -21,9 +21,16 @@ const _seatingSessionJoinTables = {
   seatingAssignments,
 } as const;
 
-const SEATING_SESSION_DEFAULT_FILTERS: helpers.FindManyOptions<
+export type BaseSeatingAssignmentFilter = helpers.FindManyOptions<
   typeof _seatingSessionJoinTables
-> = {};
+>;
+const SEATING_SESSION_DEFAULT_FILTERS: BaseSeatingAssignmentFilter = {};
+
+export function extractSeatingAssignmentFiltersQueryPayload(
+  filters: BaseSeatingAssignmentFilter,
+) {
+  return helpers.extractQueryPayload(_seatingSessionJoinTables, filters);
+}
 
 /**
  * Repository for managing seating assignments and related database queries.

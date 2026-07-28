@@ -57,6 +57,12 @@ const ACTIVE_ENROLLEMENTS: BaseClassroomEnrollmentFilters = {
   },
 };
 
+export function extractEnrollmentFiltersQueryPayload(
+  filters: BaseClassroomEnrollmentFilters,
+) {
+  return helpers.extractQueryPayload(JOINED_TABLES, filters);
+}
+
 export class EnrollmentRepository
   extends betterSqlite.BaseRepository<
     TableClassroomEnrollment,

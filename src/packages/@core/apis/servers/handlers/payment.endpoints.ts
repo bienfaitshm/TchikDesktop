@@ -17,7 +17,7 @@ import {
   // defaultPrinterManagementService,
   notify,
 } from "@/packages/electron-utility";
-import { printPdfReceipt } from "@/packages/pos-printer";
+import { printTicket } from "@/packages/@core/printing";
 
 /* =========================================================================
    SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
@@ -107,8 +107,7 @@ export class PaymentController {
     body: TicketSchema,
   })
   static async printTicket({ body }: IpcRequest<Ticket>) {
-    await printPdfReceipt(body);
-    return { result: true };
+    return await printTicket(body);
   }
 }
 

@@ -1,6 +1,7 @@
 import { renderTemplate } from "@/packages/document-template";
 import { defaultPrinterManagementService } from "@/packages/electron-utility";
-type Payload = {
+
+export type Payload = {
   ticketRef: string;
   schoolName: string;
   address: string;
