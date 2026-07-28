@@ -13,7 +13,7 @@ import {
  * * @template ReportPayload Structure typée des données attendues par le template.
  */
 export class ExportDocxExtension<
-  ReportPayload extends Record<string, unknown> = Record<string, unknown>,
+  ReportPayload extends {} = {},
 > extends AbstractExportExtension<ReportPayload> {
   public readonly extension = DOCUMENT_EXTENSION.DOCX;
 

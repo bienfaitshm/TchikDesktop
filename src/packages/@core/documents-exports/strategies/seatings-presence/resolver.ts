@@ -1,7 +1,7 @@
 import {
-  schoolRepository,
   seatingSessionRepository,
   SeatingSessionMapper,
+  schoolInfoService,
 } from "@/packages/@core/data-access/db/queries";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 
@@ -30,7 +30,7 @@ export class SeatingPresenceSessionDataResolver {
     }
     const days = Array.from({ length: nDays }, (_, i) => i);
     const [school, sessionData] = await Promise.all([
-      schoolRepository.fetchSchoolInfo(schoolId, yearId),
+      schoolInfoService.getSchoolInfos(schoolId, yearId),
       seatingSessionRepository.getSessionWithAssignments(sessionId),
     ]);
 

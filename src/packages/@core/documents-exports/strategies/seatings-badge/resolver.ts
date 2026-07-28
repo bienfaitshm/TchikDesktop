@@ -1,6 +1,7 @@
 import {
   schoolRepository,
   classroomService,
+  schoolInfoService,
 } from "@/packages/@core/data-access/db/queries";
 import type { SECTION_ENUM } from "@/packages/@core/data-access/db";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
@@ -31,15 +32,24 @@ export class SeatingPresenceSessionDataResolver {
       );
     }
     const [school, classrooms] = await Promise.all([
-      schoolRepository.fetchSchoolInfo(schoolId, yearId),
+      schoolInfoService.getSchoolInfos(schoolId, yearId),
       classroomService.getClassroomsWithStudentAndAssignments({
-        classroomOptions: {
-          where: { schoolId, yearId, section: sectionId },
-          whereIn: { classId },
-        },
-        assignementOptions: {
+        classroom: {
           where: {
-            sessionId,
+            classrooms: {
+              section: sectionId,
+              schoolId,
+              classId: {
+                $in: classId,
+              },
+            },
+          },
+        },
+        assignment: {
+          where: {
+            seatingAssignments: {
+              sessionId,
+            },
           },
         },
       }),

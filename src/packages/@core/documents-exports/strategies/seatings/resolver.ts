@@ -1,7 +1,7 @@
 import {
-  schoolRepository,
   seatingSessionRepository,
   SeatingSessionMapper,
+  schoolInfoService,
 } from "@/packages/@core/data-access/db/queries";
 
 type SeatingResolverParams = {
@@ -26,7 +26,7 @@ export class SeatingSessionDataResolver {
     }
 
     const [school, sessionData] = await Promise.all([
-      schoolRepository.fetchSchoolInfo(schoolId, yearId),
+      schoolInfoService.getSchoolInfos(schoolId, yearId),
       seatingSessionRepository.getSessionWithAssignments(sessionId),
     ]);
 

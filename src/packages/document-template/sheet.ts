@@ -62,6 +62,10 @@ export class ExcelWorkbookBuilder {
     this.workbook.created = new Date();
   }
 
+  setCreator(name: string): void {
+    this.workbook.creator = name;
+  }
+
   /**
    * Ajoute une feuille à partir d'une configuration déclarative.
    */
