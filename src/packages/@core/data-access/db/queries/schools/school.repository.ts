@@ -2,6 +2,7 @@ import { getLogger } from "@/packages/logger";
 import { db, TDataBase } from "@/packages/@core/data-access/db/config";
 import {
   schools,
+  type School,
   type TableSchool,
 } from "@/packages/@core/data-access/db/schemas";
 import { betterSqlite, helpers } from "@/packages/drizzle-queries";
@@ -20,6 +21,7 @@ const SCHOOL_DEFAULT_SORT: BaseSchoolFilters = {
 export class SchoolRepository extends betterSqlite.BaseRepository<
   TableSchool,
   TDataBase,
+  School,
   BaseSchoolFilters
 > {
   constructor(database: TDataBase = db) {

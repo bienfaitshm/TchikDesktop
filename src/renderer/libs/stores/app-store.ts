@@ -2,107 +2,129 @@
 
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
-import { persist, createJSONStorage } from "zustand/middleware";
 import type {
   School,
   StudyYear,
 } from "@/packages/@core/data-access/db/schemas";
 
-import { loadStudyYear } from "@/renderer/libs/queries/study-years";
-import { loadSchool } from "@/renderer/libs/queries/schools";
+export type ThemeMode = "light" | "dark" | "system";
 
-const APP_STORE_NAME = "@app-configuration";
+export interface PosPrintConfig {
+  host: string;
+  port: number;
+}
 
 interface ConfigurationState {
   currentSchool: School | null;
   currentStudyYear: StudyYear | null;
+  theme: ThemeMode;
+  posPrintConfig: PosPrintConfig;
   _hasHydrated: boolean;
   isSyncing: boolean;
 }
 
 interface ConfigurationActions {
-  setCurrentSchool: (school: School | null) => void;
-  setCurrentStudyYear: (year: StudyYear | null) => void;
-  resetConfiguration: () => void;
-  setHasHydrated: (state: boolean) => void;
+  setCurrentSchool: (school: School | null) => Promise<void>;
+  setCurrentStudyYear: (year: StudyYear | null) => Promise<void>;
+  setSchoolAndYear: (
+    school: School | null,
+    year: StudyYear | null,
+  ) => Promise<void>;
+  setTheme: (theme: ThemeMode) => Promise<void>;
+  setPosPrintConfig: (config: Partial<PosPrintConfig>) => Promise<void>;
+  resetConfiguration: () => Promise<void>;
   syncFreshData: () => Promise<void>;
+  initStore: () => Promise<void>;
 }
 
 type ConfigurationStore = ConfigurationState & {
   actions: ConfigurationActions;
 };
 
-export const useConfigStore = create<ConfigurationStore>()(
-  persist(
-    (set, get) => ({
-      currentSchool: null,
-      currentStudyYear: null,
-      _hasHydrated: false,
-      isSyncing: false,
+export const useConfigStore = create<ConfigurationStore>()((set) => ({
+  currentSchool: null,
+  currentStudyYear: null,
+  theme: "system",
+  posPrintConfig: { host: "localhost", port: 9100 },
+  _hasHydrated: false,
+  isSyncing: false,
 
-      actions: {
-        setCurrentSchool: (school) => set({ currentSchool: school }),
-        setCurrentStudyYear: (studyYear) =>
-          set({ currentStudyYear: studyYear }),
-        resetConfiguration: () =>
-          set({ currentSchool: null, currentStudyYear: null }),
-        setHasHydrated: (state) => set({ _hasHydrated: state }),
-
-        // ⚡ Synchronisation asynchrone non-bloquante
-        syncFreshData: async () => {
-          const state = get();
-          const schoolId = state.currentSchool?.schoolId;
-          const yearId = state.currentStudyYear?.yearId;
-
-          if (!schoolId || !yearId) return;
-
-          set({ isSyncing: true });
-          try {
-            const [freshSchool, freshStudyYear] = await Promise.all([
-              loadSchool(schoolId),
-              loadStudyYear(yearId),
-            ]);
-
-            if (freshSchool && freshStudyYear) {
-              set({
-                currentSchool: freshSchool,
-                currentStudyYear: freshStudyYear,
-              });
-            } else {
-              set({ currentSchool: null, currentStudyYear: null });
-            }
-          } catch (error) {
-            console.error(
-              "[ConfigStore] Échec de la synchronisation en tâche de fond:",
-              error,
-            );
-            // Optionnel: Ne pas reset la config si c'est juste un problème réseau temporaire
-          } finally {
-            set({ isSyncing: false });
-          }
-        },
-      },
-    }),
-    {
-      name: APP_STORE_NAME,
-      storage: createJSONStorage(() => localStorage),
-
-      // ⏱️ L'hydratation du cache localStorage est désormais instantanée (< 2ms)
-      onRehydrateStorage: () => (state) => {
-        if (!state) return;
-        state.actions.setHasHydrated(true);
-      },
-      partialize: (state) => ({
-        currentSchool: state.currentSchool,
-        currentStudyYear: state.currentStudyYear,
-      }),
+  actions: {
+    /**
+     * Initialise le store Frontend avec les données d'electron-store au lancement
+     */
+    initStore: async () => {
+      try {
+        const config = await window.electron.store.getCurrentConfig();
+        console.log("current config", config);
+        set({
+          currentSchool: config.currentSchool,
+          currentStudyYear: config.currentStudyYear,
+          theme: config.theme,
+          posPrintConfig: config.posPrint,
+          _hasHydrated: true,
+        });
+      } catch (error) {
+        console.error("[ConfigStore] Erreur d'initialisation:", error);
+        set({ _hasHydrated: true });
+      }
     },
-  ),
-);
 
-// HOOKS
+    setCurrentSchool: async (school) => {
+      set({ currentSchool: school });
+      await window.electron.store.setCurrentSchool(school);
+    },
+
+    setCurrentStudyYear: async (studyYear) => {
+      set({ currentStudyYear: studyYear });
+      await window.electron.store.setCurrentStudyYear(studyYear);
+    },
+
+    setSchoolAndYear: async (school, studyYear) => {
+      set({ currentSchool: school, currentStudyYear: studyYear });
+      await window.electron.store.setSchoolAndYear(school, studyYear);
+    },
+
+    setTheme: async (theme) => {
+      set({ theme });
+      await window.electron.store.setTheme(theme);
+    },
+
+    setPosPrintConfig: async (config) => {
+      const updated = await window.electron.store.setPosPrintConfig(config);
+      set({ posPrintConfig: updated });
+    },
+
+    resetConfiguration: async () => {
+      set({ currentSchool: null, currentStudyYear: null });
+      await window.electron.store.resetSchoolAndYear();
+    },
+
+    /**
+     * Exécute la vérification en BDD côté Main Process
+     */
+    syncFreshData: async () => {
+      set({ isSyncing: true });
+      try {
+        const result = await window.electron.store.syncSchoolAndYearWithDb();
+        set({
+          currentSchool: result.school,
+          currentStudyYear: result.year,
+        });
+      } catch (error) {
+        console.error("[ConfigStore] Échec de la synchronisation BDD:", error);
+        set({ currentSchool: null, currentStudyYear: null });
+      } finally {
+        set({ isSyncing: false });
+      }
+    },
+  },
+}));
+
+/* ---------------- HOOKS HELPER (EXACTEMENT COMME TON CODE INITIAL) ---------------- */
+
 export const useIsConfigHydrated = () => useConfigStore((s) => s._hasHydrated);
-export const useIsConfigSyncing = () => useConfigStore((s) => s.isSyncing); // Pour afficher un petit indicateur de synchro discret
+export const useIsConfigSyncing = () => useConfigStore((s) => s.isSyncing);
 export const useConfigActions = () => useConfigStore((s) => s.actions);
 
 export const useCurrentConfig = () => {
@@ -112,6 +134,8 @@ export const useCurrentConfig = () => {
       year: s.currentStudyYear,
       schoolId: s.currentSchool?.schoolId,
       yearId: s.currentStudyYear?.yearId,
+      theme: s.theme,
+      posPrint: s.posPrintConfig,
       isConfigured: !!(s.currentSchool && s.currentStudyYear),
     })),
   );
@@ -119,9 +143,10 @@ export const useCurrentConfig = () => {
 
 export const getConfig = () => {
   const state = useConfigStore.getState();
-
   return {
     schoolId: state.currentSchool?.schoolId,
     yearId: state.currentStudyYear?.yearId,
+    theme: state.theme,
+    posPrint: state.posPrintConfig,
   };
 };

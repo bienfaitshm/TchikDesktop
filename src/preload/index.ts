@@ -69,6 +69,22 @@ const electronAPI = {
    */
   getSystemInformationFeature: (): Promise<any> =>
     ipcRenderer.invoke("get-system-information-feature"),
+
+  store: {
+    getCurrentConfig: () => ipcRenderer.invoke("store:getCurrentConfig"),
+    setCurrentSchool: (school) =>
+      ipcRenderer.invoke("store:setCurrentSchool", school),
+    setCurrentStudyYear: (year) =>
+      ipcRenderer.invoke("store:setCurrentStudyYear", year),
+    setSchoolAndYear: (school, year) =>
+      ipcRenderer.invoke("store:setSchoolAndYear", school, year),
+    setTheme: (theme) => ipcRenderer.invoke("store:setTheme", theme),
+    setPosPrintConfig: (config) =>
+      ipcRenderer.invoke("store:setPosPrintConfig", config),
+    syncSchoolAndYearWithDb: () =>
+      ipcRenderer.invoke("store:syncSchoolAndYearWithDb"),
+    resetSchoolAndYear: () => ipcRenderer.invoke("store:resetSchoolAndYear"),
+  },
 };
 
 export default electronAPI;
