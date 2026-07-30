@@ -1,55 +1,58 @@
 import {
   AbstractExportExtension,
-  RawFileContent,
+  type RawFileContent,
 } from "@/packages/electron-data-exporter";
 import { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 import {
   type ColumnDef,
   ExcelWorkbookBuilder,
-  SheetConfig,
+  type SheetConfig,
 } from "@/packages/document-template";
 import type { CellValue } from "exceljs";
 
-/**
- * Couleur d’en‑tête sobre, proche du bleu standard d’Excel.
- * Choisie pour un bon contraste avec le texte noir.
- */
+/** Primary brand color for main headers (Excel blue variant). */
 const PRIMARY_COLOR = "FF00BFFF";
+/** Text color used for contrast over primary headers. */
 const HEADER_FONT_COLOR = "FFFFFFFF";
+/** Background color applied to alternating table rows. */
 const ALT_ROW_COLOR = "FFE0F7F4";
+/** Border color applied to table grid cells. */
 const BORDER_COLOR = "FFB2D8D8";
 
-export type SchoolInfo = {
+export interface SchoolInfo {
   name: string;
   yearName: string;
   address?: string;
   town?: string;
-};
+}
 
-export type SheetData<TData> = {
+export interface SheetData<TData> {
   sheetName: string;
   title?: string;
   data: TData[];
   rowMapper(item: TData, idx: number): Record<string, CellValue>;
-};
+}
 
-export type BuildSheetParams<Data> = {
+export interface BuildSheetParams<Data> {
   sheetName: string;
   schoolInfos: SchoolInfo;
   title?: string;
   columns: ColumnDef[];
   data: Data[];
   rowMapper(item: Data, idx: number): Record<string, CellValue>;
-};
+}
+
+export interface SheetReportGeneratorService {
+  description: string;
+  columns: ColumnDef[];
+}
 
 /**
- * Construit la configuration d’une feuille Excel correspondant
- * à un local et à ses élèves.
- *
- * @param room - Les données du local (nom, liste d’élèves, etc.)
- * @returns La configuration prête à être ajoutée au classeur.
+ * Builds the worksheet configuration payload for an Excel sheet including official metadata headers.
+ * @param params - Parameters containing sheet data, column definitions, and school context.
+ * @returns Configured SheetConfig object ready for workbook generation.
  */
-function buildSheet<Data>({
+export function buildSheet<Data>({
   data,
   rowMapper,
   sheetName,
@@ -101,16 +104,12 @@ function buildSheet<Data>({
         },
       },
     ],
-    columns: columns,
-    data: data,
-
-    rowMapper: (value, idx) => {
-      return {
-        ...rowMapper(value, idx),
-        index: idx + 2,
-      };
-    },
-
+    columns,
+    data,
+    rowMapper: (value, idx) => ({
+      ...rowMapper(value, idx),
+      index: idx + 2,
+    }),
     tableStyle: {
       headerRowStyle: {
         fill: {
@@ -126,22 +125,21 @@ function buildSheet<Data>({
   };
 }
 
-export type SheetReportGeneratorService = {
-  description: string;
-  columns: ColumnDef[];
-};
-
 /**
- * Extension responsable de la génération de la liste des élèves sur Excel.
- * Le nom reste agnostique du format (pas de suffixe 'Excel').
+ * Abstract extension base class responsible for exporting reports into Excel format.
  */
-export class SheetExportExtension<
-  ReportPayload extends {} = {},
+export abstract class SheetExportExtension<
+  ReportPayload extends Record<string, unknown> = Record<string, unknown>,
 > extends AbstractExportExtension<ReportPayload> {
-  readonly extension = DOCUMENT_EXTENSION.XLSX;
-  public description?: string | undefined;
+  public readonly extension = DOCUMENT_EXTENSION.XLSX;
+  public description?: string;
   protected columns: ColumnDef[];
   protected builder: ExcelWorkbookBuilder;
+
+  /**
+   * Initializes the export extension with report configuration.
+   * @param config - Configuration service containing report description and column definitions.
+   */
   constructor(config: SheetReportGeneratorService) {
     super();
     this.description = config.description;
@@ -149,18 +147,32 @@ export class SheetExportExtension<
     this.builder = new ExcelWorkbookBuilder();
   }
 
-  public getSchoolInfos(payload: ReportPayload): SchoolInfo {
-    throw new Error("Method not implemented.");
-  }
+  /**
+   * Extracts school information from the given report payload.
+   * @param payload - Payload containing context for the report.
+   * @returns Metadata regarding the school institution.
+   */
+  public abstract getSchoolInfos(payload: ReportPayload): SchoolInfo;
 
-  public getSheetData(item: unknown): SheetData<unknown> {
-    throw new Error("Method not implemented.");
-  }
+  /**
+   * Transforms a single data element into structured sheet data.
+   * @param item - Raw data item to be processed.
+   * @returns Formatted SheetData object.
+   */
+  public abstract getSheetData<TItem>(item: TItem): SheetData<unknown>;
 
-  public getItemElement(payload: ReportPayload): unknown[] {
-    throw new Error("Method not implemented.");
-  }
+  /**
+   * Extracts iterable items from the payload that represent individual sheets.
+   * @param payload - Payload containing report parameters.
+   * @returns Array of raw items.
+   */
+  public abstract getItemElement(payload: ReportPayload): unknown[];
 
+  /**
+   * Processes the report payload and compiles the final Excel file.
+   * @param payload - Payload containing parameters required for generation.
+   * @returns Raw file content representing the generated Excel workbook.
+   */
   public async process(payload: ReportPayload): Promise<RawFileContent> {
     const schoolInfos = this.getSchoolInfos(payload);
     const creator = `Tchik-${schoolInfos.name ?? "App"}`;
@@ -182,6 +194,6 @@ export class SheetExportExtension<
       );
     });
 
-    return this.builder.build() as unknown as RawFileContent;
+    return (await this.builder.build()) as unknown as RawFileContent;
   }
 }

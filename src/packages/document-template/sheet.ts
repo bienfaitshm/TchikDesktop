@@ -1,7 +1,7 @@
 import * as ExcelJS from "exceljs";
 import { additionalJsContext as utils } from "./additional-context";
 
-/** Constantes de style par défaut (élimine les "magic values") */
+/** Default style constants to eliminate magic values. */
 const DEFAULT_STYLES = {
   colors: {
     altRow: "FFE0F7F4",
@@ -14,7 +14,7 @@ const DEFAULT_STYLES = {
   },
 } as const;
 
-/** Style d’une cellule ou d’une ligne */
+/** Cell or row styling configuration options. */
 export interface CellStyleConfig {
   font?: Partial<ExcelJS.Font>;
   fill?: ExcelJS.Fill;
@@ -23,7 +23,7 @@ export interface CellStyleConfig {
   height?: number;
 }
 
-/** Définition d’une colonne du tableau */
+/** Definition of a table column. */
 export interface ColumnDef {
   key: string;
   header: string;
@@ -31,12 +31,13 @@ export interface ColumnDef {
   align?: "left" | "center" | "right";
 }
 
+/** Merged header row structure for document metadata. */
 export interface MergedHeaderRow {
   text: string;
   style: CellStyleConfig;
 }
 
-/** Configuration complète d’une feuille de calcul */
+/** Complete configuration for generating a worksheet. */
 export interface SheetConfig<
   TData = Record<string, unknown>,
   TKey extends string = string,
@@ -53,21 +54,34 @@ export interface SheetConfig<
   };
 }
 
+/**
+ * Fluent builder for creating and styling ExcelJS workbooks.
+ */
 export class ExcelWorkbookBuilder {
   private readonly workbook: ExcelJS.Workbook;
 
+  /**
+   * Initializes a new Excel workbook builder instance.
+   * @param creator - Creator metadata string for the workbook.
+   */
   constructor(creator: string = "System") {
     this.workbook = new ExcelJS.Workbook();
     this.workbook.creator = creator;
     this.workbook.created = new Date();
   }
 
-  setCreator(name: string): void {
+  /**
+   * Sets the creator metadata of the workbook.
+   * @param name - Creator name.
+   */
+  public setCreator(name: string): void {
     this.workbook.creator = name;
   }
 
   /**
-   * Ajoute une feuille à partir d'une configuration déclarative.
+   * Appends a new styled worksheet to the workbook based on declarative config.
+   * @param config - Worksheet configuration payload.
+   * @returns Current builder instance for chaining.
    */
   public addSheet<T>(config: SheetConfig<T>): this {
     if (!config || !Array.isArray(config.columns)) {
@@ -90,16 +104,28 @@ export class ExcelWorkbookBuilder {
   }
 
   /**
-   * Génère le buffer final
+   * Compiles the workbook and returns the raw binary buffer.
+   * @returns Promise resolving to Excel buffer.
    */
   public async build(): Promise<ExcelJS.Buffer> {
     return await this.workbook.xlsx.writeBuffer();
   }
 
+  /**
+   * Sanitizes sheet names by removing forbidden characters and truncating.
+   * @param name - Raw sheet name.
+   * @returns Cleaned sheet name string.
+   */
   private sanitizeSheetName(name: string): string {
     return name.replace(/[/\\?*[\]:]/g, "_").substring(0, 31);
   }
 
+  /**
+   * Renders official merged header rows at the top of the sheet.
+   * @param sheet - Target worksheet instance.
+   * @param headers - Array of merged header configurations.
+   * @param colCount - Total column count for merging spans.
+   */
   private buildOfficialHeaders(
     sheet: ExcelJS.Worksheet,
     headers: MergedHeaderRow[],
@@ -119,22 +145,32 @@ export class ExcelWorkbookBuilder {
     });
   }
 
+  /**
+   * Configures column metadata and explicitly writes the table header row below official headers.
+   * @param sheet - Target worksheet instance.
+   * @param columns - Array of column definitions.
+   */
   private buildTableHeaders(
     sheet: ExcelJS.Worksheet,
     columns: ColumnDef[],
   ): void {
     sheet.columns = columns.map((col) => ({
-      header: col.header,
       key: col.key,
       width: col.width,
     }));
+
+    sheet.addRow(columns.map((col) => col.header));
   }
 
+  /**
+   * Appends data rows to the worksheet using the provided rowMapper.
+   * @param sheet - Target worksheet instance.
+   * @param config - Worksheet configuration payload.
+   */
   private buildDataRows<T>(
     sheet: ExcelJS.Worksheet,
     config: SheetConfig<T>,
   ): void {
-    // Guard clause pour éviter les crashs si data est null
     if (!config.data || !Array.isArray(config.data)) return;
 
     config.data.forEach((item, idx) => {
@@ -144,6 +180,11 @@ export class ExcelWorkbookBuilder {
     });
   }
 
+  /**
+   * Applies font, fill, alignment, and border styles to a specific cell.
+   * @param cell - Target ExcelJS cell.
+   * @param style - Style configuration object.
+   */
   private applyCellStyle(cell: ExcelJS.Cell, style: CellStyleConfig): void {
     if (style.font) cell.font = style.font;
     if (style.fill) cell.fill = style.fill;
@@ -151,6 +192,11 @@ export class ExcelWorkbookBuilder {
     if (style.border) cell.border = style.border;
   }
 
+  /**
+   * Generates thin border definitions using a given ARGB color code.
+   * @param color - ARGB color code string.
+   * @returns Partial borders configuration object.
+   */
   private generateBorder(color: string): Partial<ExcelJS.Borders> {
     const line: ExcelJS.Border = {
       style: "thin",
@@ -159,6 +205,12 @@ export class ExcelWorkbookBuilder {
     return { top: line, left: line, bottom: line, right: line };
   }
 
+  /**
+   * Applies global table formatting, freezing panes, filters, and row colors.
+   * Alignments are strictly mapped to column definitions for header and data rows.
+   * @param sheet - Target worksheet instance.
+   * @param config - Worksheet configuration payload.
+   */
   private applyTableStyles<T>(
     sheet: ExcelJS.Worksheet,
     config: SheetConfig<T>,
@@ -186,17 +238,20 @@ export class ExcelWorkbookBuilder {
       DEFAULT_STYLES.heights.tableHeader;
     const headerStyle = styleOptions?.headerRowStyle ?? {};
 
-    // Cache de la bordure du header
     const headerBorder = this.generateBorder(
       styleOptions?.borderColor ?? DEFAULT_STYLES.colors.border,
     );
 
-    headerRow.eachCell((cell) => {
+    headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
       this.applyCellStyle(cell, headerStyle);
-      cell.alignment = cell.alignment ?? {
+      const colDef = config.columns[colNumber - 1];
+      const defaultAlign = colDef?.align ?? "center";
+
+      cell.alignment = {
         vertical: "middle",
-        horizontal: "center",
+        horizontal: defaultAlign,
         wrapText: true,
+        ...headerStyle.alignment,
       };
       cell.border = cell.border ?? headerBorder;
     });
@@ -213,26 +268,32 @@ export class ExcelWorkbookBuilder {
       fgColor: { argb: altColor },
     };
 
+    const columnAlignments: Partial<ExcelJS.Alignment>[] = config.columns.map(
+      (col) => {
+        const align = col.align ?? "left";
+        return {
+          vertical: "middle",
+          horizontal: align,
+          indent: align === "left" ? 1 : 0,
+        };
+      },
+    );
+
     for (let i = 1; i <= dataRowCount; i++) {
       const row = sheet.getRow(tableHeaderRowNum + i);
       row.height = DEFAULT_STYLES.heights.dataRow;
       const isEven = i % 2 === 0;
 
-      row.eachCell((cell, colNumber) => {
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
         if (isEven) {
           cell.fill = altRowFill;
         }
 
         cell.border = cachedBorder;
 
-        const colDef = config.columns[colNumber - 1];
-        if (colDef) {
-          const align = colDef.align ?? "left";
-          cell.alignment = {
-            vertical: "middle",
-            horizontal: align,
-            indent: align === "left" ? 1 : 0,
-          };
+        const alignStyle = columnAlignments[colNumber - 1];
+        if (alignStyle) {
+          cell.alignment = alignStyle;
         }
       });
     }
