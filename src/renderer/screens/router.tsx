@@ -17,6 +17,12 @@ import {
   History,
   Calendar,
   GraduationCap,
+  User,
+  Settings2,
+  Bell,
+  LifeBuoy,
+  Info,
+  Code2,
 } from "lucide-react";
 import * as Layout from "@/renderer/screens/layouts";
 import * as Seating from "@/renderer/apps/seatings";
@@ -186,6 +192,15 @@ export const FINANCES_SUB_MENUS: NavItem[] = [
     url: APP_ROUTES.FIN.WALLETS.LIST,
     icon: Wallet,
   },
+];
+
+export const SETTINGS_SUB_MENUS: NavItem[] = [
+  { name: "Mon compte", url: ROUTES.SETTINGS.ACCOUNT, icon: User },
+  { name: "Paramètres généraux", url: ROUTES.SETTINGS.ROOT, icon: Settings2 },
+  { name: "Notifications", url: ROUTES.SETTINGS.NOTIFICATIONS, icon: Bell },
+  { name: "Aide & Support", url: ROUTES.SETTINGS.HELP, icon: LifeBuoy },
+  { name: "À propos", url: ROUTES.SETTINGS.ABOUT, icon: Info },
+  { name: "Mode développeur", url: ROUTES.SETTINGS.DEVELOPER, icon: Code2 },
 ];
 
 export const NAVIGATION_MENUS: NavSection[] = [
@@ -364,7 +379,7 @@ export default function RouterProvider(): JSX.Element {
             {/* ========== SETTINGS ========== */}
             <Route
               path={ROUTES.SETTINGS.ROOT}
-              element={<Layout.SettingLayout />}
+              element={<SubNavLayout navItems={SETTINGS_SUB_MENUS} />}
             >
               <Route index element={<SettingsPage />} />
               <Route path={ROUTES.SETTINGS.HELP} element={<HelpPage />} />
