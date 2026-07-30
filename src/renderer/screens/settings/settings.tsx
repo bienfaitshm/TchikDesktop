@@ -8,13 +8,6 @@ import {
 } from "@/renderer/libs/stores/app-store";
 import { ThemeMode } from "@/renderer/libs/stores/app-store";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/renderer/components/ui/card";
 import { Button } from "@/renderer/components/ui/button";
 import { Input } from "@/renderer/components/ui/input";
 import { Label } from "@/renderer/components/ui/label";
@@ -26,6 +19,7 @@ import {
   SelectValue,
 } from "@/renderer/components/ui/select";
 import { Badge } from "@/renderer/components/ui/badge";
+import { Separator } from "@/renderer/components/ui/separator";
 import {
   Printer,
   Moon,
@@ -36,6 +30,8 @@ import {
   Calendar,
   RotateCcw,
   Check,
+  Palette,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -57,6 +53,9 @@ export const SettingsPage = () => {
   const [host, setHost] = useState(posPrint?.host ?? "localhost");
   const [port, setPort] = useState(posPrint?.port?.toString() ?? "9100");
   const [isSavingPos, setIsSavingPos] = useState(false);
+
+  // État local pour la recherche
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (posPrint) {
@@ -105,195 +104,272 @@ export const SettingsPage = () => {
     }
   };
 
+  const normalizeText = (text: string) =>
+    text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const normalizedQuery = normalizeText(searchQuery);
+
+  const matchSearch = (keywords: string) =>
+    normalizeText(keywords).includes(normalizedQuery);
+
+  const showSection1 = matchSearch(
+    "Contexte d'établissement École active Année académique Synchroniser BDD Réinitialiser",
+  );
+  const showSection2 = matchSearch(
+    "Impression & Matériel Imprimante POS (ESC/POS) Adresse Host / IP Port d'écoute Réseau",
+  );
+  const showSection3 = matchSearch(
+    "Apparence & Interface Mode d'affichage thème sombre clair système palette",
+  );
+
   return (
-    <PageContainer className="max-w-(--breakpoint-md) mx-0 lg:pt-6">
-      <PageHeader className="">
-        <PageHeaderTextContent>
-          <PageHeadTitle>Paramètres</PageHeadTitle>
-          <PageHeadDescription>
-            Gérez la configuration matérielle, l'apparence et le contexte de
-            l'application.
-          </PageHeadDescription>
+    <PageContainer className="max-w-4xl mx-0 lg:pt-6">
+      <PageHeader>
+        <PageHeaderTextContent className="w-full flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="mb-5">
+            <PageHeadTitle>Paramètres</PageHeadTitle>
+            <PageHeadDescription>
+              Gérez la configuration matérielle, l'apparence et le contexte de
+              l'application.
+            </PageHeadDescription>
+          </div>
+
+          {/* Barre de recherche */}
+          <div className="relative w-full shrink-0 mt-4 sm:mt-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un paramètre..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 w-full bg-background rounded-full"
+            />
+          </div>
         </PageHeaderTextContent>
       </PageHeader>
 
-      <PageContent className="grid gap-6">
-        {/* 1. SECTEUR CONTEXTE ACADÉMIQUE */}
-        <Card>
-          <CardHeader>
+      <PageContent className="space-y-10">
+        {/* Message si aucun résultat */}
+        {!showSection1 && !showSection2 && !showSection3 && (
+          <div className="text-center py-12">
+            <p className="text-sm text-muted-foreground">
+              Aucun paramètre ne correspond à "{searchQuery}".
+            </p>
+            <Button
+              variant="link"
+              onClick={() => setSearchQuery("")}
+              className="mt-2 text-xs"
+            >
+              Effacer la recherche
+            </Button>
+          </div>
+        )}
+
+        {/* ================= SECTION 1: CONTEXTE ACADÉMIQUE ================= */}
+        {showSection1 && (
+          <section className="space-y-6">
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <School className="h-5 w-5 text-primary" /> Contexte Actif
-                </CardTitle>
-                <CardDescription>
-                  École et année académique couramment sélectionnées.
-                </CardDescription>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSyncDb}
-                disabled={isSyncing}
-                className="gap-2"
-              >
-                <RefreshCw
-                  className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
-                />
-                Synchroniser BDD
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg border bg-card/50 flex items-start gap-3">
-                <School className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    École courante
-                  </p>
-                  <p className="text-sm font-semibold">
-                    {school ? school.name : "Aucune école sélectionnée"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-lg border bg-card/50 flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Année Académique
-                  </p>
-                  <p className="text-sm font-semibold">
-                    {year
-                      ? (year.yearName ?? year.yearId)
-                      : "Aucune année sélectionnée"}
-                  </p>
-                </div>
+              <h2 className="text-sm font-semibold tracking-tight text-foreground flex items-center gap-2">
+                Contexte d'établissement
+              </h2>
+              <div className="flex items-center gap-2">
+                <Badge variant={isConfigured ? "default" : "destructive"}>
+                  {isConfigured ? "Contexte configuré" : "Incomplet"}
+                </Badge>
+                {isConfigured && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleResetConfig}
+                    className="text-destructive hover:text-destructive gap-1 h-8 text-xs"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" /> Réinitialiser
+                  </Button>
+                )}
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2">
-              <Badge variant={isConfigured ? "default" : "destructive"}>
-                {isConfigured
-                  ? "Contexte configuré"
-                  : "Configuration incomplète"}
-              </Badge>
+            <div className="space-y-6">
+              {/* ITEM: ÉCOLE COURANTE */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-xs">
+                    <School className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium leading-none">
+                      École active
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {school
+                        ? school.name
+                        : "Aucune école sélectionnée actuellement."}
+                    </p>
+                  </div>
+                </div>
 
-              {isConfigured && (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  onClick={handleResetConfig}
-                  className="text-destructive hover:text-destructive gap-1"
+                  onClick={handleSyncDb}
+                  disabled={isSyncing}
+                  className="shrink-0 gap-2"
                 >
-                  <RotateCcw className="h-4 w-4" /> Réinitialiser le contexte
+                  <RefreshCw
+                    className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`}
+                  />
+                  Synchroniser BDD
                 </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
 
-        {/* 2. IMPRESSION POS */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Printer className="h-5 w-5 text-primary" /> Imprimante POS
-            </CardTitle>
-            <CardDescription>
-              Configuration réseau du serveur/imprimante de tickets POS
-              (ESC/POS).
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSavePosConfig} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="pos-host">Adresse Host / IP</Label>
+              {/* ITEM: ANNÉE ACADÉMIQUE */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500 text-white shadow-xs">
+                    <Calendar className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium leading-none">
+                      Année académique
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {year
+                        ? (year.yearName ?? year.yearId)
+                        : "Aucune année académique active."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {showSection1 && (showSection2 || showSection3) && <Separator />}
+
+        {/* ================= SECTION 2: MATÉRIEL & PERIPHERIQUES ================= */}
+        {showSection2 && (
+          <section className="space-y-6">
+            <h2 className="text-sm font-semibold tracking-tight text-foreground">
+              Impression & Matériel
+            </h2>
+
+            <form onSubmit={handleSavePosConfig} className="space-y-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-xs">
+                    <Printer className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1 max-w-md">
+                    <h3 className="text-sm font-medium leading-none">
+                      Imprimante POS (ESC/POS)
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Définissez l'adresse réseau et le port d'écoute du serveur
+                      d'impression de caisse.
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isSavingPos}
+                  size="sm"
+                  className="shrink-0 gap-1.5"
+                >
+                  <Check className="h-3.5 w-3.5" /> Enregistrer
+                </Button>
+              </div>
+
+              {/* Saisie Réseau alignée */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-13">
+                <div className="space-y-1.5">
+                  <Label htmlFor="pos-host" className="text-xs font-medium">
+                    Adresse Host / IP
+                  </Label>
                   <Input
                     id="pos-host"
                     value={host}
                     onChange={(e) => setHost(e.target.value)}
                     placeholder="localhost ou 192.168.1.50"
+                    className="h-9 text-xs"
                     required
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="pos-port">Port d'écoute</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="pos-port" className="text-xs font-medium">
+                    Port d'écoute
+                  </Label>
                   <Input
                     id="pos-port"
                     type="number"
                     value={port}
                     onChange={(e) => setPort(e.target.value)}
                     placeholder="9100"
+                    className="h-9 text-xs"
                     required
                   />
                 </div>
               </div>
-
-              <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  disabled={isSavingPos}
-                  size="sm"
-                  className="gap-2"
-                >
-                  <Check className="h-4 w-4" /> Enregistrer le POS
-                </Button>
-              </div>
             </form>
-          </CardContent>
-        </Card>
+          </section>
+        )}
 
-        {/* 3. APPARENCE / THÈME */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Sun className="h-5 w-5 text-primary" /> Apparence
-            </CardTitle>
-            <CardDescription>
-              Personnalisez le thème visuel de l'application desktop.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Mode d'affichage</Label>
-                <p className="text-xs text-muted-foreground">
-                  Sélectionnez un thème sombre, clair ou aligné sur votre
-                  système.
-                </p>
+        {showSection2 && showSection3 && <Separator />}
+
+        {/* ================= SECTION 3: PERSONNALISATION ================= */}
+        {showSection3 && (
+          <section className="space-y-6">
+            <h2 className="text-sm font-semibold tracking-tight text-foreground">
+              Apparence & Interface
+            </h2>
+
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white shadow-xs">
+                  <Palette className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium leading-none">
+                    Mode d'affichage
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Basculez entre le thème sombre, clair ou synchronisé sur
+                    votre système.
+                  </p>
+                </div>
               </div>
 
               <Select
                 value={theme ?? "system"}
                 onValueChange={(val: ThemeMode) => setTheme(val)}
               >
-                <SelectTrigger className="w-45">
+                <SelectTrigger className="w-40 h-9 text-xs">
                   <SelectValue placeholder="Choisir un thème" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="light">
+                  <SelectItem value="light" className="text-xs">
                     <div className="flex items-center gap-2">
-                      <Sun className="h-4 w-4" /> Clair
+                      <Sun className="h-3.5 w-3.5" /> Clair
                     </div>
                   </SelectItem>
-                  <SelectItem value="dark">
+                  <SelectItem value="dark" className="text-xs">
                     <div className="flex items-center gap-2">
-                      <Moon className="h-4 w-4" /> Sombre
+                      <Moon className="h-3.5 w-3.5" /> Sombre
                     </div>
                   </SelectItem>
-                  <SelectItem value="system">
+                  <SelectItem value="system" className="text-xs">
                     <div className="flex items-center gap-2">
-                      <Laptop className="h-4 w-4" /> Système
+                      <Laptop className="h-3.5 w-3.5" /> Système
                     </div>
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </CardContent>
-        </Card>
+          </section>
+        )}
       </PageContent>
     </PageContainer>
   );
