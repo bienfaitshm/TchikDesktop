@@ -12,15 +12,3 @@ root.render(
     <App />
   </React.StrictMode>,
 );
-
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    const splash = document.getElementById("splash-screen");
-    if (splash) {
-      splash.classList.add("fade-out");
-      setTimeout(() => {
-        splash.remove();
-      }, 400);
-    }
-  });
-});

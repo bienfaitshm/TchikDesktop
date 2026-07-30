@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import { useEffect } from "react";
 import { ThemeProvider } from "@/renderer/providers/theme";
 import { TooltipProvider } from "@/renderer/components/ui/tooltip";
 import Router from "@/renderer/screens/router";
@@ -10,19 +11,57 @@ import { apiClient } from "@/renderer/libs/apis";
 import { getConfig } from "@/renderer/libs/stores/app-store";
 import { StoreProvider } from "@/renderer/libs/stores/provider";
 
-apiClient.interceptors.request.use(async (payload) => {
-  const { schoolId, yearId } = getConfig();
+/**
+ * Configures global API request interceptors to inject tenant headers.
+ */
+function setupApiInterceptors(): void {
+  apiClient.interceptors.request.use(async (payload) => {
+    const { schoolId, yearId } = getConfig();
 
-  if (schoolId) {
-    payload.headers["schoolId"] = schoolId;
-  }
-  if (yearId) {
-    payload.headers["yearId"] = yearId;
-  }
+    if (schoolId) {
+      payload.headers["schoolId"] = schoolId;
+    }
+    if (yearId) {
+      payload.headers["yearId"] = yearId;
+    }
 
-  return payload;
-});
+    return payload;
+  });
+}
 
+setupApiInterceptors();
+
+/**
+ * Removes the initial native HTML splash screen with a fade-out animation once loaded.
+ * @returns Null as it renders no visual DOM nodes.
+ */
+function SplashRemover(): null {
+  useEffect(() => {
+    const splashElement = document.getElementById("splash-screen");
+    if (!splashElement) return;
+
+    splashElement.classList.add("fade-out");
+
+    const handleTransitionEnd = (): void => {
+      splashElement.remove();
+    };
+
+    splashElement.addEventListener("transitionend", handleTransitionEnd, {
+      once: true,
+    });
+
+    return () => {
+      splashElement.removeEventListener("transitionend", handleTransitionEnd);
+    };
+  }, []);
+
+  return null;
+}
+
+/**
+ * Root component orchestrating global providers, stores, boundary handling, and routing.
+ * @returns The rendered React application tree.
+ */
 function App(): JSX.Element {
   return (
     <ThemeProvider>
@@ -30,12 +69,13 @@ function App(): JSX.Element {
         <StoreProvider
           fallback={
             <div className="flex h-screen w-screen items-center justify-center bg-background">
-              <div className="text-sm text-muted-foreground animate-pulse">
-                Chargement de la configuration...
+              <div className="animate-pulse text-sm text-muted-foreground">
+                Loading configuration...
               </div>
             </div>
           }
         >
+          <SplashRemover />
           <QueryProvider>
             <SuspenseErrorBoundary
               fallbackRender={({ error, resetErrorBoundary }) => (

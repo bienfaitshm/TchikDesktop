@@ -1,40 +1,49 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type JSX, type ReactNode } from "react";
 import { useConfigStore, useIsConfigHydrated } from "./app-store";
 
-interface StoreProviderProps {
+export interface StoreProviderProps {
   children: ReactNode;
   fallback?: ReactNode;
 }
 
+/**
+ * Initializes application configuration and synchronizes data before rendering children.
+ * @param props - Component props containing children and optional fallback UI.
+ * @returns Fallback component while hydrating, or children once initialized.
+ */
 export function StoreProvider({
   children,
   fallback = null,
-}: StoreProviderProps) {
-  const initialized = useRef(false);
-  const _hasHydrated = useIsConfigHydrated();
+}: StoreProviderProps): JSX.Element {
+  const initialized = useRef<boolean>(false);
+  const hasHydrated = useIsConfigHydrated();
 
   useEffect(() => {
-    // Évite la double exécution en React Strict Mode
     if (initialized.current) return;
     initialized.current = true;
 
-    const init = async () => {
-      const actions = useConfigStore.getState().actions;
+    let isMounted = true;
 
-      // 1. Charger la config locale depuis electron-store
+    const initializeStore = async (): Promise<void> => {
+      const { actions } = useConfigStore.getState();
+
       await actions.initStore();
 
-      // 2. Vérifier/Synchroniser la fraîcheur des données avec la BDD
-      await actions.syncFreshData();
+      if (isMounted) {
+        await actions.syncFreshData();
+      }
     };
 
-    init();
+    initializeStore();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // On attend l'hydratation initiale pour éviter d'afficher des vues sans config
-  if (!_hasHydrated) {
+  if (!hasHydrated) {
     return <>{fallback}</>;
   }
 
