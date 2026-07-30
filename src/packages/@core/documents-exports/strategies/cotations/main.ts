@@ -13,6 +13,7 @@ import { CotationDataResolver } from "./resolver";
 import type { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 import { extensions } from "./extension";
+import { DocumentCategory } from "../../constants";
 
 type ExportPayload = {
   schoolId: string;
@@ -27,6 +28,8 @@ export class FicheCotationExportStrategy extends AbstractExportStrategy<
   any
 > {
   public readonly id = "FICHE_COTATION_EXPORT" as const;
+  public readonly category = DocumentCategory.DATA_SCHOOL;
+
   public readonly displayName = "Fiche de cotation des eleves";
   public readonly description = "Génère les fiches de cotations par classe";
 

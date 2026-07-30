@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import * as Layout from "@/renderer/screens/layouts";
 import * as Seating from "@/renderer/apps/seatings";
+import * as Export from "@/renderer/apps/export";
 import { SubNavLayout } from "@/renderer/layouts/submenu.layout";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 import { ROUTES, APP_ROUTES } from "@/renderer/constants";
@@ -251,6 +252,10 @@ export default function RouterProvider(): JSX.Element {
             <Route index element={<HomePage />} />
             <Route path={ROUTES.ENROLLMENTS} element={<EnrollmentPage />} />
             <Route path={ROUTES.PAYMENTS} element={<FinApp.PaymentPage />} />
+            <Route
+              path={ROUTES.EXPORTS.DOCUMENT_EXPORT}
+              element={<Export.ExportDocumentPage />}
+            />
 
             {/* ========== SCHOOL ========== */}
             <Route

@@ -12,6 +12,7 @@ import {
 import { extensions } from "@/packages/@core/documents-exports/extensions/seating-presence";
 import { createSeatingPresenceExportForm } from "./form";
 import { SeatingPresenceSessionDataResolver } from "./resolver";
+import { DocumentCategory } from "../../constants";
 
 type ExportPayload = {
   schoolId: string;
@@ -27,6 +28,8 @@ export class SeatingPresenceExportStrategy extends AbstractExportStrategy<
 > {
   public readonly id = "SEATING_PRESENCE_EXPORT" as const;
   public readonly displayName = "Fiche de présence des examens";
+  public readonly category = DocumentCategory.DATA_SCHOOL;
+
   public readonly description =
     "Génère la liste de présence pour la mise en place des examens.";
 

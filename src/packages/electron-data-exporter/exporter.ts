@@ -76,6 +76,7 @@ export class DataExport {
         const meta = await strategy.getMeta(params);
         return {
           id: strategy.id,
+          category: meta.category,
           title: meta.title,
           extensions: meta.extensions,
           description: meta.description,

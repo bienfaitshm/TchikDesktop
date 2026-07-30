@@ -111,7 +111,7 @@ function GenericComboBoxInner<T>(
             className="h-8 text-xs border-none focus-visible:ring-0 shadow-none"
           />
           <CommandList
-            className="max-h-60 overflow-y-auto scrollbar-thin"
+            className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-accent"
             onWheel={(e) => {
               e.stopPropagation();
             }}

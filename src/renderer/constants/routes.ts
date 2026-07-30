@@ -1,7 +1,11 @@
 export const ROUTES = {
   HOME: "/",
   ENROLLMENTS: "/enrollments",
-  PAYMENTS: "payments",
+  PAYMENTS: "/payments",
+  EXPORTS: {
+    DOCUMENT_EXPORT: "/export/docs",
+    DOCUMENT_IMPORT: "/import/docs",
+  },
   SCHOOLS: {
     ROOT: "/schools",
     OPTIONS: "options",
@@ -72,6 +76,10 @@ export const APP_ROUTES = {
   HOME: ROUTES.HOME,
   ENROLLMENTS: ROUTES.ENROLLMENTS,
   PAYEMENTS: ROUTES.PAYMENTS,
+  EXPORTS: {
+    DOCUMENT_EXPORT: ROUTES.EXPORTS.DOCUMENT_EXPORT,
+    DOCUMENT_IMPORT: ROUTES.EXPORTS.DOCUMENT_IMPORT,
+  },
   SCHOOLS: {
     LIST: `${ROUTES.SCHOOLS.ROOT}/${ROUTES.SCHOOLS.LIST}`,
     ROOT: ROUTES.SCHOOLS.ROOT,
