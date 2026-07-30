@@ -2,10 +2,11 @@ import React from "react";
 import { useNavigate } from "react-router";
 import { useConfigActions } from "@/renderer/libs/stores/app-store";
 import { SchoolForm } from "@/renderer/components/form/school-form";
-import { ButtonLoader } from "@/renderer/components/form/button-loader";
-import type { School } from "@/packages/@core/data-access/db/schemas";
+import { LoadingButton } from "@/renderer/components/buttons/button-loading";
+import type { School } from "@/packages/@core/data-access/db";
 import { useCreateSchoolForm } from "@/renderer/libs/queries/schools";
 import { ConfigHeader } from "./config.header";
+import { APP_ROUTES } from "@/renderer/constants";
 
 export const useSchoolNavigationAndSelection = () => {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export const useSchoolNavigationAndSelection = () => {
   return React.useCallback(
     (school: School) => {
       configActions.setCurrentSchool(school);
-      navigate(`/configuration/school-year`);
+      navigate(APP_ROUTES.CONFIGURATION.SCHOOL_YEAR);
     },
     [configActions, navigate],
   );
@@ -31,22 +32,23 @@ export const SchoolCreationForm: React.FC = () => {
   const setCurrentSchoolAndNavigate = useSchoolNavigationAndSelection();
   const { isSubmitting, formId, onSubmit } = useCreateSchoolForm({
     onSuccess(data) {
-      setCurrentSchoolAndNavigate(data as School);
+      setCurrentSchoolAndNavigate(data);
     },
   });
 
   return (
-    <div>
+    <div className="w-full space-y-6 mt-4">
       <SchoolForm formId={formId} onSubmit={onSubmit} />
       <div className="flex justify-end pt-4">
-        <ButtonLoader
+        <LoadingButton
+          size="sm"
           type="submit"
           form={formId}
-          isLoading={isSubmitting}
+          loading={isSubmitting}
           disabled={isSubmitting}
         >
           Enregistrer l'établissement
-        </ButtonLoader>
+        </LoadingButton>
       </div>
     </div>
   );
@@ -54,12 +56,14 @@ export const SchoolCreationForm: React.FC = () => {
 
 export const ConfigCreateSchoolPage: React.FC = () => {
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <ConfigHeader
         showBackButton
         title="Creer l'établissement sur lequel vous souhaitez travailler."
       />
-      <SchoolCreationForm />
+      <div className="mt-10">
+        <SchoolCreationForm />
+      </div>
     </div>
   );
 };

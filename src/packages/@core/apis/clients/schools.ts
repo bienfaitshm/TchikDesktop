@@ -3,12 +3,11 @@ import {
   SchoolCreate,
   SchoolFilter,
   SchoolUpdate,
-  StudyYear,
   StudyYearCreate,
   StudyYearUpdate,
   StudyYearFilter,
 } from "@/packages/@core/data-access/schema-validations";
-import type { School } from "@/packages/@core/data-access/db/schemas";
+import type { School, StudyYear } from "@/packages/@core/data-access/db";
 import { SchoolRoutes, StudyYearRoutes } from "../routes-constant";
 
 /**

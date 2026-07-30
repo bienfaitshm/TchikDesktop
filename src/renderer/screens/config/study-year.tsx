@@ -40,14 +40,7 @@ import {
   useCurrentConfig,
 } from "@/renderer/libs/stores/app-store";
 import { ConfigHeader } from "./config.header";
-
-interface StudyYearDataDisplay {
-  yearId: string;
-  schoolId: string;
-  yearName: string;
-  startDate: Date;
-  endDate: Date;
-}
+import { APP_ROUTES } from "@/renderer/constants";
 
 /**
  * Calcule le statut de l'année scolaire par rapport à la date actuelle.
@@ -77,7 +70,7 @@ const StudyYearListDisplayTable: React.FC = () => {
 
   if (!school?.schoolId) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto min-h-[300px]">
+      <div className="flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto min-h-75">
         <div className="flex size-12 items-center justify-center rounded-full bg-muted mb-4">
           <School className="text-muted-foreground" />
         </div>
@@ -100,9 +93,7 @@ const StudyYearListDisplayTable: React.FC = () => {
   const filteredYears = useMemo(() => {
     if (!searchQuery.trim()) return studyYears;
     const query = searchQuery.toLowerCase();
-    return studyYears.filter((sy: StudyYearDataDisplay) =>
-      sy.yearName.toLowerCase().includes(query),
-    );
+    return studyYears.filter((sy) => sy.yearName.toLowerCase().includes(query));
   }, [studyYears, searchQuery]);
 
   if (isError) {
@@ -142,42 +133,47 @@ const StudyYearListDisplayTable: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl mx-auto p-6">
-      <ConfigHeader showBackButton title="Sélection de l'année scolaire" />
-
-      {/* Header opérationnel avec recherche et CTA */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">
+    <div className="flex flex-col gap-6 max-w-5xl mx-auto">
+      <ConfigHeader
+        showBackButton
+        title="Sélection de l'année scolaire"
+        subTitle={
+          <p className="text-xs text-muted-foreground">
             Établissement :{" "}
             <strong className="text-foreground font-semibold">
               {school.name}
             </strong>
           </p>
-        </div>
-        <Button asChild>
-          <Link to="/configuration/school-year/new">
-            <Plus data-icon="inline-start" />
-            Nouvelle année scolaire
-          </Link>
-        </Button>
-      </div>
+        }
+      />
 
       {/* Filtre de recherche */}
-      {studyYears.length > 1 && (
-        <div className="max-w-md">
+      <div className="flex items-center justify-between">
+        <div className="max-w-sm">
           <InputGroup>
             <InputGroupAddon>
               <Search />
             </InputGroupAddon>
             <InputGroupInput
               placeholder="Rechercher une année (ex: 2024-2025)..."
+              className="placeholder:text-xs text-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </InputGroup>
         </div>
-      )}
+        <Button
+          title="Nouvelle année scolaire"
+          variant="outline"
+          size="icon-lg"
+          className="rounded-full text-xs"
+          asChild
+        >
+          <Link to={APP_ROUTES.CONFIGURATION.SCHOOL_YEAR_NEW}>
+            <Plus data-icon="inline-start" />
+          </Link>
+        </Button>
+      </div>
 
       {/* Grille de sélection des années scolaires */}
       {filteredYears.length > 0 ? (
@@ -197,21 +193,23 @@ const StudyYearListDisplayTable: React.FC = () => {
                 }}
               >
                 <CardHeader className="flex flex-row items-start justify-between gap-2 pb-3">
-                  <div className="flex flex-col gap-1">
-                    <CardTitle className="text-base group-hover:text-primary transition-colors">
-                      {studyYear.yearName}
-                    </CardTitle>
+                  <div className="w-full flex flex-col gap-1">
+                    <div className="w-full flex items-center justify-between">
+                      <CardTitle className="text-xs capitalize group-hover:text-primary transition-colors truncate text-wrap">
+                        {studyYear.yearName.toLocaleLowerCase()}
+                      </CardTitle>
+                      <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    </div>
                     <Badge
                       variant={status.variant}
-                      className="w-fit text-xs font-normal"
+                      className="w-fit text-[11px] font-normal"
                     >
                       {status.label}
                     </Badge>
                   </div>
-                  <ChevronRight className="text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <CardDescription className="flex items-center gap-1.5 text-xs">
+                  <CardDescription className="flex items-center gap-1.5 text-[11px]">
                     <Calendar className="size-3.5 shrink-0" />
                     <span>
                       {format(new Date(studyYear.startDate), "d MMM yyyy", {

@@ -1,7 +1,6 @@
 import { queryOptions, type UseMutationOptions } from "@tanstack/react-query";
 import { school as schoolApi } from "@/renderer/libs/apis";
 import type {
-  StudyYear,
   StudyYearCreate,
   StudyYearUpdate,
   StudyYearFilter,
@@ -12,6 +11,7 @@ import {
   type QueryUpdatePayload,
 } from "../base";
 import { queryClient } from "../providers";
+import type { StudyYear } from "@/packages/@core/data-access/db";
 
 /**
  * 1. Query Key Factory

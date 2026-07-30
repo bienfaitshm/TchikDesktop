@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import type {
-  School,
   SchoolCreate,
   SchoolUpdate,
 } from "@/packages/@core/data-access/schema-validations";
@@ -8,6 +7,7 @@ import { withNotifications } from "@/renderer/libs/notifications";
 import type { BaseMutationConfig, QueryUpdatePayload } from "../base";
 import { useFormBase, useFormBaseNotify } from "../base";
 import { useCreateSchool, useDeleteSchool, useUpdateSchool } from "./school";
+import type { School } from "@/packages/@core/data-access/db";
 
 export type SchoolFormConfig = BaseMutationConfig<School>;
 

@@ -20,13 +20,13 @@ import {
   SchoolCreationForm,
   useSchoolNavigationAndSelection,
 } from "./school.new-school";
+import { APP_ROUTES } from "@/renderer/constants";
 
 export const SchoolConfigPage: React.FC = () => {
   const onSetSchool = useSchoolNavigationAndSelection();
   const { data: schools = [] } = useGetSchools();
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Filtrage dynamique selon la recherche
   const filteredSchools = useMemo(() => {
     if (!searchQuery.trim()) return schools;
     const query = searchQuery.toLowerCase();
@@ -37,62 +37,63 @@ export const SchoolConfigPage: React.FC = () => {
     );
   }, [schools, searchQuery]);
 
-  // État vide : Aucun établissement créé
   if (schools.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center max-w-lg mx-auto min-h-[400px]">
+      <div className="flex flex-col items-center justify-center text-center mx-auto min-h-100">
         <div className="flex size-12 items-center justify-center rounded-full bg-muted mb-4">
           <Building2 className="text-muted-foreground" />
         </div>
         <h2 className="text-xl font-semibold tracking-tight">
           Aucun établissement
         </h2>
-        <p className="text-sm text-muted-foreground mt-1 mb-6">
+        <p className="text-xs text-muted-foreground mt-1 mb-6">
           Vous n'avez pas encore d'établissement enregistré. Créez-en un pour
           commencer à configurer votre espace.
         </p>
-        <Card className="w-full text-left">
-          <CardContent className="pt-6">
-            <SchoolCreationForm />
-          </CardContent>
-        </Card>
+        <SchoolCreationForm />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl mx-auto p-6">
+    <div className="flex flex-col gap-6 max-w-5xl mx-auto">
       {/* Header avec action principale */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-end-safe gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Établissements</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl font-bold tracking-tight">Établissements</h1>
+          <p className="text-xs text-muted-foreground">
             Sélectionnez un établissement pour accéder à son espace de travail.
           </p>
         </div>
-        <Link to="/configuration/school/new">
-          <Button>
-            <Plus data-icon="inline-start" />
-            Ajouter un établissement
-          </Button>
-        </Link>
       </div>
 
       {/* Barre de recherche */}
-      {schools.length > 1 && (
-        <div className="max-w-md">
+      <div className="flex items-center justify-between">
+        <div className="max-w-sm">
           <InputGroup>
             <InputGroupAddon>
               <Search />
             </InputGroupAddon>
             <InputGroupInput
               placeholder="Rechercher par nom ou ville..."
+              className="placeholder:text-xs text-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </InputGroup>
         </div>
-      )}
+        <Button
+          title="Ajouter un établissement"
+          variant="outline"
+          size="icon-lg"
+          className="rounded-full text-xs"
+          asChild
+        >
+          <Link to={APP_ROUTES.CONFIGURATION.SCHOOL_NEW}>
+            <Plus data-icon="inline-start" />
+          </Link>
+        </Button>
+      </div>
 
       {/* Grille des établissements */}
       {filteredSchools.length > 0 ? (
@@ -104,27 +105,29 @@ export const SchoolConfigPage: React.FC = () => {
               onClick={() => onSetSchool(school)}
             >
               <CardHeader className="flex flex-row items-start justify-between gap-2 pb-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <div className="w-full flex items-center gap-3">
+                  <div className="flex size-5 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <Building2 />
                   </div>
-                  <div className="flex flex-col">
-                    <CardTitle className="text-base group-hover:text-primary transition-colors truncate">
-                      {school.name}
-                    </CardTitle>
+                  <div className="flex flex-col w-full">
+                    <div className="w-full flex items-center justify-between">
+                      <CardTitle className="text-xs capitalize group-hover:text-primary transition-colors truncate text-wrap">
+                        {school.name.toLocaleLowerCase()}
+                      </CardTitle>
+                      <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    </div>
                     <CardDescription className="flex items-center gap-1 text-xs mt-0.5">
                       <MapPin className="size-3 shrink-0" />
                       <span className="truncate">{school.town}</span>
                     </CardDescription>
                   </div>
                 </div>
-                <ChevronRight className="text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
               </CardHeader>
               {school.address && (
                 <CardContent className="pt-0">
                   <Badge
                     variant="outline"
-                    className="font-normal text-xs text-muted-foreground truncate max-w-full"
+                    className="font-normal text-[11px] text-muted-foreground truncate max-w-full"
                   >
                     {school.address}
                   </Badge>
