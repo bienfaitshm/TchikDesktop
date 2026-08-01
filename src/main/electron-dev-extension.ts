@@ -5,11 +5,17 @@ import installExtension, {
 } from "electron-devtools-installer";
 import { is } from "@electron-toolkit/utils";
 
+/**
+ * Interface representing a logger for tracking extension installation events.
+ */
 interface ILogger {
   info(message: string): void;
   error(message: string, error?: unknown): void;
 }
 
+/**
+ * Configuration options for the development extension installer.
+ */
 interface ExtensionInstallerConfig {
   extensions?: ExtensionReference[];
   logger?: ILogger;
@@ -17,8 +23,9 @@ interface ExtensionInstallerConfig {
 }
 
 /**
- * Service de gestion des extensions (Single Responsibility & Open/Closed)
- * On peut ajouter de nouvelles extensions sans modifier la logique de base.
+ * Sets up the development environment by installing requested browser extensions.
+ * @param config - Optional configuration containing extensions, logger, and download flags.
+ * @returns A promise that resolves when all extensions have been processed.
  */
 export async function setupDevelopmentEnvironment(
   config?: ExtensionInstallerConfig,
@@ -38,10 +45,10 @@ export async function setupDevelopmentEnvironment(
         loadExtensionOptions: { allowFileAccess: true },
         forceDownload,
       });
-      logger.info(`[DevTools] Installée avec succès : ${name.name}`);
+      logger.info(`[DevTools] Successfully installed: ${name.name}`);
     } catch (e) {
       logger.error(
-        `[DevTools] Échec de l'installation pour l'ID : ${extId}`,
+        `[DevTools] Failed to install extension with ID: ${extId}`,
         e,
       );
     }

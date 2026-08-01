@@ -15,17 +15,16 @@ import {
   tchikAppStore,
 } from "@/packages/@core/data-access/stores";
 
-// Execute side-effect modules initialization
 import "@/main/apps/system-infos";
-// import "@/packages/@core/apis/servers/handlers";
 
 debug();
 
 const mainLogger = getLogger("MainProcess");
+let isDatabaseReady = false;
 
 /**
- * Creates and initializes the primary application BrowserWindow instance.
- * @returns Promise resolving to the created BrowserWindow instance.
+ * Creates and loads the primary application window.
+ * @returns A promise that resolves to the instantiated BrowserWindow.
  */
 const createMainWindow = async (): Promise<BrowserWindow> => {
   mainLogger.info("Creating primary application window...");
@@ -54,15 +53,9 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
     },
   });
 
-  tchikAppStore.setWindow(mainWindow);
-
   if (is.dev) {
     mainWindow.webContents.openDevTools({ mode: "right" });
   }
-
-  mainLogger.info("Main window created with default options.");
-
-  initializeTextModifiers(mainWindow);
 
   mainWindow.once("ready-to-show", () => {
     mainLogger.info("Main window ready to show.");
@@ -90,24 +83,21 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
 };
 
 /**
- * Initializes database services, performs backups, and starts IPC handlers.
- * @param mainWindow - The primary BrowserWindow instance to notify when DB is ready.
+ * Bootstraps backend services including database and IPC listeners.
+ * @returns A promise resolving when all services are initialized.
  */
-const initializeAppServices = async (
-  mainWindow: BrowserWindow,
-): Promise<void> => {
+const initializeAppServices = async (): Promise<void> => {
   try {
     mainLogger.info("Initializing background data services...");
-
     await dbManager.performBackup();
     await dbManager.initialize();
+
+    isDatabaseReady = true;
     mainLogger.info("Database initialized successfully.");
 
     mainLogger.info("Starting IPC servers and registering store handlers...");
     ipcServer.listen();
     registerStoreIpcHandlers(tchikAppStore);
-
-    mainWindow.webContents.send("database-ready");
   } catch (error) {
     mainLogger.error("Fatal error during database initialization:", error);
     handleFatalError("Database Initialization Error", error, mainLogger);
@@ -115,19 +105,36 @@ const initializeAppServices = async (
 };
 
 /**
- * Bootstraps the Electron application startup lifecycle and listeners.
+ * Creates a window and attaches necessary features and state listeners.
+ * @returns A promise resolving to the fully configured BrowserWindow.
+ */
+const setupAppWindow = async (): Promise<BrowserWindow> => {
+  const window = await createMainWindow();
+
+  tchikAppStore.setWindow(window);
+  initializeTextModifiers(window);
+  updateInit(window);
+
+  if (isDatabaseReady) {
+    window.webContents.send("database-ready");
+  }
+
+  return window;
+};
+
+/**
+ * Binds global application events and orchestrates the startup sequence.
  */
 const bootstrapApp = (): void => {
   app.whenReady().then(async () => {
     mainLogger.info("Application ready event triggered.");
-
     electronApp.setAppUserModelId("com.electron.tchik");
-    mainLogger.info("AppUserModelId configured.");
 
-    const mainWindow = await createMainWindow();
-    updateInit(mainWindow);
+    const mainWindow = await setupAppWindow();
 
-    await initializeAppServices(mainWindow);
+    await initializeAppServices();
+    // Notify the initial window since DB was initialized after window creation
+    mainWindow.webContents.send("database-ready");
 
     setupDevelopmentEnvironment({ logger: mainLogger }).catch((err) => {
       mainLogger.error("Failed to setup development environment:", err);
@@ -136,8 +143,7 @@ const bootstrapApp = (): void => {
     app.on("activate", async () => {
       if (BrowserWindow.getAllWindows().length === 0) {
         mainLogger.info("Activate event: Re-creating main application window.");
-        const window = await createMainWindow();
-        updateInit(window);
+        await setupAppWindow();
       }
     });
 
@@ -156,7 +162,7 @@ const bootstrapApp = (): void => {
 };
 
 /**
- * Registers process-level handlers for unhandled rejections and exceptions.
+ * Sets up listeners for unhandled exceptions to prevent silent process crashes.
  */
 const registerGlobalProcessErrorHandler = (): void => {
   process.on("unhandledRejection", (reason) => {
