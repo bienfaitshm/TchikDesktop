@@ -23,6 +23,8 @@ export default defineConfig({
           "mysql2",
           "tedious",
           "oracledb",
+          "@libsql/client",
+          /^@libsql\/.+/,
         ],
       },
     },
