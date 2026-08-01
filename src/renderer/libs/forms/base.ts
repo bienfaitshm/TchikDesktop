@@ -90,8 +90,9 @@ export function useZodForm<TFieldValues extends FieldValues>({
           },
         });
       },
-      (errors) => {
-        getFormErrors(errors);
+      (_errors) => {
+        const errors = getFormErrors(_errors);
+        console.log("[Form Errors]", errors);
       },
     );
   }, [form, defaultValues]);

@@ -41,13 +41,16 @@ export const CreateWalletDialog = createBaseActionDialog<
   description:
     "Ajoutez un nouveau compte ou une caisse physique pour percevoir les paiements.",
   useForm: useCreateWalletForm,
-  form({ formId, onSubmit, currencyOptions, defaultValues }): ReactNode {
+  form(
+    { formId, onSubmit, currencyOptions, defaultValues },
+    { schoolId },
+  ): ReactNode {
     return (
       <WalletForm
         formId={formId}
         onSubmit={onSubmit}
         currencyOptions={currencyOptions}
-        defaultValues={defaultValues}
+        defaultValues={{ ...defaultValues, schoolId }}
       />
     );
   },
@@ -67,16 +70,15 @@ export const UpdateWalletDialog = createBaseActionDialog<
   title: ({ name, defaultValues }: UpdateWalletDialogProps) =>
     `Modifier la caisse : ${name ?? defaultValues?.name ?? ""}`,
   description: "Modifiez les informations de ce portefeuille comptable.",
-  useForm: (config) =>
-    useUpdateWalletForm({
-      ...config,
-      walletId: config.walletId,
-    }),
-  form({ formId, onSubmit, currencyOptions, defaultValues }): ReactNode {
+  useForm: useUpdateWalletForm,
+  form(
+    { formId, onSubmit, currencyOptions, defaultValues },
+    { walletId: id },
+  ): ReactNode {
     return (
       <WalletForm
         formId={formId}
-        onSubmit={onSubmit}
+        onSubmit={(data, helpers) => onSubmit({ data, id }, helpers as any)}
         currencyOptions={currencyOptions}
         defaultValues={defaultValues}
       />

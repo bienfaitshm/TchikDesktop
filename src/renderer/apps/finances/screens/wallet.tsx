@@ -173,6 +173,7 @@ export function SchoolWalletPage() {
             <WalletDialogCreateForm
               schoolId={schoolId}
               mutationKey={walletQueryKey}
+              defaultValues={{ schoolId }}
             >
               <Button variant="outline" size="sm" className="gap-2 shadow-xs">
                 <Plus className="w-4 h-4" /> Nouveau compte

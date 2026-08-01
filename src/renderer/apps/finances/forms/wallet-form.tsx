@@ -20,6 +20,7 @@ import {
   useZodForm,
 } from "@/renderer/libs/forms";
 import { CURRENCY_ENUM } from "@/packages/@core/data-access/db/options";
+import { FormErrorView } from "@/renderer/components/form/form-error-view";
 
 const DEFAULT_VALUES: Partial<WalletCreate> = {
   name: "",
@@ -54,9 +55,7 @@ export const WalletForm: React.FC<
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="font-semibold">
-                Nom du Portefeuille / Caisse
-              </FormLabel>
+              <FormLabel>Nom du Portefeuille / Caisse</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -77,7 +76,7 @@ export const WalletForm: React.FC<
             name="currency"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-semibold">Devise Pivot</FormLabel>
+                <FormLabel>Devise Pivot</FormLabel>
                 <FormControl>
                   <SelectInput options={currencyOptions} {...field} />
                 </FormControl>
@@ -91,9 +90,7 @@ export const WalletForm: React.FC<
             name="currentBalance"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-semibold">
-                  Solde Initial (en centimes)
-                </FormLabel>
+                <FormLabel>Solde Initial (en centimes)</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -110,6 +107,8 @@ export const WalletForm: React.FC<
             )}
           />
         </div>
+        {/* Feedback d'erreur globale */}
+        <FormErrorView form={form} />
       </form>
     </Form>
   );
