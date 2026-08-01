@@ -57,6 +57,7 @@ nsis:
   uninstallDisplayName: ${productName}_uninstaller
   displayLanguageSelector: true
   createDesktopShortcut: always
+  include: build/installer.nsh
 
 mac:
   entitlements: build/entitlements.mac.plist
