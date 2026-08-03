@@ -13,9 +13,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/renderer/components/ui/sidebar";
-import { SidebarHead } from "./app-sidebar.head";
 import { SidebarFoot } from "./app-sidebar.foot";
 import { Suspense } from "@/renderer/libs/queries/suspense";
+import { ToggleSidebarButton } from "./app-sidebar.toogle-button";
 
 export interface NavItem {
   name: string;
@@ -61,7 +61,7 @@ export function ApplicationSidebar({ menus = [] }: ApplicationSidebarProps) {
   return (
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader>
-        <SidebarHead />
+        <ToggleSidebarButton />
       </SidebarHeader>
 
       <SidebarContent>

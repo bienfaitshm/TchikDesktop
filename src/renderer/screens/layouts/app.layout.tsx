@@ -1,14 +1,12 @@
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/renderer/components/ui/sidebar";
 import {
   ApplicationSidebar,
   ApplicationSidebarProps,
 } from "@/renderer/components/app-sidebar/app-sidebar";
 import { Outlet } from "react-router";
-import { Separator } from "@/renderer/components/ui/separator";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
@@ -29,10 +27,7 @@ export function AppLayout({ menus = [] }: AppLayoutProps) {
       <SidebarInset className="flex flex-col h-svh min-w-0 w-full overflow-hidden">
         <SidebarInset className="flex flex-col h-svh min-w-0 overflow-hidden">
           {/* Header */}
-          <header className="bg-background/95 backdrop-blur-sm sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground transition-colors" />
-            <Separator orientation="vertical" className="mr-4" />
-          </header>
+          <header className="bg-background/95 backdrop-blur-sm sticky top-0 z-30 flex h-10 shrink-0 items-center gap-2 border-b px-4"></header>
 
           <div className="flex-1 min-h-0 min-w-0 w-full overflow-hidden">
             <Suspense fallback={<LoadingSpinner />}>
