@@ -30,7 +30,7 @@ export const SubNavItem = ({
     to={to}
     className={({ isActive }) =>
       cn(
-        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate",
+        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors w-full truncate [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate",
         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
         "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
         isActive

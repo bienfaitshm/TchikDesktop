@@ -106,18 +106,9 @@ const MENUS: ActionMenuConfig<ClassroomRowActionsProps>[] = [
   },
 ];
 
-/**
- * Renders contextual action menus for a given classroom row.
- * @param props - Component properties containing the classroom entity, school ID, and mutation key.
- * @returns The rendered action menu component.
- */
 export const ClassroomRowAction: React.FC<ClassroomRowActionsProps> =
   createActionMenus<ClassroomRowActionsProps>(MENUS);
 
-/**
- * Main application screen component for viewing and managing classrooms.
- * @returns Rendered classroom management page layout with data table and toolbars.
- */
 export const ClassroomPage: React.FC = () => {
   const { schoolId } = useSchoolContext();
   const { options } = useGetOptionAsOptions(schoolId);
@@ -125,9 +116,7 @@ export const ClassroomPage: React.FC = () => {
   const { data: classrooms = [], queryKey: mutationKey } = useGetClassrooms({
     where: {
       classrooms: {
-        schoolId: {
-          $eq: schoolId,
-        },
+        schoolId,
       },
     },
   });
@@ -148,8 +137,8 @@ export const ClassroomPage: React.FC = () => {
   );
 
   return (
-    <PageContainer>
-      <PageHeader className="mt-10">
+    <PageContainer className="w-full min-w-0">
+      <PageHeader>
         <PageHeaderTextContent>
           <PageHeadTitle>Gestion des classes</PageHeadTitle>
           <PageHeadDescription>
@@ -157,14 +146,15 @@ export const ClassroomPage: React.FC = () => {
           </PageHeadDescription>
         </PageHeaderTextContent>
       </PageHeader>
-      <PageContent>
+
+      <PageContent className="w-full min-w-0 space-y-4">
         <DataTable<ClassroomDTO>
           data={classrooms}
           columns={columns}
           keyExtractor={(item) => item.classId}
         >
-          <DataTableToolbar>
-            <FilteredTableToolbarContainer>
+          <DataTableToolbar className="flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <FilteredTableToolbarContainer className="flex-wrap gap-2">
               <SearchTableToolbar
                 searchColumn="identifier"
                 placeholder="Rechercher ex. 1ère MA"
@@ -180,25 +170,28 @@ export const ClassroomPage: React.FC = () => {
                 options={options}
               />
             </FilteredTableToolbarContainer>
-            <div className="flex items-center gap-4">
+
+            <div className="flex items-center justify-end gap-2 shrink-0">
               <DataTableColumnToggle />
               <CreateClassroomDialog
                 schoolId={schoolId}
                 defaultValues={{ schoolId }}
                 mutationKey={mutationKey}
               >
-                <Button size="sm" className="rounded-full shadow-xs">
-                  <Plus className="size-4 mr-2" />
+                <Button size="sm" className="gap-2 rounded-full shadow-xs">
+                  <Plus className="size-4" />
                   <span>Ajouter une classe</span>
                 </Button>
               </CreateClassroomDialog>
             </div>
           </DataTableToolbar>
+
           <DataTableContent>
             <DataContentHead />
             <DataContentBody />
           </DataTableContent>
-          <DataTablePagination />
+
+          <DataTablePagination className="mt-4" />
         </DataTable>
       </PageContent>
     </PageContainer>

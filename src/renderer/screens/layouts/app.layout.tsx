@@ -22,26 +22,24 @@ export function AppLayout({ menus = [] }: AppLayoutProps) {
     () => ({ schoolId, yearId }),
     [schoolId, yearId],
   );
+
   return (
     <SidebarProvider>
       <ApplicationSidebar menus={menus} />
-      <SidebarInset className="flex flex-col h-svh overflow-hidden">
-        <header className="bg-background/95 backdrop-blur-sm sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground transition-colors" />
-          <Separator orientation="vertical" className="mr-4" />
-        </header>
+      <SidebarInset className="flex flex-col h-svh min-w-0 w-full overflow-hidden">
+        <SidebarInset className="flex flex-col h-svh min-w-0 overflow-hidden">
+          {/* Header */}
+          <header className="bg-background/95 backdrop-blur-sm sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground transition-colors" />
+            <Separator orientation="vertical" className="mr-4" />
+          </header>
 
-        <main className="flex-1 min-h-0 w-full overflow-y-auto">
-          <Suspense
-            fallback={
-              <div className="flex justify-center items-center h-full">
-                <LoadingSpinner />
-              </div>
-            }
-          >
-            <Outlet context={outletContext} />
-          </Suspense>
-        </main>
+          <div className="flex-1 min-h-0 min-w-0 w-full overflow-hidden">
+            <Suspense fallback={<LoadingSpinner />}>
+              <Outlet context={outletContext} />
+            </Suspense>
+          </div>
+        </SidebarInset>
       </SidebarInset>
     </SidebarProvider>
   );

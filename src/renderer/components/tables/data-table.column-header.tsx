@@ -28,9 +28,7 @@ export function DataTableColumnHeader<TData, TValue>({
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (!column.getCanSort()) {
-    return (
-      <div className={cn("text-sm font-semibold", className)}>{title}</div>
-    );
+    return <div className={cn("text-sm", className)}>{title}</div>;
   }
 
   const isSorted = column.getIsSorted();
@@ -44,7 +42,7 @@ export function DataTableColumnHeader<TData, TValue>({
               variant="ghost"
               size="sm"
               className={cn(
-                "-ml-2 h-8 data-[state=open]:bg-accent text-sm font-semibold hover:text-foreground",
+                "-ml-2 h-8 data-[state=open]:bg-accent text-xs font-semibold hover:text-foreground",
                 isSorted && "text-foreground font-bold",
               )}
             >

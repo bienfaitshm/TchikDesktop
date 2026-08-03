@@ -4,10 +4,19 @@ import { Checkbox } from "@/renderer/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import React from "react";
 
+/**
+ * Creates a standard row selection column with a select-all header.
+ */
 export const createSelectColumn = <T,>(): ColumnDef<T> => ({
   id: "select",
+  size: 40,
+  minSize: 40,
+  maxSize: 40,
   header: ({ table }) => (
-    <div className="flex items-center justify-center">
+    <div
+      className="flex items-center justify-center px-1"
+      onClick={(e) => e.stopPropagation()}
+    >
       <Checkbox
         checked={
           table.getIsAllPageRowsSelected() ||
@@ -19,7 +28,10 @@ export const createSelectColumn = <T,>(): ColumnDef<T> => ({
     </div>
   ),
   cell: ({ row }) => (
-    <div className="flex items-center justify-center">
+    <div
+      className="flex items-center justify-center px-1"
+      onClick={(e) => e.stopPropagation()}
+    >
       <Checkbox
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
@@ -29,6 +41,43 @@ export const createSelectColumn = <T,>(): ColumnDef<T> => ({
   ),
   enableSorting: false,
   enableHiding: false,
+  enableResizing: false,
+});
+
+/**
+ * Creates an expandable row trigger column.
+ */
+export const createExpandableColumn = <T,>(): ColumnDef<T> => ({
+  id: "expandable",
+  size: 48,
+  minSize: 48,
+  maxSize: 48,
+  cell: () => (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <ExpandableTrigger />
+      </TooltipTrigger>
+      <TooltipContent side="right" align="center">
+        Voir les actions
+      </TooltipContent>
+    </Tooltip>
+  ),
+  enableSorting: false,
+  enableHiding: false,
+  enableResizing: false,
+});
+
+/**
+ * Creates a custom row actions column.
+ */
+export const createActionsColumn = <T,>(
+  renderRowAction: (item: T, row: Row<T>) => React.ReactNode,
+): ColumnDef<T> => ({
+  id: "actions",
+  cell: ({ row }) => <>{renderRowAction(row.original, row)}</>,
+  enableSorting: false,
+  enableHiding: false,
+  enableResizing: false,
 });
 
 type EnhanceColumnsOptions<T> = {
@@ -55,72 +104,22 @@ export function enhanceColumns<T>(
   enhanced.push(...columns);
 
   if (variant === "expandable") {
-    enhanced.push({
-      id: "actions",
-      cell: () => (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <ExpandableTrigger />
-          </TooltipTrigger>
-          <TooltipContent side="right" align="center">
-            Voir les actions
-          </TooltipContent>
-        </Tooltip>
-      ),
-    });
+    enhanced.push(createExpandableColumn<T>());
   } else if (variant === "actions" && renderRowAction) {
-    enhanced.push({
-      id: "actions",
-      cell: ({ row }) => <>{renderRowAction(row.original, row)}</>,
-    });
+    enhanced.push(createActionsColumn<T>(renderRowAction));
   }
 
   return enhanced;
 }
 
-export function enhanceColumnsExpandable<T>(columns: ColumnDef<T>[]) {
-  return [
-    {
-      id: "select",
-      header: ({ table }) => (
-        <div className="flex items-center justify-center">
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
-            }
-            aria-label="Select all"
-          />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
-          />
-        </div>
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    ...columns,
-    {
-      id: "actions",
-      cell: () => (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <ExpandableTrigger />
-          </TooltipTrigger>
-          <TooltipContent side="right" align="center">
-            Voir les actions
-          </TooltipContent>
-        </Tooltip>
-      ),
-    },
-  ];
+/**
+ * Standard shortcut helper to enhance columns with selection and expansion capabilities.
+ */
+export function enhanceColumnsExpandable<T>(
+  columns: ColumnDef<T>[],
+): ColumnDef<T>[] {
+  return enhanceColumns(columns, {
+    enableSelection: true,
+    variant: "expandable",
+  });
 }

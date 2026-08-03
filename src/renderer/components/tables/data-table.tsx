@@ -48,7 +48,6 @@ type ContextTable<T> = {
   columns: ColumnDef<T>[];
   rowIds: UniqueIdentifier[];
   keyExtractor: (item: T) => string;
-  // setData: React.Dispatch<React.SetStateAction<T[]>>;
 };
 
 const DataTableContext = createContext<ContextTable<any> | null>(null);
@@ -73,7 +72,7 @@ export function DataTable<T>({
   keyExtractor,
   columns,
   children,
-}: DataTableProps<T> & { children?: React.ReactNode }) {
+}: DataTableProps<T>) {
   const contextValue = useDataTable({
     initialData: data,
     keyExtractor,
@@ -81,15 +80,27 @@ export function DataTable<T>({
   });
   return (
     <DataTableContext.Provider value={contextValue}>
-      {children}
+      <div className="w-full min-w-0">{children}</div>
     </DataTableContext.Provider>
   );
 }
 
-export function DataTableContent({ children }: { children?: React.ReactNode }) {
+export function DataTableContent({
+  children,
+  className,
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}) {
   const ctx = useDataTableContext();
   return (
-    <div className="overflow-hidden rounded-lg border scrollbar-thin">
+    /* overflow-x-auto permet le scroll horizontal sans casser la mise en page de la sidebar */
+    <div
+      className={cn(
+        "relative w-full min-w-0 overflow-x-auto rounded-lg border scrollbar-thin",
+        className,
+      )}
+    >
       <DndContext
         collisionDetection={closestCenter}
         modifiers={[restrictToVerticalAxis]}
@@ -147,11 +158,13 @@ export function DataContentBody<T>({
   const rowIds = ctx?.rowIds ?? [];
 
   return (
-    <TableBody className="[&_[data-slot=table-cell]:first-child]:w-8">
+    <TableBody className="w-full [&_[data-slot=table-cell]:first-child]:w-8 overflow-x-scroll">
       {rows.length > 0 ? (
         <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
           {rows.map((row) => {
-            const rowOriginalId = ctx!.keyExtractor(row.original);
+            const rowOriginalId = ctx?.keyExtractor
+              ? ctx.keyExtractor(row.original)
+              : row.id;
             return (
               <React.Fragment key={row.id}>
                 {children({ row, onRowClick, rowOriginalId })}
@@ -162,7 +175,7 @@ export function DataContentBody<T>({
       ) : (
         <TableRow>
           <TableCell
-            colSpan={ctx?.columns.length}
+            colSpan={ctx?.columns.length ?? 1}
             className="h-24 text-center text-muted-foreground"
           >
             No results.
@@ -175,11 +188,6 @@ export function DataContentBody<T>({
 
 interface DataTablePaginationProps {}
 
-/**
- * DataTablePagination
- * Composant "Smart" connecté au DataTableContext.
- * Il injecte automatiquement l'instance de la table dans le composant de pagination UI.
- */
 export function DataTablePagination({
   pageSizeOptions,
   className,
@@ -213,10 +221,6 @@ interface DataTableColumnToggleProps {
   className?: string;
 }
 
-/**
- * DataTableColumnToggle
- * Composant "Smart" connecté au contexte pour gérer la visibilité des colonnes.
- */
 export function DataTableColumnToggle({
   className,
 }: DataTableColumnToggleProps) {
@@ -237,16 +241,16 @@ export function DataTableColumnToggle({
 
 DataTableColumnToggle.displayName = "DataTableColumnToggle";
 
-/**
- * DataTableToolbar
- */
 export const DataTableToolbar: React.FC<React.ComponentProps<"div">> = ({
   className,
   ...props
 }) => {
   return (
     <div
-      className={cn("flex items-center justify-between gap-4 mb-4", className)}
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-4 mb-4",
+        className,
+      )}
       {...props}
     />
   );
@@ -257,30 +261,27 @@ DataTableToolbar.displayName = "DataTableToolbar";
 export type SearchTableToolbarProps = {
   searchColumn?: string;
 };
+
 export const SearchTableToolbar: React.FC<
   SearchTableToolbarProps & React.ComponentProps<"input">
 > = ({ searchColumn, ...props }) => {
   const ctx = useDataTableContext();
   const table = ctx?.tableInstance;
 
-  if (!table) {
+  if (!table || !searchColumn) {
     return null;
   }
+
+  const column = table.getColumn(searchColumn);
+  if (!column) return null;
+
   return (
-    <>
-      {searchColumn && table.getColumn(searchColumn) && (
-        <Input
-          {...props}
-          value={
-            (table.getColumn(searchColumn)?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn(searchColumn)?.setFilterValue(event.target.value)
-          }
-          className="h-9 w-37.5 lg:w-62.5"
-        />
-      )}
-    </>
+    <Input
+      {...props}
+      value={(column.getFilterValue() as string) ?? ""}
+      onChange={(event) => column.setFilterValue(event.target.value)}
+      className={cn("h-9 w-37.5 lg:w-62.5", props.className)}
+    />
   );
 };
 
@@ -296,7 +297,10 @@ export const FilteredTableToolbarContainer: React.FC<
 
   const isFiltered = table.getState().columnFilters.length > 0;
   return (
-    <div {...props} className={cn("flex flex-1 items-center gap-2", className)}>
+    <div
+      {...props}
+      className={cn("flex flex-1 items-center gap-2 flex-wrap", className)}
+    >
       {children}
       {isFiltered && (
         <Button
@@ -313,11 +317,8 @@ export const FilteredTableToolbarContainer: React.FC<
 };
 
 interface TableFacetedFilterItemProps {
-  /** L'ID de la colonne dans TanStack Table (ex: "category", "status") */
   columnId: string;
-  /** Le titre affiché dans le bouton du filtre */
   title: string;
-  /** Les options de filtrage */
   options: {
     label: string;
     value: string;
@@ -325,9 +326,6 @@ interface TableFacetedFilterItemProps {
   }[];
 }
 
-/**
- * TableFacetedFilterItem
- */
 export function TableFacetedFilterItem({
   columnId,
   title,

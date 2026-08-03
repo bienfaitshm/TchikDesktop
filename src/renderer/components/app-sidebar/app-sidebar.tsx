@@ -59,7 +59,7 @@ export type ApplicationSidebarProps = {
 
 export function ApplicationSidebar({ menus = [] }: ApplicationSidebarProps) {
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader>
         <SidebarHead />
       </SidebarHeader>

@@ -9,8 +9,9 @@ import {
 import { cn } from "@/renderer/utils";
 import React from "react";
 
+export type Option = { label: string; value: string };
 export type SelectInputProps = {
-  options?: { label: string; value: string }[];
+  options?: Option[];
   placeholder?: string;
   className?: string;
   value?: string;
