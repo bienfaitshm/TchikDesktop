@@ -13,7 +13,7 @@ export default defineConfig({
     },
     build: {
       externalizeDeps: true,
-minify: "terser",
+minify: true,
       terserOptions: {
         compress: {
           drop_console: true,
