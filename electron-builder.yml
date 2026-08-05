@@ -111,7 +111,7 @@ linux:
 appImage:
   artifactName: ${productName}_Installer_Linux_${version}.${ext}
 
-npmRebuild: false
+npmRebuild: true
 
 publish:
   provider: github
