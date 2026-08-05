@@ -17,7 +17,7 @@
     "buildNc": "npm run typecheck",
     "build:better-sqlite": "npx electron-rebuild -f -w better-sqlite3",
     "dev": "electron-vite dev --watch",
-    "postinstall": "electron-rebuild",
+    "postinstall": "electron-builder install-app-deps",
     "build": "electron-vite build",
     "build:all": "npm run build && electron-builder --publish always",
     "build:win": "npm run build && electron-builder --win",
