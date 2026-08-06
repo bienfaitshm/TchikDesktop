@@ -88,16 +88,6 @@ export class PaymentController {
 
     if (payment && req.context.window) {
       notifyPaymentSuccess({ transactionId: payment.assignmentId });
-      // const printers = await defaultPrinterManagementService.getSystemPrinters(
-      //   req.context.window,
-      // );
-      // console.log("System printers retrieved:", printers);
-
-      // try {
-      //   printReceipt();
-      // } catch (error) {
-      //   console.error("Hardware printing execution pipeline failed:", error);
-      // }
     }
 
     return payment;

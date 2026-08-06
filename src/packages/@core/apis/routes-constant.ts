@@ -234,6 +234,13 @@ export const DashboardRoutes = {
   SCHOOL_DASHBOARD: "dashboard/school",
 };
 
+export const PrinteToutes = {
+  GET_PRINTERS: "prints/get-printers",
+  PRINT_TEST: "prints/test-printer",
+  PRINT_RECEIPT: "prints/receipt/payment",
+  CHECK_PRINTER: "prints/check-printer",
+};
+
 /**
  * Export global mis à jour avec les nouveaux modules
  */
@@ -259,4 +266,5 @@ export const IpcRoutes = {
   DAILY_EXCHANGE_RATES: DailyExchangeRateRoutes,
   PAYMENT: PaymentRoutes,
   DASHBOARD: DashboardRoutes,
+  PRINT: PrinteToutes,
 } as const;
