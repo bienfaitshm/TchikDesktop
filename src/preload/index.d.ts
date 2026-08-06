@@ -1,7 +1,8 @@
-import { ElectronAPI } from "@electron-toolkit/preload";
+import type { ElectronAPI } from "@electron-toolkit/preload";
 import type { AppConfig, PosPrintConfig, ThemeMode } from "@/main/store";
 import type { School, StudyYear } from "@/packages/@core/data-access/db";
 import { TEndPoint } from "./apis";
+import type { StoreAPI } from "./types";
 
 interface AppInfo {
   name: string;
@@ -96,27 +97,10 @@ declare global {
       getAppPaths: () => Promise<AppPaths | null>;
       getSystemInformationFeature: () => Promise<SystemInformation>;
 
-      store: {
-        getCurrentConfig: () => Promise<AppConfig>;
-        setCurrentSchool: (school: School | null) => Promise<void>;
-        setCurrentStudyYear: (year: StudyYear | null) => Promise<void>;
-        setSchoolAndYear: (
-          school: School | null,
-          year: StudyYear | null,
-        ) => Promise<void>;
-        setTheme: (theme: ThemeMode) => Promise<void>;
-        setPosPrintConfig: (
-          config: Partial<PosPrintConfig>,
-        ) => Promise<PosPrintConfig>;
-        syncSchoolAndYearWithDb: () => Promise<{
-          school: School | null;
-          year: StudyYear | null;
-        }>;
-        resetSchoolAndYear: () => Promise<void>;
-      };
-    };
+      store: StoreAPI;
 
-    api: TEndPoint;
+      api: TEndPoint;
+    };
   }
 }
 
