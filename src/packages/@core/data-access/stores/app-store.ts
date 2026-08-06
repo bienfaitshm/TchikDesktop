@@ -12,8 +12,9 @@ import {
   type StudyYearRepository,
 } from "@/packages/@core/data-access/db";
 import { type CustomLogger, getLogger } from "@/packages/logger";
+import { SystemPrinter } from "@/packages/pos-printer";
 
-export interface TchikAppStoreConfig {
+export interface AppStoreConfig {
   schoolRepo: SchoolRepository;
   yearRepo: StudyYearRepository;
   logger: CustomLogger;
@@ -22,8 +23,8 @@ export interface TchikAppStoreConfig {
 export type ThemeMode = "light" | "dark" | "system";
 
 export interface PosPrintConfig {
-  host: string;
-  port: number;
+  posPrinter: SystemPrinter | null;
+  isConnected: boolean;
 }
 
 export interface AppConfig {
@@ -33,20 +34,17 @@ export interface AppConfig {
   currentStudyYear: StudyYear | null;
 }
 
-export type StoreType = {
+export type StoreData = {
   config: AppConfig;
 };
 
-const DEFAULT_DARK_BG = "#181c1e";
-const DEFAULT_LIGHT_BG = "#ffffff";
-
-const schema: Schema<StoreType> = {
+const storeSchema: Schema<StoreData> = {
   config: {
     type: "object",
     default: {
       posPrint: {
-        host: "localhost",
-        port: 9100,
+        posPrinter: null,
+        isConnected: false,
       },
       theme: "system",
       currentSchool: null,
@@ -56,13 +54,13 @@ const schema: Schema<StoreType> = {
       posPrint: {
         type: "object",
         properties: {
-          host: {
-            type: "string",
-            default: "localhost",
+          posPrinter: {
+            type: ["object", "null"],
+            default: null,
           },
-          port: {
-            type: "number",
-            default: 9100,
+          isConnected: {
+            type: "boolean",
+            default: false,
           },
         },
       },
@@ -88,19 +86,21 @@ const schema: Schema<StoreType> = {
  */
 export class TchikAppStore {
   private window: BrowserWindow | null = null;
+  private static readonly DEFAULT_DARK_BG = "#181c1e";
+  private static readonly DEFAULT_LIGHT_BG = "#ffffff";
 
   /**
    * Initializes the application store with target persistent storage and dependencies.
    * @param store - Electron store instance handling storage IO.
-   * @param dependencies - Core services required for logging and repository operations.
+   * @param dependencies - Core services required for logging and database operations.
    */
   constructor(
-    private readonly store: Store<StoreType>,
-    private readonly dependencies: TchikAppStoreConfig,
+    private readonly store: Store<StoreData>,
+    private readonly dependencies: AppStoreConfig,
   ) {}
 
   /**
-   * Binds the primary application BrowserWindow to apply theme changes directly.
+   * Binds the primary application window to apply UI theme changes directly.
    * @param win - Target Electron BrowserWindow instance.
    */
   public setWindow(win: BrowserWindow): void {
@@ -109,10 +109,12 @@ export class TchikAppStore {
 
   /**
    * Computes the current window background hex color based on the active dark mode state.
-   * @returns Color hex code as string.
+   * @returns Hexadecimal color code string.
    */
   public getBackgroundWindow(): string {
-    return nativeTheme.shouldUseDarkColors ? DEFAULT_DARK_BG : DEFAULT_LIGHT_BG;
+    return nativeTheme.shouldUseDarkColors
+      ? TchikAppStore.DEFAULT_DARK_BG
+      : TchikAppStore.DEFAULT_LIGHT_BG;
   }
 
   /**
@@ -126,7 +128,7 @@ export class TchikAppStore {
   /* ---------------- POS PRINT CONFIG ---------------- */
 
   /**
-   * Retrieves current POS printer host and port configuration.
+   * Retrieves current thermal printer hardware state and settings.
    * @returns POS printing configuration settings.
    */
   public getPosPrintConfig(): PosPrintConfig {
@@ -136,13 +138,15 @@ export class TchikAppStore {
   /**
    * Updates partial POS printer parameters and persists the result.
    * @param config - Partial POS print configuration to update.
-   * @returns Updated POS print configuration object.
+   * @returns The updated POS print configuration object.
    */
   public setPosPrintConfig(config: Partial<PosPrintConfig>): PosPrintConfig {
     const current = this.getPosPrintConfig();
     const updated = { ...current, ...config };
+
     this.store.set("config.posPrint", updated);
     this.dependencies.logger.info("POS Print configuration updated:", updated);
+
     return updated;
   }
 
@@ -224,6 +228,7 @@ export class TchikAppStore {
   ): void {
     this.store.set("config.currentSchool", school);
     this.store.set("config.currentStudyYear", studyYear);
+
     this.dependencies.logger.info(
       "School and study year updated simultaneously:",
       {
@@ -235,8 +240,7 @@ export class TchikAppStore {
 
   /**
    * Synchronizes persisted school and study year data against database records.
-   * Resets stored parameters to null if entities are invalid or missing in DB.
-   * @returns Verified school and study year records or nulls.
+   * @returns Verified school and study year records, or nulls if invalid.
    */
   public async syncSchoolAndYearWithDb(): Promise<{
     school: School | null;
@@ -285,7 +289,7 @@ export class TchikAppStore {
   }
 
   /**
-   * Resets stored school and study year configurations back to null state.
+   * Resets stored school and study year configurations back to a null state.
    */
   public resetSchoolAndYear(): void {
     this.setSchoolAndYear(null, null);
@@ -302,16 +306,17 @@ export class TchikAppStore {
 }
 
 /**
- * Creates and configures a TchikAppStore instance.
- * @param customStore - Optional custom Store instance for testing.
+ * Creates and configures a TchikAppStore instance with injected dependencies.
+ * @param customStore - Optional custom Store instance for testing overrides.
  * @param customConfig - Optional custom dependencies override.
- * @returns Instantiated TchikAppStore.
+ * @returns Fully instantiated TchikAppStore.
  */
 export function createAppStore(
-  customStore?: Store<StoreType>,
-  customConfig?: TchikAppStoreConfig,
+  customStore?: Store<StoreData>,
+  customConfig?: AppStoreConfig,
 ): TchikAppStore {
-  const storeInstance = customStore ?? new Store<StoreType>({ schema });
+  const storeInstance =
+    customStore ?? new Store<StoreData>({ schema: storeSchema });
   const configInstance = customConfig ?? {
     logger: getLogger("TchikAppStore"),
     schoolRepo: schoolRepository,
