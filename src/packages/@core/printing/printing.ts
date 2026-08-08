@@ -7,12 +7,31 @@ import {
   PrinterService,
 } from "@/packages/pos-printer";
 import { tchikAppStore } from "@/packages/@core/data-access/stores";
+import { defaultPrinterManagementService } from "@/packages/electron-utility";
+import { renderTemplate } from "@/packages/document-template";
 
 const defaultLogger = createLogger("PRINTING SERVICES");
 const defaultPrinterService = new PrinterService({
   logger: defaultLogger,
 });
 
+const d = {
+  schoolName: "COMPLEXE SCOLAIRE TCHIK",
+  address: "Lubumbashi, RDC",
+  ticketRef: "TICK-2026-001",
+  date: new Date().toLocaleDateString(),
+  studentName: "Nom de l'élève",
+  yearName: "2025-2026",
+  feeTypeName: "Frais Scolaires",
+  scheduleName: "1er Trimestre",
+  status: "PAYÉ",
+  amountPaid: "50.00",
+  currency: "$",
+  totalDue: "150.00",
+  paymentMethod: "Espèces",
+  transactionReference: "",
+  isPrinted: false,
+};
 /**
  * High-level service facade managing POS and document printing operations.
  */

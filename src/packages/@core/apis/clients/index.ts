@@ -9,3 +9,4 @@ export * from "./app-infos";
 export * from "./seatings";
 export * from "./finances";
 export * from "./dashboard";
+export * from "./printing";

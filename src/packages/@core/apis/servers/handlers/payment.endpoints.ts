@@ -10,14 +10,11 @@ import {
   EnrollmentSchema,
   type ProcessPaymentPayload,
   ProcessPaymentSchema,
-  Ticket,
-  TicketSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   // defaultPrinterManagementService,
   notify,
 } from "@/packages/electron-utility";
-import { printTicket } from "@/packages/@core/printing";
 
 /* =========================================================================
    SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
@@ -91,13 +88,6 @@ export class PaymentController {
     }
 
     return payment;
-  }
-
-  @IpcServer.register(HttpMethod.POST, PaymentRoutes.PRINT_TICKET, {
-    body: TicketSchema,
-  })
-  static async printTicket({ body }: IpcRequest<Ticket>) {
-    return await printTicket(body);
   }
 }
 

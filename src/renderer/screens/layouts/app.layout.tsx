@@ -22,7 +22,14 @@ export function AppLayout({ menus = [] }: AppLayoutProps) {
   );
 
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": "15rem",
+          "--sidebar-width-mobile": "20rem",
+        } as React.CSSProperties
+      }
+    >
       <ApplicationSidebar menus={menus} />
       <SidebarInset className="flex flex-col h-svh min-w-0 w-full overflow-hidden">
         <SidebarInset className="flex flex-col h-svh min-w-0 overflow-hidden">

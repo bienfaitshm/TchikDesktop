@@ -114,26 +114,41 @@ export class PrinterManagementService {
       },
     });
 
+    // Fonction utilitaire pour nettoyer la fenêtre en toute sécurité
+    const destroyWindow = () => {
+      if (hiddenWindow && !hiddenWindow.isDestroyed()) {
+        hiddenWindow.destroy();
+        hiddenWindow = null;
+      }
+    };
+
     try {
       return await new Promise<void>((resolve, reject) => {
-        if (!hiddenWindow)
+        if (!hiddenWindow) {
           return reject(
             new Error("Failed to allocate hidden window resource."),
           );
+        }
 
         const { webContents } = hiddenWindow;
 
-        hiddenWindow.on("unresponsive", () =>
+        hiddenWindow.on("unresponsive", () => {
+          destroyWindow();
           reject(
             new Error("Print Timeout: Ephemeral window became unresponsive."),
-          ),
-        );
+          );
+        });
 
         webContents.once("did-finish-load", () => {
           try {
             webContents.print(
               printOptions,
               (success: boolean, failureReason: string) => {
+                console.log({ success, failureReason, printOptions });
+
+                // On détruit la fenêtre une fois que l'imprimante a fini son travail
+                destroyWindow();
+
                 if (success) {
                   this.logger.info(
                     "HTML content successfully spooled to printer.",
@@ -150,6 +165,7 @@ export class PrinterManagementService {
               },
             );
           } catch (printError) {
+            destroyWindow();
             const errorMessage =
               printError instanceof Error
                 ? printError.message
@@ -163,6 +179,7 @@ export class PrinterManagementService {
         });
 
         webContents.once("did-fail-load", (_event, code, description) => {
+          destroyWindow();
           reject(
             new Error(
               `Failed to load HTML content into print engine: ${description} (Code: ${code})`,
@@ -173,14 +190,11 @@ export class PrinterManagementService {
         const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`;
         hiddenWindow.loadURL(dataUrl);
       });
-    } finally {
-      if (hiddenWindow) {
-        hiddenWindow.destroy();
-        hiddenWindow = null;
-      }
+    } catch (error) {
+      destroyWindow();
+      throw error;
     }
   }
-
   /**
    * Imprime silencieusement un Buffer PDF binaire existant.
    */

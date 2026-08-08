@@ -6,9 +6,9 @@
     <style>
         /* Configuration de la page pour une impression POS (Ticket / A6) */
         @page {
-            size: A6 portrait;
-            margin: 5mm;
-        }
+    size: 80mm auto; /* Largeur exacte du rouleau (80mm ou 58mm) et hauteur automatique */
+    margin: 0;       /* Supprime les marges par défaut du navigateur */
+}
         
         *, *::before, *::after {
             box-sizing: border-box;

@@ -5,8 +5,8 @@ import {
   useCurrentConfig,
   useConfigActions,
   useIsConfigSyncing,
+  ThemeMode,
 } from "@/renderer/libs/stores/app-store";
-import { ThemeMode } from "@/renderer/libs/stores/app-store";
 
 import { Button } from "@/renderer/components/ui/button";
 import { Input } from "@/renderer/components/ui/input";
@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/renderer/components/ui/badge";
 import { Separator } from "@/renderer/components/ui/separator";
 import {
-  Printer,
+  Printer as PrinterIcon,
   Moon,
   Sun,
   Laptop,
@@ -32,6 +32,8 @@ import {
   Check,
   Palette,
   Search,
+  Wifi,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -42,28 +44,129 @@ import {
   PageHeader,
   PageHeaderTextContent,
 } from "@/renderer/containers/page-container";
+import {
+  useGetPrinters,
+  useCheckPrinter,
+  useTestPrinter,
+} from "@/renderer/libs/queries/printing";
 
+/**
+ * Interface representing printer device data structure.
+ */
+interface PrinterDevice {
+  name: string;
+  description?: string;
+  isDefault?: boolean;
+}
+
+/**
+ * Normalizes string by converting to lowercase and stripping accents.
+ * @param text - The string to normalize.
+ * @returns Clean normalized string for search indexing.
+ */
+const normalizeText = (text: string): string =>
+  text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+/**
+ * Matches search query against target text using normalized comparison.
+ * @param keywords - Target text containing searchable terms.
+ * @param query - Raw user search input.
+ * @returns Boolean flag indicating search match.
+ */
+const matchKeywords = (keywords: string, query: string): boolean => {
+  if (!query.trim()) return true;
+  return normalizeText(keywords).includes(normalizeText(query));
+};
+
+/**
+ * Settings page component managing academic context, POS printing setup, and UI preferences.
+ * @returns The rendered React component layout.
+ */
 export const SettingsPage = () => {
   const { school, year, theme, posPrint, isConfigured } = useCurrentConfig();
+  const { data: printers = [] } = useGetPrinters();
   const { setTheme, setPosPrintConfig, syncFreshData, resetConfiguration } =
     useConfigActions();
   const isSyncing = useIsConfigSyncing();
 
-  // État local pour le formulaire POS Print
-  const [host, setHost] = useState(posPrint?.host ?? "localhost");
-  const [port, setPort] = useState(posPrint?.port?.toString() ?? "9100");
-  const [isSavingPos, setIsSavingPos] = useState(false);
+  const testConnectionMutation = useTestPrinter();
+  const printTestReceiptMutation = useTestPrinter();
 
-  // État local pour la recherche
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDevice, setSelectedDevice] = useState<string>(
+    posPrint?.deviceName ?? "",
+  );
+  const [host, setHost] = useState<string>(posPrint?.host ?? "localhost");
+  const [port, setPort] = useState<string>(
+    posPrint?.port?.toString() ?? "9100",
+  );
+  const [isSavingPos, setIsSavingPos] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  console.log("printers", printers);
 
   useEffect(() => {
     if (posPrint) {
-      setHost(posPrint.host);
-      setPort(posPrint.port.toString());
+      setSelectedDevice(posPrint.deviceName ?? "");
+      setHost(posPrint.host ?? "localhost");
+      setPort(posPrint.port?.toString() ?? "9100");
     }
   }, [posPrint]);
 
+  /**
+   * Handles dynamic printer selection update.
+   * @param deviceName - Name of selected system printer.
+   */
+  const handleSelectPrinter = (deviceName: string) => {
+    setSelectedDevice(deviceName);
+  };
+
+  /**
+   * Validates and performs connection health check to configured printer server.
+   * @returns Boolean representing success state.
+   */
+  const handleCheckConnectivity = async (): Promise<boolean> => {
+    const parsedPort = Number.parseInt(port, 10);
+    if (Number.isNaN(parsedPort) || parsedPort <= 0 || parsedPort > 65535) {
+      toast.error("Veuillez saisir un numéro de port valide (1-65535).");
+      return false;
+    }
+
+    try {
+      await testConnectionMutation.mutateAsync({
+        printerName: selectedDevice ?? "default Name",
+      });
+      toast.success("Connexion à l'imprimante établie avec succès.");
+      return true;
+    } catch {
+      toast.error("Impossible de contacter l'imprimante.");
+      return false;
+    }
+  };
+
+  /**
+   * Triggers test page printing to verify physical printer behavior.
+   */
+  const handleTestPrint = async () => {
+    // const isConnected = await handleCheckConnectivity();
+    // if (!isConnected) return;
+
+    try {
+      await printTestReceiptMutation.mutateAsync({
+        printerName: selectedDevice ?? "default Name",
+      });
+      toast.success("Impression de test envoyée avec succès.");
+    } catch {
+      toast.error("Échec de l'impression du ticket de test.");
+    }
+  };
+
+  /**
+   * Validates form and persists current POS printing configuration to store.
+   * @param e - Form submit event.
+   */
   const handleSavePosConfig = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsedPort = Number.parseInt(port, 10);
@@ -75,27 +178,37 @@ export const SettingsPage = () => {
 
     setIsSavingPos(true);
     try {
-      await setPosPrintConfig({ host, port: parsedPort });
+      await setPosPrintConfig({
+        deviceName: selectedDevice,
+        host,
+        port: parsedPort,
+      });
       toast.success("Configuration d'impression POS enregistrée.");
-    } catch (error) {
+    } catch {
       toast.error("Échec de la mise à jour de la configuration POS.");
     } finally {
       setIsSavingPos(false);
     }
   };
 
+  /**
+   * Triggers database synchronization for active context.
+   */
   const handleSyncDb = async () => {
     try {
       await syncFreshData();
       toast.success("Données d'école et d'année synchronisées avec la BDD.");
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la synchronisation BDD.");
     }
   };
 
+  /**
+   * Resets stored school and academic year configuration upon confirmation.
+   */
   const handleResetConfig = async () => {
     if (
-      confirm(
+      window.confirm(
         "Êtes-vous sûr de vouloir réinitialiser la sélection d'école et d'année ?",
       )
     ) {
@@ -104,25 +217,17 @@ export const SettingsPage = () => {
     }
   };
 
-  const normalizeText = (text: string) =>
-    text
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-
-  const normalizedQuery = normalizeText(searchQuery);
-
-  const matchSearch = (keywords: string) =>
-    normalizeText(keywords).includes(normalizedQuery);
-
-  const showSection1 = matchSearch(
+  const showSection1 = matchKeywords(
     "Contexte d'établissement École active Année académique Synchroniser BDD Réinitialiser",
+    searchQuery,
   );
-  const showSection2 = matchSearch(
-    "Impression & Matériel Imprimante POS (ESC/POS) Adresse Host / IP Port d'écoute Réseau",
+  const showSection2 = matchKeywords(
+    "Impression & Matériel Imprimante POS (ESC/POS) Adresse Host / IP Port d'écoute Réseau Connectivité Test",
+    searchQuery,
   );
-  const showSection3 = matchSearch(
+  const showSection3 = matchKeywords(
     "Apparence & Interface Mode d'affichage thème sombre clair système palette",
+    searchQuery,
   );
 
   return (
@@ -137,7 +242,6 @@ export const SettingsPage = () => {
             </PageHeadDescription>
           </div>
 
-          {/* Barre de recherche */}
           <div className="relative w-full shrink-0 mt-4 sm:mt-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -151,7 +255,6 @@ export const SettingsPage = () => {
       </PageHeader>
 
       <PageContent className="space-y-10">
-        {/* Message si aucun résultat */}
         {!showSection1 && !showSection2 && !showSection3 && (
           <div className="text-center py-12">
             <p className="text-sm text-muted-foreground">
@@ -167,7 +270,6 @@ export const SettingsPage = () => {
           </div>
         )}
 
-        {/* ================= SECTION 1: CONTEXTE ACADÉMIQUE ================= */}
         {showSection1 && (
           <section className="space-y-6">
             <div className="flex items-center justify-between">
@@ -192,7 +294,6 @@ export const SettingsPage = () => {
             </div>
 
             <div className="space-y-6">
-              {/* ITEM: ÉCOLE COURANTE */}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-xs">
@@ -224,7 +325,6 @@ export const SettingsPage = () => {
                 </Button>
               </div>
 
-              {/* ITEM: ANNÉE ACADÉMIQUE */}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500 text-white shadow-xs">
@@ -248,7 +348,6 @@ export const SettingsPage = () => {
 
         {showSection1 && (showSection2 || showSection3) && <Separator />}
 
-        {/* ================= SECTION 2: MATÉRIEL & PERIPHERIQUES ================= */}
         {showSection2 && (
           <section className="space-y-6">
             <h2 className="text-sm font-semibold tracking-tight text-foreground">
@@ -259,15 +358,15 @@ export const SettingsPage = () => {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-xs">
-                    <Printer className="h-5 w-5" />
+                    <PrinterIcon className="h-5 w-5" />
                   </div>
                   <div className="space-y-1 max-w-md">
                     <h3 className="text-sm font-medium leading-none">
                       Imprimante POS (ESC/POS)
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Définissez l'adresse réseau et le port d'écoute du serveur
-                      d'impression de caisse.
+                      Sélectionnez l'imprimante, configurez l'adresse réseau,
+                      testez la connexion et effectuez un tirage de contrôle.
                     </p>
                   </div>
                 </div>
@@ -282,8 +381,35 @@ export const SettingsPage = () => {
                 </Button>
               </div>
 
-              {/* Saisie Réseau alignée */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-13">
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label
+                    htmlFor="printer-select"
+                    className="text-xs font-medium"
+                  >
+                    Imprimantes disponibles
+                  </Label>
+                  <Select
+                    value={selectedDevice}
+                    onValueChange={handleSelectPrinter}
+                  >
+                    <SelectTrigger id="printer-select" className="h-9 text-xs">
+                      <SelectValue placeholder="Sélectionner une imprimante détectée" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {printers.map((printer) => (
+                        <SelectItem
+                          key={printer.name}
+                          value={printer.value}
+                          className="text-xs"
+                        >
+                          {printer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-1.5">
                   <Label htmlFor="pos-host" className="text-xs font-medium">
                     Adresse Host / IP
@@ -312,6 +438,40 @@ export const SettingsPage = () => {
                     required
                   />
                 </div>
+
+                <div className="flex items-center gap-3 pt-2 sm:col-span-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCheckConnectivity}
+                    disabled={testConnectionMutation.isPending}
+                    className="gap-1.5 text-xs h-8"
+                  >
+                    <Wifi
+                      className={`h-3.5 w-3.5 ${
+                        testConnectionMutation.isPending ? "animate-pulse" : ""
+                      }`}
+                    />
+                    Tester la connectivité
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleTestPrint}
+                    disabled={printTestReceiptMutation.isPending}
+                    className="gap-1.5 text-xs h-8"
+                  >
+                    <FileText
+                      className={`h-3.5 w-3.5 ${
+                        printTestReceiptMutation.isPending ? "animate-spin" : ""
+                      }`}
+                    />
+                    Impression de test
+                  </Button>
+                </div>
               </div>
             </form>
           </section>
@@ -319,7 +479,6 @@ export const SettingsPage = () => {
 
         {showSection2 && showSection3 && <Separator />}
 
-        {/* ================= SECTION 3: PERSONNALISATION ================= */}
         {showSection3 && (
           <section className="space-y-6">
             <h2 className="text-sm font-semibold tracking-tight text-foreground">

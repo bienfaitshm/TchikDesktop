@@ -15,3 +15,4 @@ export * from "./user";
 export * from "./wallets";
 export * from "./statistics";
 export * from "./dashboard";
+export * from "./print.endpoint";

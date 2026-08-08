@@ -1,5 +1,7 @@
+import { Image } from "@node-escpos/core";
 import { CustomLogger as Logger } from "@/packages/logger";
 import type { ActionResult, PrinterThermal } from "./thermic-printer";
+import { getResourcePath } from "@/packages/electron-utility/path";
 
 /**
  * Parameters required to execute a thermal printer diagnostic test job.
@@ -21,12 +23,35 @@ export interface TestThermalPrinterParams {
   logger?: Logger;
 }
 
+/** Standard divider line for 58mm thermal receipts. */
 const PRINTER_DIVIDER = "--------------------------------";
 
+/** Default line character width for 58mm thermal paper. */
+const LINE_WIDTH = 32;
+
 /**
- * Formats and prints a diagnostic test receipt including school headers and hardware checks.
- * @param params - Configuration object containing printer instance, names, and school metadata.
- * @returns A promise resolving to an ActionResult indicating job outcome.
+ * Formats a single line with left-aligned and right-aligned text strings.
+ * @param left - Text aligned to the left margin.
+ * @param right - Text aligned to the right margin.
+ * @param width - Total character capacity of the line.
+ * @returns Formatted line string padded with whitespace.
+ */
+function formatLeftRight(
+  left: string,
+  right: string,
+  width: number = LINE_WIDTH,
+): string {
+  const spaceWidth = width - left.length - right.length;
+  if (spaceWidth <= 0) {
+    return `${left} ${right}`;
+  }
+  return `${left}${" ".repeat(spaceWidth)}${right}`;
+}
+
+/**
+ * Formats and prints a diagnostic test receipt including school headers, a scaled QR code, and logo.
+ * @param params - Configuration parameters and hardware references for execution.
+ * @returns Promise resolving to the result status of the operation.
  */
 export async function testThermalPrinterJob({
   printer,
@@ -40,48 +65,75 @@ export async function testThermalPrinterJob({
   logger?.info(`Building diagnostic print job for printer "${printerName}"`);
 
   try {
-    // Institution Header
-    printer.alignCenter();
-    printer.bold(true);
-    printer.println(schoolName.toUpperCase());
-    printer.bold(false);
+    // 1. Institution Header
+    printer.align("CT");
+    printer.style("b");
+    printer.text(schoolName.toUpperCase());
+    printer.style("normal");
 
     if (schoolAddress) {
-      printer.println(schoolAddress);
+      printer.text(schoolAddress, "UTF-8");
     }
     if (schoolTown) {
-      printer.println(schoolTown);
+      printer.text(schoolTown);
     }
 
-    printer.println(`Academic Year: ${yearName}`);
-    printer.println(PRINTER_DIVIDER);
+    printer.text(yearName);
+    printer.text(PRINTER_DIVIDER);
 
-    // Test Information Section
-    printer.bold(true);
-    printer.println("PRINT DIAGNOSTIC TEST");
-    printer.bold(false);
-    printer.println(PRINTER_DIVIDER);
+    // 2. Test Information Section
+    printer.style("b");
+    printer.text("TEST DE DIAGNOSTIC");
+    printer.style("normal");
+    printer.text(PRINTER_DIVIDER);
 
-    printer.alignLeft();
-    printer.println(`Printer Name : ${printerName}`);
-    printer.println("Hardware Status: ONLINE");
-    printer.println(`Date & Time    : ${new Date().toLocaleString()}`);
-    printer.println(PRINTER_DIVIDER);
+    printer.align("LT");
+    printer.text(formatLeftRight("Imprimante :", printerName));
+    printer.text(formatLeftRight("Statut :", "EN LIGNE"));
+    printer.text(
+      formatLeftRight("Date :", new Date().toLocaleDateString("fr-FR")),
+    );
+    printer.text(
+      formatLeftRight("Heure :", new Date().toLocaleTimeString("fr-FR")),
+    );
+    printer.text(PRINTER_DIVIDER);
 
-    // Footer & Hardware Execution
-    printer.alignCenter();
-    printer.println("Diagnostic test completed successfully!");
-    printer.newLine();
+    printer.align("CT");
+    printer.text("Test de diagnostic réussi !");
+    printer.text(PRINTER_DIVIDER);
+
+    // 3. Scaled QR Code Transfer (size: 3 reduces dimension to prevent USB buffer overflow)
+    try {
+      await printer.qrimage("https://github.com/node-escpos/driver", {
+        size: 3,
+        mode: "NORMAL",
+      });
+    } catch (qrError) {
+      logger?.warn(`Failed to render QR code on "${printerName}": ${qrError}`);
+    }
+
+    // 4. Compact Raster Logo Transfer (s8 density mode for reduced height/data size)
+    // try {
+    //   const filePath = getResourcePath("/resources/icon.png");
+    //   const image = await Image.load(filePath, "image/png");
+    //   await printer.image(image, "s8");
+    // } catch (imgError) {
+    //   logger?.warn(
+    //     `Failed to render logo image on "${printerName}": ${imgError}`,
+    //   );
+    // }
+
+    // 5. Finalize Job
+    printer.feed(1);
     printer.cut();
 
-    await printer.execute();
     logger?.info(
       `Diagnostic print test successfully dispatched to "${printerName}".`,
     );
 
     return {
       success: true,
-      message: "Test page printed successfully.",
+      message: "Page de test imprimée avec succès.",
     };
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
@@ -91,14 +143,13 @@ export async function testThermalPrinterJob({
 
     return {
       success: false,
-      message: `Diagnostic print failed: ${detail}`,
+      message: `Échec du test de diagnostic : ${detail}`,
     };
   }
 }
 
 /**
  * Standardized data transfer object containing pre-formatted invoice details.
- * Prevents logic duplication between the React UI and the hardware printer job.
  */
 export interface InvoiceReceiptData {
   schoolName: string;
@@ -126,9 +177,9 @@ export interface PrintInvoiceJobParams {
 }
 
 /**
- * Dispatches sequential hardware commands to reproduce the digital invoice design on a thermal receipt.
- * @param params - Contains the printer instance and the normalized invoice payload.
- * @returns A promise resolving to an ActionResult indicating the job's success or failure.
+ * Dispatches sequential hardware commands to print a student fee payment invoice.
+ * @param params - Contains the printer instance and normalized invoice payload.
+ * @returns Promise resolving to the outcome status of the print job.
  */
 export async function printInvoiceJob({
   printer,
@@ -136,63 +187,67 @@ export async function printInvoiceJob({
 }: PrintInvoiceJobParams): Promise<ActionResult> {
   try {
     // 1. Header Section
-    printer.alignCenter();
-    printer.bold(true);
-    printer.println(invoiceData.schoolName.toUpperCase());
-    printer.bold(false);
+    printer.align("CT");
+    printer.style("b");
+    printer.text(invoiceData.schoolName.toUpperCase());
+    printer.style("normal");
 
-    printer.println(invoiceData.schoolAddress);
-    printer.drawLine(); // Replaces dashed border
+    printer.text(invoiceData.schoolAddress);
+    printer.text(PRINTER_DIVIDER);
 
-    printer.alignLeft();
-    printer.leftRight(
-      `Date: ${invoiceData.date}`,
-      `Heure: ${invoiceData.time}`,
+    printer.align("LT");
+    printer.text(
+      formatLeftRight(
+        `Date: ${invoiceData.date}`,
+        `Heure: ${invoiceData.time}`,
+      ),
     );
-    printer.println(`Ref: ${invoiceData.ticketRef.toUpperCase()}`);
-    printer.drawLine();
+    printer.text(`Réf: ${invoiceData.ticketRef.toUpperCase()}`);
+    printer.text(PRINTER_DIVIDER);
 
     // 2. Student Information Section
-    printer.leftRight("NOM :", invoiceData.studentName);
-    printer.leftRight("CODE :", invoiceData.studentCode);
-    printer.leftRight("CLASSE :", invoiceData.classroom);
-    printer.drawLine();
+    printer.text(formatLeftRight("NOM :", invoiceData.studentName));
+    printer.text(formatLeftRight("CODE :", invoiceData.studentCode));
+    printer.text(formatLeftRight("CLASSE :", invoiceData.classroom));
+    printer.text(PRINTER_DIVIDER);
 
     // 3. Fee and Payment Details Section
-    printer.bold(true);
-    printer.println("DESIGNATION");
-    printer.bold(false);
-    printer.leftRight(
-      `${invoiceData.feeTypeName} [${invoiceData.scheduleName}]`,
-      invoiceData.amountPaidFormatted,
+    printer.style("b");
+    printer.text("DÉSIGNATION");
+    printer.style("normal");
+    printer.text(
+      formatLeftRight(
+        `${invoiceData.feeTypeName} [${invoiceData.scheduleName}]`,
+        invoiceData.amountPaidFormatted,
+      ),
     );
-    printer.drawLine();
+    printer.text(PRINTER_DIVIDER);
 
     // 4. Total Paid Section
-    printer.bold(true);
-    printer.leftRight("TOTAL PAYE", invoiceData.amountPaidFormatted);
-    printer.bold(false);
-    printer.drawLine();
+    printer.style("b");
+    printer.text(
+      formatLeftRight("TOTAL PAYÉ", invoiceData.amountPaidFormatted),
+    );
+    printer.style("normal");
+    printer.text(PRINTER_DIVIDER);
 
     // 5. Footer Notice
-    printer.alignCenter();
-    printer.println(`CAISSE: ${invoiceData.cashRegisterId}`);
-    printer.println("*** MERCI DE VOTRE VISITE ***");
+    printer.align("CT");
+    printer.text(`CAISSE: ${invoiceData.cashRegisterId}`);
+    printer.text("*** MERCI DE VOTRE VISITE ***");
 
-    printer.newLine();
+    printer.feed(1);
     printer.cut();
-
-    await printer.execute();
 
     return {
       success: true,
-      message: "Invoice successfully printed.",
+      message: "Facture imprimée avec succès.",
     };
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      message: `Failed to print invoice: ${detail}`,
+      message: `Échec de l'impression de la facture : ${detail}`,
     };
   }
 }

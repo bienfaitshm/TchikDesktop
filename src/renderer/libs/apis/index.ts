@@ -23,6 +23,7 @@ const API_REGISTRY = {
   dailyExchangeRate: apis.createDailyExchangeRateApis,
   payment: apis.createPaymentApis,
   dashboard: apis.createDashboardApis,
+  print: apis.createPrintingApis,
 } as const;
 
 type ApiRegistry = typeof API_REGISTRY;
@@ -113,4 +114,5 @@ export const {
   dailyExchangeRate,
   payment,
   dashboard,
+  print,
 } = api;

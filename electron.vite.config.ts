@@ -13,7 +13,7 @@ export default defineConfig({
     },
     build: {
       externalizeDeps: true,
-minify: true,
+      minify: true,
       terserOptions: {
         compress: {
           drop_console: true,
@@ -22,6 +22,9 @@ minify: true,
       rollupOptions: {
         external: [
           "electron",
+          "usb",
+          "@node-escpos/core",
+          "@node-escpos/usb-adapter",
           "sqlite3",
           "better-sqlite3",
           "pg",
