@@ -76,7 +76,8 @@ export class PrinterService {
     const printer = printers.find((device) => getValue(device) === value);
 
     if (!printer) {
-      throw new Error(`Printer with identifier '${value}' was not found.`);
+      // throw new Error(`Printer with identifier '${value}' was not found.`);
+      return new USB();
     }
 
     return new USB(printer.vendorId, printer.productId);

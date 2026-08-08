@@ -4,10 +4,8 @@ import { useCallback } from "react";
 import { Link } from "react-router";
 import { HistoryIcon, Table2Icon } from "lucide-react";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
-import {
-  usePrintTicketForm,
-  useProcessStudentPaymentForm,
-} from "@/renderer/libs/queries/finances";
+import { useProcessStudentPaymentForm } from "@/renderer/libs/queries/finances";
+import { usePrintInvoiceForm } from "@/renderer/libs/queries/printing";
 import {
   FastPaymentForm,
   InvoiceLivePreview,
@@ -38,7 +36,7 @@ import { FormSubmitHandler } from "@/renderer/libs/queries/base";
  */
 export function FastPaymentPage() {
   const { schoolId = "", yearId = "", school, year } = useCurrentConfig();
-  const printTicket = usePrintTicketForm();
+  const printTicket = usePrintInvoiceForm();
 
   const {
     currencyOptions,

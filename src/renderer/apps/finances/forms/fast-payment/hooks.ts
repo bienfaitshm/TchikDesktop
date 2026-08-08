@@ -33,6 +33,8 @@ export type SchoolContext = {
  * Represents a point-of-sale receipt ticket entity.
  */
 export type Ticket = {
+  classroomName: string;
+  studentCode: string;
   ticketRef: string;
   schoolName: string;
   address: string;
@@ -136,19 +138,21 @@ export const generateTicketRef = (year = new Date().getFullYear()): string => {
  * @returns Complete Ticket object ready for store persistence.
  */
 function createTicket(
-  studentName: string,
+  student: { studentName: string; classroomName: string; code: string },
   payment: ReturnDataPayment,
   school: SchoolContext,
   fee: { feeTypeName: string; scheduleName: string },
 ): Ticket {
   return {
+    classroomName: student.classroomName,
     address: school.address,
     schoolName: school.name,
     amountPaid: payment.payment.amountReceived,
     currency: payment.payment.currencyReceived,
     paymentMethod: payment.payment.paymentMethod,
     transactionReference: payment.payment.transactionReference,
-    studentName,
+    studentName: student.studentName,
+    studentCode: student.code,
     feeTypeName: fee.feeTypeName,
     scheduleName: fee.scheduleName,
     status: payment.status,
@@ -238,7 +242,11 @@ export const useFastPaymentStore = create<FastPaymentStore>()(
         } = get();
 
         const ticket = createTicket(
-          getStudentDisplayName(selectedStudent),
+          {
+            studentName: getStudentDisplayName(selectedStudent),
+            classroomName: selectedStudent?.classroom.identifier ?? "-",
+            code: selectedStudent?.studentCode ?? "-",
+          },
           data,
           school,
           {

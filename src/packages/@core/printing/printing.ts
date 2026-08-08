@@ -70,16 +70,16 @@ export class Printing {
     service: PrinterService = defaultPrinterService,
     store = tchikAppStore,
   ) {
-    const { posPrint } = store.getCurrentConfig();
+    // const { posPrint } = store.getCurrentConfig();
 
-    if (!posPrint?.posPrinter?.name) {
-      return createErrorResponse(
-        "POS Printer is not configured",
-        HttpStatus.CONFLICT,
-      );
-    }
+    // if (!posPrint?.posPrinter?.name) {
+    //   return createErrorResponse(
+    //     "POS Printer is not configured",
+    //     HttpStatus.CONFLICT,
+    //   );
+    // }
 
-    return service.printReceipt(posPrint.posPrinter.name, async (printer) => {
+    return service.printReceipt("posPrint.posPrinter.name", async (printer) => {
       const result = await jobs.printInvoiceJob({
         printer,
         invoiceData,

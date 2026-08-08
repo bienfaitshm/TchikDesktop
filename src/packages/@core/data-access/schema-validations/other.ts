@@ -99,7 +99,13 @@ export type BulkCreatePayload<T extends z.ZodTypeAny> = z.infer<
   ReturnType<typeof createBulkCreateSchema<T>>
 >;
 
+/**
+ * Zod runtime validation schema for student fee payment tickets.
+ * Ensures data integrity for receipt printing and financial record keeping.
+ */
 export const TicketSchema = z.object({
+  classroomName: z.string(),
+  studentCode: z.string(),
   ticketRef: z.string(),
   schoolName: z.string(),
   address: z.string(),
