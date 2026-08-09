@@ -1,41 +1,9 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import {
-  useCurrentConfig,
-  useConfigActions,
-  useIsConfigSyncing,
-  ThemeMode,
-} from "@/renderer/libs/stores/app-store";
-
-import { Button } from "@/renderer/components/ui/button";
-import { Input } from "@/renderer/components/ui/input";
-import { Label } from "@/renderer/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/renderer/components/ui/select";
-import { Badge } from "@/renderer/components/ui/badge";
-import { Separator } from "@/renderer/components/ui/separator";
-import {
-  Printer as PrinterIcon,
-  Moon,
-  Sun,
-  Laptop,
-  RefreshCw,
-  School,
-  Calendar,
-  RotateCcw,
-  Check,
-  Palette,
-  Search,
-  Wifi,
-  FileText,
-} from "lucide-react";
-import { toast } from "sonner";
+  SettingSection,
+  SettingsSearchInput,
+  SettingsSearchList,
+  SettingsSearchProvider,
+} from "@/renderer/containers/setting-search";
 import {
   PageContainer,
   PageContent,
@@ -44,492 +12,86 @@ import {
   PageHeader,
   PageHeaderTextContent,
 } from "@/renderer/containers/page-container";
-import {
-  useGetPrinters,
-  useCheckPrinter,
-  useTestPrinter,
-} from "@/renderer/libs/queries/printing";
+import { Calendar, Palette, PrinterIcon, School } from "lucide-react";
 
-/**
- * Interface representing printer device data structure.
- */
-interface PrinterDevice {
-  name: string;
-  description?: string;
-  isDefault?: boolean;
-}
+const sections: SettingSection[] = [
+  {
+    label: "Espace de travail",
+    keywords:
+      "Contexte d'établissement École active Année académique Synchroniser BDD Réinitialiser",
+    items: [
+      {
+        title: "École active",
+        description:
+          " Sélectionnez l'imprimante, configurez l'adresse réseau, testez la connexion et effectuez un tirage de contrôle.",
+        icon: <School className="h-5 w-5" />,
+        color: "bg-emerald-500 text-white",
+        content: <></>,
+      },
+      {
+        title: "Année académique",
+        description:
+          " Sélectionnez l'imprimante, configurez l'adresse réseau, testez la connexion et effectuez un tirage de contrôle.",
+        icon: <Calendar className="h-5 w-5" />,
+        color: "bg-blue-500 text-white",
+        content: <></>,
+      },
+    ],
+  },
+  {
+    label: "Impression & Matériel",
+    keywords:
+      "Impression & Matériel Imprimante POS (ESC/POS) Adresse Host / IP Port d'écoute Réseau Connectivité Test",
+    items: [
+      {
+        title: "Imprimante POS (ESC/POS)",
+        description:
+          " Sélectionnez l'imprimante, configurez l'adresse réseau, testez la connexion et effectuez un tirage de contrôle.",
+        icon: <PrinterIcon className="h-5 w-5" />,
+        color: "bg-amber-500 text-white",
+        content: <></>,
+      },
+    ],
+  },
+  {
+    label: " Apparence & Interface",
+    keywords:
+      "Apparence & Interface Mode d'affichage thème sombre clair système palette",
+    items: [
+      {
+        title: "Mode d'affichage",
+        description:
+          "Basculez entre le thème sombre, clair ou synchronisé sur votre système.",
+        icon: <Palette className="h-5 w-5" />,
+        color: "bg-purple-600 text-white",
+        content: <></>,
+      },
+    ],
+  },
+];
 
-/**
- * Normalizes string by converting to lowercase and stripping accents.
- * @param text - The string to normalize.
- * @returns Clean normalized string for search indexing.
- */
-const normalizeText = (text: string): string =>
-  text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-
-/**
- * Matches search query against target text using normalized comparison.
- * @param keywords - Target text containing searchable terms.
- * @param query - Raw user search input.
- * @returns Boolean flag indicating search match.
- */
-const matchKeywords = (keywords: string, query: string): boolean => {
-  if (!query.trim()) return true;
-  return normalizeText(keywords).includes(normalizeText(query));
-};
-
-/**
- * Settings page component managing academic context, POS printing setup, and UI preferences.
- * @returns The rendered React component layout.
- */
 export const SettingsPage = () => {
-  const { school, year, theme, posPrint, isConfigured } = useCurrentConfig();
-  const { data: printers = [] } = useGetPrinters();
-  const { setTheme, setPosPrintConfig, syncFreshData, resetConfiguration } =
-    useConfigActions();
-  const isSyncing = useIsConfigSyncing();
-
-  const testConnectionMutation = useTestPrinter();
-  const printTestReceiptMutation = useTestPrinter();
-
-  const [selectedDevice, setSelectedDevice] = useState<string>(
-    posPrint?.deviceName ?? "",
-  );
-  const [host, setHost] = useState<string>(posPrint?.host ?? "localhost");
-  const [port, setPort] = useState<string>(
-    posPrint?.port?.toString() ?? "9100",
-  );
-  const [isSavingPos, setIsSavingPos] = useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-
-  console.log("printers", printers);
-
-  useEffect(() => {
-    if (posPrint) {
-      setSelectedDevice(posPrint.deviceName ?? "");
-      setHost(posPrint.host ?? "localhost");
-      setPort(posPrint.port?.toString() ?? "9100");
-    }
-  }, [posPrint]);
-
-  /**
-   * Handles dynamic printer selection update.
-   * @param deviceName - Name of selected system printer.
-   */
-  const handleSelectPrinter = (deviceName: string) => {
-    setSelectedDevice(deviceName);
-  };
-
-  /**
-   * Validates and performs connection health check to configured printer server.
-   * @returns Boolean representing success state.
-   */
-  const handleCheckConnectivity = async (): Promise<boolean> => {
-    const parsedPort = Number.parseInt(port, 10);
-    if (Number.isNaN(parsedPort) || parsedPort <= 0 || parsedPort > 65535) {
-      toast.error("Veuillez saisir un numéro de port valide (1-65535).");
-      return false;
-    }
-
-    try {
-      await testConnectionMutation.mutateAsync({
-        printerName: selectedDevice ?? "default Name",
-      });
-      toast.success("Connexion à l'imprimante établie avec succès.");
-      return true;
-    } catch {
-      toast.error("Impossible de contacter l'imprimante.");
-      return false;
-    }
-  };
-
-  /**
-   * Triggers test page printing to verify physical printer behavior.
-   */
-  const handleTestPrint = async () => {
-    // const isConnected = await handleCheckConnectivity();
-    // if (!isConnected) return;
-
-    try {
-      await printTestReceiptMutation.mutateAsync({
-        printerName: selectedDevice ?? "default Name",
-      });
-      toast.success("Impression de test envoyée avec succès.");
-    } catch {
-      toast.error("Échec de l'impression du ticket de test.");
-    }
-  };
-
-  /**
-   * Validates form and persists current POS printing configuration to store.
-   * @param e - Form submit event.
-   */
-  const handleSavePosConfig = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const parsedPort = Number.parseInt(port, 10);
-
-    if (Number.isNaN(parsedPort) || parsedPort <= 0 || parsedPort > 65535) {
-      toast.error("Veuillez saisir un numéro de port valide (1-65535).");
-      return;
-    }
-
-    setIsSavingPos(true);
-    try {
-      await setPosPrintConfig({
-        deviceName: selectedDevice,
-        host,
-        port: parsedPort,
-      });
-      toast.success("Configuration d'impression POS enregistrée.");
-    } catch {
-      toast.error("Échec de la mise à jour de la configuration POS.");
-    } finally {
-      setIsSavingPos(false);
-    }
-  };
-
-  /**
-   * Triggers database synchronization for active context.
-   */
-  const handleSyncDb = async () => {
-    try {
-      await syncFreshData();
-      toast.success("Données d'école et d'année synchronisées avec la BDD.");
-    } catch {
-      toast.error("Erreur lors de la synchronisation BDD.");
-    }
-  };
-
-  /**
-   * Resets stored school and academic year configuration upon confirmation.
-   */
-  const handleResetConfig = async () => {
-    if (
-      window.confirm(
-        "Êtes-vous sûr de vouloir réinitialiser la sélection d'école et d'année ?",
-      )
-    ) {
-      await resetConfiguration();
-      toast.info("Configuration école/année réinitialisée.");
-    }
-  };
-
-  const showSection1 = matchKeywords(
-    "Contexte d'établissement École active Année académique Synchroniser BDD Réinitialiser",
-    searchQuery,
-  );
-  const showSection2 = matchKeywords(
-    "Impression & Matériel Imprimante POS (ESC/POS) Adresse Host / IP Port d'écoute Réseau Connectivité Test",
-    searchQuery,
-  );
-  const showSection3 = matchKeywords(
-    "Apparence & Interface Mode d'affichage thème sombre clair système palette",
-    searchQuery,
-  );
-
   return (
     <PageContainer className="max-w-4xl mx-0 lg:pt-6">
-      <PageHeader>
-        <PageHeaderTextContent className="w-full flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="mb-5">
-            <PageHeadTitle>Paramètres</PageHeadTitle>
-            <PageHeadDescription>
-              Gérez la configuration matérielle, l'apparence et le contexte de
-              l'application.
-            </PageHeadDescription>
-          </div>
-
-          <div className="relative w-full shrink-0 mt-4 sm:mt-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher un paramètre..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 w-full bg-background rounded-full"
-            />
-          </div>
-        </PageHeaderTextContent>
-      </PageHeader>
-
-      <PageContent className="space-y-10">
-        {!showSection1 && !showSection2 && !showSection3 && (
-          <div className="text-center py-12">
-            <p className="text-sm text-muted-foreground">
-              Aucun paramètre ne correspond à "{searchQuery}".
-            </p>
-            <Button
-              variant="link"
-              onClick={() => setSearchQuery("")}
-              className="mt-2 text-xs"
-            >
-              Effacer la recherche
-            </Button>
-          </div>
-        )}
-
-        {showSection1 && (
-          <section className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold tracking-tight text-foreground flex items-center gap-2">
-                Contexte d'établissement
-              </h2>
-              <div className="flex items-center gap-2">
-                <Badge variant={isConfigured ? "default" : "destructive"}>
-                  {isConfigured ? "Contexte configuré" : "Incomplet"}
-                </Badge>
-                {isConfigured && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleResetConfig}
-                    className="text-destructive hover:text-destructive gap-1 h-8 text-xs"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" /> Réinitialiser
-                  </Button>
-                )}
-              </div>
+      <SettingsSearchProvider sections={sections}>
+        <PageHeader>
+          <PageHeaderTextContent className="w-full flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="mb-5">
+              <PageHeadTitle>Paramètres</PageHeadTitle>
+              <PageHeadDescription>
+                Gérez la configuration matérielle, l'apparence et le contexte de
+                l'application.
+              </PageHeadDescription>
             </div>
 
-            <div className="space-y-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-xs">
-                    <School className="h-5 w-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-medium leading-none">
-                      École active
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      {school
-                        ? school.name
-                        : "Aucune école sélectionnée actuellement."}
-                    </p>
-                  </div>
-                </div>
+            <SettingsSearchInput />
+          </PageHeaderTextContent>
+        </PageHeader>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSyncDb}
-                  disabled={isSyncing}
-                  className="shrink-0 gap-2"
-                >
-                  <RefreshCw
-                    className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`}
-                  />
-                  Synchroniser BDD
-                </Button>
-              </div>
-
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500 text-white shadow-xs">
-                    <Calendar className="h-5 w-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-medium leading-none">
-                      Année académique
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      {year
-                        ? (year.yearName ?? year.yearId)
-                        : "Aucune année académique active."}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {showSection1 && (showSection2 || showSection3) && <Separator />}
-
-        {showSection2 && (
-          <section className="space-y-6">
-            <h2 className="text-sm font-semibold tracking-tight text-foreground">
-              Impression & Matériel
-            </h2>
-
-            <form onSubmit={handleSavePosConfig} className="space-y-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-xs">
-                    <PrinterIcon className="h-5 w-5" />
-                  </div>
-                  <div className="space-y-1 max-w-md">
-                    <h3 className="text-sm font-medium leading-none">
-                      Imprimante POS (ESC/POS)
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Sélectionnez l'imprimante, configurez l'adresse réseau,
-                      testez la connexion et effectuez un tirage de contrôle.
-                    </p>
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isSavingPos}
-                  size="sm"
-                  className="shrink-0 gap-1.5"
-                >
-                  <Check className="h-3.5 w-3.5" /> Enregistrer
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-13">
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label
-                    htmlFor="printer-select"
-                    className="text-xs font-medium"
-                  >
-                    Imprimantes disponibles
-                  </Label>
-                  <Select
-                    value={selectedDevice}
-                    onValueChange={handleSelectPrinter}
-                  >
-                    <SelectTrigger id="printer-select" className="h-9 text-xs">
-                      <SelectValue placeholder="Sélectionner une imprimante détectée" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {printers.map((printer) => (
-                        <SelectItem
-                          key={printer.name}
-                          value={printer.value}
-                          className="text-xs"
-                        >
-                          {printer.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="pos-host" className="text-xs font-medium">
-                    Adresse Host / IP
-                  </Label>
-                  <Input
-                    id="pos-host"
-                    value={host}
-                    onChange={(e) => setHost(e.target.value)}
-                    placeholder="localhost ou 192.168.1.50"
-                    className="h-9 text-xs"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="pos-port" className="text-xs font-medium">
-                    Port d'écoute
-                  </Label>
-                  <Input
-                    id="pos-port"
-                    type="number"
-                    value={port}
-                    onChange={(e) => setPort(e.target.value)}
-                    placeholder="9100"
-                    className="h-9 text-xs"
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center gap-3 pt-2 sm:col-span-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCheckConnectivity}
-                    disabled={testConnectionMutation.isPending}
-                    className="gap-1.5 text-xs h-8"
-                  >
-                    <Wifi
-                      className={`h-3.5 w-3.5 ${
-                        testConnectionMutation.isPending ? "animate-pulse" : ""
-                      }`}
-                    />
-                    Tester la connectivité
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleTestPrint}
-                    disabled={printTestReceiptMutation.isPending}
-                    className="gap-1.5 text-xs h-8"
-                  >
-                    <FileText
-                      className={`h-3.5 w-3.5 ${
-                        printTestReceiptMutation.isPending ? "animate-spin" : ""
-                      }`}
-                    />
-                    Impression de test
-                  </Button>
-                </div>
-              </div>
-            </form>
-          </section>
-        )}
-
-        {showSection2 && showSection3 && <Separator />}
-
-        {showSection3 && (
-          <section className="space-y-6">
-            <h2 className="text-sm font-semibold tracking-tight text-foreground">
-              Apparence & Interface
-            </h2>
-
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white shadow-xs">
-                  <Palette className="h-5 w-5" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-sm font-medium leading-none">
-                    Mode d'affichage
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Basculez entre le thème sombre, clair ou synchronisé sur
-                    votre système.
-                  </p>
-                </div>
-              </div>
-
-              <Select
-                value={theme ?? "system"}
-                onValueChange={(val: ThemeMode) => setTheme(val)}
-              >
-                <SelectTrigger className="w-40 h-9 text-xs">
-                  <SelectValue placeholder="Choisir un thème" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light" className="text-xs">
-                    <div className="flex items-center gap-2">
-                      <Sun className="h-3.5 w-3.5" /> Clair
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="dark" className="text-xs">
-                    <div className="flex items-center gap-2">
-                      <Moon className="h-3.5 w-3.5" /> Sombre
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="system" className="text-xs">
-                    <div className="flex items-center gap-2">
-                      <Laptop className="h-3.5 w-3.5" /> Système
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </section>
-        )}
-      </PageContent>
+        <PageContent className="space-y-10">
+          <SettingsSearchList />
+        </PageContent>
+      </SettingsSearchProvider>
     </PageContainer>
   );
 };
