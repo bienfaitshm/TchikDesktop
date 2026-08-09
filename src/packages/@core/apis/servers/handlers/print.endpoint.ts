@@ -10,7 +10,6 @@ import {
   TicketSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import { Printing } from "@/packages/@core/printing";
-import { defaultPrinterManagementService } from "@/packages/electron-utility";
 
 /**
  * Validation schema for checking printer connectivity status.
@@ -34,7 +33,7 @@ export class PrinterController {
    * @returns A promise resolving to the list of available system printers.
    */
   @IpcServer.register(HttpMethod.GET, PrinteToutes.GET_PRINTERS)
-  static async getPrinters({ context: { window } }: IpcRequest<unknown>) {
+  static async getPrinters({}: IpcRequest<unknown>) {
     return Printing.getPrinters();
   }
 

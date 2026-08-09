@@ -4,15 +4,19 @@ import {
   feeConfigurations,
   feeAssignments,
   studentPayments,
-  type TableStudentPayment,
   options,
   feeTypes,
   classrooms,
-  type FeeType,
-  type Classroom,
   classroomEnrollments,
   users,
-  StudentPayment,
+  feeSchedules,
+  type FeeSchedule,
+  type FeeType,
+  type Classroom,
+  type TableStudentPayment,
+  type StudentPayment,
+  type FeeAssignment,
+  type ClassroomEnrollment,
 } from "@/packages/@core/data-access/db/schemas";
 import { helpers, betterSqlite } from "@/packages/drizzle-queries";
 import { eq, getTableColumns } from "drizzle-orm";
@@ -35,6 +39,9 @@ export type StudentPaymentDTO = StudentPayment & {
   feeType: FeeType;
   classroom: Classroom;
   student: UserDTO;
+  feeAssigment: FeeAssignment;
+  feeSchedule: FeeSchedule;
+  enrollment: ClassroomEnrollment;
 };
 
 const DEFAULT_SORT: BaseStudentPaymentFilters = {
@@ -43,7 +50,9 @@ const DEFAULT_SORT: BaseStudentPaymentFilters = {
 
 export class StudentPaymentRepository extends betterSqlite.BaseRepository<
   TableStudentPayment,
-  TDataBase
+  TDataBase,
+  StudentPaymentDTO,
+  BaseStudentPaymentFilters
 > {
   /**
    * Initializes a new instance of the StudentPaymentRepository.
@@ -73,11 +82,17 @@ export class StudentPaymentRepository extends betterSqlite.BaseRepository<
         classroom: getTableColumns(classrooms),
         student: UserRepository.getVisibleColumns(),
         feeType: getTableColumns(feeTypes),
+        feeAssigment: getTableColumns(feeAssignments),
+        enrollment: getTableColumns(classroomEnrollments),
       })
       .from(this.table)
       .innerJoin(
         feeAssignments,
         eq(this.table.assignmentId, feeAssignments.assignmentId),
+      )
+      .innerJoin(
+        feeSchedules,
+        eq(feeAssignments.scheduleId, feeSchedules.scheduleId),
       )
       .innerJoin(
         classroomEnrollments,

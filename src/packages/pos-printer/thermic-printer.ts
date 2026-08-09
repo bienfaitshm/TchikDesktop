@@ -55,7 +55,7 @@ export class PrinterService {
     this.logger = config.logger;
     this.defaultPrinterType =
       config.defaultPrinterType || this.defaultPrinterType;
-    this.encoding = config.encoding || "CP858";
+    this.encoding = config.encoding || "CP850";
   }
 
   /**
@@ -76,8 +76,7 @@ export class PrinterService {
     const printer = printers.find((device) => getValue(device) === value);
 
     if (!printer) {
-      // throw new Error(`Printer with identifier '${value}' was not found.`);
-      return new USB();
+      throw new Error(`Printer with identifier '${value}' was not found.`);
     }
 
     return new USB(printer.vendorId, printer.productId);
@@ -204,6 +203,7 @@ export class PrinterService {
       return await this.executeWithDevice(printerValue, async (device) => {
         const options = { encoding: this.encoding };
         const printer = new Printer(device, options);
+        printer.encode("cp850");
 
         this.logger.info(`Executing receipt job on printer: ${printerValue}`);
         const result = await receiptJob(printer);

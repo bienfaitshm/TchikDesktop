@@ -1,8 +1,5 @@
-import { Image } from "@node-escpos/core";
 import { CustomLogger as Logger } from "@/packages/logger";
 import type { ActionResult, PrinterThermal } from "./thermic-printer";
-import { getResourcePath } from "@/packages/electron-utility/path";
-import { Ticket } from "@/packages/@core/data-access/schema-validations";
 import { formatCurrency } from "@/packages/currency";
 /**
  * Parameters required to execute a thermal printer diagnostic test job.
@@ -152,19 +149,25 @@ export async function testThermalPrinterJob({
 /**
  * Standardized data transfer object containing pre-formatted invoice details.
  */
-export interface InvoiceReceiptData extends Ticket {
-  // schoolName: string;
-  // schoolAddress: string;
-  // date: string;
-  // time: string;
-  // ticketRef: string;
-  // studentName: string;
-  // studentCode: string;
-  // classroom: string;
-  // feeTypeName: string;
-  // scheduleName: string;
-  // amountPaidFormatted: string;
-  // cashRegisterId: string;
+export interface InvoiceReceiptData {
+  classroomName: string;
+  studentCode: string;
+  ticketRef: string;
+  schoolName: string;
+  address: string;
+  schoolTown?: string;
+  studentName: string;
+  feeTypeName: string;
+  scheduleName: string;
+  status: string;
+  currency: string;
+  amountPaid: number;
+  totalDue: number;
+  yearName: string;
+  paymentMethod: string;
+  transactionReference: string | null;
+  date: string;
+  hour: string;
 }
 
 /**
@@ -194,13 +197,14 @@ export async function printInvoiceJob({
     printer.style("normal");
 
     printer.text(invoiceData.address);
+    printer.text(invoiceData.yearName);
     printer.text(PRINTER_DIVIDER);
 
     printer.align("LT");
     printer.text(
       formatLeftRight(
         `Date: ${invoiceData.date}`,
-        `Heure: ${invoiceData.date?.getMinutes()}`,
+        `Heure: ${invoiceData.hour}`,
       ),
     );
     printer.text(`Réf: ${invoiceData.ticketRef.toUpperCase()}`);
@@ -213,15 +217,16 @@ export async function printInvoiceJob({
     printer.text(PRINTER_DIVIDER);
 
     // 3. Fee and Payment Details Section
-    printer.style("b");
-    printer.text("DÉSIGNATION");
     printer.style("normal");
+    printer.text("DÉSIGNATION");
+    printer.style("b");
     printer.text(
       formatLeftRight(
-        `${invoiceData.feeTypeName} [${invoiceData.scheduleName}]`,
+        `${invoiceData.feeTypeName}`,
         formatCurrency(invoiceData.amountPaid, invoiceData.currency),
       ),
     );
+    printer.text(`[${invoiceData.scheduleName}]`);
     printer.text(PRINTER_DIVIDER);
 
     // 4. Total Paid Section
@@ -235,10 +240,29 @@ export async function printInvoiceJob({
     printer.style("normal");
     printer.text(PRINTER_DIVIDER);
 
+    try {
+      await printer.qrimage(
+        JSON.stringify(
+          {
+            ecole: invoiceData.schoolName,
+            eleve: invoiceData.studentName,
+            raison: `Payment de ${invoiceData.feeTypeName}/${invoiceData.scheduleName} montant: ${formatCurrency(invoiceData.amountPaid, invoiceData.currency)}`,
+          },
+          null,
+          4,
+        ),
+        {
+          size: 3,
+          mode: "NORMAL",
+        },
+      );
+    } catch (qrError) {
+      console?.warn(`Failed to render QR code`);
+    }
+
     // 5. Footer Notice
     printer.align("CT");
-    printer.text(`CAISSE/ ${invoiceData.yearName}`);
-    printer.text("*** MERCI DE VOTRE VISITE ***");
+    printer.text("- MERCI DE VOTRE VISITE -");
 
     printer.feed(1);
     printer.cut();
