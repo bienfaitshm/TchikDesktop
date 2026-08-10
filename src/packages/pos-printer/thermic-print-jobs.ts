@@ -101,14 +101,14 @@ export async function testThermalPrinterJob({
     printer.text(PRINTER_DIVIDER);
 
     // 3. Scaled QR Code Transfer (size: 3 reduces dimension to prevent USB buffer overflow)
-    try {
-      await printer.qrimage("https://github.com/node-escpos/driver", {
-        size: 3,
-        mode: "NORMAL",
-      });
-    } catch (qrError) {
-      logger?.warn(`Failed to render QR code on "${printerName}": ${qrError}`);
-    }
+    // try {
+    //   await printer.qrimage("https://github.com/node-escpos/driver", {
+    //     size: 3,
+    //     mode: "NORMAL",
+    //   });
+    // } catch (qrError) {
+    //   logger?.warn(`Failed to render QR code on "${printerName}": ${qrError}`);
+    // }
 
     // 4. Compact Raster Logo Transfer (s8 density mode for reduced height/data size)
     // try {
