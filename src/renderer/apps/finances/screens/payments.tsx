@@ -27,6 +27,7 @@ import {
 } from "@/renderer/containers/page-container";
 import { APP_ROUTES } from "@/renderer/constants";
 import { FormSubmitHandler } from "@/renderer/libs/queries/base";
+import { PaymentPrintButton } from "../forms/fast-payment/payment-print-button";
 
 /**
  * Point-of-sale terminal page component for processing student payments.
@@ -55,11 +56,13 @@ export function FastPaymentPage() {
   const handlePrintTicket: FormSubmitHandler<Ticket, any> = useCallback(
     (_payload, helpers) => {
       console.log("handlePrintTicket", _payload);
-      printTicket.onSubmit(_payload, {
-        reset() {
-          helpers.reset();
+      printTicket.onSubmit(
+        {
+          paymentId: _payload.paymentId,
+          tickRef: _payload.transactionReference || _payload.ticketRef,
         },
-      });
+        helpers,
+      );
     },
     [],
   );
@@ -106,7 +109,16 @@ export function FastPaymentPage() {
             />
           </FastPaymentFormContainer>
           <FastPaymentPreviewContainer>
-            <InvoiceLivePreview school={school!} onPrint={handlePrintTicket} />
+            <InvoiceLivePreview school={school!} onPrint={handlePrintTicket}>
+              {(props) => (
+                <PaymentPrintButton
+                  handlePrint={props.onPrint}
+                  isRealTicket={props.isRealTicket}
+                  ticketPreview={props.ticketPreview}
+                  isPrinting={printTicket.isSubmitting}
+                />
+              )}
+            </InvoiceLivePreview>
           </FastPaymentPreviewContainer>
         </FastPaymentContainer>
       </PageContent>

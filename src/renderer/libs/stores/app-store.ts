@@ -6,12 +6,10 @@ import type {
   School,
   StudyYear,
 } from "@/packages/@core/data-access/db/schemas";
-import type { SystemPrinter } from "@/packages/pos-printer";
+import { PosPrintConfig } from "@/packages/@core/data-access/stores";
 const logger = console;
 
 export type ThemeMode = "light" | "dark" | "system";
-
-export interface PosPrintConfig extends SystemPrinter {}
 
 export interface AppConfiguration {
   posPrint: PosPrintConfig;

@@ -33,6 +33,7 @@ export type SchoolContext = {
  * Represents a point-of-sale receipt ticket entity.
  */
 export type Ticket = {
+  paymentId: string;
   classroomName: string;
   studentCode: string;
   ticketRef: string;
@@ -144,6 +145,7 @@ function createTicket(
   fee: { feeTypeName: string; scheduleName: string },
 ): Ticket {
   return {
+    paymentId: payment.payment.paymentId,
     classroomName: student.classroomName,
     address: school.address,
     schoolName: school.name,

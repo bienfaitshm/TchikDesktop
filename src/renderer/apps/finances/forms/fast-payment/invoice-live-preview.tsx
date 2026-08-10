@@ -1,7 +1,7 @@
 "use client";
 
-import { memo, useMemo, useCallback } from "react";
-import { AlertTriangle, Printer, CheckCircle2 } from "lucide-react";
+import { memo, useMemo, useCallback, ReactNode } from "react";
+import { CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { School } from "@/packages/@core/data-access/db";
 import {
@@ -11,7 +11,6 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { formatCurrency } from "@/packages/currency";
 import { formatDate } from "@/packages/times";
 import { useShallow } from "zustand/react/shallow";
@@ -20,7 +19,6 @@ import {
   useFastPaymentPreviewTicket,
   type Ticket,
 } from "./hooks";
-import { LoadingButton } from "@/renderer/components/buttons/button-loading";
 import type { FormSubmitHandler } from "@/renderer/libs/forms";
 
 /**
@@ -31,8 +29,12 @@ export type InvoiceLivePreviewProps = {
   school?: School;
   /** Callback triggered to execute the ticket printing process. */
   onPrint?: FormSubmitHandler<Ticket>;
-  /** Indicates whether the print process is currently in progress. */
-  isPrinting?: boolean;
+
+  children: (props: {
+    onPrint?(): void;
+    ticketPreview?: Ticket;
+    isRealTicket: boolean;
+  }) => ReactNode;
 };
 
 /**
@@ -79,7 +81,7 @@ const formatTicketDateTime = (dateInput?: string | Date | null) => {
  * @returns Memoized React component presenting ticket details and print controls.
  */
 export const InvoiceLivePreview = memo<InvoiceLivePreviewProps>(
-  ({ school, onPrint, isPrinting }) => {
+  ({ school, onPrint, children }) => {
     const ticketPreview = useFastPaymentPreviewTicket();
     const { selectedStudent, markTicketAsPrinted } = useFastPaymentStore(
       useShallow((state) => ({
@@ -277,33 +279,18 @@ export const InvoiceLivePreview = memo<InvoiceLivePreviewProps>(
               </p>
             </div>
           </div>
-
-          <Alert variant="destructive" className="mt-2">
-            <AlertTriangle className="size-4" />
-            <AlertTitle>Attention</AlertTitle>
-            <AlertDescription className="text-[11px] leading-relaxed">
-              Ce montant sera débité immédiatement. Cette opération est
-              irréversible.
-            </AlertDescription>
-          </Alert>
+          <p className="text-muted-foreground text-[11px]">
+            Ce montant sera débité immédiatement. Cette opération est
+            irréversible.
+          </p>
         </CardContent>
 
         <CardFooter className="bg-muted/40 p-3 rounded-b-xl flex gap-2">
-          <LoadingButton
-            onClick={handlePrint}
-            disabled={!isRealTicket || isPrinting}
-            loading={isPrinting}
-            className="w-full font-sans text-xs font-semibold"
-            size="sm"
-            variant="outline"
-          >
-            <Printer className="size-3.5 mr-2" />
-            {isRealTicket
-              ? ticketPreview?.isPrinted
-                ? "Réimprimer la facture"
-                : "Imprimer la facture"
-              : "Validez l'encaissement pour imprimer"}
-          </LoadingButton>
+          {children?.({
+            isRealTicket,
+            ticketPreview: ticketPreview as Ticket,
+            onPrint: handlePrint,
+          })}
         </CardFooter>
       </Card>
     );

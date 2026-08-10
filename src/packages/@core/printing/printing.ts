@@ -1,8 +1,4 @@
-import {
-  HttpStatus,
-  createErrorResponse,
-  HttpException,
-} from "@/packages/electron-ipc-rest";
+import { HttpStatus, HttpException } from "@/packages/electron-ipc-rest";
 import { getLogger as createLogger } from "@/packages/logger";
 import {
   printPdfReceipt,
@@ -24,47 +20,57 @@ const defaultPrinterService = new PrinterService({
 });
 
 /**
- * High-level service facade managing POS and document printing operations.
+ * Service orchestrating POS and PDF document printing operations.
  */
-export class Printing {
+export class PrintingService {
+  private readonly printerService: PrinterService;
+  private readonly paymentRepository: StudentPaymentRepository;
+  private readonly appStore: typeof tchikAppStore;
+
   /**
-   * Retrieves all available OS-level installed printers.
-   * @param service - POS printer service instance.
-   * @returns List of system printers detected on the host machine.
+   * Initializes a new instance of PrintingService with injectable dependencies.
+   * @param printerService - Hardware printer service instance.
+   * @param paymentRepository - Repository for accessing payment data.
+   * @param appStore - Application store managing current configuration state.
    */
-  static async getPrinters(service: PrinterService = defaultPrinterService) {
-    return service.getSystemPrinters();
+  constructor(
+    printerService: PrinterService = defaultPrinterService,
+    paymentRepository: StudentPaymentRepository = studentPaymentRepository,
+    appStore = tchikAppStore,
+  ) {
+    this.printerService = printerService;
+    this.paymentRepository = paymentRepository;
+    this.appStore = appStore;
   }
 
   /**
-   * Checks the connectivity status of a target printer by its system name.
-   * @param printerName - The identifier name of the system printer.
-   * @param service - POS printer service instance.
-   * @returns Connection status result.
+   * Retrieves all available OS-installed printers on the host system.
+   * @returns Array of system printers detected on the machine.
    */
-  static async checkPrinter(
-    printerName: string,
-    service: PrinterService = defaultPrinterService,
-  ) {
-    return service.checkConnection(printerName);
+  async getPrinters() {
+    return this.printerService.getSystemPrinters();
+  }
+
+  /**
+   * Checks connection status for a target printer by system name.
+   * @param printerName - Target system printer identifier.
+   * @returns Connection status outcome object.
+   */
+  async checkPrinter(printerName: string) {
+    return this.printerService.checkConnection(printerName);
   }
 
   /**
    * Fetches payment details and triggers a POS invoice receipt print job.
-   * @param paymentPayload - Payment identifier and ticket reference details.
-   * @param paymentRepo - Repository instance for student payment access.
-   * @param service - POS printer service instance.
-   * @param store - Application store instance.
+   * @param paymentPayload - Identifier and ticket reference for the payment.
    * @returns True if the print job succeeded.
    */
-  static async printInvoice(
-    paymentPayload: { paymentId: string; tickRef: string },
-    paymentRepo: StudentPaymentRepository = studentPaymentRepository,
-    service: PrinterService = defaultPrinterService,
-    store = tchikAppStore,
-  ) {
+  async printInvoice(paymentPayload: {
+    paymentId: string;
+    tickRef: string;
+  }): Promise<boolean> {
     const { posPrint, currentSchool, currentStudyYear } =
-      store.getCurrentConfig();
+      this.appStore.getCurrentConfig();
 
     if (!currentSchool || !currentStudyYear) {
       throw new HttpException(
@@ -73,54 +79,63 @@ export class Printing {
       );
     }
 
-    if (!posPrint?.posPrinter?.name) {
+    if (!posPrint?.posPrinter) {
       throw new HttpException(
         "L'imprimante POS n'est pas configurée !",
         HttpStatus.NOT_FOUND,
       );
     }
 
-    const payment = paymentRepo.findById(paymentPayload.paymentId);
+    const payment = this.paymentRepository.findById(paymentPayload.paymentId);
     if (!payment) {
       throw new HttpException("Paiement non trouvé !", HttpStatus.NOT_FOUND);
     }
 
-    const invoiceData: jobs.InvoiceReceiptData = createInvoiceData(
-      paymentPayload.tickRef,
-      payment,
-      {
-        name: currentSchool.name,
-        town: currentSchool.town,
-        address: currentSchool.address,
-        yearName: currentStudyYear.yearName,
-      },
-    );
+    try {
+      const invoiceData: jobs.InvoiceReceiptData = createInvoiceData(
+        paymentPayload.tickRef,
+        payment,
+        {
+          name: currentSchool.name,
+          town: currentSchool.town,
+          address: currentSchool.address,
+          yearName: currentStudyYear.yearName,
+        },
+      );
 
-    return service.printReceipt(posPrint.posPrinter.name, async (printer) => {
-      const result = await jobs.printInvoiceJob({
-        printer,
-        invoiceData,
-      });
+      const result = await this.printerService.printReceipt(
+        posPrint.posPrinter.value,
+        async (printer) => {
+          const printJobResult = await jobs.printInvoiceJob({
+            printer,
+            invoiceData,
+          });
+          return printJobResult.success;
+        },
+      );
+
       return result.success;
-    });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Il y a eu une erreur lors de l'impression";
+      throw new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**
-   * Runs a test thermal print job using active school configuration details.
-   * @param printerName - Name of the target printer to test.
-   * @param service - POS printer service instance.
-   * @param store - Application configuration store instance.
-   * @param logger - Logger service instance for printing diagnostics.
-   * @returns Execution result object.
+   * Executes a test thermal print job using current school configuration.
+   * @param printerName - Target printer name for the test.
+   * @param logger - Diagnostic logger instance.
+   * @returns Print result object.
    */
-  static async testPrinter(
-    printerName: string,
-    service: PrinterService = defaultPrinterService,
-    store = tchikAppStore,
-    logger = defaultLogger,
-  ) {
+  async testPrinter(printerName: string, logger = defaultLogger) {
     const { currentSchool, currentStudyYear, posPrint } =
-      store.getCurrentConfig();
+      this.appStore.getCurrentConfig();
 
     if (!currentSchool || !currentStudyYear || !posPrint) {
       throw new HttpException(
@@ -129,33 +144,50 @@ export class Printing {
       );
     }
 
-    const result = await service.printReceipt(printerName, async (printer) => {
-      await jobs.testThermalPrinterJob({
-        printer,
+    try {
+      const result = await this.printerService.printReceipt(
         printerName,
-        schoolName: currentSchool.name,
-        yearName: currentStudyYear.yearName,
-        schoolAddress: currentSchool.address,
-        schoolTown: currentSchool.town,
-        logger,
-      });
+        async (printer) => {
+          await jobs.testThermalPrinterJob({
+            printer,
+            printerName,
+            schoolName: currentSchool.name,
+            yearName: currentStudyYear.yearName,
+            schoolAddress: currentSchool.address ?? currentSchool.name,
+            schoolTown: currentSchool.town ?? "",
+            logger,
+          });
 
-      return true;
-    });
+          return true;
+        },
+      );
 
-    if (result.success) {
+      if (!result.success) {
+        throw new HttpException(
+          result.message ?? "Erreur lors du test de l'imprimante",
+          HttpStatus.CONFLICT,
+        );
+      }
+
       return result;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Il y a eu une erreur lors du test de l'imprimante";
+      throw new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
-    return createErrorResponse(result.message ?? "", HttpStatus.CONFLICT);
   }
 
   /**
-   * Generates and prints a PDF ticket from a generic payload.
-   * @param payload - Receipt dataset and rendering parameters.
-   * @returns PDF print execution result or structured error payload.
+   * Generates and prints a PDF ticket from a payload.
+   * @param payload - Printable PDF dataset parameters.
+   * @returns PDF print job execution result.
    */
-  static printTicket(payload: Payload) {
+  printTicket(payload: Payload) {
     try {
       return printPdfReceipt(payload);
     } catch (error) {
@@ -163,26 +195,17 @@ export class Printing {
         error instanceof Error
           ? error.message
           : "Une erreur inconnue est survenue";
-      return createErrorResponse(message, HttpStatus.CONFLICT);
+      throw new HttpException(message, HttpStatus.CONFLICT);
     }
   }
 }
 
 /**
- * Backward-compatible export for standalone PDF ticket printing.
- * @param payload - Receipt dataset and rendering parameters.
- * @returns PDF print execution result or structured error payload.
- */
-export function printTicket(payload: Payload) {
-  return Printing.printTicket(payload);
-}
-
-/**
- * Constructs invoice payload structure from student payment DTO and school settings.
- * @param ticketRef - Unique ticket reference string.
- * @param paymentDto - Payment source details DTO.
- * @param school - Active school parameters object.
- * @returns Formatted invoice data object for thermal printer jobs.
+ * Normalizes payment record and school metadata into an invoice payload.
+ * @param ticketRef - Ticket reference identifier.
+ * @param paymentDto - Source student payment object.
+ * @param school - Active school parameter details.
+ * @returns Formatted thermal invoice dataset.
  */
 function createInvoiceData(
   ticketRef: string,
@@ -215,6 +238,5 @@ function createInvoiceData(
     date: formatDate(studentPayment.createdAt),
     hour: formatDate(studentPayment.createdAt, "HH:mm"),
     transactionReference: studentPayment.transactionReference,
-    isPrinted: true,
   };
 }

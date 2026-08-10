@@ -29,12 +29,12 @@ export const usePrinterSettings = () => {
   const { data: printers = [] } = useGetPrinters();
 
   const [selectedPrinter, setSelectedPrinter] = useState<SystemPrinter | null>(
-    posPrint ?? null,
+    posPrint?.posPrinter ?? null,
   );
 
   useEffect(() => {
-    if (posPrint) {
-      setSelectedPrinter(posPrint);
+    if (posPrint?.posPrinter) {
+      setSelectedPrinter(posPrint.posPrinter);
     }
   }, [posPrint]);
 
@@ -61,12 +61,15 @@ export const usePrinterSettings = () => {
   );
 
   const isConnected = useMemo(
-    () => (posPrint?.value ? printerMap.has(posPrint.value) : false),
+    () =>
+      posPrint?.posPrinter?.value
+        ? printerMap.has(posPrint.posPrinter.value)
+        : false,
     [posPrint, printerMap],
   );
 
   const hasUnsavedChanges = useMemo(
-    () => selectedPrinter?.value !== posPrint?.value,
+    () => selectedPrinter?.value !== posPrint?.posPrinter?.value,
     [posPrint, selectedPrinter],
   );
 
@@ -82,19 +85,28 @@ export const usePrinterSettings = () => {
 
   const handleSavePrinterConfig = useCallback(() => {
     if (selectedPrinter) {
-      configActions.setPosPrintConfig(selectedPrinter);
+      configActions.setPosPrintConfig({
+        isConnected: true,
+        posPrinter: selectedPrinter,
+      });
     }
   }, [selectedPrinter, configActions]);
 
   const handleCheckConnectivity = useCallback(() => {
     if (selectedPrinter?.value) {
-      checkPrinter.onSubmit({ printerValue: selectedPrinter.value });
+      checkPrinter.onSubmit(
+        { printerValue: selectedPrinter.value },
+        { reset: () => {} },
+      );
     }
   }, [checkPrinter, selectedPrinter]);
 
   const handleTestPrint = useCallback(() => {
     if (selectedPrinter?.value) {
-      testPrinter.onSubmit({ printerValue: selectedPrinter.value });
+      testPrinter.onSubmit(
+        { printerValue: selectedPrinter.value },
+        { reset: () => {} },
+      );
     }
   }, [testPrinter, selectedPrinter]);
 
@@ -150,7 +162,7 @@ export const SettingPrinter = () => {
         <div className="space-y-1">
           <Label className="text-xs font-medium">Imprimante configurée</Label>
           <p className="text-sm font-medium">
-            {posPrint?.name || "Aucune imprimante configurée"}
+            {posPrint?.posPrinter?.name || "Aucune imprimante configurée"}
           </p>
         </div>
 

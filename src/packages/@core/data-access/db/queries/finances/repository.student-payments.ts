@@ -84,6 +84,7 @@ export class StudentPaymentRepository extends betterSqlite.BaseRepository<
         feeType: getTableColumns(feeTypes),
         feeAssigment: getTableColumns(feeAssignments),
         enrollment: getTableColumns(classroomEnrollments),
+        feeSchedule: getTableColumns(feeSchedules),
       })
       .from(this.table)
       .innerJoin(
