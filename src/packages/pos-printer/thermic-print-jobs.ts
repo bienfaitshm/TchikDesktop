@@ -197,6 +197,9 @@ export async function printInvoiceJob({
     printer.style("normal");
 
     printer.text(invoiceData.address);
+    if (invoiceData.schoolTown) {
+      printer.text(invoiceData.schoolTown);
+    }
     printer.text(invoiceData.yearName);
     printer.text(PRINTER_DIVIDER);
 
@@ -240,25 +243,21 @@ export async function printInvoiceJob({
     printer.style("normal");
     printer.text(PRINTER_DIVIDER);
 
-    try {
-      await printer.qrimage(
-        JSON.stringify(
-          {
-            ecole: invoiceData.schoolName,
-            eleve: invoiceData.studentName,
-            raison: `Payment de ${invoiceData.feeTypeName}/${invoiceData.scheduleName} montant: ${formatCurrency(invoiceData.amountPaid, invoiceData.currency)}`,
-          },
-          null,
-          4,
-        ),
-        {
-          size: 3,
-          mode: "NORMAL",
-        },
-      );
-    } catch (qrError) {
-      console?.warn(`Failed to render QR code`);
-    }
+    // try {
+    //   await printer.qrimage(
+    //     JSON.stringify(
+    //       {
+    //         ecole: invoiceData.schoolName,
+    //         eleve: invoiceData.studentName,
+    //         raison: `Payment de ${invoiceData.feeTypeName}/${invoiceData.scheduleName} montant: ${formatCurrency(invoiceData.amountPaid, invoiceData.currency)}`,
+    //       },
+    //       null,
+    //       4,
+    //     ),
+    //   );
+    // } catch (qrError) {
+    //   console?.warn(`Failed to render QR code`);
+    // }
 
     // 5. Footer Notice
     printer.align("CT");

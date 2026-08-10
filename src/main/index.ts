@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow } from "electron";
+import { app, shell, BrowserWindow, nativeTheme } from "electron";
 import debug from "electron-debug";
 import path from "node:path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
@@ -109,6 +109,7 @@ const initializeAppServices = async (): Promise<void> => {
  * @returns A promise resolving to the fully configured BrowserWindow.
  */
 const setupAppWindow = async (): Promise<BrowserWindow> => {
+  nativeTheme.themeSource = tchikAppStore.getTheme();
   const window = await createMainWindow();
 
   tchikAppStore.setWindow(window);

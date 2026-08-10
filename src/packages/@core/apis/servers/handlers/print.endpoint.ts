@@ -9,7 +9,7 @@ import {
   Ticket,
   TicketSchema,
 } from "@/packages/@core/data-access/schema-validations";
-import { Printing } from "@/packages/@core/printing";
+import { printingService } from "@/packages/@core/printing";
 
 /**
  * Validation schema for checking printer connectivity status.
@@ -34,7 +34,7 @@ export class PrinterController {
    */
   @IpcServer.register(HttpMethod.GET, PrinteToutes.GET_PRINTERS)
   static async getPrinters({}: IpcRequest<unknown>) {
-    return Printing.getPrinters();
+    return printingService.getPrinters();
   }
 
   /**
@@ -46,7 +46,7 @@ export class PrinterController {
     body: PrinterNameSchema,
   })
   static async checkPrinter({ body }: IpcRequest<PrinterValuePayload>) {
-    return Printing.checkPrinter(body.printerValue);
+    return printingService.checkPrinter(body.printerValue);
   }
 
   /**
@@ -58,7 +58,7 @@ export class PrinterController {
     body: TicketSchema,
   })
   static async printReceipt({ body }: IpcRequest<Ticket>) {
-    return Printing.printInvoice(body);
+    return printingService.printInvoice(body);
   }
 
   /**
@@ -70,6 +70,6 @@ export class PrinterController {
     body: PrinterNameSchema,
   })
   static async testPrinter({ body }: IpcRequest<PrinterValuePayload>) {
-    return Printing.testPrinter(body.printerValue);
+    return printingService.testPrinter(body.printerValue);
   }
 }

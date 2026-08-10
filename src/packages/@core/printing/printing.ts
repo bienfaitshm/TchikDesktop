@@ -240,3 +240,5 @@ function createInvoiceData(
     transactionReference: studentPayment.transactionReference,
   };
 }
+
+export const printingService = new PrintingService();
