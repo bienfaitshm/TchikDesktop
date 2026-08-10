@@ -15,10 +15,10 @@ import { Printing } from "@/packages/@core/printing";
  * Validation schema for checking printer connectivity status.
  */
 export const PrinterNameSchema = z.object({
-  printerName: z.string().min(1, "Printer name is required"),
+  printerValue: z.string().min(1, "Printer name is required"),
 });
 
-export type PrinterNamePayload = z.infer<typeof PrinterNameSchema>;
+export type PrinterValuePayload = z.infer<typeof PrinterNameSchema>;
 
 /* =========================================================================
    CONTROLLER IMPLEMENTATION
@@ -45,8 +45,8 @@ export class PrinterController {
   @IpcServer.register(HttpMethod.POST, PrinteToutes.CHECK_PRINTER, {
     body: PrinterNameSchema,
   })
-  static async checkPrinter({ body }: IpcRequest<PrinterNamePayload>) {
-    return Printing.checkPrinter(body.printerName);
+  static async checkPrinter({ body }: IpcRequest<PrinterValuePayload>) {
+    return Printing.checkPrinter(body.printerValue);
   }
 
   /**
@@ -69,7 +69,7 @@ export class PrinterController {
   @IpcServer.register(HttpMethod.POST, PrinteToutes.PRINT_TEST, {
     body: PrinterNameSchema,
   })
-  static async testPrinter({ body }: IpcRequest<PrinterNamePayload>) {
-    return Printing.testPrinter(body.printerName);
+  static async testPrinter({ body }: IpcRequest<PrinterValuePayload>) {
+    return Printing.testPrinter(body.printerValue);
   }
 }

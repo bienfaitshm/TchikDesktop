@@ -1,16 +1,15 @@
 import { Search } from "lucide-react";
 import {
   createContext,
-  Fragment,
   ReactNode,
   useContext,
   useState,
   useMemo,
   useTransition,
 } from "react";
-import { Input } from "../components/ui/input";
-import { Separator } from "../components/ui/separator";
-import { cn } from "../utils";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/renderer/utils";
 
 /**
  * Defines a single setting item with its visual and content representations.
@@ -20,7 +19,8 @@ export type SettingItem = {
   color: string;
   title: string;
   description?: string;
-  content: ReactNode;
+  content?: ReactNode;
+  action?: ReactNode;
 };
 
 /**
@@ -153,15 +153,18 @@ export const SettingsSearchList: React.FC = () => {
                     >
                       {item.icon}
                     </div>
-                    <div className="space-y-1 max-w-md">
-                      <h3 className="text-sm font-medium leading-none">
-                        {item.title}
-                      </h3>
-                      {item.description && (
-                        <p className="text-xs text-muted-foreground">
-                          {item.description}
-                        </p>
-                      )}
+                    <div className="w-full flex items-start justify-between">
+                      <div className="space-y-1 max-w-md">
+                        <h3 className="text-sm font-medium leading-none">
+                          {item.title}
+                        </h3>
+                        {item.description && (
+                          <p className="text-xs text-muted-foreground">
+                            {item.description}
+                          </p>
+                        )}
+                      </div>
+                      {item.action && <div>{item.action}</div>}
                     </div>
                   </div>
                   <div className="pl-13">{item.content}</div>

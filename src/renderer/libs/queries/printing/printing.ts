@@ -1,13 +1,12 @@
 import { useMutation, useSuspenseQuery } from "../base";
 import { print } from "@/renderer/libs/apis";
 import type { Ticket } from "@/packages/@core/data-access/schema-validations";
+import type { PrinterValuePayload } from "@/packages/@core/apis/servers/handlers";
 
 /**
  * Payload interface for printer identification operations.
  */
-export interface PrinterTargetPayload {
-  printerName: string;
-}
+export interface PrinterTargetPayload extends PrinterValuePayload {}
 
 /**
  * Query and mutation key factory for the printing domain.
@@ -31,6 +30,7 @@ export function useGetPrinters() {
   return useSuspenseQuery({
     queryKey: printingKeys.printers(),
     queryFn: () => print.getPrinters(),
+    refetchInterval: 1000,
   });
 }
 

@@ -6,6 +6,7 @@ import {
 } from "./printing";
 import { useFormBaseNotify } from "../base";
 import type { Ticket } from "@/packages/@core/data-access/schema-validations";
+import type { PrinterValuePayload } from "@/packages/@core/apis/servers/handlers";
 import type { BaseMutationConfig } from "../base";
 
 /**
@@ -63,11 +64,17 @@ export function usePrintInvoiceForm(config?: BaseMutationConfig<Ticket>) {
  * @param config - Optional mutation and form configuration.
  * @returns Form controller object merged with available printers and default selection.
  */
-export function useTestPrinterForm(config?: BaseMutationConfig<Ticket>) {
+export function useTestPrinterForm(
+  config?: BaseMutationConfig<PrinterValuePayload>,
+) {
   const mutation = useTestPrinter();
-  const { printers, defaultPrinter } = usePrinterSelection();
+  // const { printers, defaultPrinter } = usePrinterSelection();
 
-  const base = useFormBaseNotify<Ticket, Ticket, Ticket>({
+  const base = useFormBaseNotify<
+    PrinterValuePayload,
+    PrinterValuePayload,
+    PrinterValuePayload
+  >({
     mutation,
     config,
     getNotifications: () => ({
@@ -84,7 +91,7 @@ export function useTestPrinterForm(config?: BaseMutationConfig<Ticket>) {
     adaptData: (data) => data,
   });
 
-  return { ...base, printers, defaultPrinter };
+  return { ...base };
 }
 
 /**
@@ -92,11 +99,17 @@ export function useTestPrinterForm(config?: BaseMutationConfig<Ticket>) {
  * @param config - Optional mutation and form configuration.
  * @returns Form controller object merged with available printers and default selection.
  */
-export function useCheckPrinterForm(config?: BaseMutationConfig<Ticket>) {
+export function useCheckPrinterForm(
+  config?: BaseMutationConfig<PrinterValuePayload>,
+) {
   const mutation = useCheckPrinter();
-  const { printers, defaultPrinter } = usePrinterSelection();
+  // const { printers, defaultPrinter } = usePrinterSelection();
 
-  const base = useFormBaseNotify<Ticket, Ticket, Ticket>({
+  const base = useFormBaseNotify<
+    PrinterValuePayload,
+    PrinterValuePayload,
+    PrinterValuePayload
+  >({
     mutation,
     config,
     getNotifications: () => ({
@@ -112,5 +125,5 @@ export function useCheckPrinterForm(config?: BaseMutationConfig<Ticket>) {
     adaptData: (data) => data,
   });
 
-  return { ...base, printers, defaultPrinter };
+  return { ...base };
 }

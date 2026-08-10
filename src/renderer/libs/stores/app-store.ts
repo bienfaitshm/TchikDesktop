@@ -6,15 +6,12 @@ import type {
   School,
   StudyYear,
 } from "@/packages/@core/data-access/db/schemas";
-
+import type { SystemPrinter } from "@/packages/pos-printer";
 const logger = console;
 
 export type ThemeMode = "light" | "dark" | "system";
 
-export interface PosPrintConfig {
-  host: string;
-  port: number;
-}
+export interface PosPrintConfig extends SystemPrinter {}
 
 export interface AppConfiguration {
   posPrint: PosPrintConfig;
@@ -54,7 +51,7 @@ interface ConfigurationState {
   currentSchool: School | null;
   currentStudyYear: StudyYear | null;
   theme: ThemeMode;
-  posPrintConfig: PosPrintConfig;
+  posPrintConfig: PosPrintConfig | null;
   hasHydrated: boolean;
   isSyncing: boolean;
 }
@@ -114,7 +111,7 @@ export const useConfigStore = create<ConfigurationStore>()((set) => ({
   currentSchool: null,
   currentStudyYear: null,
   theme: "system",
-  posPrintConfig: { host: "localhost", port: 9100 },
+  posPrintConfig: null,
   hasHydrated: false,
   isSyncing: false,
 
@@ -295,7 +292,7 @@ export const getConfig = (): {
   schoolId: string | undefined;
   yearId: string | undefined;
   theme: ThemeMode;
-  posPrint: PosPrintConfig;
+  posPrint: PosPrintConfig | null;
 } => {
   const state = useConfigStore.getState();
   return {
