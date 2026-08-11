@@ -1,6 +1,7 @@
 import { resolve } from "path";
 import { defineConfig } from "electron-vite";
 import react from "@vitejs/plugin-react";
+import { visualizer } from "rollup-plugin-visualizer";
 
 export default defineConfig({
   main: {
@@ -13,10 +14,10 @@ export default defineConfig({
     },
     build: {
       externalizeDeps: true,
-      minify: true,
+      minify: "terser",
       terserOptions: {
         compress: {
-          drop_console: true,
+          drop_console: false,
         },
       },
       rollupOptions: {
@@ -34,6 +35,13 @@ export default defineConfig({
           "oracledb",
           "@libsql/client",
           /^@libsql\/.+/,
+        ],
+        plugins: [
+          // Visualizer pour le processus principal
+          visualizer({
+            filename: "stats/main.html",
+            template: "treemap",
+          }),
         ],
       },
     },

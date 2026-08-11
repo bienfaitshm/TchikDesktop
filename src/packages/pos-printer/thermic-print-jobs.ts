@@ -1,6 +1,6 @@
 import { CustomLogger as Logger } from "@/packages/logger";
 import type { ActionResult, PrinterThermal } from "./thermic-printer";
-import { formatCurrency } from "@/packages/currency";
+import { formatPrinterCurrency, sanitizeText } from "./utils";
 /**
  * Parameters required to execute a thermal printer diagnostic test job.
  */
@@ -66,17 +66,17 @@ export async function testThermalPrinterJob({
     // 1. Institution Header
     printer.align("CT");
     printer.style("b");
-    printer.text(schoolName.toUpperCase());
+    printer.text(sanitizeText(schoolName.toUpperCase()));
     printer.style("normal");
 
     if (schoolAddress) {
-      printer.text(schoolAddress, "UTF-8");
+      printer.text(sanitizeText(schoolAddress), "UTF-8");
     }
     if (schoolTown) {
-      printer.text(schoolTown);
+      printer.text(sanitizeText(schoolTown));
     }
 
-    printer.text(yearName);
+    printer.text(sanitizeText(yearName));
     printer.text(PRINTER_DIVIDER);
 
     // 2. Test Information Section
@@ -97,7 +97,7 @@ export async function testThermalPrinterJob({
     printer.text(PRINTER_DIVIDER);
 
     printer.align("CT");
-    printer.text("Test de diagnostic réussi !");
+    printer.text(sanitizeText("Test de diagnostic réussi !"));
     printer.text(PRINTER_DIVIDER);
 
     // 3. Scaled QR Code Transfer (size: 3 reduces dimension to prevent USB buffer overflow)
@@ -193,14 +193,14 @@ export async function printInvoiceJob({
     // 1. Header Section
     printer.align("CT");
     printer.style("b");
-    printer.text(invoiceData.schoolName.toUpperCase());
+    printer.text(sanitizeText(invoiceData.schoolName.toUpperCase()));
     printer.style("normal");
 
     printer.text(invoiceData.address);
     if (invoiceData.schoolTown) {
-      printer.text(invoiceData.schoolTown);
+      printer.text(sanitizeText(invoiceData.schoolTown));
     }
-    printer.text(invoiceData.yearName);
+    printer.text(sanitizeText(invoiceData.yearName));
     printer.text(PRINTER_DIVIDER);
 
     printer.align("LT");
@@ -210,7 +210,7 @@ export async function printInvoiceJob({
         `Heure: ${invoiceData.hour}`,
       ),
     );
-    printer.text(`Réf: ${invoiceData.ticketRef.toUpperCase()}`);
+    printer.text(sanitizeText(`Réf: ${invoiceData.ticketRef.toUpperCase()}`));
     printer.text(PRINTER_DIVIDER);
 
     // 2. Student Information Section
@@ -221,23 +221,27 @@ export async function printInvoiceJob({
 
     // 3. Fee and Payment Details Section
     printer.style("normal");
-    printer.text("DÉSIGNATION");
+    printer.text(sanitizeText("DÉSIGNATION"));
     printer.style("b");
     printer.text(
-      formatLeftRight(
-        `${invoiceData.feeTypeName}`,
-        formatCurrency(invoiceData.amountPaid, invoiceData.currency),
+      sanitizeText(
+        formatLeftRight(
+          `${invoiceData.feeTypeName}`,
+          formatPrinterCurrency(invoiceData.amountPaid, invoiceData.currency),
+        ),
       ),
     );
-    printer.text(`[${invoiceData.scheduleName}]`);
+    printer.text(sanitizeText(`[${invoiceData.scheduleName}]`));
     printer.text(PRINTER_DIVIDER);
 
     // 4. Total Paid Section
     printer.style("b");
     printer.text(
-      formatLeftRight(
-        "TOTAL PAYÉ",
-        formatCurrency(invoiceData.amountPaid, invoiceData.currency),
+      sanitizeText(
+        formatLeftRight(
+          "TOTAL PAYÉ",
+          formatPrinterCurrency(invoiceData.amountPaid, invoiceData.currency),
+        ),
       ),
     );
     printer.style("normal");

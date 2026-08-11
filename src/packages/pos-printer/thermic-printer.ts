@@ -45,7 +45,7 @@ export type PrinterServiceConfig = {
 export class PrinterService {
   private readonly logger: Logger;
   private defaultPrinterType: string = "EPSON";
-  private readonly encoding: string;
+  private readonly encoding: string = "win1252";
 
   /**
    * Constructs a PrinterService instance with specified logger and configurations.
@@ -55,7 +55,7 @@ export class PrinterService {
     this.logger = config.logger;
     this.defaultPrinterType =
       config.defaultPrinterType || this.defaultPrinterType;
-    this.encoding = config.encoding || "CP850";
+    this.encoding = config.encoding || this.encoding;
   }
 
   /**
@@ -203,8 +203,9 @@ export class PrinterService {
       return await this.executeWithDevice(printerValue, async (device) => {
         const options = { encoding: this.encoding };
         const printer = new Printer(device, options);
-        printer.encode("cp850");
-
+        // printer.raw(Buffer.from([0x1b, 0x74, 0x10]));
+        // printer.encode("win1252");
+        printer.setCharacterCodeTable(16).encode("win1252");
         this.logger.info(`Executing receipt job on printer: ${printerValue}`);
         const result = await receiptJob(printer);
 

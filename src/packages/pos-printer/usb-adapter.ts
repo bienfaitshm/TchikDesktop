@@ -471,8 +471,8 @@ export default USBAdapter;
  */
 export class PrinterService {
   private readonly logger: Logger;
-  private readonly defaultPrinterType: string;
-  private readonly encoding: string;
+  private defaultPrinterType: string = "EPSON";
+  private encoding: string = "ISO8859_15";
 
   /**
    * Constructs a PrinterService instance with specified logger and configurations.
@@ -480,8 +480,9 @@ export class PrinterService {
    */
   constructor(config: PrinterServiceConfig) {
     this.logger = config.logger;
-    this.defaultPrinterType = config.defaultPrinterType || "EPSON";
-    this.encoding = config.encoding || "CP858";
+    this.defaultPrinterType =
+      config.defaultPrinterType || this.defaultPrinterType;
+    this.encoding = config.encoding || this.encoding;
   }
 
   /**
