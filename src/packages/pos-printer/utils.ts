@@ -16,8 +16,5 @@ export function formatPrinterCurrency(
   currency: string,
 ): string {
   const formatted = formatCurrency(amount, currency);
-
-  // \u00A0 = Espace insécable classique (NBSP)
-  // \u202F = Espace insécable étroit (Narrow NBSP)
   return formatted.replace(/[\u00A0\u202F]/g, " ");
 }
