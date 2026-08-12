@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to build"
+        description: "Tag to build (ex: v1.0.0)"
         required: true
   push:
     tags: ["v*"]
@@ -25,6 +25,7 @@ jobs:
       - name: Checkout Source Tree
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
           fetch-depth: 0
 
       - name: Initialize Node.js Runtime
@@ -36,25 +37,25 @@ jobs:
       - name: Cache electron-builder binaries
         uses: actions/cache@v4
         with:
-          path: ~/.cache/electron-builder
-          key: ${{ runner.os }}-electron-builder
+          path: |
+            ~/.cache/electron-builder
+            ${{ env.LOCALAPPDATA }}\electron-builder\Cache
+          key: ${{ runner.os }}-electron-builder-${{ hashFiles('**/package.json') }}
 
       - name: Install Project Dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Install Linux Build Dependencies
+      - name: Install Linux Build Dependencies (Ubuntu only)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libarchive-tools rpm
 
-      - name: Build Application (Compile)
-        run: yarn build:all --publish never
+      # Exécute la compilation et publie tous les formats (EXE, MSI, AppX, DMG, AppImage)
+      - name: Build and Publish Application
+        run: yarn build:all --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish Assets to GitHub Release
-        # On exécute la publication séparément pour isoler l'upload
-        run: npx electron-builder --publish always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Décommentez et ajoutez ces secrets si vous avez un certificat de signature (Optionnel mais recommandé)
+          # CSC_LINK: ${{ secrets.CSC_LINK }}
+          # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
