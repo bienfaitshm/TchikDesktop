@@ -50,6 +50,8 @@ win:
 msi:
   perMachine: true
   artifactName: ${productName}_Installer_Windows_${version}.${ext}
+  createDesktopShortcut: true
+  menuCategory: "Education"
 
 # 2. Format NSIS (Windows Offline EXE)
 nsis:
