@@ -58,5 +58,5 @@ jobs:
         env:
           # Important : on utilise le PAT aussi ici pour que electron-builder
           # puisse uploader sur la release créée par le workflow précédent
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_BUILDER_BINARIES_MIRROR: "https://npmmirror.com/mirrors/electron-builder-binaries/"
