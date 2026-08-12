@@ -43,25 +43,19 @@ export interface FormSubmitHelpers<TFieldValues extends FieldValues> {
  * Function contract for form submit handlers.
  * @template TFieldValues - The shape of the form field values.
  */
-export type FormSubmitHandler<
-  TFieldValues extends FieldValues,
-  DataReturn extends FieldValues,
-> = (
+export type FormSubmitHandler<TFieldValues extends FieldValues> = (
   data: TFieldValues,
-  helpers: FormSubmitHelpers<DataReturn>,
+  helpers?: FormSubmitHelpers<TFieldValues>,
 ) => void | Promise<void>;
 
 /**
  * Standard properties for form components.
  * @template TFieldValues - The shape of the form field values.
  */
-export interface BaseFormProps<
-  TFieldValues extends FieldValues,
-  DataReturn extends FieldValues = {},
-> {
+export interface BaseFormProps<TFieldValues extends FieldValues> {
   formId?: string;
   defaultValues?: DefaultValues<TFieldValues>;
-  onSubmit: FormSubmitHandler<TFieldValues, DataReturn>;
+  onSubmit: FormSubmitHandler<TFieldValues>;
 }
 
 /**

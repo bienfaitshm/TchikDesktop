@@ -13,6 +13,7 @@ import {
   createDeleteActionDialog,
   type ActionDialogProps,
 } from "./base.dialog-actions";
+import { wrapUpdateFunc } from "../libs/queries/base";
 
 export type ClassroomDialogProps = ActionDialogProps<
   ClassroomFormData,
@@ -102,7 +103,7 @@ export const UpdateClassroomDialog = createBaseActionDialog<
     return (
       <ClassroomForm
         formId={formId}
-        onSubmit={(data, helpers) => onSubmit({ data, id }, helpers as any)}
+        onSubmit={wrapUpdateFunc(onSubmit, id)}
         isGenerating={isGenerating}
         onGenerateSuggestion={handleGenerate}
         searchOption={searchOptions}

@@ -4,18 +4,6 @@ import {
   getSectionLabel,
   SECTION_OPTIONS,
 } from "@/packages/@core/data-access/db/options";
-import { withNotifications } from "@/renderer/libs/notifications";
-import {
-  useCreateClassroom,
-  useUpdateClassroom,
-  useDeleteClassroom,
-} from "./classroom";
-import {
-  createClassroomSuggestion,
-  getPrefixIdentifier,
-  createSuggestion,
-  type TSuggestion,
-} from "./utils";
 import type {
   Classroom,
   ClassroomCreate,
@@ -24,22 +12,37 @@ import type {
 } from "@/packages/@core/data-access/schema-validations";
 import {
   type BaseMutationConfig,
-  type QueryUpdatePayload,
-  useFormBase,
-  useFormBaseNotify,
+  useFormBaseCreate,
+  useFormBaseDelete,
+  useFormBaseUpdate,
 } from "../base";
 import { useSearchOptions } from "../options";
+import {
+  useCreateClassroom,
+  useDeleteClassroom,
+  useUpdateClassroom,
+} from "./classroom";
+import {
+  createClassroomSuggestion,
+  createSuggestion,
+  getPrefixIdentifier,
+  type TSuggestion,
+} from "./utils";
 
-const NONE_VALUES = ["undefined", "null"];
+/** Sentinel values indicating an unselected or undefined option ID. */
+const UNSELECTED_OPTION_VALUES: readonly string[] = [
+  "undefined",
+  "null",
+  "none",
+];
 
-export type ClassroomFormData = ClassroomCreate;
-export type ClassroomFormConfig = BaseMutationConfig<Classroom>;
+/** Default option entry for classes without a specialized stream. */
+const DEFAULT_OPTION_ITEM = {
+  label: "Tronc commun (Aucune option)",
+  value: "none",
+} as const;
 
-export interface UpdateClassroomConfig extends BaseMutationConfig<ClassroomUpdate> {
-  schoolId: string;
-  classroomId?: string;
-}
-
+/** Notifications configuration for classroom creation. */
 const CREATE_CLASSROOM_NOTIFICATIONS = {
   success: {
     title: "Salle de classe créée !",
@@ -48,8 +51,9 @@ const CREATE_CLASSROOM_NOTIFICATIONS = {
   error: {
     title: "Échec de la création.",
   },
-};
+} as const;
 
+/** Notifications configuration for classroom update. */
 const UPDATE_CLASSROOM_NOTIFICATIONS = {
   success: {
     title: "Salle de classe mise à jour !",
@@ -58,12 +62,21 @@ const UPDATE_CLASSROOM_NOTIFICATIONS = {
   error: {
     title: "Échec de la mise à jour.",
   },
-};
+} as const;
+
+export type ClassroomFormData = ClassroomCreate;
+export type ClassroomFormConfig = BaseMutationConfig<Classroom>;
+
+/** Configuration parameters for updating a classroom record. */
+export interface UpdateClassroomConfig extends BaseMutationConfig<ClassroomUpdate> {
+  schoolId: string;
+  classroomId?: string;
+}
 
 /**
- * Builds deletion notifications for classrooms.
- * @param identifier - Optional classroom identifier label.
- * @returns Notification configuration object for classroom deletion.
+ * Builds dynamic deletion notifications tailored to the specified classroom name.
+ * @param identifier - Display identifier of the target classroom.
+ * @returns Notification object containing success and error configurations.
  */
 const getDeleteClassroomNotifications = (identifier?: string) => ({
   success: {
@@ -80,32 +93,38 @@ const getDeleteClassroomNotifications = (identifier?: string) => ({
 });
 
 /**
- * Creates a section-based suggestion using section label prefixes.
- * @param identifier - Target classroom identifier code.
- * @param section - Associated educational section enum.
- * @returns Generated suggestion metadata object.
+ * Generates a fallback classroom suggestion based on section prefixing.
+ * @param identifier - Base classroom code or name.
+ * @param section - Associated educational section enum value.
+ * @returns Formatted suggestion object.
  */
 function createSectionSuggestion(
   identifier: string,
   section?: SECTION_ENUM,
 ): TSuggestion {
   const prefix = getPrefixIdentifier(identifier);
-  const sectionLabel = getSectionLabel(section);
+  const sectionLabel = getSectionLabel(section ?? SECTION_ENUM.SECONDARY);
 
   return createSuggestion(sectionLabel, sectionLabel.substring(0, 1), prefix);
 }
 
 /**
- * Shared infrastructure hook encapsulating search options and code suggestion generators.
+ * Internal shared hook providing school option search and code suggestion logic.
  * @param schoolId - Unique target school identifier.
- * @returns Option search state, section options, and suggestion generator callback.
+ * @returns Form search states, section selection options, and suggestion generator.
  */
 function useBaseClassroomForm(schoolId: string) {
   const searchFilters: OptionFilter = useMemo(
     () => ({ where: { options: { schoolId: { $eq: schoolId } } } }),
     [schoolId],
   );
+
   const search = useSearchOptions({ filters: searchFilters });
+
+  const options = useMemo(
+    () => [DEFAULT_OPTION_ITEM, ...(search.options ?? [])],
+    [search.options],
+  );
 
   const generateSuggestion = useCallback(
     (
@@ -113,7 +132,11 @@ function useBaseClassroomForm(schoolId: string) {
       optionId?: string,
       section?: SECTION_ENUM,
     ): TSuggestion | null => {
-      if (!search.options || !optionId || NONE_VALUES.includes(optionId)) {
+      if (
+        !search.options ||
+        !optionId ||
+        UNSELECTED_OPTION_VALUES.includes(optionId)
+      ) {
         return createSectionSuggestion(identifier, section);
       }
       return createClassroomSuggestion(search.options, optionId, identifier);
@@ -124,10 +147,7 @@ function useBaseClassroomForm(schoolId: string) {
   return {
     searchOptions: {
       ...search,
-      options: [
-        { label: "Tronc commun (Aucune option)", value: "none" },
-        ...(search.options ?? []),
-      ],
+      options,
     },
     sectionOptions: SECTION_OPTIONS,
     generateSuggestion,
@@ -135,102 +155,61 @@ function useBaseClassroomForm(schoolId: string) {
 }
 
 /**
- * Form hook managing classroom creation operations.
- * @param schoolId - Unique target school identifier.
- * @param config - Optional base mutation configuration.
- * @returns Form state, submission handlers, and option search states.
+ * Form hook providing submit handlers and state for classroom creation.
+ * @param schoolId - Target school identifier.
+ * @param config - Optional mutation configuration options.
+ * @returns Form properties and search options for classroom creation.
  */
 export function useCreateClassroomForm(
   schoolId: string,
   config?: ClassroomFormConfig,
 ) {
-  const mutation = useCreateClassroom();
   const base = useBaseClassroomForm(schoolId);
-
-  const adaptData = useCallback((data: ClassroomCreate) => data, []);
-
-  const formNotify = useFormBaseNotify<
-    ClassroomCreate,
-    ClassroomCreate,
-    Classroom
-  >({
-    mutation,
+  const formProps = useFormBaseCreate<ClassroomCreate>({
+    useCreate: useCreateClassroom,
     config,
-    getNotifications: () => CREATE_CLASSROOM_NOTIFICATIONS,
-    adaptData,
+    notification: CREATE_CLASSROOM_NOTIFICATIONS,
   });
 
   return {
-    ...formNotify,
+    ...formProps,
     ...base,
   };
 }
 
 /**
- * Form hook managing classroom update operations.
- * @param params - Combined configuration parameters containing schoolId and classroomId.
- * @returns Form state, submission handlers, and option search states.
+ * Form hook providing submit handlers and state for classroom update operations.
+ * @param params - Configuration object including schoolId, classroomId, and mutation settings.
+ * @returns Form properties and search options for classroom updates.
  */
 export function useUpdateClassroomForm({
   schoolId,
   classroomId,
   ...config
 }: UpdateClassroomConfig) {
-  const mutation = useUpdateClassroom();
   const base = useBaseClassroomForm(schoolId);
-
-  const adaptData = useCallback(
-    ({ data, id }: QueryUpdatePayload<ClassroomUpdate>) => ({
-      id: id ?? classroomId ?? "",
-      data,
-    }),
-    [classroomId],
-  );
-
-  const formNotify = useFormBaseNotify<
-    QueryUpdatePayload<ClassroomUpdate>,
-    { id: string; data: ClassroomUpdate },
-    ClassroomUpdate
-  >({
-    mutation,
+  const formProps = useFormBaseUpdate<ClassroomUpdate>({
+    id: classroomId,
     config,
-    getNotifications: () => UPDATE_CLASSROOM_NOTIFICATIONS,
-    adaptData,
+    notification: UPDATE_CLASSROOM_NOTIFICATIONS,
+    useUpdate: useUpdateClassroom,
   });
 
   return {
-    ...formNotify,
+    ...formProps,
     ...base,
   };
 }
 
 /**
- * Hook for executing classroom deletion operations.
- * @param config - Optional base mutation configuration settings.
- * @returns Object containing deletion trigger and pending state indicator.
+ * Hook managing the deletion workflow for a specific classroom record.
+ * @param config - Optional mutation configuration.
+ * @returns Object providing the deletion trigger and pending state.
  */
 export function useDeleteClassroomForm(config?: BaseMutationConfig<void>) {
-  const { notifyAndInvalidate } = useFormBase<void>(config);
-  const mutation = useDeleteClassroom();
-
-  const deleteClassroom = useCallback(
-    async (classId: string, identifier?: string) => {
-      return mutation.mutateAsync(
-        classId,
-        withNotifications({
-          notifications: getDeleteClassroomNotifications(identifier),
-          onSuccess: () => {
-            notifyAndInvalidate();
-          },
-        }),
-      );
-    },
-    [mutation, notifyAndInvalidate],
-  );
-
-  return {
-    isDeleting: mutation.isPending,
-    deleteClassroom,
-    onDelete: deleteClassroom,
-  };
+  return useFormBaseDelete({
+    useDelete: useDeleteClassroom,
+    config,
+    getNotifications: getDeleteClassroomNotifications,
+  });
 }
