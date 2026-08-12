@@ -29,12 +29,12 @@ jobs:
         id: semantic
         uses: cycjimmy/semantic-release-action@v4
         env:
-          # On utilise le token natif de GitHub Actions
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Trigger Build Workflow
         if: steps.semantic.outputs.new_release_published == 'true'
-        # Le secret réside ici : on utilise --ref pour cibler directement le tag créé
-        run: gh workflow run build.yml --ref "${{ steps.semantic.outputs.new_release_git_tag }}"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: build.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          inputs: '{ "tag": "${{ steps.semantic.outputs.new_release_version }}" }'
