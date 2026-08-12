@@ -12,11 +12,17 @@ jobs:
       issues: write
       pull-requests: write
       actions: write
+
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
+
       - uses: actions/setup-node@v4
-        with: { node-version: "lts/*", cache: "yarn" }
+        with:
+          node-version: "lts/*"
+          cache: "yarn"
+
       - run: yarn install --frozen-lockfile
 
       - name: Execute Semantic Release
@@ -25,10 +31,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Déclenchement du build avec la CLI native `gh` et le tag complet (ex: v1.9.0)
       - name: Trigger Build Workflow
         if: steps.semantic.outputs.new_release_published == 'true'
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: build.yml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          inputs: '{ "tag": "${{ steps.semantic.outputs.new_release_version }}" }'
+        run: gh workflow run build.yml -f tag="${{ steps.semantic.outputs.new_release_git_tag }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

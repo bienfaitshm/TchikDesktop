@@ -1,6 +1,5 @@
 productName: Tchik
 appId: com.bienfaitshm.tchik
-publisherName: Bienfait Shomari
 
 directories:
   buildResources: build
