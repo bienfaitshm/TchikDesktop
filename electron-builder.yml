@@ -38,7 +38,6 @@ asarUnpack:
 win:
   executableName: Tchik
   icon: build/icon.ico
-  publisherName: Bienfait Shomari
   target:
     - target: msi        # Installateur MSI Offline (Déploiement Entreprise/École)
       arch: [x64]
@@ -49,9 +48,7 @@ win:
 
 # 1. Format MSI (Windows Offline MSI)
 msi:
-  oneClick: false
   perMachine: true
-  runAfterFinish: false
   artifactName: ${productName}_Installer_Windows_${version}.${ext}
 
 # 2. Format NSIS (Windows Offline EXE)
@@ -103,7 +100,7 @@ linux:
     - target: deb
   maintainer: Bienfait Shomari <bienfaitshm@google.com>
   category: Education
-  icon: build/
+  icon: build/icon.png
   description: "Gestionnaire Tchik pour l'éducation"
   desktop:
     entry:
