@@ -29,11 +29,5 @@ jobs:
         id: semantic
         uses: cycjimmy/semantic-release-action@v4
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Déclenchement du build avec la CLI native `gh` et le tag complet (ex: v1.9.0)
-      - name: Trigger Build Workflow
-        if: steps.semantic.outputs.new_release_published == 'true'
-        run: gh workflow run build.yml -f tag="${{ steps.semantic.outputs.new_release_git_tag }}"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Utilisation du PAT pour permettre le trigger automatique du build
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
