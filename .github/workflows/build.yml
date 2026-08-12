@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to build (ex: v1.0.0)"
+        description: "Tag to build (ex: v1.9.0-beta.24 ou 1.9.0-beta.24)"
         required: true
   push:
     tags: ["v*"]
@@ -22,18 +22,21 @@ jobs:
         os: [ubuntu-latest, windows-latest]
 
     steps:
+      # 1. Checkout intelligent qui gère avec ou sans 'v'
       - name: Checkout Source Tree
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
+          ref: ${{ inputs.tag && (startsWith(inputs.tag, 'v') && inputs.tag || format('v{0}', inputs.tag)) || github.ref }}
           fetch-depth: 0
 
+      # 2. Configuration Node.js
       - name: Initialize Node.js Runtime
         uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
           cache: "yarn"
 
+      # 3. Cache multiplateforme
       - name: Cache electron-builder binaries
         uses: actions/cache@v4
         with:
@@ -42,20 +45,21 @@ jobs:
             ${{ env.LOCALAPPDATA }}\electron-builder\Cache
           key: ${{ runner.os }}-electron-builder-${{ hashFiles('**/package.json') }}
 
+      # 4. Installation des dépendances
       - name: Install Project Dependencies
         run: yarn install --frozen-lockfile
 
+      # 5. Dépendances système Linux
       - name: Install Linux Build Dependencies (Ubuntu only)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libarchive-tools rpm
 
-      # Exécute la compilation et publie tous les formats (EXE, MSI, AppX, DMG, AppImage)
+      # 6. Compilation et Publication
       - name: Build and Publish Application
         run: yarn build:all --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Décommentez et ajoutez ces secrets si vous avez un certificat de signature (Optionnel mais recommandé)
           # CSC_LINK: ${{ secrets.CSC_LINK }}
           # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
