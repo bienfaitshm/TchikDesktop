@@ -9,7 +9,7 @@ import { DataTableColumnHeader } from "@/renderer/components/tables/data-table.c
  * @returns The formatted JSX element displaying the stringified value or 'N/A'.
  */
 const renderDefaultCell = (context: CellContext<FeeTypeDTO, unknown>) => (
-  <TypographySmall className="text-sm">
+  <TypographySmall className="text-xs">
     {String(context.getValue() ?? "N/A")}
   </TypographySmall>
 );
@@ -36,7 +36,7 @@ export const feeTypeColumns: ColumnDef<FeeTypeDTO>[] = [
     ),
     cell: ({ row: { original } }) => {
       return (
-        <TypographySmall className="text-sm">
+        <TypographySmall className="text-xs">
           {original.wallet.name}
         </TypographySmall>
       );

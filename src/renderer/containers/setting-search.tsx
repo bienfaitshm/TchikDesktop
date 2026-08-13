@@ -104,14 +104,16 @@ export const SettingsSearchProvider: React.FC<
  * Search input field updating the context query state.
  * @returns A fully styled input bound to the search context.
  */
-export const SettingsSearchInput: React.FC = () => {
+export const SettingsSearchInput: React.FC<{ placeholder?: string }> = ({
+  placeholder = "Rechercher un paramètre...",
+}) => {
   const { onSearch } = useSettingsSearch();
 
   return (
     <div className="relative w-full shrink-0 mt-4 sm:mt-0">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <Input
-        placeholder="Rechercher un paramètre..."
+        placeholder={placeholder}
         onChange={(e) => onSearch(e.target.value)}
         className="pl-9 h-9 w-full bg-background rounded-full"
       />

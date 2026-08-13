@@ -15,7 +15,7 @@ import type {
 import type { Wallet } from "@/packages/@core/data-access/db";
 
 export const walletKeys = {
-  all: ["wallets"] as const,
+  all: ["fin", "wallets"] as const,
   lists: (params?: WalletFilter) =>
     [...walletKeys.all, "list", { params }] as const,
   options: (params?: WalletFilter) =>

@@ -16,7 +16,7 @@ import type { FeeTypeDTO, FeeType } from "@/packages/@core/data-access/db";
 import { FeeTypeSearchParams } from "@/packages/@core/apis/clients/finances.fee-types";
 
 export const feeTypeKeys = {
-  all: ["fee-types"] as const,
+  all: ["fin", "fee-types"] as const,
   lists: (params?: FeeTypeFilter) =>
     [...feeTypeKeys.all, "list", { params }] as const,
   options: (params?: FeeTypeSearchParams) =>
