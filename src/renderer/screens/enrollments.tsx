@@ -93,7 +93,7 @@ export function EnrollmentPage(): React.JSX.Element {
         </PageHeaderTextContent>
       </PageHeader>
 
-      <PageContent>
+      <PageContent className="pt-5">
         <InvoiGridContainer>
           <InvoiGridFormContainer>
             {isConfigReady ? (
