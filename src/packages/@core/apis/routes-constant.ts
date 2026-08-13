@@ -17,6 +17,7 @@ export const TutorRoutes = {
   DETAIL: "tutors/:tutorId",
   SEARCH: "tutors/search",
   BULK: "tutors/bulk",
+  QUICK: "tutors/quick",
 } as const;
 
 /**

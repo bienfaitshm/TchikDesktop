@@ -16,7 +16,9 @@ import {
   TutorSchema,
   TutorFilterSchema,
   TutorCreateSchema,
+  TutorQuickInputSchema,
   TutorUpdateSchema,
+  type TutorQuickInput,
   type TutorFilter,
   type TutorCreate,
   type TutorUpdate,
@@ -87,6 +89,15 @@ export class TutorController {
   })
   static async create(req: IpcRequest<TutorCreate>): Promise<TutorDTO> {
     return TutorController.repository.create(req.body);
+  }
+
+  @IpcServer.register(HttpMethod.POST, TutorRoutes.QUICK, {
+    body: TutorQuickInputSchema,
+  })
+  static async createTutor(
+    req: IpcRequest<TutorQuickInput>,
+  ): Promise<TutorDTO> {
+    return TutorController.service.createTutor(req.body);
   }
 
   /**
