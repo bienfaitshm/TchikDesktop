@@ -24,10 +24,18 @@ import {
   foreignKeyIdNoNull,
 } from "../drizzle-fields";
 
+/**
+ * Utility type deriving an update payload type by excluding primary keys and immutable timestamps.
+ * @template T - Base entity model type.
+ * @template PK - Primary key property name to omit.
+ */
 type AsUpdatePayload<T, PK extends keyof T> = Partial<
   Omit<T, PK | "createdAt" | "updatedAt">
 >;
 
+/**
+ * Schools database table schema definition.
+ */
 export const schools = sqliteTable("schools", {
   schoolId: primaryKeyId("school_id"),
   name: text("name").notNull(),
@@ -42,6 +50,9 @@ export type School = InferSelectModel<TableSchool>;
 export type InsertSchool = InferInsertModel<TableSchool>;
 export type UpdateSchool = AsUpdatePayload<InsertSchool, "schoolId">;
 
+/**
+ * Reusable column mixin adding a non-null school foreign key constraint with cascade deletion.
+ */
 export const withSchoolId = {
   schoolId: foreignKeyIdNoNull("school_id", {
     ref: () => schools.schoolId,
@@ -49,6 +60,9 @@ export const withSchoolId = {
   }),
 };
 
+/**
+ * Users database table schema definition with search indexes.
+ */
 export const users = sqliteTable(
   "users",
   {
@@ -86,6 +100,34 @@ export type User = InferSelectModel<TableUser>;
 export type InsertUser = InferInsertModel<TableUser>;
 export type UpdateUser = AsUpdatePayload<InsertUser, "userId">;
 
+/**
+ * Tutors database table schema definition with school scope and lookup indexes.
+ */
+export const tutors = sqliteTable(
+  "tutors",
+  {
+    tutorId: primaryKeyId("tutor_id"),
+    profession: text("profession"),
+    address: text("address"),
+    phoneNumber: text("phone_number"),
+    ...withSchoolId,
+    ...timestamps,
+  },
+  (table) => [
+    index("tutors_school_idx").on(table.schoolId),
+    index("tutors_phone_number_idx").on(table.phoneNumber),
+    index("tutors_school_phone_idx").on(table.schoolId, table.phoneNumber),
+  ],
+);
+
+export type TableTutor = typeof tutors;
+export type Tutor = InferSelectModel<TableTutor>;
+export type InsertTutor = InferInsertModel<TableTutor>;
+export type UpdateTutor = AsUpdatePayload<InsertTutor, "tutorId">;
+
+/**
+ * Academic options database table schema definition.
+ */
 export const options = sqliteTable(
   "options",
   {
@@ -106,6 +148,9 @@ export type Option = InferSelectModel<TableOption>;
 export type InsertOption = InferInsertModel<TableOption>;
 export type UpdateOption = AsUpdatePayload<InsertOption, "optionId">;
 
+/**
+ * Study years database table schema definition.
+ */
 export const studyYears = sqliteTable("study_years", {
   yearId: primaryKeyId("year_id"),
   yearName: text("year_name").notNull(),
@@ -119,6 +164,9 @@ export type StudyYear = InferSelectModel<TableStudyYear>;
 export type InsertStudyYear = InferInsertModel<TableStudyYear>;
 export type UpdateStudyYear = AsUpdatePayload<InsertStudyYear, "yearId">;
 
+/**
+ * Classrooms database table schema definition.
+ */
 export const classrooms = sqliteTable(
   "classrooms",
   {
@@ -134,11 +182,11 @@ export const classrooms = sqliteTable(
   },
   (table) => [
     index("classrooms_school_idx").on(table.schoolId),
-    index("classrooms_school_indentifier_idx").on(
+    index("classrooms_school_identifier_idx").on(
       table.schoolId,
       table.identifier,
     ),
-    index("classrooms_school_short_indentifier_idx").on(
+    index("classrooms_school_short_identifier_idx").on(
       table.schoolId,
       table.shortIdentifier,
     ),
@@ -150,6 +198,9 @@ export type Classroom = InferSelectModel<TableClassroom>;
 export type InsertClassroom = InferInsertModel<TableClassroom>;
 export type UpdateClassroom = AsUpdatePayload<InsertClassroom, "classId">;
 
+/**
+ * Reusable column mixin combining school and academic year foreign key constraints.
+ */
 export const withYearAndSchoolIds = {
   ...withSchoolId,
   yearId: foreignKeyIdNoNull("year_id", {
@@ -158,6 +209,9 @@ export const withYearAndSchoolIds = {
   }),
 };
 
+/**
+ * Classroom enrollments database table schema definition with foreign keys and unique constraints.
+ */
 export const classroomEnrollments = sqliteTable(
   "classroom_enrollments",
   {
@@ -177,6 +231,9 @@ export const classroomEnrollments = sqliteTable(
     studentId: text("student_id")
       .notNull()
       .references(() => users.userId, { onDelete: "cascade" }),
+    tutorId: text("tutor_id").references(() => tutors.tutorId, {
+      onDelete: "set null",
+    }),
     ...withYearAndSchoolIds,
     ...timestamps,
   },
@@ -184,6 +241,8 @@ export const classroomEnrollments = sqliteTable(
     index("enrollments_school_idx").on(table.schoolId),
     index("enrollments_classroom_idx").on(table.classroomId),
     index("enrollments_student_idx").on(table.studentId),
+    index("enrollments_tutor_idx").on(table.tutorId),
+    index("enrollments_year_idx").on(table.yearId),
     uniqueIndex("student_year_unique_idx").on(table.studentId, table.yearId),
   ],
 );
