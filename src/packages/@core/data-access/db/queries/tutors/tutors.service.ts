@@ -13,7 +13,7 @@ import {
 } from "@/packages/@core/data-access/db/schemas";
 import { db } from "@/packages/@core/data-access/db/config";
 import { USER_ROLE_ENUM } from "@/packages/@core/data-access/db/options";
-import { UserRepository } from "../users";
+import { userRepository, UserRepository } from "../users";
 
 /**
  * Composite input type required to create a user account and an associated tutor profile.
@@ -101,3 +101,6 @@ export class TutorService {
     });
   }
 }
+
+export const tutorRepository = new TutorRepository();
+export const tutorService = new TutorService(tutorRepository, userRepository);

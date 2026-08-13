@@ -12,6 +12,13 @@ export const UserRoutes = {
   BULK: "users/bulk",
 } as const;
 
+export const TutorRoutes = {
+  ALL: "tutors",
+  DETAIL: "tutors/:tutorId",
+  SEARCH: "tutors/search",
+  BULK: "tutors/bulk",
+} as const;
+
 /**
  * Routes IPC pour la gestion des OPTIONS.
  * Utilisées pour les choix et configurations simples.
@@ -254,6 +261,7 @@ export const IpcRoutes = {
   STATS: StatsRoutes,
   APP_INFOS: AppInfosRoutes,
   USERS: UserRoutes,
+  TUTORS: TutorRoutes,
   LOCAL_ROOMS: LocalRoomRoutes,
   SEATING_SESSIONS: SeatingSessionRoutes,
   SEATING_ASSIGNMENTS: SeatingAssignmentRoutes,

@@ -4,6 +4,7 @@ export * from "./options";
 export * from "./schools";
 export * from "./dashboard";
 export * from "./users";
+export * from "./tutors";
 export * from "./seatings";
 export * from "./reports";
 export * from "./select-option.transformer";
