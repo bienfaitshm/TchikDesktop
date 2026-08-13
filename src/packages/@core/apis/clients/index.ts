@@ -1,4 +1,5 @@
 export * from "./user";
+export * from "./tutor";
 export * from "./classrooms";
 export * from "./enrollments";
 export * from "./options";
