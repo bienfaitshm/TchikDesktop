@@ -9,7 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/renderer/components/ui/dialog";
+  DialogContainer,
+} from "./base";
 import { LoadingButton } from "@/renderer/components/buttons/button-loading";
 
 type DialogChildrenRenderProps = {
@@ -21,8 +22,7 @@ export interface DialogFormProps {
   title: string;
   description?: string;
   children?:
-    | React.ReactNode
-    | ((props: DialogChildrenRenderProps) => React.ReactNode);
+    React.ReactNode | ((props: DialogChildrenRenderProps) => React.ReactNode);
   formId?: string;
   isLoading?: boolean;
   submitText?: string;
@@ -78,7 +78,6 @@ export const DialogForm: React.FC<DialogFormProps> = ({
     <Dialog modal={true} open={open} onOpenChange={handleOpenChange}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent
-        className="sm:max-w-lg md:max-w-2xl lg:max-w-4xl flex flex-col max-h-[85vh]"
         onPointerDownOutside={handleContentInteract}
         onEscapeKeyDown={handleContentInteract}
       >
@@ -87,11 +86,11 @@ export const DialogForm: React.FC<DialogFormProps> = ({
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
 
-        <div className="-mx-4 my-2 overflow-y-auto border-t border-border/60 px-4 py-4 max-h-[60vh] scrollbar-thin scrollbar-thumb-muted-foreground/20">
+        <DialogContainer>
           {typeof children === "function"
             ? children({ onClose: handleClose })
             : children}
-        </div>
+        </DialogContainer>
 
         <DialogFooter>
           <DialogClose asChild>
