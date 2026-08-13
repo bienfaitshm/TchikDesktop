@@ -6,6 +6,7 @@ import * as apis from "@/packages/@core/apis/clients";
  */
 const API_REGISTRY = {
   users: apis.createUserApis,
+  tutors: apis.createTutorApis,
   classroom: apis.createClassroomApis,
   enrollment: apis.createEnrollmentApis,
   option: apis.createOptionApis,
@@ -104,6 +105,7 @@ export const {
   stats,
   appInfos,
   users,
+  tutors,
   seating,
   wallet,
   feeType,

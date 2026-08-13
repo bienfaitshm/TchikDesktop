@@ -47,6 +47,7 @@ export type UserFilter = z.infer<typeof UserFilterSchema>;
  */
 export const TutorFilterSchema = withQueryOptions({
   tutors: TutorSchema,
+  users: UserSchema,
 });
 
 export type TutorFilter = z.infer<typeof TutorFilterSchema>;
