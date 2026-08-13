@@ -13,8 +13,9 @@ export const SECTION_ENUM_TRANSLATIONS: Record<SECTION_ENUM, string> = {
 export enum USER_ROLE_ENUM {
   STAFF = "STAFF",
   PROMOTER = "PROMOTER",
-  ADMIN = "ADMIN", // Standardisé : Clé === Valeur
+  ADMIN = "ADMIN",
   STUDENT = "STUDENT",
+  TUTOR = "TUTOR",
 }
 
 export const USER_ROLE_ENUM_TRANSLATIONS: Record<USER_ROLE_ENUM, string> = {
@@ -22,6 +23,7 @@ export const USER_ROLE_ENUM_TRANSLATIONS: Record<USER_ROLE_ENUM, string> = {
   [USER_ROLE_ENUM.PROMOTER]: "Promoteur",
   [USER_ROLE_ENUM.ADMIN]: "Administrateur",
   [USER_ROLE_ENUM.STUDENT]: "Élève",
+  [USER_ROLE_ENUM.TUTOR]: "Tuteur",
 };
 
 export enum USER_GENDER_ENUM {
