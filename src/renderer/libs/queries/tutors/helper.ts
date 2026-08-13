@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useGenericSearchOptions } from "../base";
 import { useGetTutorsAsOptions as useFetchTutors } from "./tutors";
 import type { TutorFilter } from "@/packages/@core/data-access/schema-validations";
+import { USER_ROLE_ENUM } from "@/packages/@core/data-access/db/options";
 
 /**
  * Parameters required to scope the tutor search context.
@@ -31,6 +32,9 @@ export function buildTutorSearchQuery(
     where: {
       tutors: {
         schoolId,
+      },
+      users: {
+        role: USER_ROLE_ENUM.TUTOR,
       },
     },
     orderBy: [

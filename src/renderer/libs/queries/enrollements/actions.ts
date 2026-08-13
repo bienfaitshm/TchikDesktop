@@ -1,255 +1,188 @@
-import { useCallback, useMemo } from "react";
-import type { FieldValues } from "react-hook-form";
-import type {
-  ClassroomFilter,
-  Enrollment,
-  EnrollmentCreate,
-  EnrollmentQuickCreate,
-  EnrollmentUpdate,
-  UserFilter,
-} from "@/packages/@core/data-access/schema-validations";
-import { withNotifications } from "@/renderer/libs/notifications";
 import { useSearchClassrooms } from "../classrooms";
-import { useSearchUsers } from "../users";
+import { useSearchStudents } from "../users";
 import type {
   BaseMutationConfig,
-  QueryUpdatePayload,
-  UseBaseParams,
+  NotificationConfig,
+  NotificationResolver,
 } from "../base";
-import { useFormBase, useFormBaseNotify } from "../base";
 import {
   useCreateEnrollment,
   useCreateQuickEnrollment,
   useDeleteEnrollment,
   useUpdateEnrollment,
 } from "./enrollments";
+import {
+  useFormBaseDelete,
+  useFormBaseCreate,
+  useFormBaseUpdate,
+} from "../base";
+import { useSearchTutors } from "../tutors/helper";
+import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
 
-export type EnrollmentFormConfig = BaseMutationConfig<Enrollment>;
-
+/**
+ * Contextual parameters required for enrollment form operations.
+ */
 export interface EnrollmentFormContext {
+  /** Unique identifier of the target school. */
   schoolId: string;
+  /** Unique identifier of the target academic year. */
   yearId: string;
 }
 
-const CREATE_ENROLLMENT_NOTIFICATIONS = {
+/** Default notification messages for enrollment creation operations. */
+const CREATE_ENROLLMENT_NOTIFICATIONS: NotificationConfig = {
   success: {
     title: "Enrôlement effectué",
     description: "Le nouvel enrôlement a été enregistré.",
   },
   error: {
-    title: "Échec de l'enrôlement.",
+    title: "Échec de l'enrôlement",
+    description: "Impossible d'enregistrer le nouvel enrôlement.",
   },
 };
 
-const UPDATE_ENROLLMENT_NOTIFICATIONS = {
+/** Default notification messages for enrollment update operations. */
+const UPDATE_ENROLLMENT_NOTIFICATIONS: NotificationConfig = {
   success: {
     title: "Mise à jour réussie",
     description: "Les informations de l'enrôlement ont été modifiées.",
   },
   error: {
-    title: "Échec de la mise à jour.",
+    title: "Échec de la mise à jour",
+    description: "Impossible de modifier les informations de l'enrôlement.",
   },
 };
 
 /**
- * Builds deletion notifications for enrollment cancellations.
- * @param studentName - Optional student name to display in the notification body.
- * @returns Notification object for enrollment deletion.
+ * Generates notification configurations for enrollment deletion actions.
+ * @param studentName - Optional student full name to display in notification.
+ * @returns Notification configuration object with success and error details.
  */
-const getDeleteEnrollmentNotifications = (studentName?: string) => ({
+const getDeleteEnrollmentNotifications = (
+  studentName?: string,
+): NotificationConfig => ({
   success: {
     title: "Enrôlement annulé",
     description: studentName
       ? `L'enrôlement de ${studentName} a été supprimé.`
       : "L'enrôlement a été supprimé.",
   },
+  error: {
+    title: "Erreur d'annulation",
+    description: "Impossible d'annuler cet enrôlement.",
+  },
 });
 
 /**
- * Computes query filters for user and classroom searches.
- * @param context - Optional context parameters containing school and year IDs.
- * @returns Object containing userFilters and classroomFilters.
+ * Builds dynamic notification configurations for quick enrollment operations.
+ * @param data - Quick enrollment payload containing student identity details.
+ * @returns Formatted notification configuration object.
  */
-function getEnrollmentSearchFilters(context?: Partial<EnrollmentFormContext>): {
-  userFilters: UserFilter;
-  classroomFilters: ClassroomFilter;
-} {
-  const schoolId = context?.schoolId ?? "";
+const getQuickEnrollmentNotifications: NotificationResolver<EnrollmentDTO> = (
+  data,
+) => {
+  const studentName = [data?.student?.firstName, data?.student?.lastName]
+    .filter(Boolean)
+    .join(" ");
+
   return {
-    userFilters: { where: { users: { schoolId: { $eq: schoolId } } } },
-    classroomFilters: {
-      where: { classrooms: { schoolId: { $eq: schoolId } } },
+    success: {
+      title: "Inscription réussie !",
+      description: studentName
+        ? `L'élève ${studentName} a été inscrit avec succès.`
+        : "L'élève a été inscrit avec succès.",
+    },
+    error: {
+      title: "Erreur d'inscription rapide",
+      description: "Impossible de procéder à l'inscription rapide de l'élève.",
     },
   };
-}
-
-export interface UseEnrollmentFormBaseParams<
-  TFormData extends FieldValues,
-  TMutateInput,
-  TReturnData = unknown,
-> extends UseBaseParams<TFormData, TMutateInput, TReturnData> {
-  context?: Partial<EnrollmentFormContext>;
-}
+};
 
 /**
- * Internal base hook encapsulating user/classroom search option hooks and form mutation bindings.
- * @template TFormData - The form input field values structure.
- * @template TMutateInput - The variable structure required by the mutation.
- * @template TReturnData - The response data type returned by the mutation.
- * @param params - Parameters object containing context, mutation, adapters, and notifications.
- * @returns Object exposing formId, onSubmit, submission status, and search option states.
+ * Internal helper hook initializing search dependencies for enrollment forms.
+ * @param schoolId - Unique identifier of the school context.
+ * @returns Object containing user, classroom, and tutor search hook instances.
  */
-function useEnrollmentFormBase<
-  TFormData extends FieldValues,
-  TMutateInput,
-  TReturnData = unknown,
->({
-  context,
-  ...params
-}: UseEnrollmentFormBaseParams<TFormData, TMutateInput, TReturnData>) {
-  const { userFilters, classroomFilters } = useMemo(
-    () => getEnrollmentSearchFilters(context),
-    [context?.schoolId, context?.yearId],
-  );
-
-  const searchUser = useSearchUsers({ filters: userFilters });
-  const searchClassroom = useSearchClassrooms({ filters: classroomFilters });
-
-  const formNotify = useFormBaseNotify<TFormData, TMutateInput, TReturnData>(
-    params,
-  );
+function useEnrollmentFormBase(schoolId: string) {
+  const searchUser = useSearchStudents();
+  const searchClassroom = useSearchClassrooms({ schoolId });
+  const searchTutor = useSearchTutors({ schoolId });
 
   return {
-    ...formNotify,
     searchUser,
     searchClassroom,
+    searchTutor,
   };
 }
 
 /**
  * Form hook managing quick student enrollment creation operations.
- * @param config - Optional base mutation configuration settings.
- * @param context - Context parameters containing schoolId and yearId.
- * @returns Form handlers, submission states, and user/classroom search instances.
+ * @param options - Combined school context and mutation options for quick creation.
+ * @returns Form state handlers, submission logic, and context search instances.
  */
-export function useCreateQuickEnrollmentForm(
-  config?: BaseMutationConfig<Enrollment>,
-  context?: Partial<EnrollmentFormContext>,
-) {
-  const mutation = useCreateQuickEnrollment();
-
-  const adaptData = useCallback((data: EnrollmentQuickCreate) => data, []);
-
-  const getNotifications = useCallback((data: EnrollmentQuickCreate) => {
-    const studentName = [data?.student?.firstName, data?.student?.lastName]
-      .filter(Boolean)
-      .join(" ");
-    return {
-      success: {
-        title: "Inscription réussie !",
-        description: studentName
-          ? `L'élève ${studentName} a été inscrit avec succès.`
-          : "L'élève a été inscrit avec succès.",
-      },
-      error: {
-        title: "Erreur d'inscription rapide.",
-      },
-    };
-  }, []);
-
-  return useEnrollmentFormBase<
-    EnrollmentQuickCreate,
-    EnrollmentQuickCreate,
-    Enrollment
-  >({
-    mutation,
+export function useCreateQuickEnrollmentForm({
+  schoolId,
+  ...config
+}: EnrollmentFormContext & BaseMutationConfig<EnrollmentDTO>) {
+  const form = useFormBaseCreate({
+    useCreate: useCreateQuickEnrollment,
     config,
-    context,
-    getNotifications,
-    adaptData,
+    notification: getQuickEnrollmentNotifications,
   });
+
+  const search = useEnrollmentFormBase(schoolId);
+
+  return { ...form, ...search };
 }
 
 /**
  * Form hook managing standard student enrollment creation operations.
- * @param config - Optional base mutation configuration settings.
- * @param context - Context parameters containing schoolId and yearId.
- * @returns Form handlers, submission states, and user/classroom search instances.
+ * @param options - Combined school context and mutation options for standard creation.
+ * @returns Form state handlers, submission logic, and context search instances.
  */
-export function useCreateEnrollmentForm(
-  config?: BaseMutationConfig<Enrollment>,
-  context?: Partial<EnrollmentFormContext>,
-) {
-  const mutation = useCreateEnrollment();
-
-  const adaptData = useCallback((data: EnrollmentCreate) => data, []);
-
-  return useEnrollmentFormBase<EnrollmentCreate, EnrollmentCreate, Enrollment>({
-    mutation,
+export function useCreateEnrollmentForm({
+  schoolId,
+  ...config
+}: EnrollmentFormContext & BaseMutationConfig<EnrollmentDTO>) {
+  const form = useFormBaseCreate({
+    useCreate: useCreateEnrollment,
     config,
-    context,
-    getNotifications: () => CREATE_ENROLLMENT_NOTIFICATIONS,
-    adaptData,
+    notification: CREATE_ENROLLMENT_NOTIFICATIONS,
   });
+
+  const search = useEnrollmentFormBase(schoolId);
+  return { ...form, ...search };
 }
 
 /**
  * Form hook managing student enrollment update operations.
- * @param config - Optional base mutation configuration settings.
- * @param context - Context parameters containing schoolId and yearId.
- * @returns Form handlers, submission states, and user/classroom search instances.
+ * @param options - Combined school context and mutation options for updates.
+ * @returns Form state handlers, submission logic, and context search instances.
  */
-export function useUpdateEnrollmentForm(
-  config?: BaseMutationConfig<EnrollmentUpdate>,
-  context?: Partial<EnrollmentFormContext>,
-) {
-  const mutation = useUpdateEnrollment();
-
-  const adaptData = useCallback(
-    ({ data, id }: QueryUpdatePayload<EnrollmentUpdate>) => ({ data, id }),
-    [],
-  );
-
-  return useEnrollmentFormBase<
-    QueryUpdatePayload<EnrollmentUpdate>,
-    { data: EnrollmentUpdate; id: string },
-    EnrollmentUpdate
-  >({
-    mutation,
+export function useUpdateEnrollmentForm({
+  schoolId,
+  ...config
+}: EnrollmentFormContext & BaseMutationConfig<EnrollmentDTO>) {
+  const form = useFormBaseUpdate({
+    useUpdate: useUpdateEnrollment,
     config,
-    context,
-    getNotifications: () => UPDATE_ENROLLMENT_NOTIFICATIONS,
-    adaptData,
+    notification: UPDATE_ENROLLMENT_NOTIFICATIONS,
   });
+
+  const search = useEnrollmentFormBase(schoolId);
+  return { ...form, ...search };
 }
 
 /**
- * Hook for executing enrollment deletion operations.
- * @param config - Optional base mutation configuration settings.
- * @returns Object containing deleteEnrollment callback and pending state indicator.
+ * Hook managing enrollment deletion operations and pending states.
+ * @param config - Optional mutation configuration settings for deletion.
+ * @returns Object containing deletion trigger callback and pending state.
  */
 export function useDeleteEnrollmentForm(config?: BaseMutationConfig<void>) {
-  const { notifyAndInvalidate } = useFormBase<void>(config);
-  const mutation = useDeleteEnrollment();
-
-  const deleteEnrollment = useCallback(
-    (enrollmentId: string, studentName?: string) => {
-      mutation.mutate(
-        enrollmentId,
-        withNotifications({
-          notifications: getDeleteEnrollmentNotifications(studentName),
-          onSuccess: () => {
-            notifyAndInvalidate();
-          },
-        }),
-      );
-    },
-    [mutation, notifyAndInvalidate],
-  );
-
-  return {
-    deleteEnrollment,
-    isDeleting: mutation.isPending,
-    onDelete: deleteEnrollment,
-  };
+  return useFormBaseDelete({
+    config,
+    useDelete: useDeleteEnrollment,
+    getNotifications: getDeleteEnrollmentNotifications,
+  });
 }

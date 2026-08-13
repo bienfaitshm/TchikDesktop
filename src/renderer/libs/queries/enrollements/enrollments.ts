@@ -1,7 +1,6 @@
 import { useMutation, useSuspenseQuery } from "../base/query";
 import { useQuery } from "@tanstack/react-query";
 import {
-  type Enrollment,
   type EnrollmentCreate,
   type EnrollmentQuickCreate,
   type EnrollmentUpdate,
@@ -67,7 +66,7 @@ export function useSearchEnrollments(
 
 export function useGetEnrollmentById(
   enrollmentId: string,
-  options?: Partial<UseSuspenseQueryOptions<Enrollment>>,
+  options?: Partial<UseSuspenseQueryOptions<EnrollmentDTO>>,
 ) {
   return useSuspenseQuery({
     queryKey: enrollmentKeys.detail(enrollmentId),
@@ -81,7 +80,7 @@ export function useGetEnrollmentById(
  */
 
 export function useCreateEnrollment(
-  options?: Partial<UseMutationOptions<Enrollment, Error, EnrollmentCreate>>,
+  options?: Partial<UseMutationOptions<EnrollmentDTO, Error, EnrollmentCreate>>,
 ) {
   return useMutation({
     mutationKey: enrollmentKeys.mutations.create(),
@@ -93,7 +92,7 @@ export function useCreateEnrollment(
 
 export function useCreateQuickEnrollment(
   options?: Partial<
-    UseMutationOptions<Enrollment, Error, EnrollmentQuickCreate>
+    UseMutationOptions<EnrollmentDTO, Error, EnrollmentQuickCreate>
   >,
 ) {
   return useMutation({
@@ -106,7 +105,11 @@ export function useCreateQuickEnrollment(
 
 export function useUpdateEnrollment(
   options?: Partial<
-    UseMutationOptions<Enrollment, Error, QueryUpdatePayload<EnrollmentUpdate>>
+    UseMutationOptions<
+      EnrollmentDTO,
+      Error,
+      QueryUpdatePayload<EnrollmentUpdate>
+    >
   >,
 ) {
   return useMutation({
