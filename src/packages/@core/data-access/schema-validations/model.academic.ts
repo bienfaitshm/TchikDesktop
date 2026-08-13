@@ -340,12 +340,10 @@ export type EnrollmentActionCreate = z.infer<
 >;
 
 /* =========================================================================
-   QUICK ENROLLMENT & BASE SCHEMAS
+   BASE SCHEMAS
    ========================================================================= */
 
-/**
- * Base schema representing core personal identity attributes without security or context fields.
- */
+// Assurez-vous que UserCreateSchema est un z.object direct
 export const BasePersonSchema = UserCreateSchema.omit({
   schoolId: true,
   role: true,
@@ -353,70 +351,71 @@ export const BasePersonSchema = UserCreateSchema.omit({
 });
 export type BasePerson = z.infer<typeof BasePersonSchema>;
 
-/**
- * Schema for creating a student during quick enrollment workflows.
- */
 export const BaseStudentSchema = BasePersonSchema;
 export type BaseStudent = z.infer<typeof BaseStudentSchema>;
 
-/**
- * Schema for creating a tutor during quick enrollment workflows, combining tutor and personal identity details.
- */
 export const BaseTutorSchema = TutorCreateSchema.omit({
   schoolId: true,
-}).extend(BasePersonSchema.shape);
+}).merge(BasePersonSchema); // .merge() est souvent plus propre que .extend(shape)
+
 export type BaseTutor = z.infer<typeof BaseTutorSchema>;
 
-const BaseEnrollmentSchemaWithoutStudent = EnrollmentCreateSchema.omit({
+/* =========================================================================
+   SUB-UNIONS (STUDENT & TUTOR)
+   ========================================================================= */
+
+// 1. Gestion Élève (Discriminated Union propre)
+const ExistingStudentSchema = z.object({
+  isInSystem: z.literal(true),
+  studentId: z.string().min(1, "Student ID is required."),
+});
+
+const NewStudentSchema = z.object({
+  isInSystem: z.literal(false),
+  student: BaseStudentSchema,
+});
+
+export const StudentInputSchema = z.discriminatedUnion("isInSystem", [
+  ExistingStudentSchema,
+  NewStudentSchema,
+]);
+
+// 2. Gestion Tuteur (Discriminated Union propre + Cas Optionnel)
+const ExistingTutorSchema = z.object({
+  isTutorInSystem: z.literal(true),
+  tutorId: z.string().min(1, "Tutor ID is required."),
+});
+
+const NewTutorSchema = z.object({
+  isTutorInSystem: z.literal(false),
+  tutor: BaseTutorSchema,
+});
+
+// const NoTutorSchema = z.object({
+//   isTutorInSystem: z.literal(null).optional(),
+// });
+
+export const TutorQuickInputSchema = z.discriminatedUnion("isTutorInSystem", [
+  ExistingTutorSchema,
+  NewTutorSchema,
+  // Astuce : On peut aussi gérer le cas "Pas de tuteur" proprement
+]);
+
+/* =========================================================================
+   ENROLLMENT SCHEMA FINAL
+   ========================================================================= */
+
+const BaseEnrollmentSchema = EnrollmentCreateSchema.omit({
   studentId: true,
   tutorId: true,
 });
 
-/**
- * Discriminated union schema for managing tutor association in quick enrollment workflows.
- */
-export const TutorQuickInputSchema = z.union([
+// Composition propre sans z.intersection toxique
+export const EnrollmentQuickCreateSchema = BaseEnrollmentSchema.and(
   z.object({
-    isTutorInSystem: z.literal(true),
-    tutorId: z.string().min(1, "Tutor ID is required when tutor exists."),
-    tutor: z.preprocess((_) => undefined, z.undefined().optional()),
+    studentData: StudentInputSchema,
+    tutorData: TutorQuickInputSchema.optional(),
   }),
-  z.object({
-    isTutorInSystem: z.literal(false),
-    tutorId: z.preprocess((_) => undefined, z.undefined().optional()),
-    tutor: BaseTutorSchema,
-  }),
-  z.object({
-    isTutorInSystem: z.preprocess((_) => undefined, z.undefined().optional()),
-    tutorId: z.preprocess((_) => undefined, z.undefined().optional()),
-    tutor: z.preprocess((_) => undefined, z.undefined().optional()),
-  }),
-]);
-
-export type TutorQuickInput = z.infer<typeof TutorQuickInputSchema>;
-
-/**
- * Discriminated union schema for quick student enrollment with integrated optional tutor creation.
- */
-export const EnrollmentQuickCreateSchema = z.intersection(
-  TutorQuickInputSchema,
-  z.discriminatedUnion("isInSystem", [
-    // Case A: Existing student in database
-    BaseEnrollmentSchemaWithoutStudent.extend({
-      isInSystem: z.literal(true),
-      studentId: z
-        .string()
-        .min(1, "Student ID is required when student exists."),
-      student: z.preprocess((_) => undefined, z.undefined().optional()),
-    }),
-
-    // Case B: New student to enroll
-    BaseEnrollmentSchemaWithoutStudent.extend({
-      isInSystem: z.literal(false),
-      studentId: z.preprocess((_) => undefined, z.undefined().optional()),
-      student: BaseStudentSchema,
-    }),
-  ]),
 );
 
 export type EnrollmentQuickCreate = z.infer<typeof EnrollmentQuickCreateSchema>;

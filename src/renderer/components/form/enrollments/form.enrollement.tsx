@@ -113,6 +113,7 @@ export const EnrollmentForm: React.FC<
                 </div>
                 <FormControl>
                   <StudentSeniorityStatusSelect
+                    {...field}
                     value={field.value}
                     onChangeValue={field.onChange}
                     disabled={isSubmitting}

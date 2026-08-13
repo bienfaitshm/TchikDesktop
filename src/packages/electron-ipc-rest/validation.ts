@@ -57,7 +57,7 @@ export function wrapSchemaValidation(
     for (const key of keys) {
       const schema = schemas[key];
       if (schema) {
-        safeData[key] = validateSchema(
+        safeData[key as string] = validateSchema(
           schema,
           req[key],
           key as ValidationErrorDetail["location"],

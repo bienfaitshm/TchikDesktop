@@ -326,7 +326,7 @@ export const selectPreviewTicket = (
   }
 
   const lastTicket = tickets[0];
-  if (lastTicket && !lastTicket.isPrinted) {
+  if (lastTicket) {
     return lastTicket;
   }
 

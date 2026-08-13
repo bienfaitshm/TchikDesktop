@@ -1,146 +1,130 @@
-import { UserPlus, History } from "lucide-react";
+"use client";
+
+import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import {
-  Empty,
-  EmptyContent,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/renderer/components/ui/empty";
-import { Button } from "@/renderer/components/ui/button";
+  PageContainer,
+  PageContent,
+  PageHeadTitle,
+  PageHeadDescription,
+  PageHeader,
+  PageHeaderTextContent,
+} from "@/renderer/containers/page-container";
 import {
-  DataTable,
-  DataContentHead,
-  DataTableContent,
-  DataContentBody,
-  DataTablePagination,
-} from "@/renderer/components/tables";
-import { enrollmentHistoryColumns } from "@/renderer/components/tables/columns";
-import { CreateEnrollmentDialog } from "@/renderer/dialog-actions/enrollment.dialog-actions";
-import { useGetEnrollments } from "@/renderer/libs/queries/enrollements";
-import { useSchoolContext } from "@/renderer/hooks/app-config-router";
+  InvoiGridContainer,
+  InvoiGridFormContainer,
+  InvoiGridPreviewContainer,
+} from "@/renderer/containers/invoice-grid-container";
+import {
+  QuickEnrollmentForm,
+  useEnrollmentStore,
+} from "@/components/form/enrollments";
+import { useCreateQuickEnrollmentForm } from "@/renderer/libs/queries/enrollements";
 import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
+import { LoadingButton } from "@/components/buttons/button-loading";
 
-interface SchoolYearProps {
+/**
+ * Properties for the EnrollmentForm component.
+ */
+interface EnrollmentFormProps {
+  /** Unique identifier of the target school. */
   schoolId: string;
+  /** Unique identifier of the target academic year. */
   yearId: string;
-  mutationKey?: readonly unknown[];
+  /** Optional callback invoked when enrollment succeeds. */
+  onSuccess?: (enrollment: EnrollmentDTO) => void;
 }
 
-interface EnrollmentHistoryProps extends SchoolYearProps {
-  enrollments?: EnrollmentDTO[];
+/**
+ * Renders the quick enrollment form with search capabilities and submit controls.
+ * @param props - Form configuration including schoolId, yearId, and success callback.
+ * @returns The rendered quick enrollment form element.
+ */
+export function EnrollmentForm({
+  schoolId,
+  yearId,
+  onSuccess,
+}: EnrollmentFormProps): React.JSX.Element {
+  const form = useCreateQuickEnrollmentForm({ schoolId, yearId, onSuccess });
+
+  return (
+    <div className="space-y-4">
+      <QuickEnrollmentForm
+        formId={form.formId}
+        classrooms={form.searchClassroom}
+        students={form.searchUser}
+        tutors={form.searchTutor}
+        onSubmit={(value) => {
+          console.log("value", value);
+          //   form.onSubmit(value);
+        }}
+        defaultValues={{ yearId, schoolId }}
+      />
+      <LoadingButton
+        loading={form.isSubmiting}
+        form={form.formId}
+        type="submit"
+        className="w-full"
+      >
+        Enregistrer
+      </LoadingButton>
+    </div>
+  );
 }
 
-export const EnrollmentHistory = ({
-  schoolId,
-  yearId,
-  enrollments = [],
-  mutationKey,
-}: EnrollmentHistoryProps) => {
-  return (
-    <div className="w-full">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 mt-10">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">
-            Historique des Inscriptions
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Consultez et gérez l'historique des inscriptions pour l'année
-            scolaire en cours.
-          </p>
-        </div>
+/**
+ * Main enrollment terminal page component orchestrating configuration and layout.
+ * @returns The complete student enrollment terminal interface.
+ */
+export function EnrollmentPage(): React.JSX.Element {
+  const { schoolId = "", yearId = "" } = useCurrentConfig();
+  const addEnrollment = useEnrollmentStore((store) => store.addEnrollment);
 
-        <div className="flex flex-wrap items-center gap-3">
-          <CreateEnrollmentDialog
-            schoolId={schoolId}
-            yearId={yearId}
-            defaultValues={{ schoolId, yearId }}
-            mutationKey={mutationKey}
-          >
-            <Button className="gap-2 shadow-xs">
-              <UserPlus className="h-4 w-4" />
-              <span>Inscription Complète</span>
-            </Button>
-          </CreateEnrollmentDialog>
-        </div>
-      </header>
-
-      <main>
-        <DataTable
-          columns={enrollmentHistoryColumns}
-          data={enrollments}
-          keyExtractor={(row) => `${row.enrollmentId}-${row.student.userId}`}
-        >
-          <DataTableContent>
-            <DataContentHead />
-            <DataContentBody />
-          </DataTableContent>
-          <DataTablePagination />
-        </DataTable>
-      </main>
-    </div>
-  );
-};
-
-export const EmptyEnrollmentHistory = ({
-  schoolId,
-  yearId,
-  mutationKey,
-}: SchoolYearProps) => {
-  return (
-    <div className="h-[50vh] flex justify-center items-centerw-full">
-      <Empty>
-        <EmptyContent>
-          <EmptyHeader>
-            <EmptyMedia>
-              <History className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            </EmptyMedia>
-          </EmptyHeader>
-          <EmptyTitle className="mb-4 text-center">
-            Aucun historique d'inscription trouvé pour cette période.
-          </EmptyTitle>
-          <CreateEnrollmentDialog
-            schoolId={schoolId}
-            yearId={yearId}
-            defaultValues={{ schoolId, yearId }}
-            mutationKey={mutationKey}
-          >
-            <Button className="gap-2 shadow-xs mx-auto">
-              <UserPlus className="h-4 w-4" />
-              <span>Inscrivez votre premier élève de l'année</span>
-            </Button>
-          </CreateEnrollmentDialog>
-        </EmptyContent>
-      </Empty>
-    </div>
-  );
-};
-
-export const EnrollmentPage = () => {
-  const { schoolId, yearId } = useSchoolContext();
-  const { data: enrollments = [], queryKey: mutationKey } = useGetEnrollments({
-    where: { classroomEnrollments: { schoolId, yearId } },
-    limit: 20,
-    orderBy: [
-      { table: "classroomEnrollments", column: "createdAt", order: "desc" },
-    ],
-  });
+  const isConfigReady = Boolean(schoolId && yearId);
 
   return (
-    <div className="container mx-auto max-w-7xl py-10 px-4">
-      {enrollments.length > 0 ? (
-        <EnrollmentHistory
-          yearId={yearId}
-          schoolId={schoolId}
-          enrollments={enrollments}
-          mutationKey={mutationKey}
-        />
-      ) : (
-        <EmptyEnrollmentHistory
-          yearId={yearId}
-          schoolId={schoolId}
-          mutationKey={mutationKey}
-        />
-      )}
-    </div>
+    <PageContainer>
+      <PageHeader className="border-b pb-5 mb-2">
+        <PageHeaderTextContent>
+          <PageHeadTitle>Terminal d'inscription</PageHeadTitle>
+          <PageHeadDescription>
+            Gérez les nouvelles inscriptions des élèves pour l'année académique
+            en cours.
+          </PageHeadDescription>
+        </PageHeaderTextContent>
+      </PageHeader>
+
+      <PageContent>
+        <InvoiGridContainer>
+          <InvoiGridFormContainer>
+            {isConfigReady ? (
+              <EnrollmentForm
+                schoolId={schoolId}
+                yearId={yearId}
+                onSuccess={(enrollment) => {
+                  console.log("Return", enrollment);
+                  addEnrollment(enrollment);
+                }}
+              />
+            ) : (
+              <div className="p-4 text-sm text-muted-foreground">
+                Veuillez sélectionner une école et une année académique valide.
+              </div>
+            )}
+          </InvoiGridFormContainer>
+
+          <InvoiGridPreviewContainer>
+            <div className="p-4 border rounded-md">
+              <h2 className="text-lg font-semibold">
+                Aperçu du reçu d'inscription
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Le détail de la facture s'affichera ici après la sélection de
+                l'élève.
+              </p>
+            </div>
+          </InvoiGridPreviewContainer>
+        </InvoiGridContainer>
+      </PageContent>
+    </PageContainer>
   );
-};
+}
