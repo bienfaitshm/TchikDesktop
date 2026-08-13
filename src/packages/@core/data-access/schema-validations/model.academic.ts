@@ -356,7 +356,7 @@ export type BaseStudent = z.infer<typeof BaseStudentSchema>;
 
 export const BaseTutorSchema = TutorCreateSchema.omit({
   schoolId: true,
-}).merge(BasePersonSchema); // .merge() est souvent plus propre que .extend(shape)
+}).extend(BasePersonSchema.shape);
 
 export type BaseTutor = z.infer<typeof BaseTutorSchema>;
 
@@ -411,11 +411,11 @@ const BaseEnrollmentSchema = EnrollmentCreateSchema.omit({
 });
 
 // Composition propre sans z.intersection toxique
-export const EnrollmentQuickCreateSchema = BaseEnrollmentSchema.and(
+export const EnrollmentQuickCreateSchema = BaseEnrollmentSchema.extend(
   z.object({
     studentData: StudentInputSchema,
     tutorData: TutorQuickInputSchema.optional(),
-  }),
+  }).shape,
 );
 
 export type EnrollmentQuickCreate = z.infer<typeof EnrollmentQuickCreateSchema>;

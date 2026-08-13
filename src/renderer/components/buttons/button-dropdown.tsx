@@ -33,7 +33,10 @@ export interface DropdownOption {
 /**
  * Configuration properties for the ButtonDropdown component.
  */
-export interface ButtonDropdownProps {
+export interface ButtonDropdownProps extends Omit<
+  ButtonProps,
+  "value" | "onClick" | "defaultValue" | "children"
+> {
   /** Main button label or content. */
   children: React.ReactNode | ((value?: string | null) => React.ReactNode);
   /** Collection of selectable menu options. */
@@ -46,10 +49,6 @@ export interface ButtonDropdownProps {
   onClick?: (selectedValue: string | null) => void;
   /** Callback fired when a dropdown option is selected. */
   onValueChange?: (value: string | null) => void;
-  /** Visual variant styling passed down to buttons. */
-  variant?: ButtonProps["variant"];
-  /** Disables all button interactions when true. */
-  disabled?: boolean;
 }
 
 /**
@@ -133,7 +132,7 @@ export function ButtonDropdown({
                   {Icon && <Icon className="mr-2 size-4" />}
                   <span>{option.label}</span>
                   <DropdownMenuShortcut>
-                    {option.value === internalValue && (
+                    {option.value === selectedValue && (
                       <Check className="size-4" />
                     )}
                   </DropdownMenuShortcut>

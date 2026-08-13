@@ -154,14 +154,16 @@ const ToggleExistenceField: React.FC<ToggleExistenceFieldProps> = ({
             </div>
             <FormControl>
               <ButtonDropdown
-                defaultValue={value ? "true" : "false"}
-                onValueChange={(value) => {
-                  const isExisting = value === "true";
+                value={value ? "true" : "false"}
+                onValueChange={(val) => {
+                  const isExisting = val === "true";
                   field.onChange(isExisting);
                   onToggleChange?.(isExisting);
                 }}
+                onBlur={field.onBlur}
+                name={field.name}
+                disabled={disabled}
                 options={SYSTEM_EXISTENCE_OPTIONS}
-                {...field}
               >
                 {(value) =>
                   value === "true" ? "Profil existant" : "Nouveau profil"
@@ -213,22 +215,30 @@ export const QuickEnrollmentForm: React.FC<
    */
   const handleStudentSystemChange = (inSystem: boolean): void => {
     if (!inSystem) {
-      form.setValue("studentData", {
-        isInSystem: false,
-        student: {
-          gender: USER_GENDER_ENUM.MALE,
-          lastName: "",
-          middleName: "",
-          firstName: "",
-          birthPlace: "Lubumbashi",
-          birthDate: new Date(),
+      form.setValue(
+        "studentData",
+        {
+          isInSystem: false,
+          student: {
+            gender: USER_GENDER_ENUM.MALE,
+            lastName: "",
+            middleName: "",
+            firstName: "",
+            birthPlace: "Lubumbashi",
+            birthDate: new Date(),
+          },
         },
-      });
+        { shouldValidate: true, shouldDirty: true },
+      );
     } else {
-      form.setValue("studentData", {
-        isInSystem: true,
-        studentId: "",
-      });
+      form.setValue(
+        "studentData",
+        {
+          isInSystem: true,
+          studentId: "",
+        },
+        { shouldValidate: true, shouldDirty: true },
+      );
     }
   };
 
@@ -238,23 +248,31 @@ export const QuickEnrollmentForm: React.FC<
    */
   const handleTutorSystemChange = (tutorInSystem: boolean): void => {
     if (!tutorInSystem) {
-      form.setValue("tutorData", {
-        isTutorInSystem: false,
-        tutor: {
-          gender: USER_GENDER_ENUM.MALE,
-          lastName: "",
-          middleName: "",
-          address: "",
-          firstName: "",
-          phoneNumber: "",
-          profession: "",
+      form.setValue(
+        "tutorData",
+        {
+          isTutorInSystem: false,
+          tutor: {
+            gender: USER_GENDER_ENUM.MALE,
+            lastName: "",
+            middleName: "",
+            address: "",
+            firstName: "",
+            phoneNumber: "",
+            profession: "",
+          },
         },
-      });
+        { shouldValidate: true, shouldDirty: true },
+      );
     } else {
-      form.setValue("tutorData", {
-        isTutorInSystem: true,
-        tutorId: "",
-      });
+      form.setValue(
+        "tutorData",
+        {
+          isTutorInSystem: true,
+          tutorId: "",
+        },
+        { shouldValidate: true, shouldDirty: true },
+      );
     }
   };
 

@@ -7,32 +7,34 @@ import {
   type UseFormProps,
   type UseFormReturn,
   type SubmitHandler,
+  FieldValues,
 } from "react-hook-form";
 import type { z } from "zod";
 
 /**
  * Props étendues de useForm basées directement sur la forme du schéma Zod.
  */
-export interface UseZodFormProps<
-  TSchema extends z.ZodType<any, any, any>,
-> extends Omit<UseFormProps<z.output<TSchema>>, "resolver"> {
+export interface UseZodFormProps<TSchema extends FieldValues> extends Omit<
+  UseFormProps<TSchema>,
+  "resolver"
+> {
   /**
    * Le schéma de validation Zod (ZodObject, ZodEffects, etc.).
    */
-  schema: TSchema;
+  schema: z.ZodType<TSchema>;
 
   /**
    * Handler de soumission typé automatiquement selon le schéma Zod.
    */
-  onSubmit?: SubmitHandler<z.output<TSchema>>;
+  onSubmit?: SubmitHandler<TSchema>;
 }
 
 /**
  * Type de retour combinant les méthodes de RHF et notre handler de soumission.
  */
 export interface UseZodFormReturn<
-  TSchema extends z.ZodType<any, any, any>,
-> extends UseFormReturn<z.output<TSchema>> {
+  TSchema extends FieldValues,
+> extends UseFormReturn<TSchema> {
   /**
    * Fonction de soumission qui encapsule handleSubmit de RHF.
    */
@@ -45,13 +47,13 @@ export interface UseZodFormReturn<
  *
  * @template TSchema - Le schéma Zod hérité.
  */
-export function useZodForm<TSchema extends z.ZodType<any, any, any>>({
+export function useZodForm<TSchema extends FieldValues>({
   schema,
   onSubmit,
   mode = "onSubmit",
   ...formProps
 }: UseZodFormProps<TSchema>): UseZodFormReturn<TSchema> {
-  const methods = useForm<z.output<TSchema>>({
+  const methods = useForm<TSchema>({
     ...formProps,
     resolver: zodResolver(schema),
     mode,

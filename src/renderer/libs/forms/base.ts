@@ -82,6 +82,7 @@ export function useZodForm<TFieldValues extends FieldValues>({
   const submit = useMemo(() => {
     return form.handleSubmit(
       async (values) => {
+        console.log("value===>", form.getValues(), values);
         if (!onSubmitRef.current) return;
 
         await onSubmitRef.current(values, {
