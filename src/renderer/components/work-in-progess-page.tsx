@@ -50,7 +50,7 @@ export default function WorkInProgressPage() {
             Page en cours de développement
           </h1>
         </div>
-        {/* <Example /> */}
+        <Example />
       </main>
 
       {/* Footer minimaliste */}
