@@ -14,13 +14,12 @@ import {
 } from "./schema";
 
 /**
- * Defines relational mapping for the schools entity.
+ * Defines relational mappings for the schools entity.
  */
 export const schoolsRelations = relations(schools, ({ many }) => ({
   users: many(users),
   tutors: many(tutors),
   options: many(options),
-  studyYears: many(studyYears),
   classrooms: many(classrooms),
   enrollments: many(classroomEnrollments),
   localrooms: many(localrooms),
@@ -28,29 +27,34 @@ export const schoolsRelations = relations(schools, ({ many }) => ({
 }));
 
 /**
- * Defines relational mapping for the users entity.
+ * Defines relational mappings for the users entity.
  */
 export const usersRelations = relations(users, ({ one, many }) => ({
   school: one(schools, {
     fields: [users.schoolId],
     references: [schools.schoolId],
   }),
+  tutor: one(tutors),
   enrollments: many(classroomEnrollments),
 }));
 
 /**
- * Defines relational mapping for the tutors entity.
+ * Defines relational mappings for the tutors entity.
  */
 export const tutorsRelations = relations(tutors, ({ one, many }) => ({
   school: one(schools, {
     fields: [tutors.schoolId],
     references: [schools.schoolId],
   }),
+  user: one(users, {
+    fields: [tutors.userId],
+    references: [users.userId],
+  }),
   enrollments: many(classroomEnrollments),
 }));
 
 /**
- * Defines relational mapping for the options entity.
+ * Defines relational mappings for the options entity.
  */
 export const optionsRelations = relations(options, ({ one, many }) => ({
   school: one(schools, {
@@ -61,16 +65,15 @@ export const optionsRelations = relations(options, ({ one, many }) => ({
 }));
 
 /**
- * Defines relational mapping for the study years entity.
+ * Defines relational mappings for the study years entity.
  */
 export const studyYearsRelations = relations(studyYears, ({ many }) => ({
-  classrooms: many(classrooms),
   enrollments: many(classroomEnrollments),
   seatingSessions: many(seatingSessions),
 }));
 
 /**
- * Defines relational mapping for the classrooms entity.
+ * Defines relational mappings for the classrooms entity.
  */
 export const classroomsRelations = relations(classrooms, ({ one, many }) => ({
   school: one(schools, {
@@ -85,7 +88,7 @@ export const classroomsRelations = relations(classrooms, ({ one, many }) => ({
 }));
 
 /**
- * Defines relational mapping for the classroom enrollments entity.
+ * Defines relational mappings for the classroom enrollments entity.
  */
 export const classroomEnrollmentsRelations = relations(
   classroomEnrollments,

@@ -34,7 +34,7 @@ type AsUpdatePayload<T, PK extends keyof T> = Partial<
 >;
 
 /**
- * Schools database table schema definition.
+ * Database table definition for schools storing organizational metadata.
  */
 export const schools = sqliteTable("schools", {
   schoolId: primaryKeyId("school_id"),
@@ -45,9 +45,13 @@ export const schools = sqliteTable("schools", {
   ...timestamps,
 });
 
+/** Represents the Drizzle table schema for schools. */
 export type TableSchool = typeof schools;
+/** Represents a selected school entity record. */
 export type School = InferSelectModel<TableSchool>;
+/** Represents the insertion payload for a school record. */
 export type InsertSchool = InferInsertModel<TableSchool>;
+/** Represents the update payload for a school record. */
 export type UpdateSchool = AsUpdatePayload<InsertSchool, "schoolId">;
 
 /**
@@ -61,7 +65,7 @@ export const withSchoolId = {
 };
 
 /**
- * Users database table schema definition with search indexes.
+ * Database table definition for users supporting students, tutors, and staff accounts.
  */
 export const users = sqliteTable(
   "users",
@@ -95,13 +99,17 @@ export const users = sqliteTable(
   ],
 );
 
+/** Represents the Drizzle table schema for users. */
 export type TableUser = typeof users;
+/** Represents a selected user entity record. */
 export type User = InferSelectModel<TableUser>;
+/** Represents the insertion payload for a user record. */
 export type InsertUser = InferInsertModel<TableUser>;
+/** Represents the update payload for a user record. */
 export type UpdateUser = AsUpdatePayload<InsertUser, "userId">;
 
 /**
- * Tutors database table schema definition with school scope and lookup indexes.
+ * Database table definition for tutors managing student legal guardians.
  */
 export const tutors = sqliteTable(
   "tutors",
@@ -110,6 +118,9 @@ export const tutors = sqliteTable(
     profession: text("profession"),
     address: text("address"),
     phoneNumber: text("phone_number"),
+    userId: text("user_id")
+      .unique()
+      .references(() => users.userId, { onDelete: "cascade" }),
     ...withSchoolId,
     ...timestamps,
   },
@@ -120,13 +131,17 @@ export const tutors = sqliteTable(
   ],
 );
 
+/** Represents the Drizzle table schema for tutors. */
 export type TableTutor = typeof tutors;
+/** Represents a selected tutor entity record. */
 export type Tutor = InferSelectModel<TableTutor>;
+/** Represents the insertion payload for a tutor record. */
 export type InsertTutor = InferInsertModel<TableTutor>;
+/** Represents the update payload for a tutor record. */
 export type UpdateTutor = AsUpdatePayload<InsertTutor, "tutorId">;
 
 /**
- * Academic options database table schema definition.
+ * Database table definition for academic options or study streams.
  */
 export const options = sqliteTable(
   "options",
@@ -143,13 +158,17 @@ export const options = sqliteTable(
   (table) => [index("options_school_idx").on(table.schoolId)],
 );
 
+/** Represents the Drizzle table schema for options. */
 export type TableOption = typeof options;
+/** Represents a selected option entity record. */
 export type Option = InferSelectModel<TableOption>;
+/** Represents the insertion payload for an option record. */
 export type InsertOption = InferInsertModel<TableOption>;
+/** Represents the update payload for an option record. */
 export type UpdateOption = AsUpdatePayload<InsertOption, "optionId">;
 
 /**
- * Study years database table schema definition.
+ * Database table definition for academic study years.
  */
 export const studyYears = sqliteTable("study_years", {
   yearId: primaryKeyId("year_id"),
@@ -159,13 +178,17 @@ export const studyYears = sqliteTable("study_years", {
   ...timestamps,
 });
 
+/** Represents the Drizzle table schema for study years. */
 export type TableStudyYear = typeof studyYears;
+/** Represents a selected study year entity record. */
 export type StudyYear = InferSelectModel<TableStudyYear>;
+/** Represents the insertion payload for a study year record. */
 export type InsertStudyYear = InferInsertModel<TableStudyYear>;
+/** Represents the update payload for a study year record. */
 export type UpdateStudyYear = AsUpdatePayload<InsertStudyYear, "yearId">;
 
 /**
- * Classrooms database table schema definition.
+ * Database table definition for school classrooms.
  */
 export const classrooms = sqliteTable(
   "classrooms",
@@ -193,9 +216,13 @@ export const classrooms = sqliteTable(
   ],
 );
 
+/** Represents the Drizzle table schema for classrooms. */
 export type TableClassroom = typeof classrooms;
+/** Represents a selected classroom entity record. */
 export type Classroom = InferSelectModel<TableClassroom>;
+/** Represents the insertion payload for a classroom record. */
 export type InsertClassroom = InferInsertModel<TableClassroom>;
+/** Represents the update payload for a classroom record. */
 export type UpdateClassroom = AsUpdatePayload<InsertClassroom, "classId">;
 
 /**
@@ -210,15 +237,16 @@ export const withYearAndSchoolIds = {
 };
 
 /**
- * Classroom enrollments database table schema definition with foreign keys and unique constraints.
+ * Database table definition for classroom enrollments connecting students, classrooms, and tutors per academic year.
  */
 export const classroomEnrollments = sqliteTable(
   "classroom_enrollments",
   {
     enrollmentId: primaryKeyId("enrollment_id"),
-    classroomId: text("classroom_id")
-      .notNull()
-      .references(() => classrooms.classId, { onDelete: "cascade" }),
+    classroomId: foreignKeyIdNoNull("classroom_id", {
+      ref: () => classrooms.classId,
+      actions: { onDelete: "cascade" },
+    }),
     status: enumColumn("status", STUDENT_STATUS_ENUM)
       .notNull()
       .default(STUDENT_STATUS_ENUM.ACTIVE),
@@ -228,9 +256,10 @@ export const classroomEnrollments = sqliteTable(
     studentCode: text("student_code")
       .notNull()
       .$defaultFn(generateNumericEnrollmentCode),
-    studentId: text("student_id")
-      .notNull()
-      .references(() => users.userId, { onDelete: "cascade" }),
+    studentId: foreignKeyIdNoNull("student_id", {
+      ref: () => users.userId,
+      actions: { onDelete: "cascade" },
+    }),
     tutorId: text("tutor_id").references(() => tutors.tutorId, {
       onDelete: "set null",
     }),
@@ -247,10 +276,14 @@ export const classroomEnrollments = sqliteTable(
   ],
 );
 
+/** Represents the Drizzle table schema for classroom enrollments. */
 export type TableClassroomEnrollment = typeof classroomEnrollments;
+/** Represents a selected classroom enrollment entity record. */
 export type ClassroomEnrollment = InferSelectModel<TableClassroomEnrollment>;
+/** Represents the insertion payload for a classroom enrollment record. */
 export type InsertClassroomEnrollment =
   InferInsertModel<TableClassroomEnrollment>;
+/** Represents the update payload for a classroom enrollment record. */
 export type UpdateClassroomEnrollment = AsUpdatePayload<
   InsertClassroomEnrollment,
   "enrollmentId"

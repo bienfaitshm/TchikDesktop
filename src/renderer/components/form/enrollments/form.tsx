@@ -15,6 +15,8 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@/renderer/components/ui/radio-group";
+import { Input } from "@/renderer/components/ui/input";
+import { Label } from "@/renderer/components/ui/label";
 import {
   STUDENT_STATUS_ENUM,
   USER_GENDER_ENUM,
@@ -22,7 +24,6 @@ import {
 import { EnrollmentQuickCreateSchema } from "@/packages/@core/data-access/schema-validations";
 import { GenericComboBox } from "@/renderer/components/form/fields/generic-combo-box";
 import { StudentSeniorityStatusSelect } from "../fields/student-seriority-statut";
-import { Label } from "@/renderer/components/ui/label";
 import {
   type BaseFormProps,
   useZodForm,
@@ -33,10 +34,15 @@ import { SelectExistStudent } from "./form.select-student";
 import type { EnrollmentFormData } from "./types";
 import type { SearchOption } from "@/renderer/libs/queries/base";
 
+/**
+ * Default fallback values for initializing the Quick Enrollment form.
+ */
 export const DEFAULT_QUICK_ENROLLMENT_VALUES: Partial<EnrollmentFormData> = {
   classroomId: "",
   isNewStudent: false,
   isInSystem: false,
+  isTutorInSystem: false,
+  tutorId: "",
   status: STUDENT_STATUS_ENUM.ACTIVE,
   student: {
     lastName: "",
@@ -46,23 +52,53 @@ export const DEFAULT_QUICK_ENROLLMENT_VALUES: Partial<EnrollmentFormData> = {
     gender: USER_GENDER_ENUM.MALE,
     birthDate: new Date(),
   },
+  tutor: {
+    profession: "",
+    address: "",
+    phoneNumber: "",
+  },
 };
 
+/**
+ * Props for the QuickEnrollmentForm component.
+ */
 interface QuickEnrollmentFormProps {
+  /** Flag indicating if the form is operating in update mode */
   isUpdate?: boolean;
+  /** Available options for classroom selection */
   classrooms: SearchOption;
+  /** Available options for existing students search */
   students: SearchOption;
+  /** Available options for existing tutors search */
+  tutors: SearchOption;
 }
 
+/**
+ * Animation variants for smooth fade-in and fade-out transition effects.
+ */
 const fadeVariants: Variants = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } },
   exit: { opacity: 0, y: -10, transition: { duration: 0.15, ease: "easeIn" } },
 };
 
+/**
+ * Quick enrollment form component enabling fast registration of students and tutors.
+ *
+ * @param props - Form configuration, submission handler, and lookup options.
+ * @returns The rendered quick enrollment form element.
+ */
 export const QuickEnrollmentForm: React.FC<
   BaseFormProps<EnrollmentFormData> & QuickEnrollmentFormProps
-> = ({ formId, onSubmit, defaultValues, isUpdate, classrooms, students }) => {
+> = ({
+  formId,
+  onSubmit,
+  defaultValues,
+  isUpdate,
+  classrooms,
+  students,
+  tutors,
+}) => {
   const form = useZodForm<EnrollmentFormData>({
     schema: EnrollmentQuickCreateSchema,
     defaultValues: mergeDefaultValuesDeep(
@@ -74,6 +110,7 @@ export const QuickEnrollmentForm: React.FC<
 
   const { isSubmitting } = form.formState;
   const isInSystem = form.watch("isInSystem");
+  const isTutorInSystem = form.watch("isTutorInSystem");
 
   return (
     <Form {...form}>
@@ -83,7 +120,7 @@ export const QuickEnrollmentForm: React.FC<
           control={form.control}
           name="classroomId"
           render={({ field }) => (
-            <FormItem className="flex flex-col mb-4">
+            <FormItem className="flex flex-col mb-6">
               <FormLabel>Classe de destination</FormLabel>
               <FormControl>
                 <GenericComboBox
@@ -102,7 +139,7 @@ export const QuickEnrollmentForm: React.FC<
           )}
         />
 
-        <div className="space-y-10">
+        <div className="space-y-6">
           {/* Statut d'ancienneté */}
           <FormField
             control={form.control}
@@ -127,7 +164,7 @@ export const QuickEnrollmentForm: React.FC<
             )}
           />
 
-          {/* Existence dans le système */}
+          {/* Existence de l'élève dans le système */}
           <FormField
             control={form.control}
             name="isInSystem"
@@ -171,15 +208,8 @@ export const QuickEnrollmentForm: React.FC<
           />
         </div>
 
-        {/* Section Dynamique Animée 
-          `motion.div layout` gère l'ajustement de hauteur automatique et fluide du parent.
-          `mode="wait"` s'assure que l'ancien bloc a fini de disparaître avant d'afficher le nouveau.
-        */}
-        <motion.div
-          layout
-          className="mt-10 overflow-hidden h-60"
-          aria-disabled={!isUpdate}
-        >
+        {/* Section Dynamique Élève */}
+        <motion.div layout className="mt-8 overflow-hidden h-auto">
           <AnimatePresence mode="wait">
             {isInSystem ? (
               <motion.div
@@ -188,10 +218,11 @@ export const QuickEnrollmentForm: React.FC<
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                className="space-y-10"
+                className="space-y-4"
               >
-                <Label>Rechercher l'élève existant</Label>
-                <div className="my-4" />
+                <Label className="text-base font-semibold">
+                  Rechercher l'élève existant
+                </Label>
                 <SelectExistStudent students={students} />
               </motion.div>
             ) : (
@@ -201,15 +232,164 @@ export const QuickEnrollmentForm: React.FC<
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                className="space-y-10"
+                className="space-y-4"
               >
-                <Label>Informations de l'élève</Label>
-                <div className="my-4" />
+                <Label className="text-base font-semibold">
+                  Informations de l'élève
+                </Label>
                 <StudentFormFields />
               </motion.div>
             )}
           </AnimatePresence>
         </motion.div>
+
+        {/* Section Tuteur */}
+        <div className="mt-10 pt-6 border-t space-y-6">
+          <FormField
+            control={form.control}
+            name="isTutorInSystem"
+            render={({ field }) => (
+              <FormItem className="flex flex-col justify-between">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base font-semibold">
+                    Tuteur légal
+                  </FormLabel>
+                  <FormDescription>
+                    Le tuteur est-il déjà enregistré dans le système ?
+                  </FormDescription>
+                </div>
+                <FormControl className="mt-2">
+                  <RadioGroup
+                    onValueChange={(val) => field.onChange(val === "true")}
+                    value={field.value ? "true" : "false"}
+                    disabled={isSubmitting}
+                    className="flex space-x-4 pt-2"
+                  >
+                    <FormItem className="flex items-center space-x-2 space-y-0">
+                      <FormControl>
+                        <RadioGroupItem value="false" />
+                      </FormControl>
+                      <FormLabel className="font-normal cursor-pointer">
+                        Nouveau tuteur
+                      </FormLabel>
+                    </FormItem>
+                    <FormItem className="flex items-center space-x-2 space-y-0">
+                      <FormControl>
+                        <RadioGroupItem value="true" />
+                      </FormControl>
+                      <FormLabel className="font-normal cursor-pointer">
+                        Tuteur existant
+                      </FormLabel>
+                    </FormItem>
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Section Dynamique Tuteur */}
+          <motion.div layout className="mt-6 overflow-hidden h-auto">
+            <AnimatePresence mode="wait">
+              {isTutorInSystem ? (
+                <motion.div
+                  key="exist-tutor"
+                  variants={fadeVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={form.control}
+                    name="tutorId"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Sélectionner le tuteur</FormLabel>
+                        <FormControl>
+                          <GenericComboBox
+                            {...field}
+                            onChangeValue={(val) => field.onChange(val)}
+                            options={tutors.options}
+                            placeholder="Rechercher un tuteur..."
+                            className="w-full"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="new-tutor"
+                  variants={fadeVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                >
+                  <FormField
+                    control={form.control}
+                    name="tutor.profession"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Profession</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ""}
+                            placeholder="Ex: Enseignant"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="tutor.phoneNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Téléphone</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ""}
+                            placeholder="Ex: +243..."
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="tutor.address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Adresse</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ""}
+                            placeholder="Adresse de résidence"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </div>
       </form>
     </Form>
   );

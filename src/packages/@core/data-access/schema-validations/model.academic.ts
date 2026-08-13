@@ -43,6 +43,7 @@ export const SchoolSchema = z
   })
   .extend(timestampBaseSchema.shape);
 
+/** Type representing a complete School record. */
 export type School = z.infer<typeof SchoolSchema>;
 
 /**
@@ -84,6 +85,7 @@ export const UserSchema = z
   .extend(schoolIdBaseSchema.shape)
   .extend(timestampBaseSchema.shape);
 
+/** Type representing a complete User record. */
 export type User = z.infer<typeof UserSchema>;
 
 /**
@@ -104,13 +106,11 @@ export const TutorSchema = z
     phoneNumber: optionalNullableString.describe(
       "Primary contact phone number",
     ),
-    schoolId: z
-      .string()
-      .min(1)
-      .describe("Unique identifier of the associated school (UUID)"),
   })
+  .extend(schoolIdBaseSchema.shape)
   .extend(timestampBaseSchema.shape);
 
+/** Type representing a complete Tutor record. */
 export type Tutor = z.infer<typeof TutorSchema>;
 
 /**
@@ -134,6 +134,7 @@ export const OptionSchema = z
   .extend(schoolIdBaseSchema.shape)
   .extend(timestampBaseSchema.shape);
 
+/** Type representing a complete Option record. */
 export type Option = z.infer<typeof OptionSchema>;
 
 /**
@@ -152,6 +153,7 @@ export const StudyYearSchema = z
   })
   .extend(timestampBaseSchema.shape);
 
+/** Type representing a complete StudyYear record. */
 export type StudyYear = z.infer<typeof StudyYearSchema>;
 
 /**
@@ -176,6 +178,7 @@ export const ClassroomSchema = z
   .extend(schoolIdBaseSchema.shape)
   .extend(timestampBaseSchema.shape);
 
+/** Type representing a complete Classroom record. */
 export type Classroom = z.infer<typeof ClassroomSchema>;
 
 /**
@@ -203,6 +206,7 @@ export const EnrollmentSchema = z
   .extend(schoolYearIdBaseSchema.shape)
   .extend(timestampBaseSchema.shape);
 
+/** Type representing a complete Enrollment record. */
 export type Enrollment = z.infer<typeof EnrollmentSchema>;
 
 /**
@@ -220,12 +224,14 @@ export const EnrollmentActionSchema = z
   })
   .extend(timestampBaseSchema.shape);
 
+/** Type representing an EnrollmentAction audit record. */
 export type EnrollmentAction = z.infer<typeof EnrollmentActionSchema>;
 
 /* =========================================================================
    CREATE / UPDATE DERIVED SCHEMAS
    ========================================================================= */
 
+/** Creation payload schema for School records. */
 export const SchoolCreateSchema = SchoolSchema.omit({
   schoolId: true,
   createdAt: true,
@@ -233,9 +239,11 @@ export const SchoolCreateSchema = SchoolSchema.omit({
 });
 export type SchoolCreate = z.infer<typeof SchoolCreateSchema>;
 
+/** Update payload schema for School records. */
 export const SchoolUpdateSchema = SchoolCreateSchema.partial();
 export type SchoolUpdate = z.infer<typeof SchoolUpdateSchema>;
 
+/** Creation payload schema for User records. */
 export const UserCreateSchema = UserSchema.omit({
   userId: true,
   username: true,
@@ -244,11 +252,13 @@ export const UserCreateSchema = UserSchema.omit({
 });
 export type UserCreate = z.infer<typeof UserCreateSchema>;
 
+/** Update payload schema for User records. */
 export const UserUpdateSchema = UserCreateSchema.omit({
   schoolId: true,
 }).partial();
 export type UserUpdate = z.infer<typeof UserUpdateSchema>;
 
+/** Creation payload schema for Tutor records. */
 export const TutorCreateSchema = TutorSchema.omit({
   tutorId: true,
   createdAt: true,
@@ -256,11 +266,13 @@ export const TutorCreateSchema = TutorSchema.omit({
 });
 export type TutorCreate = z.infer<typeof TutorCreateSchema>;
 
+/** Update payload schema for Tutor records. */
 export const TutorUpdateSchema = TutorCreateSchema.omit({
   schoolId: true,
 }).partial();
 export type TutorUpdate = z.infer<typeof TutorUpdateSchema>;
 
+/** Creation payload schema for Option records. */
 export const OptionCreateSchema = OptionSchema.omit({
   optionId: true,
   createdAt: true,
@@ -268,11 +280,13 @@ export const OptionCreateSchema = OptionSchema.omit({
 });
 export type OptionCreate = z.infer<typeof OptionCreateSchema>;
 
+/** Update payload schema for Option records. */
 export const OptionUpdateSchema = OptionCreateSchema.omit({
   schoolId: true,
 }).partial();
 export type OptionUpdate = z.infer<typeof OptionUpdateSchema>;
 
+/** Creation payload schema for StudyYear records. */
 export const StudyYearCreateSchema = StudyYearSchema.omit({
   yearId: true,
   createdAt: true,
@@ -280,9 +294,11 @@ export const StudyYearCreateSchema = StudyYearSchema.omit({
 });
 export type StudyYearCreate = z.infer<typeof StudyYearCreateSchema>;
 
+/** Update payload schema for StudyYear records. */
 export const StudyYearUpdateSchema = StudyYearCreateSchema.partial();
 export type StudyYearUpdate = z.infer<typeof StudyYearUpdateSchema>;
 
+/** Creation payload schema for Classroom records. */
 export const ClassroomCreateSchema = ClassroomSchema.omit({
   classId: true,
   createdAt: true,
@@ -290,11 +306,13 @@ export const ClassroomCreateSchema = ClassroomSchema.omit({
 });
 export type ClassroomCreate = z.infer<typeof ClassroomCreateSchema>;
 
+/** Update payload schema for Classroom records. */
 export const ClassroomUpdateSchema = ClassroomCreateSchema.omit({
   schoolId: true,
 }).partial();
 export type ClassroomUpdate = z.infer<typeof ClassroomUpdateSchema>;
 
+/** Creation payload schema for Enrollment records. */
 export const EnrollmentCreateSchema = EnrollmentSchema.omit({
   enrollmentId: true,
   studentCode: true,
@@ -303,6 +321,7 @@ export const EnrollmentCreateSchema = EnrollmentSchema.omit({
 });
 export type EnrollmentCreate = z.infer<typeof EnrollmentCreateSchema>;
 
+/** Update payload schema for Enrollment records. */
 export const EnrollmentUpdateSchema = EnrollmentCreateSchema.omit({
   schoolId: true,
   yearId: true,
@@ -310,6 +329,7 @@ export const EnrollmentUpdateSchema = EnrollmentCreateSchema.omit({
 }).partial();
 export type EnrollmentUpdate = z.infer<typeof EnrollmentUpdateSchema>;
 
+/** Creation payload schema for EnrollmentAction audit logs. */
 export const EnrollmentActionCreateSchema = EnrollmentActionSchema.omit({
   actionId: true,
   createdAt: true,
@@ -320,19 +340,31 @@ export type EnrollmentActionCreate = z.infer<
 >;
 
 /* =========================================================================
-   QUICK ENROLLMENT & BULK SEATING
+   QUICK ENROLLMENT & BASE SCHEMAS
    ========================================================================= */
 
-export const BaseStudentSchema = UserCreateSchema.omit({
+/**
+ * Base schema representing core personal identity attributes without security or context fields.
+ */
+export const BasePersonSchema = UserCreateSchema.omit({
   schoolId: true,
   role: true,
   password: true,
 });
+export type BasePerson = z.infer<typeof BasePersonSchema>;
+
+/**
+ * Schema for creating a student during quick enrollment workflows.
+ */
+export const BaseStudentSchema = BasePersonSchema;
 export type BaseStudent = z.infer<typeof BaseStudentSchema>;
 
+/**
+ * Schema for creating a tutor during quick enrollment workflows, combining tutor and personal identity details.
+ */
 export const BaseTutorSchema = TutorCreateSchema.omit({
   schoolId: true,
-});
+}).extend(BasePersonSchema.shape);
 export type BaseTutor = z.infer<typeof BaseTutorSchema>;
 
 const BaseEnrollmentSchemaWithoutStudent = EnrollmentCreateSchema.omit({
@@ -341,26 +373,23 @@ const BaseEnrollmentSchemaWithoutStudent = EnrollmentCreateSchema.omit({
 });
 
 /**
- * Union schema for handling tutor association in quick enrollment:
- * - Option 1: Existing tutor via `tutorId`
- * - Option 2: New tutor creation via `tutor` object
- * - Option 3: No tutor attached
+ * Discriminated union schema for managing tutor association in quick enrollment workflows.
  */
 export const TutorQuickInputSchema = z.union([
   z.object({
     isTutorInSystem: z.literal(true),
     tutorId: z.string().min(1, "Tutor ID is required when tutor exists."),
-    tutor: z.undefined().optional(),
+    tutor: z.preprocess((_) => undefined, z.undefined().optional()),
   }),
   z.object({
     isTutorInSystem: z.literal(false),
-    tutorId: z.undefined().optional(),
+    tutorId: z.preprocess((_) => undefined, z.undefined().optional()),
     tutor: BaseTutorSchema,
   }),
   z.object({
-    isTutorInSystem: z.undefined().optional(),
-    tutorId: z.undefined().optional(),
-    tutor: z.undefined().optional(),
+    isTutorInSystem: z.preprocess((_) => undefined, z.undefined().optional()),
+    tutorId: z.preprocess((_) => undefined, z.undefined().optional()),
+    tutor: z.preprocess((_) => undefined, z.undefined().optional()),
   }),
 ]);
 
