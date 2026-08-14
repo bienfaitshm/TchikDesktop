@@ -10,14 +10,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/renderer/components/dialog/base";
-import { TutorProfileCard, TutorDetail } from "./tutor-profile";
+import { TutorProfileCard } from "@/renderer/apps/schools/components/tutor-profile";
+import type { TutorDTO } from "@/packages/@core/data-access/db";
 
 /**
  * Props interface for the TutorProfileContent component.
  */
 export interface TutorProfileContentProps {
   /** Detailed tutor payload to render inside the container. */
-  tutor?: TutorDetail;
+  tutor?: TutorDTO;
 }
 
 /**
@@ -52,7 +53,7 @@ TutorProfileContent.displayName = "TutorProfileContent";
  */
 export interface TutorProfileDialogProps {
   /** Detailed tutor payload to be displayed in the modal. */
-  tutor?: TutorDetail;
+  tutor?: TutorDTO;
   /** Controls the open state of the dialog. */
   open?: boolean;
   /** Callback executed when the open state changes. */

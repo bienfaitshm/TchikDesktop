@@ -2,7 +2,6 @@ import * as React from "react";
 import {
   User,
   Phone,
-  Mail,
   Briefcase,
   MapPin,
   GraduationCap,
@@ -11,7 +10,7 @@ import {
   XCircle,
   AlertCircle,
 } from "lucide-react";
-
+import type { TutorDTO } from "@/packages/@core/data-access/db";
 /**
  * Enumeration representing student enrollment status.
  */
@@ -32,27 +31,11 @@ export interface StudentSummary {
 }
 
 /**
- * Represents detailed profile information for a legal tutor.
- */
-export interface TutorDetail {
-  id: string;
-  firstName: string;
-  lastName: string;
-  middleName?: string;
-  phoneNumber: string;
-  email?: string;
-  address?: string;
-  profession?: string;
-  gender: "MALE" | "FEMALE";
-  students: StudentSummary[];
-}
-
-/**
  * Props interface for the TutorProfileCard component.
  */
 export interface TutorProfileCardProps {
   /** The tutor data payload including linked student records. */
-  tutor: TutorDetail;
+  tutor: TutorDTO;
   /** Optional container CSS class overrides. */
   className?: string;
   /** Optional click handler executed when selecting a student item. */
@@ -63,7 +46,7 @@ export interface TutorProfileCardProps {
  * Props interface for the TutorHeader sub-component.
  */
 interface TutorHeaderProps {
-  tutor: TutorDetail;
+  tutor: TutorDTO;
 }
 
 /**
@@ -95,11 +78,7 @@ export function formatFullName(
  * @returns Rendered tutor header component.
  */
 const TutorHeader: React.FC<TutorHeaderProps> = ({ tutor }) => {
-  const fullName = formatFullName(
-    tutor.firstName,
-    tutor.lastName,
-    tutor.middleName,
-  );
+  const fullName = tutor.user.fullName;
 
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
@@ -131,16 +110,6 @@ const TutorHeader: React.FC<TutorHeaderProps> = ({ tutor }) => {
           <Phone className="h-3.5 w-3.5 text-indigo-400" />
           <span>{tutor.phoneNumber}</span>
         </a>
-
-        {tutor.email && (
-          <a
-            href={`mailto:${tutor.email}`}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 transition-colors hover:border-slate-700 hover:text-white"
-          >
-            <Mail className="h-3.5 w-3.5 text-indigo-400" />
-            <span>{tutor.email}</span>
-          </a>
-        )}
 
         {tutor.address && (
           <div className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-slate-400">
@@ -241,7 +210,7 @@ export const TutorProfileCard: React.FC<TutorProfileCardProps> = ({
   className = "",
   onSelectStudent,
 }) => {
-  const hasStudents = tutor.students && tutor.students.length > 0;
+  const hasStudents = false;
 
   return (
     <section
@@ -261,19 +230,19 @@ export const TutorProfileCard: React.FC<TutorProfileCardProps> = ({
             </h3>
           </div>
           <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-indigo-400 border border-slate-800">
-            {tutor.students.length}
+            {/* {tutor} */}
           </span>
         </div>
 
         {hasStudents ? (
           <div className="grid grid-cols-1 gap-3">
-            {tutor.students.map((student) => (
+            {/* {tutor.students.map((student) => (
               <StudentListItem
                 key={student.id}
                 student={student}
                 onSelect={onSelectStudent}
               />
-            ))}
+            ))} */}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-800 bg-slate-900/30 p-8 text-center">

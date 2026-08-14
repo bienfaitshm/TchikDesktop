@@ -16,6 +16,7 @@ import {
 
 /** Base mutation configuration type for tutor form hooks. */
 export type TutorFormConfig<T = unknown> = BaseMutationConfig<T>;
+export type TutorFormData = unknown;
 
 const CREATE_TUTOR_NOTIFICATIONS = {
   success: {
