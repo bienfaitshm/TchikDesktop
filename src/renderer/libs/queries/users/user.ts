@@ -21,7 +21,7 @@ import type { QueryUpdatePayload } from "../base";
  * 1. Query Key Factory (Unique source de vérité pour le cache des utilisateurs)
  */
 export const userKeys = {
-  all: ["users"] as const,
+  all: ["schools", "users"] as const,
   lists: (params?: UserFilter) =>
     [...userKeys.all, "list", { params }] as const,
   options: (params?: SearchUserQueryParams) =>

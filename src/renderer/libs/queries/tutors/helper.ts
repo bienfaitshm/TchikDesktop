@@ -1,8 +1,8 @@
 import { useCallback } from "react";
-import { useGenericSearchOptions } from "../base";
-import { useGetTutorsAsOptions as useFetchTutors } from "./tutors";
 import type { TutorFilter } from "@/packages/@core/data-access/schema-validations";
 import { USER_ROLE_ENUM } from "@/packages/@core/data-access/db/options";
+import { useGenericSearchOptions } from "../base";
+import { useGetTutorsAsOptions as useFetchTutors } from "./tutors";
 
 /**
  * Parameters required to scope the tutor search context.
@@ -69,6 +69,7 @@ export function buildTutorSearchQuery(
  * @returns Search query state, matching options, loading state, and search setter.
  */
 export function useSearchTutors({ schoolId }: TutorSearchContextParams) {
+  console.log("Search tutors");
   const buildSearchQuery = useCallback(
     (search: string): TutorFilter => buildTutorSearchQuery(search, schoolId),
     [schoolId],

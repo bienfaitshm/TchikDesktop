@@ -36,6 +36,8 @@ import type {
 } from "@/renderer/components/app-sidebar/app-sidebar";
 
 import * as FinApp from "@/renderer/apps/finances";
+import * as SchoolApp from "@/renderer/apps/schools";
+
 // ==========================================
 //  HELPER SENIOR POUR IMPORTS DE TYPE LAZY
 // ==========================================
@@ -272,7 +274,7 @@ export default function RouterProvider(): JSX.Element {
               <Route path={ROUTES.SCHOOLS.LOCALS} element={<LocalRoomPage />} />
               <Route
                 path={ROUTES.SCHOOLS.TUTORS}
-                element={<WorkInProgressPage />}
+                element={<SchoolApp.TutorsPage />}
               />
             </Route>
 

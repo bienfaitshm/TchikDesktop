@@ -20,7 +20,7 @@ import type { QueryUpdatePayload } from "../base";
  * 1. Query Key Factory (Unique source de vérité pour le cache des utilisateurs)
  */
 export const TutorKeys = {
-  all: ["tutors"] as const,
+  all: ["schools", "tutors"] as const,
   lists: (params?: TutorFilter) =>
     [...TutorKeys.all, "list", { params }] as const,
   options: (params?: TutorQueryParams) =>

@@ -51,6 +51,7 @@ export const ROUTES = {
     ASSIGNMENT_ID: ":assignmentId",
     PAYMENT_ID: ":paymentId",
     RATE_ID: ":rateId",
+    TUTOR_ID: ":tutorId",
   },
   ACTIONS: {
     NEW: "new",

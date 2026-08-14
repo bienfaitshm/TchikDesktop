@@ -52,7 +52,7 @@ export class TutorRepository
       db: database,
       table: tutors,
       idColumn: tutors.tutorId,
-      baseTableName: "tutor",
+      baseTableName: "tutors",
       logger: getLogger,
       joinTables: tutorJoinTables,
       defaultFilters: TUTORS_DEFAULT_SORT,
