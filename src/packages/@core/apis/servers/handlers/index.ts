@@ -12,6 +12,7 @@ export * from "./schools";
 export * from "./seating";
 export * from "./student-payments";
 export * from "./user";
+export * from "./tutor.endpoint";
 export * from "./wallets";
 export * from "./statistics";
 export * from "./dashboard";
