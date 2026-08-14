@@ -147,7 +147,7 @@ export class EnrollmentService {
     }, tx);
     */
 
-      return enrollment;
+      return this.enrollmentRepo.findById(enrollment.enrollmentId);
     });
   }
 }
