@@ -21,6 +21,7 @@ import {
 import { useCreateQuickEnrollmentForm } from "@/renderer/libs/queries/enrollements";
 import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
 import { LoadingButton } from "@/components/buttons/button-loading";
+import { FormattedJsonViewer } from "../components/json-formated-viewer";
 
 /**
  * Properties for the EnrollmentForm component.
@@ -53,10 +54,7 @@ export function EnrollmentForm({
         classrooms={form.searchClassroom}
         students={form.searchUser}
         tutors={form.searchTutor}
-        onSubmit={(value) => {
-          console.log("value", value);
-          //   form.onSubmit(value);
-        }}
+        onSubmit={form.onSubmit}
         defaultValues={{ yearId, schoolId }}
       />
       <LoadingButton
@@ -78,6 +76,9 @@ export function EnrollmentForm({
 export function EnrollmentPage(): React.JSX.Element {
   const { schoolId = "", yearId = "" } = useCurrentConfig();
   const addEnrollment = useEnrollmentStore((store) => store.addEnrollment);
+  const lastEnrollment = useEnrollmentStore((store) =>
+    store.getLastEnrollemnt(),
+  );
 
   const isConfigReady = Boolean(schoolId && yearId);
 
@@ -121,6 +122,7 @@ export function EnrollmentPage(): React.JSX.Element {
                 Le détail de la facture s'affichera ici après la sélection de
                 l'élève.
               </p>
+              <FormattedJsonViewer data={lastEnrollment} />
             </div>
           </InvoiGridPreviewContainer>
         </InvoiGridContainer>

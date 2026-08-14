@@ -32,15 +32,14 @@ import type {
 import { USER_GENDER_ENUM } from "@/packages/@core/data-access/db/options";
 import {
   ButtonDropdown,
-  DropdownOption,
+  type DropdownOption,
 } from "@/components/buttons/button-dropdown";
 import { UserCheckIcon, UserPlusIcon } from "lucide-react";
 import { TutorFormFields } from "./form.tutor";
 import type { Option } from "@/components/form/fields/select-input";
+import { createCompleteSubmitHandler } from "./utils";
 
-/**
- * Dropdown options for choosing between an existing system record and creating a new record.
- */
+/** Options for switching between existing profile selection and new entry creation. */
 const SYSTEM_EXISTENCE_OPTIONS: DropdownOption[] = [
   {
     label: "Profil existant",
@@ -54,22 +53,59 @@ const SYSTEM_EXISTENCE_OPTIONS: DropdownOption[] = [
   },
 ];
 
+/** Default payload state when creating a new student entry. */
+const INITIAL_NEW_STUDENT_PAYLOAD = {
+  isInSystem: false as const,
+  student: {
+    gender: USER_GENDER_ENUM.MALE,
+    lastName: "",
+    middleName: "",
+    firstName: "",
+    birthPlace: "Lubumbashi",
+    birthDate: new Date(),
+  },
+};
+
+/** Default payload state when choosing an existing student record. */
+const INITIAL_EXISTING_STUDENT_PAYLOAD = {
+  isInSystem: true as const,
+  studentId: "",
+};
+
+/** Default payload state when creating a new tutor entry. */
+const INITIAL_NEW_TUTOR_PAYLOAD = {
+  isTutorInSystem: false as const,
+  tutor: {
+    gender: USER_GENDER_ENUM.MALE,
+    lastName: "",
+    middleName: "",
+    address: "",
+    firstName: "",
+    phoneNumber: "",
+    profession: "",
+  },
+};
+
+/** Default payload state when choosing an existing tutor record. */
+const INITIAL_EXISTING_TUTOR_PAYLOAD = {
+  isTutorInSystem: true as const,
+  tutorId: "",
+};
+
 /**
- * Default fallback values for initializing the quick enrollment form state.
+ * Default values for initializing form state and ensuring no schema properties are omitted.
  */
 export const DEFAULT_QUICK_ENROLLMENT_VALUES: Partial<EnrollmentFormData> = {
   schoolId: "",
   yearId: "",
   classroomId: "",
   isNewStudent: false,
-  studentData: { isInSystem: true, studentId: "" },
-  tutorData: { isTutorInSystem: true, tutorId: "" },
+  studentData: INITIAL_EXISTING_STUDENT_PAYLOAD,
+  tutorData: INITIAL_EXISTING_TUTOR_PAYLOAD,
   status: STUDENT_STATUS_ENUM.ACTIVE,
 };
 
-/**
- * Animation variants providing smooth fade and height expansion transitions.
- */
+/** Animation variants for section expansion and fade transitions. */
 const containerAnimationVariants: Variants = {
   initial: {
     opacity: 0,
@@ -96,40 +132,36 @@ const containerAnimationVariants: Variants = {
   },
 };
 
-/**
- * Props for the QuickEnrollmentForm component.
- */
+/** Props interface for the QuickEnrollmentForm component. */
 export interface QuickEnrollmentFormProps {
-  /** Indicates whether the form operates in update mode. */
+  /** Indicates if the form is rendering in edit mode. */
   isUpdate?: boolean;
-  /** Available classrooms for student assignment. */
+  /** Selectable classroom option dataset. */
   classrooms: SearchOptionReturn<Classroom & Option>;
-  /** Search options for existing students. */
+  /** Search dataset for existing student selection. */
   students: SearchOptionReturn<UserDTO & Option>;
-  /** Search options for existing tutors. */
+  /** Search dataset for existing tutor selection. */
   tutors: SearchOptionReturn<TutorDTO & Option>;
 }
 
-/**
- * Props for the ToggleExistenceField sub-component.
- */
+/** Component props for ToggleExistenceField. */
 interface ToggleExistenceFieldProps {
-  /** Target form key name in react-hook-form. */
+  /** Field path inside the form control tree. */
   name: Path<EnrollmentFormData>;
-  /** Field header label text. */
+  /** Header label text. */
   label: string;
-  /** Field descriptive help text. */
+  /** Explanatory description text. */
   description: string;
-  /** Disabled state flag. */
+  /** Disables interaction when set to true. */
   disabled?: boolean;
-  /** Callback fired when existence mode changes. */
+  /** Handler fired upon changing existence state. */
   onToggleChange?: (isInSystem: boolean) => void;
 }
 
 /**
- * Renders a standardized form toggle row for system existence selection.
- * @param props - Component props including field name, label, description, and callbacks.
- * @returns The rendered dropdown form control item.
+ * Renders a dropdown component for toggling profile creation mode.
+ * @param props - Form item properties and callbacks.
+ * @returns Form field item rendering the button dropdown.
  */
 const ToggleExistenceField: React.FC<ToggleExistenceFieldProps> = ({
   name,
@@ -165,8 +197,8 @@ const ToggleExistenceField: React.FC<ToggleExistenceFieldProps> = ({
                 disabled={disabled}
                 options={SYSTEM_EXISTENCE_OPTIONS}
               >
-                {(value) =>
-                  value === "true" ? "Profil existant" : "Nouveau profil"
+                {(val) =>
+                  val === "true" ? "Profil existant" : "Nouveau profil"
                 }
               </ButtonDropdown>
             </FormControl>
@@ -181,9 +213,92 @@ const ToggleExistenceField: React.FC<ToggleExistenceFieldProps> = ({
 ToggleExistenceField.displayName = "ToggleExistenceField";
 
 /**
- * Main quick enrollment form component managing student and tutor registration flows.
- * @param props - Configuration properties, submission callback, and dataset options.
- * @returns The rendered quick enrollment form view.
+ * Wraps conditional form sections with Framer Motion animations.
+ * @param props - Active transition key and target children nodes.
+ * @returns Animated motion container component.
+ */
+const FormSectionAnimator: React.FC<{
+  activeKey: string;
+  children: React.ReactNode;
+}> = ({ activeKey, children }) => (
+  <motion.div layout className="overflow-hidden">
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={activeKey}
+        variants={containerAnimationVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        className="pt-2"
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  </motion.div>
+);
+
+FormSectionAnimator.displayName = "FormSectionAnimator";
+
+/**
+ * Renders a combobox input for selecting an existing tutor from available choices.
+ * @param props - Tutor datasets and field disabled status.
+ * @returns Form item containing generic combobox control.
+ */
+const SelectExistTutor: React.FC<{
+  tutors: SearchOptionReturn<TutorDTO & Option>;
+  disabled?: boolean;
+}> = ({ tutors, disabled }) => {
+  const { control } = useFormContext<EnrollmentFormData>();
+
+  return (
+    <FormField
+      control={control}
+      name="tutorData.tutorId"
+      render={({ field }) => (
+        <FormItem className="flex flex-col">
+          <FormLabel>Sélectionner le tuteur</FormLabel>
+          <FormControl>
+            <GenericComboBox
+              {...field}
+              onChangeValue={field.onChange}
+              options={tutors.options}
+              placeholder="Rechercher un tuteur par nom ou téléphone..."
+              className="w-full"
+              disabled={disabled}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+};
+
+SelectExistTutor.displayName = "SelectExistTutor";
+
+/**
+ * Renders hidden input elements to register context parameters into React Hook Form.
+ * @returns Fragment containing hidden inputs for state persistence during submit.
+ */
+const HiddenFormContextFields: React.FC = () => {
+  const { register } = useFormContext<EnrollmentFormData>();
+
+  return (
+    <>
+      <input type="hidden" {...register("schoolId")} />
+      <input type="hidden" {...register("yearId")} />
+      <input type="hidden" {...register("isNewStudent")} />
+      <input type="hidden" {...register("status")} />
+    </>
+  );
+};
+
+HiddenFormContextFields.displayName = "HiddenFormContextFields";
+
+/**
+ * Coordinates student quick enrollment and handles submission without field omission.
+ * @param props - Form identifiers, submit handlers, and dataset selections.
+ * @returns Complete quick enrollment form component.
  */
 export const QuickEnrollmentForm: React.FC<
   BaseFormProps<EnrollmentFormData> & QuickEnrollmentFormProps
@@ -196,12 +311,17 @@ export const QuickEnrollmentForm: React.FC<
   students,
   tutors,
 }) => {
+  const _defaultValues = React.useMemo(
+    () =>
+      mergeDefaultValuesDeep<EnrollmentFormData>(
+        defaultValues,
+        DEFAULT_QUICK_ENROLLMENT_VALUES,
+      ),
+    [defaultValues],
+  );
   const form = useZodForm<EnrollmentFormData>({
     schema: EnrollmentQuickCreateSchema,
-    defaultValues: mergeDefaultValuesDeep(
-      defaultValues,
-      DEFAULT_QUICK_ENROLLMENT_VALUES,
-    ),
+    defaultValues: _defaultValues,
     onSubmit,
   });
 
@@ -210,75 +330,48 @@ export const QuickEnrollmentForm: React.FC<
   const isTutorInSystem = form.watch("tutorData.isTutorInSystem");
 
   /**
-   * Resets student object or ID according to system existence selection.
-   * @param inSystem - Whether the student exists in system.
+   * Re-initializes student data sub-tree when toggling between existing and new modes.
+   * @param inSystem - True if selecting existing student record.
    */
   const handleStudentSystemChange = (inSystem: boolean): void => {
-    if (!inSystem) {
-      form.setValue(
-        "studentData",
-        {
-          isInSystem: false,
-          student: {
-            gender: USER_GENDER_ENUM.MALE,
-            lastName: "",
-            middleName: "",
-            firstName: "",
-            birthPlace: "Lubumbashi",
-            birthDate: new Date(),
-          },
-        },
-        { shouldValidate: true, shouldDirty: true },
-      );
-    } else {
-      form.setValue(
-        "studentData",
-        {
-          isInSystem: true,
-          studentId: "",
-        },
-        { shouldValidate: true, shouldDirty: true },
-      );
-    }
+    const nextValue = inSystem
+      ? INITIAL_EXISTING_STUDENT_PAYLOAD
+      : INITIAL_NEW_STUDENT_PAYLOAD;
+
+    form.setValue("studentData", nextValue, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true,
+    });
   };
 
   /**
-   * Resets tutor object or ID according to system existence selection.
-   * @param tutorInSystem - Whether the tutor exists in system.
+   * Re-initializes tutor data sub-tree when toggling between existing and new modes.
+   * @param tutorInSystem - True if selecting existing tutor record.
    */
   const handleTutorSystemChange = (tutorInSystem: boolean): void => {
-    if (!tutorInSystem) {
-      form.setValue(
-        "tutorData",
-        {
-          isTutorInSystem: false,
-          tutor: {
-            gender: USER_GENDER_ENUM.MALE,
-            lastName: "",
-            middleName: "",
-            address: "",
-            firstName: "",
-            phoneNumber: "",
-            profession: "",
-          },
-        },
-        { shouldValidate: true, shouldDirty: true },
-      );
-    } else {
-      form.setValue(
-        "tutorData",
-        {
-          isTutorInSystem: true,
-          tutorId: "",
-        },
-        { shouldValidate: true, shouldDirty: true },
-      );
-    }
+    const nextValue = tutorInSystem
+      ? INITIAL_EXISTING_TUTOR_PAYLOAD
+      : INITIAL_NEW_TUTOR_PAYLOAD;
+
+    form.setValue("tutorData", nextValue, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true,
+    });
   };
+
+  const handleSubmit = React.useCallback(
+    createCompleteSubmitHandler(form, onSubmit),
+    [],
+  );
 
   return (
     <Form {...form}>
-      <form id={formId} onSubmit={form.submit} aria-label="Inscription rapide">
+      <form id={formId} onSubmit={handleSubmit} aria-label="Inscription rapide">
+        {/* Hidden inputs ensuring non-rendered context values are registered on handleSubmit */}
+        <HiddenFormContextFields />
+
         {/* Academic Placement Section */}
         <FormField
           control={form.control}
@@ -315,33 +408,15 @@ export const QuickEnrollmentForm: React.FC<
             onToggleChange={handleStudentSystemChange}
           />
 
-          <motion.div layout className="overflow-hidden">
-            <AnimatePresence mode="wait" initial={false}>
-              {isInSystem ? (
-                <motion.div
-                  key="existing-student"
-                  variants={containerAnimationVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="pt-2"
-                >
-                  <SelectExistStudent students={students} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="new-student"
-                  variants={containerAnimationVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="pt-2"
-                >
-                  <StudentFormFields />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+          <FormSectionAnimator
+            activeKey={isInSystem ? "existing-student" : "new-student"}
+          >
+            {isInSystem ? (
+              <SelectExistStudent students={students} />
+            ) : (
+              <StudentFormFields />
+            )}
+          </FormSectionAnimator>
         </div>
 
         {/* Legal Tutor Section */}
@@ -354,52 +429,15 @@ export const QuickEnrollmentForm: React.FC<
             onToggleChange={handleTutorSystemChange}
           />
 
-          <motion.div layout className="overflow-hidden">
-            <AnimatePresence mode="wait" initial={false}>
-              {isTutorInSystem ? (
-                <motion.div
-                  key="existing-tutor"
-                  variants={containerAnimationVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="pt-2"
-                >
-                  <FormField
-                    control={form.control}
-                    name="tutorData.tutorId"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Sélectionner le tuteur</FormLabel>
-                        <FormControl>
-                          <GenericComboBox
-                            {...field}
-                            onChangeValue={field.onChange}
-                            options={tutors.options}
-                            placeholder="Rechercher un tuteur par nom ou téléphone..."
-                            className="w-full"
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="new-tutor"
-                  variants={containerAnimationVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="pt-2"
-                >
-                  <TutorFormFields />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+          <FormSectionAnimator
+            activeKey={isTutorInSystem ? "existing-tutor" : "new-tutor"}
+          >
+            {isTutorInSystem ? (
+              <SelectExistTutor tutors={tutors} disabled={isSubmitting} />
+            ) : (
+              <TutorFormFields />
+            )}
+          </FormSectionAnimator>
         </div>
       </form>
     </Form>

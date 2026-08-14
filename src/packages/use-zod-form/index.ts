@@ -7,45 +7,41 @@ import {
   type UseFormProps,
   type UseFormReturn,
   type SubmitHandler,
-  FieldValues,
+  type FieldValues,
 } from "react-hook-form";
 import type { z } from "zod";
 
 /**
- * Props étendues de useForm basées directement sur la forme du schéma Zod.
+ * Extended properties for `useZodForm`, leveraging a Zod schema as the primary source of truth.
+ * @template TSchema - Generic field values type derived from the Zod schema.
  */
 export interface UseZodFormProps<TSchema extends FieldValues> extends Omit<
   UseFormProps<TSchema>,
   "resolver"
 > {
-  /**
-   * Le schéma de validation Zod (ZodObject, ZodEffects, etc.).
-   */
-  schema: z.ZodType<TSchema>;
+  /** The Zod validation schema instance. */
+  schema: z.ZodType<TSchema, TSchema>;
 
-  /**
-   * Handler de soumission typé automatiquement selon le schéma Zod.
-   */
+  /** Optional typed submission handler executed upon successful form validation. */
   onSubmit?: SubmitHandler<TSchema>;
 }
 
 /**
- * Type de retour combinant les méthodes de RHF et notre handler de soumission.
+ * Return type combining standard React Hook Form utilities with an encapsulated submit handler.
+ * @template TSchema - Generic field values type derived from the Zod schema.
  */
 export interface UseZodFormReturn<
   TSchema extends FieldValues,
 > extends UseFormReturn<TSchema> {
-  /**
-   * Fonction de soumission qui encapsule handleSubmit de RHF.
-   */
+  /** Ready-to-use submit handler wrapping RHF's internal handleSubmit execution. */
   submit: (e?: React.BaseSyntheticEvent) => Promise<void>;
 }
 
 /**
- * Wrapper de production combinant react-hook-form et zod avec une inférence stricte.
- * Le schéma Zod est la source unique de vérité pour le typage.
- *
- * @template TSchema - Le schéma Zod hérité.
+ * Production-ready wrapper unifying react-hook-form and zod validation with strict typing.
+ * @template TSchema - Inferrable schema type extending standard form field values.
+ * @param props - Form configuration containing the validation schema and submit callback.
+ * @returns Augmented React Hook Form controls including a simplified submit method.
  */
 export function useZodForm<TSchema extends FieldValues>({
   schema,
@@ -60,15 +56,28 @@ export function useZodForm<TSchema extends FieldValues>({
   });
 
   const onSubmitRef = React.useRef(onSubmit);
-  onSubmitRef.current = onSubmit;
 
-  const submit = React.useMemo(() => {
-    return methods.handleSubmit(async (data, event) => {
-      if (onSubmitRef.current) {
-        await onSubmitRef.current(data, event);
-      }
-    });
-  }, [methods.handleSubmit]);
+  React.useEffect(() => {
+    onSubmitRef.current = onSubmit;
+  }, [onSubmit]);
+
+  const submit = React.useCallback(
+    async (e?: React.BaseSyntheticEvent) => {
+      await methods.handleSubmit(
+        async (data, event) => {
+          console.log("Avec form.getValues", methods.getValues());
+          console.log("Avec le valeur de form.handleSubmit", data);
+          if (onSubmitRef.current) {
+            await onSubmitRef.current(data, event);
+          }
+        },
+        (errors) => {
+          console.log("Errors", errors);
+        },
+      )(e);
+    },
+    [methods],
+  );
 
   return {
     ...methods,

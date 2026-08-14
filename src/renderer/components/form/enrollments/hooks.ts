@@ -20,6 +20,7 @@ export type EnrollmentState = {
 export type EnrollmentActions = {
   addEnrollment: (enrollment: ReturnDataEnrollment) => void;
   markEnrollmentAsPrinted: (enrollmentRef: string) => void;
+  getLastEnrollemnt(): StoreEnrollment | undefined | null;
   clearEnrollments: () => void;
   resetAll: () => void;
 };
@@ -71,8 +72,12 @@ const initialState: EnrollmentState = {
  */
 export const useEnrollmentStore = create<EnrollmentStore>()(
   devtools(
-    (set) => ({
+    (set, get) => ({
       ...initialState,
+
+      getLastEnrollemnt: () => {
+        return get().enrollments[0];
+      },
 
       addEnrollment: (enrollment) =>
         set(

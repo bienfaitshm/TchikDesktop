@@ -128,6 +128,7 @@ export const tutors = sqliteTable(
     index("tutors_school_idx").on(table.schoolId),
     index("tutors_phone_number_idx").on(table.phoneNumber),
     index("tutors_school_phone_idx").on(table.schoolId, table.phoneNumber),
+    index("users_idx").on(table.userId),
   ],
 );
 
