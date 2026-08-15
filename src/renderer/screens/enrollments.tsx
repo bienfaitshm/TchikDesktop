@@ -22,6 +22,7 @@ import { useCreateQuickEnrollmentForm } from "@/renderer/libs/queries/enrollemen
 import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
 import { LoadingButton } from "@/components/buttons/button-loading";
 import { FormattedJsonViewer } from "../components/json-formated-viewer";
+import { EnrollmentInvoice } from "../components/invoices/enrollment-invoice";
 
 /**
  * Properties for the EnrollmentForm component.
@@ -122,6 +123,7 @@ export function EnrollmentPage(): React.JSX.Element {
                 Le détail de la facture s'affichera ici après la sélection de
                 l'élève.
               </p>
+              <EnrollmentInvoice />
               <FormattedJsonViewer data={lastEnrollment} />
             </div>
           </InvoiGridPreviewContainer>
