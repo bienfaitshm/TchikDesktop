@@ -79,8 +79,8 @@ export class TutorService {
    * @param input - Payload containing user and tutor creation details.
    * @returns The created tutor entity combined with its associated user details.
    */
-  public createTutor(input: CreateTutorInput): TutorDTO {
-    return this.db.transaction((tx: any) => {
+  public createTutor(input: CreateTutorInput, tx?: TDataBase): TutorDTO {
+    return (tx ?? this.db).transaction((tx: any) => {
       const { tutor: tutorPayload, user: userPayload } =
         formatTutorInput(input);
 
@@ -104,8 +104,12 @@ export class TutorService {
    * @returns The updated tutor entity combined with its associated user details.
    * @throws NotFoundError If the tutor or associated user record is not found.
    */
-  public updateTutor(tutorId: string, payload: UpdateTutorInput): TutorDTO {
-    return this.db.transaction((tx: any) => {
+  public updateTutor(
+    tutorId: string,
+    payload: UpdateTutorInput,
+    tx?: TDataBase,
+  ): TutorDTO {
+    return (tx ?? this.db).transaction((tx: any) => {
       const { tutor: tutorPayload, user: userPayload } =
         formatTutorInput(payload);
 

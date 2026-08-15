@@ -5,17 +5,15 @@ import {
   userRepository,
 } from "@/packages/@core/data-access/db/queries/users";
 import {
-  type TutorRepository,
-  tutorRepository,
+  type TutorService,
+  tutorService,
 } from "@/packages/@core/data-access/db/queries/tutors";
-
 import {
   EnrollmentRepository,
   EnrollmentDTO,
   BaseClassroomEnrollmentFilters,
 } from "./enrollment.repository";
 import { SelectOptionFacade } from "@/packages/drizzle-queries";
-import { USER_ROLE_ENUM } from "../../options";
 
 export class EnrollmentService {
   public readonly enrollmentSelectService: SelectOptionFacade<EnrollmentDTO>;
@@ -23,7 +21,7 @@ export class EnrollmentService {
   constructor(
     private readonly enrollmentRepo: EnrollmentRepository,
     private readonly userRepo: UserRepository,
-    private readonly tutorRepo: TutorRepository,
+    private readonly tutorService: TutorService,
     private readonly clientDb: TDataBase = db,
   ) {
     this.enrollmentSelectService = new SelectOptionFacade<EnrollmentDTO>(
@@ -78,47 +76,26 @@ export class EnrollmentService {
       if (studentData.isInSystem) {
         targetStudentId = studentData.studentId;
       } else {
-        const newUser = this.userRepo.createUser(
+        const student = this.userRepo.createStudent(
           {
             ...studentData.student,
             birthDate: studentData.student.birthDate!,
-            role: USER_ROLE_ENUM.STUDENT,
             schoolId: payload.schoolId,
           },
           tx,
         );
 
-        targetStudentId = newUser.userId;
+        targetStudentId = student.userId;
       }
 
       // 2. GESTION TUTEUR
       if (tutorData?.isTutorInSystem === true) {
         targetTutorId = tutorData.tutorId;
       } else if (tutorData?.isTutorInSystem === false) {
-        const { phoneNumber, profession, address, ...restData } =
-          tutorData.tutor;
-
-        const newTutorUser = this.userRepo.createUser(
-          {
-            ...restData,
-            birthDate: restData.birthDate!,
-            role: USER_ROLE_ENUM.TUTOR,
-            schoolId: payload.schoolId,
-          },
+        const tutor = this.tutorService.createTutor(
+          { ...tutorData.tutor, schoolId: payload.schoolId },
           tx,
         );
-
-        const tutor = this.tutorRepo.create(
-          {
-            address,
-            phoneNumber,
-            profession,
-            userId: newTutorUser.userId,
-            schoolId: payload.schoolId,
-          },
-          tx,
-        );
-
         targetTutorId = tutor.tutorId;
       }
 
@@ -156,5 +133,5 @@ export const enrollmentRepository = new EnrollmentRepository();
 export const enrollmentService = new EnrollmentService(
   enrollmentRepository,
   userRepository,
-  tutorRepository,
+  tutorService,
 );
