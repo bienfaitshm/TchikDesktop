@@ -17,6 +17,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/renderer/components/ui/avatar";
+import { Separator } from "@/renderer/components/ui/separator";
 /**
  * Enumeration representing student enrollment status.
  */
@@ -110,13 +111,13 @@ const TutorHeader: React.FC<TutorHeaderProps> = ({ tutor }) => {
         </div>
       </div>
       <div className="flex gap-2">
-        <Badge variant="secondary" className="p-2 px-6">
+        <Badge variant="secondary" className="p-2 px-6 text-xs">
           <Phone className="h-3.5 w-3.5" />
           <span>{tutor.phoneNumber}</span>
         </Badge>
 
         {tutor.address && (
-          <Badge variant="secondary" className="p-2 px-6">
+          <Badge variant="secondary" className="p-2 px-6 text-xs">
             <MapPin className="h-3.5 w-3.5" />
             <span>{tutor.address}</span>
           </Badge>
@@ -211,47 +212,46 @@ StudentListItem.displayName = "StudentListItem";
  */
 export const TutorProfileCard: React.FC<TutorProfileCardProps> = ({
   tutor,
-  className = "",
-  onSelectStudent,
 }) => {
   const hasStudents = false;
 
   return (
-    <section aria-label="Profil du tuteur et élèves rattachés">
+    <section
+      className="space-y-4"
+      aria-label="Profil du tuteur et élèves rattachés"
+    >
       {/* Tutor Profile Header */}
       <TutorHeader tutor={tutor} />
-
+      <Separator />
       {/* Associated Students Section */}
       <div className="mt-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-indigo-400" />
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-              Élèves sous responsabilité
-            </h3>
-          </div>
-          <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-indigo-400 border border-slate-800">
-            {/* {tutor} */}
-          </span>
-        </div>
-
         {hasStudents ? (
-          <div className="grid grid-cols-1 gap-3">
-            {/* {tutor.students.map((student) => (
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="size-3" />
+                <h3 className="text-xs uppercase">
+                  Élèves sous responsabilité
+                </h3>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
+              {/* {tutor.students.map((student) => (
               <StudentListItem
                 key={student.id}
                 student={student}
                 onSelect={onSelectStudent}
               />
             ))} */}
+            </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-800 bg-slate-900/30 p-8 text-center">
-            <Users className="h-8 w-8 text-slate-600 mb-2" />
-            <p className="text-sm font-medium text-slate-400">
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center">
+            <Users className="h-8 w-8 text-muted-foreground mb-2" />
+            <p className="text-sm font-medium text-muted-foreground">
               Aucun élève rattaché à ce tuteur.
             </p>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Les élèves inscrits sous la responsabilité de ce tuteur
               apparaîtront ici.
             </p>
