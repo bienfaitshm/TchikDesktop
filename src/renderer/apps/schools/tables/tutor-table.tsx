@@ -1,3 +1,5 @@
+import React from "react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import type { TutorDTO } from "@/packages/@core/data-access/db";
 import {
   DataContentBody,
@@ -10,30 +12,26 @@ import {
   TutorProfileDialog,
   TutorDialogDeleteForm,
   TutorDialogUpdateForm,
-  type CreateTutorDialogProps,
 } from "@/renderer/apps/schools/dialogs";
 import { tutorColumns } from "./tutor-table.columns";
 import { enhanceColumns } from "@/renderer/components/tables/columns";
-import React from "react";
-import { Eye, Pencil, Trash2 } from "lucide-react";
 import {
-  ActionMenuConfig,
+  type ActionMenuConfig,
   createActionMenus,
 } from "@/renderer/components/menus/action-menus";
 
 /**
  * Properties for the tutor row contextual actions component.
  */
-export interface TutorRowActionsProps extends Pick<
-  CreateTutorDialogProps,
-  "mutationKey"
-> {
+export interface TutorRowActionsProps {
   /** The tutor entity associated with the current row. */
   tutor: TutorDTO;
   /** Unique identifier of the current school context. */
   schoolId: string;
   /** Unique identifier of the current academic year context. */
   yearId: string;
+  /** Optional React Query mutation key used for cache invalidation. */
+  mutationKey?: readonly unknown[];
 }
 
 /**
@@ -42,15 +40,17 @@ export interface TutorRowActionsProps extends Pick<
 const ACTION_MENUS: ActionMenuConfig<TutorRowActionsProps>[] = [
   {
     id: "profile",
-    label: "View Profile",
+    label: "Voir le profil",
     icon: Eye,
-    dialog({ tutor }) {
-      return <TutorProfileDialog tutor={tutor} />;
+    dialog({ tutor, schoolId, yearId }) {
+      return (
+        <TutorProfileDialog tutor={tutor} schoolId={schoolId} yearId={yearId} />
+      );
     },
   },
   {
     id: "edit",
-    label: "Edit Tutor",
+    label: "Modifier le tuteur",
     icon: Pencil,
     dialog({ tutor, schoolId, mutationKey }) {
       return (
@@ -65,7 +65,7 @@ const ACTION_MENUS: ActionMenuConfig<TutorRowActionsProps>[] = [
   },
   {
     id: "delete",
-    label: "Delete Tutor",
+    label: "Supprimer le tuteur",
     icon: Trash2,
     separator: true,
     variant: "destructive",
@@ -74,7 +74,7 @@ const ACTION_MENUS: ActionMenuConfig<TutorRowActionsProps>[] = [
         <TutorDialogDeleteForm
           mutationKey={mutationKey}
           id={tutor.tutorId}
-          name={tutor.fullName ?? "Unknown"}
+          name={tutor.fullName ?? "Inconnu"}
         />
       );
     },
@@ -83,11 +83,16 @@ const ACTION_MENUS: ActionMenuConfig<TutorRowActionsProps>[] = [
 
 /**
  * Renders contextual action menus for a given tutor row.
- * @param props - Component properties containing the tutor entity, school ID, year ID, and mutation key.
- * @returns The rendered action menu component.
+ * @param props - Component properties containing tutor entity, school ID, year ID, and optional mutation key.
+ * @returns Rendered action menu component for a tutor row.
  */
-export const RowAction: React.FC<TutorRowActionsProps> =
+export const TutorRowActions: React.FC<TutorRowActionsProps> =
   createActionMenus<TutorRowActionsProps>(ACTION_MENUS);
+
+TutorRowActions.displayName = "TutorRowActions";
+
+/* Backward compatibility alias */
+export const RowAction = TutorRowActions;
 
 /**
  * Properties for the TutorTable component.
@@ -95,7 +100,7 @@ export const RowAction: React.FC<TutorRowActionsProps> =
 export type TutorTableProps = {
   /** List of tutor records to display in the table. */
   tutors?: TutorDTO[];
-  /** Optional React Query mutation key used for invalidation upon table actions. */
+  /** Optional React Query mutation key used for cache invalidation upon table actions. */
   mutationKey?: readonly unknown[];
   /** Unique identifier of the current school context. */
   schoolId: string;
@@ -104,9 +109,9 @@ export type TutorTableProps = {
 };
 
 /**
- * Renders a data table presenting a list of tutors with pagination and row actions.
+ * Renders a paginated data table presenting a list of tutors with row-level action menus.
  * @param props - Component properties including tutors data, school ID, year ID, and mutation key.
- * @returns The rendered tutor data table component.
+ * @returns Rendered tutor data table element.
  */
 export const TutorTable: React.FC<TutorTableProps> = ({
   tutors = [],
@@ -119,7 +124,7 @@ export const TutorTable: React.FC<TutorTableProps> = ({
       enhanceColumns(tutorColumns, {
         variant: "actions",
         renderRowAction: (tutor) => (
-          <RowAction
+          <TutorRowActions
             tutor={tutor}
             schoolId={schoolId}
             yearId={yearId}
@@ -146,3 +151,5 @@ export const TutorTable: React.FC<TutorTableProps> = ({
     </div>
   );
 };
+
+TutorTable.displayName = "TutorTable";
