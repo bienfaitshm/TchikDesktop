@@ -11,6 +11,12 @@ import {
   AlertCircle,
 } from "lucide-react";
 import type { TutorDTO } from "@/packages/@core/data-access/db";
+import { Badge } from "@/renderer/components/ui/badge";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/renderer/components/ui/avatar";
 /**
  * Enumeration representing student enrollment status.
  */
@@ -78,44 +84,42 @@ export function formatFullName(
  * @returns Rendered tutor header component.
  */
 const TutorHeader: React.FC<TutorHeaderProps> = ({ tutor }) => {
-  const fullName = tutor.user.fullName;
+  const fullName = tutor.fullName;
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-          <User className="h-7 w-7" />
-        </div>
+        <Avatar size="lg" className="size-7">
+          <AvatarFallback>
+            <User className="size-5" />
+          </AvatarFallback>
+        </Avatar>
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-slate-100">{fullName}</h2>
-            <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-400 border border-slate-700">
+            <h2 className="text-sm uppercase font-bold ">{fullName}</h2>
+            <span className="rounded-full  px-2.5 py-0.5 text-xs font-medium">
               Tuteur légal
             </span>
           </div>
           {tutor.profession && (
-            <p className="flex items-center gap-1.5 text-sm text-slate-400 mt-1">
-              <Briefcase className="h-3.5 w-3.5 text-slate-500" />
+            <p className="flex items-center gap-1.5 text-sm mt-1">
+              <Briefcase className="h-3.5 w-3.5" />
               {tutor.profession}
             </p>
           )}
         </div>
       </div>
-
-      <div className="flex flex-wrap gap-3 text-xs text-slate-300">
-        <a
-          href={`tel:${tutor.phoneNumber}`}
-          className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 transition-colors hover:border-slate-700 hover:text-white"
-        >
-          <Phone className="h-3.5 w-3.5 text-indigo-400" />
+      <div className="flex gap-2">
+        <Badge variant="secondary" className="p-2 px-6">
+          <Phone className="h-3.5 w-3.5" />
           <span>{tutor.phoneNumber}</span>
-        </a>
+        </Badge>
 
         {tutor.address && (
-          <div className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-slate-400">
-            <MapPin className="h-3.5 w-3.5 text-slate-500" />
+          <Badge variant="secondary" className="p-2 px-6">
+            <MapPin className="h-3.5 w-3.5" />
             <span>{tutor.address}</span>
-          </div>
+          </Badge>
         )}
       </div>
     </div>
@@ -213,10 +217,7 @@ export const TutorProfileCard: React.FC<TutorProfileCardProps> = ({
   const hasStudents = false;
 
   return (
-    <section
-      className={`rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-xl text-slate-100 ${className}`}
-      aria-label="Profil du tuteur et élèves rattachés"
-    >
+    <section aria-label="Profil du tuteur et élèves rattachés">
       {/* Tutor Profile Header */}
       <TutorHeader tutor={tutor} />
 
