@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Suspense } from "@/renderer/libs/queries/suspense";
 import {
   Dialog,
   DialogClose,
@@ -12,28 +13,44 @@ import {
 } from "@/renderer/components/dialog/base";
 import { TutorProfileCard } from "@/renderer/apps/schools/components/tutor-profile";
 import type { TutorDTO } from "@/packages/@core/data-access/db";
+import { useGetEnrollments } from "@/renderer/libs/queries/enrollements";
+import { Button } from "@/renderer/components/ui/button";
 
 /**
- * Props interface for the TutorProfileContent component.
+ * Properties for the TutorProfileContent component.
  */
 export interface TutorProfileContentProps {
   /** Detailed tutor payload to render inside the container. */
   tutor?: TutorDTO;
+  /** Active academic year identifier. */
+  yearId?: string;
+  /** Active school identifier. */
+  schoolId?: string;
 }
 
 /**
- * Renders tutor profile details safely inside a dialog container wrapper.
- * @param props - Component props containing the optional tutor data.
- * @returns Rendered dialog container or an empty fallback state.
+ * Renders tutor profile details and associated student enrollments within a dialog container.
+ * @param props - Component props containing optional tutor data and scope identifiers.
+ * @returns Rendered dialog container or a fallback placeholder.
  */
 export const TutorProfileContent: React.FC<TutorProfileContentProps> = ({
   tutor,
+  schoolId,
+  yearId,
 }) => {
+  const tutorId = tutor?.tutorId;
+
+  const { data: enrollments = [] } = useGetEnrollments({
+    where: {
+      classroomEnrollments: { tutorId, schoolId, yearId },
+    },
+  });
+
   if (!tutor) {
     return (
       <DialogContainer>
         <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-slate-800 bg-slate-900/40 text-sm text-slate-400">
-          No tutor information available.
+          Aucune information tuteur disponible.
         </div>
       </DialogContainer>
     );
@@ -41,7 +58,7 @@ export const TutorProfileContent: React.FC<TutorProfileContentProps> = ({
 
   return (
     <DialogContainer>
-      <TutorProfileCard tutor={tutor} />
+      <TutorProfileCard tutor={tutor} enrollments={enrollments} />
     </DialogContainer>
   );
 };
@@ -49,7 +66,7 @@ export const TutorProfileContent: React.FC<TutorProfileContentProps> = ({
 TutorProfileContent.displayName = "TutorProfileContent";
 
 /**
- * Props interface for the TutorProfileDialog component.
+ * Properties for the TutorProfileDialog component.
  */
 export interface TutorProfileDialogProps {
   /** Detailed tutor payload to be displayed in the modal. */
@@ -60,11 +77,15 @@ export interface TutorProfileDialogProps {
   onOpenChange?: (open: boolean) => void;
   /** Optional custom trigger element that toggles the dialog. */
   trigger?: React.ReactNode;
+  /** Active academic year identifier. */
+  yearId?: string;
+  /** Active school identifier. */
+  schoolId?: string;
 }
 
 /**
- * Renders a full modal dialog displaying tutor profile information.
- * @param props - Configuration properties controlling visibility and payload data.
+ * Renders a full modal dialog displaying tutor profile details and linked student records.
+ * @param props - Configuration properties controlling visibility, triggers, and payload data.
  * @returns Rendered modal dialog element.
  */
 export const TutorProfileDialog: React.FC<TutorProfileDialogProps> = ({
@@ -72,24 +93,31 @@ export const TutorProfileDialog: React.FC<TutorProfileDialogProps> = ({
   open,
   onOpenChange,
   trigger,
+  schoolId,
+  yearId,
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Tutor Profile Details</DialogTitle>
+          <DialogTitle>Détails du profil du tuteur</DialogTitle>
           <DialogDescription>
-            Comprehensive identity, contact information, and linked student
-            records.
+            Informations d'identité, coordonnées et liste des élèves associés.
           </DialogDescription>
         </DialogHeader>
-
-        <TutorProfileContent tutor={tutor} />
-
+        <Suspense>
+          <TutorProfileContent
+            tutor={tutor}
+            schoolId={schoolId}
+            yearId={yearId}
+          />
+        </Suspense>
         <DialogFooter>
-          <DialogClose className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-slate-700 hover:text-white">
-            Close
+          <DialogClose asChild>
+            <Button variant="outline" size="sm">
+              Fermer
+            </Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

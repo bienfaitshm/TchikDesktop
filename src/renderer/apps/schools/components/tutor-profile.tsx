@@ -1,127 +1,111 @@
 import * as React from "react";
-import {
-  User,
-  Phone,
-  Briefcase,
-  MapPin,
-  GraduationCap,
-  Users,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-} from "lucide-react";
-import type { TutorDTO } from "@/packages/@core/data-access/db";
+import { Phone, Briefcase, MapPin, Users, GraduationCap } from "lucide-react";
+import type { EnrollmentDTO, TutorDTO } from "@/packages/@core/data-access/db";
 import { Badge } from "@/renderer/components/ui/badge";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/renderer/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/renderer/components/ui/avatar";
 import { Separator } from "@/renderer/components/ui/separator";
-/**
- * Enumeration representing student enrollment status.
- */
-export type StudentStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";
+import { cn } from "@/renderer/utils";
 
 /**
- * Represents summary information for a student linked to a tutor.
+ * Extracts up to two uppercase initial letters from a given full name.
+ * @param name - Full name string to extract initials from.
+ * @returns Two-character uppercase initials or default fallback symbol.
  */
-export interface StudentSummary {
-  id: string;
-  firstName: string;
-  lastName: string;
-  middleName?: string;
-  classroomName: string;
-  status: StudentStatus;
-  relationship?: string;
-  avatarUrl?: string;
+function getInitials(name?: string): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 /**
- * Props interface for the TutorProfileCard component.
+ * Props for the TutorProfileCard main container component.
  */
 export interface TutorProfileCardProps {
-  /** The tutor data payload including linked student records. */
+  /** Primary tutor record payload. */
   tutor: TutorDTO;
+  /** List of student enrollment records assigned to this tutor. */
+  enrollments?: EnrollmentDTO[];
   /** Optional container CSS class overrides. */
   className?: string;
-  /** Optional click handler executed when selecting a student item. */
-  onSelectStudent?: (studentId: string) => void;
 }
 
 /**
- * Props interface for the TutorHeader sub-component.
+ * Props for the internal TutorHeader component.
  */
 interface TutorHeaderProps {
+  /** Primary tutor record payload. */
   tutor: TutorDTO;
 }
 
 /**
- * Props interface for the StudentListItem sub-component.
+ * Props for the internal StudentListItem component.
  */
 interface StudentListItemProps {
-  student: StudentSummary;
-  onSelect?: (studentId: string) => void;
+  /** Individual student enrollment record payload. */
+  student: EnrollmentDTO;
 }
 
 /**
- * Formats name parts into a sanitized, space-separated full name string.
- * @param firstName - Primary given name.
- * @param lastName - Primary family surname.
- * @param middleName - Optional secondary or middle name.
- * @returns Cleanly formatted full name string.
- */
-export function formatFullName(
-  firstName: string,
-  lastName: string,
-  middleName?: string,
-): string {
-  return [firstName, middleName, lastName].filter(Boolean).join(" ");
-}
-
-/**
- * Renders the profile header displaying tutor contact information and identity attributes.
- * @param props - Component props containing the tutor entity.
- * @returns Rendered tutor header component.
+ * Displays identity, status, and contact details for a legal tutor.
+ * @param props - Component parameters including tutor data record.
+ * @returns Rendered header element for tutor profile view.
  */
 const TutorHeader: React.FC<TutorHeaderProps> = ({ tutor }) => {
-  const fullName = tutor.fullName;
+  const fullName = tutor.fullName ?? "Tuteur non nommé";
+  const initials = getInitials(fullName);
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-4">
-        <Avatar size="lg" className="size-7">
-          <AvatarFallback>
-            <User className="size-5" />
+      <div className="flex items-start gap-4">
+        <Avatar className="h-16 w-16 border">
+          <AvatarFallback className="bg-primary/10 text-primary font-semibold text-base">
+            {initials}
           </AvatarFallback>
         </Avatar>
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm uppercase font-bold ">{fullName}</h2>
-            <span className="rounded-full  px-2.5 py-0.5 text-xs font-medium">
+
+        <div className="flex flex-col flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-base font-bold uppercase tracking-tight text-foreground truncate">
+              {fullName}
+            </h2>
+            <Badge
+              variant="outline"
+              className="text-[10px] font-medium py-0 px-2"
+            >
               Tuteur légal
-            </span>
+            </Badge>
           </div>
+
           {tutor.profession && (
-            <p className="flex items-center gap-1.5 text-sm mt-1">
-              <Briefcase className="h-3.5 w-3.5" />
-              {tutor.profession}
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+              <Briefcase className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{tutor.profession}</span>
             </p>
           )}
-        </div>
-      </div>
-      <div className="flex gap-2">
-        <Badge variant="secondary" className="p-2 px-6 text-xs">
-          <Phone className="h-3.5 w-3.5" />
-          <span>{tutor.phoneNumber}</span>
-        </Badge>
 
-        {tutor.address && (
-          <Badge variant="secondary" className="p-2 px-6 text-xs">
-            <MapPin className="h-3.5 w-3.5" />
-            <span>{tutor.address}</span>
-          </Badge>
-        )}
+          <div className="flex flex-wrap gap-2 mt-3">
+            {tutor.phoneNumber && (
+              <Badge
+                variant="secondary"
+                className="gap-1.5 py-1 px-2.5 text-xs font-normal"
+              >
+                <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>{tutor.phoneNumber}</span>
+              </Badge>
+            )}
+
+            {tutor.address && (
+              <Badge
+                variant="secondary"
+                className="gap-1.5 py-1 px-2.5 text-xs font-normal"
+              >
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="truncate max-w-50">{tutor.address}</span>
+              </Badge>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -130,74 +114,47 @@ const TutorHeader: React.FC<TutorHeaderProps> = ({ tutor }) => {
 TutorHeader.displayName = "TutorHeader";
 
 /**
- * Renders an individual student card with placement and status details.
- * @param props - Component options including student data and select handler.
- * @returns Rendered student card item.
+ * Displays a concise summary card for an enrolled student under tutor responsibility.
+ * @param props - Component options containing enrollment and student details.
+ * @returns Rendered item view for a student.
  */
-const StudentListItem: React.FC<StudentListItemProps> = ({
-  student,
-  onSelect,
-}) => {
-  const fullName = formatFullName(
-    student.firstName,
-    student.lastName,
-    student.middleName,
-  );
-
-  const renderStatusBadge = (status: StudentStatus) => {
-    switch (status) {
-      case "ACTIVE":
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20">
-            <CheckCircle2 className="h-3 w-3" /> Actif
-          </span>
-        );
-      case "INACTIVE":
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-0.5 text-xs font-medium text-slate-400 border border-slate-500/20">
-            <XCircle className="h-3 w-3" /> Inactif
-          </span>
-        );
-      case "SUSPENDED":
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400 border border-amber-500/20">
-            <AlertCircle className="h-3 w-3" /> Suspendu
-          </span>
-        );
-    }
-  };
+const StudentListItem: React.FC<StudentListItemProps> = ({ student }) => {
+  const studentName = student.student?.fullName ?? "Élève inconnu";
+  const classroomName = student.classroom?.shortIdentifier ?? "N/A";
+  const registrationNumber = student.studentCode;
+  const initials = getInitials(studentName);
 
   return (
-    <div
-      onClick={() => onSelect?.(student.id)}
-      className={`group flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/50 p-4 transition-all duration-200 hover:border-indigo-500/40 hover:bg-slate-900 ${
-        onSelect ? "cursor-pointer" : ""
-      }`}
-    >
+    <div className="p-2.5 rounded-lg border bg-card hover:bg-accent/40 transition-colors">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-800 text-slate-300 group-hover:bg-indigo-500/10 group-hover:text-indigo-400 transition-colors">
-          <GraduationCap className="h-5 w-5" />
-        </div>
-        <div>
-          <h4 className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">
-            {fullName}
-          </h4>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Classe :{" "}
-            <span className="text-slate-300 font-medium">
-              {student.classroomName}
+        <Avatar className="h-9 w-9">
+          <AvatarFallback className="bg-muted text-xs font-medium">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-xs font-semibold text-foreground truncate">
+              {studentName}
+            </h4>
+            {registrationNumber && (
+              <span className="text-[10px] font-mono text-muted-foreground">
+                #{registrationNumber}
+              </span>
+            )}
+          </div>
+
+          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+            <GraduationCap className="h-3 w-3" />
+            <span>
+              Classe :{" "}
+              <strong className="font-medium text-foreground">
+                {classroomName}
+              </strong>
             </span>
           </p>
         </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        {student.relationship && (
-          <span className="text-xs text-slate-500 hidden sm:inline-block">
-            {student.relationship}
-          </span>
-        )}
-        {renderStatusBadge(student.status)}
       </div>
     </div>
   );
@@ -206,52 +163,49 @@ const StudentListItem: React.FC<StudentListItemProps> = ({
 StudentListItem.displayName = "StudentListItem";
 
 /**
- * Main container component displaying tutor profile details alongside their registered students.
- * @param props - Component options including tutor data entity and event handlers.
- * @returns Complete tutor profile and student list view.
+ * Renders the primary profile layout for a legal tutor alongside linked students.
+ * @param props - Component options including tutor data, enrollments, and optional styles.
+ * @returns Complete profile section element.
  */
 export const TutorProfileCard: React.FC<TutorProfileCardProps> = ({
   tutor,
+  enrollments = [],
+  className,
 }) => {
-  const hasStudents = false;
+  const hasStudents = enrollments.length > 0;
 
   return (
     <section
-      className="space-y-4"
+      className={cn("space-y-4", className)}
       aria-label="Profil du tuteur et élèves rattachés"
     >
-      {/* Tutor Profile Header */}
       <TutorHeader tutor={tutor} />
+
       <Separator />
-      {/* Associated Students Section */}
-      <div className="mt-6 space-y-4">
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Users className="h-4 w-4" />
+            <h3 className="text-xs font-semibold tracking-wider text-foreground">
+              Élèves sous responsabilité ({enrollments.length})
+            </h3>
+          </div>
+        </div>
+
         {hasStudents ? (
-          <div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Users className="size-3" />
-                <h3 className="text-xs uppercase">
-                  Élèves sous responsabilité
-                </h3>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-3">
-              {/* {tutor.students.map((student) => (
-              <StudentListItem
-                key={student.id}
-                student={student}
-                onSelect={onSelectStudent}
-              />
-            ))} */}
-            </div>
+          <div className="grid grid-cols-1 gap-2.5">
+            {enrollments.map((student) => (
+              <StudentListItem key={student.enrollmentId} student={student} />
+            ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center">
-            <Users className="h-8 w-8 text-muted-foreground mb-2" />
-            <p className="text-sm font-medium text-muted-foreground">
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center bg-muted/20">
+            <Users className="h-8 w-8 text-muted-foreground/60 mb-2" />
+            <p className="text-xs font-medium text-muted-foreground">
               Aucun élève rattaché à ce tuteur.
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[11px] text-muted-foreground/80 mt-0.5">
               Les élèves inscrits sous la responsabilité de ce tuteur
               apparaîtront ici.
             </p>
