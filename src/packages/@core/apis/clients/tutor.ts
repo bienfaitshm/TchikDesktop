@@ -1,8 +1,7 @@
 import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import {
   TutorFilter,
-  TutorCreate,
-  TutorUpdate,
+  BaseTutor,
 } from "@/packages/@core/data-access/schema-validations";
 import type { SelectOption, TutorDTO } from "@/packages/@core/data-access/db";
 import { TutorRoutes } from "../routes-constant";
@@ -46,7 +45,7 @@ export interface TutorApi {
    * @param data - The payload required to create a tutor.
    * @returns A promise resolving to the newly created tutor.
    */
-  createTutor(data: TutorCreate): Promise<TutorData>;
+  createTutor(data: BaseTutor): Promise<TutorData>;
 
   /**
    * Updates an existing tutor record.
@@ -54,7 +53,7 @@ export interface TutorApi {
    * @param data - Partial or full fields to update.
    * @returns A promise resolving to the updated tutor.
    */
-  updateTutor(tutorId: string, data: TutorUpdate): Promise<TutorData>;
+  updateTutor(tutorId: string, data: BaseTutor): Promise<TutorData>;
 
   /**
    * Deletes a tutor by unique identifier.
