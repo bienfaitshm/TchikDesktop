@@ -7,8 +7,7 @@ import type {
 import { useQuery } from "@tanstack/react-query";
 import { tutors as TutorsApi } from "@/renderer/libs/apis";
 import type {
-  TutorCreate,
-  TutorUpdate,
+  BaseTutor,
   TutorFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import type { TutorDTO } from "@/packages/@core/data-access/db";
@@ -70,23 +69,23 @@ export function useGetTutorsAsOptions(
  */
 
 export function useCreateTutor(
-  options?: Partial<UseMutationOptions<TutorDTO, Error, TutorCreate>>,
+  options?: Partial<UseMutationOptions<TutorDTO, Error, BaseTutor>>,
 ) {
   return useMutation({
     mutationKey: TutorKeys.mutations.create(),
-    mutationFn: (data: TutorCreate) => TutorsApi.createTutor(data),
+    mutationFn: (data: BaseTutor) => TutorsApi.createTutor(data),
     ...options,
   });
 }
 
 export function useUpdateTutor(
   options?: Partial<
-    UseMutationOptions<TutorDTO, Error, QueryUpdatePayload<TutorUpdate>>
+    UseMutationOptions<TutorDTO, Error, QueryUpdatePayload<BaseTutor>>
   >,
 ) {
   return useMutation({
     mutationKey: TutorKeys.mutations.update(),
-    mutationFn: ({ id, data }: QueryUpdatePayload<TutorUpdate>) =>
+    mutationFn: ({ id, data }: QueryUpdatePayload<BaseTutor>) =>
       TutorsApi.updateTutor(id, data),
     ...options,
   });

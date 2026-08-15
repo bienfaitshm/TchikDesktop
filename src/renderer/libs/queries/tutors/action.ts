@@ -1,7 +1,4 @@
-import type {
-  TutorCreate,
-  TutorUpdate,
-} from "@/packages/@core/data-access/schema-validations";
+import type { BaseTutor } from "@/packages/@core/data-access/schema-validations";
 import {
   useCreateTutor,
   useDeleteTutor,
@@ -16,7 +13,7 @@ import {
 
 /** Base mutation configuration type for tutor form hooks. */
 export type TutorFormConfig<T = unknown> = BaseMutationConfig<T>;
-export type TutorFormData = unknown;
+export type TutorFormData = BaseTutor;
 
 const CREATE_TUTOR_NOTIFICATIONS = {
   success: {
@@ -60,7 +57,7 @@ const getDeleteTutorNotifications = (tutorName?: string) => ({
  * @param config - Optional mutation configuration settings for creation.
  * @returns Form state handlers, submit callback, and pending state.
  */
-export function useCreateTutorForm(config?: BaseMutationConfig<TutorCreate>) {
+export function useCreateTutorForm(config?: BaseMutationConfig<BaseTutor>) {
   return useFormBaseCreate({
     config,
     useCreate: useCreateTutor,
@@ -73,7 +70,7 @@ export function useCreateTutorForm(config?: BaseMutationConfig<TutorCreate>) {
  * @param config - Optional mutation configuration settings for update.
  * @returns Form state handlers, submit callback, and pending state.
  */
-export function useUpdateTutorForm(config?: BaseMutationConfig<TutorUpdate>) {
+export function useUpdateTutorForm(config?: BaseMutationConfig<BaseTutor>) {
   return useFormBaseUpdate({
     useUpdate: useUpdateTutor,
     config,
