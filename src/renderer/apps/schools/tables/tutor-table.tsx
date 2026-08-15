@@ -52,13 +52,12 @@ const ACTION_MENUS: ActionMenuConfig<TutorRowActionsProps>[] = [
     id: "edit",
     label: "Edit Tutor",
     icon: Pencil,
-    dialog({ tutor, schoolId, yearId, mutationKey }) {
+    dialog({ tutor, schoolId, mutationKey }) {
       return (
         <TutorDialogUpdateForm
           schoolId={schoolId}
-          yearId={yearId}
           mutationKey={mutationKey}
-          tutorId={tutor.id}
+          tutorId={tutor.tutorId}
           defaultValues={tutor}
         />
       );
@@ -74,8 +73,8 @@ const ACTION_MENUS: ActionMenuConfig<TutorRowActionsProps>[] = [
       return (
         <TutorDialogDeleteForm
           mutationKey={mutationKey}
-          id={tutor.id}
-          name={tutor.user?.fullName ?? "Unknown"}
+          id={tutor.tutorId}
+          name={tutor.fullName ?? "Unknown"}
         />
       );
     },
@@ -115,8 +114,6 @@ export const TutorTable: React.FC<TutorTableProps> = ({
   schoolId,
   yearId,
 }) => {
-  const serializedMutationKey = JSON.stringify(mutationKey);
-
   const columns = React.useMemo(
     () =>
       enhanceColumns(tutorColumns, {
@@ -130,7 +127,7 @@ export const TutorTable: React.FC<TutorTableProps> = ({
           />
         ),
       }),
-    [serializedMutationKey, schoolId, yearId, mutationKey],
+    [schoolId, yearId, mutationKey],
   );
 
   return (
@@ -138,7 +135,7 @@ export const TutorTable: React.FC<TutorTableProps> = ({
       <DataTable<TutorDTO>
         data={tutors}
         columns={columns}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.tutorId}
       >
         <DataTableContent>
           <DataContentHead />

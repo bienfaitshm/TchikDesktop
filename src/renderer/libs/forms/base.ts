@@ -112,7 +112,7 @@ export function useZodForm<TFieldValues extends FieldValues>({
   const form = useForm({
     schema,
     defaultValues,
-    shouldUnregister: true,
+    shouldUnregister: false,
   });
 
   const onSubmitRef = useRef(onSubmit);
