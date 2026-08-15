@@ -12,6 +12,8 @@ import {
   type ActionDialogProps,
 } from "@/renderer/dialog-actions/base.dialog-actions";
 
+import { TutorForm } from "../forms/tutor-form";
+
 export type FeeConfigDialogProps = ActionDialogProps<
   TutorFormData,
   TutorFormConfig
@@ -72,7 +74,7 @@ export const UpdateTutorDialog = createBaseActionDialog<
     ),
   form(): ReactNode {
     // TODO: complete
-    return <div>Form here complete leter</div>;
+    return <TutorForm />;
   },
 });
 

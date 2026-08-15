@@ -1,20 +1,22 @@
 import type { UseZodFormReturn } from "@/packages/use-zod-form";
+import { FieldValues } from "react-hook-form";
 import type z from "zod";
 
 /**
  * Properties for the FormErrorView component.
  * @template T - The Zod schema type defining the form data structure.
  */
-export type FormErrorViewProps<T extends z.ZodType> = {
-  form: UseZodFormReturn<T>;
-};
+export type FormErrorViewProps<T extends z.ZodType<FieldValues, FieldValues>> =
+  {
+    form: UseZodFormReturn<T>;
+  };
 
 /**
  * Renders a global root error alert for a validated form.
  * @param props - Component properties containing the form instance.
  * @returns The alert element if a root error exists, otherwise null.
  */
-export function FormErrorView<T extends z.ZodType>({
+export function FormErrorView<T extends z.ZodType<FieldValues, FieldValues>>({
   form,
 }: FormErrorViewProps<T>) {
   const rootError = form.formState.errors.root;

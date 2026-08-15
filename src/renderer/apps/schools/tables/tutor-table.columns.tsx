@@ -33,7 +33,7 @@ export const tutorColumns: ColumnDef<TutorDTO>[] = [
     header: ({ column }) =>
       renderColumnHeader(column, "Nom, postnom et prénom"),
     cell: ({ row: { original } }) => {
-      const fullName = original.user?.fullName ?? "Sans nom";
+      const fullName = original?.fullName ?? "Sans nom";
       const profession = original.profession;
 
       return (
