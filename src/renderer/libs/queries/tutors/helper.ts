@@ -69,7 +69,6 @@ export function buildTutorSearchQuery(
  * @returns Search query state, matching options, loading state, and search setter.
  */
 export function useSearchTutors({ schoolId }: TutorSearchContextParams) {
-  console.log("Search tutors");
   const buildSearchQuery = useCallback(
     (search: string): TutorFilter => buildTutorSearchQuery(search, schoolId),
     [schoolId],

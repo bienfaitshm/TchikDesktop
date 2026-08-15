@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useParams } from "react-router";
-import { Edit2, UserPen, UserPlus, Banknote, Trash2 } from "lucide-react";
+import { Edit2, UserPen, UserPlus, Banknote, Trash2, Eye } from "lucide-react";
 
 import {
   GENDER_OPTIONS,
@@ -38,6 +38,7 @@ import {
   createActionMenus,
   type ActionMenuConfig,
 } from "@/components/menus/action-menus";
+import { TutorProfileDialog } from "@/renderer/apps/schools/dialogs";
 
 export interface EnrollmentRowActionsProps extends CreateEnrollmentDialogProps {
   enrollment: EnrollmentDTO;
@@ -78,6 +79,18 @@ const MENUS: ActionMenuConfig<EnrollmentRowActionsProps>[] = [
           yearId={yearId}
           mutationKey={mutationKey}
         />
+      );
+    },
+  },
+  {
+    id: "view-tutor-profile",
+    label: "Voir le profil du tuteur",
+    icon: Eye,
+    disabled: ({ enrollment }) => !enrollment.tutorId,
+    dialog({ enrollment, schoolId, yearId }) {
+      const { tutor } = enrollment;
+      return (
+        <TutorProfileDialog schoolId={schoolId} yearId={yearId} tutor={tutor} />
       );
     },
   },

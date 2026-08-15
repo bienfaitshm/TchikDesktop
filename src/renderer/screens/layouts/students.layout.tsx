@@ -48,7 +48,7 @@ export const StudentLayout = () => {
     <div className="h-full w-full overflow-hidden bg-background">
       <SidebarContainer sidebar={<ClassroomSideNav schoolId={schoolId} />}>
         <PageContainer>
-          <PageHeader className="mt-10">
+          <PageHeader>
             <PageHeaderTextContent>
               <PageHeadTitle>{classroom.identifier}</PageHeadTitle>
               <PageHeadDescription>

@@ -10,6 +10,7 @@ import {
   type ClassroomEnrollment,
   type User,
   type Classroom,
+  tutors,
 } from "@/packages/@core/data-access/db/schemas/schema";
 import {
   DatabaseError,
@@ -21,17 +22,20 @@ import {
 import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/options";
 
 import { UserRepository } from "../users";
+import { TutorDTO } from "../tutors";
 
 export type EnrollmentDTO = ClassroomEnrollment & {
-  student: User & { fullName?: string };
+  student: User & { fullName: string };
   classroom: Omit<Classroom, "classId" | "schoolId">;
   yearName: string;
+  tutor?: TutorDTO;
 };
 
 const JOINED_TABLES = {
   classrooms,
   users,
   classroomEnrollments,
+  tutors,
 } as const;
 
 /**
@@ -97,9 +101,11 @@ export class EnrollmentRepository
         ...getTableColumns(this.table),
         student: UserRepository.getVisibleColumns(),
         classroom: getTableColumns(classrooms),
+        tutor: getTableColumns(tutors),
         yearName: studyYears.yearName,
       })
       .from(this.table)
+      .leftJoin(tutors, eq(this.table.tutorId, tutors.tutorId))
       .innerJoin(users, eq(this.table.studentId, users.userId))
       .innerJoin(classrooms, eq(this.table.classroomId, classrooms.classId))
       .innerJoin(studyYears, eq(this.table.yearId, studyYears.yearId))
