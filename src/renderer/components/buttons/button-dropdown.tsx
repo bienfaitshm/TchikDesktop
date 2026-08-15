@@ -123,7 +123,11 @@ export function ButtonDropdown({
             e.stopPropagation();
           }}
         >
-          <DropdownMenuGroup>
+          <DropdownMenuGroup
+            onWheel={(e) => {
+              e.stopPropagation();
+            }}
+          >
             {options.map((option, index) => {
               const Icon = option.icon;
               const optionKey = option.value ?? `option-${index}`;

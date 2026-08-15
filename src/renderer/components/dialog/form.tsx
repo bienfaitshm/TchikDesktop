@@ -28,6 +28,7 @@ export interface DialogFormProps {
   submitText?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  modal?: boolean;
 }
 
 export const DialogForm: React.FC<DialogFormProps> = ({
@@ -40,6 +41,7 @@ export const DialogForm: React.FC<DialogFormProps> = ({
   children,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
+  modal,
 }) => {
   const [internalOpen, setInternalOpen] = React.useState(false);
   const isControlled = controlledOpen !== undefined;
@@ -75,7 +77,7 @@ export const DialogForm: React.FC<DialogFormProps> = ({
   );
 
   return (
-    <Dialog modal={true} open={open} onOpenChange={handleOpenChange}>
+    <Dialog modal={modal} open={open} onOpenChange={handleOpenChange}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent
         onPointerDownOutside={handleContentInteract}

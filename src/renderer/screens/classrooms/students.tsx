@@ -178,6 +178,7 @@ export const StudentPage: React.FC = () => {
             </Button>
           </SchedulePaymentDialog>
           <CreateEnrollmentDialog
+            modal={false}
             schoolId={schoolId}
             yearId={yearId}
             defaultValues={{ schoolId, yearId, classroomId }}

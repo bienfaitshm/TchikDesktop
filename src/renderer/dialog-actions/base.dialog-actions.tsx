@@ -20,7 +20,7 @@ export type ActionDialogProps<
   TExtraProps extends object = {},
 > = React.PropsWithChildren<
   TExtraProps &
-    Pick<DialogFormProps, "open" | "onOpenChange"> & {
+    Pick<DialogFormProps, "open" | "onOpenChange" | "modal"> & {
       defaultValues?: DefaultValues<TFieldValues>;
       mutationKey?: readonly unknown[];
       onSuccess?: (data?: unknown) => void;
@@ -59,7 +59,7 @@ export function createBaseActionDialog<
   useForm,
 }: CreateBaseActionDialogConfig<TProps, TFormProps>): React.FC<TProps> {
   const ActionDialog: React.FC<TProps> = (props) => {
-    const { children, defaultValues, onOpenChange, open } = props;
+    const { children, defaultValues, onOpenChange, open, modal } = props;
 
     const actions = useForm(props);
 
@@ -74,6 +74,7 @@ export function createBaseActionDialog<
 
     return (
       <DialogForm
+        modal={modal}
         trigger={children}
         title={resolvedTitle}
         description={resolvedDescription}

@@ -29,6 +29,8 @@ export interface EnrollmentFormContext {
   yearId: string;
 }
 
+export type EnrollmentFormConfig = BaseMutationConfig<EnrollmentDTO>;
+
 /** Default notification messages for enrollment creation operations. */
 const CREATE_ENROLLMENT_NOTIFICATIONS: NotificationConfig = {
   success: {
@@ -124,7 +126,7 @@ function useEnrollmentFormBase(schoolId: string) {
 export function useCreateQuickEnrollmentForm({
   schoolId,
   ...config
-}: EnrollmentFormContext & BaseMutationConfig<EnrollmentDTO>) {
+}: EnrollmentFormContext & EnrollmentFormConfig) {
   const form = useFormBaseCreate({
     useCreate: useCreateQuickEnrollment,
     config,
@@ -144,7 +146,7 @@ export function useCreateQuickEnrollmentForm({
 export function useCreateEnrollmentForm({
   schoolId,
   ...config
-}: EnrollmentFormContext & BaseMutationConfig<EnrollmentDTO>) {
+}: EnrollmentFormContext & EnrollmentFormConfig) {
   const form = useFormBaseCreate({
     useCreate: useCreateEnrollment,
     config,
@@ -163,7 +165,7 @@ export function useCreateEnrollmentForm({
 export function useUpdateEnrollmentForm({
   schoolId,
   ...config
-}: EnrollmentFormContext & BaseMutationConfig<EnrollmentDTO>) {
+}: EnrollmentFormContext & EnrollmentFormConfig) {
   const form = useFormBaseUpdate({
     useUpdate: useUpdateEnrollment,
     config,
