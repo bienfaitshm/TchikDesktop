@@ -11,7 +11,9 @@ import { DataTableColumnHeader } from "@/renderer/components/tables/data-table.c
 const renderColumnHeader = (
   column: Column<TutorDTO, unknown>,
   title: string,
-) => <DataTableColumnHeader column={column} title={title} />;
+) => (
+  <DataTableColumnHeader className="max-w-44" column={column} title={title} />
+);
 
 /**
  * Renders a simple text cell with default formatting and null handling.
@@ -19,7 +21,7 @@ const renderColumnHeader = (
  * @returns A React element containing the formatted text.
  */
 const renderTextCell = (value: string | null | undefined) => (
-  <div className="text-xs text-foreground">
+  <div className="text-xs text-foreground max-w-40">
     <p>{value ?? "-"}</p>
   </div>
 );
@@ -37,7 +39,7 @@ export const tutorColumns: ColumnDef<TutorDTO>[] = [
       const profession = original.profession;
 
       return (
-        <div>
+        <div className="max-w-sm">
           <p className="font-medium text-xs uppercase text-foreground max-w-70 truncate">
             {fullName}
           </p>
