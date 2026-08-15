@@ -13,15 +13,12 @@ import {
   type IpcRequest,
 } from "@/packages/electron-ipc-rest";
 import {
+  BaseTutorSchema,
   TutorSchema,
   TutorFilterSchema,
-  TutorCreateSchema,
   TutorQuickInputSchema,
-  TutorUpdateSchema,
   type BaseTutor,
   type TutorFilter,
-  type TutorCreate,
-  type TutorUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import type { SelectOption } from "@/packages/drizzle-queries";
 import { TutorRoutes } from "../../routes-constant";
@@ -85,10 +82,10 @@ export class TutorController {
    * @returns A promise resolving to the created tutor record.
    */
   @IpcServer.register(HttpMethod.POST, TutorRoutes.ALL, {
-    body: TutorCreateSchema,
+    body: BaseTutorSchema,
   })
-  static async create(req: IpcRequest<TutorCreate>): Promise<TutorDTO> {
-    return TutorController.repository.create(req.body);
+  static async create(req: IpcRequest<BaseTutor>): Promise<TutorDTO> {
+    return TutorController.service.createTutor(req.body);
   }
 
   @IpcServer.register(HttpMethod.POST, TutorRoutes.QUICK, {
@@ -119,10 +116,10 @@ export class TutorController {
    */
   @IpcServer.register(HttpMethod.PUT, TutorRoutes.DETAIL, {
     params: TutorIdSchema,
-    body: TutorUpdateSchema,
+    body: BaseTutorSchema,
   })
-  static async update(req: IpcRequest<TutorUpdate, TutorId>) {
-    return TutorController.repository.updateById(req.params.tutorId, req.body);
+  static async update(req: IpcRequest<BaseTutor, TutorId>) {
+    return TutorController.service.updateTutor(req.params.tutorId, req.body);
   }
 
   /**
