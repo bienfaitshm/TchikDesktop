@@ -119,6 +119,7 @@ export const tutors = sqliteTable(
     address: text("address"),
     phoneNumber: text("phone_number"),
     userId: text("user_id")
+      .notNull()
       .unique()
       .references(() => users.userId, { onDelete: "cascade" }),
     ...withSchoolId,

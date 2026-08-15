@@ -354,9 +354,7 @@ export type BasePerson = z.infer<typeof BasePersonSchema>;
 export const BaseStudentSchema = BasePersonSchema;
 export type BaseStudent = z.infer<typeof BaseStudentSchema>;
 
-export const BaseTutorSchema = TutorCreateSchema.omit({
-  schoolId: true,
-}).extend(BasePersonSchema.shape);
+export const BaseTutorSchema = TutorCreateSchema.extend(BasePersonSchema.shape);
 
 export type BaseTutor = z.infer<typeof BaseTutorSchema>;
 
@@ -388,12 +386,8 @@ const ExistingTutorSchema = z.object({
 
 const NewTutorSchema = z.object({
   isTutorInSystem: z.literal(false),
-  tutor: BaseTutorSchema,
+  tutor: BaseTutorSchema.omit({ schoolId: true }),
 });
-
-// const NoTutorSchema = z.object({
-//   isTutorInSystem: z.literal(null).optional(),
-// });
 
 export const TutorQuickInputSchema = z.discriminatedUnion("isTutorInSystem", [
   ExistingTutorSchema,

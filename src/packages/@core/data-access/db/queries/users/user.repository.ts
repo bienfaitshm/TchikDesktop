@@ -13,8 +13,10 @@ import {
   betterSqlite,
   OptionProvider,
 } from "@/packages/drizzle-queries";
+import { USER_ROLE_ENUM } from "@/packages/@core/data-access/db/options";
 
 export type UserDTO = { fullName: string } & Omit<User, "password">;
+const DEFAULT_TEMPORARY_PASSWORD = process.env.DEFAULT_TEMP_PASSWORD || "0000";
 
 const userJoinTables = {
   users,
@@ -100,13 +102,93 @@ export class UserRepository
   }
 
   /**
-   * Creates a user record by assigning a hashed default temporary password.
-   * @param value - User insertion payload excluding password.
+   * Creates a new user record with a hashed default temporary password.
+   * @param value - User insertion payload excluding the password field.
    * @param tx - Optional database transaction instance.
-   * @returns The created user entity.
+   * @returns A promise resolving to the created user entity.
    */
-  createUser(value: Omit<InsertUser, "password">, tx?: TDataBase) {
-    const passwordHash = hashPassword("0000");
+  createUser(value: Omit<InsertUser, "password">, tx?: TDataBase): UserDTO {
+    const passwordHash = hashPassword(DEFAULT_TEMPORARY_PASSWORD);
     return this.create({ ...value, password: passwordHash }, tx);
+  }
+
+  /**
+   * Creates a user entity assigned to a specific system role.
+   * @param value - User insertion payload excluding password and role fields.
+   * @param role - Target user role from USER_ROLE_ENUM.
+   * @param tx - Optional database transaction instance.
+   * @returns A promise resolving to the created user entity.
+   */
+  createUserWithRole(
+    value: Omit<InsertUser, "password" | "role">,
+    role: USER_ROLE_ENUM,
+    tx?: TDataBase,
+  ): UserDTO {
+    return this.createUser({ ...value, role }, tx);
+  }
+
+  /**
+   * Creates a user entity assigned to the STAFF role.
+   * @param value - User insertion payload excluding password and role fields.
+   * @param tx - Optional database transaction instance.
+   * @returns A promise resolving to the created staff user entity.
+   */
+  createStaff(
+    value: Omit<InsertUser, "password" | "role">,
+    tx?: TDataBase,
+  ): UserDTO {
+    return this.createUserWithRole(value, USER_ROLE_ENUM.STAFF, tx);
+  }
+
+  /**
+   * Creates a user entity assigned to the PROMOTER role.
+   * @param value - User insertion payload excluding password and role fields.
+   * @param tx - Optional database transaction instance.
+   * @returns A promise resolving to the created promoter user entity.
+   */
+  createPromoter(
+    value: Omit<InsertUser, "password" | "role">,
+    tx?: TDataBase,
+  ): UserDTO {
+    return this.createUserWithRole(value, USER_ROLE_ENUM.PROMOTER, tx);
+  }
+
+  /**
+   * Creates a user entity assigned to the ADMIN role.
+   * @param value - User insertion payload excluding password and role fields.
+   * @param tx - Optional database transaction instance.
+   * @returns A promise resolving to the created admin user entity.
+   */
+  createAdmin(
+    value: Omit<InsertUser, "password" | "role">,
+    tx?: TDataBase,
+  ): UserDTO {
+    return this.createUserWithRole(value, USER_ROLE_ENUM.ADMIN, tx);
+  }
+
+  /**
+   * Creates a user entity assigned to the STUDENT role.
+   * @param value - User insertion payload excluding password and role fields.
+   * @param tx - Optional database transaction instance.
+   * @returns A promise resolving to the created student user entity.
+   */
+  createStudent(
+    value: Omit<InsertUser, "password" | "role">,
+    tx?: TDataBase,
+  ): UserDTO {
+    return this.createUserWithRole(value, USER_ROLE_ENUM.STUDENT, tx);
+  }
+
+  /**
+   * Creates a user entity assigned to the TUTOR role.
+   * @param value - User insertion payload excluding password and role fields.
+   * @param tx - Optional database transaction instance.
+   * @returns A promise resolving to the created tutor user entity.
+   */
+  createTutor(
+    value: Omit<InsertUser, "password" | "role">,
+    tx?: TDataBase,
+  ): UserDTO {
+    return this.createUserWithRole(value, USER_ROLE_ENUM.TUTOR, tx);
   }
 }

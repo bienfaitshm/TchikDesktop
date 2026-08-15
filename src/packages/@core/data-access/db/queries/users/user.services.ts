@@ -1,7 +1,4 @@
-import {
-  SelectOptionFacade,
-  type SearchOptions,
-} from "@/packages/@core/data-access/db/queries/select-option.transformer";
+import { SelectOptionFacade } from "@/packages/drizzle-queries";
 import {
   UserRepository,
   type UserDTO,
@@ -32,7 +29,7 @@ export class UserService {
    * Récupère les options formatées pour les listes déroulantes (Select/Combobox)
    * Le typage des filtres est désormais strict et sécurisé.
    */
-  async getOptions(args: SearchOptions<BaseUserFilters>) {
+  async getOptions(args: BaseUserFilters) {
     return this.userSelectService.loadOptions(args);
   }
 }

@@ -14,7 +14,7 @@ import {
 import { eq, getTableColumns } from "drizzle-orm";
 import { type UserDTO, UserRepository } from "../users";
 
-export type TutorDTO = Tutor & { user: UserDTO };
+export type TutorDTO = Tutor & UserDTO;
 
 const tutorJoinTables = {
   tutors,
@@ -67,8 +67,8 @@ export class TutorRepository
   protected override getQuerySet(tx?: TDataBase) {
     return this.getClient(tx)
       .select({
+        ...UserRepository.getVisibleColumns(),
         ...getTableColumns(this.table),
-        user: UserRepository.getVisibleColumns(),
       })
       .from(this.table)
       .leftJoin(users, eq(this.table.userId, users.userId))
