@@ -19,6 +19,7 @@ import {
   createDeleteActionDialog,
   type ActionDialogProps,
 } from "./base.dialog-actions";
+import { wrapUpdateFunc } from "@/renderer/libs/queries/base";
 
 export type EnrollmentDialogProps = ActionDialogProps<
   EnrollmentCreate | EnrollmentQuickCreate,
@@ -46,17 +47,14 @@ export const CreateEnrollmentDialog = createBaseActionDialog<
   description:
     "Remplissez le formulaire complet pour procéder à l'enrôlement de l'élève.",
   submitText: "Valider l'inscription",
-  useForm: (config) =>
-    useCreateQuickEnrollmentForm(config, {
-      schoolId: config?.schoolId,
-      yearId: config?.yearId,
-    }),
+  useForm: useCreateQuickEnrollmentForm,
   form({
     formId,
     onSubmit,
     searchClassroom,
     searchUser,
     defaultValues,
+    searchTutor,
   }): ReactNode {
     return (
       <div className="py-4">
@@ -66,6 +64,7 @@ export const CreateEnrollmentDialog = createBaseActionDialog<
           defaultValues={defaultValues}
           classrooms={searchClassroom}
           students={searchUser}
+          tutors={searchTutor}
         />
       </div>
     );
@@ -90,16 +89,17 @@ export const UpdateEnrollmentDialog = createBaseActionDialog<
   submitText: "Mettre à jour",
   useForm: useUpdateEnrollmentForm,
   form(
-    { formId, onSubmit, searchClassroom, defaultValues },
-    { enrollmentId: id },
+    { formId, onSubmit, searchClassroom, searchTutor, defaultValues },
+    { enrollmentId },
   ): ReactNode {
     return (
       <div className="py-4">
         <EnrollmentForm
           formId={formId}
-          onSubmit={(data, helpers) => onSubmit({ data, id }, helpers as any)}
+          onSubmit={wrapUpdateFunc(onSubmit, enrollmentId)}
           defaultValues={defaultValues}
-          classrooms={searchClassroom.options}
+          classrooms={searchClassroom}
+          tutors={searchTutor}
         />
       </div>
     );

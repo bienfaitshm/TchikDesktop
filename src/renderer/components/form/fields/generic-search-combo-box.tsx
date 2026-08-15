@@ -146,7 +146,7 @@ function ComboboxSearchInner<T extends ObjectRecord>(
             ) : (
               <span
                 className={cn(
-                  "text-sm",
+                  "text-xs font-medium capitalize",
                   !selectedOption && "text-muted-foreground",
                 )}
               >
@@ -247,7 +247,7 @@ export const RenderItem: React.FC<{
   subLabel?: string;
   description?: string;
 }> = React.memo(({ label, subLabel, description }) => (
-  <div className="flex-1 truncate gap-0.5">
+  <div className="flex-1 truncate gap-0.5 capitalize">
     <span className="font-medium">{label}</span>
     {(description || subLabel) && (
       <p className="text-[10px] text-muted-foreground truncate">

@@ -38,6 +38,7 @@ import { UserCheckIcon, UserPlusIcon } from "lucide-react";
 import { TutorFormFields } from "./form.tutor";
 import type { Option } from "@/components/form/fields/select-input";
 import { createCompleteSubmitHandler } from "./utils";
+import { ComboboxSearch } from "../fields/generic-search-combo-box";
 
 /** Options for switching between existing profile selection and new entry creation. */
 const SYSTEM_EXISTENCE_OPTIONS: DropdownOption[] = [
@@ -258,10 +259,14 @@ const SelectExistTutor: React.FC<{
         <FormItem className="flex flex-col">
           <FormLabel>Sélectionner le tuteur</FormLabel>
           <FormControl>
-            <GenericComboBox
+            <ComboboxSearch
               {...field}
-              onChangeValue={field.onChange}
+              onChange={field.onChange}
               options={tutors.options}
+              value={field.value ?? ""}
+              search={tutors.searchQuery}
+              isLoading={tutors.isSearching}
+              onSearchChange={tutors.setSearchQuery}
               placeholder="Rechercher un tuteur par nom ou téléphone..."
               className="w-full"
               disabled={disabled}

@@ -116,7 +116,13 @@ export function ButtonDropdown({
             </Button>
           }
         ></DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuContent
+          align="end"
+          className="w-40"
+          onWheel={(e) => {
+            e.stopPropagation();
+          }}
+        >
           <DropdownMenuGroup>
             {options.map((option, index) => {
               const Icon = option.icon;
