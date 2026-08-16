@@ -9,7 +9,7 @@ import {
 } from "./base";
 
 /**
- * Represents contact and identification details for a student's legal guardian.
+ * Contact and identification details for a student's legal guardian.
  */
 export type GuardianDetails = {
   /** Full name of the legal guardian. */
@@ -21,25 +21,27 @@ export type GuardianDetails = {
 };
 
 /**
- * Represents the essential student information required for an enrollment receipt.
+ * Essential student information required for an enrollment receipt.
  */
 export type StudentDetails = {
   /** Full name of the enrolled student. */
   name: string;
   /** Unique identification code for the student. */
   code: string;
-  /** Optional class or section identifier. */
+  /** Optional classroom or section identifier. */
   classroom?: string;
   /** Optional details of the student's legal guardian. */
   guardian?: GuardianDetails;
 };
 
 /**
- * Props for the EnrollmentInvoice component.
+ * Properties for the EnrollmentInvoice component.
  */
 export type EnrollmentInvoiceProps = {
   /** Student details to be printed on the invoice. */
   student: StudentDetails;
+  /** Optional guardian details override or direct parameter. */
+  guardian?: GuardianDetails;
   /** Optional title override for the receipt header. */
   title?: string;
   /** Optional custom reference string for the transaction. */
@@ -49,64 +51,90 @@ export type EnrollmentInvoiceProps = {
 };
 
 /**
- * Renders a structured enrollment invoice displaying student details, guardian info, and metadata.
- * @param props - Component properties containing student info and optional invoice overrides.
+ * Helper properties for rendering a single key-value row.
+ */
+interface DetailRowProps {
+  /** Label describing the field. */
+  label: string;
+  /** Value content to display. */
+  value: string;
+  /** Optional flag to apply bold font weight. */
+  isBold?: boolean;
+  /** Optional flag to apply text truncation. */
+  isTruncated?: boolean;
+}
+
+/**
+ * Renders a standardized key-value row with label and formatted value text.
+ * @param props - Configuration properties for the detail row.
+ * @returns A structured key-value JSX element.
+ */
+function DetailRow({
+  label,
+  value,
+  isBold = false,
+  isTruncated = false,
+}: DetailRowProps): React.JSX.Element {
+  const valueClass = [
+    isBold ? "font-bold" : "",
+    isTruncated ? "truncate max-w-48" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <KeyValueRow>
+      <KeyLabel>{label}</KeyLabel>
+      <ValueText className={valueClass || undefined}>{value}</ValueText>
+    </KeyValueRow>
+  );
+}
+
+/**
+ * Renders a structured enrollment receipt displaying student and guardian details.
+ * @param props - Component properties containing student info, guardian info, and invoice overrides.
  * @returns A formatted invoice ticket component for student enrollment.
  */
-export const EnrollmentInvoice: React.FC<EnrollmentInvoiceProps> = ({
+export function EnrollmentInvoice({
   student,
+  guardian: guardianProp,
   title = "Reçu d'inscription",
   invoiceRef,
   date,
-}) => {
-  const { guardian } = student;
+}: EnrollmentInvoiceProps): React.JSX.Element {
+  const activeGuardian = guardianProp ?? student.guardian;
 
   return (
     <InvoiceContainer title={title} invoiceRef={invoiceRef} date={date}>
       <div className="text-xs flex flex-col gap-1">
         <RowTitle>Identité de l'élève</RowTitle>
-        <KeyValueRow>
-          <KeyLabel>NOM :</KeyLabel>
-          <ValueText className="font-bold truncate max-w-48">
-            {student.name}
-          </ValueText>
-        </KeyValueRow>
-        <KeyValueRow>
-          <KeyLabel>CODE :</KeyLabel>
-          <ValueText>{student.code}</ValueText>
-        </KeyValueRow>
+        <DetailRow label="NOM :" value={student.name} isBold isTruncated />
+        <DetailRow label="CODE :" value={student.code} />
         {student.classroom && (
-          <KeyValueRow>
-            <KeyLabel>CLASSE :</KeyLabel>
-            <ValueText>{student.classroom}</ValueText>
-          </KeyValueRow>
+          <DetailRow label="CLASSE :" value={student.classroom} />
         )}
 
-        {guardian && (
+        {activeGuardian && (
           <>
             <DashedDivider className="my-1" />
             <RowTitle>Identité du tuteur</RowTitle>
-            {guardian.name && (
-              <KeyValueRow>
-                <KeyLabel>NOM :</KeyLabel>
-                <ValueText className="font-bold truncate max-w-48">
-                  {guardian.name}
-                </ValueText>
-              </KeyValueRow>
+            {activeGuardian.name && (
+              <DetailRow
+                label="NOM :"
+                value={activeGuardian.name}
+                isBold
+                isTruncated
+              />
             )}
-            {guardian.phone && (
-              <KeyValueRow>
-                <KeyLabel>TÉL :</KeyLabel>
-                <ValueText>{guardian.phone}</ValueText>
-              </KeyValueRow>
+            {activeGuardian.phone && (
+              <DetailRow label="TÉL :" value={activeGuardian.phone} />
             )}
-            {guardian.address && (
-              <KeyValueRow>
-                <KeyLabel>ADRESSE :</KeyLabel>
-                <ValueText className="truncate max-w-48">
-                  {guardian.address}
-                </ValueText>
-              </KeyValueRow>
+            {activeGuardian.address && (
+              <DetailRow
+                label="ADRESSE :"
+                value={activeGuardian.address}
+                isTruncated
+              />
             )}
           </>
         )}
@@ -119,4 +147,4 @@ export const EnrollmentInvoice: React.FC<EnrollmentInvoiceProps> = ({
       </p>
     </InvoiceContainer>
   );
-};
+}

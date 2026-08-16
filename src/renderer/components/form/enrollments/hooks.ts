@@ -18,15 +18,25 @@ export type EnrollmentState = {
 
 /** Action methods available to update the enrollment POS store state. */
 export type EnrollmentActions = {
+  /** Adds a new enrollment record to the store stack. */
   addEnrollment: (enrollment: ReturnDataEnrollment) => void;
+  /** Marks a store enrollment as printed using its unique reference or ID. */
   markEnrollmentAsPrinted: (enrollmentRef: string) => void;
-  getLastEnrollemnt(): StoreEnrollment | undefined | null;
+  /** Retrieves the most recent enrollment entry added to the store. */
+  getLastEnrollment: () => StoreEnrollment | undefined;
+  /** Clears all stored enrollment records. */
   clearEnrollments: () => void;
+  /** Resets the store state back to initial values. */
   resetAll: () => void;
 };
 
 export type EnrollmentStore = EnrollmentState & EnrollmentActions;
 
+/**
+ * Creates a StoreEnrollment entity with an assigned reference and unprinted status.
+ * @param enrollment - The raw enrollment DTO.
+ * @returns The fully constructed StoreEnrollment object.
+ */
 function createEnrollment(enrollment: ReturnDataEnrollment): StoreEnrollment {
   const currentYear = new Date().getFullYear();
   return {
@@ -75,7 +85,7 @@ export const useEnrollmentStore = create<EnrollmentStore>()(
     (set, get) => ({
       ...initialState,
 
-      getLastEnrollemnt: () => {
+      getLastEnrollment: () => {
         return get().enrollments[0];
       },
 
@@ -88,11 +98,12 @@ export const useEnrollmentStore = create<EnrollmentStore>()(
           "addEnrollment",
         ),
 
-      markEnrollmentAsPrinted: (enrollmentId) =>
+      markEnrollmentAsPrinted: (enrollmentRef) =>
         set(
           (state) => ({
             enrollments: state.enrollments.map((item) =>
-              enrollmentId === item.enrollmentId
+              item.enrollmentRef === enrollmentRef ||
+              item.enrollmentId === enrollmentRef
                 ? { ...item, isPrinted: true }
                 : item,
             ),

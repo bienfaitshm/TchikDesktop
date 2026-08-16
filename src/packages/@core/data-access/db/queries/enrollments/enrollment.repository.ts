@@ -22,7 +22,7 @@ import {
 import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/options";
 
 import { UserRepository } from "../users";
-import { TutorDTO } from "../tutors";
+import { TutorDTO, TutorRepository } from "../tutors";
 
 export type EnrollmentDTO = ClassroomEnrollment & {
   student: User & { fullName: string };
@@ -101,7 +101,7 @@ export class EnrollmentRepository
         ...getTableColumns(this.table),
         student: UserRepository.getVisibleColumns(),
         classroom: getTableColumns(classrooms),
-        tutor: getTableColumns(tutors),
+        tutor: TutorRepository.getDTOColumns(tutors),
         yearName: studyYears.yearName,
       })
       .from(this.table)

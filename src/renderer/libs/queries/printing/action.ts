@@ -5,19 +5,22 @@ import {
   useTestPrinter,
 } from "./printing";
 import { useFormBaseNotify } from "../base";
-import type { Ticket } from "@/packages/@core/data-access/schema-validations";
-import type { PrinterValuePayload } from "@/packages/@core/apis/servers/handlers";
+import type {
+  PrintInvoicePayload,
+  PrinterValuePayload,
+} from "@/packages/@core/data-access/schema-validations";
 import type { BaseMutationConfig } from "../base";
 
 /**
- * Configuration type for ticket mutation forms.
+ * Configuration type for PrintInvoicePayload mutation forms.
  */
-export type TicketFormConfig<T = Ticket> = BaseMutationConfig<T>;
+export type PrintInvoicePayloadFormConfig<T = PrintInvoicePayload> =
+  BaseMutationConfig<T>;
 
 /**
- * Form data payload alias for tickets.
+ * Form data payload alias for PrintInvoicePayloads.
  */
-export type TicketFormData = Ticket;
+export type PrintInvoicePayloadFormData = PrintInvoicePayload;
 
 /**
  * Shared helper hook to retrieve printer list and resolve the default printer.
@@ -35,11 +38,17 @@ function usePrinterSelection() {
  * @param config - Optional mutation and form configuration.
  * @returns Form controller object merged with available printers and default selection.
  */
-export function usePrintInvoiceForm(config?: BaseMutationConfig<Ticket>) {
+export function usePrintInvoiceForm(
+  config?: BaseMutationConfig<PrintInvoicePayload>,
+) {
   const mutation = usePrintInvoice();
   const { printers, defaultPrinter } = usePrinterSelection();
 
-  const base = useFormBaseNotify<Ticket, Ticket, Ticket>({
+  const base = useFormBaseNotify<
+    PrintInvoicePayload,
+    PrintInvoicePayload,
+    PrintInvoicePayload
+  >({
     mutation,
     config,
     getNotifications: () => ({

@@ -11,7 +11,7 @@ import {
   betterSqlite,
   OptionProvider,
 } from "@/packages/drizzle-queries";
-import { eq, getTableColumns } from "drizzle-orm";
+import { eq, getTableColumns, Table } from "drizzle-orm";
 import { type UserDTO, UserRepository } from "../users";
 
 export type TutorDTO = Tutor & UserDTO;
@@ -60,16 +60,23 @@ export class TutorRepository
   }
 
   /**
+   * getTutorDTOFields
+   */
+  static getDTOColumns(table: Table = tutors) {
+    return {
+      ...UserRepository.getVisibleColumns(),
+      ...getTableColumns(table),
+    };
+  }
+
+  /**
    * Builds the base dynamic query set selecting non-sensitive tutor attributes.
    * @param tx - Optional database transaction instance.
    * @returns Dynamic query builder targeting the tutors table.
    */
   protected override getQuerySet(tx?: TDataBase) {
     return this.getClient(tx)
-      .select({
-        ...UserRepository.getVisibleColumns(),
-        ...getTableColumns(this.table),
-      })
+      .select(TutorRepository.getDTOColumns(this.table))
       .from(this.table)
       .leftJoin(users, eq(this.table.userId, users.userId))
       .$dynamic();

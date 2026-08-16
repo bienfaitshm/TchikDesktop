@@ -1,7 +1,9 @@
 import { useMutation, useSuspenseQuery } from "../base";
 import { print } from "@/renderer/libs/apis";
-import type { Ticket } from "@/packages/@core/data-access/schema-validations";
-import type { PrinterValuePayload } from "@/packages/@core/apis/servers/handlers";
+import type {
+  PrintInvoicePayload,
+  PrinterValuePayload,
+} from "@/packages/@core/data-access/schema-validations";
 
 /**
  * Payload interface for printer identification operations.
@@ -52,7 +54,7 @@ export function useCheckPrinter() {
 export function usePrintInvoice() {
   return useMutation({
     mutationKey: printingKeys.mutations.printInvoice(),
-    mutationFn: (payload: Ticket) => print.printInvoice(payload),
+    mutationFn: (payload: PrintInvoicePayload) => print.printInvoice(payload),
   });
 }
 

@@ -2,22 +2,22 @@ import React from "react";
 import { cn } from "@/renderer/utils";
 
 /**
- * Props interface for fast payment layout container components.
+ * Props interface for invoice layout container components.
  * Extends standard HTML div element attributes for maximum flexibility.
  */
-export type InvoiGridContainerProps = React.ComponentProps<"div">;
+export type InvoiceGridContainerProps = React.ComponentProps<"div">;
 
 /**
- * Root grid container component establishing the responsive layout for fast payment forms.
+ * Root grid container component establishing the responsive layout for invoice forms.
  *
  * @param props - Standard HTML div props including className and children.
  * @returns Styled outer grid wrapper element.
  */
-export const InvoiGridContainer = ({
+export const InvoiceGridContainer = ({
   className,
   children,
   ...props
-}: InvoiGridContainerProps) => (
+}: InvoiceGridContainerProps): React.JSX.Element => (
   <div
     className={cn(
       "grid grid-cols-1 lg:grid-cols-12 gap-x-24 items-start",
@@ -35,11 +35,11 @@ export const InvoiGridContainer = ({
  * @param props - Standard HTML div props including className and children.
  * @returns Styled form layout section element.
  */
-export const InvoiGridFormContainer = ({
+export const InvoiceGridFormContainer = ({
   className,
   children,
   ...props
-}: InvoiGridContainerProps) => (
+}: InvoiceGridContainerProps): React.JSX.Element => (
   <div
     className={cn("lg:col-span-8 flex flex-col gap-6", className)}
     {...props}
@@ -54,11 +54,11 @@ export const InvoiGridFormContainer = ({
  * @param props - Standard HTML div props including className and children.
  * @returns Styled preview layout section element.
  */
-export const InvoiGridPreviewContainer = ({
+export const InvoiceGridPreviewContainer = ({
   className,
   children,
   ...props
-}: InvoiGridContainerProps) => (
+}: InvoiceGridContainerProps): React.JSX.Element => (
   <div className={cn("lg:col-span-4", className)} {...props}>
     {children}
   </div>

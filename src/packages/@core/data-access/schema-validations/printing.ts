@@ -30,7 +30,7 @@ export type InvoiceRefPayload = z.infer<typeof InvoiceRefSchema>;
 export const PrintInvoiceSchema = z
   .object({
     id: z.string().min(1, "Payment ID is required"),
-    codeinvoice: z.string().min(1, "Code invoice is required"),
+    invoiceCode: z.string().min(1, "Code invoice is required"),
   })
   .extend(InvoiceRefSchema.shape);
 

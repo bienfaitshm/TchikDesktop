@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import {
   PageContainer,
@@ -10,24 +11,25 @@ import {
   PageHeaderTextContent,
 } from "@/renderer/containers/page-container";
 import {
-  InvoiGridContainer,
-  InvoiGridFormContainer,
-  InvoiGridPreviewContainer,
+  InvoiceGridContainer,
+  InvoiceGridFormContainer,
+  InvoiceGridPreviewContainer,
 } from "@/renderer/containers/invoice-grid-container";
 import {
   QuickEnrollmentForm,
+  StoreEnrollment,
   useEnrollmentStore,
 } from "@/components/form/enrollments";
 import { useCreateQuickEnrollmentForm } from "@/renderer/libs/queries/enrollements";
 import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
 import { LoadingButton } from "@/components/buttons/button-loading";
-import { FormattedJsonViewer } from "../components/json-formated-viewer";
 import { EnrollmentInvoice } from "../components/invoices/enrollment-invoice";
 import {
   ActionPrintContainer,
   PrinterConfigView,
   PrintInvoiceButton,
-} from "../components/invoices/invoice-print";
+} from "@/components/invoices/invoice-print";
+import { usePrintInvoiceForm } from "@/renderer/libs/queries/printing";
 
 /**
  * Properties for the EnrollmentForm component.
@@ -64,13 +66,117 @@ export function EnrollmentForm({
         defaultValues={{ yearId, schoolId }}
       />
       <LoadingButton
-        loading={form.isSubmiting}
+        loading={form.isSubmitting}
         form={form.formId}
         type="submit"
         className="w-full"
       >
         Enregistrer
       </LoadingButton>
+    </div>
+  );
+}
+
+/**
+ * Properties for the InvoiceEnrollmentPrinting component.
+ */
+interface InvoiceEnrollmentPrintingProps {
+  /** Enrollment record to be printed. */
+  enrollment: StoreEnrollment;
+}
+
+/**
+ * Manages invoice printing actions and receipt rendering for a given enrollment.
+ * @param props - Component props containing the enrollment record.
+ * @returns The action container and receipt preview element.
+ */
+export function InvoiceEnrollmentPrinting({
+  enrollment,
+}: InvoiceEnrollmentPrintingProps): React.JSX.Element {
+  const markEnrollmentAsPrinted = useEnrollmentStore(
+    (store) => store.markEnrollmentAsPrinted,
+  );
+
+  const mutation = usePrintInvoiceForm({
+    onSuccess() {
+      markEnrollmentAsPrinted(enrollment.enrollmentRef);
+    },
+  });
+
+  const handlePrint = (): void => {
+    mutation.onSubmit({
+      invoiceCode: "enrollment",
+      id: enrollment.enrollmentId,
+      invoiceRef: enrollment.enrollmentRef,
+    });
+  };
+
+  const guardianData = enrollment.tutor
+    ? {
+        name: enrollment.tutor.fullName,
+        phone: enrollment.tutor.phoneNumber ?? "-",
+        address: enrollment.tutor.address ?? "-",
+      }
+    : undefined;
+
+  return (
+    <ActionPrintContainer
+      isPending={mutation.isSubmitting}
+      isPrinted={enrollment.isPrinted}
+    >
+      <EnrollmentInvoice
+        student={{
+          code: enrollment.studentCode,
+          name: enrollment.student.fullName,
+          classroom: enrollment.classroom.shortIdentifier,
+        }}
+        guardian={guardianData}
+        invoiceRef={enrollment.enrollmentRef}
+      />
+      <PrinterConfigView>
+        {() => {
+          return (
+            <PrintInvoiceButton
+              isPrinted={enrollment.isPrinted}
+              isPrinting={mutation.isSubmitting}
+              isReady={true}
+              onClick={handlePrint}
+            />
+          );
+        }}
+      </PrinterConfigView>
+    </ActionPrintContainer>
+  );
+}
+
+/**
+ * Properties for the EnrollmentInvoicePreview component.
+ */
+interface EnrollmentInvoicePreviewProps {
+  /** The most recently saved enrollment record to display. */
+  lastEnrollment?: StoreEnrollment | null;
+}
+
+/**
+ * Renders the preview panel container for enrollment receipts with empty state handling.
+ * @param props - Component props containing the last enrollment record.
+ * @returns The rendered preview panel component.
+ */
+export function EnrollmentInvoicePreview({
+  lastEnrollment,
+}: EnrollmentInvoicePreviewProps): React.JSX.Element {
+  return (
+    <div className="p-4 border rounded-md">
+      <h2 className="text-base font-semibold">Aperçu du reçu d'inscription</h2>
+
+      {lastEnrollment ? (
+        <InvoiceEnrollmentPrinting enrollment={lastEnrollment} />
+      ) : (
+        <p className="text-sm text-muted-foreground mt-1">
+          Le détail du reçu s'affichera ici une fois l'inscription de l'élève
+          enregistrée.
+        </p>
+      )}
     </div>
   );
 }
@@ -83,7 +189,7 @@ export function EnrollmentPage(): React.JSX.Element {
   const { schoolId = "", yearId = "" } = useCurrentConfig();
   const addEnrollment = useEnrollmentStore((store) => store.addEnrollment);
   const lastEnrollment = useEnrollmentStore((store) =>
-    store.getLastEnrollemnt(),
+    store.getLastEnrollment(),
   );
 
   const isConfigReady = Boolean(schoolId && yearId);
@@ -101,14 +207,13 @@ export function EnrollmentPage(): React.JSX.Element {
       </PageHeader>
 
       <PageContent className="pt-5">
-        <InvoiGridContainer>
-          <InvoiGridFormContainer>
+        <InvoiceGridContainer>
+          <InvoiceGridFormContainer>
             {isConfigReady ? (
               <EnrollmentForm
                 schoolId={schoolId}
                 yearId={yearId}
                 onSuccess={(enrollment) => {
-                  console.log("Return", enrollment);
                   addEnrollment(enrollment);
                 }}
               />
@@ -117,50 +222,12 @@ export function EnrollmentPage(): React.JSX.Element {
                 Veuillez sélectionner une école et une année académique valide.
               </div>
             )}
-          </InvoiGridFormContainer>
+          </InvoiceGridFormContainer>
 
-          <InvoiGridPreviewContainer>
-            <div className="p-4 border rounded-md">
-              <h2 className="text-base font-semibold">
-                Aperçu du reçu d'inscription
-              </h2>
-
-              {lastEnrollment ? (
-                <ActionPrintContainer>
-                  <EnrollmentInvoice
-                    student={{
-                      code: lastEnrollment.studentCode,
-                      name: lastEnrollment.student.fullName,
-                      classroom: lastEnrollment.classroom.shortIdentifier,
-                      ...(lastEnrollment.tutor && {
-                        guardian: {
-                          address:
-                            lastEnrollment.tutor.address ??
-                            "Aucune Adresse donnee",
-                          name: lastEnrollment.tutor.fullName,
-                          phone:
-                            lastEnrollment.tutor.phoneNumber ?? "Aucun numeroe",
-                        },
-                      }),
-                    }}
-
-                    invoiceRef={lastEnrollment.enrollmentRef}
-                  />
-                  <PrinterConfigView>
-                    {() => <PrintInvoiceButton />}
-                  </PrinterConfigView>
-                </ActionPrintContainer>
-              ) : (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Le détail de la facture s'affichera ici après la sélection de
-                  l'élève.
-                </p>
-              )}
-
-              <FormattedJsonViewer data={lastEnrollment} />
-            </div>
-          </InvoiGridPreviewContainer>
-        </InvoiGridContainer>
+          <InvoiceGridPreviewContainer>
+            <EnrollmentInvoicePreview lastEnrollment={lastEnrollment} />
+          </InvoiceGridPreviewContainer>
+        </InvoiceGridContainer>
       </PageContent>
     </PageContainer>
   );
