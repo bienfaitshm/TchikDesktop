@@ -22,10 +22,10 @@ export interface TestThermalPrinterParams {
 }
 
 /** Standard divider line for 58mm thermal receipts. */
-const PRINTER_DIVIDER = "--------------------------------";
+export const PRINTER_DIVIDER = "--------------------------------";
 
 /** Default line character width for 58mm thermal paper. */
-const LINE_WIDTH = 32;
+export const LINE_WIDTH = 32;
 
 /**
  * Formats a single line with left-aligned and right-aligned text strings.
@@ -34,7 +34,7 @@ const LINE_WIDTH = 32;
  * @param width - Total character capacity of the line.
  * @returns Formatted line string padded with whitespace.
  */
-function formatLeftRight(
+export function formatLeftRight(
   left: string,
   right: string,
   width: number = LINE_WIDTH,
