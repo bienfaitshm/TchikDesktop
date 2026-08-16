@@ -32,7 +32,7 @@ export class SeatingPresenceSessionDataResolver {
       );
     }
     const [school, classrooms] = await Promise.all([
-      schoolInfoService.getSchoolInfos(schoolId, yearId),
+      schoolInfoService.getSchoolInfo(schoolId, yearId),
       classroomService.getClassroomsWithStudentAndAssignments({
         classroom: {
           where: {

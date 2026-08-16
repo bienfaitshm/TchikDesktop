@@ -30,7 +30,7 @@ export class SeatingPresenceSessionDataResolver {
     }
     const days = Array.from({ length: nDays }, (_, i) => i);
     const [school, sessionData] = await Promise.all([
-      schoolInfoService.getSchoolInfos(schoolId, yearId),
+      schoolInfoService.getSchoolInfo(schoolId, yearId),
       seatingSessionRepository.getSessionWithAssignments(sessionId),
     ]);
 

@@ -26,7 +26,7 @@ export class SeatingSessionDataResolver {
     }
 
     const [school, sessionData] = await Promise.all([
-      schoolInfoService.getSchoolInfos(schoolId, yearId),
+      schoolInfoService.getSchoolInfo(schoolId, yearId),
       seatingSessionRepository.getSessionWithAssignments(sessionId),
     ]);
 
