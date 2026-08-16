@@ -1,53 +1,54 @@
 import { HttpStatus, HttpException } from "@/packages/electron-ipc-rest";
-import { getLogger as createLogger } from "@/packages/logger";
+import {
+  getLogger as createLogger,
+  type CustomLogger as Logger,
+} from "@/packages/logger";
 import {
   printPdfReceipt,
   Payload,
   jobs,
   PrinterService,
+  ActionResult,
 } from "@/packages/pos-printer";
+import { schoolInfoService } from "@/packages/@core/data-access/db/queries";
 import { tchikAppStore } from "@/packages/@core/data-access/stores";
-import {
-  type StudentPaymentRepository,
-  type StudentPaymentDTO,
-  studentPaymentRepository,
-} from "@/packages/@core/data-access/db";
-import { formatDate } from "@/packages/times";
+import type { ClassConstructor } from "@/packages/handler-factory";
+import { PrintInvoiceService, IPrintInvoiceJob } from "./print-register";
+import { EnrollmentInvoice } from "./enrollment-invoice-pos";
+import { PaymentInvoice } from "./payment-invoice-pos";
+import type { PrintInvoicePayload } from "@/packages/@core/data-access/schema-validations";
 
 const defaultLogger = createLogger("PRINTING SERVICES");
-const defaultPrinterService = new PrinterService({
-  logger: defaultLogger,
-});
 
 /**
- * Service orchestrating POS and PDF document printing operations.
+ * Service orchestrating thermal POS and PDF document printing operations.
  */
 export class PrintingService {
   private readonly printerService: PrinterService;
-  private readonly paymentRepository: StudentPaymentRepository;
+  private readonly printInvoiceService: PrintInvoiceService;
   private readonly appStore: typeof tchikAppStore;
 
   /**
    * Initializes a new instance of PrintingService with injectable dependencies.
    * @param printerService - Hardware printer service instance.
-   * @param paymentRepository - Repository for accessing payment data.
+   * @param printInvoiceService - Service responsible for processing invoice receipts.
    * @param appStore - Application store managing current configuration state.
    */
   constructor(
-    printerService: PrinterService = defaultPrinterService,
-    paymentRepository: StudentPaymentRepository = studentPaymentRepository,
+    printerService: PrinterService,
+    printInvoiceService: PrintInvoiceService,
     appStore = tchikAppStore,
   ) {
     this.printerService = printerService;
-    this.paymentRepository = paymentRepository;
+    this.printInvoiceService = printInvoiceService;
     this.appStore = appStore;
   }
 
   /**
    * Retrieves all available OS-installed printers on the host system.
-   * @returns Array of system printers detected on the machine.
+   * @returns Array of system printers detected on the host machine.
    */
-  async getPrinters() {
+  public async getPrinters(): Promise<unknown[]> {
     return this.printerService.getSystemPrinters();
   }
 
@@ -56,90 +57,40 @@ export class PrintingService {
    * @param printerName - Target system printer identifier.
    * @returns Connection status outcome object.
    */
-  async checkPrinter(printerName: string) {
+  public async checkPrinter(printerName: string): Promise<ActionResult> {
     return this.printerService.checkConnection(printerName);
   }
 
   /**
    * Fetches payment details and triggers a POS invoice receipt print job.
    * @param paymentPayload - Identifier and ticket reference for the payment.
-   * @returns True if the print job succeeded.
    */
-  async printInvoice(paymentPayload: {
-    paymentId: string;
-    tickRef: string;
-  }): Promise<boolean> {
-    const { posPrint, currentSchool, currentStudyYear } =
-      this.appStore.getCurrentConfig();
-
-    if (!currentSchool || !currentStudyYear) {
-      throw new HttpException(
-        "La configuration de l'école n'est pas faite !",
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
-    if (!posPrint?.posPrinter) {
-      throw new HttpException(
-        "L'imprimante POS n'est pas configurée !",
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
-    const payment = this.paymentRepository.findById(paymentPayload.paymentId);
-    if (!payment) {
-      throw new HttpException("Paiement non trouvé !", HttpStatus.NOT_FOUND);
-    }
-
-    try {
-      const invoiceData: jobs.InvoiceReceiptData = createInvoiceData(
-        paymentPayload.tickRef,
-        payment,
-        {
-          name: currentSchool.name,
-          town: currentSchool.town,
-          address: currentSchool.address,
-          yearName: currentStudyYear.yearName,
-        },
-      );
-
-      const result = await this.printerService.printReceipt(
-        posPrint.posPrinter.value,
-        async (printer) => {
-          const printJobResult = await jobs.printInvoiceJob({
-            printer,
-            invoiceData,
-          });
-          return printJobResult.success;
-        },
-      );
-
-      return result.success;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Il y a eu une erreur lors de l'impression";
-      throw new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+  public async printInvoice(
+    paymentPayload: PrintInvoicePayload,
+  ): Promise<void> {
+    await this.printInvoiceService.printInvoice(
+      paymentPayload,
+      this.printerService,
+      this.appStore,
+    );
   }
 
   /**
    * Executes a test thermal print job using current school configuration.
    * @param printerName - Target printer name for the test.
    * @param logger - Diagnostic logger instance.
-   * @returns Print result object.
+   * @returns Print result object indicating execution outcome.
    */
-  async testPrinter(printerName: string, logger = defaultLogger) {
+  public async testPrinter(
+    printerName: string,
+    logger: Logger = defaultLogger,
+  ): Promise<ActionResult> {
     const { currentSchool, currentStudyYear, posPrint } =
       this.appStore.getCurrentConfig();
 
     if (!currentSchool || !currentStudyYear || !posPrint) {
       throw new HttpException(
-        "La configuration de l'école ou de l'imprimante est incomplète !",
+        "School or printer configuration is incomplete.",
         HttpStatus.NOT_FOUND,
       );
     }
@@ -164,7 +115,7 @@ export class PrintingService {
 
       if (!result.success) {
         throw new HttpException(
-          result.message ?? "Erreur lors du test de l'imprimante",
+          result.message ?? "An error occurred during printer testing.",
           HttpStatus.CONFLICT,
         );
       }
@@ -177,7 +128,7 @@ export class PrintingService {
       const message =
         error instanceof Error
           ? error.message
-          : "Il y a eu une erreur lors du test de l'imprimante";
+          : "An unknown error occurred during printer testing.";
       throw new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -187,58 +138,34 @@ export class PrintingService {
    * @param payload - Printable PDF dataset parameters.
    * @returns PDF print job execution result.
    */
-  printTicket(payload: Payload) {
+  public async printTicket(payload: Payload): Promise<unknown> {
     try {
-      return printPdfReceipt(payload);
+      return await printPdfReceipt(payload);
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : "Une erreur inconnue est survenue";
+          : "An unknown error occurred while printing PDF ticket.";
       throw new HttpException(message, HttpStatus.CONFLICT);
     }
   }
 }
 
-/**
- * Normalizes payment record and school metadata into an invoice payload.
- * @param ticketRef - Ticket reference identifier.
- * @param paymentDto - Source student payment object.
- * @param school - Active school parameter details.
- * @returns Formatted thermal invoice dataset.
- */
-function createInvoiceData(
-  ticketRef: string,
-  {
-    student,
-    feeSchedule,
-    classroom,
-    feeAssigment,
-    enrollment,
-    ...studentPayment
-  }: StudentPaymentDTO,
-  school: { address?: string; name: string; town: string; yearName: string },
-): jobs.InvoiceReceiptData {
-  return {
-    address: school.address ?? school.name,
-    schoolName: school.name,
-    yearName: school.yearName,
-    schoolTown: school.town,
-    studentCode: enrollment.studentCode,
-    studentName: student.fullName,
-    classroomName: classroom.shortIdentifier,
-    currency: studentPayment.currencyReceived,
-    amountPaid: studentPayment.amountReceived,
-    totalDue: feeAssigment.totalAmount,
-    feeTypeName: studentPayment.feeType.name,
-    scheduleName: feeSchedule.installmentName,
-    paymentMethod: studentPayment.paymentMethod,
-    status: feeAssigment.status,
-    ticketRef: ticketRef,
-    date: formatDate(studentPayment.createdAt),
-    hour: formatDate(studentPayment.createdAt, "HH:mm"),
-    transactionReference: studentPayment.transactionReference,
-  };
-}
+const defaultPrinterService = new PrinterService({
+  logger: defaultLogger,
+});
 
-export const printingService = new PrintingService();
+const invoices: ClassConstructor<IPrintInvoiceJob>[] = [
+  PaymentInvoice,
+  EnrollmentInvoice,
+];
+
+const printInvoiceService = new PrintInvoiceService(
+  invoices,
+  schoolInfoService,
+);
+
+export const printingService = new PrintingService(
+  defaultPrinterService,
+  printInvoiceService,
+);
