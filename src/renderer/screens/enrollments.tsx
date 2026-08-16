@@ -23,6 +23,11 @@ import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
 import { LoadingButton } from "@/components/buttons/button-loading";
 import { FormattedJsonViewer } from "../components/json-formated-viewer";
 import { EnrollmentInvoice } from "../components/invoices/enrollment-invoice";
+import {
+  ActionPrintContainer,
+  PrinterConfigView,
+  PrintInvoiceButton,
+} from "../components/invoices/invoice-print";
 
 /**
  * Properties for the EnrollmentForm component.
@@ -116,14 +121,32 @@ export function EnrollmentPage(): React.JSX.Element {
 
           <InvoiGridPreviewContainer>
             <div className="p-4 border rounded-md">
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-base font-semibold">
                 Aperçu du reçu d'inscription
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
                 Le détail de la facture s'affichera ici après la sélection de
                 l'élève.
               </p>
-              <EnrollmentInvoice />
+              <ActionPrintContainer>
+                <EnrollmentInvoice
+                  student={{
+                    code: "12234",
+                    name: "killumba shomari bienfait",
+                    classroom: "3e HP",
+                    guardian: {
+                      name: "assumani kilumba",
+                      address: "Golf Mubanzo",
+                      phone: "+24397388289",
+                    },
+                  }}
+
+                  invoiceRef="12345"
+                />
+                <PrinterConfigView>
+                  {() => <PrintInvoiceButton />}
+                </PrinterConfigView>
+              </ActionPrintContainer>
               <FormattedJsonViewer data={lastEnrollment} />
             </div>
           </InvoiGridPreviewContainer>

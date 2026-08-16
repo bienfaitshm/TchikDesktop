@@ -25,8 +25,8 @@ import type { SystemPrinter } from "@/packages/pos-printer";
  */
 export const usePrinterSettings = () => {
   const { posPrint } = useCurrentConfig();
-  const configActions = useConfigActions();
   const { data: printers = [] } = useGetPrinters();
+  const configActions = useConfigActions();
 
   const [selectedPrinter, setSelectedPrinter] = useState<SystemPrinter | null>(
     posPrint?.posPrinter ?? null,
