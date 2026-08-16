@@ -124,29 +124,39 @@ export function EnrollmentPage(): React.JSX.Element {
               <h2 className="text-base font-semibold">
                 Aperçu du reçu d'inscription
               </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Le détail de la facture s'affichera ici après la sélection de
-                l'élève.
-              </p>
-              <ActionPrintContainer>
-                <EnrollmentInvoice
-                  student={{
-                    code: "12234",
-                    name: "killumba shomari bienfait",
-                    classroom: "3e HP",
-                    guardian: {
-                      name: "assumani kilumba",
-                      address: "Golf Mubanzo",
-                      phone: "+24397388289",
-                    },
-                  }}
 
-                  invoiceRef="12345"
-                />
-                <PrinterConfigView>
-                  {() => <PrintInvoiceButton />}
-                </PrinterConfigView>
-              </ActionPrintContainer>
+              {lastEnrollment ? (
+                <ActionPrintContainer>
+                  <EnrollmentInvoice
+                    student={{
+                      code: lastEnrollment.studentCode,
+                      name: lastEnrollment.student.fullName,
+                      classroom: lastEnrollment.classroom.shortIdentifier,
+                      ...(lastEnrollment.tutor && {
+                        guardian: {
+                          address:
+                            lastEnrollment.tutor.address ??
+                            "Aucune Adresse donnee",
+                          name: lastEnrollment.tutor.fullName,
+                          phone:
+                            lastEnrollment.tutor.phoneNumber ?? "Aucun numeroe",
+                        },
+                      }),
+                    }}
+
+                    invoiceRef={lastEnrollment.enrollmentRef}
+                  />
+                  <PrinterConfigView>
+                    {() => <PrintInvoiceButton />}
+                  </PrinterConfigView>
+                </ActionPrintContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Le détail de la facture s'affichera ici après la sélection de
+                  l'élève.
+                </p>
+              )}
+
               <FormattedJsonViewer data={lastEnrollment} />
             </div>
           </InvoiGridPreviewContainer>
