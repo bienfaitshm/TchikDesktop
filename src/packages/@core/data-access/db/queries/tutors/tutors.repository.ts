@@ -17,16 +17,16 @@ export type TutorDTO = Tutor & UserDTO;
 
 const tutorJoinTables = {
   tutors,
-  tutorUsers: UserRepository.tutorUsers,
+  users: UserRepository.tutorUsers,
 } as const;
 
 export type BaseTutorFilters = helpers.FindManyOptions<typeof tutorJoinTables>;
 
 const TUTORS_DEFAULT_SORT: BaseTutorFilters = {
   orderBy: [
-    { table: "tutorUsers", column: "lastName", order: "asc" },
-    { table: "tutorUsers", column: "middleName", order: "asc" },
-    { table: "tutorUsers", column: "firstName", order: "asc" },
+    { table: "users", column: "lastName", order: "asc" },
+    { table: "users", column: "middleName", order: "asc" },
+    { table: "users", column: "firstName", order: "asc" },
   ],
 };
 

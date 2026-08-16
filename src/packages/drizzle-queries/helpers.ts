@@ -17,6 +17,7 @@ import {
   type Table,
   type SQL,
   type AnyColumn,
+  sql,
 } from "drizzle-orm";
 import { merge } from "ts-deepmerge";
 
@@ -178,7 +179,10 @@ export function buildOrderByClauses<TTables extends Record<string, Table>>(
     if (!Object.prototype.hasOwnProperty.call(columns, sort.column)) continue;
 
     const column = columns[sort.column] as Column;
-    sortOrders.push(sort.order === "desc" ? desc(column) : asc(column));
+    const colSql = sql`${column} COLLATE NOCASE`;
+
+    sortOrders.push(sort.order === "desc" ? desc(colSql) : asc(colSql));
+    // sortOrders.push(sort.order === "desc" ? desc(column) : asc(column));
   }
 
   return sortOrders;
