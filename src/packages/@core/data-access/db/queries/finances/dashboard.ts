@@ -167,7 +167,7 @@ export class FinancialStatisticsService {
     return this.db
       .select({
         paymentId: studentPayments.paymentId,
-        studentName: UserRepository.fullNameSql,
+        studentName: UserRepository.getFullNameColumn(),
         classroomName: classrooms.identifier,
         amount: studentPayments.amountReceived,
         currency: studentPayments.currencyReceived,

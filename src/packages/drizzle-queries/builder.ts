@@ -132,7 +132,10 @@ export function buildOrderByClauses<T extends Table>(
     )
       continue;
     const column = columns[sort.column as string] as Column;
-    sortOrders.push(sort.order === "desc" ? desc(column) : asc(column));
+    const colSql = sql`${column} COLLATE NOCASE`;
+
+    sortOrders.push(sort.order === "desc" ? desc(colSql) : asc(colSql));
+    // sortOrders.push(sort.order === "desc" ? desc(column) : asc(column));
   }
 
   return sortOrders;

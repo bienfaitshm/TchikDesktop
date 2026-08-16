@@ -89,10 +89,10 @@ export class PrintInvoiceService {
       throw new Error("POS printer is not configured!");
     }
 
-    const job = this.jobRegistry.get(payload.codeinvoice);
+    const job = this.jobRegistry.get(payload.invoiceCode);
     if (!job) {
       throw new Error(
-        `No print job found for invoice code "${payload.codeinvoice}"!`,
+        `No print job found for invoice code "${payload.invoiceCode}"!`,
       );
     }
 

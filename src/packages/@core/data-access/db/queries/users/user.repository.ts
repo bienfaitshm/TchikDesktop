@@ -14,6 +14,7 @@ import {
   OptionProvider,
 } from "@/packages/drizzle-queries";
 import { USER_ROLE_ENUM } from "@/packages/@core/data-access/db/options";
+import { alias } from "drizzle-orm/sqlite-core/alias";
 
 export type UserDTO = { fullName: string } & Omit<User, "password">;
 const DEFAULT_TEMPORARY_PASSWORD = process.env.DEFAULT_TEMP_PASSWORD || "0000";
@@ -44,23 +45,28 @@ export class UserRepository
   >
   implements OptionProvider<UserDTO>
 {
-  static readonly fullNameSql = sql<string>`
+  static readonly tutorUsers: TableUser = alias(users, "tutor_users");
+  static readonly studentUsers: TableUser = alias(users, "student_users");
+
+  static getFullNameColumn(table: TableUser = users) {
+    return sql<string>`
     trim(
-      coalesce(nullif(trim(${users.lastName}), ''), '') || ' ' ||
-      coalesce(nullif(trim(${users.middleName}), ''), '') || ' ' ||
-      coalesce(nullif(trim(${users.firstName}), ''), '')
+      coalesce(nullif(trim(${table.lastName}), ''), '') || ' ' ||
+      coalesce(nullif(trim(${table.middleName}), ''), '') || ' ' ||
+      coalesce(nullif(trim(${table.firstName}), ''), '')
     )
   `.as("fullName");
+  }
 
   /**
    * Returns selectable user table columns excluding the password field with a concatenated fullName alias.
    * @returns An object representing mapped visible columns for SQL selection.
    */
-  static getVisibleColumns() {
-    const { password, ...userFields } = getTableColumns(users);
+  static getVisibleColumns(table: TableUser = users) {
+    const { password, ...userFields } = getTableColumns(table);
     return {
       ...userFields,
-      fullName: UserRepository.fullNameSql,
+      fullName: UserRepository.getFullNameColumn(table),
     };
   }
 

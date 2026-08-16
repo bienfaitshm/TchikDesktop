@@ -15,11 +15,8 @@ export function printText(printer: PrinterThermal, text: string): void {
  * @param printer - Thermal printer device instance.
  * @param char - Character used to construct the divider line (defaults to "-").
  */
-export function printDivider(
-  printer: PrinterThermal,
-  char: string = "-",
-): void {
-  printer.drawLine(char);
+export function printDivider(printer: PrinterThermal): void {
+  printer.text(jobs.PRINTER_DIVIDER);
 }
 
 /**

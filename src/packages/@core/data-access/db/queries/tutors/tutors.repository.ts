@@ -2,7 +2,6 @@ import { getLogger } from "@/packages/logger";
 import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import {
   tutors,
-  users,
   type TableTutor,
   type Tutor,
 } from "@/packages/@core/data-access/db/schemas";
@@ -18,16 +17,16 @@ export type TutorDTO = Tutor & UserDTO;
 
 const tutorJoinTables = {
   tutors,
-  users,
+  tutorUsers: UserRepository.tutorUsers,
 } as const;
 
 export type BaseTutorFilters = helpers.FindManyOptions<typeof tutorJoinTables>;
 
 const TUTORS_DEFAULT_SORT: BaseTutorFilters = {
   orderBy: [
-    { table: "users", column: "lastName", order: "asc" },
-    { table: "users", column: "middleName", order: "asc" },
-    { table: "users", column: "firstName", order: "asc" },
+    { table: "tutorUsers", column: "lastName", order: "asc" },
+    { table: "tutorUsers", column: "middleName", order: "asc" },
+    { table: "tutorUsers", column: "firstName", order: "asc" },
   ],
 };
 
@@ -64,7 +63,7 @@ export class TutorRepository
    */
   static getDTOColumns(table: Table = tutors) {
     return {
-      ...UserRepository.getVisibleColumns(),
+      ...UserRepository.getVisibleColumns(UserRepository.tutorUsers),
       ...getTableColumns(table),
     };
   }
@@ -78,7 +77,10 @@ export class TutorRepository
     return this.getClient(tx)
       .select(TutorRepository.getDTOColumns(this.table))
       .from(this.table)
-      .leftJoin(users, eq(this.table.userId, users.userId))
+      .leftJoin(
+        UserRepository.tutorUsers,
+        eq(this.table.userId, UserRepository.tutorUsers.userId),
+      )
       .$dynamic();
   }
 

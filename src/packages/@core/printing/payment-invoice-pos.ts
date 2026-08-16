@@ -86,15 +86,20 @@ export class PaymentInvoice implements IPrintInvoiceJob {
 
     try {
       // 1. Header Section
+
       printTitle(printer, invoiceData.schoolName);
+      printer.align("CT");
       if (invoiceData.address) {
         printText(printer, invoiceData.address);
       }
       if (invoiceData.schoolTown) {
         printText(printer, invoiceData.schoolTown);
       }
+      printer.align("CT");
       printText(printer, invoiceData.yearName);
-      printTitle(printer, "Recu de paiment");
+      printTitle(printer, "REÇU DE PAIEMENT");
+      printer.align("LT");
+
       printDivider(printer);
 
       // 2. Metadata Section

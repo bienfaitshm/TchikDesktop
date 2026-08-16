@@ -99,14 +99,21 @@ export class EnrollmentRepository
     return client
       .select({
         ...getTableColumns(this.table),
-        student: UserRepository.getVisibleColumns(),
+        student: UserRepository.getVisibleColumns(UserRepository.studentUsers),
         classroom: getTableColumns(classrooms),
         tutor: TutorRepository.getDTOColumns(tutors),
         yearName: studyYears.yearName,
       })
       .from(this.table)
       .leftJoin(tutors, eq(this.table.tutorId, tutors.tutorId))
-      .innerJoin(users, eq(this.table.studentId, users.userId))
+      .leftJoin(
+        UserRepository.tutorUsers,
+        eq(UserRepository.tutorUsers.userId, tutors.userId),
+      )
+      .innerJoin(
+        UserRepository.studentUsers,
+        eq(this.table.studentId, UserRepository.studentUsers.userId),
+      )
       .innerJoin(classrooms, eq(this.table.classroomId, classrooms.classId))
       .innerJoin(studyYears, eq(this.table.yearId, studyYears.yearId))
       .$dynamic();

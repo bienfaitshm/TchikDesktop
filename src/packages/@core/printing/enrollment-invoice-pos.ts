@@ -93,14 +93,18 @@ export class EnrollmentInvoice implements IPrintInvoiceJob {
     try {
       // 1. Header Section
       printTitle(printer, invoiceData.schoolName);
+      printer.align("CT");
       if (invoiceData.address) {
         printText(printer, invoiceData.address);
       }
       if (invoiceData.schoolTown) {
         printText(printer, invoiceData.schoolTown);
       }
+      printer.align("CT");
       printText(printer, invoiceData.yearName);
       printTitle(printer, "REÇU D'INSCRIPTION");
+      printer.align("LT");
+
       printDivider(printer);
 
       // 2. Metadata Section
@@ -134,7 +138,7 @@ export class EnrollmentInvoice implements IPrintInvoiceJob {
           printKeyValueRow(printer, "ADRESSE :", invoiceData.guardian.address);
         }
       }
-      printDivider(printer);
+      // printDivider(printer);
 
       // 5. Fee and Payment Details Section
       //   printText(printer, "DÉSIGNATION");
@@ -158,6 +162,7 @@ export class EnrollmentInvoice implements IPrintInvoiceJob {
 
       // 7. Footer Notice
       printer.align("CT");
+      printer.size(0.5, 0.5);
       printText(
         printer,
         "Merci d'avoir renouvelé votre confiance en notre établissement pour la formation de vos enfants.",

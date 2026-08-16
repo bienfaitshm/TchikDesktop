@@ -150,19 +150,16 @@ export const ActionPrintContainer: React.FC<
   React.PropsWithChildren<ActionPrintContainerProps>
 > = ({ children, isPrinted = false, isPending = false }) => {
   return (
-    <div className="flex flex-col gap-4 w-full">
-      <div className="flex justify-between items-center w-full">
-        <Badge
-          variant="outline"
-          className="border-primary/30 text-primary bg-primary/10 font-mono tracking-tight text-[10px]"
-        >
+    <div className="flex flex-col gap-6 w-full">
+      <div className="flex justify-between items-center w-full my-2">
+        <Badge variant="outline" className="text-[10px] first-letter:uppercase">
           <span>{!isPrinted ? "APERÇU TICKET" : "DERNIER TICKET ÉMIS"}</span>
         </Badge>
 
         {isPrinted ? (
           <Badge
             variant="secondary"
-            className="text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+            className="text-[10px] first-letter:uppercase gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
           >
             <CheckCircle2 className="size-3 text-emerald-600" /> Imprimé
           </Badge>
