@@ -1,4 +1,3 @@
-import z from "zod";
 import {
   HttpMethod,
   IpcServer,
@@ -6,19 +5,12 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { PrinteToutes } from "../../routes-constant";
 import {
-  Ticket,
-  TicketSchema,
+  PrintInvoiceSchema,
+  PrinterValueSchema,
+  type PrinterValuePayload,
+  type PrintInvoicePayload,
 } from "@/packages/@core/data-access/schema-validations";
 import { printingService } from "@/packages/@core/printing";
-
-/**
- * Validation schema for checking printer connectivity status.
- */
-export const PrinterNameSchema = z.object({
-  printerValue: z.string().min(1, "Printer name is required"),
-});
-
-export type PrinterValuePayload = z.infer<typeof PrinterNameSchema>;
 
 /* =========================================================================
    CONTROLLER IMPLEMENTATION
@@ -43,10 +35,10 @@ export class PrinterController {
    * @returns A promise resolving to the printer connection status result.
    */
   @IpcServer.register(HttpMethod.POST, PrinteToutes.CHECK_PRINTER, {
-    body: PrinterNameSchema,
+    body: PrinterValueSchema,
   })
   static async checkPrinter({ body }: IpcRequest<PrinterValuePayload>) {
-    return printingService.checkPrinter(body.printerValue);
+    return printingService.checkPrinter(body.value);
   }
 
   /**
@@ -55,9 +47,9 @@ export class PrinterController {
    * @returns A promise resolving to the receipt printing execution result.
    */
   @IpcServer.register(HttpMethod.POST, PrinteToutes.PRINT_RECEIPT, {
-    body: TicketSchema,
+    body: PrintInvoiceSchema,
   })
-  static async printReceipt({ body }: IpcRequest<Ticket>) {
+  static async printReceipt({ body }: IpcRequest<PrintInvoicePayload>) {
     return printingService.printInvoice(body);
   }
 
@@ -67,9 +59,9 @@ export class PrinterController {
    * @returns A promise resolving to the test printing execution result.
    */
   @IpcServer.register(HttpMethod.POST, PrinteToutes.PRINT_TEST, {
-    body: PrinterNameSchema,
+    body: PrinterValueSchema,
   })
   static async testPrinter({ body }: IpcRequest<PrinterValuePayload>) {
-    return printingService.testPrinter(body.printerValue);
+    return printingService.testPrinter(body.value);
   }
 }
