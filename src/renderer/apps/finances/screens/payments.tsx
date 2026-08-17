@@ -69,7 +69,7 @@ export function FastPaymentPage(): React.JSX.Element {
           </PaymentHistoryDialog>
         </PageHeadAction>
       </PageHeader>
-      <PageContent className="pt-1">
+      <PageContent>
         <InvoiceGridContainer>
           <InvoiceGridFormContainer>
             <PaymentForm />
@@ -88,7 +88,7 @@ export function FastPaymentPage(): React.JSX.Element {
  * @returns The payment form section element.
  */
 export function PaymentForm(): React.JSX.Element {
-  const { schoolId, yearId } = useCurrentConfig();
+  const { schoolId = "", yearId = "" } = useCurrentConfig();
   const resetForm = useFastPaymentStore((store) => store.resetForm);
 
   const form = useProcessStudentPaymentForm({

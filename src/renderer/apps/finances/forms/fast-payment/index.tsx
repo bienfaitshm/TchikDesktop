@@ -16,7 +16,7 @@ import {
   FastPaymentLoading,
 } from "@/renderer/apps/finances/components/fast-payment-empty";
 import { generateInvoiceRef, useFastPaymentStore } from "./hooks";
-import type { FastPaymentFormProps, FastPaymentSubmitter } from "./types";
+import type { FastPaymentFormProps } from "./types";
 import { useSearchEnrollments } from "@/renderer/libs/queries/enrollements/helpers";
 import { ComboboxSearch } from "@/renderer/components/form/fields/generic-search-combo-box";
 
@@ -51,10 +51,12 @@ export function FastPaymentForm({
   );
 
   return (
-    <div className="mt-6 space-y-5">
+    <div className="space-y-5">
       <FieldGroup className="flex flex-col gap-5">
         <Field>
-          <FieldLabel htmlFor="student">Élève au guichet</FieldLabel>
+          <FieldLabel htmlFor="student" className="text-xs">
+            Élève au guichet
+          </FieldLabel>
           <ComboboxSearch
             placeholder="Sélectionner l'élève"
             options={searchStudent.options}
