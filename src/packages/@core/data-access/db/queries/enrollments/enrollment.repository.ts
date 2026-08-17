@@ -3,7 +3,6 @@ import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
   classroomEnrollments,
-  users,
   classrooms,
   studyYears,
   type TableClassroomEnrollment,
@@ -54,9 +53,7 @@ const ENROLLMENT_DEFAULT_SORT: BaseClassroomEnrollmentFilters = {
 const ACTIVE_ENROLLEMENTS: BaseClassroomEnrollmentFilters = {
   where: {
     classroomEnrollments: {
-      status: {
-        $eq: STUDENT_STATUS_ENUM.ACTIVE,
-      },
+      status: STUDENT_STATUS_ENUM.ACTIVE,
     },
   },
 };
@@ -135,18 +132,7 @@ export class EnrollmentRepository
     tx?: TDataBase,
   ) {
     try {
-      const client = this.getClient(tx) as TDataBase;
-      const query = client
-        .select({
-          enrollmentId: this.table.enrollmentId,
-          classroomId: this.table.classroomId,
-          optionId: classrooms.optionId,
-          student: UserRepository.getVisibleColumns(),
-        })
-        .from(this.table)
-        .innerJoin(users, eq(this.table.studentId, users.userId))
-        .innerJoin(classrooms, eq(this.table.classroomId, classrooms.classId))
-        .$dynamic();
+      const query = this.getQuerySet(tx);
       const result = helpers.applyQueryOptions(
         query,
         this.getJoinTable(),

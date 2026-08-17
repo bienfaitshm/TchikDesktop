@@ -153,11 +153,11 @@ export class FeeConfigurationRepository
             yearId: { $eq: ctx.yearId },
           },
         },
-        // or: [
-        //   { feeConfigurations: { classroomId: { $eq: ctx.classroomId } } },
-        //   { feeConfigurations: { optionId: { $eq: ctx.optionId } } },
-        //   { feeConfigurations: { section: { $eq: ctx.section } } },
-        // ],
+        or: [
+          { feeConfigurations: { classroomId: { $eq: ctx.classroomId } } },
+          { feeConfigurations: { optionId: { $eq: ctx.optionId } } },
+          { feeConfigurations: { section: { $eq: ctx.section } } },
+        ],
       };
 
       const queryPayload = helpers.extractQueryPayload(
