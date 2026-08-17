@@ -38,8 +38,10 @@ Vous pouvez également parcourir l'historique complet des versions, consulter le
 | Fonctionnalité | Ce que vous y gagnez |
 | --- | --- |
 | **Gestion élèves** | Une base de données claire, centralisée et facile à mettre à jour. |
+| **Gestion des tuteurs** | Association directe des élèves à leurs responsables légaux pour un suivi centralisé. |
+| **Paiements & Facturation** | Gestion intégrée des encaissements et impression physique des reçus et factures d'inscription. |
 | **Moteur d'examens** | Automatisation du placement des élèves. Zéro conflit, planification optimisée. |
-| **Génération doc** | Listes, convocations et plans générés automatiquement en un clic. |
+| **Génération de documents** | Listes d'émargement, convocations et plans de salle générés automatiquement en un clic. |
 | **Interopérabilité** | Import/Export fluide pour communiquer avec vos autres logiciels. |
 
 ---
@@ -48,35 +50,15 @@ Vous pouvez également parcourir l'historique complet des versions, consulter le
 
 Tchik est conçu pour durer. Grâce à sa structure modulaire et son fonctionnement local, il offre un terrain de jeu robuste et sécurisé pour vos administrateurs. Développez vos propres extensions et adaptez l'outil sans les contraintes d'un système fermé.
 
-# An Electron application with React and TypeScript
+Développé avec **Electron**, **React** et **TypeScript**.
 
-## Recommended IDE Setup
+### Configuration IDE recommandée
 
 * [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
 
-## Project Setup
+### Guide de développement
 
-### Install
+#### 1. Installation des dépendances
 
 ```bash
 npm install
-```
-
-### Development
-
-```bash
-npm run dev
-```
-
-### Build
-
-```bash
-# For windows
-$ npm run build:win
-
-# For macOS
-$ npm run build:mac
-
-# For Linux
-$ npm run build:linux
-```
