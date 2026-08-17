@@ -11,7 +11,7 @@ export const optionColumns: ColumnDef<Option>[] = [
     ),
     cell: ({ getValue }) => {
       return (
-        <TypographySmall className="text-sm">
+        <TypographySmall className="text-sm max-w-md text-ellipsis truncate">
           {String(getValue() ?? "N/A")}
         </TypographySmall>
       );

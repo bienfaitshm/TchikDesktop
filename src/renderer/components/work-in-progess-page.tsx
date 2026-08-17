@@ -1,4 +1,32 @@
+"use client";
 import { Construction } from "lucide-react";
+
+import { useState } from "react";
+import { InputSuggestion } from "@/components/inputs/input-suggestion";
+
+const FRAMEWORKS = [
+  "Next.js",
+  "React",
+  "Tailwind CSS",
+  "TypeScript",
+  "Vue.js",
+  "Svelte",
+];
+
+export function Example() {
+  const [value, setValue] = useState("");
+
+  return (
+    <div className="w-80">
+      <InputSuggestion
+        suggestions={FRAMEWORKS}
+        value={value}
+        onValueChange={setValue}
+        placeholder="Tapez un framework (ex: Nex...)"
+      />
+    </div>
+  );
+}
 
 export default function WorkInProgressPage() {
   return (
@@ -22,6 +50,7 @@ export default function WorkInProgressPage() {
             Page en cours de développement
           </h1>
         </div>
+        {/* <Example /> */}
       </main>
 
       {/* Footer minimaliste */}

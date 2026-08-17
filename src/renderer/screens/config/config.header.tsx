@@ -1,8 +1,6 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
-
-import { TypographyH4 } from "@/renderer/components/ui/typography";
 import { Button } from "@/renderer/components/ui/button";
 import { cn } from "@/renderer/utils";
 
@@ -13,9 +11,10 @@ import { cn } from "@/renderer/utils";
  * @property {string} [className] - Classes CSS additionnelles pour le conteneur.
  */
 interface ConfigHeaderProps {
-    title: string;
-    showBackButton?: boolean;
-    className?: string;
+  title: string | ReactNode;
+  subTitle?: string | ReactNode;
+  showBackButton?: boolean;
+  className?: string;
 }
 
 /**
@@ -23,30 +22,40 @@ interface ConfigHeaderProps {
  * Gère l'affichage du titre et le retour en arrière historique.
  */
 export const ConfigHeader: React.FC<ConfigHeaderProps> = ({
-    title,
-    showBackButton = false,
-    className,
+  title,
+  subTitle,
+  showBackButton = false,
+  className,
 }) => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    return (
-        <div className={cn("flex items-center gap-5", className)}>
-            {showBackButton && (
-                <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => navigate(-1)}
-                    aria-label="Retour"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-            )}
+  return (
+    <div className={cn("flex items-center gap-5", className)}>
+      {showBackButton && (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => navigate(-1)}
+          aria-label="Retour"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+      )}
 
-            <TypographyH4 className="mb-0 text-center md:text-left">
-                {title}
-            </TypographyH4>
-        </div>
-    );
+      <div>
+        {typeof title === "string" ? (
+          <h1 className="text-xl font-bold tracking-tight">{title}</h1>
+        ) : (
+          title
+        )}
+        {typeof subTitle === "string" ? (
+          <p className="text-foreground text-xs">{subTitle}</p>
+        ) : (
+          subTitle
+        )}
+      </div>
+    </div>
+  );
 };
 
 ConfigHeader.displayName = "ConfigHeader";

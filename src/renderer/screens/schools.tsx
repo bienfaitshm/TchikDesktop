@@ -1,6 +1,8 @@
-import React, { useMemo } from "react";
+"use client";
+
+import React from "react";
 import { Button } from "@/renderer/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Copy, Trash2 } from "lucide-react";
 import { useGetSchools } from "@/renderer/libs/queries/schools";
 import type { School } from "@/packages/@core/data-access/db/schemas";
 import {
@@ -15,97 +17,124 @@ import {
   DataTableColumnToggle,
 } from "@/renderer/components/tables/data-table";
 import {
-  enhanceColumnsExpandable,
+  enhanceColumns,
   schoolColumns,
 } from "@/renderer/components/tables/columns";
-import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
-import {
-  ActionContainer,
-  ActionTileCopy,
-  ActionTileDelete,
-  ActionTileEdit,
-} from "@/renderer/components/tables/data-table.action-tiles";
-
 import {
   CreateSchoolDialog,
   DeleteSchoolDialog,
   UpdateSchoolDialog,
-  type CreateSchoolDialogProps,
+  type SchoolDialogProps,
 } from "@/renderer/dialog-actions/school.dialog-actions";
+import {
+  createActionMenus,
+  type ActionMenuConfig,
+} from "@/components/menus/action-menus";
+import {
+  PageContainer,
+  PageHeader,
+  PageHeaderTextContent,
+  PageHeadTitle,
+  PageHeadDescription,
+  PageContent,
+} from "@/renderer/containers/page-container";
 
-import type { Row } from "@tanstack/react-table";
-import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
-
-interface RowActionsProps extends Pick<CreateSchoolDialogProps, "mutationKey"> {
+export interface RowActionsProps extends Pick<
+  SchoolDialogProps,
+  "mutationKey"
+> {
   school: School;
 }
 
-/**
- * Actions de ligne mémoïsées.
- * On utilise les props cohérentes : schoolId et schoolName.
- */
-const SchoolRowActions = React.memo(
-  ({ school, mutationKey }: RowActionsProps) => {
-    const initialData = useMemo(() => ({ ...school }), [school.schoolId]);
-
-    return (
-      <ActionContainer className="lg:grid-cols-3">
+const MENUS: ActionMenuConfig<RowActionsProps>[] = [
+  {
+    id: "edit",
+    label: "Modifier les infos de l'école",
+    icon: Pencil,
+    dialog({ school, mutationKey }) {
+      return (
         <UpdateSchoolDialog
           mutationKey={mutationKey}
           schoolId={school.schoolId}
-          defaultValues={initialData}
-        >
-          <ActionTileEdit />
-        </UpdateSchoolDialog>
-
-        <CreateSchoolDialog
-          mutationKey={mutationKey}
-          defaultValues={initialData}
-        >
-          <ActionTileCopy />
-        </CreateSchoolDialog>
-
+          defaultValues={school}
+        />
+      );
+    },
+  },
+  {
+    id: "duplicate",
+    label: "Dupliquer",
+    icon: Copy,
+    dialog({ school, mutationKey }) {
+      return (
+        <CreateSchoolDialog mutationKey={mutationKey} defaultValues={school} />
+      );
+    },
+  },
+  {
+    id: "delete",
+    label: "Supprimer",
+    icon: Trash2,
+    separator: true,
+    variant: "destructive",
+    dialog({ school, mutationKey }) {
+      return (
         <DeleteSchoolDialog
           mutationKey={mutationKey}
-          schoolId={school.schoolId}
-          schoolName={school.name}
-        >
-          <ActionTileDelete />
-        </DeleteSchoolDialog>
-      </ActionContainer>
-    );
+          id={school.schoolId}
+          name={school.name}
+        />
+      );
+    },
   },
-);
-SchoolRowActions.displayName = "SchoolRowActions";
+];
 
-export const SchoolsPage = () => {
+/**
+ * Renders contextual action menus for a given school row.
+ * @param props - Component properties containing the school entity and mutation key.
+ * @returns The rendered action menu component.
+ */
+export const RowAction = createActionMenus(MENUS);
+
+/**
+ * Main application screen component for viewing and managing registered schools.
+ * @returns Rendered school management page layout with data table and toolbars.
+ */
+export const SchoolsPage: React.FC = () => {
   const { data: schools = [], queryKey: mutationKey } = useGetSchools();
+  const columns = React.useMemo(
+    () =>
+      enhanceColumns(schoolColumns, {
+        variant: "actions",
+        renderRowAction: (school) => (
+          <RowAction school={school} mutationKey={mutationKey} />
+        ),
+      }),
+    [mutationKey],
+  );
 
   return (
-    <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
-      <PageShell
-        maxWidth="xl"
-        header={
-          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4 ">
-            <header className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight">
-                Gestion des établissements
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Visualisez et administrez la liste des écoles enregistrées.
-              </p>
-            </header>
-          </section>
-        }
-      >
+    <PageContainer>
+      <PageHeader>
+        <PageHeaderTextContent>
+          <PageHeadTitle> Gestion des établissements</PageHeadTitle>
+          <PageHeadDescription>
+            Visualisez et administrez la liste des écoles enregistrées.
+          </PageHeadDescription>
+        </PageHeaderTextContent>
+      </PageHeader>
+      <PageContent>
         <DataTable<School>
           data={schools}
-          columns={enhanceColumnsExpandable(schoolColumns)}
+          columns={columns}
           keyExtractor={(item) => item.schoolId}
         >
           <DataTableToolbar>
             <FilteredTableToolbarContainer>
-              <SearchTableToolbar searchColumn="name" placeholder="Recherche" />
+              <SearchTableToolbar
+                searchColumn="name"
+                placeholder="Recherche..."
+              />
             </FilteredTableToolbarContainer>
             <div className="flex items-center gap-4">
               <DataTableColumnToggle />
@@ -120,23 +149,11 @@ export const SchoolsPage = () => {
 
           <DataTableContent>
             <DataContentHead />
-            <DataContentBody<School>>
-              {({ row }) => (
-                <ExpandableRow
-                  row={row as Row<unknown>}
-                  renderDetail={
-                    <SchoolRowActions
-                      mutationKey={mutationKey}
-                      school={row.original}
-                    />
-                  }
-                />
-              )}
-            </DataContentBody>
+            <DataContentBody<School> />
           </DataTableContent>
           <DataTablePagination />
         </DataTable>
-      </PageShell>
-    </div>
+      </PageContent>
+    </PageContainer>
   );
 };

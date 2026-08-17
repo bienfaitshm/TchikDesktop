@@ -1,138 +1,435 @@
-import type { JSX } from "react";
-
+import { lazy, Suspense, type JSX } from "react";
 import { HashRouter as Router, Route, Routes } from "react-router";
+import {
+  Home,
+  LayoutDashboard,
+  Building,
+  BookOpen,
+  Users,
+  Settings,
+  Wallet,
+  Banknote,
+  UserPlus,
+  LayoutGrid,
+  Presentation,
+  School,
+  CircleDollarSign,
+  History,
+  Calendar,
+  GraduationCap,
+  User,
+  Settings2,
+  Bell,
+  LifeBuoy,
+  Info,
+  Code2,
+} from "lucide-react";
 import * as Layout from "@/renderer/screens/layouts";
-import Launcher from "@/renderer/screens/launcher";
-import { HomePage } from "@/renderer/screens/home";
-import { StudyYearsPage } from "@/renderer/screens/study-years";
-import { SchoolsPage } from "@/renderer/screens/schools";
-import { OptionPage } from "@/renderer/screens/options";
-import { LocalRoomPage } from "@/renderer/screens/locals";
-import {
-  ConfigurationLayoutScreen,
-  ConfigCreateSchoolPage,
-  SchoolConfigPage,
-  StudyYearConfigPage,
-  NewStudyYearConfigurationPage,
-} from "@/renderer/screens/config";
-import {
-  AboutPage,
-  // AccountPage,
-  DeveloperPage,
-  HelpPage,
-  SettingsPage,
-  // NotificationPage,
-} from "@/renderer/screens/settings";
-import WorkInProgressPage from "@/renderer/components/work-in-progess-page";
-
-import { EnrollmentPage } from "@/renderer/screens/enrollments";
-import { ClassroomPage } from "@/renderer/screens/classrooms/classrooms";
-
-import { StudentPage } from "@/renderer/screens/classrooms/students";
+import * as Seating from "@/renderer/apps/seatings";
+import * as Export from "@/renderer/apps/export";
+import { SubNavLayout } from "@/renderer/layouts/submenu.layout";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
-import {
-  SeatingPage,
-  SeatingSessionDetailPage,
-  SeatingSessionAssignmentPage,
-} from "@/renderer/screens/seating";
+import { ROUTES, APP_ROUTES } from "@/renderer/constants";
+import type {
+  NavSection,
+  NavItem,
+} from "@/renderer/components/app-sidebar/app-sidebar";
 
-import { ROUTES } from "@/renderer/constants";
+import * as FinApp from "@/renderer/apps/finances";
+import * as SchoolApp from "@/renderer/apps/schools";
+
+// ==========================================
+//  HELPER SENIOR POUR IMPORTS DE TYPE LAZY
+// ==========================================
+/**
+ * Permet de charger à la demande des exports nommés (ex: export { HomePage })
+ */
+function lazyNamed<T extends Record<string, any>>(
+  factory: () => Promise<T>,
+  name: keyof T,
+) {
+  return lazy(() => factory().then((module) => ({ default: module[name] })));
+}
+
+// ==========================================
+// ⚡ IMPORTS DYNAMIQUES (LAZY LOADING)
+// ==========================================
+
+// Base & Layouts
+const Launcher = lazy(() => import("@/renderer/screens/launcher"));
+const HomePage = lazyNamed(() => import("@/renderer/screens/home"), "HomePage");
+const DashBoardPage = lazyNamed(() => import("./dashboard"), "DashBoardPage");
+const NotFoundPage = lazyNamed(
+  () => import("@/renderer/screens/not-found"),
+  "NotFoundPage",
+);
+const WorkInProgressPage = lazy(
+  () => import("@/renderer/components/work-in-progess-page"),
+);
+
+// Configuration hors-ligne (Setup initial)
+const ConfigurationLayoutScreen = lazy(() =>
+  import("@/renderer/screens/config").then((m) => ({
+    default: m.ConfigurationLayoutScreen,
+  })),
+);
+const SchoolConfigPage = lazyNamed(
+  () => import("@/renderer/screens/config"),
+  "SchoolConfigPage",
+);
+const ConfigCreateSchoolPage = lazyNamed(
+  () => import("@/renderer/screens/config"),
+  "ConfigCreateSchoolPage",
+);
+const StudyYearConfigPage = lazyNamed(
+  () => import("@/renderer/screens/config"),
+  "StudyYearConfigPage",
+);
+const NewStudyYearConfigurationPage = lazyNamed(
+  () => import("@/renderer/screens/config"),
+  "NewStudyYearConfigurationPage",
+);
+
+// École (Schools)
+const SchoolsPage = lazyNamed(
+  () => import("@/renderer/screens/schools"),
+  "SchoolsPage",
+);
+const OptionPage = lazyNamed(
+  () => import("@/renderer/screens/options"),
+  "OptionPage",
+);
+const StudyYearsPage = lazyNamed(
+  () => import("@/renderer/screens/study-years"),
+  "StudyYearsPage",
+);
+const LocalRoomPage = lazyNamed(
+  () => import("@/renderer/screens/locals"),
+  "LocalRoomPage",
+);
+
+// Inscriptions & Classes
+const EnrollmentPage = lazyNamed(
+  () => import("@/renderer/screens/enrollments"),
+  "EnrollmentPage",
+);
+const ClassroomPage = lazyNamed(
+  () => import("@/renderer/screens/classrooms/classrooms"),
+  "ClassroomPage",
+);
+const StudentPage = lazyNamed(
+  () => import("@/renderer/screens/classrooms/students"),
+  "StudentPage",
+);
+
+// Plan de classe (Seating)
+const SeatingPage = lazyNamed(
+  () => import("@/renderer/screens/seating"),
+  "SeatingPage",
+);
+const SeatingSessionDetailPage = lazyNamed(
+  () => import("@/renderer/screens/seating"),
+  "SeatingSessionDetailPage",
+);
+const SeatingSessionAssignmentPage = lazyNamed(
+  () => import("@/renderer/screens/seating"),
+  "SeatingSessionAssignmentPage",
+);
+
+// Paramètres
+const SettingsPage = lazyNamed(
+  () => import("@/renderer/screens/settings"),
+  "SettingsPage",
+);
+const HelpPage = lazyNamed(
+  () => import("@/renderer/screens/settings"),
+  "HelpPage",
+);
+const DeveloperPage = lazyNamed(
+  () => import("@/renderer/screens/settings"),
+  "DeveloperPage",
+);
+const AboutPage = lazyNamed(
+  () => import("@/renderer/screens/settings"),
+  "AboutPage",
+);
+
+// ==========================================
+// CONFIGURATIONS MENUS (NAVIGATION)
+// ==========================================
+export const SCHOOL_SUB_MENUS: NavItem[] = [
+  {
+    name: "Vue d'ensemble",
+    url: APP_ROUTES.SCHOOLS.ROOT,
+    icon: LayoutDashboard,
+  },
+  { name: "Locaux", url: APP_ROUTES.SCHOOLS.LOCALS, icon: Building },
+  {
+    name: "Filières & Options",
+    url: APP_ROUTES.SCHOOLS.OPTIONS,
+    icon: BookOpen,
+  },
+  { name: "Parents & Tuteurs", url: APP_ROUTES.SCHOOLS.TUTORS, icon: Users },
+  {
+    name: "Années scolaires",
+    url: APP_ROUTES.SCHOOLS.SCHOOL_YEARS,
+    icon: Calendar,
+  },
+  { name: "Écoles", url: APP_ROUTES.SCHOOLS.LIST, icon: GraduationCap },
+];
+
+export const FINANCES_SUB_MENUS: NavItem[] = [
+  { name: "Vue d'ensemble", url: ROUTES.FIN.ROOT, icon: LayoutDashboard },
+  {
+    name: "Historique des paiements",
+    url: APP_ROUTES.FIN.PAYMENTS.HISTORIES,
+    icon: History,
+  },
+  {
+    name: "Configuration",
+    url: APP_ROUTES.FIN.PAYMENT_CONFIGS.LIST,
+    icon: Settings,
+  },
+  {
+    name: "Portefeuilles & Types de frais",
+    url: APP_ROUTES.FIN.WALLETS.LIST,
+    icon: Wallet,
+  },
+];
+
+export const SETTINGS_SUB_MENUS: NavItem[] = [
+  { name: "Mon compte", url: ROUTES.SETTINGS.ACCOUNT, icon: User },
+  { name: "Paramètres généraux", url: ROUTES.SETTINGS.ROOT, icon: Settings2 },
+  { name: "Notifications", url: ROUTES.SETTINGS.NOTIFICATIONS, icon: Bell },
+  { name: "Aide & Support", url: ROUTES.SETTINGS.HELP, icon: LifeBuoy },
+  { name: "À propos", url: ROUTES.SETTINGS.ABOUT, icon: Info },
+  { name: "Mode développeur", url: ROUTES.SETTINGS.DEVELOPER, icon: Code2 },
+];
+
+export const NAVIGATION_MENUS: NavSection[] = [
+  {
+    label: "Accès Rapide",
+    items: [
+      { name: "Accueil", url: APP_ROUTES.HOME, icon: Home },
+      { name: "Paiements", url: APP_ROUTES.PAYEMENTS, icon: Banknote },
+      { name: "Inscriptions", url: APP_ROUTES.ENROLLMENTS, icon: UserPlus },
+      {
+        name: "Plan de classe",
+        url: APP_ROUTES.SEATING.ROOT,
+        icon: LayoutGrid,
+      },
+    ],
+  },
+  {
+    label: "Gestion de l'établissement",
+    items: [
+      { name: "Finances", url: ROUTES.FIN.ROOT, icon: CircleDollarSign },
+      {
+        name: "Salles de classe",
+        url: APP_ROUTES.CLASSROOMS.ROOT,
+        icon: Presentation,
+      },
+      { name: "Écoles", url: APP_ROUTES.SCHOOLS.ROOT, icon: School },
+    ],
+  },
+] as const;
 
 export default function RouterProvider(): JSX.Element {
   return (
     <Router>
-      <Routes>
-        <Route
-          element={
-            <Layout.ConfigGuard
-              redirectTo={ROUTES.CONFIG.ROOT}
-              loader={<LoadingSpinner />}
-            >
-              <Layout.AppLayout />
-            </Layout.ConfigGuard>
-          }
-          errorElement={<Launcher />}
-        >
-          <Route index element={<HomePage />} />
-          <Route path={ROUTES.ENROLLMENTS} element={<EnrollmentPage />} />
-
-          {/* Seating */}
-          <Route path={ROUTES.SEATING.ROOT}>
-            <Route index element={<SeatingPage />} />
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
+          <Route
+            element={
+              <Layout.ConfigGuard
+                redirectTo={ROUTES.CONFIG.ROOT}
+                loader={<LoadingSpinner />}
+              >
+                <Layout.AppLayout menus={NAVIGATION_MENUS} />
+              </Layout.ConfigGuard>
+            }
+            errorElement={<Launcher />}
+          >
+            {/* Base Routes */}
+            <Route index element={<HomePage />} />
+            <Route path={ROUTES.ENROLLMENTS} element={<EnrollmentPage />} />
+            <Route path={ROUTES.PAYMENTS} element={<FinApp.PaymentPage />} />
             <Route
-              path={ROUTES.SEATING.SESSION}
-              element={<Layout.SeatingSessionLayout />}
+              path={ROUTES.EXPORTS.DOCUMENT_EXPORT}
+              element={<Export.ExportDocumentPage />}
+            />
+
+            {/* ========== SCHOOL ========== */}
+            <Route
+              path={ROUTES.SCHOOLS.ROOT}
+              element={<SubNavLayout navItems={SCHOOL_SUB_MENUS} />}
             >
-              <Route index element={<SeatingSessionDetailPage />} />
+              <Route index element={<DashBoardPage />} />
+              <Route path={ROUTES.SCHOOLS.LIST} element={<SchoolsPage />} />
+              <Route path={ROUTES.SCHOOLS.OPTIONS} element={<OptionPage />} />
               <Route
-                path={ROUTES.SEATING.SESSION_ASSIGNMENT}
-                element={<SeatingSessionAssignmentPage />}
+                path={ROUTES.SCHOOLS.STUDY_YEARS}
+                element={<StudyYearsPage />}
+              />
+              <Route path={ROUTES.SCHOOLS.LOCALS} element={<LocalRoomPage />} />
+              <Route
+                path={ROUTES.SCHOOLS.TUTORS}
+                element={<SchoolApp.TutorsPage />}
+              />
+            </Route>
+
+            {/* ========== FINANCES ========== */}
+            <Route path={ROUTES.FIN.ROOT}>
+              <Route
+                path={ROUTES.FIN.CLASSROOMS}
+                element={<FinApp.ClassroomPaymentLayout />}
+              >
+                <Route index element={<FinApp.ClassroomPaymentEmptyPage />} />
+                <Route
+                  path={ROUTES.PARAMS.CLASSROOM_ID}
+                  element={<FinApp.ClassroomPaymentDetailPage />}
+                />
+              </Route>
+            </Route>
+            <Route
+              path={ROUTES.FIN.ROOT}
+              element={<SubNavLayout navItems={FINANCES_SUB_MENUS} />}
+            >
+              <Route index element={<FinApp.SchoolFinanceDashboard />} />
+              {/* Portefeuilles */}
+              <Route path={ROUTES.FIN.WALLET}>
+                <Route index element={<FinApp.SchoolWalletPage />} />
+                <Route
+                  path={ROUTES.ACTIONS.NEW}
+                  element={<FinApp.SchoolWalletPage />}
+                />
+                <Route
+                  path={ROUTES.PARAMS.WALLET_ID}
+                  element={<FinApp.SchoolWalletPage />}
+                />
+                <Route
+                  path={`${ROUTES.PARAMS.WALLET_ID}/${ROUTES.ACTIONS.EDIT}`}
+                  element={<FinApp.SchoolWalletPage />}
+                />
+              </Route>
+              {/* Historique global des paiements */}
+              <Route path={ROUTES.FIN.PAYMENTS}>
+                <Route
+                  path={ROUTES.FIN.PAYMENTS_HISTORIES}
+                  element={<FinApp.PaymentsHistoryPage />}
+                />
+                {/* <Route
+                  path={ROUTES.PARAMS.PAYMENT_ID}
+                  element={<PaymentsJournalPage />}
+                /> */}
+              </Route>
+              {/* Configurations de frais */}
+              <Route path={ROUTES.FIN.PAYMENT_CONFIG}>
+                <Route index element={<FinApp.SchoolPaymentConfigPage />} />
+                <Route
+                  path={ROUTES.ACTIONS.NEW}
+                  element={<FinApp.SchoolPaymentConfigPage />}
+                />
+                <Route
+                  path={ROUTES.PARAMS.FEE_CONFIG_ID}
+                  element={<FinApp.SchoolPaymentConfigPage />}
+                />
+                <Route
+                  path={`${ROUTES.PARAMS.FEE_CONFIG_ID}/${ROUTES.ACTIONS.EDIT}`}
+                  element={<FinApp.SchoolPaymentConfigPage />}
+                />
+              </Route>
+              {/* Gestion financière par classe */}
+              {/* Taux de change */}
+              <Route path={ROUTES.FIN.EXCHANGE_RATES}>
+                <Route index element={<WorkInProgressPage />} />
+                <Route
+                  path={ROUTES.ACTIONS.NEW}
+                  element={<WorkInProgressPage />}
+                />
+                <Route
+                  path={`${ROUTES.PARAMS.RATE_ID}/${ROUTES.ACTIONS.EDIT}`}
+                  element={<WorkInProgressPage />}
+                />
+              </Route>
+            </Route>
+
+            {/* ========== SEATING ========== */}
+            <Route path={ROUTES.SEATING.ROOT}>
+              <Route index element={<SeatingPage />} />
+              <Route
+                path={ROUTES.SEATING.SESSION}
+                element={<Seating.LocalroomLayout />}
+              >
+                <Route index element={<SeatingSessionDetailPage />} />
+                <Route
+                  path={ROUTES.SEATING.SESSION_ASSIGNMENT}
+                  element={<SeatingSessionAssignmentPage />}
+                />
+              </Route>
+            </Route>
+
+            {/* ========== CLASSROOMS ========== */}
+            <Route path={ROUTES.CLASSROOMS.ROOT}>
+              <Route index element={<ClassroomPage />} />
+              <Route
+                path={ROUTES.CLASSROOMS.CLASSROOM}
+                element={<Layout.StudentLayout />}
+              >
+                <Route
+                  path={ROUTES.CLASSROOMS.STUDENTS}
+                  element={<StudentPage />}
+                />
+              </Route>
+            </Route>
+
+            {/* ========== SETTINGS ========== */}
+            <Route
+              path={ROUTES.SETTINGS.ROOT}
+              element={<SubNavLayout navItems={SETTINGS_SUB_MENUS} />}
+            >
+              <Route index element={<SettingsPage />} />
+              <Route path={ROUTES.SETTINGS.HELP} element={<HelpPage />} />
+              <Route
+                path={ROUTES.SETTINGS.DEVELOPER}
+                element={<DeveloperPage />}
+              />
+              <Route
+                path={ROUTES.SETTINGS.ACCOUNT}
+                element={<WorkInProgressPage />}
+              />
+              <Route path={ROUTES.SETTINGS.ABOUT} element={<AboutPage />} />
+              <Route
+                path={ROUTES.SETTINGS.NOTIFICATIONS}
+                element={<WorkInProgressPage />}
               />
             </Route>
           </Route>
 
-          {/* Schools & Options */}
-          <Route path={ROUTES.OPTIONS} element={<OptionPage />} />
-          <Route path={ROUTES.SCHOOLS} element={<SchoolsPage />} />
-          <Route path={ROUTES.STUDY_YEARS} element={<StudyYearsPage />} />
-          <Route path={ROUTES.LOCALS} element={<LocalRoomPage />} />
-
-          {/* Classrooms */}
-          <Route path={ROUTES.CLASSROOMS.ROOT}>
-            <Route index element={<ClassroomPage />} />
+          {/* ========== CONFIGURATION (Hors-Layout) ========== */}
+          <Route
+            path={ROUTES.CONFIG.ROOT}
+            element={<ConfigurationLayoutScreen />}
+          >
+            <Route index element={<SchoolConfigPage />} />
             <Route
-              path={ROUTES.CLASSROOMS.CLASSROOM}
-              element={<Layout.StudentLayout />}
-            >
-              <Route
-                path={ROUTES.CLASSROOMS.STUDENTS}
-                element={<StudentPage />}
-              />
-            </Route>
-          </Route>
-
-          {/* Settings */}
-          <Route path={ROUTES.SETTINGS.ROOT} element={<Layout.SettingLayout />}>
-            <Route index element={<SettingsPage />} />
-            <Route path={ROUTES.SETTINGS.HELP} element={<HelpPage />} />
-            <Route
-              path={ROUTES.SETTINGS.DEVELOPER}
-              element={<DeveloperPage />}
+              path={ROUTES.CONFIG.SCHOOL_NEW}
+              element={<ConfigCreateSchoolPage />}
             />
             <Route
-              path={ROUTES.SETTINGS.ACCOUNT}
-              element={<WorkInProgressPage />}
+              path={ROUTES.CONFIG.STUDY_YEAR}
+              element={<StudyYearConfigPage />}
             />
-            <Route path={ROUTES.SETTINGS.ABOUT} element={<AboutPage />} />
             <Route
-              path={ROUTES.SETTINGS.NOTIFICATIONS}
-              element={<WorkInProgressPage />}
+              path={ROUTES.CONFIG.STUDY_YEAR_NEW}
+              element={<NewStudyYearConfigurationPage />}
             />
           </Route>
-        </Route>
 
-        {/* Configuration */}
-        <Route
-          path={ROUTES.CONFIG.ROOT}
-          element={<ConfigurationLayoutScreen />}
-        >
-          <Route index element={<SchoolConfigPage />} />
-          <Route
-            path={ROUTES.CONFIG.SCHOOL_NEW}
-            element={<ConfigCreateSchoolPage />}
-          />
-          <Route
-            path={ROUTES.CONFIG.STUDY_YEAR}
-            element={<StudyYearConfigPage />}
-          />
-          <Route
-            path={ROUTES.CONFIG.STUDY_YEAR_NEW}
-            element={<NewStudyYearConfigurationPage />}
-          />
-        </Route>
-
-        <Route path="*" element={<h2>404 Not Found</h2>} />
-      </Routes>
+          {/* 404 */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `fee_assignments` ADD `currency` text DEFAULT 'CDF' NOT NULL;

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
-import type { TClassroom } from "@/packages/@core/data-access/db/schemas/types";
+import type { Classroom } from "@/packages/@core/data-access/db/";
 import { convertGroupedObjectToArray, groupBy } from "@/renderer/utils";
 import type { Section } from "@/renderer/components/sidebar-section-menus";
 
@@ -16,7 +16,7 @@ interface ClassroomSidebar<TData> {
   handleClearSearch: () => void;
 }
 
-export function useClassroomSidebar<TData extends TClassroom>(
+export function useClassroomSidebar<TData extends Classroom>(
   data: TData[],
 ): ClassroomSidebar<TData> {
   const [searchTerm, setSearchTerm] = React.useState("");

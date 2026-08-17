@@ -13,7 +13,10 @@ import {
   type RoomState,
   formatRoomsToSeatingAssignments,
 } from "@/renderer/libs/seating-viewer";
-import type { SeatingGenerator } from "@/packages/@core/data-access/schema-validations";
+import type {
+  BulkSeatingAssignment,
+  SeatingGenerator,
+} from "@/packages/@core/data-access/schema-validations";
 import { useParams } from "react-router";
 
 type SeatingGeneratorPayload = {
@@ -62,14 +65,14 @@ export function useSeatingGenerator() {
 /**
  * Hook pour récupérer les options de sélection des salles
  */
-export const useRoomOptions = (schoolId?: string, yearId?: string) => {
+export const useRoomOptions = (schoolId?: string) => {
   const { data: classRooms = [] } = useGetClassrooms(
-    { where: { schoolId, yearId } },
+    { where: { classrooms: { schoolId } } },
     // { enabled: !!schoolId && !!yearId }
   );
 
   const { data: localRooms = [] } = useGetLocalRooms(
-    { where: { schoolId } },
+    { where: { localrooms: { schoolId } } },
     // { enabled: !!schoolId }
   );
 
@@ -108,6 +111,8 @@ export const useSaveSeatingAssignment = (config: SaveSeatingConfig) => {
         data,
         config.sessionId,
       );
+
+      // console.log()
       mutate(
         { data: seatingData, params: extraParams },
         createMutationCallbacksWithNotifications({
@@ -151,10 +156,7 @@ export const useSeatingGeneratorManager = ({
 
   const { generateSeating, generatedRooms, hasData, isGenerating } =
     useSeatingGenerator();
-  const { classRoomOptions, localRoomOptions } = useRoomOptions(
-    schoolId,
-    yearId,
-  );
+  const { classRoomOptions, localRoomOptions } = useRoomOptions(schoolId);
 
   const { isSaving, saveAssignment } = useSaveSeatingAssignment({
     sessionId,

@@ -8,105 +8,118 @@ import {
 import { SeatingSessionCreateSchema } from "@/packages/@core/data-access/schema-validations";
 import { withNotifications } from "@/renderer/libs/notifications";
 import {
-  type BaseFormProps,
   type BaseMutationConfig,
   type QueryUpdatePayload,
   useFormBase,
+  useFormBaseNotify,
 } from "../base";
 
 export type SeatingSessionData = z.infer<typeof SeatingSessionCreateSchema>;
-export type SeatingSessionFormConfig = BaseMutationConfig<any>;
+export type SeatingSessionFormConfig = BaseMutationConfig<SeatingSessionData>;
+
+export interface UpdateSeatingSessionConfig extends BaseMutationConfig<
+  Partial<SeatingSessionData>
+> {
+  sessionId?: string;
+}
+
+const CREATE_SEATING_SESSION_NOTIFICATIONS = {
+  success: {
+    title: "Session créée !",
+    description: "La session est maintenant disponible.",
+  },
+  error: {
+    title: "Erreur lors de la création",
+  },
+};
+
+const UPDATE_SEATING_SESSION_NOTIFICATIONS = {
+  success: {
+    title: "Mise à jour réussie",
+    description: "Les changements ont été enregistrés.",
+  },
+  error: {
+    title: "Échec de la mise à jour.",
+  },
+};
 
 /**
- * Hook pour la CRÉATION d'une session de placement.
+ * Builds notification configurations for seating session deletions.
+ * @param name - Optional name of the session being removed.
+ * @returns Notification configuration object.
+ */
+const getDeleteSeatingSessionNotifications = (name?: string) => ({
+  success: {
+    title: "Session supprimée",
+    description: name
+      ? `"${name}" a été retirée.`
+      : "La session a été supprimée.",
+  },
+  error: {
+    title: "Erreur de suppression",
+  },
+});
+
+/**
+ * Form hook managing seating session creation operations.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Form state, submission handlers, and pending status.
  */
 export function useCreateSeatingSessionForm(config?: SeatingSessionFormConfig) {
-  const { formId, notifyAndInvalidate } = useFormBase(config);
   const mutation = useCreateSeatingSession();
 
-  const onSubmit: BaseFormProps<SeatingSessionData>["onSubmit"] = useCallback(
-    (data, helpers) => {
-      mutation.mutate(
-        data,
-        withNotifications({
-          notifications: {
-            success: {
-              title: "Session créée !",
-              description: `La session "${data.sessionName}" est maintenant disponible.`,
-            },
-            error: {
-              title: "Erreur lors de la création",
-            },
-          },
-          onSuccess: (responseData) => {
-            notifyAndInvalidate(responseData);
-            helpers.reset();
-          },
-        }),
-      );
-    },
-    [mutation, notifyAndInvalidate],
-  );
+  const adaptData = useCallback((data: SeatingSessionData) => data, []);
 
-  return {
-    formId,
-    onSubmit,
-    isSubmitting: mutation.isPending,
-  };
-}
-
-interface UpdateConfig extends BaseMutationConfig<any> {
-  sessionId: string;
+  return useFormBaseNotify<
+    SeatingSessionData,
+    SeatingSessionData,
+    SeatingSessionData
+  >({
+    mutation,
+    config,
+    getNotifications: () => CREATE_SEATING_SESSION_NOTIFICATIONS,
+    adaptData,
+  });
 }
 
 /**
- * Hook pour la MISE À JOUR d'une session de placement.
+ * Form hook managing seating session update operations.
+ * @param params - Combined configuration parameters containing optional sessionId.
+ * @returns Form state, submission handlers, and pending status.
  */
 export function useUpdateSeatingSessionForm({
   sessionId,
   ...config
-}: UpdateConfig) {
-  const { formId, notifyAndInvalidate } = useFormBase(config);
+}: UpdateSeatingSessionConfig = {}) {
   const mutation = useUpdateSeatingSession();
 
-  const onSubmit: BaseFormProps<
-    QueryUpdatePayload<SeatingSessionData>
-  >["onSubmit"] = useCallback(
-    ({ data, id }, helpers) => {
-      mutation.mutate(
-        { id: id ?? sessionId, data },
-        withNotifications({
-          notifications: {
-            success: {
-              title: "Mise à jour réussie",
-              description: `Les changements sur "${data.sessionName}" ont été enregistrés.`,
-            },
-            error: {
-              title: "Échec de la mise à jour.",
-            },
-          },
-          onSuccess: (responseData) => {
-            notifyAndInvalidate(responseData);
-            helpers.reset();
-          },
-        }),
-      );
-    },
-    [sessionId, mutation, notifyAndInvalidate],
+  const adaptData = useCallback(
+    ({ data, id }: QueryUpdatePayload<Partial<SeatingSessionData>>) => ({
+      data,
+      id: id ?? sessionId ?? "",
+    }),
+    [sessionId],
   );
 
-  return {
-    formId,
-    onSubmit,
-    isSubmitting: mutation.isPending,
-  };
+  return useFormBaseNotify<
+    QueryUpdatePayload<Partial<SeatingSessionData>>,
+    { data: Partial<SeatingSessionData>; id: string },
+    Partial<SeatingSessionData>
+  >({
+    mutation,
+    config,
+    getNotifications: () => UPDATE_SEATING_SESSION_NOTIFICATIONS,
+    adaptData,
+  });
 }
 
 /**
- * Hook pour la SUPPRESSION d'une session de placement.
+ * Hook for executing seating session deletion operations.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Object containing the delete callback and pending state.
  */
 export function useDeleteSeatingSessionForm(config?: BaseMutationConfig<void>) {
-  const { notifyAndInvalidate } = useFormBase(config);
+  const { notifyAndInvalidate } = useFormBase<void>(config);
   const mutation = useDeleteSeatingSession();
 
   const deleteSeatingSession = useCallback(
@@ -114,19 +127,9 @@ export function useDeleteSeatingSessionForm(config?: BaseMutationConfig<void>) {
       return mutation.mutateAsync(
         id,
         withNotifications({
-          notifications: {
-            success: {
-              title: "Session supprimée",
-              description: name
-                ? `"${name}" a été retirée.`
-                : "La session a été supprimée.",
-            },
-            error: {
-              title: "Erreur de suppression",
-            },
-          },
+          notifications: getDeleteSeatingSessionNotifications(name),
           onSuccess: () => {
-            notifyAndInvalidate(undefined as void);
+            notifyAndInvalidate();
           },
         }),
       );
@@ -137,5 +140,6 @@ export function useDeleteSeatingSessionForm(config?: BaseMutationConfig<void>) {
   return {
     deleteSeatingSession,
     isDeleting: mutation.isPending,
+    onDelete: deleteSeatingSession,
   };
 }

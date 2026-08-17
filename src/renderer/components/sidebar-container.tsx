@@ -52,13 +52,13 @@ export const SidebarContainer = React.forwardRef<
     return (
       <ResizablePanelGroup
         orientation={orientation}
-        className={cn("h-full items-stretch", className)}
+        className={cn("h-full flex-1 items-stretch", className)}
         {...props}
       >
         {/* Panneau de la Sidebar */}
         <ResizablePanel
           defaultSize="25%"
-          minSize="20%"
+          minSize="15%"
           maxSize="30%"
           {...sidebarProps}
           className={cn(

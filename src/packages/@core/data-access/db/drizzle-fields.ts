@@ -28,27 +28,47 @@ export const enumColumn = <T extends Record<string, string>>(
 export const primaryKeyId = (columnName: string) =>
   text(columnName)
     .primaryKey()
-    .$defaultFn(() => generateShortId(6));
+    .$defaultFn(() => generateShortId(10));
 
 /**
  * Crée une clé étrangère standardisée.
  * Note : 'actions' contient onDelete/onUpdate dans la config Drizzle.
  */
-export const foreignKeyId = (
+export const foreignKeyId = <T extends "NULL" | "NOT_NULL" = "NOT_NULL">(
   columnName: string,
-  { actions, ref }: ReferenceConfig,
+  { actions, ref, type = "NOT_NULL" as T }: ReferenceConfig & { type?: T },
 ) => {
-  return text(columnName).notNull().references(ref, actions);
+  const field = text(columnName);
+
+  const finalField = (
+    type === "NOT_NULL" ? field.notNull() : field
+  ) as T extends "NOT_NULL" ? ReturnType<typeof field.notNull> : typeof field;
+
+  return finalField.references(ref, actions);
+};
+
+export const foreignKeyIdNoNull = (
+  columnName: string,
+  actions: ReferenceConfig,
+) => {
+  return text(columnName).notNull().references(actions.ref, actions.actions);
+};
+
+export const foreignKeyIdNull = (
+  columnName: string,
+  actions: ReferenceConfig,
+) => {
+  return text(columnName).references(actions.ref, actions.actions);
 };
 
 /**
  * Crée un champ de type Timestamp (stocké en INTEGER pour SQLite).
+ * Compatible avec les migrations de lignes existantes.
  */
 export const timestampColumn = (columnName: string) =>
   integer(columnName, { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date());
-
 /**
  * Mixin pour ajouter automatiquement les colonnes de suivi temporel.
  * Utilise le snake_case pour la base de données et le camelCase pour le code applicatif.

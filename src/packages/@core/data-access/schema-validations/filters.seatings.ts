@@ -1,41 +1,38 @@
-import { z } from "zod";
+import z from "zod";
 import {
   LocalroomSchema,
   SeatingSessionSchema,
   SeatingAssignmentSchema,
-  withQueryOptions,
+  schoolYearIdBaseSchema,
 } from "./model";
-import { orArray } from "./filters.base";
 
-export const LocalroomFilterSchema = withQueryOptions(
-  z.object({
-    localroomId: orArray(LocalroomSchema.shape.localroomId),
-    name: orArray(LocalroomSchema.shape.name),
-    schoolId: orArray(LocalroomSchema.shape.schoolId),
-    maxCapacity: orArray(LocalroomSchema.shape.maxCapacity),
-  }),
-);
+import { withQueryOptions } from "./helpers";
 
-export const SeatingSessionFilterSchema = withQueryOptions(
-  z.object({
-    sessionId: orArray(SeatingSessionSchema.shape.sessionId),
-    sessionName: orArray(SeatingSessionSchema.shape.sessionName),
-    schoolId: orArray(SeatingSessionSchema.shape.schoolId),
-    yearId: orArray(SeatingSessionSchema.shape.yearId),
-  }),
-);
+/* =========================================================================
+   LOCALROOM FILTER
+   ========================================================================= */
+export const LocalroomFilterSchema = withQueryOptions({
+  localrooms: LocalroomSchema,
+});
+export type LocalroomFilter = z.infer<typeof LocalroomFilterSchema>;
 
-export const SeatingAssignmentFilterSchema = withQueryOptions(
-  z.object({
-    assignmentId: orArray(SeatingAssignmentSchema.shape.assignmentId),
-    sessionId: orArray(SeatingAssignmentSchema.shape.sessionId),
-    localroomId: orArray(SeatingAssignmentSchema.shape.localroomId),
-    enrollmentId: orArray(SeatingAssignmentSchema.shape.enrollmentId),
-    rowPosition: orArray(SeatingAssignmentSchema.shape.rowPosition),
-    columnPosition: orArray(SeatingAssignmentSchema.shape.columnPosition),
-  }),
-);
+/* =========================================================================
+   SEATING SESSION FILTER
+   ========================================================================= */
+export const SeatingSessionFilterSchema = withQueryOptions({
+  seatingSessions: SeatingSessionSchema,
+});
+export type SeatingSessionFilter = z.infer<typeof SeatingSessionFilterSchema>;
 
+/* =========================================================================
+   SEATING ASSIGNMENT FILTER
+   ========================================================================= */
+export const SeatingAssignmentFilterSchema = withQueryOptions({
+  seatingAssignments: SeatingAssignmentSchema,
+});
+export type SeatingAssignmentFilter = z.infer<
+  typeof SeatingAssignmentFilterSchema
+>;
 /**
  * Schéma pour filtrer les tableaux de bord et métriques de placement.
  * Pro-Tip: On réutilise les types de base plutôt que de re-déclarer du z.string().uuid()
@@ -48,3 +45,5 @@ export const SeatingStatsFilterSchema = z.object({
 });
 
 export type SeatingStatsFilter = z.infer<typeof SeatingStatsFilterSchema>;
+export const StatsFilterSchema = schoolYearIdBaseSchema;
+export type StatsFilter = z.infer<typeof StatsFilterSchema>;

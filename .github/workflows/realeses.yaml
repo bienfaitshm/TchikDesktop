@@ -12,11 +12,17 @@ jobs:
       issues: write
       pull-requests: write
       actions: write
+
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
+
       - uses: actions/setup-node@v4
-        with: { node-version: "lts/*", cache: "yarn" }
+        with:
+          node-version: "lts/*"
+          cache: "yarn"
+
       - run: yarn install --frozen-lockfile
 
       - name: Execute Semantic Release

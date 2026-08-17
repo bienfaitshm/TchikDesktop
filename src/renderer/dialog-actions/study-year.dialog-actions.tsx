@@ -1,144 +1,95 @@
-import * as React from "react";
-import { DialogForm } from "@/renderer/components/dialog/form";
-import {
-  ConfirmDeleteDialog,
-  useAsyncConfirm,
-} from "@/renderer/components/dialog/confirm-delete";
-import { useConfirm } from "@/renderer/hooks/use-confirm";
-import { cloneElementWithProps } from "@/renderer/utils/react";
+import type { ReactNode } from "react";
 import {
   StudyYearForm,
   type StudyYearFormData,
 } from "@/renderer/components/form/study-year-form";
 import {
   useCreateStudyYearForm,
-  useUpdateStudyYearForm,
   useDeleteStudyYearForm,
+  useUpdateStudyYearForm,
   type StudyYearFormConfig,
 } from "@/renderer/libs/queries/study-years";
+import {
+  createBaseActionDialog,
+  createDeleteActionDialog,
+  type ActionDialogProps,
+} from "./base.dialog-actions";
 
-/* ==========================================================================
-   1. CRÉATION
-   ========================================================================== */
-
-export type CreateStudyYearDialogProps<
-  TExtraProps extends Record<string, any> = {},
-> = React.PropsWithChildren<
-  TExtraProps &
-    StudyYearFormConfig & {
-      defaultValues?: Partial<StudyYearFormData>;
-    }
+export type StudyYearDialogProps = ActionDialogProps<
+  StudyYearFormData,
+  StudyYearFormConfig
 >;
 
-export const CreateStudyYearDialog: React.FC<CreateStudyYearDialogProps> = ({
-  children,
-  defaultValues,
-  ...config
-}) => {
-  const { formId, onSubmit, isSubmitting } = useCreateStudyYearForm(config);
+export type CreateStudyYearDialogProps = StudyYearDialogProps;
 
-  return (
-    <DialogForm
-      trigger={children}
-      title="Nouvelle année scolaire"
-      description="Configurez une nouvelle période scolaire (ex: 2023-2024)."
-      formId={formId}
-      isLoading={isSubmitting}
-    >
+export type UpdateStudyYearDialogProps = StudyYearDialogProps & {
+  studyYearId: string;
+  yearName?: string;
+};
+
+/**
+ * Action dialog component for creating a new academic study year.
+ * @param props - Dialog properties containing initial form values and callbacks.
+ * @returns Rendered creation dialog component.
+ */
+export const CreateStudyYearDialog = createBaseActionDialog<
+  CreateStudyYearDialogProps,
+  ReturnType<typeof useCreateStudyYearForm>
+>({
+  title: "Nouvelle année scolaire",
+  description: "Configurez une nouvelle période scolaire (ex: 2023-2024).",
+  useForm: useCreateStudyYearForm,
+  form({ formId, onSubmit, defaultValues }): ReactNode {
+    return (
       <StudyYearForm
         formId={formId}
         onSubmit={onSubmit}
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-/* ==========================================================================
-   2. MODIFICATION
-   ========================================================================== */
-type UpdateStudyYearDialogProps = {
-  studyYearId: string;
-};
+CreateStudyYearDialog.displayName = "CreateStudyYearDialog";
 
-export const UpdateStudyYearDialog: React.FC<
-  UpdateStudyYearDialogProps & CreateStudyYearDialogProps
-> = ({ studyYearId, children, defaultValues, ...config }) => {
-  const { formId, isSubmitting, onSubmit } = useUpdateStudyYearForm(config);
-
-  return (
-    <DialogForm
-      trigger={children}
-      title="Modifier l'année scolaire"
-      description="Modifiez les dates ou l'intitulé de l'année scolaire."
-      formId={formId}
-      isLoading={isSubmitting}
-    >
+/**
+ * Action dialog component for updating an existing academic study year.
+ * @param props - Dialog properties containing target studyYearId and initial form values.
+ * @returns Rendered update dialog component.
+ */
+export const UpdateStudyYearDialog = createBaseActionDialog<
+  UpdateStudyYearDialogProps,
+  ReturnType<typeof useUpdateStudyYearForm>
+>({
+  title: ({ yearName, defaultValues }: UpdateStudyYearDialogProps) =>
+    `Modifier l'année scolaire : ${yearName ?? defaultValues?.yearName ?? ""}`,
+  description: "Modifiez les dates ou l'intitulé de l'année scolaire.",
+  useForm: useUpdateStudyYearForm,
+  form({ formId, onSubmit, defaultValues }, { studyYearId }): ReactNode {
+    return (
       <StudyYearForm
         formId={formId}
         onSubmit={(data, helpers) =>
-          onSubmit?.({ id: studyYearId, data }, helpers as any)
+          onSubmit({ data, id: studyYearId }, helpers as any)
         }
         defaultValues={defaultValues}
       />
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-/* ==========================================================================
-   3. SUPPRESSION
-   ========================================================================== */
-interface DeleteStudyYearDialogProps {
-  children:
-    | React.ReactNode
-    | ((props: {
-        onOpen: (e: React.MouseEvent) => void;
-        isLoading: boolean;
-      }) => React.ReactNode);
-  studyYearId: string;
-  yearName: string;
-}
+UpdateStudyYearDialog.displayName = "UpdateStudyYearDialog";
 
-export const DeleteStudyYearDialog: React.FC<
-  DeleteStudyYearDialogProps & StudyYearFormConfig
-> = ({ children, studyYearId, yearName, ...config }) => {
-  const { isOpen, onOpen, onClose } = useConfirm<string>();
-
-  const { deleteStudyYear, isDeleting } = useDeleteStudyYearForm({
-    ...config,
-    onSuccess: () => onClose(),
-  });
-
-  const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
-    id: studyYearId,
-    onOpenConfirm: onOpen,
-    onCloseConfirm: onClose,
-    onConfirmAction: deleteStudyYear,
-    actionArgs: [yearName],
-    errorMessage: "Erreur lors de la suppression de l'année scolaire:",
-  });
-
-  return (
-    <>
-      <ConfirmDeleteDialog
-        id={studyYearId}
-        isOpen={isOpen}
-        onClose={onClose}
-        onConfirm={handleConfirm}
-        isPending={isDeleting}
-        title="Supprimer l'année scolaire"
-        description={`Êtes-vous sûr de vouloir supprimer l'année ${yearName} ? Cela pourrait affecter les inscriptions liées.`}
-        itemName={yearName}
-      />
-
-      {typeof children === "function"
-        ? children({ onOpen: handleTriggerClick, isLoading: isDeleting })
-        : cloneElementWithProps(children, {
-            onClick: handleTriggerClick,
-            disabled: isDeleting,
-          })}
-    </>
-  );
-};
+/**
+ * Action dialog component for confirming and executing academic study year deletion.
+ * @returns Rendered delete confirmation dialog component.
+ */
+export const DeleteStudyYearDialog = createDeleteActionDialog({
+  title: "Supprimer l'année scolaire",
+  description:
+    "Attention : la suppression de cette année scolaire pourrait affecter les inscriptions et données associées.",
+  errorMessage: "Erreur lors de la suppression de l'année scolaire:",
+  useDeleteForm: useDeleteStudyYearForm,
+});
 
 DeleteStudyYearDialog.displayName = "DeleteStudyYearDialog";

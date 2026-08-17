@@ -1,0 +1,1 @@
+DROP INDEX `daily_rate_unique_idx`;

@@ -27,6 +27,7 @@ import {
   useZodForm,
   mergeDefaultValues,
 } from "@/renderer/libs/forms";
+import { FormErrorView } from "./form-error-view";
 
 export type OptionFormData = OptionCreate;
 
@@ -178,14 +179,7 @@ export const OptionForm: React.FC<BaseFormProps<OptionFormData>> = ({
         </div>
 
         {/* Feedback d'erreur globale */}
-        {form.formState.errors.root && (
-          <div
-            role="alert"
-            className="p-3 text-red-600 border rounded-md text-sm font-medium animate-in fade-in zoom-in duration-200"
-          >
-            {form.formState.errors.root.message}
-          </div>
-        )}
+        <FormErrorView form={form} />
       </form>
     </Form>
   );

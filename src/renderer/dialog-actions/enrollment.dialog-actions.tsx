@@ -1,5 +1,4 @@
-import React from "react";
-import { DialogForm } from "@/renderer/components/dialog/form";
+import type { ReactNode } from "react";
 import type {
   EnrollmentCreate,
   EnrollmentQuickCreate,
@@ -8,56 +7,56 @@ import {
   EnrollmentForm,
   QuickEnrollmentForm,
 } from "@/renderer/components/form";
-
 import {
-  useUpdateEnrollmentForm,
-  useDeleteEnrollmentForm,
   useCreateQuickEnrollmentForm,
+  useDeleteEnrollmentForm,
+  useUpdateEnrollmentForm,
   type EnrollmentFormConfig,
   type EnrollmentFormContext,
 } from "@/renderer/libs/queries/enrollements";
-
 import {
-  ConfirmDeleteDialog,
-  useAsyncConfirm,
-} from "@/renderer/components/dialog/confirm-delete";
-import { useConfirm } from "@/renderer/hooks/use-confirm";
-import { cloneElementWithProps } from "@/renderer/utils/react";
+  createBaseActionDialog,
+  createDeleteActionDialog,
+  type ActionDialogProps,
+} from "./base.dialog-actions";
+import { wrapUpdateFunc } from "@/renderer/libs/queries/base";
 
-type SchoolYearId = { schoolId: string; yearId: string };
+export type EnrollmentDialogProps = ActionDialogProps<
+  EnrollmentCreate | EnrollmentQuickCreate,
+  EnrollmentFormConfig
+> &
+  EnrollmentFormContext;
 
-export type DialogProps<TExtraProps extends Record<string, any> = {}> =
-  React.PropsWithChildren<
-    TExtraProps &
-      EnrollmentFormContext &
-      EnrollmentFormConfig & {
-        defaultValues?: Partial<EnrollmentCreate | EnrollmentQuickCreate>;
-      }
-  >;
+export type CreateEnrollmentDialogProps = EnrollmentDialogProps;
+
+export type UpdateEnrollmentDialogProps = EnrollmentDialogProps & {
+  enrollmentId: string;
+  fullName?: string;
+};
 
 /**
- * Dialogue : Inscription Complète (Create)
+ * Action dialog component for creating a new student enrollment record.
+ * @param props - Dialog properties containing school and academic year context.
+ * @returns Rendered enrollment creation dialog component.
  */
-export const CreateEnrollmentDialog: React.FC<DialogProps> = ({
-  children,
-  defaultValues,
-  schoolId,
-  yearId,
-  ...config
-}) => {
-  const { formId, onSubmit, isSubmitting, searchClassroom, searchUser } =
-    useCreateQuickEnrollmentForm(config, { schoolId, yearId });
-
-  return (
-    <DialogForm
-      trigger={children}
-      title="Dossier d'Inscription"
-      description=" Remplissez le formulaire complet pour procéder à l'enrôlement de
-            l'élève."
-      formId={formId}
-      isLoading={isSubmitting}
-      submitText=" Valider l'inscription"
-    >
+export const CreateEnrollmentDialog = createBaseActionDialog<
+  CreateEnrollmentDialogProps,
+  ReturnType<typeof useCreateQuickEnrollmentForm>
+>({
+  title: "Dossier d'Inscription",
+  description:
+    "Remplissez le formulaire complet pour procéder à l'enrôlement de l'élève.",
+  submitText: "Valider l'inscription",
+  useForm: useCreateQuickEnrollmentForm,
+  form({
+    formId,
+    onSubmit,
+    searchClassroom,
+    searchUser,
+    defaultValues,
+    searchTutor,
+  }): ReactNode {
+    return (
       <div className="py-4">
         <QuickEnrollmentForm
           formId={formId}
@@ -65,110 +64,60 @@ export const CreateEnrollmentDialog: React.FC<DialogProps> = ({
           defaultValues={defaultValues}
           classrooms={searchClassroom}
           students={searchUser}
+          tutors={searchTutor}
         />
       </div>
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-type UpdateEnrollmentDialogProps = {
-  enrollmentId: string;
-  fullName?: string;
-};
+CreateEnrollmentDialog.displayName = "CreateEnrollmentDialog";
 
-export const UpdateEnrollmentDialog: React.FC<
-  UpdateEnrollmentDialogProps & SchoolYearId & DialogProps
-> = ({
-  enrollmentId,
-  children,
-  schoolId,
-  yearId,
-  fullName,
-  defaultValues,
-  ...config
-}) => {
-  const { formId, isSubmitting, onSubmit, searchClassroom } =
-    useUpdateEnrollmentForm(config, { schoolId, yearId });
-
-  const handleSubmit = React.useCallback(
-    (data, helpers) =>
-      onSubmit(
-        { id: enrollmentId, data },
-        { reset: (updatedData) => helpers.reset(updatedData) },
-      ),
-    [onSubmit, enrollmentId],
-  );
-
-  return (
-    <DialogForm
-      trigger={children}
-      title={`Modifier l'Inscription${fullName ? ` de ${fullName}` : ""}`}
-      description="Mettez à jour les informations de l'élève pour l'année scolaire en cours."
-      formId={formId}
-      isLoading={isSubmitting}
-      submitText="Mettre à jour"
-    >
+/**
+ * Action dialog component for updating an existing student enrollment record.
+ * @param props - Dialog properties containing target enrollmentId and student name.
+ * @returns Rendered enrollment update dialog component.
+ */
+export const UpdateEnrollmentDialog = createBaseActionDialog<
+  UpdateEnrollmentDialogProps,
+  ReturnType<typeof useUpdateEnrollmentForm>
+>({
+  title: ({ fullName }: UpdateEnrollmentDialogProps) =>
+    `Modifier l'Inscription${fullName ? ` de ${fullName}` : ""}`,
+  description:
+    "Mettez à jour les informations de l'élève pour l'année scolaire en cours.",
+  submitText: "Mettre à jour",
+  useForm: useUpdateEnrollmentForm,
+  form(
+    { formId, onSubmit, searchClassroom, searchTutor, defaultValues },
+    { enrollmentId },
+  ): ReactNode {
+    return (
       <div className="py-4">
         <EnrollmentForm
           formId={formId}
-          onSubmit={handleSubmit}
+          onSubmit={wrapUpdateFunc(onSubmit, enrollmentId)}
           defaultValues={defaultValues}
-          classrooms={searchClassroom.options}
+          classrooms={searchClassroom}
+          tutors={searchTutor}
         />
       </div>
-    </DialogForm>
-  );
-};
+    );
+  },
+});
 
-interface DeleteProps {
-  enrollmentId: string;
-  studentName: string;
-}
+UpdateEnrollmentDialog.displayName = "UpdateEnrollmentDialog";
 
-export const DeleteEnrollmentDialog: React.FC<DialogProps<DeleteProps>> = ({
-  children,
-  enrollmentId,
-  studentName,
-  ...config
-}) => {
-  const { isOpen, onOpen, onClose } = useConfirm<string>();
-
-  const { deleteEnrollment, isDeleting } = useDeleteEnrollmentForm({
-    ...config,
-    onSuccess: (id) => {
-      config.onSuccess?.(id as any);
-      onClose();
-    },
-  });
-
-  const { handleConfirm, handleTriggerClick } = useAsyncConfirm({
-    id: enrollmentId,
-    onOpenConfirm: onOpen,
-    onCloseConfirm: onClose,
-    onConfirmAction: deleteEnrollment,
-    actionArgs: [studentName],
-    errorMessage: "Erreur lors de la suppression de la filière:",
-  });
-
-  return (
-    <>
-      <ConfirmDeleteDialog
-        id={enrollmentId}
-        isOpen={isOpen}
-        onClose={onClose}
-        onConfirm={handleConfirm}
-        isPending={isDeleting}
-        title="Supprimer l'inscription"
-        description="Attention : Cette action est irréversible. L'élève sera désinscrit et ses données d'enrôlement supprimées."
-        itemName={studentName}
-      />
-
-      {cloneElementWithProps(children, {
-        onClick: handleTriggerClick,
-        disabled: isDeleting,
-      })}
-    </>
-  );
-};
+/**
+ * Action dialog component for confirming and executing student enrollment deletion.
+ * @returns Rendered delete confirmation dialog component.
+ */
+export const DeleteEnrollmentDialog = createDeleteActionDialog({
+  title: "Supprimer l'inscription",
+  description:
+    "Attention : Cette action est irréversible. L'élève sera désinscrit et ses données d'enrôlement supprimées.",
+  errorMessage: "Erreur lors de la suppression de l'inscription:",
+  useDeleteForm: useDeleteEnrollmentForm,
+});
 
 DeleteEnrollmentDialog.displayName = "DeleteEnrollmentDialog";

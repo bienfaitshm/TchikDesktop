@@ -1,19 +1,22 @@
 import { useMutation, useSuspenseQuery } from "../base/query";
+import { useQuery } from "@tanstack/react-query";
 import {
-  type Enrollment,
   type EnrollmentCreate,
   type EnrollmentQuickCreate,
   type EnrollmentUpdate,
-  type EnrollmentFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import { enrollment as enrollmentApi } from "@/renderer/libs/apis";
-
+import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
 import type { QueryUpdatePayload } from "../base";
 import type {
   UseSuspenseQueryOptions,
   UseMutationOptions,
 } from "@tanstack/react-query";
-import type { EnrollmentData } from "@/packages/@core/apis/clients";
+import type {
+  SearchEnrollmentQueryParams,
+  EnrollmentQueryParams,
+} from "@/packages/@core/apis/clients";
+import type { SelectOption } from "@/packages/drizzle-queries";
 
 /**
  * 1. Query Key Factory
@@ -21,8 +24,10 @@ import type { EnrollmentData } from "@/packages/@core/apis/clients";
  */
 export const enrollmentKeys = {
   all: ["enrollments"] as const,
-  lists: (params?: EnrollmentFilter) =>
+  lists: (params?: EnrollmentQueryParams) =>
     [...enrollmentKeys.all, "list", { params }] as const,
+  search: (params?: SearchEnrollmentQueryParams) =>
+    [...enrollmentKeys.all, "search", { params }] as const,
   details: () => [...enrollmentKeys.all, "detail"] as const,
   detail: (id: string) => [...enrollmentKeys.details(), id] as const,
   mutations: {
@@ -38,8 +43,8 @@ export const enrollmentKeys = {
  */
 
 export function useGetEnrollments(
-  params?: EnrollmentFilter,
-  options?: Partial<UseSuspenseQueryOptions<EnrollmentData[]>>,
+  params?: EnrollmentQueryParams,
+  options?: Partial<UseSuspenseQueryOptions<EnrollmentDTO[]>>,
 ) {
   return useSuspenseQuery({
     queryKey: enrollmentKeys.lists(params),
@@ -48,9 +53,20 @@ export function useGetEnrollments(
   });
 }
 
+export function useSearchEnrollments(
+  params?: SearchEnrollmentQueryParams,
+  options?: Partial<UseSuspenseQueryOptions<(SelectOption & EnrollmentDTO)[]>>,
+) {
+  return useQuery({
+    queryKey: enrollmentKeys.search(params),
+    queryFn: () => enrollmentApi.searchEnrollments(params),
+    ...options,
+  });
+}
+
 export function useGetEnrollmentById(
   enrollmentId: string,
-  options?: Partial<UseSuspenseQueryOptions<Enrollment>>,
+  options?: Partial<UseSuspenseQueryOptions<EnrollmentDTO>>,
 ) {
   return useSuspenseQuery({
     queryKey: enrollmentKeys.detail(enrollmentId),
@@ -64,7 +80,7 @@ export function useGetEnrollmentById(
  */
 
 export function useCreateEnrollment(
-  options?: Partial<UseMutationOptions<Enrollment, Error, EnrollmentCreate>>,
+  options?: Partial<UseMutationOptions<EnrollmentDTO, Error, EnrollmentCreate>>,
 ) {
   return useMutation({
     mutationKey: enrollmentKeys.mutations.create(),
@@ -76,7 +92,7 @@ export function useCreateEnrollment(
 
 export function useCreateQuickEnrollment(
   options?: Partial<
-    UseMutationOptions<Enrollment, Error, EnrollmentQuickCreate>
+    UseMutationOptions<EnrollmentDTO, Error, EnrollmentQuickCreate>
   >,
 ) {
   return useMutation({
@@ -89,7 +105,11 @@ export function useCreateQuickEnrollment(
 
 export function useUpdateEnrollment(
   options?: Partial<
-    UseMutationOptions<Enrollment, Error, QueryUpdatePayload<EnrollmentUpdate>>
+    UseMutationOptions<
+      EnrollmentDTO,
+      Error,
+      QueryUpdatePayload<EnrollmentUpdate>
+    >
   >,
 ) {
   return useMutation({

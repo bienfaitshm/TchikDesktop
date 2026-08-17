@@ -14,18 +14,15 @@ import type {
   SeatingAssignment,
   SeatingSessionFilter,
   SeatingGenerator,
-  SchoolYear,
+  SchoolYearIdBase,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   LocalRoomRoutes,
   SeatingSessionRoutes,
   SeatingAssignmentRoutes,
 } from "../routes-constant";
-import type { SearchOptions } from "@/packages/@core/data-access/db/queries";
 
-export type SearchLocalRoomQueryParams = Partial<
-  SearchOptions<LocalroomFilter>
->;
+export type SearchLocalRoomQueryParams = LocalroomFilter;
 
 export type LocalroomData = Localroom;
 export type SeatingSessionData = SeatingSession;
@@ -100,7 +97,7 @@ export type SeatingApi = Readonly<{
   getSessionWithAssignments(sessionId: string): Promise<any>;
 
   // --- Seating Assignments ---
-  generateSeating(data: SeatingGenerator & SchoolYear): Promise<any>;
+  generateSeating(data: SeatingGenerator & SchoolYearIdBase): Promise<any>;
   fetchRoomLayout(
     sessionId: string,
     localroomId: string,

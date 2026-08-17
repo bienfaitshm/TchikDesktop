@@ -1,4 +1,11 @@
-import { useCallback, useMemo, useState, useRef, useId } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchClassrooms } from "../classrooms";
 import {
@@ -37,31 +44,53 @@ export interface UseSeatingGeneratorManagerProps {
   onSuccess?(): void;
 }
 
+const GENERATE_NOTIFICATIONS = {
+  success: {
+    title: "Génération réussie",
+    description: "Le plan de salle temporaire a été calculé avec succès.",
+  },
+  error: {
+    title: "Échec de la génération",
+    description:
+      "Une erreur est survenue lors de la création de la simulation.",
+  },
+};
+
 /**
- * 1. Hook pour générer un plan de placement (Simulé en mémoire locale avant persistence)
+ * Builds notification options for saving seating assignments.
+ * @param sessionName - Optional name of the active seating session.
+ * @returns Notification object configuration.
+ */
+const getSaveNotifications = (sessionName?: string) => ({
+  success: {
+    title: "Enregistrement réussi",
+    description: sessionName
+      ? `La mise en place '${sessionName}' a été enregistrée.`
+      : "La mise en place a été enregistrée avec succès.",
+  },
+  error: {
+    title: "Erreur d'enregistrement",
+    description: "Impossible de sauvegarder la configuration sur le serveur.",
+  },
+});
+
+/**
+ * Manages local memory simulation state for seating plan calculations before backend persistence.
+ * @returns State and actions for seating simulation management.
  */
 export function useSeatingGenerator() {
   const [generatedRooms, setGeneratedRooms] = useState<RoomState[]>([]);
   const { mutateAsync: generateAsync, isPending: isGenerating } =
     useGenerateSeating();
 
+  const clearSimulation = useCallback(() => setGeneratedRooms([]), []);
+
   const generateSeating = useCallback(
     async (data: SeatingGeneratorPayload) => {
       return generateAsync(
         data,
         withNotifications({
-          notifications: {
-            success: {
-              title: "Génération réussie",
-              description:
-                "Le plan de salle temporaire a été calculé avec succès.",
-            },
-            error: {
-              title: "Échec de la génération",
-              description:
-                "Une erreur est survenue lors de la création de la simulation.",
-            },
-          },
+          notifications: GENERATE_NOTIFICATIONS,
           onSuccess: (res) => {
             setGeneratedRooms(res as RoomState[]);
           },
@@ -76,39 +105,46 @@ export function useSeatingGenerator() {
     isGenerating,
     generateSeating,
     hasData: generatedRooms.length > 0,
-    clearSimulation: () => setGeneratedRooms([]),
+    clearSimulation,
   };
 }
 
 /**
- * 2. Hook pour récupérer les options destinées aux composants Select/Combobox
+ * Fetches select/combobox options for classrooms and local rooms based on school and year context.
+ * @param schoolId - Optional school identifier.
+ * @param yearId - Optional academic year identifier.
+ * @returns Object containing classroom and local room search query results.
  */
 export function useRoomOptions(schoolId?: string, yearId?: string) {
-  const classRoomOptions = useSearchClassrooms({
-    filters: { where: { yearId, schoolId } },
-  });
-  const localRoomOptions = useSearchLocalRooms({
-    filters: { where: { schoolId } },
-  });
-
-  return useMemo(
-    () => ({
-      classRoomOptions,
-      localRoomOptions,
-    }),
-    [classRoomOptions, localRoomOptions],
+  const classroomFilters = useMemo(
+    () => ({ where: { yearId, schoolId } }),
+    [schoolId, yearId],
   );
+
+  const localRoomFilters = useMemo(() => ({ where: { schoolId } }), [schoolId]);
+
+  const classRoomOptions = useSearchClassrooms({ filters: classroomFilters });
+  const localRoomOptions = useSearchLocalRooms({ filters: localRoomFilters });
+
+  return {
+    classRoomOptions,
+    localRoomOptions,
+  };
 }
 
 /**
- * 3. Hook pour sauvegarder définitivement l'assignation des places et synchroniser le cache
+ * Persists calculated room seating assignments to the backend and triggers query cache invalidations.
+ * @param config - Target session configuration and success callbacks.
+ * @returns Function to save assignment and current pending state.
  */
 export function useSaveSeatingAssignment(config: SaveSeatingConfig) {
   const queryClient = useQueryClient();
   const { mutate, isPending: isSaving } = useRebuildAssignStudents();
 
   const onSuccessRef = useRef(config.onSuccess);
-  onSuccessRef.current = config.onSuccess;
+  useEffect(() => {
+    onSuccessRef.current = config.onSuccess;
+  }, [config.onSuccess]);
 
   const saveAssignment = useCallback(
     (data: RoomState[], extraParams: BulkAssignParams) => {
@@ -120,21 +156,8 @@ export function useSaveSeatingAssignment(config: SaveSeatingConfig) {
       mutate(
         { data: seatingData, params: extraParams },
         withNotifications({
-          notifications: {
-            success: {
-              title: "Enregistrement réussi",
-              description: config.sessionName
-                ? `La mise en place '${config.sessionName}' a été enregistrée.`
-                : "La mise en place a été enregistrée avec succès.",
-            },
-            error: {
-              title: "Erreur d'enregistrement",
-              description:
-                "Impossible de sauvegarder la configuration sur le serveur.",
-            },
-          },
+          notifications: getSaveNotifications(config.sessionName),
           onSuccess: (res) => {
-            // Pipeline senior : Invalidation chirurgicale automatique à l'enregistrement
             queryClient.invalidateQueries({
               queryKey: seatingKeys.sessionDetail(config.sessionId),
             });
@@ -142,7 +165,6 @@ export function useSaveSeatingAssignment(config: SaveSeatingConfig) {
               queryKey: seatingKeys.sessionRoomsStatus(config.sessionId),
             });
 
-            // Notification du callback d'UI
             onSuccessRef.current?.(res);
           },
         }),
@@ -158,7 +180,9 @@ export function useSaveSeatingAssignment(config: SaveSeatingConfig) {
 }
 
 /**
- * 4. Hook Complet : useSeatingGeneratorManager (Façade Pattern principal)
+ * High-level facade hook coordinating simulation, options retrieval, modal visibility, and batch saving.
+ * @param props - Session configuration and completion callbacks.
+ * @returns Unified state and event handlers for managing seating generation.
  */
 export function useSeatingGeneratorManager({
   sessionId,
@@ -177,21 +201,24 @@ export function useSeatingGeneratorManager({
     isGenerating,
     clearSimulation,
   } = useSeatingGenerator();
+
   const { classRoomOptions, localRoomOptions } = useRoomOptions(
     schoolId,
     yearId,
   );
+
+  const handleSaveSuccess = useCallback(() => {
+    setIsOpen(false);
+    clearSimulation();
+    onSuccess?.();
+  }, [clearSimulation, onSuccess]);
 
   const { isSaving, saveAssignment } = useSaveSeatingAssignment({
     sessionId,
     sessionName,
     schoolId,
     yearId,
-    onSuccess: () => {
-      setIsOpen(false);
-      clearSimulation(); // Nettoyage de la mémoire de simulation au succès
-      onSuccess?.();
-    },
+    onSuccess: handleSaveSuccess,
   });
 
   const isBusy = isGenerating || isSaving;
@@ -236,7 +263,9 @@ export function useSeatingGeneratorManager({
 }
 
 /**
- * 5. Hook utilitaire indépendant d'invalidation (Utile pour le Drag & Drop unitaire hors manager)
+ * Utility hook providing a memoized function to invalidate seating-related query caches.
+ * @param params - Target sessionId and optional localRoomId filters.
+ * @returns Memoized function that triggers cache invalidation on execution.
  */
 export function useInvalidateSeatingCache({
   sessionId,
@@ -249,6 +278,7 @@ export function useInvalidateSeatingCache({
 
   return useCallback(() => {
     if (!sessionId) return;
+
     queryClient.invalidateQueries({
       queryKey: seatingKeys.sessionDetail(sessionId),
     });

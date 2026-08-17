@@ -81,7 +81,7 @@ export function useCreateClassroom(
 ) {
   return useMutation({
     mutationKey: classroomKeys.mutations.create(),
-    mutationFn: (data: ClassroomCreate) => classroomApi.createClassroom(data),
+    mutationFn: (data) => classroomApi.createClassroom(data),
     ...options,
   });
 }
@@ -93,8 +93,7 @@ export function useUpdateClassroom(
 ) {
   return useMutation({
     mutationKey: classroomKeys.mutations.update(),
-    mutationFn: ({ data, id }: TQueryUpdate<ClassroomUpdate>) =>
-      classroomApi.updateClassroom(id, data),
+    mutationFn: ({ data, id }) => classroomApi.updateClassroom(id, data),
     ...options,
   });
 }

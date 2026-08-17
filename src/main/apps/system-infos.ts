@@ -5,7 +5,7 @@ import { dbManager } from "@/packages/@core/data-access/db";
 import * as os from "os";
 
 ipcMain.handle("get-db-backup-files", () => {
-  return dbManager.getBackDBFiles();
+  return dbManager.getBackupFiles();
 });
 
 /**

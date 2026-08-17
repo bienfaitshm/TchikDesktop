@@ -1,67 +1,39 @@
-import { and, eq, getTableColumns } from "drizzle-orm";
 import { getLogger } from "@/packages/logger";
-import { db } from "@/packages/@core/data-access/db/config";
+import { db, TDataBase } from "@/packages/@core/data-access/db/config";
 import {
   schools,
-  studyYears,
+  type School,
   type TableSchool,
-  type FindManyOptions,
 } from "@/packages/@core/data-access/db/schemas";
-import { BaseRepository, type LibSqlClient } from "../base-repository";
+import { betterSqlite, helpers } from "@/packages/drizzle-queries";
 
-const SCHOOL_DEFAULT_SORT: FindManyOptions<TableSchool> = {
-  orderBy: [{ column: "name", order: "asc" }],
+const _schoolJoinTables = {
+  schools,
+} as const;
+export type BaseSchoolFilters = helpers.FindManyOptions<
+  typeof _schoolJoinTables
+>;
+
+const SCHOOL_DEFAULT_SORT: BaseSchoolFilters = {
+  orderBy: [{ table: "schools", column: "name", order: "asc" }],
 };
 
-export class SchoolRepository extends BaseRepository<
+export class SchoolRepository extends betterSqlite.BaseRepository<
   TableSchool,
-  LibSqlClient
+  TDataBase,
+  School,
+  BaseSchoolFilters
 > {
-  constructor(database: LibSqlClient = db) {
+  constructor(database: TDataBase = db) {
     super({
       db: database,
       table: schools,
       idColumn: schools.schoolId,
-      entityName: "School",
+      baseTableName: "schools",
       logger: getLogger,
-      defaultSort: SCHOOL_DEFAULT_SORT,
+      defaultFilters: SCHOOL_DEFAULT_SORT,
+      joinTables: _schoolJoinTables,
     });
-  }
-
-  /**
-   * Récupère les informations détaillées d'une école pour une année donnée.
-   * Supporte désormais nativement le contexte de transaction 'tx'.
-   */
-  async fetchSchoolInfo(
-    schoolId: string,
-    yearId: string,
-    tx?: LibSqlClient,
-  ): Promise<any | null> {
-    try {
-      const client = this.getClient(tx);
-
-      const [result] = await client
-        .select({
-          ...getTableColumns(this.table),
-          studyYear: getTableColumns(studyYears),
-        })
-        .from(this.table)
-        .innerJoin(studyYears, eq(this.table.schoolId, studyYears.schoolId))
-        .where(
-          and(eq(this.table.schoolId, schoolId), eq(studyYears.yearId, yearId)),
-        )
-        .limit(1);
-
-      return result || null;
-    } catch (error) {
-      this.logError(`fetchSchoolInfo failed for school ${schoolId}`, error, {
-        schoolId,
-        yearId,
-      });
-      throw new Error(
-        "Impossible de récupérer les informations de l'école spécifiée.",
-      );
-    }
   }
 }
 

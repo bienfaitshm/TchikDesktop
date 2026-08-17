@@ -1,0 +1,1 @@
+ALTER TABLE `fee_assignments` ADD `total_amount` integer DEFAULT 0 NOT NULL;

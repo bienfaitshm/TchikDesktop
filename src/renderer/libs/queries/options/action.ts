@@ -1,102 +1,103 @@
 import { useCallback } from "react";
-import { withNotifications } from "@/renderer/libs/notifications";
-import { useCreateOption, useDeleteOption, useUpdateOption } from "./option";
 import type {
   Option,
   OptionCreate,
   OptionUpdate,
 } from "@/packages/@core/data-access/schema-validations";
-import {
-  type BaseFormProps,
-  type BaseMutationConfig,
-  type QueryUpdatePayload,
-  useFormBase,
-} from "../base";
+import { withNotifications } from "@/renderer/libs/notifications";
+import type { BaseMutationConfig, QueryUpdatePayload } from "../base";
+import { useFormBase, useFormBaseNotify } from "../base";
+import { useCreateOption, useDeleteOption, useUpdateOption } from "./option";
 
 export type OptionFormConfig = BaseMutationConfig<Option>;
 
+const CREATE_OPTION_NOTIFICATIONS = {
+  success: {
+    title: "Filière créée !",
+    description: "La filière a été ajoutée.",
+  },
+  error: {
+    title: "Échec de la création.",
+  },
+};
+
+const UPDATE_OPTION_NOTIFICATIONS = {
+  success: {
+    title: "Filière mise à jour !",
+    description: "Les modifications ont été enregistrées.",
+  },
+  error: {
+    title: "Échec de la mise à jour.",
+  },
+};
+
 /**
- * Hook pour la CRÉATION d'une option (Filière).
+ * Builds notification configurations for academic option deletions.
+ * @param optionName - Optional name of the option being removed.
+ * @returns Notification configuration object.
+ */
+const getDeleteOptionNotifications = (optionName?: string) => ({
+  success: {
+    title: "Filière supprimée",
+    description: optionName
+      ? `La filière '${optionName}' a été retirée.`
+      : "La filière a été supprimée.",
+  },
+  error: {
+    title: "Échec de la suppression.",
+  },
+});
+
+/**
+ * Custom form hook for creating academic options.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Form state, submit handler, and pending status.
  */
 export function useCreateOptionForm(config?: OptionFormConfig) {
-  const { formId, notifyAndInvalidate } = useFormBase(config);
   const mutation = useCreateOption();
 
-  const onSubmit: BaseFormProps<OptionCreate>["onSubmit"] = useCallback(
-    (data, helpers) => {
-      mutation.mutate(
-        data,
-        withNotifications({
-          notifications: {
-            success: {
-              title: "Filière créée !",
-              description: `La filière '${data.optionName}' a été ajoutée.`,
-            },
-            error: {
-              title: "Échec de la création.",
-            },
-          },
-          onSuccess: (res) => {
-            notifyAndInvalidate(res);
-            helpers.reset();
-          },
-        }),
-      );
-    },
-    [mutation, notifyAndInvalidate],
-  );
+  const adaptData = useCallback((data: OptionCreate) => data, []);
 
-  return {
-    formId,
-    onSubmit,
-    isSubmitting: mutation.isPending,
-  };
+  return useFormBaseNotify<OptionCreate, OptionCreate, Option>({
+    mutation,
+    config,
+    getNotifications: () => CREATE_OPTION_NOTIFICATIONS,
+    adaptData,
+  });
 }
 
 /**
- * Hook pour la MISE À JOUR d'une option (Filière).
+ * Custom form hook for updating existing academic options.
+ * @param config - Optional base mutation configuration settings for OptionUpdate.
+ * @returns Form state, submit handler, and pending status.
  */
-export function useUpdateOptionForm(config?: OptionFormConfig) {
-  const { formId, notifyAndInvalidate } = useFormBase(config);
+export function useUpdateOptionForm(config?: BaseMutationConfig<OptionUpdate>) {
   const mutation = useUpdateOption();
 
-  const onSubmit: BaseFormProps<QueryUpdatePayload<OptionUpdate>>["onSubmit"] =
-    useCallback(
-      ({ data, id }, helpers) => {
-        mutation.mutate(
-          { data, id },
-          withNotifications({
-            notifications: {
-              success: {
-                title: "Filière mise à jour !",
-                description: `Les modifications de '${data.optionName}' ont été enregistrées.`,
-              },
-              error: {
-                title: "Échec de la mise à jour.",
-              },
-            },
-            onSuccess: (res) => {
-              notifyAndInvalidate(res);
-              helpers.reset();
-            },
-          }),
-        );
-      },
-      [mutation, notifyAndInvalidate],
-    );
+  const adaptData = useCallback(
+    ({ data, id }: QueryUpdatePayload<OptionUpdate>) => ({ data, id }),
+    [],
+  );
 
-  return {
-    formId,
-    onSubmit,
-    isSubmitting: mutation.isPending,
-  };
+  return useFormBaseNotify<
+    QueryUpdatePayload<OptionUpdate>,
+    { data: OptionUpdate; id: string },
+    OptionUpdate
+  >({
+    mutation,
+    config,
+    getNotifications: () => UPDATE_OPTION_NOTIFICATIONS,
+    adaptData,
+  });
 }
 
 /**
- * Hook pour la SUPPRESSION d'une option (Filière).
+ * Custom hook managing academic option deletion actions and pending state.
+ * @param config - Optional base mutation configuration settings.
+ * @returns Object containing the delete callback and pending state.
  */
 export function useDeleteOptionForm(config?: BaseMutationConfig<void>) {
-  const { notifyAndInvalidate } = useFormBase(config);
+  const { notifyAndInvalidate } = useFormBase<void>(config);
   const mutation = useDeleteOption();
 
   const deleteOption = useCallback(
@@ -104,19 +105,9 @@ export function useDeleteOptionForm(config?: BaseMutationConfig<void>) {
       mutation.mutate(
         optionId,
         withNotifications({
-          notifications: {
-            success: {
-              title: "Filière supprimée",
-              description: optionName
-                ? `La filière '${optionName}' a été retirée.`
-                : "La filière a été supprimée.",
-            },
-            error: {
-              title: "Échec de la suppression.",
-            },
-          },
+          notifications: getDeleteOptionNotifications(optionName),
           onSuccess: () => {
-            notifyAndInvalidate(undefined as void);
+            notifyAndInvalidate();
           },
         }),
       );
@@ -127,5 +118,6 @@ export function useDeleteOptionForm(config?: BaseMutationConfig<void>) {
   return {
     deleteOption,
     isDeleting: mutation.isPending,
+    onDelete: deleteOption,
   };
 }

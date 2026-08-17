@@ -1,144 +1,234 @@
-import { UserPlus, History } from "lucide-react";
-import {
-  Empty,
-  EmptyContent,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/renderer/components/ui/empty";
-import { Button } from "@/renderer/components/ui/button";
-import {
-  DataTable,
-  DataContentHead,
-  DataTableContent,
-  DataContentBody,
-  DataTablePagination,
-} from "@/renderer/components/tables";
-import { enrollmentHistoryColumns } from "@/renderer/components/tables/columns";
-import { CreateEnrollmentDialog } from "@/renderer/dialog-actions/enrollment.dialog-actions";
-import { useGetEnrollments } from "@/renderer/libs/queries/enrollements";
-import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import type { EnrollmentData } from "@/packages/@core/apis/clients";
+"use client";
 
-interface SchoolYearProps {
+import React from "react";
+import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
+import {
+  PageContainer,
+  PageContent,
+  PageHeadTitle,
+  PageHeadDescription,
+  PageHeader,
+  PageHeaderTextContent,
+} from "@/renderer/containers/page-container";
+import {
+  InvoiceGridContainer,
+  InvoiceGridFormContainer,
+  InvoiceGridPreviewContainer,
+} from "@/renderer/containers/invoice-grid-container";
+import {
+  QuickEnrollmentForm,
+  StoreEnrollment,
+  useEnrollmentStore,
+} from "@/components/form/enrollments";
+import { useCreateQuickEnrollmentForm } from "@/renderer/libs/queries/enrollements";
+import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
+import { LoadingButton } from "@/components/buttons/button-loading";
+import { EnrollmentInvoice } from "../components/invoices/enrollment-invoice";
+import {
+  ActionPrintContainer,
+  PrinterConfigView,
+  PrintInvoiceButton,
+} from "@/components/invoices/invoice-print";
+import { usePrintInvoiceForm } from "@/renderer/libs/queries/printing";
+
+/**
+ * Properties for the EnrollmentForm component.
+ */
+interface EnrollmentFormProps {
+  /** Unique identifier of the target school. */
   schoolId: string;
+  /** Unique identifier of the target academic year. */
   yearId: string;
-  mutationKey?: readonly unknown[];
+  /** Optional callback invoked when enrollment succeeds. */
+  onSuccess?: (enrollment: EnrollmentDTO) => void;
 }
 
-interface EnrollmentHistoryProps extends SchoolYearProps {
-  enrollments?: EnrollmentData[];
+/**
+ * Renders the quick enrollment form with search capabilities and submit controls.
+ * @param props - Form configuration including schoolId, yearId, and success callback.
+ * @returns The rendered quick enrollment form element.
+ */
+export function EnrollmentForm({
+  schoolId,
+  yearId,
+  onSuccess,
+}: EnrollmentFormProps): React.JSX.Element {
+  const form = useCreateQuickEnrollmentForm({ schoolId, yearId, onSuccess });
+
+  return (
+    <div className="space-y-4">
+      <QuickEnrollmentForm
+        formId={form.formId}
+        classrooms={form.searchClassroom}
+        students={form.searchUser}
+        tutors={form.searchTutor}
+        onSubmit={form.onSubmit}
+        defaultValues={{ yearId, schoolId }}
+      />
+      <LoadingButton
+        loading={form.isSubmitting}
+        form={form.formId}
+        type="submit"
+        className="w-full"
+      >
+        Enregistrer
+      </LoadingButton>
+    </div>
+  );
 }
 
-export const EnrollmentHistory = ({
-  schoolId,
-  yearId,
-  enrollments = [],
-  mutationKey,
-}: EnrollmentHistoryProps) => {
-  return (
-    <div className="w-full">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 mt-10">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">
-            Historique des Inscriptions
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Consultez et gérez l'historique des inscriptions pour l'année
-            scolaire en cours.
-          </p>
-        </div>
+/**
+ * Properties for the InvoiceEnrollmentPrinting component.
+ */
+interface InvoiceEnrollmentPrintingProps {
+  /** Enrollment record to be printed. */
+  enrollment: StoreEnrollment;
+}
 
-        <div className="flex flex-wrap items-center gap-3">
-          <CreateEnrollmentDialog
-            schoolId={schoolId}
-            yearId={yearId}
-            defaultValues={{ schoolId, yearId }}
-            mutationKey={mutationKey}
-          >
-            <Button className="gap-2 shadow-xs">
-              <UserPlus className="h-4 w-4" />
-              <span>Inscription Complète</span>
-            </Button>
-          </CreateEnrollmentDialog>
-        </div>
-      </header>
-
-      <main>
-        <DataTable
-          columns={enrollmentHistoryColumns}
-          data={enrollments}
-          keyExtractor={(row) => `${row.enrollmentId}-${row.student.userId}`}
-        >
-          <DataTableContent>
-            <DataContentHead />
-            <DataContentBody />
-          </DataTableContent>
-          <DataTablePagination />
-        </DataTable>
-      </main>
-    </div>
+/**
+ * Manages invoice printing actions and receipt rendering for a given enrollment.
+ * @param props - Component props containing the enrollment record.
+ * @returns The action container and receipt preview element.
+ */
+export function InvoiceEnrollmentPrinting({
+  enrollment,
+}: InvoiceEnrollmentPrintingProps): React.JSX.Element {
+  const markEnrollmentAsPrinted = useEnrollmentStore(
+    (store) => store.markEnrollmentAsPrinted,
   );
-};
 
-export const EmptyEnrollmentHistory = ({
-  schoolId,
-  yearId,
-  mutationKey,
-}: SchoolYearProps) => {
-  return (
-    <div className="h-[50vh] flex justify-center items-centerw-full">
-      <Empty>
-        <EmptyContent>
-          <EmptyHeader>
-            <EmptyMedia>
-              <History className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            </EmptyMedia>
-          </EmptyHeader>
-          <EmptyTitle className="mb-4 text-center">
-            Aucun historique d'inscription trouvé pour cette période.
-          </EmptyTitle>
-          <CreateEnrollmentDialog
-            schoolId={schoolId}
-            yearId={yearId}
-            defaultValues={{ schoolId, yearId }}
-            mutationKey={mutationKey}
-          >
-            <Button className="gap-2 shadow-xs mx-auto">
-              <UserPlus className="h-4 w-4" />
-              <span>Inscrivez votre premier élève de l'année</span>
-            </Button>
-          </CreateEnrollmentDialog>
-        </EmptyContent>
-      </Empty>
-    </div>
-  );
-};
-
-export const EnrollmentPage = () => {
-  const { schoolId, yearId } = useSchoolContext();
-  const { data: enrollments = [], queryKey: mutationKey } = useGetEnrollments({
-    where: { schoolId, yearId },
-    limit: 20,
-    orderBy: [{ column: "createdAt", order: "desc" }],
+  const mutation = usePrintInvoiceForm({
+    onSuccess() {
+      markEnrollmentAsPrinted(enrollment.enrollmentRef);
+    },
   });
 
+  const handlePrint = (): void => {
+    mutation.onSubmit({
+      invoiceCode: "enrollment",
+      id: enrollment.enrollmentId,
+      invoiceRef: enrollment.enrollmentRef,
+    });
+  };
+
+  const guardianData = enrollment.tutor
+    ? {
+        name: enrollment.tutor.fullName,
+        phone: enrollment.tutor.phoneNumber ?? "-",
+        address: enrollment.tutor.address ?? "-",
+      }
+    : undefined;
+
   return (
-    <div className="container mx-auto max-w-7xl py-10 px-4">
-      {enrollments.length > 0 ? (
-        <EnrollmentHistory
-          yearId={yearId}
-          schoolId={schoolId}
-          enrollments={enrollments}
-          mutationKey={mutationKey}
-        />
+    <ActionPrintContainer
+      isPending={mutation.isSubmitting}
+      isPrinted={enrollment.isPrinted}
+    >
+      <EnrollmentInvoice
+        student={{
+          code: enrollment.studentCode,
+          name: enrollment.student.fullName,
+          classroom: enrollment.classroom.shortIdentifier,
+        }}
+        guardian={guardianData}
+        invoiceRef={enrollment.enrollmentRef}
+      />
+      <PrinterConfigView>
+        {() => {
+          return (
+            <PrintInvoiceButton
+              isPrinted={enrollment.isPrinted}
+              isPrinting={mutation.isSubmitting}
+              isReady={true}
+              onClick={handlePrint}
+            />
+          );
+        }}
+      </PrinterConfigView>
+    </ActionPrintContainer>
+  );
+}
+
+/**
+ * Properties for the EnrollmentInvoicePreview component.
+ */
+interface EnrollmentInvoicePreviewProps {
+  /** The most recently saved enrollment record to display. */
+  lastEnrollment?: StoreEnrollment | null;
+}
+
+/**
+ * Renders the preview panel container for enrollment receipts with empty state handling.
+ * @param props - Component props containing the last enrollment record.
+ * @returns The rendered preview panel component.
+ */
+export function EnrollmentInvoicePreview({
+  lastEnrollment,
+}: EnrollmentInvoicePreviewProps): React.JSX.Element {
+  return (
+    <div className="p-4 border rounded-md">
+      <h2 className="text-base font-semibold">Aperçu du reçu d'inscription</h2>
+
+      {lastEnrollment ? (
+        <InvoiceEnrollmentPrinting enrollment={lastEnrollment} />
       ) : (
-        <EmptyEnrollmentHistory
-          yearId={yearId}
-          schoolId={schoolId}
-          mutationKey={mutationKey}
-        />
+        <p className="text-sm text-muted-foreground mt-1">
+          Le détail du reçu s'affichera ici une fois l'inscription de l'élève
+          enregistrée.
+        </p>
       )}
     </div>
   );
-};
+}
+
+/**
+ * Main enrollment terminal page component orchestrating configuration and layout.
+ * @returns The complete student enrollment terminal interface.
+ */
+export function EnrollmentPage(): React.JSX.Element {
+  const { schoolId = "", yearId = "" } = useCurrentConfig();
+  const addEnrollment = useEnrollmentStore((store) => store.addEnrollment);
+  const lastEnrollment = useEnrollmentStore((store) =>
+    store.getLastEnrollment(),
+  );
+
+  const isConfigReady = Boolean(schoolId && yearId);
+
+  return (
+    <PageContainer>
+      <PageHeader className="border-b pb-5 mb-2">
+        <PageHeaderTextContent>
+          <PageHeadTitle>Terminal d'inscription</PageHeadTitle>
+          <PageHeadDescription>
+            Gérez les nouvelles inscriptions des élèves pour l'année académique
+            en cours.
+          </PageHeadDescription>
+        </PageHeaderTextContent>
+      </PageHeader>
+
+      <PageContent className="pt-5">
+        <InvoiceGridContainer>
+          <InvoiceGridFormContainer>
+            {isConfigReady ? (
+              <EnrollmentForm
+                schoolId={schoolId}
+                yearId={yearId}
+                onSuccess={(enrollment) => {
+                  addEnrollment(enrollment);
+                }}
+              />
+            ) : (
+              <div className="p-4 text-sm text-muted-foreground">
+                Veuillez sélectionner une école et une année académique valide.
+              </div>
+            )}
+          </InvoiceGridFormContainer>
+
+          <InvoiceGridPreviewContainer>
+            <EnrollmentInvoicePreview lastEnrollment={lastEnrollment} />
+          </InvoiceGridPreviewContainer>
+        </InvoiceGridContainer>
+      </PageContent>
+    </PageContainer>
+  );
+}

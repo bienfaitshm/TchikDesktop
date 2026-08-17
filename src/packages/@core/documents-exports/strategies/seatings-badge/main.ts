@@ -1,5 +1,5 @@
 import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
-import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
+import { schoolYearIdBaseSchema } from "@/packages/@core/data-access/schema-validations";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 import {
   type FormFieldDef,
@@ -29,7 +29,7 @@ export class SeatingBadgeExportStrategy extends AbstractExportStrategy<
   public readonly description =
     "Générez et exportez les badges de participation pour les candidats aux examens.";
 
-  public readonly validationSchema = SchoolYearSchema;
+  public readonly validationSchema = schoolYearIdBaseSchema;
   constructor() {
     super({
       extensions,

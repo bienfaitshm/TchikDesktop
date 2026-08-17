@@ -11,9 +11,9 @@ import {
   ItemDescription,
 } from "@/renderer/components/ui/item";
 
-import type { EnrollmentTDO } from "@/packages/@core/data-access/db/queries";
+import type { EnrollmentDTO } from "@/packages/@core/data-access/db/queries";
 
-export const studentColumns: ColumnDef<EnrollmentTDO>[] = [
+export const studentColumns: ColumnDef<EnrollmentDTO>[] = [
   {
     accessorKey: "student.fullName",
     enableSorting: true,

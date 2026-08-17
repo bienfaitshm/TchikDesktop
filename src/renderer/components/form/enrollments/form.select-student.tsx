@@ -23,10 +23,12 @@ export const SelectExistStudent: React.FC<SelectExistStudentProps> = ({
     <fieldset className="space-y-6 border-none p-0 m-0">
       <FormField
         control={control}
-        name="studentId"
+        name="studentData.studentId"
         render={({ field }) => (
           <FormItem className="flex flex-col">
-            <FormLabel>Élève à inscrire</FormLabel>
+            <FormLabel className="text-xs">
+              Rechercher Élève à inscrire
+            </FormLabel>
             <FormControl>
               <ComboboxSearch
                 {...field}

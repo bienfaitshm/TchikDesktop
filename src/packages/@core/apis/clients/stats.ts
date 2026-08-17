@@ -1,6 +1,6 @@
 import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import { StatsRoutes } from "../routes-constant";
-import { TStatsFilter } from "@/packages/@core/data-access/schema-validations";
+import { StatsFilter } from "@/packages/@core/data-access/schema-validations";
 import type {
   ChartDataPoint,
   ClassStatsDTO,
@@ -18,25 +18,25 @@ import type {
  */
 export type StatsApi = Readonly<{
   /** Récupère les compteurs clés (Total, Actifs, Exclus) */
-  fetchSummary(params: TStatsFilter): Promise<StatsSummary>;
+  fetchSummary(params: StatsFilter): Promise<StatsSummary>;
 
   /** Récupère la répartition par statut (Actif, Abandon, Exclu) */
-  fetchByStatus(params: TStatsFilter): Promise<ChartDataPoint[]>;
+  fetchByStatus(params: StatsFilter): Promise<ChartDataPoint[]>;
 
   /** Récupère la répartition par genre (M/F) */
   fetchByGender(schoolId: string): Promise<ChartDataPoint[]>;
 
   /** Récupère le nombre d'élèves par classe */
-  fetchByClass(params: TStatsFilter): Promise<ClassStatsDTO[]>;
+  fetchByClass(params: StatsFilter): Promise<ClassStatsDTO[]>;
 
   /** Récupère le nombre d'élèves par option d'étude */
-  fetchByOption(params: TStatsFilter): Promise<ChartDataPoint[]>;
+  fetchByOption(params: StatsFilter): Promise<ChartDataPoint[]>;
 
   /** Récupère les données de rétention (Anciens vs Nouveaux) */
-  fetchRetention(params: TStatsFilter): Promise<ChartDataPoint[]>;
+  fetchRetention(params: StatsFilter): Promise<ChartDataPoint[]>;
 
   /** Récupère le nombre total d'élèves (simple chiffre) */
-  fetchTotalStudents(params: TStatsFilter): Promise<number>;
+  fetchTotalStudents(params: StatsFilter): Promise<number>;
 
   /** Récupère les inscriptions par année avec répartition H/F */
   fetchEnrollmentsByYear(schoolId: string): Promise<EnrollmentStatsByYear[]>;

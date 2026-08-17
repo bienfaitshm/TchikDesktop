@@ -1,0 +1,1 @@
+DROP INDEX `fee_types_wallet_year_school_idx`;

@@ -77,3 +77,43 @@ export const ENROLLMENT_ACTION_ENUM_TRANSLATIONS: Record<
   [ENROLLMENT_ACTION_ENUM.STUDENT_STATUS]: "Statut de l'élève",
   [ENROLLMENT_ACTION_ENUM.STUDENT_TRANSFER]: "Transfert de l'élève",
 };
+
+export enum FEE_SCHEDULES_ENUM {
+  UNPAID = "UNPAID",
+  PARTIAL = "PARTIAL",
+  PAID = "PAID",
+}
+
+export const FEE_SCHEDULES_ENUM_TRANSLATIONS: Record<
+  FEE_SCHEDULES_ENUM,
+  string
+> = {
+  [FEE_SCHEDULES_ENUM.UNPAID]: "Non payé",
+  [FEE_SCHEDULES_ENUM.PARTIAL]: "Partiel",
+  [FEE_SCHEDULES_ENUM.PAID]: "Payé",
+};
+
+export enum CURRENCY_ENUM {
+  USD = "USD",
+  CDF = "CDF",
+}
+
+export const CURRENCY_ENUM_TRANSLATIONS: Record<CURRENCY_ENUM, string> = {
+  [CURRENCY_ENUM.USD]: "Dollar américain",
+  [CURRENCY_ENUM.CDF]: "Franc congolais",
+};
+
+export enum PAYMENT_METHOD_ENUM {
+  CASH = "CASH",
+  MOBILE_MONEY = "MOBILE_MONEY",
+  BANK = "BANK",
+}
+
+export const PAYMENT_METHOD_ENUM_TRANSLATIONS: Record<
+  PAYMENT_METHOD_ENUM,
+  string
+> = {
+  [PAYMENT_METHOD_ENUM.CASH]: "Espèces",
+  [PAYMENT_METHOD_ENUM.MOBILE_MONEY]: "Mobile Money",
+  [PAYMENT_METHOD_ENUM.BANK]: "Banque",
+};

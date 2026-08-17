@@ -1,12 +1,4 @@
-import {
-  Home,
-  LayoutDashboard,
-  GraduationCap,
-  School,
-  Clipboard,
-  List,
-  type LucideIcon,
-} from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 import { NavLink } from "react-router";
 
 import {
@@ -21,44 +13,20 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/renderer/components/ui/sidebar";
-import { SidebarHead } from "./app-sidebar.head";
 import { SidebarFoot } from "./app-sidebar.foot";
 import { Suspense } from "@/renderer/libs/queries/suspense";
-import { APP_ROUTES } from "@/renderer/constants";
+import { ToggleSidebarButton } from "./app-sidebar.toogle-button";
 
-interface NavItem {
+export interface NavItem {
   name: string;
   url: string;
   icon: LucideIcon;
 }
 
-interface NavSection {
+export interface NavSection {
   label: string;
   items: NavItem[];
 }
-
-const NAVIGATION_GROUPS: NavSection[] = [
-  {
-    label: "Application",
-    items: [
-      { name: "Accueil", url: APP_ROUTES.HOME, icon: Home },
-      { name: "Inscriptions", url: APP_ROUTES.ENROLLMENTS, icon: Clipboard },
-      {
-        name: "Mise en place",
-        url: APP_ROUTES.SEATING.ROOT,
-        icon: LayoutDashboard,
-      },
-    ],
-  },
-  {
-    label: "Écoles",
-    items: [
-      { name: "Classes", url: APP_ROUTES.CLASSROOMS.ROOT, icon: School },
-      { name: "Locaux", url: APP_ROUTES.LOCALS, icon: List },
-      { name: "Options", url: APP_ROUTES.OPTIONS, icon: GraduationCap },
-    ],
-  },
-];
 
 const NavGroup = ({ section }: { section: NavSection }) => (
   <SidebarGroup>
@@ -85,15 +53,19 @@ const NavGroup = ({ section }: { section: NavSection }) => (
   </SidebarGroup>
 );
 
-export function ApplicationSidebar() {
+export type ApplicationSidebarProps = {
+  menus?: NavSection[];
+};
+
+export function ApplicationSidebar({ menus = [] }: ApplicationSidebarProps) {
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader>
-        <SidebarHead />
+        <ToggleSidebarButton />
       </SidebarHeader>
 
       <SidebarContent>
-        {NAVIGATION_GROUPS.map((section) => (
+        {menus.map((section) => (
           <NavGroup key={section.label} section={section} />
         ))}
       </SidebarContent>

@@ -36,25 +36,27 @@ jobs:
       - name: Cache electron-builder binaries
         uses: actions/cache@v4
         with:
-          path: ~/.cache/electron-builder
-          key: ${{ runner.os }}-electron-builder
+          path: |
+            ~/.cache/electron-builder
+            ${{ env.LOCALAPPDATA }}\electron-builder\Cache
+            ~/Library/Caches/electron-builder
+          key: ${{ runner.os }}-electron-builder-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-builder-
 
       - name: Install Project Dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Install Linux Build Dependencies
+      - name: Install Linux Build Dependencies (Ubuntu only)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libarchive-tools rpm
 
-      - name: Build Application (Compile)
-        run: yarn build:all --publish never
+      - name: Build and Publish Application
+        run: yarn build:all --publish always
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish Assets to GitHub Release
-        # On exécute la publication séparément pour isoler l'upload
-        run: npx electron-builder --publish always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Important : on utilise le PAT aussi ici pour que electron-builder
+          # puisse uploader sur la release créée par le workflow précédent
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_BUILDER_BINARIES_MIRROR: "https://npmmirror.com/mirrors/electron-builder-binaries/"

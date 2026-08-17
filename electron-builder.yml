@@ -1,9 +1,5 @@
 productName: Tchik
-appId: Tchik.electron.app
-
-# Variables d'environnement pour la CI/CD (GitHub Actions)
-# Windows: CSC_LINK et CSC_KEY_PASSWORD
-# Mac: APPLE_ID et APPLE_ID_PASSWORD
+appId: com.bienfaitshm.tchik
 
 directories:
   buildResources: build
@@ -29,33 +25,55 @@ extraResources:
   - from: "drizzle"
     to: "drizzle"
 
-
-
 asarUnpack:
   - node_modules/sqlite3
+  - node_modules/better-sqlite3
+  - node_modules/@libsql/**/*
   - out/main/chunks/*.node
   - resources/**
 
+# ----------------------------------------------------
+# CONFIGURATION WINDOWS
+# ----------------------------------------------------
 win:
   executableName: Tchik
   icon: build/icon.ico
   target:
-    - target: nsis
-      arch:
-        - x64
-        - arm64
+    - target: msi        # Installateur MSI Offline (Déploiement Entreprise/École)
+      arch: [x64]
+    - target: nsis       # Installateur EXE Offline (Classique)
+      arch: [x64, arm64]
+    - target: nsis-web   # Installateur EXE Online (Léger)
+      arch: [x64, arm64]
 
+# 1. Format MSI (Windows Offline MSI)
+msi:
+  perMachine: true
+  artifactName: ${productName}_Installer_Windows_${version}.${ext}
+  createDesktopShortcut: true
+  menuCategory: "Education"
+
+# 2. Format NSIS (Windows Offline EXE)
 nsis:
   oneClick: false
   perMachine: true
   allowElevation: true
   allowToChangeInstallationDirectory: true
-  artifactName: ${productName}_Installer_Windows_${version}-setup.${ext}
+  displayLanguageSelector: false
   shortcutName: ${productName}
-  uninstallDisplayName: ${productName}_uninstaller
-  displayLanguageSelector: true
+  artifactName: ${productName}_Installer_Windows_${version}-setup.${ext}
   createDesktopShortcut: always
+  createStartMenuShortcut: true
 
+# 3. Format NSIS-Web (Windows Online EXE)
+nsisWeb:
+  artifactName: ${productName}_Online_Setup_Windows_${version}.${ext}
+  appPackageUrl: "https://github.com/bienfaitshm/TchikDesktop/releases/download/v${version}"
+
+
+# ----------------------------------------------------
+# CONFIGURATION MAC
+# ----------------------------------------------------
 mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
@@ -70,21 +88,22 @@ mac:
         - x64
         - arm64
   notarize: false
-    # provider: appleId
 
 dmg:
   artifactName: ${productName}_Installer_MacOs_${version}.${ext}
   icon: build/icon.icns
+
+# ----------------------------------------------------
+# CONFIGURATION LINUX
+# ----------------------------------------------------
 linux:
   target:
     - target: AppImage
     - target: deb
   maintainer: Bienfait Shomari <bienfaitshm@google.com>
   category: Education
-  icon: build/
+  icon: build/icon.png
   description: "Gestionnaire Tchik pour l'éducation"
-  
-  # Configuration conforme à la documentation
   desktop:
     entry:
       Name: Tchik
@@ -93,8 +112,6 @@ linux:
       Terminal: false
       Type: Application
       StartupWMClass: Tchik
-      
-    # Actions de clic droit sur l'icône du dock
     desktopActions:
       NewWindow:
         Name: New Window
@@ -102,13 +119,15 @@ linux:
       NewFile:
         Name: New File
         Exec: Tchik --new-file
-
   artifactName: ${productName}_Installer_Linux_${version}.${ext}
 
 appImage:
   artifactName: ${productName}_Installer_Linux_${version}.${ext}
 
-npmRebuild: false
+# ----------------------------------------------------
+# PUBLICATION & REGISTRE
+# ----------------------------------------------------
+npmRebuild: true
 
 publish:
   provider: github

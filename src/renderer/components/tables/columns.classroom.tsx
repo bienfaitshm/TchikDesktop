@@ -14,19 +14,20 @@ export const classroomColumns: ColumnDef<ClassroomDTO>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Nom complet" />
     ),
-    cell: ({
-      getValue,
-      row: {
-        original: { classId },
-      },
-    }) => {
+    cell: ({ getValue, row }) => {
+      const value = getValue<string>();
+      const { classId } = row.original;
+
       return (
         <Link
           to={APP_ROUTES.CLASSROOMS.STUDENTS(classId)}
-          className="hover:underline"
+          className="hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
-          <TypographySmall className="text-foreground max-w-20">
-            {getValue<string>()}
+          <TypographySmall
+            className="text-foreground max-w-32 lg:max-w-44 inline-block truncate"
+            title={value}
+          >
+            {value}
           </TypographySmall>
         </Link>
       );
@@ -37,9 +38,11 @@ export const classroomColumns: ColumnDef<ClassroomDTO>[] = [
   },
   {
     accessorKey: "shortIdentifier",
-    header: "Nom court",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Nom court" />
+    ),
     cell: ({ getValue }) => (
-      <TypographySmall className="text-muted-foreground">
+      <TypographySmall className="text-muted-foreground text-xs">
         {getValue<string>()}
       </TypographySmall>
     ),
@@ -49,7 +52,9 @@ export const classroomColumns: ColumnDef<ClassroomDTO>[] = [
   },
   {
     accessorKey: "section",
-    header: "Section",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Section" />
+    ),
     cell: ({ getValue }) => <SectionBadge section={getValue<SECTION_ENUM>()} />,
     enableSorting: true,
     enableHiding: true,
@@ -57,16 +62,22 @@ export const classroomColumns: ColumnDef<ClassroomDTO>[] = [
   },
   {
     accessorKey: "option.optionName",
-    header: "Option",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Option" />
+    ),
     enableHiding: true,
-    cell: ({ getValue, row: { getValue: getRowValue } }) => {
-      const section = getRowValue<SECTION_ENUM>("section");
+    enableSorting: true,
+    enableColumnFilter: true,
+    cell: ({ getValue, row }) => {
+      const optionName = getValue<string | null>();
+      const section = row.original.section;
+
       return (
-        <TypographySmall className="text-muted-foreground">
-          {String(
-            getValue() ??
-              `Aucune option pour la section ${section ? getSectionLabel(section) : "N/A"}`,
-          )}
+        <TypographySmall className="text-muted-foreground text-xs max-w-32 inline-block truncate">
+          {optionName ??
+            `Aucune option pour la section ${
+              section ? getSectionLabel(section) : "N/A"
+            }`}
         </TypographySmall>
       );
     },

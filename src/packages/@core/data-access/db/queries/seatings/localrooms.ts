@@ -3,78 +3,56 @@ import {
   localrooms,
   type Localroom,
   type TableLocalroom,
-  type FindManyOptions,
 } from "@/packages/@core/data-access/db/schemas";
-import { db } from "@/packages/@core/data-access/db/config";
-import { BaseRepository, type LibSqlClient } from "../base-repository";
-import { createSQLiteSearchFilter } from "../drizzle-utility";
-import { SearchOptions } from "../select-option.transformer";
-import { applyQueryOptions, mergeQueryOptions } from "../drizzle-builder";
+import { db, TDataBase } from "@/packages/@core/data-access/db/config";
+import {
+  helpers,
+  betterSqlite,
+  OptionProvider,
+} from "@/packages/drizzle-queries";
 
-export type BaseLocalRoomFilters = Partial<FindManyOptions<TableLocalroom>>;
+const _localJoinTables = {
+  localrooms,
+} as const;
 
-const DEFAULT_LIMIT_VALUE = 50;
+export type BaseLocalRoomFilters = helpers.FindManyOptions<
+  typeof _localJoinTables
+>;
 
-const LOCAL_ROOM_SORT: FindManyOptions<TableLocalroom> = {
-  orderBy: [{ column: "name", order: "asc" }],
+const LOCAL_ROOM_SORT: BaseLocalRoomFilters = {
+  orderBy: [{ table: "localrooms", column: "name", order: "asc" }],
+  limit: 50,
 };
 
 /**
- * Repository de gestion des Salles de classe (LocalRoom).
- * Aligné sur l'interface de connexion globale LibSqlClient pour le support des transactions.
+ * Repository for managing LocalRoom entities with support for global TDataBase transactions.
  */
-export class LocalRoomRepository extends BaseRepository<
-  TableLocalroom,
-  LibSqlClient
-> {
-  constructor(database: LibSqlClient = db) {
+export class LocalRoomRepository
+  extends betterSqlite.BaseRepository<
+    TableLocalroom,
+    TDataBase,
+    BaseLocalRoomFilters
+  >
+  implements OptionProvider<Localroom, BaseLocalRoomFilters>
+{
+  constructor(database: TDataBase = db) {
     super({
       db: database,
       table: localrooms,
       idColumn: localrooms.localroomId,
-      entityName: "LocalRoom",
+      baseTableName: "localrooms",
       logger: getLogger,
-      defaultSort: LOCAL_ROOM_SORT,
+      defaultFilters: LOCAL_ROOM_SORT,
+      joinTables: _localJoinTables,
     });
   }
 
   /**
-   * Récupère les utilisateurs pour les composants Select / Combobox.
-   * Alterne intelligemment entre recherche textuelle filtrée et données par défaut.
+   * Retrieves local rooms for select/combobox components using optional filters.
+   * @param filters - Optional query parameters for filtering and pagination.
+   * @returns Array of matching local room records.
    */
-  async fetchOptions({
-    filters,
-    search,
-  }: SearchOptions<BaseLocalRoomFilters> = {}): Promise<Localroom[]> {
-    try {
-      let query = this.getQuerySet();
-
-      const searchFilter = createSQLiteSearchFilter([this.table.name], search);
-
-      if (searchFilter) {
-        const mergedOptions = mergeQueryOptions(filters, LOCAL_ROOM_SORT);
-        query = query.where(searchFilter);
-
-        return (await applyQueryOptions(
-          query,
-          this.table,
-          mergedOptions,
-        )) as unknown as Localroom[];
-      }
-
-      const defaultOptions = mergeQueryOptions(
-        { limit: DEFAULT_LIMIT_VALUE, ...filters },
-        LOCAL_ROOM_SORT,
-      );
-
-      return (await applyQueryOptions(
-        query,
-        this.table,
-        defaultOptions,
-      )) as unknown as Localroom[];
-    } catch (error) {
-      this.logError("fetchOptions", error, { filters, search });
-      throw new Error("Erreur lors de la récupération des locaux ");
-    }
+  fetchOptions(filters?: BaseLocalRoomFilters) {
+    return this.findMany(filters);
   }
 }

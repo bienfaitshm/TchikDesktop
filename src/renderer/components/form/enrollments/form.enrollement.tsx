@@ -13,6 +13,7 @@ import {
 import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/enum";
 import { STUDENT_STATUS_OPTIONS } from "@/packages/@core/data-access/db/options";
 import { GenericComboBox } from "@/renderer/components/form/fields/generic-combo-box";
+import { ComboboxSearch } from "@/components/form/fields/generic-search-combo-box";
 import { StudentSeniorityStatusSelect } from "@/renderer/components/form/fields/student-seriority-statut";
 import {
   type BaseFormProps,
@@ -24,6 +25,9 @@ import {
   EnrollmentCreateSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import { StudentStatus } from "../fields/student-status";
+import { SearchOptionReturn } from "@/renderer/libs/queries/base";
+import type { Option } from "@/components/form/fields/select-input";
+import type { Classroom, TutorDTO } from "@/packages/@core/data-access/db";
 
 export const DEFAULT_VALUES: Partial<EnrollmentCreate> = {
   classroomId: "",
@@ -34,12 +38,14 @@ export const DEFAULT_VALUES: Partial<EnrollmentCreate> = {
 };
 
 interface QuickEnrollmentFormProps {
-  classrooms?: { value: string; label: string }[];
+  classrooms: SearchOptionReturn<Classroom & Option>;
+  /** Search dataset for existing tutor selection. */
+  tutors: SearchOptionReturn<TutorDTO & Option>;
 }
 
 export const EnrollmentForm: React.FC<
   BaseFormProps<EnrollmentCreate> & QuickEnrollmentFormProps
-> = ({ formId, onSubmit, defaultValues, classrooms = [] }) => {
+> = ({ formId, onSubmit, defaultValues, classrooms, tutors }) => {
   const form = useZodForm<EnrollmentCreate>({
     schema: EnrollmentCreateSchema,
     defaultValues: mergeDefaultValuesDeep(defaultValues, DEFAULT_VALUES),
@@ -61,10 +67,11 @@ export const EnrollmentForm: React.FC<
               <FormControl>
                 <GenericComboBox
                   {...field}
-                  onChangeValue={(val) => field.onChange(val)}
-                  options={classrooms}
-                  placeholder="Sélectionner la classe"
+                  onChangeValue={field.onChange}
+                  options={classrooms.options}
+                  placeholder="Rechercher ou sélectionner une classe..."
                   className="w-full"
+                  disabled={isSubmitting}
                 />
               </FormControl>
               <FormDescription>
@@ -76,27 +83,53 @@ export const EnrollmentForm: React.FC<
         />
 
         {/* Statud */}
-        <FormField
-          control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem className="flex flex-col mb-4">
-              <FormLabel>Statut de l'eleves</FormLabel>
-              <FormControl>
-                <StudentStatus
-                  {...field}
-                  options={STUDENT_STATUS_OPTIONS}
-                  className="w-full"
-                />
-              </FormControl>
-              <FormDescription>
-                le status de l'élève sera changé, par exemple l'exclusion ou
-                signaler l'abandon.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem className="flex flex-col mb-4">
+                <FormLabel>Statut de l'eleves</FormLabel>
+                <FormControl>
+                  <StudentStatus
+                    {...field}
+                    options={STUDENT_STATUS_OPTIONS}
+                    className="w-full"
+                  />
+                </FormControl>
+                <FormDescription>
+                  le status de l'élève sera changé, par exemple l'exclusion ou
+                  signaler l'abandon.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="tutorId"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Sélectionner le tuteur</FormLabel>
+                <FormControl>
+                  <ComboboxSearch
+                    {...field}
+                    onChange={field.onChange}
+                    options={tutors.options}
+                    value={field.value ?? ""}
+                    search={tutors.searchQuery}
+                    isLoading={tutors.isSearching}
+                    onSearchChange={tutors.setSearchQuery}
+                    placeholder="Rechercher un tuteur par nom ou téléphone..."
+                    className="w-full"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="space-y-10">
           {/* Statut d'ancienneté */}
@@ -113,6 +146,7 @@ export const EnrollmentForm: React.FC<
                 </div>
                 <FormControl>
                   <StudentSeniorityStatusSelect
+                    {...field}
                     value={field.value}
                     onChangeValue={field.onChange}
                     disabled={isSubmitting}

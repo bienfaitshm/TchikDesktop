@@ -1,0 +1,123 @@
+import type { FeeTypeDTO } from "@/packages/@core/data-access/db";
+import {
+  DataContentBody,
+  DataContentHead,
+  DataTable,
+  DataTableContent,
+  DataTablePagination,
+} from "@/renderer/components/tables";
+import {
+  FeeTypeDialogDeleteForm,
+  FeeTypeDialogUpdateForm,
+  type FeeTypeDialogProps,
+} from "@/renderer/apps/finances/dialog";
+import { feeTypeColumns } from "./fee-types.columns";
+import { enhanceColumns } from "@/renderer/components/tables/columns";
+import React from "react";
+import { Pencil, Trash2, ListOrdered } from "lucide-react";
+import { ScheduleViewDialog } from "../dialog/schedule.detail-dialog";
+import {
+  ActionMenuConfig,
+  createActionMenus,
+} from "@/renderer/components/menus/action-menus";
+
+export interface FeeTypeRowActionsProps extends Pick<
+  FeeTypeDialogProps,
+  "mutationKey"
+> {
+  feeType: FeeTypeDTO;
+  schoolId: string;
+}
+
+const MENUS: ActionMenuConfig<FeeTypeRowActionsProps>[] = [
+  {
+    id: "create-schedule",
+    label: "Voir les échéanciers",
+    icon: ListOrdered,
+    dialog({ feeType }) {
+      return <ScheduleViewDialog feeType={feeType} />;
+    },
+  },
+  {
+    id: "edit",
+    label: "Modifier le type de frais",
+    icon: Pencil,
+    dialog({ feeType, schoolId, mutationKey }) {
+      return (
+        <FeeTypeDialogUpdateForm
+          schoolId={schoolId}
+          mutationKey={mutationKey}
+          feeTypeId={feeType.feeTypeId}
+          defaultValues={feeType}
+        />
+      );
+    },
+  },
+  {
+    id: "delete",
+    label: "Supprimer le type de frais",
+    icon: Trash2,
+    separator: true,
+    variant: "destructive",
+    dialog({ feeType, mutationKey }) {
+      return (
+        <FeeTypeDialogDeleteForm
+          mutationKey={mutationKey}
+          id={feeType.feeTypeId}
+          name={feeType.name}
+        />
+      );
+    },
+  },
+];
+
+/**
+ * Renders contextual action menus for a given fee type row.
+ * @param props - Component properties containing the fee type entity, school ID, and mutation key.
+ * @returns The rendered action menu component.
+ */
+export const RowAction: React.FC<FeeTypeRowActionsProps> =
+  createActionMenus<FeeTypeRowActionsProps>(MENUS);
+
+export type FeeTypeTableProps = {
+  feeTypes?: FeeTypeDTO[];
+  mutationKey?: readonly unknown[];
+  schoolId: string;
+};
+
+export const FeeTypeTable: React.FC<FeeTypeTableProps> = ({
+  feeTypes = [],
+  mutationKey,
+  schoolId,
+}) => {
+  const columns = React.useMemo(
+    () =>
+      enhanceColumns(feeTypeColumns, {
+        variant: "actions",
+        renderRowAction: (feeType) => (
+          <RowAction
+            feeType={feeType}
+            schoolId={schoolId}
+            mutationKey={mutationKey}
+          />
+        ),
+      }),
+    [mutationKey, schoolId],
+  );
+
+  return (
+    <div className="w-full">
+      <DataTable<FeeTypeDTO>
+        data={feeTypes}
+        columns={columns}
+        keyExtractor={(item) => item.feeTypeId}
+      >
+        <DataTableContent>
+          <DataContentHead />
+          <DataContentBody />
+        </DataTableContent>
+        <DataTablePagination />
+      </DataTable>
+    </div>
+  );
+};

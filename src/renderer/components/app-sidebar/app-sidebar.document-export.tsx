@@ -14,6 +14,8 @@ import {
   MenubarMenu,
   MenubarTrigger,
 } from "@/renderer/components/ui/menubar";
+import { NavLink } from "react-router";
+import { APP_ROUTES } from "@/renderer/constants";
 
 interface SidebarExportDocumentProps {
   className?: string;
@@ -66,15 +68,11 @@ export function SidebarExportDocument({
               </p>
             </div>
 
-            <DialogDataExport
-              schoolId={schoolId}
-              yearId={yearId}
-              buttonTrigger={
-                <MenubarTrigger asChild>
-                  <ButtonExport className="w-full justify-center shadow-xs hover:bg-sidebar-primary hover:text-sidebar-primary-foreground cursor-pointer" />
-                </MenubarTrigger>
-              }
-            />
+            <MenubarTrigger asChild>
+              <NavLink to={APP_ROUTES.EXPORTS.DOCUMENT_EXPORT}>
+                <ButtonExport className="w-full justify-center shadow-xs hover:bg-sidebar-primary hover:text-sidebar-primary-foreground cursor-pointer" />
+              </NavLink>
+            </MenubarTrigger>
           </div>
         </MenubarMenu>
       </Menubar>

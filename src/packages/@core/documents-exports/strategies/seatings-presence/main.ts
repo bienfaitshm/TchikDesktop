@@ -3,7 +3,7 @@
  */
 
 import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
-import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
+import { schoolYearIdBaseSchema } from "@/packages/@core/data-access/schema-validations";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 import {
   type FormFieldDef,
@@ -12,6 +12,7 @@ import {
 import { extensions } from "@/packages/@core/documents-exports/extensions/seating-presence";
 import { createSeatingPresenceExportForm } from "./form";
 import { SeatingPresenceSessionDataResolver } from "./resolver";
+import { DocumentCategory } from "../../constants";
 
 type ExportPayload = {
   schoolId: string;
@@ -27,10 +28,12 @@ export class SeatingPresenceExportStrategy extends AbstractExportStrategy<
 > {
   public readonly id = "SEATING_PRESENCE_EXPORT" as const;
   public readonly displayName = "Fiche de présence des examens";
+  public readonly category = DocumentCategory.DATA_SCHOOL;
+
   public readonly description =
     "Génère la liste de présence pour la mise en place des examens.";
 
-  public readonly validationSchema = SchoolYearSchema;
+  public readonly validationSchema = schoolYearIdBaseSchema;
 
   constructor() {
     super({

@@ -31,7 +31,7 @@ export interface ComboboxSearchProps {
   searchPlaceholder?: string;
   search?: string;
   value?: string;
-  onChange?(value: string): void;
+  onChange?(value: string, item: any): void;
   options?: ComboboxOption[];
   disable?: boolean;
   className?: string;

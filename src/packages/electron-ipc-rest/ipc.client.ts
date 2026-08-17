@@ -1,31 +1,15 @@
-import type { BrowserWindow } from "electron";
 import type { IpcRenderer } from "@electron-toolkit/preload";
 import { HttpMethod, HttpStatus } from "./constant";
 import { unwrapResult, HttpException, type IResponse } from "./utils";
-
-export interface ILogger {
-  info(message: string, meta?: unknown): void;
-  warn(message: string, meta?: unknown): void;
-  error(message: string, error?: unknown): void;
-}
-
-export interface IpcRequest<
-  TBody = unknown,
-  TParams = Record<string, unknown>,
-  THeaders = Record<string, string>,
-> {
-  readonly id: string;
-  readonly body: TBody;
-  readonly params: TParams;
-  readonly headers: THeaders;
-  readonly context: {
-    readonly sender: Electron.WebContents;
-    readonly window: BrowserWindow | null;
-  };
-}
+import { ILogger, IpcRequest } from "./type";
 
 export interface ServerConfig {
   readonly logger?: ILogger;
+}
+
+export interface ProgressPayload {
+  message: string;
+  pourcent: number;
 }
 
 // Handler mis à jour avec le type Headers instanciable
@@ -53,7 +37,6 @@ interface IpcPayload<T> {
 }
 
 export class IpcClient {
-  // Ajout d'un système d'éjection pour éviter les fuites de mémoire
   private requestHandlers: Interceptor<IpcPayload<any>>[] = [];
   private responseHandlers: Interceptor<IResponse<any>>[] = [];
 
@@ -80,6 +63,19 @@ export class IpcClient {
     private readonly ipcRenderer: IpcRenderer,
     private readonly baseHeaders: Record<string, string> = {},
   ) {}
+
+  /**
+   * onSyncMessage
+   */
+  public onSyncProgressMessage(
+    url: string,
+    callback: (params: ProgressPayload) => void,
+  ) {
+    const subscription = (_event: any, value: ProgressPayload) =>
+      callback(value);
+    this.ipcRenderer.on(url, subscription);
+    return () => this.ipcRenderer.removeListener(url, subscription);
+  }
 
   public get<T>(url: string, config?: ClientRequestConfig): Promise<T> {
     return this.request<T>(url, HttpMethod.GET, undefined, config);

@@ -1,109 +1,117 @@
 import z from "zod";
 import {
-  localRoomRepository,
   localRoomService,
-  type SelectOption,
+  localRoomRepository,
 } from "@/packages/@core/data-access/db/queries";
 import {
   HttpMethod,
-  IpcRequest,
-  ValidationSchemas,
+  IpcServer,
+  type IpcRequest,
 } from "@/packages/electron-ipc-rest";
-import { AbstractEndpoint } from "../abstract";
 import { LocalRoomRoutes } from "../../routes-constant";
 import {
   LocalroomUpdateSchema,
   LocalroomFilterSchema,
   LocalroomCreateSchema,
   LocalroomSchema,
+  createSearchOptionsSchema,
+  type LocalroomFilter,
   type LocalroomCreate,
   type LocalroomUpdate,
-  type LocalroomFilter,
-  createSearchOptionsSchema,
 } from "@/packages/@core/data-access/schema-validations";
+
+/* =========================================================================
+   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
+   ========================================================================= */
 
 const LocalRoomIdSchema = LocalroomSchema.pick({
   localroomId: true,
 }).required();
-type TLocalRoomIdSchema = z.infer<typeof LocalRoomIdSchema>;
+type LocalRoomId = z.infer<typeof LocalRoomIdSchema>;
 
 export const searchLocalRoomSchema = createSearchOptionsSchema(
   LocalroomFilterSchema,
 );
-export type SearchLocalRoomParams = z.infer<typeof searchLocalRoomSchema>;
+type SearchLocalRoomOptions = z.infer<typeof searchLocalRoomSchema>;
 
-/** Récupère la liste des locaux filtrée (généralement par schoolId). */
-export class GetLocalRooms extends AbstractEndpoint<any> {
-  route = LocalRoomRoutes.ALL;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = { params: LocalroomFilterSchema };
-  protected handle({
-    params,
-  }: IpcRequest<unknown, LocalroomFilter>): Promise<unknown> {
-    return localRoomRepository.findMany(params as any);
+/* =========================================================================
+   CONTROLLER IMPLEMENTATION
+   ========================================================================= */
+
+/**
+ * Handles Inter-Process Communication (IPC) inbound requests for physical school room management.
+ */
+export class LocalRoomController {
+  /**
+   * Retrieves all local rooms matching targeted lookup criteria filters.
+   * @param req - The IPC request context containing standard filtering parameters.
+   * @returns A promise resolving to an array of matching room records.
+   */
+  @IpcServer.register(HttpMethod.GET, LocalRoomRoutes.ALL, {
+    params: LocalroomFilterSchema,
+  })
+  static async getAll(req: IpcRequest<unknown, LocalroomFilter>) {
+    return localRoomRepository.findMany(req.params);
   }
-}
 
-export class GetSearchLocalRooms extends AbstractEndpoint<any> {
-  route = LocalRoomRoutes.SEARCH;
-  method = HttpMethod.GET;
-  validationErrorMessage? = undefined;
-  schemas: ValidationSchemas = {
+  /**
+   * Retrieves selection data and simplified search structures for dropdown components.
+   * @param req - The IPC request object containing search options parameters.
+   * @returns A promise resolving to structured autocomplete selection choices.
+   */
+  @IpcServer.register(HttpMethod.GET, LocalRoomRoutes.SEARCH, {
     params: searchLocalRoomSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<unknown, SearchLocalRoomParams>): Promise<SelectOption[]> {
-    return localRoomService.getOptions(params as any);
+  })
+  static async getOptions(req: IpcRequest<unknown, SearchLocalRoomOptions>) {
+    return localRoomService.getOptions(req.params);
   }
-}
 
-export class GetLocalRoom extends AbstractEndpoint<any> {
-  route = LocalRoomRoutes.DETAIL;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = { params: LocalRoomIdSchema };
-  protected handle({
-    params,
-  }: IpcRequest<unknown, TLocalRoomIdSchema>): Promise<unknown> {
-    return localRoomRepository.findById(params.localroomId);
+  /**
+   * Fetches specific structural room details using a primary identification token.
+   * @param req - The IPC request object carrying target identification parameters.
+   * @returns A promise resolving to the matched room object, or null.
+   */
+  @IpcServer.register(HttpMethod.GET, LocalRoomRoutes.DETAIL, {
+    params: LocalRoomIdSchema,
+  })
+  static async getById(req: IpcRequest<unknown, LocalRoomId>) {
+    return localRoomRepository.findById(req.params.localroomId);
   }
-}
 
-/** Crée un nouveau local physique dans une école. */
-export class CreateLocalRoom extends AbstractEndpoint<any> {
-  route = LocalRoomRoutes.ALL;
-  method = HttpMethod.POST;
-  schemas: ValidationSchemas = { body: LocalroomCreateSchema };
-  protected handle({ body }: IpcRequest<LocalroomCreate>): Promise<unknown> {
-    return localRoomRepository.create(body);
+  /**
+   * Provisions a new physical room entity record inside the core database structure.
+   * @param req - The IPC request object containing the raw creation payload.
+   * @returns A promise resolving to the newly created room record instance.
+   */
+  @IpcServer.register(HttpMethod.POST, LocalRoomRoutes.ALL, {
+    body: LocalroomCreateSchema,
+  })
+  static async create(req: IpcRequest<LocalroomCreate>) {
+    return localRoomRepository.create(req.body);
   }
-}
 
-/** Met à jour les informations d'un local (capacité, nom, dimensions). */
-export class UpdateLocalRoom extends AbstractEndpoint<any> {
-  route = LocalRoomRoutes.DETAIL;
-  method = HttpMethod.PUT;
-  schemas: ValidationSchemas = {
+  /**
+   * Updates fields on an existing institutional room designated by parameters.
+   * @param req - The IPC request object containing update body payload and identification parameters.
+   * @returns A promise resolving to the mutated room object record.
+   */
+  @IpcServer.register(HttpMethod.PUT, LocalRoomRoutes.DETAIL, {
     params: LocalRoomIdSchema,
     body: LocalroomUpdateSchema,
-  };
-  protected handle({
-    params,
-    body,
-  }: IpcRequest<LocalroomUpdate, TLocalRoomIdSchema>): Promise<unknown> {
-    return localRoomRepository.update(params.localroomId, body);
+  })
+  static async update(req: IpcRequest<LocalroomUpdate, LocalRoomId>) {
+    return localRoomRepository.updateById(req.params.localroomId, req.body);
   }
-}
 
-/** Supprime un local de la base de données. */
-export class DeleteLocalRoom extends AbstractEndpoint<any> {
-  route = LocalRoomRoutes.DETAIL;
-  method = HttpMethod.DELETE;
-  schemas: ValidationSchemas = { params: LocalRoomIdSchema };
-  protected handle({
-    params,
-  }: IpcRequest<undefined, TLocalRoomIdSchema>): Promise<unknown> {
-    return localRoomRepository.delete(params.localroomId);
+  /**
+   * Removes a targeted physical room entry definitively from persistent data storage tables.
+   * @param req - The IPC request object carrying target tracking keys.
+   * @returns A promise resolving to the operation completion status results.
+   */
+  @IpcServer.register(HttpMethod.DELETE, LocalRoomRoutes.DETAIL, {
+    params: LocalRoomIdSchema,
+  })
+  static async delete(req: IpcRequest<unknown, LocalRoomId>) {
+    return localRoomRepository.delete(req.params.localroomId);
   }
 }

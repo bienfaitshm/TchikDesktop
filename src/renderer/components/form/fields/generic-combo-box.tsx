@@ -29,6 +29,7 @@ type GenericComboBoxProps<T> = {
   id?: string;
   options: ComboBoxOption<T>[];
   value?: string;
+  disabled?: boolean;
   onChangeValue: (value: string) => void;
   placeholder?: string;
   searchPlaceholder?: string;
@@ -46,6 +47,7 @@ function GenericComboBoxInner<T>(
   {
     options = [],
     value,
+    disabled,
     onChangeValue,
     placeholder = "Sélectionner...",
     searchPlaceholder = "Rechercher...",
@@ -74,6 +76,7 @@ function GenericComboBoxInner<T>(
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          disabled={disabled}
           className={cn(
             "w-full justify-between font-normal h-9 px-3",
             className,
@@ -111,7 +114,7 @@ function GenericComboBoxInner<T>(
             className="h-8 text-xs border-none focus-visible:ring-0 shadow-none"
           />
           <CommandList
-            className="max-h-60 overflow-y-auto scrollbar-thin"
+            className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-accent"
             onWheel={(e) => {
               e.stopPropagation();
             }}

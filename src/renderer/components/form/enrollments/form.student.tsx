@@ -2,6 +2,7 @@
 import { useFormContext } from "react-hook-form";
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -13,6 +14,8 @@ import { DateInput } from "@/renderer/components/form/fields/date";
 import { GenderInput } from "@/renderer/components/form/fields/gender";
 import type { EnrollmentFormData } from "./types";
 import React from "react";
+import { StudentSeniorityStatusSelect } from "../fields/student-seriority-statut";
+import { Label } from "@/components/ui/label";
 
 export const StudentFormFields: React.FC = () => {
   const {
@@ -22,13 +25,15 @@ export const StudentFormFields: React.FC = () => {
 
   return (
     <fieldset className="space-y-4" disabled={isSubmitting}>
+      <Label className="xs">Informations de l'élève</Label>
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <FormField
           control={control}
-          name="student.lastName"
+          name="studentData.student.lastName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nom</FormLabel>
+              <FormLabel className="text-xs">Nom</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -42,10 +47,10 @@ export const StudentFormFields: React.FC = () => {
         />
         <FormField
           control={control}
-          name="student.middleName"
+          name="studentData.student.middleName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Postnom</FormLabel>
+              <FormLabel className="text-xs">Postnom</FormLabel>
               <FormControl>
                 <Input {...field} placeholder="Ex: MUKALA" />
               </FormControl>
@@ -55,10 +60,10 @@ export const StudentFormFields: React.FC = () => {
         />
         <FormField
           control={control}
-          name="student.firstName"
+          name="studentData.student.firstName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Prénom</FormLabel>
+              <FormLabel className="text-xs">Prénom</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -76,12 +81,13 @@ export const StudentFormFields: React.FC = () => {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <FormField
           control={control}
-          name="student.gender"
+          name="studentData.student.gender"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Sexe</FormLabel>
+              <FormLabel className="text-xs">Sexe</FormLabel>
               <FormControl>
                 <GenderInput
+                  {...field}
                   value={field.value}
                   onChange={field.onChange}
                   options={[
@@ -97,10 +103,10 @@ export const StudentFormFields: React.FC = () => {
 
         <FormField
           control={control}
-          name="student.birthPlace"
+          name="studentData.student.birthPlace"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Lieu de naissance</FormLabel>
+              <FormLabel className="text-xs">Lieu de naissance</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -115,12 +121,42 @@ export const StudentFormFields: React.FC = () => {
 
         <FormField
           control={control}
-          name="student.birthDate"
+          name="studentData.student.birthDate"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel className="mb-2">Date de naissance</FormLabel>
+              <FormLabel className="text-xs">Date de naissance</FormLabel>
               <FormControl>
-                <DateInput value={field.value!} onChange={field.onChange} />
+                <DateInput
+                  {...field}
+                  value={field.value!}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <div>
+        {/* Seniority Status */}
+        <FormField
+          control={control}
+          name="isNewStudent"
+          render={({ field }) => (
+            <FormItem className="flex flex-col justify-between">
+              <div className="space-y-1">
+                <FormLabel className="text-sm">Statut d'inscription</FormLabel>
+                <FormDescription>
+                  Précisez s'il s'agit d'une nouvelle inscription.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <StudentSeniorityStatusSelect
+                  {...field}
+                  value={field.value}
+                  onChangeValue={field.onChange}
+                  disabled={isSubmitting}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

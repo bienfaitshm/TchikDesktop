@@ -1,12 +1,13 @@
 import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
-import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
+import { schoolYearIdBaseSchema } from "@/packages/@core/data-access/schema-validations";
 import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
-import { extensions } from "@/packages/@core/documents-exports/extensions/enrollments";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
+import { DocumentCategory } from "@/packages/@core/documents-exports/constants";
 import { EnrollmentDataResolver } from "./resolver";
+import { extensions } from "./extensions";
 import { createEnrollmentDocumentExportForm } from "./form";
 
 type ExportPayload = {
@@ -24,11 +25,12 @@ export class EnrollmentExportStrategy extends AbstractExportStrategy<
   any
 > {
   public readonly id = "ENROLLMENT_EXPORT";
+  public readonly category = DocumentCategory.DATA_SCHOOL;
   public readonly displayName = "Liste des Inscriptions";
   public readonly description =
     "Export complet des données d'inscription (élèves, classes, dates).";
 
-  protected readonly validationSchema = SchoolYearSchema;
+  protected readonly validationSchema = schoolYearIdBaseSchema;
 
   constructor() {
     super({

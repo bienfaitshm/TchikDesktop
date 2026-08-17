@@ -1,8 +1,10 @@
 "use client";
 
-import type { ClassroomDTO } from "@/packages/@core/data-access/db/queries";
+import * as React from "react";
+import { Plus, Eye, Pencil, Copy, Trash2 } from "lucide-react";
 import { useGetClassrooms } from "@/renderer/libs/queries/classrooms";
-import React, { useMemo } from "react";
+import type { ClassroomDTO } from "@/packages/@core/data-access/db/queries";
+import { Button } from "@/renderer/components/ui/button";
 import {
   DataTable,
   DataContentBody,
@@ -15,134 +17,147 @@ import {
   SearchTableToolbar,
   DataTableColumnToggle,
 } from "@/renderer/components/tables/data-table";
-import { Button } from "@/renderer/components/ui/button";
 import {
   classroomColumns,
-  enhanceColumnsExpandable,
+  enhanceColumns,
 } from "@/renderer/components/tables/columns";
-import { Plus } from "lucide-react";
-import { Suspense } from "@/renderer/libs/queries/suspense";
 import {
-  ClassroomDialogCreateForm,
-  ClassroomDialogDeleteForm,
-  ClassroomDialogUpdateForm,
+  CreateClassroomDialog,
+  DeleteClassroomDialog,
+  UpdateClassroomDialog,
   type ClassroomDialogProps,
 } from "@/renderer/dialog-actions/classroom.dialog-actions";
-
-import { ExpandableRow } from "@/renderer/components/tables/data-table.expandable";
-import {
-  ActionContainer,
-  ActionTileCopy,
-  ActionTileDelete,
-  ActionTileEdit,
-  ActionTileDetail,
-} from "@/renderer/components/tables/data-table.action-tiles";
-import { Link } from "react-router";
-import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
-import { useGetOptionAsOptions } from "@/renderer/hooks/data-as-options";
 import { useSchoolContext } from "@/renderer/hooks/app-config-router";
-import { PageShell } from "@/renderer/screens/layouts/page-shell.layout";
+import { useGetOptionAsOptions } from "@/renderer/hooks/data-as-options";
 import { APP_ROUTES } from "@/renderer/constants";
-const columns = enhanceColumnsExpandable(classroomColumns);
+import {
+  createActionMenus,
+  type ActionMenuConfig,
+} from "@/components/menus/action-menus";
+import { SECTION_OPTIONS } from "@/packages/@core/data-access/db/options";
+import {
+  PageContainer,
+  PageHeader,
+  PageHeaderTextContent,
+  PageHeadTitle,
+  PageHeadDescription,
+  PageContent,
+} from "@/renderer/containers/page-container";
 
-interface ClassroomRowActionsProps extends Pick<
+export interface ClassroomRowActionsProps extends Pick<
   ClassroomDialogProps,
   "mutationKey"
 > {
   classroom: ClassroomDTO;
   schoolId: string;
-  yearId: string;
 }
 
-/**
- * @description Actions de ligne
- */
-const ClassroomRowActions: React.FC<ClassroomRowActionsProps> = React.memo(
-  ({ classroom, schoolId, yearId, mutationKey }) => {
-    const defaultValues = useMemo(
-      () => ({ ...classroom, yearId }),
-      [classroom, yearId],
-    );
-
-    return (
-      <ActionContainer className="justify-end">
-        {/* Navigation vers le détail des étudiants */}
-        <Link
-          to={APP_ROUTES.CLASSROOMS.STUDENTS(classroom.classId)}
-          className="contents"
-        >
-          <ActionTileDetail />
-        </Link>
-
-        {/* Modification */}
-        <ClassroomDialogUpdateForm
-          classId={classroom.classId}
-          schoolId={schoolId}
-          defaultValues={defaultValues}
-          mutationKey={mutationKey}
-        >
-          <ActionTileEdit />
-        </ClassroomDialogUpdateForm>
-
-        {/* Duplication */}
-        <ClassroomDialogCreateForm
-          schoolId={schoolId}
-          defaultValues={{ schoolId, yearId }}
-          mutationKey={mutationKey}
-        >
-          <ActionTileCopy />
-        </ClassroomDialogCreateForm>
-
-        {/* Suppression avec confirmation (Plus de Render Props obsolète) */}
-        <ClassroomDialogDeleteForm
-          classId={classroom.classId}
-          identifier={classroom.identifier}
-          mutationKey={mutationKey}
-        >
-          <ActionTileDelete />
-        </ClassroomDialogDeleteForm>
-      </ActionContainer>
-    );
+const MENUS: ActionMenuConfig<ClassroomRowActionsProps>[] = [
+  {
+    id: "details",
+    label: "Voir les élèves",
+    icon: Eye,
+    link: ({ classroom }) => APP_ROUTES.CLASSROOMS.STUDENTS(classroom.classId),
   },
-);
+  {
+    id: "edit",
+    label: "Modifier la classe",
+    icon: Pencil,
+    dialog({ classroom, schoolId, mutationKey }) {
+      return (
+        <UpdateClassroomDialog
+          classId={classroom.classId}
+          schoolId={schoolId}
+          defaultValues={classroom}
+          mutationKey={mutationKey}
+        />
+      );
+    },
+  },
+  {
+    id: "duplicate",
+    label: "Dupliquer la classe",
+    icon: Copy,
+    dialog({ classroom, schoolId, mutationKey }) {
+      return (
+        <CreateClassroomDialog
+          schoolId={schoolId}
+          defaultValues={{ ...classroom, schoolId }}
+          mutationKey={mutationKey}
+        />
+      );
+    },
+  },
+  {
+    id: "delete",
+    label: "Supprimer la classe",
+    icon: Trash2,
+    separator: true,
+    variant: "destructive",
+    dialog({ classroom, mutationKey }) {
+      return (
+        <DeleteClassroomDialog
+          id={classroom.classId}
+          name={classroom.identifier}
+          mutationKey={mutationKey}
+        />
+      );
+    },
+  },
+];
 
-ClassroomRowActions.displayName = "ClassroomRowActions";
+export const ClassroomRowAction: React.FC<ClassroomRowActionsProps> =
+  createActionMenus<ClassroomRowActionsProps>(MENUS);
 
-export const ClassroomPage = () => {
-  const { schoolId, yearId } = useSchoolContext();
+export const ClassroomPage: React.FC = () => {
+  const { schoolId } = useSchoolContext();
   const { options } = useGetOptionAsOptions(schoolId);
 
   const { data: classrooms = [], queryKey: mutationKey } = useGetClassrooms({
-    where: { schoolId, yearId },
+    where: {
+      classrooms: {
+        schoolId,
+      },
+    },
   });
 
+  const columns = React.useMemo(
+    () =>
+      enhanceColumns(classroomColumns, {
+        variant: "actions",
+        renderRowAction: (classroom) => (
+          <ClassroomRowAction
+            mutationKey={mutationKey}
+            classroom={classroom}
+            schoolId={schoolId}
+          />
+        ),
+      }),
+    [mutationKey, schoolId],
+  );
+
   return (
-    <div className="h-[calc(100vh-64px)] w-full overflow-hidden">
-      <PageShell
-        maxWidth="xl"
-        header={
-          <section className="container flex items-center justify-between w-full max-w-(--breakpoint-2xl) my-4">
-            <header className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight">
-                Gestion des classes
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Administrez les salles.
-              </p>
-            </header>
-          </section>
-        }
-      >
+    <PageContainer className="w-full min-w-0">
+      <PageHeader>
+        <PageHeaderTextContent>
+          <PageHeadTitle>Gestion des classes</PageHeadTitle>
+          <PageHeadDescription>
+            Administrez les classes de votre établissement.
+          </PageHeadDescription>
+        </PageHeaderTextContent>
+      </PageHeader>
+
+      <PageContent className="w-full min-w-0 space-y-4">
         <DataTable<ClassroomDTO>
           data={classrooms}
           columns={columns}
           keyExtractor={(item) => item.classId}
         >
-          <DataTableToolbar>
-            <FilteredTableToolbarContainer>
+          <DataTableToolbar className="flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <FilteredTableToolbarContainer className="flex-wrap gap-2">
               <SearchTableToolbar
                 searchColumn="identifier"
-                placeholder="Recherche Ex. 1er MA"
+                placeholder="Rechercher ex. 1ère MA"
               />
               <TableFacetedFilterItem
                 title="Section"
@@ -155,48 +170,30 @@ export const ClassroomPage = () => {
                 options={options}
               />
             </FilteredTableToolbarContainer>
-            <div className="flex items-center gap-4">
+
+            <div className="flex items-center justify-end gap-2 shrink-0">
               <DataTableColumnToggle />
-              <ClassroomDialogCreateForm
+              <CreateClassroomDialog
                 schoolId={schoolId}
-                defaultValues={{ yearId, schoolId }}
+                defaultValues={{ schoolId }}
                 mutationKey={mutationKey}
               >
-                <Button size="sm" className="rounded-full shadow-xs">
-                  <Plus className="size-4 mr-2" />
+                <Button size="sm" className="gap-2 rounded-full shadow-xs">
+                  <Plus className="size-4" />
                   <span>Ajouter une classe</span>
                 </Button>
-              </ClassroomDialogCreateForm>
+              </CreateClassroomDialog>
             </div>
           </DataTableToolbar>
 
-          <Suspense
-            fallback={
-              <div className="h-64 w-full animate-pulse bg-muted/20 rounded-lg" />
-            }
-          >
-            <DataTableContent>
-              <DataContentHead />
-              <DataContentBody<ClassroomDTO>>
-                {({ row }) => (
-                  <ExpandableRow
-                    row={row as any}
-                    renderDetail={
-                      <ClassroomRowActions
-                        classroom={row.original}
-                        schoolId={schoolId}
-                        yearId={yearId}
-                        mutationKey={mutationKey}
-                      />
-                    }
-                  />
-                )}
-              </DataContentBody>
-            </DataTableContent>
-            <DataTablePagination />
-          </Suspense>
+          <DataTableContent>
+            <DataContentHead />
+            <DataContentBody />
+          </DataTableContent>
+
+          <DataTablePagination className="mt-4" />
         </DataTable>
-      </PageShell>
-    </div>
+      </PageContent>
+    </PageContainer>
   );
 };

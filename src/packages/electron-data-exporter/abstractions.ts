@@ -5,7 +5,7 @@
  */
 
 import type { FileFilter, SaveDialogOptions } from "electron";
-import type { AnyZodObject, ZodError } from "zod";
+import type { ZodObject, ZodError } from "zod";
 import {
   DOCUMENT_EXTENSION,
   getFileDescription,
@@ -15,6 +15,7 @@ import type { RawFileContent, ServiceResult, ContextParams } from "./types";
 
 export interface TMeta<TFormField = unknown> {
   title: string;
+  category: string;
   description: string;
   extensions: FileFilter[];
   fields?: readonly TFormField[];
@@ -37,7 +38,7 @@ export abstract class AbstractExportExtension<
   TData = unknown,
 > implements IExportExtension<TData> {
   abstract readonly extension: DOCUMENT_EXTENSION;
-  abstract readonly description?: string;
+  abstract description?: string;
 
   public getExtensionFilter(): FileFilter & { description?: string } {
     return {
@@ -80,10 +81,11 @@ export abstract class AbstractExportStrategy<
   TData = unknown,
 > implements IExportStrategy<TFormField> {
   public abstract readonly id: string;
+  public abstract readonly category: string;
   public abstract readonly displayName: string;
   public abstract readonly description: string;
 
-  protected abstract readonly validationSchema: AnyZodObject;
+  protected abstract readonly validationSchema: ZodObject;
   protected formFields: TFormField[] = [];
 
   /** Registre interne des moteurs de rendu supportés par cette stratégie. */
@@ -92,14 +94,14 @@ export abstract class AbstractExportStrategy<
     IExportExtension<TData>
   >();
 
-  protected getSchemasCreator?: (fields: TFormField[]) => AnyZodObject;
+  protected getSchemasCreator?: (fields: TFormField[]) => ZodObject;
 
   constructor({
     extensions,
     getSchemasCreator,
   }: {
     extensions: IExportExtension<TData>[];
-    getSchemasCreator?: (fields: TFormField[]) => AnyZodObject;
+    getSchemasCreator?: (fields: TFormField[]) => ZodObject;
   }) {
     this.getSchemasCreator = getSchemasCreator;
     extensions.forEach((ext) =>
@@ -115,6 +117,7 @@ export abstract class AbstractExportStrategy<
   ): Promise<TMeta<TFormField>> {
     return {
       title: this.displayName,
+      category: this.category,
       description: this.description,
       extensions: this.extensionFilters,
       fields: await this.getFormFields(params),
@@ -175,10 +178,10 @@ export abstract class AbstractExportStrategy<
     return this.formFields;
   }
 
-  protected getSchemas(): AnyZodObject {
+  protected getSchemas(): ZodObject {
     const extraSchemas = this.getSchemasCreator?.(this.formFields ?? []);
     return extraSchemas
-      ? this.validationSchema.merge(extraSchemas)
+      ? this.validationSchema.extend(extraSchemas.shape)
       : this.validationSchema;
   }
 
@@ -219,7 +222,6 @@ export abstract class AbstractExportStrategy<
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.log("engine.process", error);
       return {
         success: false,
         error: {
@@ -232,7 +234,7 @@ export abstract class AbstractExportStrategy<
   }
 
   private formatZodError(error: ZodError): string {
-    return error.errors
+    return error.issues
       .map((e) => `${e.path.join(".")}: ${e.message}`)
       .join("; ");
   }

@@ -50,6 +50,7 @@ export interface ExportArtifact {
  */
 export interface DocumentMetadata<TField = unknown> {
   readonly id: string;
+  readonly category: string;
   readonly extensions: FileFilter[];
   readonly title: string;
   readonly description: string;

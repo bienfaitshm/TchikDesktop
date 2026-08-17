@@ -90,13 +90,7 @@ export async function unwrapResult<T>(
   const response = await responsePromise;
 
   if (isSuccess(response.status)) {
-    if (response.data === null || response.data === undefined) {
-      throw new HttpException(
-        "Response parsed successfully but returned empty data",
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-    return response.data;
+    return response.data as T;
   }
 
   const errorMsg = response.error?.message || "IPC Communication Error";

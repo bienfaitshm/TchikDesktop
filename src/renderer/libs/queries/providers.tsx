@@ -1,18 +1,37 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient as useTSQueryClient,
+} from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
-const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            staleTime: 10 * 60 * 1000, // Les données ne deviennent jamais obsolètes
-            refetchOnWindowFocus: false, // Pas de refetch lors du focus
-            refetchOnReconnect: false, // Pas de refetch lors de la reconnexion
-            refetchInterval: false, // Pas de refetch périodique
-        },
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 10 * 60 * 1000,
+
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchInterval: false,
     },
-})
+  },
+});
 
-export default function QuerieProvider({
-    children,
+export const useQueryClient = () => {
+  return useTSQueryClient(queryClient);
+};
+
+// if (process.env.NODE_ENV !== 'production') {
+//   window.TANSTACK_QUERY_CLIENT = queryClient;
+// }
+
+export default function QueryProvider({
+  children,
 }: React.PropsWithChildren<unknown>): React.ReactNode {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  );
 }

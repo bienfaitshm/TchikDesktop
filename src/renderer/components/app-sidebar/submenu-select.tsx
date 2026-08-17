@@ -1,181 +1,144 @@
 "use client";
 
-import React, { PropsWithChildren } from "react";
-import { Link, LinkProps } from "react-router";
-import { Check, PlusCircle } from "lucide-react";
+import React, { createContext, useContext } from "react";
+import { Check, type LucideIcon } from "lucide-react";
 import {
-  MenubarItem,
   MenubarSub,
   MenubarSubTrigger,
   MenubarSubContent,
+  MenubarItem,
 } from "@/renderer/components/ui/menubar";
 
-export type MenuSelectProps<TData> = {
-  items: TData[];
-  selectedValue?: string;
-  emptyMessage?: string;
-  getItemProps: (item: TData) => {
-    id: string;
-    label: string;
-    subLabel?: string;
-  };
-  onSelectItem: (item: TData) => void;
-};
+// ==========================================
+// 1. Context React pour la Composition
+// ==========================================
 
-export type MenuSelectItemProps = {
-  label: string;
-  subLabel?: string;
-  icon?: React.ReactNode;
-  isSelected?: boolean;
-  onSelect?: () => void;
-};
+interface SelectSubMenuContextValue<T extends string = string> {
+  selectedValue: T;
+  onValueChange: (value: T) => void;
+}
 
-export type SubMenuSelectProps = {
-  title: string;
-  subTitle?: string;
-  ariaLabel?: string;
-};
+const SelectSubMenuContext = createContext<SelectSubMenuContextValue | null>(
+  null,
+);
 
-export type MenubarLinkActionProps = Pick<LinkProps, "to"> & {};
-
-export function MenuSelect<TData extends object>({
-  items,
-  selectedValue,
-  emptyMessage = "Aucune option disponible",
-  getItemProps,
-  onSelectItem,
-}: MenuSelectProps<TData>) {
-  if (items.length === 0) {
-    return (
-      <MenubarItem
-        disabled
-        className="text-muted-foreground/70 italic text-sm py-2 px-3 focus:bg-transparent"
-      >
-        {emptyMessage}
-      </MenubarItem>
+function useSelectSubMenu() {
+  const context = useContext(SelectSubMenuContext);
+  if (!context) {
+    throw new Error(
+      "Les sous-composants de SelectSubMenu doivent être utilisés à l'intérieur de <SelectSubMenu />",
     );
   }
+  return context;
+}
 
+// ==========================================
+// 2. Composants Composables (Compound Components)
+// ==========================================
+
+export interface SelectSubMenuProps<T extends string> {
+  value: T;
+  onValueChange: (value: T) => void;
+  children: React.ReactNode;
+}
+
+/** Racine qui fournit le contexte d'état */
+export function SelectSubMenu<T extends string>({
+  value,
+  onValueChange,
+  children,
+}: SelectSubMenuProps<T>) {
   return (
-    <>
-      {items.map((item, index) => {
-        const { id, label, subLabel } = getItemProps(item);
-        const isSelected = id === selectedValue;
-        const itemKey = id || `menu-item-${index}`;
-
-        return (
-          <MenuSelectItem
-            key={itemKey}
-            onSelect={() => onSelectItem(item)}
-            isSelected={isSelected}
-            label={label}
-            subLabel={subLabel}
-          />
-        );
-      })}
-    </>
+    <SelectSubMenuContext.Provider
+      value={{
+        selectedValue: value,
+        onValueChange: onValueChange as (v: string) => void,
+      }}
+    >
+      <MenubarSub>{children}</MenubarSub>
+    </SelectSubMenuContext.Provider>
   );
 }
 
-export function MenuSelectItem({
-  label,
-  subLabel,
-  icon,
-  isSelected = false,
-  onSelect,
-}: MenuSelectItemProps) {
+export interface SelectSubMenuTriggerProps {
+  icon?: LucideIcon | React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+  className?: string;
+}
+
+/** Déclencheur du sous-menu */
+export function SelectSubMenuTrigger({
+  icon: Icon,
+  children,
+  className = "",
+}: SelectSubMenuTriggerProps) {
+  return (
+    <MenubarSubTrigger
+      className={`flex items-center gap-3 cursor-pointer py-2 px-4 focus:bg-accent data-[state=open]:bg-accent ${className}`}
+    >
+      {Icon && (
+        <Icon className="size-4 text-muted-foreground group-hover:text-primary transition-colors" />
+      )}
+      <span className="flex-1 text-sm">{children}</span>
+    </MenubarSubTrigger>
+  );
+}
+
+export interface SelectSubMenuContentProps {
+  children: React.ReactNode;
+  className?: string;
+  sideOffset?: number;
+  alignOffset?: number;
+}
+
+/** Conteneur de la liste des choix */
+export function SelectSubMenuContent({
+  children,
+  className = "min-w-45",
+  sideOffset = 12,
+  alignOffset = -4,
+}: SelectSubMenuContentProps) {
+  return (
+    <MenubarSubContent
+      className={className}
+      sideOffset={sideOffset}
+      alignOffset={alignOffset}
+    >
+      {children}
+    </MenubarSubContent>
+  );
+}
+
+export interface SelectSubMenuItemProps<T extends string> {
+  value: T;
+  icon?: LucideIcon | React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+  className?: string;
+}
+
+/** Option individuelle avec gestion automatique du Check mark */
+export function SelectSubMenuItem<T extends string>({
+  value,
+  icon: Icon,
+  children,
+  className = "",
+}: SelectSubMenuItemProps<T>) {
+  const { selectedValue, onValueChange } = useSelectSubMenu();
+  const isSelected = selectedValue === value;
+
   return (
     <MenubarItem
-      role="menuitemcheckbox"
-      aria-checked={isSelected}
+      className={`flex items-center gap-2 cursor-pointer py-1.5 px-3 ${className}`}
       onSelect={(e) => {
         e.preventDefault();
-        onSelect?.();
+        onValueChange(value);
       }}
-      className="flex items-center justify-between py-2 px-3 cursor-pointer rounded-md transition-colors text-sm focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50"
     >
-      <div className="flex items-center gap-3 text-left片段">
-        {icon && (
-          <div
-            className="size-4 shrink-0 text-muted-foreground flex items-center justify-center"
-            aria-hidden="true"
-          >
-            {icon}
-          </div>
-        )}
-
-        <div className="flex flex-col leading-tight">
-          <span className="text-sm font-medium">{label}</span>
-          {subLabel && (
-            <span className="text-xs text-muted-foreground mt-0.5">
-              {subLabel}
-            </span>
-          )}
-        </div>
-      </div>
-
+      {Icon && <Icon className="size-4 opacity-70" />}
+      <span className="flex-1 text-sm">{children}</span>
       {isSelected && (
-        <Check
-          className="size-4 text-primary shrink-0 ml-2 animate-in zoom-in-50 duration-200"
-          aria-hidden="true"
-        />
+        <Check className="size-4 text-primary animate-in zoom-in-50 duration-200" />
       )}
-    </MenubarItem>
-  );
-}
-
-/**
- * SubMenuSelect - Conteneur pour créer des sous-menus complexes
- */
-export function SubMenuSelect({
-  title,
-  subTitle,
-  ariaLabel,
-  children,
-}: PropsWithChildren<SubMenuSelectProps>) {
-  return (
-    <MenubarSub>
-      <MenubarSubTrigger className="py-2 px-3 flex items-center justify-between feedback-trigger">
-        <div className="flex flex-col flex-1 text-left">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {title}
-          </span>
-          {subTitle && (
-            <span
-              className="text-xs text-foreground font-medium truncate max-w-[180px] mt-0.5"
-              aria-live="polite"
-            >
-              {subTitle}
-            </span>
-          )}
-        </div>
-      </MenubarSubTrigger>
-
-      <MenubarSubContent
-        className="min-w-[260px] rounded-lg p-1 shadow-md"
-        sideOffset={8}
-        alignOffset={-4}
-        aria-label={ariaLabel}
-      >
-        {children}
-      </MenubarSubContent>
-    </MenubarSub>
-  );
-}
-
-export function MenubarLinkAction({
-  to,
-  children,
-}: PropsWithChildren<MenubarLinkActionProps>) {
-  return (
-    <MenubarItem
-      className="text-muted-foreground hover:text-foreground focus:bg-accent focus:text-accent-foreground text-xs py-2 px-3 font-medium cursor-pointer rounded-md gap-2"
-      asChild
-    >
-      <Link to={to}>
-        <PlusCircle className="size-4 shrink-0" aria-hidden="true" />
-        <span>{children}</span>
-      </Link>
     </MenubarItem>
   );
 }

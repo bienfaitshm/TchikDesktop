@@ -24,3 +24,12 @@ export function cloneElementWithProps<T extends Record<string, unknown>>(
     },
   });
 }
+
+export function lazyNamed<T extends Record<string, any>>(
+  factory: () => Promise<T>,
+  name: keyof T,
+) {
+  return React.lazy(() =>
+    factory().then((module) => ({ default: module[name] })),
+  );
+}

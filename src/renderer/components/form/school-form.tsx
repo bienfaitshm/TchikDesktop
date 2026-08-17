@@ -49,7 +49,7 @@ export const SchoolForm: React.FC<BaseFormProps<SchoolFormData>> = ({
     <Form {...form}>
       <form
         id={formId}
-        className="space-y-8"
+        className="space-y-8 flex flex-col"
         onSubmit={form.submit}
         aria-label="Configuration de l'établissement scolaire"
         noValidate
@@ -61,35 +61,30 @@ export const SchoolForm: React.FC<BaseFormProps<SchoolFormData>> = ({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center gap-1 font-bold text-muted-foreground">
-                  Nom officiel de l'école
-                  <span className="text-destructive" aria-hidden="true">
-                    *
-                  </span>
-                </FormLabel>
+                <FormLabel>Nom officiel de l'école</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Ex: Complexe Scolaire MASOMO"
                     autoComplete="organization"
-                    className="h-11 focus-visible:ring-primary/50"
+                    className="focus-visible:ring-primary/50"
                     disabled={isSubmitting}
                     aria-required="true"
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs text-left">
                   Saisissez le nom complet tel qu'il doit apparaître sur les
                   bulletins et rapports.
                 </FormDescription>
-                <FormMessage className="font-medium" />
+                <FormMessage className="text-xs text-left" />
               </FormItem>
             )}
           />
         </section>
 
         {/* Section : Localisation avec Fieldset pour l'accessibilité */}
-        <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-lg border text-muted-foreground">
-          <legend className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4 px-2">
+        <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <legend className="text-xs text-left text-muted-foreground mb-4">
             Localisation Géographique
           </legend>
 
@@ -98,7 +93,7 @@ export const SchoolForm: React.FC<BaseFormProps<SchoolFormData>> = ({
             name="town"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-semibold">Ville</FormLabel>
+                <FormLabel>Ville</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -107,7 +102,7 @@ export const SchoolForm: React.FC<BaseFormProps<SchoolFormData>> = ({
                     disabled={isSubmitting}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-xs text-left" />
               </FormItem>
             )}
           />
@@ -117,9 +112,7 @@ export const SchoolForm: React.FC<BaseFormProps<SchoolFormData>> = ({
             name="address"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-semibold">
-                  Adresse physique
-                </FormLabel>
+                <FormLabel>Adresse physique</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -128,7 +121,7 @@ export const SchoolForm: React.FC<BaseFormProps<SchoolFormData>> = ({
                     disabled={isSubmitting}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-xs text-left" />
               </FormItem>
             )}
           />

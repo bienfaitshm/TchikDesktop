@@ -1,152 +1,130 @@
 import {
   HttpMethod,
-  IpcRequest,
-  ValidationSchemas,
+  IpcServer,
+  type IpcRequest,
 } from "@/packages/electron-ipc-rest";
-import { AbstractEndpoint } from "../abstract";
 import { StatsRoutes } from "../../routes-constant";
 import { StatsService } from "@/packages/@core/data-access/db/queries";
 import {
-  StatsFilterSchema,
-  TStatsFilter,
+  schoolIdBaseSchema,
+  type SchoolYearIdBase,
+  schoolYearIdBaseSchema,
+  type SchoolIdBase,
 } from "@/packages/@core/data-access/schema-validations";
 
 /**
- * Endpoint pour obtenir le résumé global (KPIs)
+ * Handles Inter-Process Communication (IPC) inbound requests for institutional statistics and KPIs.
  */
-export class GetStatsSummary extends AbstractEndpoint<any> {
-  route = StatsRoutes.SUMMARY;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
-    params: StatsFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, TStatsFilter>): Promise<unknown> {
-    return StatsService.getQuickKpis(params.schoolId, params.yearId);
+export class StatsController {
+  /**
+   * Retrieves high-level institutional KPIs for dashboard summaries.
+   * @param req - The IPC request context carrying standard operational statistics filters.
+   * @returns A promise resolving to the global metrics summary object.
+   */
+  @IpcServer.register(HttpMethod.GET, StatsRoutes.SUMMARY, {
+    params: schoolYearIdBaseSchema,
+  })
+  static async getSummary({
+    params: { schoolId, yearId },
+  }: IpcRequest<unknown, SchoolYearIdBase>) {
+    return StatsService.getQuickKpis(schoolId, yearId);
   }
-}
 
-/**
- * Endpoint pour la répartition par Statut (Actif, Exclu, etc.)
- * Utilisable directement par Shadcn PieChart
- */
-export class GetStatsByStatus extends AbstractEndpoint<any> {
-  route = StatsRoutes.STUDENTS_BY_STATUS;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
-    params: StatsFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, TStatsFilter>): Promise<unknown> {
-    return StatsService.getStudentStatusStats(params.schoolId, params.yearId);
+  /**
+   * Retrieves student distribution metrics grouped by registration status.
+   * @param req - The IPC request context carrying target statistics filters.
+   * @returns A promise resolving to status distribution data arrays.
+   */
+  @IpcServer.register(HttpMethod.GET, StatsRoutes.STUDENTS_BY_STATUS, {
+    params: schoolYearIdBaseSchema,
+  })
+  static async getByStatus({
+    params: { schoolId, yearId },
+  }: IpcRequest<unknown, SchoolYearIdBase>) {
+    return StatsService.getStudentStatusStats(schoolId, yearId);
   }
-}
 
-/**
- * Endpoint pour la répartition par Genre
- */
-export class GetStatsByGender extends AbstractEndpoint<any> {
-  route = StatsRoutes.STUDENTS_BY_GENDER;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
-    params: StatsFilterSchema.pick({ schoolId: true }), // Le genre peut être global à l'école
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, { schoolId: string }>): Promise<unknown> {
-    return StatsService.getGenderDistribution(params.schoolId);
+  /**
+   * Extracts absolute school-wide student distributions categorized by gender.
+   * @param req - The IPC request context holding primary school identification parameters.
+   * @returns A promise resolving to global institutional gender statistics.
+   */
+  @IpcServer.register(HttpMethod.GET, StatsRoutes.STUDENTS_BY_GENDER, {
+    params: schoolIdBaseSchema,
+  })
+  static async getByGender({
+    params: { schoolId },
+  }: IpcRequest<unknown, SchoolIdBase>) {
+    return StatsService.getGenderDistribution(schoolId);
   }
-}
 
-/**
- * Endpoint pour la répartition par Classe (BarChart)
- */
-export class GetStatsByClass extends AbstractEndpoint<any> {
-  route = StatsRoutes.STUDENTS_BY_CLASS;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
-    params: StatsFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, TStatsFilter>): Promise<unknown> {
-    return StatsService.getStudentsCountByClass(params.schoolId, params.yearId);
+  /**
+   * Compiles enrollment headcount records structured per distinct classroom space.
+   * @param req - The IPC request context carrying target statistics filters.
+   * @returns A promise resolving to classroom occupancy volume metrics.
+   */
+  @IpcServer.register(HttpMethod.GET, StatsRoutes.STUDENTS_BY_CLASS, {
+    params: schoolYearIdBaseSchema,
+  })
+  static async getByClass({
+    params: { schoolId, yearId },
+  }: IpcRequest<unknown, SchoolYearIdBase>) {
+    return StatsService.getStudentsCountByClass(schoolId, yearId);
   }
-}
 
-/**
- * Endpoint pour la répartition par Option d'étude
- */
-export class GetStatsByOption extends AbstractEndpoint<any> {
-  route = StatsRoutes.STUDENTS_BY_OPTION;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
-    params: StatsFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, TStatsFilter>): Promise<unknown> {
-    return StatsService.getStudentsCountByOption(
-      params.schoolId,
-      params.yearId,
-    );
+  /**
+   * Fetches total student enrollment numbers grouped by selected study options.
+   * @param req - The IPC request context carrying target statistics filters.
+   * @returns A promise resolving to specialized study option volume metrics.
+   */
+  @IpcServer.register(HttpMethod.GET, StatsRoutes.STUDENTS_BY_OPTION, {
+    params: schoolYearIdBaseSchema,
+  })
+  static async getByOption({
+    params: { schoolId, yearId },
+  }: IpcRequest<unknown, SchoolYearIdBase>) {
+    return StatsService.getStudentsCountByOption(schoolId, yearId);
   }
-}
 
-/**
- * Endpoint pour les métriques de rétention (Anciens vs Nouveaux)
- */
-export class GetStatsRetention extends AbstractEndpoint<any> {
-  route = StatsRoutes.RETENTION;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
-    params: StatsFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, TStatsFilter>): Promise<unknown> {
-    return StatsService.getRetentionMetrics(params.schoolId, params.yearId);
+  /**
+   * Processes student body retention indexes contrasting current and historical cycles.
+   * @param req - The IPC request context carrying target statistics filters.
+   * @returns A promise resolving to structural school retention statistics.
+   */
+  @IpcServer.register(HttpMethod.GET, StatsRoutes.RETENTION, {
+    params: schoolYearIdBaseSchema,
+  })
+  static async getRetention({
+    params: { schoolId, yearId },
+  }: IpcRequest<unknown, SchoolYearIdBase>) {
+    return StatsService.getRetentionMetrics(schoolId, yearId);
   }
-}
 
-/**
- * Endpoint pour obtenir le nombre total d'élèves
- */
-export class GetTotalStudents extends AbstractEndpoint<any> {
-  route = StatsRoutes.TOTAL_STUDENTS;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
-    params: StatsFilterSchema,
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, TStatsFilter>): Promise<unknown> {
-    return StatsService.getTotalStudents(params.schoolId, params.yearId);
+  /**
+   * Returns a baseline total aggregate count of all students inside a specific boundary.
+   * @param req - The IPC request context carrying target statistics filters.
+   * @returns A promise resolving to the absolute numeric volume of students.
+   */
+  @IpcServer.register(HttpMethod.GET, StatsRoutes.TOTAL_STUDENTS, {
+    params: schoolYearIdBaseSchema,
+  })
+  static async getTotalStudents({
+    params: { schoolId, yearId },
+  }: IpcRequest<unknown, SchoolYearIdBase>) {
+    return StatsService.getTotalStudents(schoolId, yearId);
   }
-}
 
-/**
- * Endpoint pour la répartition des inscriptions par année (avec détails H/F)
- */
-export class GetEnrollmentsByYear extends AbstractEndpoint<any> {
-  route = StatsRoutes.ENROLLMENTS_BY_YEAR;
-  method = HttpMethod.GET;
-  schemas: ValidationSchemas = {
-    params: StatsFilterSchema.pick({ schoolId: true }),
-  };
-
-  protected handle({
-    params,
-  }: IpcRequest<any, { schoolId: string }>): Promise<unknown> {
-    return StatsService.getEnrollmentStatsByYear(params.schoolId);
+  /**
+   * Tracks long-term chronological student registration trends mapped over multiple years.
+   * @param req - The IPC request context holding primary school identification parameters.
+   * @returns A promise resolving to historical multi-year enrollment growth datasets.
+   */
+  @IpcServer.register(HttpMethod.GET, StatsRoutes.ENROLLMENTS_BY_YEAR, {
+    params: schoolIdBaseSchema,
+  })
+  static async getEnrollmentsByYear({
+    params: { schoolId },
+  }: IpcRequest<unknown, SchoolIdBase>) {
+    return StatsService.getEnrollmentStatsByYear(schoolId);
   }
 }

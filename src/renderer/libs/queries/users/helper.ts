@@ -1,39 +1,63 @@
-import React from "react";
-import type { SearchUserQueryParams } from "@/packages/@core/apis/clients";
-import { useDebounce } from "../base";
-import { useGetUsersAsOptions } from "./user";
+import { USER_ROLE_ENUM } from "@/packages/@core/data-access/db/options";
+import { useCallback } from "react";
+import { useGenericSearchOptions } from "../base";
+import { useGetUsersAsOptions as useFetchUsers } from "./user";
+import type { UserFilter } from "@/packages/@core/data-access/schema-validations";
 
-export interface UseSearchUsersOptions {
-  /** Filtres additionnels optionnels pour restreindre la recherche */
-  filters?: SearchUserQueryParams["filters"];
-  /** Délai de debounce en millisecondes (par défaut: 300ms) */
-  debounceMs?: number;
-}
+/**
+ * Builds a search query filter targeting students with optional multi-term name matching.
+ * @param search - Raw search string typed by the user.
+ * @param limit - Maximum number of student records to retrieve. Defaults to 25.
+ * @returns Fully constructed UserFilter object scoped to student users.
+ */
+export function buildStudentSearchQuery(
+  search: string,
+  limit: number = 25,
+): UserFilter {
+  const sanitizedSearch = search.trim();
+  const searchTerms = sanitizedSearch ? sanitizedSearch.split(/\s+/) : [];
 
-export function useSearchUsers(options: UseSearchUsersOptions = {}) {
-  const { filters, debounceMs = 300 } = options;
+  const baseQuery: UserFilter = {
+    limit,
+    where: {
+      users: {
+        role: USER_ROLE_ENUM.STUDENT,
+      },
+    },
+    orderBy: [
+      { table: "users", column: "lastName", order: "asc" },
+      { table: "users", column: "middleName", order: "asc" },
+      { table: "users", column: "firstName", order: "asc" },
+    ],
+  };
 
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const debouncedSearch = useDebounce(searchQuery, debounceMs);
+  if (searchTerms.length === 0) {
+    return baseQuery;
+  }
 
-  const queryParams = React.useMemo<SearchUserQueryParams>(
-    () => ({
-      search: debouncedSearch,
-      filters,
-    }),
-    [debouncedSearch, JSON.stringify(filters)],
-  );
-
-  const {
-    data = [],
-    isLoading,
-    isFetching,
-  } = useGetUsersAsOptions(queryParams);
+  const wordFilters: UserFilter["or"] = searchTerms.flatMap((term) => [
+    { users: { lastName: { $like: `%${term}%` } } },
+    { users: { middleName: { $like: `%${term}%` } } },
+    { users: { firstName: { $like: `%${term}%` } } },
+  ]);
 
   return {
-    searchQuery,
-    options: data,
-    isSearching: isLoading || isFetching,
-    setSearchQuery,
+    ...baseQuery,
+    or: wordFilters,
   };
+}
+
+/**
+ * Custom React hook providing debounced search options for student selection components.
+ * @returns Object containing search state, option results, loading indicator, and query updater.
+ */
+export function useSearchStudents() {
+  const buildSearchQuery = useCallback(
+    (search: string): UserFilter => buildStudentSearchQuery(search),
+    [],
+  );
+
+  return useGenericSearchOptions(useFetchUsers, buildSearchQuery, {
+    debounceMs: 300,
+  });
 }

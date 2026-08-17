@@ -4,14 +4,44 @@ import {
   type UserRepository,
   userRepository,
 } from "@/packages/@core/data-access/db/queries/users";
-import { EnrollmentRepository } from "./enrollment.repository";
+import {
+  type TutorService,
+  tutorService,
+} from "@/packages/@core/data-access/db/queries/tutors";
+import {
+  EnrollmentRepository,
+  EnrollmentDTO,
+  BaseClassroomEnrollmentFilters,
+} from "./enrollment.repository";
+import { SelectOptionFacade } from "@/packages/drizzle-queries";
 
 export class EnrollmentService {
+  public readonly enrollmentSelectService: SelectOptionFacade<EnrollmentDTO>;
+
   constructor(
     private readonly enrollmentRepo: EnrollmentRepository,
     private readonly userRepo: UserRepository,
+    private readonly tutorService: TutorService,
     private readonly clientDb: TDataBase = db,
-  ) {}
+  ) {
+    this.enrollmentSelectService = new SelectOptionFacade<EnrollmentDTO>(
+      this.enrollmentRepo,
+      {
+        valueKey: "enrollmentId",
+        labelKeyLong: ({ student }) =>
+          student.fullName ?? `${student.lastName} ${student.middleName}`,
+        labelKeyShort: ({ student }) => student.lastName,
+        labelFormat: "long",
+        transform(baseOption, originalItem) {
+          return { ...baseOption, ...originalItem };
+        },
+      },
+    );
+  }
+
+  getOptions(filters: BaseClassroomEnrollmentFilters) {
+    return this.enrollmentSelectService.loadOptions(filters);
+  }
 
   private validateContext(
     schoolId?: string,
@@ -35,33 +65,42 @@ export class EnrollmentService {
   /**
    * Processus transactionnel de création rapide
    */
-  async quickCreate(payload: EnrollmentQuickCreate) {
+  quickCreate({ studentData, tutorData, ...payload }: EnrollmentQuickCreate) {
     this.validateContext(payload.schoolId, payload.yearId);
 
-    return await this.clientDb.transaction(async (tx) => {
-      let targetStudentId = payload.studentId;
+    return this.clientDb.transaction((tx) => {
+      let targetStudentId: string;
+      let targetTutorId: string | null = null;
 
-      if (payload.student) {
-        const newUser = await this.userRepo.createUser(
+      // 1. GESTION ÉLÈVE
+      if (studentData.isInSystem) {
+        targetStudentId = studentData.studentId;
+      } else {
+        const student = this.userRepo.createStudent(
           {
-            lastName: payload.student.lastName,
-            middleName: payload.student.middleName,
+            ...studentData.student,
+            birthDate: studentData.student.birthDate!,
             schoolId: payload.schoolId,
           },
           tx,
         );
 
-        targetStudentId = newUser.userId;
+        targetStudentId = student.userId;
       }
 
-      // Sécurité subsidiaire (Triggers si l'ID n'a pas pu être généré ou récupéré)
-      if (!targetStudentId) {
-        throw new Error(
-          "Student ID unique requis pour finaliser l'inscription.",
+      // 2. GESTION TUTEUR
+      if (tutorData?.isTutorInSystem === true) {
+        targetTutorId = tutorData.tutorId;
+      } else if (tutorData?.isTutorInSystem === false) {
+        const tutor = this.tutorService.createTutor(
+          { ...tutorData.tutor, schoolId: payload.schoolId },
+          tx,
         );
+        targetTutorId = tutor.tutorId;
       }
 
-      return await this.enrollmentRepo.create(
+      // 3. CRÉATION DE L'INSCRIPTION
+      const enrollment = this.enrollmentRepo.create(
         {
           classroomId: payload.classroomId,
           schoolId: payload.schoolId,
@@ -69,9 +108,23 @@ export class EnrollmentService {
           status: payload.status,
           isNewStudent: payload.isNewStudent,
           studentId: targetStudentId,
+          tutorId: targetTutorId,
         },
         tx,
       );
+
+      // 4. PAIEMENT / FRAIS (Décommenter et passer 'tx' une fois prêt)
+      /*
+    await this.paymentService.assignFeesToStudent({
+      schoolId: payload.schoolId,
+      yearId: payload.yearId,
+      enrollmentId: enrollment.enrollmentId,
+      classroomId: payload.classroomId,
+      optionId: payload.optionId ?? null,
+    }, tx);
+    */
+
+      return this.enrollmentRepo.findById(enrollment.enrollmentId);
     });
   }
 }
@@ -80,4 +133,5 @@ export const enrollmentRepository = new EnrollmentRepository();
 export const enrollmentService = new EnrollmentService(
   enrollmentRepository,
   userRepository,
+  tutorService,
 );

@@ -1,5 +1,5 @@
 import {
-  schoolRepository,
+  schoolInfoService,
   classroomService,
 } from "@/packages/@core/data-access/db/queries";
 
@@ -27,15 +27,23 @@ export class CotationDataResolver {
 
     try {
       const [school, classrooms] = await Promise.all([
-        schoolRepository.fetchSchoolInfo(schoolId, yearId),
+        schoolInfoService.getSchoolInfo(schoolId, yearId),
         classroomService.getClassroomsWithStudents({
-          classroomOptions: {
+          classroom: {
             where: {
-              yearId,
-              schoolId,
+              classrooms: {
+                schoolId,
+                classId: {
+                  $in: classId,
+                },
+              },
             },
-            whereIn: {
-              classId: classId,
+          },
+          enrollment: {
+            where: {
+              classroomEnrollments: {
+                yearId,
+              },
             },
           },
         }),

@@ -3,16 +3,17 @@
  */
 
 import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
-import { SchoolYearSchema } from "@/packages/@core/data-access/schema-validations";
+import { schoolYearIdBaseSchema } from "@/packages/@core/data-access/schema-validations";
 import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
-import { extensions } from "@/packages/@core/documents-exports/extensions/cotations";
 import { createCotationDocumentExportForm } from "./form";
 import { CotationDataResolver } from "./resolver";
 import type { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
+import { extensions } from "./extension";
+import { DocumentCategory } from "../../constants";
 
 type ExportPayload = {
   schoolId: string;
@@ -27,10 +28,12 @@ export class FicheCotationExportStrategy extends AbstractExportStrategy<
   any
 > {
   public readonly id = "FICHE_COTATION_EXPORT" as const;
+  public readonly category = DocumentCategory.DATA_SCHOOL;
+
   public readonly displayName = "Fiche de cotation des eleves";
   public readonly description = "Génère les fiches de cotations par classe";
 
-  public readonly validationSchema = SchoolYearSchema;
+  public readonly validationSchema = schoolYearIdBaseSchema;
 
   constructor() {
     super({

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   useMutation as useMutationTQ,
   useSuspenseQuery as useSuspenseQueryTQ,
@@ -11,10 +11,13 @@ import {
   type QueryKey,
   type UseSuspenseQueryResult,
 } from "@tanstack/react-query";
+import { useDebounce } from "./utils";
 
 /**
- * useMutation Wrapper
- * Enrichit le résultat de la mutation avec sa mutationKey de manière performante.
+ * Enriches the mutation result with its corresponding mutationKey for performance tracking.
+ * @param options - TanStack useMutation hook options.
+ * @param queryClient - Optional custom QueryClient instance.
+ * @returns Enhanced mutation result containing the mutationKey property.
  */
 export function useMutation<
   TData = unknown,
@@ -40,8 +43,10 @@ export function useMutation<
 }
 
 /**
- * useSuspenseQuery Wrapper
- * Retourne le résultat de la requête ainsi que la queryKey de manière stable.
+ * Returns the suspense query result alongside a stable queryKey reference.
+ * @param options - TanStack useSuspenseQuery hook options.
+ * @param queryClient - Optional custom QueryClient instance.
+ * @returns Enhanced suspense query result containing the queryKey property.
  */
 export function useSuspenseQuery<
   TQueryFnData = unknown,
@@ -63,4 +68,63 @@ export function useSuspenseQuery<
     }),
     [queryResult, queryKey],
   );
+}
+
+export type SearchOptionReturn<TData> = {
+  searchQuery: string;
+  options: TData[];
+  isSearching: boolean;
+  setSearchQuery(search: string): void;
+};
+
+export interface SearchHookOptions<TFilters = Record<string, unknown>> {
+  /** Optional additional filters to narrow search results */
+  filters?: TFilters;
+  /** Debounce delay in milliseconds (default: 300ms) */
+  debounceMs?: number;
+}
+
+/**
+ * Generic search hook encapsulating debounced input handling and dynamic query fetching.
+ * @param useQueryHook - Custom query hook executing the search operation.
+ * @param querySearch - Function mapping search text to query filter parameters.
+ * @param options - Search configuration options including filters and debounce timing.
+ * @returns Search query state, formatted options, loading indicators, and setter function.
+ */
+
+export function useGenericSearchOptions<TData, TFilters>(
+  useQueryHook: (filters?: TFilters) => {
+    data?: TData[];
+    isLoading: boolean;
+    isFetching: boolean;
+  },
+  querySearch: (search: string, extraFilters?: TFilters) => TFilters,
+  options: SearchHookOptions<TFilters> = {},
+): SearchOptionReturn<TData> {
+  const { filters, debounceMs = 300 } = options;
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, debounceMs);
+
+  // 1. Référence stable pour querySearch (évite que les fonctions anonymes n'invalident le mémo)
+  const querySearchRef = useRef(querySearch);
+  querySearchRef.current = querySearch;
+
+  // 2. Sérialisation optimisée des filtres
+  const serializedFilters = useMemo(() => JSON.stringify(filters), [filters]);
+
+  // 3. Calcul des paramètres combinant la recherche et les filtres
+  const queryParams = useMemo(
+    () => querySearchRef.current(debouncedSearch, filters),
+    [debouncedSearch, serializedFilters],
+  );
+
+  const { data = [], isLoading, isFetching } = useQueryHook(queryParams);
+
+  return {
+    searchQuery,
+    options: data,
+    isSearching: isLoading || isFetching,
+    setSearchQuery,
+  };
 }

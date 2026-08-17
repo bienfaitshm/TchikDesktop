@@ -1,16 +1,13 @@
 {
   "branches": [
+    "main",
     {
-      "name": "main",
-      "channel": "lts"
+      "name": "preview",
+      "prerelease": "rc"
     },
     {
       "name": "develop",
       "prerelease": "beta"
-    },
-    {
-      "name": "preview",
-      "prerelease": "preview"
     }
   ],
   "plugins": [

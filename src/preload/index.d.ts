@@ -1,5 +1,8 @@
-import { ElectronAPI } from "@electron-toolkit/preload";
+import type { ElectronAPI } from "@electron-toolkit/preload";
+import type { AppConfig, PosPrintConfig, ThemeMode } from "@/main/store";
+import type { School, StudyYear } from "@/packages/@core/data-access/db";
 import { TEndPoint } from "./apis";
+import type { StoreAPI } from "./types";
 
 interface AppInfo {
   name: string;
@@ -93,9 +96,11 @@ declare global {
       getMonitors: () => Promise<Monitor[]>;
       getAppPaths: () => Promise<AppPaths | null>;
       getSystemInformationFeature: () => Promise<SystemInformation>;
-    };
 
-    api: TEndPoint;
+      store: StoreAPI;
+
+      api: TEndPoint;
+    };
   }
 }
 

@@ -41,93 +41,6 @@ export interface UseTableOptions<TData> {
   keyExtractor: (item: TData) => string;
 }
 
-// export function useDataTable<TData>({
-//   initialData,
-//   columns,
-//   keyExtractor,
-// }: UseTableOptions<TData>) {
-//   const [rowSelection, setRowSelection] = React.useState({});
-//   const [columnVisibility, setColumnVisibility] =
-//     React.useState<VisibilityState>({});
-//   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-//     [],
-//   );
-//   const [sorting, setSorting] = React.useState<SortingState>([]);
-//   const [pagination, setPagination] = React.useState({
-//     pageIndex: 0,
-//     pageSize: 10,
-//   });
-
-//   const data = React.useMemo(() => initialData || [], [initialData]);
-
-//   const dndId = React.useId();
-//   const dndSensors = useSensors(
-//     useSensor(MouseSensor),
-//     useSensor(TouchSensor),
-//     useSensor(KeyboardSensor),
-//   );
-
-//   const rowIds = React.useMemo(
-//     () => data.map(keyExtractor),
-//     [data, keyExtractor],
-//   );
-
-//   const tableInstance = useReactTable({
-//     data,
-//     columns,
-//     state: {
-//       sorting,
-//       columnVisibility,
-//       rowSelection,
-//       columnFilters,
-//       pagination,
-//     },
-//     onRowSelectionChange: setRowSelection,
-//     onSortingChange: setSorting,
-//     onColumnFiltersChange: setColumnFilters,
-//     onColumnVisibilityChange: setColumnVisibility,
-//     onPaginationChange: setPagination,
-
-//     getRowId: (row) => keyExtractor(row),
-//     getCoreRowModel: getCoreRowModel(),
-//     getFilteredRowModel: getFilteredRowModel(),
-//     getPaginationRowModel: getPaginationRowModel(),
-//     getSortedRowModel: getSortedRowModel(),
-//     getFacetedRowModel: getFacetedRowModel(),
-//     getFacetedUniqueValues: getFacetedUniqueValues(),
-//   });
-
-//   /**
-//    * @function handleRowDragEnd
-//    * @description Handles the `onDragEnd` event from `@dnd-kit/core` to reorder the table data.
-//    * It updates the internal `data` state based on the drag and drop operation.
-//    * @param {DragEndEvent} event - The drag end event object from `@dnd-kit/core`.
-//    */
-//   const handleRowDragEnd = React.useCallback(
-//     (event: DragEndEvent) => {
-//       const { active, over } = event;
-//       if (active && over && active.id !== over.id) {
-//         // setData((currentData) => {
-//         //   const oldIndex = rowIds.indexOf(active.id);
-//         //   const newIndex = rowIds.indexOf(over.id);
-//         //   return arrayMove(currentData, oldIndex, newIndex);
-//         // });
-//       }
-//     },
-//     [rowIds],
-//   );
-
-//   return {
-//     dndId,
-//     dndSensors,
-//     handleRowDragEnd,
-//     tableInstance,
-//     columns, // Include columns for convenience
-//     rowIds, // Include rowIds for SortableContext
-//     keyExtractor, // Include keyExtractor for clarity/potential external use
-//   } as const;
-// }
-
 export function useDataTable<TData>({
   initialData: data,
   columns,
@@ -144,15 +57,6 @@ export function useDataTable<TData>({
     pageIndex: 0,
     pageSize: 10,
   });
-
-  // const prevInitialDataRef = React.useRef(initialData);
-  // const [data, setData] = React.useState(initialData);
-  // React.useEffect(() => {
-  //   if (initialData !== prevInitialDataRef.current) {
-  //     prevInitialDataRef.current = initialData;
-  //     setData(initialData);
-  //   }
-  // }, [initialData]);
 
   const state = React.useMemo(
     () => ({

@@ -1,4 +1,5 @@
 export * from "./user";
+export * from "./tutor";
 export * from "./classrooms";
 export * from "./enrollments";
 export * from "./options";
@@ -7,3 +8,6 @@ export * from "./export-documents";
 export * from "./stats";
 export * from "./app-infos";
 export * from "./seatings";
+export * from "./finances";
+export * from "./dashboard";
+export * from "./printing";

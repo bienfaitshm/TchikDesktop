@@ -1,14 +1,10 @@
 import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import {
-  Option,
   OptionFilter,
   OptionCreate,
   OptionUpdate,
 } from "@/packages/@core/data-access/schema-validations";
-import type {
-  SearchOptions,
-  SelectOption,
-} from "@/packages/@core/data-access/db/queries";
+import type { SelectOption, Option } from "@/packages/@core/data-access/db";
 
 import { OptionRoutes } from "../routes-constant";
 
@@ -23,7 +19,7 @@ export type OptionData = Option;
  */
 export type OptionQueryParams = OptionFilter;
 
-export type SearchOptionQueryParams = Partial<SearchOptions<OptionQueryParams>>;
+export type SearchOptionQueryParams = OptionFilter;
 /**
  * Type de l'objet API retourné. Le 'as const' garantit que toutes les propriétés
  * sont en lecture seule (readonly) pour le consommateur de cette API.

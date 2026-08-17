@@ -1,42 +1,52 @@
-import { app, shell, BrowserWindow } from "electron";
+import { app, shell, BrowserWindow, nativeTheme } from "electron";
+import debug from "electron-debug";
 import path from "node:path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { dbManager } from "@/packages/@core/data-access/db";
 import { getLogger } from "@/packages/logger";
-import { apiGateway, ipcServer } from "@/main/apps";
+import { ipcServer } from "@/main/apps";
 import { initializeTextModifiers } from "@/main/features/text-transformation";
 import { setupDevelopmentEnvironment } from "@/main/electron-dev-extension";
 import { updateInit } from "@/main/update";
 import { getAppIcon } from "@/main/utils";
 import { handleFatalError } from "./error-handler";
-import "@/main/apps/system-infos";
-const mainLogger = getLogger("MainProcess");
+import {
+  registerStoreIpcHandlers,
+  tchikAppStore,
+} from "@/packages/@core/data-access/stores";
 
+import "@/main/apps/system-infos";
+
+debug();
+
+const mainLogger = getLogger("MainProcess");
+let isDatabaseReady = false;
+
+/**
+ * Creates and loads the primary application window.
+ * @returns A promise that resolves to the instantiated BrowserWindow.
+ */
 const createMainWindow = async (): Promise<BrowserWindow> => {
-  mainLogger.info("Création de la fenêtre principale...");
+  mainLogger.info("Creating primary application window...");
   const appIcon = getAppIcon();
 
   const mainWindow = new BrowserWindow({
     width: 900,
-    height: 670,
-    minWidth: 670,
-    minHeight: 600,
+    height: 800,
+    minWidth: 870,
+    minHeight: 800,
     center: true,
-
+    backgroundColor: tchikAppStore.getBackgroundWindow(),
     show: false,
-    backgroundColor: "#ffffff",
-
     title: "Tchik",
     icon: appIcon,
     autoHideMenuBar: true,
     titleBarStyle: "default",
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
-
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
-
       spellcheck: true,
       backgroundThrottling: true,
       devTools: is.dev,
@@ -44,92 +54,126 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
   });
 
   if (is.dev) {
-    mainWindow.webContents.openDevTools({ mode: "detach" });
+    mainWindow.webContents.openDevTools({ mode: "right" });
   }
 
-  mainLogger.info("Fenêtre principale créée avec les options par défaut.");
-
-  initializeTextModifiers(mainWindow);
-
   mainWindow.once("ready-to-show", () => {
-    mainLogger.info("Fenêtre prête à être affichée.");
+    mainLogger.info("Main window ready to show.");
     mainWindow.show();
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    mainLogger.warn(`Tentative d'ouverture d'URL externe: ${url}`);
+    mainLogger.warn(`External URL navigation attempt: ${url}`);
     shell.openExternal(url);
     return { action: "deny" };
   });
 
   if (is.dev && process.env.ELECTRON_RENDERER_URL) {
     mainLogger.info(
-      `Chargement de l'URL de développement: ${process.env.ELECTRON_RENDERER_URL}`,
+      `Loading development URL: ${process.env.ELECTRON_RENDERER_URL}`,
     );
-    mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
+    await mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
     const filePath = path.join(__dirname, "../renderer/index.html");
-    mainLogger.info(`Chargement du fichier de production: ${filePath}`);
-    mainWindow.loadFile(filePath);
+    mainLogger.info(`Loading production index file: ${filePath}`);
+    await mainWindow.loadFile(filePath);
   }
 
   return mainWindow;
 };
 
-app.whenReady().then(async () => {
-  mainLogger.info("Application prête (whenReady).");
+/**
+ * Bootstraps backend services including database and IPC listeners.
+ * @returns A promise resolving when all services are initialized.
+ */
+const initializeAppServices = async (): Promise<void> => {
+  try {
+    mainLogger.info("Initializing background data services...");
+    await dbManager.performBackup();
+    await dbManager.initialize();
 
-  electronApp.setAppUserModelId("com.electron.tchik");
-  mainLogger.info("AppUserModelId défini.");
+    isDatabaseReady = true;
+    mainLogger.info("Database initialized successfully.");
 
-  mainLogger.info("Initialisation de la DATA...");
-  // 1. Initialisation de la DATA en premier
-  await dbManager.performBackup();
-  await dbManager.initialize();
+    mainLogger.info("Starting IPC servers and registering store handlers...");
+    ipcServer.listen();
+    registerStoreIpcHandlers(tchikAppStore);
+  } catch (error) {
+    mainLogger.error("Fatal error during database initialization:", error);
+    handleFatalError("Database Initialization Error", error, mainLogger);
+  }
+};
 
-  mainLogger.info("Préparation des services...");
-  // 2. Préparation des services
-  apiGateway.registerEndpoints();
-  ipcServer.listen();
+/**
+ * Creates a window and attaches necessary features and state listeners.
+ * @returns A promise resolving to the fully configured BrowserWindow.
+ */
+const setupAppWindow = async (): Promise<BrowserWindow> => {
+  nativeTheme.themeSource = tchikAppStore.getTheme();
+  const window = await createMainWindow();
 
-  await setupDevelopmentEnvironment({ logger: mainLogger });
+  tchikAppStore.setWindow(window);
+  initializeTextModifiers(window);
+  updateInit(window);
 
-  const mainWindow = await createMainWindow();
+  if (isDatabaseReady) {
+    window.webContents.send("database-ready");
+  }
 
-  updateInit(mainWindow);
+  return window;
+};
 
-  app.on("activate", async () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      mainLogger.info(
-        'Événement "activate": Recréation de la fenêtre principale.',
-      );
-      const window = await createMainWindow();
-      updateInit(window);
+/**
+ * Binds global application events and orchestrates the startup sequence.
+ */
+const bootstrapApp = (): void => {
+  app.whenReady().then(async () => {
+    mainLogger.info("Application ready event triggered.");
+    electronApp.setAppUserModelId("com.electron.tchik");
+
+    const mainWindow = await setupAppWindow();
+
+    await initializeAppServices();
+    // Notify the initial window since DB was initialized after window creation
+    mainWindow.webContents.send("database-ready");
+
+    setupDevelopmentEnvironment({ logger: mainLogger }).catch((err) => {
+      mainLogger.error("Failed to setup development environment:", err);
+    });
+
+    app.on("activate", async () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        mainLogger.info("Activate event: Re-creating main application window.");
+        await setupAppWindow();
+      }
+    });
+
+    app.on("browser-window-created", (_, window) => {
+      mainLogger.info("New window created, applying shortcut optimization.");
+      optimizer.watchWindowShortcuts(window);
+    });
+  });
+
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") {
+      mainLogger.info("All windows closed: Exiting application.");
+      app.quit();
     }
   });
+};
 
-  app.on("browser-window-created", (_, window) => {
-    mainLogger.info(
-      "Nouvelle fenêtre de navigateur créée, optimisation des raccourcis.",
-    );
-    optimizer.watchWindowShortcuts(window);
+/**
+ * Sets up listeners for unhandled exceptions to prevent silent process crashes.
+ */
+const registerGlobalProcessErrorHandler = (): void => {
+  process.on("unhandledRejection", (reason) => {
+    handleFatalError("Unhandled Rejection", reason, mainLogger);
   });
-});
 
-app.on("window-all-closed", async () => {
-  if (process.platform !== "darwin") {
-    mainLogger.info(
-      'Événement "window-all-closed": Fermeture de l\'application.',
-    );
-    // await dbManager.performBackup();
-    app.quit();
-  }
-});
+  process.on("uncaughtException", (err) => {
+    handleFatalError("Uncaught Exception", err, mainLogger);
+  });
+};
 
-process.on("unhandledRejection", (reason) => {
-  handleFatalError("Unhandled Rejection", reason, mainLogger);
-});
-
-process.on("uncaughtException", (err) => {
-  handleFatalError("Uncaught Exception", err, mainLogger);
-});
+registerGlobalProcessErrorHandler();
+bootstrapApp();

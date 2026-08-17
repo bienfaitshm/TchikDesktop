@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, ReactNode } from "react";
+import React, { useState, useCallback, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/renderer/components/ui/button";
 import {
@@ -17,17 +17,23 @@ import { useDocumentExportManager } from "@/renderer/libs/queries/document-expor
 import { ExportFormContent } from "@/renderer/components/form/document-export-form";
 import { LoadingButton } from "@/renderer/components/buttons/button-loading";
 
-type WithSchoolAndYearId<T> = T & { schoolId: string; yearId?: string };
+export type WithSchoolAndYearId<T> = T & { schoolId: string; yearId?: string };
 
-interface DialogDataExportProps {
+export interface DialogDataExportProps {
   defaultValues?: Record<string, unknown>;
   buttonTrigger?: ReactNode;
 }
 
+export interface ExportLoadingOverlayProps {
+  message?: string;
+}
+
 /**
- * Indicateur visuel d'activité pour l'exportation.
+ * Visual loading overlay indicating document generation progress.
+ * @param message - Optional display message shown during loading state.
+ * @returns Rendered loader overlay element.
  */
-const ExportLoadingOverlay: React.FC<{ message?: string }> = ({
+const ExportLoadingOverlay: React.FC<ExportLoadingOverlayProps> = ({
   message = "Préparation du document...",
 }) => (
   <div className="flex items-center justify-center gap-3 p-4 rounded-xl border bg-muted/30 animate-in fade-in zoom-in duration-200">
@@ -41,10 +47,20 @@ const ExportLoadingOverlay: React.FC<{ message?: string }> = ({
   </div>
 );
 
+/**
+ * Action dialog component managing document export operations and dynamic form layouts.
+ * @param props - Dialog properties including school/year context, default values, and trigger button.
+ * @returns Rendered modal export dialog component.
+ */
 export const DialogDataExport: React.FC<
   WithSchoolAndYearId<DialogDataExportProps>
 > = ({ schoolId, yearId, defaultValues, buttonTrigger }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleSuccess = useCallback(() => {
+    const timer = setTimeout(() => setIsOpen(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const formManager = useDocumentExportManager(
     {
@@ -53,13 +69,16 @@ export const DialogDataExport: React.FC<
       ...defaultValues,
     },
     {
-      onSuccess: () => {
-        setTimeout(() => setIsOpen(false), 1500);
-      },
+      onSuccess: handleSuccess,
     },
   );
 
-  const { isExporting, formId, handleDocumentChange } = formManager;
+  const {
+    isExporting,
+    formId,
+    handleDocumentChange,
+    onSubmit: submitExport,
+  } = formManager;
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -70,6 +89,13 @@ export const DialogDataExport: React.FC<
       }
     },
     [handleDocumentChange, isExporting],
+  );
+
+  const handleFormSubmit = useCallback(
+    ({ data }: { data: Record<string, unknown> }) => {
+      submitExport(data, { schoolId, yearId });
+    },
+    [submitExport, schoolId, yearId],
   );
 
   return (
@@ -86,7 +112,6 @@ export const DialogDataExport: React.FC<
             </DialogDescription>
           </DialogHeader>
 
-          {/* Contenu principal du formulaire */}
           <div className="py-4 mx-2">
             <ExportFormContent
               formId={formManager.formId}
@@ -95,13 +120,10 @@ export const DialogDataExport: React.FC<
               selectedDocKey={formManager.selectedDocKey}
               dynamicFields={formManager.dynamicFields}
               onDocumentChange={formManager.handleDocumentChange}
-              onSubmit={({ data }) =>
-                formManager.onSubmit(data, { schoolId, yearId })
-              }
+              onSubmit={handleFormSubmit}
             />
           </div>
 
-          {/* Feedback visuel lors de l'exportation */}
           {isExporting && (
             <div className="mt-6">
               <ExportLoadingOverlay />

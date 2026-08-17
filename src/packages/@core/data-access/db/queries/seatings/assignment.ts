@@ -1,5 +1,5 @@
 import { sql, eq, and, isNull } from "drizzle-orm";
-import { db } from "@/packages/@core/data-access/db/config";
+import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import {
   seatingAssignments,
   classroomEnrollments,
@@ -10,31 +10,55 @@ import {
   type SeatingAssignment,
   type InsertSeatingAssignment,
 } from "@/packages/@core/data-access/db/schemas";
-import { BaseRepository, type LibSqlClient } from "../base-repository";
 import { getLogger } from "@/packages/logger";
+import {
+  betterSqlite,
+  DatabaseError,
+  helpers,
+} from "@/packages/drizzle-queries";
 
-export class SeatingAssignmentRepository extends BaseRepository<
+const _seatingSessionJoinTables = {
+  seatingAssignments,
+} as const;
+
+export type BaseSeatingAssignmentFilter = helpers.FindManyOptions<
+  typeof _seatingSessionJoinTables
+>;
+const SEATING_SESSION_DEFAULT_FILTERS: BaseSeatingAssignmentFilter = {};
+
+export function extractSeatingAssignmentFiltersQueryPayload(
+  filters: BaseSeatingAssignmentFilter,
+) {
+  return helpers.extractQueryPayload(_seatingSessionJoinTables, filters);
+}
+
+/**
+ * Repository for managing seating assignments and related database queries.
+ */
+export class SeatingAssignmentRepository extends betterSqlite.BaseRepository<
   TableSeatingAssignment,
-  LibSqlClient
+  TDataBase
 > {
-  constructor(database: LibSqlClient = db) {
+  constructor(database: TDataBase = db) {
     super({
       db: database,
       table: seatingAssignments,
       idColumn: seatingAssignments.assignmentId,
-      entityName: "SeatingAssignment",
+      baseTableName: "seatingAssignments",
       logger: getLogger,
+      defaultFilters: SEATING_SESSION_DEFAULT_FILTERS,
+      joinTables: _seatingSessionJoinTables,
     });
   }
 
   /**
-   * Plan de salle trié par ordre alphabétique des élèves.
+   * Retrieves the room layout sorted alphabetically by student names.
+   * @param sessionId - Identifier of the seating session.
+   * @param localroomId - Identifier of the local room.
+   * @param tx - Optional transaction database client.
+   * @returns Array of seating assignment details with student and classroom info.
    */
-  async getRoomLayout(
-    sessionId: string,
-    localroomId: string,
-    tx?: LibSqlClient,
-  ) {
+  getRoomLayout(sessionId: string, localroomId: string, tx?: TDataBase) {
     const client = this.getClient(tx);
     return client
       .select({
@@ -70,22 +94,20 @@ export class SeatingAssignmentRepository extends BaseRepository<
           eq(seatingAssignments.localroomId, localroomId),
         ),
       )
-      .orderBy(
-        sql`lower(${users.lastName})`, // Suppression du doublon
-        sql`lower(${users.firstName})`,
-      );
+      .orderBy(sql`lower(${users.lastName})`, sql`lower(${users.firstName})`)
+      .all();
   }
 
   /**
-   * Trouver un étudiant spécifique dans une session.
+   * Finds a specific student seat within a session.
+   * @param sessionId - Identifier of the seating session.
+   * @param enrollmentId - Identifier of the student enrollment.
+   * @param tx - Optional transaction database client.
+   * @returns The seat details or null if not found.
    */
-  async findStudentSeat(
-    sessionId: string,
-    enrollmentId: string,
-    tx?: LibSqlClient,
-  ) {
+  findStudentSeat(sessionId: string, enrollmentId: string, tx?: TDataBase) {
     const client = this.getClient(tx);
-    const [seat] = await client
+    const seat = client
       .select({
         roomName: localrooms.name,
         row: seatingAssignments.rowPosition,
@@ -101,18 +123,19 @@ export class SeatingAssignmentRepository extends BaseRepository<
           eq(seatingAssignments.sessionId, sessionId),
           eq(seatingAssignments.enrollmentId, enrollmentId),
         ),
-      );
-    return seat || null;
+      )
+      .get();
+    return seat ?? null;
   }
 
   /**
-   * Récupérer les élèves qui n'ont PAS ENCORE été placés pour cette session.
+   * Retrieves students who have not yet been assigned a seat for the session.
+   * @param sessionId - Identifier of the seating session.
+   * @param yearId - Identifier of the academic year.
+   * @param tx - Optional transaction database client.
+   * @returns Array of unassigned student enrollment details.
    */
-  async getUnassignedStudents(
-    sessionId: string,
-    yearId: string,
-    tx?: LibSqlClient,
-  ) {
+  getUnassignedStudents(sessionId: string, yearId: string, tx?: TDataBase) {
     const client = this.getClient(tx);
     return client
       .select({
@@ -138,94 +161,113 @@ export class SeatingAssignmentRepository extends BaseRepository<
           isNull(seatingAssignments.assignmentId),
         ),
       )
-      .orderBy(sql`lower(${users.lastName})`);
+      .orderBy(sql`lower(${users.lastName})`)
+      .all();
   }
 
   /**
-   * Vider une salle pour une session.
+   * Clears all room assignments for a given session.
+   * @param sessionId - Identifier of the seating session.
+   * @param localroomId - Identifier of the local room.
+   * @param tx - Optional transaction database client.
+   * @returns True if successful.
    */
-  async clearRoomAssignments(
-    sessionId: string,
-    localroomId: string,
-    tx?: LibSqlClient,
-  ) {
+  clearRoomAssignments(sessionId: string, localroomId: string, tx?: TDataBase) {
     try {
       const client = this.getClient(tx);
-      await client
+      client
         .delete(seatingAssignments)
         .where(
           and(
             eq(seatingAssignments.sessionId, sessionId),
             eq(seatingAssignments.localroomId, localroomId),
           ),
-        );
+        )
+        .run();
       return true;
     } catch (error) {
-      this.logError("clearRoomAssignments", error, { sessionId, localroomId });
-      throw new Error("Impossible de vider la salle.");
+      const dbError = DatabaseError.from(
+        error,
+        "Failed to clear room assignments",
+      );
+      this.logError("clearRoomAssignments", dbError, {
+        sessionId,
+        localroomId,
+      });
+      throw dbError;
     }
   }
 
   /**
-   * Insertion de masse d'assignations.
+   * Performs a bulk insertion of seating assignments.
+   * @param assignments - Array of assignments to insert.
+   * @param tx - Optional transaction database client.
+   * @returns Array of inserted seating assignments.
    */
-  async bulkAssign(assignments: InsertSeatingAssignment[], tx?: LibSqlClient) {
+  bulkAssign(
+    assignments: InsertSeatingAssignment[],
+    tx?: TDataBase,
+  ): SeatingAssignment[] {
     if (assignments.length === 0) return [];
 
     const client = this.getClient(tx);
 
     try {
-      return await client
+      return client
         .insert(seatingAssignments)
-        .values(assignments as any)
-        .returning();
+        .values(assignments)
+        .returning()
+        .all();
     } catch (error) {
-      this.logError("bulkAssign", error, { count: assignments.length });
-      throw new Error(
-        "Conflit de placement : Une place ou un élève est déjà assigné.",
+      const dbError = DatabaseError.from(
+        error,
+        "Placement conflict: A seat or a student is already assigned.",
       );
+      this.logError("clearRoomAssignments", dbError, {
+        count: assignments.length,
+      });
+      throw dbError;
     }
   }
 
-  async deleteAssignmentsBySession(
-    sessionId: string,
-    tx?: LibSqlClient,
-  ): Promise<boolean> {
+  /**
+   * Deletes all assignments associated with a session.
+   * @param sessionId - Identifier of the seating session.
+   * @param tx - Optional transaction database client.
+   * @returns True if at least one assignment was deleted.
+   */
+  deleteAssignmentsBySession(sessionId: string, tx?: TDataBase) {
     const client = this.getClient(tx);
-    const result = await client
+    return client
       .delete(seatingAssignments)
-      .where(eq(seatingAssignments.sessionId, sessionId));
-    return !!result;
+      .where(eq(seatingAssignments.sessionId, sessionId))
+      .returning()
+      .all();
   }
 
   /**
-   * Remplace l'intégralité des assignations d'une session.
-   * Tout s'exécute au sein d'une seule et unique transaction isolée.
+   * Replaces all assignments for a session within a single isolated transaction.
+   * @param sessionId - Identifier of the seating session.
+   * @param assignments - New array of seating assignments.
+   * @param tx - Optional transaction database client.
+   * @returns Array of newly created seating assignments.
    */
-  async rebuildAssignments(
+  rebuildAssignments(
     sessionId: string,
     assignments: InsertSeatingAssignment[],
-    tx?: LibSqlClient,
-  ): Promise<SeatingAssignment[]> {
+    tx?: TDataBase,
+  ): SeatingAssignment[] {
     if (assignments.length === 0) {
       return [];
     }
 
     const baseClient = this.getClient(tx);
 
-    return await baseClient.transaction(async (innerTx) => {
-      const isDeletionSuccessful = await this.deleteAssignmentsBySession(
-        sessionId,
-        innerTx,
-      );
+    return baseClient.transaction((innerTx) => {
+      this.deleteAssignmentsBySession(sessionId, innerTx);
 
-      if (!isDeletionSuccessful) {
-        throw new Error(
-          `Failed to clear assignments for session: ${sessionId}`,
-        );
-      }
-
-      return await this.bulkAssign(assignments, innerTx);
+      if (assignments.length === 0) return [];
+      return this.bulkAssign(assignments, innerTx);
     });
   }
 }

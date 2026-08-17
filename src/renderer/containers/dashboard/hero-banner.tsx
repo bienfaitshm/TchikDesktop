@@ -3,7 +3,7 @@
 import { Badge } from "@/renderer/components/ui/badge";
 import { useConfigStore } from "@/renderer/libs/stores/app-store";
 import { CalendarDays, Building2 } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 
 function getFormattedDateTime(): string {
   return new Date().toLocaleDateString("fr-FR", {
@@ -18,9 +18,11 @@ function getFormattedDateTime(): string {
 }
 
 /**
- * Affiche les badges de session active et de date/heure mis à jour périodiquement.
+ * ⚡ OPTIMISATION 1 : Utilisation de React.memo pour SessionBadge.
+ * Ce composant gère sa propre horloge interne. Grâce à memo, ses re-renders
+ * fréquents (toutes les secondes) n'impacteront JAMAIS le composant parent (HeroBanner).
  */
-export const SessionBadge = () => {
+export const SessionBadge = memo(() => {
   const [formattedDate, setFormattedDate] = useState(getFormattedDateTime);
 
   useEffect(() => {
@@ -44,12 +46,19 @@ export const SessionBadge = () => {
       </Badge>
     </div>
   );
-};
+});
+
+SessionBadge.displayName = "SessionBadge";
 
 interface HeroBannerProps {}
 
-export const HeroBanner: React.FC<HeroBannerProps> = ({}) => {
-  const school = useConfigStore((state) => state.currentSchool);
+export const HeroBanner: React.FC<HeroBannerProps> = () => {
+  /**
+   * ⚡ OPTIMISATION 2 : Ciblage précis de la valeur dans le store.
+   * Nous ne récupérons QUE le nom de l'école. Le composant re-rend uniquement si le nom change,
+   * ignorant les autres changements d'états internes ou les flags de synchronisation du store.
+   */
+  const schoolName = useConfigStore((state) => state.currentSchool?.name);
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-primary/10 bg-linear-to-r from-primary/10 via-muted/30 to-background p-6 sm:p-8 shadow-xs">
@@ -57,10 +66,12 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({}) => {
         <Building2 className="size-36 text-primary" />
       </div>
       <div className="relative z-10 space-y-4">
+        {/* L'horloge s'exécute de manière isolée ici */}
         <SessionBadge />
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            {school?.name}
+          {/* Un fallback visuel élégant pour éviter tout décalage de mise en page (Layout Shift) */}
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight min-h-9">
+            {schoolName || "Chargement de l'établissement..."}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground max-w-3xl leading-relaxed">
             Fini le travail manuel <b>Tchik</b> génère et sécurise

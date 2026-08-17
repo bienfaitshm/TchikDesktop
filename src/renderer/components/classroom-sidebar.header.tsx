@@ -53,31 +53,34 @@ export const ClassroomSidebarHeader = ({
       </div>
 
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full h-8 justify-between px-2 text-[11px] font-medium border border-border/40 bg-background/50 hover:bg-muted/50 transition-all shadow-xs"
-          >
-            <span className="flex items-center gap-2 truncate">
-              <Layers className="size-3 text-muted-foreground/70" />
-              {currentSectionLabel}
-            </span>
-            <ChevronDown className="size-3 opacity-40 shrink-0" />
-          </Button>
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full h-8 justify-between px-2 text-[11px] font-medium border border-border/40 bg-background/50 hover:bg-muted/50 transition-all shadow-xs"
+            >
+              <span className="flex items-center gap-2 truncate">
+                <Layers className="size-3 text-muted-foreground/70" />
+                {currentSectionLabel}
+              </span>
+              <ChevronDown className="size-3 opacity-40 shrink-0" />
+            </Button>
+          }
+        />
         <DropdownMenuContent
-          className="w-(--radix-dropdown-menu-trigger-width) min-w-[200px]"
+          className="w-(--radix-dropdown-menu-trigger-width) min-w-50"
           align="start"
         >
-          <DropdownMenuLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/70">
-            Filtrer par Section
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
           <DropdownMenuRadioGroup
             value={selectedSection}
             onValueChange={onSectionChange}
           >
+            <DropdownMenuLabel className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/70">
+              Filtrer par Section
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+
             <DropdownMenuRadioItem
               value="all"
               className="text-xs cursor-pointer"
