@@ -102,6 +102,7 @@ export class EnrollmentInvoice implements IPrintInvoiceJob {
       }
       printer.align("CT");
       printText(printer, invoiceData.yearName);
+      printer.feed(1);
       printTitle(printer, "REÇU D'INSCRIPTION");
       printer.align("LT");
 
@@ -160,14 +161,9 @@ export class EnrollmentInvoice implements IPrintInvoiceJob {
       //   );
       printDivider(printer);
 
-      // 7. Footer Notice
-      printer.align("CT");
-      printer.size(0.5, 0.5);
-      printText(
-        printer,
-        "Merci d'avoir renouvelé votre confiance en notre établissement pour la formation de vos enfants.",
-      );
-
+      printer.feed(1);
+      printer.align("RT");
+      printText(printer, "Sceau et signature");
       printer.feed(1);
       printer.cut();
 

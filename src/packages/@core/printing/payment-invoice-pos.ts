@@ -97,10 +97,11 @@ export class PaymentInvoice implements IPrintInvoiceJob {
       }
       printer.align("CT");
       printText(printer, invoiceData.yearName);
+      printer.feed(1);
       printTitle(printer, "REÇU DE PAIEMENT");
-      printer.align("LT");
 
       printDivider(printer);
+      printer.align("LT");
 
       // 2. Metadata Section
       printKeyValueRow(
@@ -138,7 +139,9 @@ export class PaymentInvoice implements IPrintInvoiceJob {
       // 6. Footer Notice
       printer.align("CT");
       printText(printer, "- MERCI DE VOTRE VISITE -");
-
+      printer.feed(1);
+      printer.align("RT");
+      printText(printer, "Sceau et signature");
       printer.feed(1);
       printer.cut();
 
