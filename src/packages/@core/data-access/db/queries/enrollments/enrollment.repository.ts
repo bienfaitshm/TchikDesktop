@@ -33,7 +33,7 @@ export type EnrollmentDTO = ClassroomEnrollment & {
 
 const JOINED_TABLES = {
   classrooms,
-  users,
+  users: UserRepository.studentUsers,
   classroomEnrollments,
   tutors,
 } as const;

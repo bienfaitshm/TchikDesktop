@@ -58,8 +58,9 @@ export function FastPaymentPage() {
       console.log("handlePrintTicket", _payload);
       printTicket.onSubmit(
         {
-          paymentId: _payload.paymentId,
-          tickRef: _payload.transactionReference || _payload.ticketRef,
+          invoiceCode: "payment",
+          id: _payload.paymentId,
+          invoiceRef: _payload.transactionReference || _payload.ticketRef,
         },
         helpers,
       );
