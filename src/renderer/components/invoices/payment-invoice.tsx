@@ -213,7 +213,9 @@ export function PaymentInvoice({
                 />
               )}
               {payment.scheduleName && (
-                <ValueText>[{payment.scheduleName}]</ValueText>
+                <ValueText className="text-left">
+                  [ {payment.scheduleName} ]
+                </ValueText>
               )}
               <TotalPaidBadge
                 amount={payment.paidAmount ?? 0}

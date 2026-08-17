@@ -24,7 +24,8 @@ import {
   usePrintTicket,
   useProcessStudentPayment,
 } from "./finances";
-import { Ticket } from "@/packages/@core/data-access/schema-validations";
+import { useSearchClassrooms } from "../classrooms";
+import { useSearchEnrollments } from "../enrollements";
 
 export type ReturnPaymentProcessData = FeeAssignment & {
   payment: StudentPayment;
@@ -160,12 +161,13 @@ export function useUpdateTableClassroomPayment(
  * @param userConfig - Optional base mutation configuration.
  * @returns Form state, handlers, and payment select field options.
  */
-export function useProcessStudentPaymentForm(
-  { schoolId, yearId }: PaymentContextParams,
-  userConfig?: ProcessPaymentFormConfig,
-) {
+export function useProcessStudentPaymentForm({
+  schoolId,
+  yearId,
+  ...config
+}: PaymentContextParams & ProcessPaymentFormConfig) {
   const mutation = useProcessStudentPayment();
-  const config = useUpdateTableClassroomPayment(userConfig);
+  const innerConfig = useUpdateTableClassroomPayment(config);
 
   const adaptData = useCallback(
     (data: ProcessStudentPaymentPayload) => ({ ...data, schoolId, yearId }),
@@ -178,7 +180,7 @@ export function useProcessStudentPaymentForm(
     ReturnPaymentProcessData
   >({
     mutation,
-    config,
+    config: innerConfig,
     getNotifications: () => PROCESS_PAYMENT_NOTIFICATIONS,
     adaptData,
   });
@@ -188,16 +190,4 @@ export function useProcessStudentPaymentForm(
     paymentMethodOptions: PAYMENT_METHOD_OPTIONS,
     ...base,
   };
-}
-
-export function usePrintTicketForm() {
-  const mutation = usePrintTicket();
-
-  const adaptData = useCallback((data: Ticket) => data, []);
-
-  return useFormBaseNotify<Ticket, Ticket, Ticket>({
-    mutation,
-    getNotifications: () => PRINT_TICKET_NOTIFICATION,
-    adaptData,
-  });
 }

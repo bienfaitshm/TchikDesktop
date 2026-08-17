@@ -1,9 +1,7 @@
 "use client";
 
-import { Suspense, useCallback, useMemo } from "react";
-import { CreditCard } from "lucide-react";
+import React, { Suspense, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useShallow } from "zustand/react/shallow";
 import {
   Field,
   FieldDescription,
@@ -11,24 +9,23 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 
-import { StudentSearch } from "./student-search";
 import { FeeSelection } from "./fee-selection";
 import { PaymentProcessForm } from "@/renderer/apps/finances/forms/payment-process-form";
 import {
   EmptySelectStudent,
   FastPaymentLoading,
 } from "@/renderer/apps/finances/components/fast-payment-empty";
-import { generateTicketRef, useFastPaymentStore } from "./hooks";
+import { generateInvoiceRef, useFastPaymentStore } from "./hooks";
 import type { FastPaymentFormProps, FastPaymentSubmitter } from "./types";
-import type { EnrollmentOption } from "./types";
-import { PaymentButton } from "./payment-submit-button";
+import { useSearchEnrollments } from "@/renderer/libs/queries/enrollements/helpers";
+import { ComboboxSearch } from "@/renderer/components/form/fields/generic-search-combo-box";
 
 /**
  * Main fast payment form component managing POS checkout workflow.
- * Handles student selection, fee overview loading, payment submission, and live preview layout.
+ * Renders student selection combobox and embeds fee selection and payment sub-forms.
  *
- * @param props - Component properties including school/year context, payment options, and callbacks.
- * @returns Complete fast payment layout component.
+ * @param props - Form configuration including school context, payment options, and submission handler.
+ * @returns The fast payment layout component JSX.
  */
 export function FastPaymentForm({
   schoolId,
@@ -37,123 +34,80 @@ export function FastPaymentForm({
   paymentMethodOptions = [],
   onSubmit,
   formId,
-  isSubmitting,
-  school,
-  yearName,
-}: FastPaymentFormProps) {
-  const { selectedStudent, setSelectedStudent, resetForm } =
-    useFastPaymentStore(
-      useShallow((state) => ({
-        selectedStudent: state.selectedStudent,
-        setSelectedStudent: state.setSelectedStudent,
-        resetForm: state.resetForm,
-      })),
-    );
+}: FastPaymentFormProps): React.JSX.Element {
+  const searchStudent = useSearchEnrollments({
+    schoolId,
+    yearId,
+  });
 
-  const handleStudentChange = useCallback(
-    (_: unknown, student?: EnrollmentOption) => {
-      setSelectedStudent(student);
-    },
-    [setSelectedStudent],
+  const selectedStudent = useFastPaymentStore((store) => store.selectedStudent);
+  const handleStudentChange = useFastPaymentStore(
+    (store) => store.setSelectedStudent,
   );
 
-  const handleSubmit: FastPaymentSubmitter = useCallback(
-    (payload, helpers) => {
-      onSubmit(payload, {
-        reset: (value) => {
-          helpers.reset();
-          resetForm(value, {
-            name: school?.name ?? "—",
-            address: school?.address ?? "—",
-            yearName: yearName ?? "",
-          });
-        },
-      });
-    },
-    [onSubmit, resetForm, school],
+  const transactionReference = useMemo(
+    () => generateInvoiceRef(),
+    [selectedStudent?.enrollmentId],
   );
-
-  const transactionReference = useMemo(generateTicketRef, []);
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2 text-foreground">
-          <CreditCard className="size-5 text-primary" />
-          <h3 className="text-xl font-bold tracking-tight">
-            Caisse : Paiement Rapide
-          </h3>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Enregistrez un encaissement direct et générez la facture
-          instantanément.
-        </p>
-      </div>
+    <div className="mt-6 space-y-5">
+      <FieldGroup className="flex flex-col gap-5">
+        <Field>
+          <FieldLabel htmlFor="student">Élève au guichet</FieldLabel>
+          <ComboboxSearch
+            placeholder="Sélectionner l'élève"
+            options={searchStudent.options}
+            selectedItem={selectedStudent}
+            value={selectedStudent?.value}
+            onChange={(_, enrollment) => handleStudentChange(enrollment)}
+            search={searchStudent.searchQuery}
+            isLoading={searchStudent.isSearching}
+            onSearchChange={searchStudent.setSearchQuery}
+            searchPlaceholder="Rechercher par nom, code..."
+          />
+          <FieldDescription className="text-xs text-muted-foreground">
+            Apparaît sur les factures et reçus imprimés.
+          </FieldDescription>
+        </Field>
 
-      <div className="mt-6">
-        <FieldGroup className="flex flex-col gap-5">
-          <Field>
-            <FieldLabel htmlFor="student">Élève au guichet</FieldLabel>
-            <StudentSearch
-              id="student"
-              schoolId={schoolId}
-              yearId={yearId}
-              enrollment={selectedStudent}
-              onChange={handleStudentChange}
-            />
-            <FieldDescription className="text-xs text-muted-foreground">
-              Apparaît sur les factures et reçus imprimés.
-            </FieldDescription>
-          </Field>
-
-          <AnimatePresence mode="wait">
-            {selectedStudent ? (
-              <motion.div
-                key={selectedStudent.enrollmentId}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Suspense fallback={<FastPaymentLoading />}>
-                  <FeeSelection enrollmentId={selectedStudent.enrollmentId}>
-                    {({ amountPaid, assignmentId, totalAmount }) => (
-                      <div className="mt-4">
-                        <PaymentProcessForm
-                          onSubmit={handleSubmit}
-                          currencyOptions={currencyOptions}
-                          paymentMethodOptions={paymentMethodOptions}
-                          formId={formId}
-                          defaultValues={{
-                            schoolId,
-                            yearId,
-                            assignmentId,
-                            transactionReference,
-                          }}
-                          totalAmount={totalAmount}
-                          amountPaid={amountPaid}
-                        />
-                      </div>
-                    )}
-                  </FeeSelection>
-                </Suspense>
-              </motion.div>
-            ) : (
-              <EmptySelectStudent />
-            )}
-          </AnimatePresence>
-        </FieldGroup>
-        <PaymentButton
-          formId={formId}
-          isSubmitting={isSubmitting}
-          className="my-4"
-          label="Valider l'encaissement"
-        />
-      </div>
+        <AnimatePresence mode="wait">
+          {selectedStudent ? (
+            <motion.div
+              key={selectedStudent.enrollmentId}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Suspense fallback={<FastPaymentLoading />}>
+                <FeeSelection enrollmentId={selectedStudent.enrollmentId}>
+                  {({ amountPaid, assignmentId, totalAmount }) => (
+                    <div className="mt-4">
+                      <PaymentProcessForm
+                        onSubmit={onSubmit}
+                        currencyOptions={currencyOptions}
+                        paymentMethodOptions={paymentMethodOptions}
+                        formId={formId}
+                        defaultValues={{
+                          schoolId,
+                          yearId,
+                          assignmentId,
+                          transactionReference,
+                        }}
+                        totalAmount={totalAmount}
+                        amountPaid={amountPaid}
+                      />
+                    </div>
+                  )}
+                </FeeSelection>
+              </Suspense>
+            </motion.div>
+          ) : (
+            <EmptySelectStudent />
+          )}
+        </AnimatePresence>
+      </FieldGroup>
     </div>
   );
 }
-
-export { InvoiceLivePreview } from "./invoice-live-preview";
-export * from "./fastpayment-container";
-export type { Ticket } from "./hooks";

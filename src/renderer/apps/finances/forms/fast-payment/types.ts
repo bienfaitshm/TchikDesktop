@@ -1,6 +1,5 @@
 import type {
   EnrollmentDTO,
-  School,
   EnrollmentPayment,
 } from "@/packages/@core/data-access/db";
 import type { ProcessStudentPaymentPayload } from "@/packages/@core/apis/clients/finances.payment";
@@ -20,10 +19,8 @@ export type ScheduleOption = EnrollmentPayment["schedules"][number];
 /**
  * Callback handler type for submitting fast student payment payloads.
  */
-export type FastPaymentSubmitter = FormSubmitHandler<
-  ProcessStudentPaymentPayload,
-  any
->;
+export type FastPaymentSubmitter =
+  FormSubmitHandler<ProcessStudentPaymentPayload>;
 
 /**
  * Props interface for the FastPaymentForm component.
@@ -39,11 +36,7 @@ export type FastPaymentFormProps = {
   paymentMethodOptions?: SelectOption[];
   /** Async handler function invoked on form submission. */
   onSubmit: FastPaymentSubmitter;
-  /** Optional school details entity. */
-  school?: School;
-  /** Indicates if the form submission is currently in progress. */
-  isSubmitting?: boolean;
+
   /** Optional HTML form ID attribute. */
   formId?: string;
-  yearName: string;
 };
