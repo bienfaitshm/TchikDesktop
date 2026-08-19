@@ -14,7 +14,7 @@ import {
 } from "@/renderer/components/ui/form";
 import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/enum";
 import { EnrollmentQuickCreateSchema } from "@/packages/@core/data-access/schema-validations";
-import { GenericComboBox } from "@/renderer/components/form/fields/generic-combo-box";
+import { ComboboxSearch } from "@/renderer/components/form/fields/generic-search-combo-box";
 import {
   type BaseFormProps,
   useZodForm,
@@ -38,7 +38,6 @@ import { UserCheckIcon, UserPlusIcon } from "lucide-react";
 import { TutorFormFields } from "./form.tutor";
 import type { Option } from "@/components/form/fields/select-input";
 import { createCompleteSubmitHandler } from "./utils";
-import { ComboboxSearch } from "../fields/generic-search-combo-box";
 
 /** Options for switching between existing profile selection and new entry creation. */
 const SYSTEM_EXISTENCE_OPTIONS: DropdownOption[] = [
@@ -385,10 +384,14 @@ export const QuickEnrollmentForm: React.FC<
             <FormItem className="flex flex-col mb-6">
               <FormLabel className="text-xs">Classe de destination</FormLabel>
               <FormControl>
-                <GenericComboBox
+                <ComboboxSearch
                   {...field}
-                  onChangeValue={field.onChange}
+                  onChange={field.onChange}
                   options={classrooms.options}
+                  value={field.value ?? ""}
+                  search={classrooms.searchQuery}
+                  isLoading={classrooms.isSearching}
+                  onSearchChange={classrooms.setSearchQuery}
                   placeholder="Rechercher ou sélectionner une classe..."
                   className="w-full"
                   disabled={isSubmitting}
