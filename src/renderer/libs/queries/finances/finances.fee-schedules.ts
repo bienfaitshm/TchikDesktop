@@ -18,7 +18,7 @@ import type { FeeSchedule } from "@/packages/@core/data-access/db";
    FEE SCHEDULE QUERY KEYS
    ========================================================================= */
 export const feeScheduleKeys = {
-  all: ["fee-schedules"] as const,
+  all: ["fin", "fee-schedules"] as const,
   lists: (params?: FeeScheduleFilter) =>
     [...feeScheduleKeys.all, "list", { params }] as const,
   options: (params?: FeeScheduleFilter) =>

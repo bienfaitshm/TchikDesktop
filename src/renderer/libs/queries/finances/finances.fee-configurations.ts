@@ -20,7 +20,7 @@ import type {
 export type ApplicableFeeConfigParams = ApplicableParams;
 
 export const feeConfigurationKeys = {
-  all: ["fee-configurations"] as const,
+  all: ["fin", "fee-configurations"] as const,
   lists: (params?: FeeConfigurationFilter) =>
     [...feeConfigurationKeys.all, "list", { params }] as const,
   applicable: (params?: ApplicableParams) =>

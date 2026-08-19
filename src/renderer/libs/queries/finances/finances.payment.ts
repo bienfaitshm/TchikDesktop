@@ -23,7 +23,7 @@ import { Ticket } from "@/packages/@core/data-access/schema-validations/other";
  * Query key factory for payment operations cache management.
  */
 export const paymentKeys = {
-  all: ["payments"] as const,
+  all: ["fin", "payments"] as const,
   classroomTables: () => [...paymentKeys.all, "classroom-table"] as const,
   classroomTable: (params: ClassroomPaymentFilterParams) =>
     [...paymentKeys.classroomTables(), { params }] as const,

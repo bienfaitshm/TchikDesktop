@@ -12,7 +12,6 @@ import {
 } from "@/renderer/components/ui/form";
 import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/enum";
 import { STUDENT_STATUS_OPTIONS } from "@/packages/@core/data-access/db/options";
-import { GenericComboBox } from "@/renderer/components/form/fields/generic-combo-box";
 import { ComboboxSearch } from "@/components/form/fields/generic-search-combo-box";
 import { StudentSeniorityStatusSelect } from "@/renderer/components/form/fields/student-seriority-statut";
 import {
@@ -65,10 +64,14 @@ export const EnrollmentForm: React.FC<
             <FormItem className="flex flex-col mb-4">
               <FormLabel>Classe de destination</FormLabel>
               <FormControl>
-                <GenericComboBox
+                <ComboboxSearch
                   {...field}
-                  onChangeValue={field.onChange}
+                  onChange={field.onChange}
                   options={classrooms.options}
+                  value={field.value ?? ""}
+                  search={classrooms.searchQuery}
+                  isLoading={classrooms.isSearching}
+                  onSearchChange={classrooms.setSearchQuery}
                   placeholder="Rechercher ou sélectionner une classe..."
                   className="w-full"
                   disabled={isSubmitting}

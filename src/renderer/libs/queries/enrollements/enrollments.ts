@@ -23,7 +23,7 @@ import type { SelectOption } from "@/packages/drizzle-queries";
  * Centralise et structure toutes les clés de cache pour TanStack Query.
  */
 export const enrollmentKeys = {
-  all: ["enrollments"] as const,
+  all: ["schools", "enrollments"] as const,
   lists: (params?: EnrollmentQueryParams) =>
     [...enrollmentKeys.all, "list", { params }] as const,
   search: (params?: SearchEnrollmentQueryParams) =>

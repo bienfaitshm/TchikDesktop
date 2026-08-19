@@ -15,7 +15,7 @@ import type {
 
 type FeeBulkAssignmentData = any;
 export const feeAssignmentKeys = {
-  all: ["fee-assignments"] as const,
+  all: ["fin", "fee-assignments"] as const,
   lists: (params?: FeeAssignmentFilter) =>
     [...feeAssignmentKeys.all, "list", { params }] as const,
   options: (params?: FeeAssignmentFilter) =>

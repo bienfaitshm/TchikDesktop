@@ -1,16 +1,16 @@
 import { useMutation, useSuspenseQuery } from "../base";
 import { classroom as classroomApi } from "@/renderer/libs/apis";
 import type {
-  Classroom,
   ClassroomCreate,
   ClassroomFilter,
   ClassroomUpdate,
 } from "@/packages/@core/data-access/schema-validations";
 import type { TQueryUpdate } from "../type";
 import type { SearchClassroomQueryParams } from "@/packages/@core/apis/clients";
-import type {
-  UseSuspenseQueryOptions,
-  UseMutationOptions,
+import {
+  type UseSuspenseQueryOptions,
+  type UseMutationOptions,
+  useQuery,
 } from "@tanstack/react-query";
 import type {
   ClassroomDTO,
@@ -21,7 +21,7 @@ import type {
  * 1. Query Key Factory (Immuable et centralisée)
  */
 export const classroomKeys = {
-  all: ["classrooms"] as const,
+  all: ["schools", "classrooms"] as const,
   lists: (params?: ClassroomFilter) =>
     [...classroomKeys.all, "list", { params }] as const,
   options: (params?: SearchClassroomQueryParams) =>
@@ -54,7 +54,7 @@ export function useGetClassroomAsOptions(
   params?: SearchClassroomQueryParams,
   options?: Partial<UseSuspenseQueryOptions<(SelectOption & ClassroomDTO)[]>>,
 ) {
-  return useSuspenseQuery({
+  return useQuery({
     queryKey: classroomKeys.options(params),
     queryFn: () => classroomApi.fetchClassroomAsOptions(params),
     ...options,
@@ -63,7 +63,7 @@ export function useGetClassroomAsOptions(
 
 export function useGetClassroomById(
   classroomId: string,
-  options?: Partial<UseSuspenseQueryOptions<Classroom>>,
+  options?: Partial<UseSuspenseQueryOptions<ClassroomDTO>>,
 ) {
   return useSuspenseQuery({
     queryKey: classroomKeys.detail(classroomId),
@@ -77,7 +77,7 @@ export function useGetClassroomById(
  */
 
 export function useCreateClassroom(
-  options?: Partial<UseMutationOptions<Classroom, Error, ClassroomCreate>>,
+  options?: Partial<UseMutationOptions<ClassroomDTO, Error, ClassroomCreate>>,
 ) {
   return useMutation({
     mutationKey: classroomKeys.mutations.create(),
@@ -88,7 +88,7 @@ export function useCreateClassroom(
 
 export function useUpdateClassroom(
   options?: Partial<
-    UseMutationOptions<Classroom, Error, TQueryUpdate<ClassroomUpdate>>
+    UseMutationOptions<ClassroomDTO, Error, TQueryUpdate<ClassroomUpdate>>
   >,
 ) {
   return useMutation({
