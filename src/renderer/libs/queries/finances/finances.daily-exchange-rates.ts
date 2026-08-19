@@ -14,7 +14,7 @@ import type {
 } from "@tanstack/react-query";
 
 export const dailyExchangeRateKeys = {
-  all: ["daily-exchange-rates"] as const,
+  all: ["fin", "daily-exchange-rates"] as const,
   lists: (params?: DailyExchangeRateFilter) =>
     [...dailyExchangeRateKeys.all, "list", { params }] as const,
   lts: (params?: DailyExchangeRateFilter) =>

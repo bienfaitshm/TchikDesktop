@@ -16,7 +16,7 @@ import type {
 } from "@tanstack/react-query";
 
 export const studentPaymentKeys = {
-  all: ["student-payments"] as const,
+  all: ["fin", "student-payments"] as const,
   lists: (params?: StudentPaymentFilter) =>
     [...studentPaymentKeys.all, "list", { params }] as const,
   options: (params?: StudentPaymentFilter) =>
