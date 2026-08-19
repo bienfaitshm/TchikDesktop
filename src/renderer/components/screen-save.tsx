@@ -164,7 +164,7 @@ export function Screensaver({ onDismiss, requiredPin }: ScreensaverProps) {
 
       {/* --- PANEL SLIDE-UP POUR LE CODE OTP --- */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-[60] flex flex-col items-center justify-center p-12 bg-background/90 backdrop-blur-2xl border-t border-border/50 rounded-t-[3rem] shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+        className={`fixed inset-x-0 bottom-0 z-60 flex flex-col items-center justify-center p-12 bg-background/90 backdrop-blur-2xl border-t border-border/50 rounded-t-[3rem] shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           isUnlocking ? "translate-y-0" : "translate-y-full"
         }`}
         onClick={(e) => e.stopPropagation()} // Bloque la propagation pour ne pas fermer au clic dans le panneau
