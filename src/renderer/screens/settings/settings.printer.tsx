@@ -95,7 +95,7 @@ export const usePrinterSettings = () => {
   const handleCheckConnectivity = useCallback(() => {
     if (selectedPrinter?.value) {
       checkPrinter.onSubmit(
-        { printerValue: selectedPrinter.value },
+        { value: selectedPrinter.value },
         { reset: () => {} },
       );
     }
@@ -104,7 +104,7 @@ export const usePrinterSettings = () => {
   const handleTestPrint = useCallback(() => {
     if (selectedPrinter?.value) {
       testPrinter.onSubmit(
-        { printerValue: selectedPrinter.value },
+        { value: selectedPrinter.value },
         { reset: () => {} },
       );
     }
