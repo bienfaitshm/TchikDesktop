@@ -26,7 +26,7 @@ export function AppLayout({ menus = [] }: AppLayoutProps) {
   );
 
   return (
-    <ScreenSaveProvider requiredPin="1234" lockShortcutKey="l">
+    <ScreenSaveProvider lockShortcutKey="l">
       <SidebarProvider
         style={
           {
