@@ -11,7 +11,10 @@ import { Suspense } from "@/renderer/libs/queries/suspense";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 import React from "react";
-import { ScreenSaveProvider } from "@/renderer/providers/screen-save-provider";
+import {
+  ScreenSaveProvider,
+  LockScreenButton,
+} from "@/components/screen-saver";
 
 type AppLayoutProps = ApplicationSidebarProps;
 
@@ -23,7 +26,7 @@ export function AppLayout({ menus = [] }: AppLayoutProps) {
   );
 
   return (
-    <ScreenSaveProvider>
+    <ScreenSaveProvider requiredPin="1234" lockShortcutKey="l">
       <SidebarProvider
         style={
           {
@@ -36,7 +39,12 @@ export function AppLayout({ menus = [] }: AppLayoutProps) {
         <SidebarInset className="flex flex-col h-svh min-w-0 w-full overflow-hidden">
           <SidebarInset className="flex flex-col h-svh min-w-0 overflow-hidden">
             {/* Header */}
-            <header className="bg-background/95 backdrop-blur-sm sticky top-0 z-30 flex h-10 shrink-0 items-center gap-2 border-b px-4"></header>
+            <header className="bg-background/95 backdrop-blur-sm sticky top-0 z-30 flex h-10 shrink-0 items-center justify-between gap-2 border-b px-4">
+              <div></div>
+              <div>
+                <LockScreenButton />
+              </div>
+            </header>
             <div className="flex-1 min-h-0 min-w-0 w-full overflow-hidden">
               <Suspense
                 fallback={

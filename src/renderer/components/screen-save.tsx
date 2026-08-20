@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Power, Lock } from "lucide-react";
+import { Power, Lock } from "lucide-react";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import {
   InputOTP,
@@ -113,10 +113,9 @@ export function Screensaver({ onDismiss, requiredPin }: ScreensaverProps) {
 
         {/* Indicateur haut */}
         <div
-          className="flex items-center gap-2 text-muted-foreground text-sm tracking-widest uppercase z-10 transition-opacity duration-300"
+          className="flex items-center gap-2 text-muted-foreground text-xs z-10 transition-opacity duration-300"
           style={{ opacity: isUnlocking ? 0 : 1 }}
         >
-          <Sparkles className="h-4 w-4 animate-pulse text-primary" />
           <span>Mode Veille</span>
         </div>
 
@@ -154,7 +153,7 @@ export function Screensaver({ onDismiss, requiredPin }: ScreensaverProps) {
           <Button
             variant="outline"
             size="lg"
-            className="rounded-full gap-2 shadow-lg hover:scale-105 transition-transform bg-background/50 backdrop-blur-md"
+            className="rounded-full px-4 gap-2 shadow-lg hover:scale-105 transition-transform bg-background/50 backdrop-blur-md"
           >
             <Power className="h-4 w-4" />
             Déverrouiller
@@ -164,7 +163,7 @@ export function Screensaver({ onDismiss, requiredPin }: ScreensaverProps) {
 
       {/* --- PANEL SLIDE-UP POUR LE CODE OTP --- */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-60 flex flex-col items-center justify-center p-12 bg-background/90 backdrop-blur-2xl border-t border-border/50 rounded-t-[3rem] shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+        className={`fixed inset-x-0 bottom-0 z-60 flex flex-col items-center justify-center p-12 bg-background/50 backdrop-blur-2xl border-t border-border/50 rounded-t-[3rem] shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           isUnlocking ? "translate-y-0" : "translate-y-full"
         }`}
         onClick={(e) => e.stopPropagation()} // Bloque la propagation pour ne pas fermer au clic dans le panneau
@@ -218,7 +217,7 @@ export function Screensaver({ onDismiss, requiredPin }: ScreensaverProps) {
 
           <Button
             variant="ghost"
-            className="mt-4"
+            className="mt-4 px-4 rounded-full"
             onClick={() => {
               setIsUnlocking(false);
               setOtpValue("");
