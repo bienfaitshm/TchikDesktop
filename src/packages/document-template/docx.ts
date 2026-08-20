@@ -98,7 +98,7 @@ export class DocxReportGeneratorService {
           ? engineError.message
           : String(engineError);
       const executionFailureMessage = `Failed to assemble DOCX report for template "${templateName}": ${errorMsg}`;
-
+      console.log(engineError);
       this.logger.error(executionFailureMessage);
       throw new Error(executionFailureMessage, { cause: engineError });
     }

@@ -9,7 +9,7 @@ import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
-import { extensions } from "@/packages/@core/documents-exports/extensions/seating-presence";
+import { extensions } from "./extensions";
 import { createSeatingPresenceExportForm } from "./form";
 import { SeatingPresenceSessionDataResolver } from "./resolver";
 import { DocumentCategory } from "../../constants";
