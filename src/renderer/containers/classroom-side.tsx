@@ -84,6 +84,7 @@ export const ClassroomNavItems = ({
                       <SubNavItem
                         to={to(classroom.classId)}
                         key={classroom.classId}
+                        className="text-xs"
                       >
                         {classroom.identifier}
                       </SubNavItem>
@@ -96,7 +97,7 @@ export const ClassroomNavItems = ({
             /* État vide propre (Pattern shadcn standard si <Empty /> n'est pas un composant custom) */
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                <SearchXIcon className="size-6 text-muted-foreground" />
+                <SearchXIcon className="size-5 text-muted-foreground" />
               </div>
               <div className="flex flex-col gap-1">
                 <h3 className="text-sm font-semibold">Aucune classe trouvée</h3>
@@ -111,7 +112,7 @@ export const ClassroomNavItems = ({
                   variant="outline"
                   size="sm"
                   onClick={handleClearSearch}
-                  className="mt-2"
+                  className="mt-2 text-xs rounded-full px-4"
                 >
                   Réinitialiser la recherche
                 </Button>
