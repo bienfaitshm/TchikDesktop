@@ -8,16 +8,12 @@ export interface OptionSearchContextParams {
 }
 
 export function useSearchOptions(params: OptionSearchContextParams) {
-  const { schoolId } = params;
-
   const buildSearchQuery = useCallback(
     (search: string): OptionFilter => ({
       limit: 25,
       where: {
         options: {
-          schoolId: {
-            $eq: schoolId,
-          },
+          schoolId: params.schoolId,
         },
       },
       or: [
@@ -41,7 +37,7 @@ export function useSearchOptions(params: OptionSearchContextParams) {
         { table: "options", column: "optionShortName", order: "asc" as const },
       ],
     }),
-    [schoolId],
+    [params.schoolId],
   );
 
   return useGenericSearchOptions(useGetOptionsAsOptions, buildSearchQuery);

@@ -47,7 +47,7 @@ export interface DataToOptionConfig<T, R extends SelectOption = SelectOption> {
   labelKeyLong: ValueExtractor<T>;
   labelKeyShort: ValueExtractor<T>;
   labelFormat?: LabelFormatterStrategy;
-  transform?: (baseOption: SelectOption, originalItem: T) => R;
+  transform?: (baseOption: SelectOption, originalItem: T) => R & T;
 }
 
 /**
@@ -88,7 +88,7 @@ export class SelectOptionTransformer {
   public static transformSingle<T, R extends SelectOption = SelectOption>(
     item: T,
     config: DataToOptionConfig<T, R>,
-  ): R {
+  ): R & T {
     const {
       valueKey,
       labelKeyLong,
@@ -102,13 +102,13 @@ export class SelectOptionTransformer {
     const shortLabel = this.resolveValue(item, labelKeyShort);
 
     const label = this.formatLabel(longLabel, shortLabel, labelFormat);
-    const baseOption: SelectOption = { value, label };
+    const baseOption: SelectOption & T = { value, label, ...item };
 
     if (transform) {
       return transform(baseOption, item);
     }
 
-    return baseOption as R;
+    return baseOption as R & T;
   }
 
   /**

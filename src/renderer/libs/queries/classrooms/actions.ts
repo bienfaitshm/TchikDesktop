@@ -5,10 +5,8 @@ import {
   SECTION_OPTIONS,
 } from "@/packages/@core/data-access/db/options";
 import type {
-  Classroom,
   ClassroomCreate,
   ClassroomUpdate,
-  OptionFilter,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   type BaseMutationConfig,
@@ -28,6 +26,10 @@ import {
   getPrefixIdentifier,
   type TSuggestion,
 } from "./utils";
+import type {
+  ClassroomDTO,
+  SelectOption,
+} from "@/packages/@core/data-access/db";
 
 /** Sentinel values indicating an unselected or undefined option ID. */
 const UNSELECTED_OPTION_VALUES: readonly string[] = [
@@ -37,10 +39,10 @@ const UNSELECTED_OPTION_VALUES: readonly string[] = [
 ];
 
 /** Default option entry for classes without a specialized stream. */
-const DEFAULT_OPTION_ITEM = {
+const DEFAULT_OPTION_ITEM: SelectOption = {
   label: "Tronc commun (Aucune option)",
   value: "none",
-} as const;
+};
 
 /** Notifications configuration for classroom creation. */
 const CREATE_CLASSROOM_NOTIFICATIONS = {
@@ -65,7 +67,7 @@ const UPDATE_CLASSROOM_NOTIFICATIONS = {
 } as const;
 
 export type ClassroomFormData = ClassroomCreate;
-export type ClassroomFormConfig = BaseMutationConfig<Classroom>;
+export type ClassroomFormConfig = BaseMutationConfig<ClassroomDTO>;
 
 /** Configuration parameters for updating a classroom record. */
 export interface UpdateClassroomConfig extends BaseMutationConfig<ClassroomUpdate> {
@@ -114,12 +116,7 @@ function createSectionSuggestion(
  * @returns Form search states, section selection options, and suggestion generator.
  */
 function useBaseClassroomForm(schoolId: string) {
-  const searchFilters: OptionFilter = useMemo(
-    () => ({ where: { options: { schoolId: { $eq: schoolId } } } }),
-    [schoolId],
-  );
-
-  const search = useSearchOptions({ filters: searchFilters });
+  const search = useSearchOptions({ schoolId });
 
   const options = useMemo(
     () => [DEFAULT_OPTION_ITEM, ...(search.options ?? [])],
@@ -139,7 +136,13 @@ function useBaseClassroomForm(schoolId: string) {
       ) {
         return createSectionSuggestion(identifier, section);
       }
-      return createClassroomSuggestion(search.options, optionId, identifier);
+      const result = createClassroomSuggestion(
+        search.options,
+        optionId,
+        identifier,
+      );
+      console.log(search.options, optionId, identifier, result);
+      return result;
     },
     [search.options],
   );
@@ -160,10 +163,10 @@ function useBaseClassroomForm(schoolId: string) {
  * @param config - Optional mutation configuration options.
  * @returns Form properties and search options for classroom creation.
  */
-export function useCreateClassroomForm(
-  schoolId: string,
-  config?: ClassroomFormConfig,
-) {
+export function useCreateClassroomForm({
+  schoolId,
+  ...config
+}: ClassroomFormConfig & { schoolId: string }) {
   const base = useBaseClassroomForm(schoolId);
   const formProps = useFormBaseCreate<ClassroomCreate>({
     useCreate: useCreateClassroom,

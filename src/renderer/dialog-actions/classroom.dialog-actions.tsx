@@ -62,7 +62,7 @@ export const CreateClassroomDialog = createBaseActionDialog<
         isGenerating={isGenerating}
         onGenerateSuggestion={handleGenerate}
         searchOption={searchOptions}
-        sectionOptions={sectionOptions}
+        sectionOptions={sectionOptions || []}
         defaultValues={defaultValues}
       />
     );

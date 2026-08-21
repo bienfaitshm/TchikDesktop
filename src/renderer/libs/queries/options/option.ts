@@ -2,7 +2,6 @@ import {
   useQuery,
   queryOptions,
   keepPreviousData,
-  type UseQueryOptions,
   type UseMutationOptions,
 } from "@tanstack/react-query";
 import { option as optionApi } from "@/renderer/libs/apis";
@@ -12,25 +11,23 @@ import type {
   OptionUpdate,
   OptionCreate,
 } from "@/packages/@core/data-access/schema-validations";
-import type { SearchOptionQueryParams } from "@/packages/@core/apis/clients";
 import {
   useMutation,
   useSuspenseQuery,
   type QueryUpdatePayload,
 } from "../base";
-import type { SelectOption } from "@/packages/@core/data-access/db/queries";
 import { queryClient } from "../providers";
 
 /**
  * 1. Query Key Factory
  */
 export const optionKeys = {
-  all: ["options"] as readonly unknown[],
+  all: ["schools", "options"] as readonly unknown[],
   lists: (params?: OptionFilter) =>
     params
       ? ([...optionKeys.all, "list", params] as readonly unknown[])
       : ([...optionKeys.all, "list"] as readonly unknown[]),
-  options: (params?: SearchOptionQueryParams) =>
+  options: (params?: OptionFilter) =>
     params
       ? ([...optionKeys.all, "options", params] as readonly unknown[])
       : ([...optionKeys.all, "options"] as readonly unknown[]),
@@ -82,14 +79,14 @@ export function useGetOptionById(optionId: string) {
 }
 
 export function useGetOptionsAsOptions(
-  params?: SearchOptionQueryParams,
-  options?: Partial<UseQueryOptions<(SelectOption & Option)[]>>,
+  params?: OptionFilter,
+  // options?: Partial<UseQueryOptions<(SelectOption & Option)[]>>,
 ) {
   return useQuery({
     queryKey: optionKeys.options(params),
     queryFn: () => optionApi.fetchAsOptions(params),
     placeholderData: keepPreviousData,
-    ...options,
+    // ...options,
   });
 }
 
