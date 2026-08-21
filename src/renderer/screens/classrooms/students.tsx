@@ -10,6 +10,7 @@ import {
   PageHeadTitle,
   PageHeadDescription,
   PageContent,
+  PageHeadAction,
 } from "@/renderer/containers/page-container";
 import {
   GENDER_OPTIONS,
@@ -26,8 +27,8 @@ import {
   FilteredTableToolbarContainer,
   SearchTableToolbar,
   DataTableColumnToggle,
-} from "@/renderer/components/tables";
-import { studentColumns } from "@/renderer/components/tables/columns.students";
+} from "@/components/tables";
+import { studentColumns } from "@/components/tables/columns.students";
 import { useGetEnrollments } from "@/renderer/libs/queries/enrollements/enrollments";
 import {
   CreateEnrollmentDialog,
@@ -36,8 +37,9 @@ import {
   type CreateEnrollmentDialogProps,
 } from "@/renderer/dialog-actions/enrollment.dialog-actions";
 import { UpdateStudentDialog } from "@/renderer/dialog-actions/student.dialog-action";
-import { enhanceColumns } from "@/renderer/components/tables/columns";
-import { Button } from "@/renderer/components/ui/button";
+import { enhanceColumns } from "@/components/tables/columns";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { Button } from "@/components/ui/button";
 import { SchedulePaymentDialog } from "@/renderer/apps/finances/dialog/student-payement-schedule.dialog";
 import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
 import {
@@ -173,6 +175,36 @@ export const StudentPage: React.FC = () => {
             Liste des élèves inscrits dans cette classe.
           </PageHeadDescription>
         </PageHeaderTextContent>
+        <PageHeadAction>
+          <ButtonGroup>
+            <SchedulePaymentDialog
+              schoolId={schoolId}
+              yearId={yearId}
+              classId={classroomId as string}
+              classroomName={classroom.shortIdentifier}
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 h-8 shadow-xs text-xs"
+              >
+                <Banknote className="size-3.5" />
+                <span>Paiements</span>
+              </Button>
+            </SchedulePaymentDialog>
+            <CreateEnrollmentDialog
+              modal={false}
+              schoolId={schoolId}
+              yearId={yearId}
+              defaultValues={{ schoolId, yearId, classroomId }}
+            >
+              <Button size="sm" className="gap-2 h-8 shadow-xs text-xs">
+                <UserPlus className="size-3.5" />
+                <span>Nouvelle inscription</span>
+              </Button>
+            </CreateEnrollmentDialog>
+          </ButtonGroup>
+        </PageHeadAction>
       </PageHeader>
       <PageContent>
         <DataTable<EnrollmentDTO>
@@ -198,28 +230,6 @@ export const StudentPage: React.FC = () => {
               />
             </FilteredTableToolbarContainer>
             <div className="flex items-center gap-4">
-              <SchedulePaymentDialog
-                schoolId={schoolId}
-                yearId={yearId}
-                classId={classroomId as string}
-                classroomName={classroom.shortIdentifier}
-              >
-                <Button variant="outline">
-                  <Banknote />
-                  <span>Paiements</span>
-                </Button>
-              </SchedulePaymentDialog>
-              <CreateEnrollmentDialog
-                modal={false}
-                schoolId={schoolId}
-                yearId={yearId}
-                defaultValues={{ schoolId, yearId, classroomId }}
-              >
-                <Button size="sm" className="gap-2 shadow-xs">
-                  <UserPlus className="h-4 w-4" />
-                  <span>Nouvelle inscription</span>
-                </Button>
-              </CreateEnrollmentDialog>
               <DataTableColumnToggle />
             </div>
           </DataTableToolbar>

@@ -42,17 +42,17 @@ export function DataTableColumnHeader<TData, TValue>({
               variant="ghost"
               size="sm"
               className={cn(
-                "-ml-2 h-8 data-[state=open]:bg-accent text-xs font-semibold hover:text-foreground",
+                "-ml-2 h-7 data-[state=open]:bg-accent text-xs font-semibold hover:text-foreground",
                 isSorted && "text-foreground font-bold",
               )}
             >
               <span>{title}</span>
               {isSorted === "desc" ? (
-                <ArrowDown className="ml-2 h-3.5 w-3.5" />
+                <ArrowDown className="ml-2 size-3.5" />
               ) : isSorted === "asc" ? (
-                <ArrowUp className="ml-2 h-3.5 w-3.5" />
+                <ArrowUp className="ml-2 size-3.5" />
               ) : (
-                <ChevronsUpDown className="ml-2 h-3.5 w-3.5 opacity-50" />
+                <ChevronsUpDown className="ml-2 size-3.5 opacity-50" />
               )}
             </Button>
           }
@@ -62,19 +62,19 @@ export function DataTableColumnHeader<TData, TValue>({
             onClick={() => column.toggleSorting(false)}
             className={cn(isSorted === "asc" && "bg-accent/50")}
           >
-            <ArrowUp className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
+            <ArrowUp className="mr-2 size-3.5 text-muted-foreground/70 text-xs" />
             Croissant
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => column.toggleSorting(true)}
             className={cn(isSorted === "desc" && "bg-accent/50")}
           >
-            <ArrowDown className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
+            <ArrowDown className="mr-2 size-3.5 text-muted-foreground/70 text-xs" />
             Décroissant
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={() => column.clearSorting()}>
-            <ChevronsUpDown className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
+            <ChevronsUpDown className="mr-2 size-3.5 text-muted-foreground/70 text-xs" />
             Réinitialiser
           </DropdownMenuItem>
 
@@ -82,7 +82,7 @@ export function DataTableColumnHeader<TData, TValue>({
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
-                <EyeOff className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
+                <EyeOff className="mr-2 size-3.5 text-muted-foreground/70 text-xs" />
                 Masquer la colonne
               </DropdownMenuItem>
             </>

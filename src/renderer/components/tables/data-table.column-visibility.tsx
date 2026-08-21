@@ -67,7 +67,7 @@ export function TableColumnVisibility<TData>({
             variant="outline"
             size="sm"
             className={cn(
-              "ml-auto hidden lg:flex gap-2 items-center",
+              "ml-auto h-8 rounded-full text-xs hidden lg:flex gap-2 items-center",
               className,
             )}
           />
@@ -79,7 +79,7 @@ export function TableColumnVisibility<TData>({
 
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="text-xs font-bold text-muted-foreground tracking-wider">
+          <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
             Colonnes visibles
           </DropdownMenuLabel>
         </DropdownMenuGroup>
@@ -91,7 +91,7 @@ export function TableColumnVisibility<TData>({
             return (
               <DropdownMenuCheckboxItem
                 key={column.id}
-                className="cursor-pointer text-sm"
+                className="cursor-pointer text-xs"
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
