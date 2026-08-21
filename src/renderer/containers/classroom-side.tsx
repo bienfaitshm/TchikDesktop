@@ -73,7 +73,7 @@ export const ClassroomNavItems = ({
                 <div key={title} className="flex flex-col gap-1.5">
                   {title && (
                     <div className="sticky top-0 -mx-1 bg-sidebar/40 px-6 py-1.5 backdrop-blur-sm">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <p className="text-xs font-semibold tracking-wider text-muted-foreground">
                         {getSectionLabel(title as SECTION_ENUM)}
                       </p>
                     </div>
