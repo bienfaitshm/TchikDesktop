@@ -376,7 +376,7 @@ export default function RouterProvider(): JSX.Element {
                 path={ROUTES.CLASSROOMS.CLASSROOM}
                 element={
                   <ClassroomsLayout
-                    navigateToDetail={APP_ROUTES.CLASSROOMS.DETAIL}
+                    navigateToDetail={APP_ROUTES.CLASSROOMS.STUDENTS}
                   />
                 }
               >
