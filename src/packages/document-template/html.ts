@@ -5,39 +5,42 @@ import {
   ILogger,
 } from "./template-reader";
 
-/**
- * Un logger "No-Op" (Null Object Pattern) qui ignore tous les logs.
- * Permet d'éviter les vérifications répétitives de type "if (logger)" dans le code.
- */
+/** Null Object implementation for safe fallback logging. */
 const NULL_LOGGER: ILogger = {
   warn: () => {},
   error: () => {},
 };
 
+/** In-memory cache for compiled Handlebars template delegates. */
+const templateCache = new Map<string, HandlebarsTemplateDelegate>();
+
 /**
- * Options de configuration pour le moteur de rendu de templates.
+ * Safely extracts a string error message from an unknown error type.
+ * @param error - The caught error instance.
+ * @returns Standardized message string.
+ */
+const formatErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+/**
+ * Options configuration contract for template execution.
  */
 export interface TemplateRenderOptions {
-  /**
-   * Une instance personnalisée du service de stockage pour récupérer le template.
-   */
+  /** Custom storage service instance used to retrieve raw templates. */
   storageService?: TemplateStorageService;
 
-  /**
-   * Un système de log injectable (ex: Winston, Pino, ou console).
-   * Si non fourni, un logger silencieux (Null Object) sera utilisé.
-   */
+  /** Custom logger implementation for tracking render lifecycle events. */
   logger?: ILogger;
 }
 
 /**
- * Compile et rend un template Handlebars à partir d'un fichier source.
- * * @template T Context/Structure des données à injecter dans le template.
- * @param templateRelativePath Chemin relatif du fichier template (ex: "invoice.hbs").
- * @param context Données d'injection pour le template.
- * @param options Options de rendu (permet notamment l'injection du stockage et du logger).
- * @returns Le contenu du template rendu sous forme de chaîne de caractères.
- * @throws {Error} Si le fichier est introuvable ou si la compilation Handlebars échoue.
+ * Compiles and renders a Handlebars template with the provided context data.
+ * @template T - Context object structure injected into the template.
+ * @param templateRelativePath - Relative file path to the Handlebars template.
+ * @param context - Data object to hydrate into the template layout.
+ * @param options - Execution options including custom storage or logger.
+ * @returns Promise resolving to the rendered HTML content string.
+ * @throws {Error} When template fetching, compilation, or execution fails.
  */
 export async function renderTemplate<T extends object>(
   templateRelativePath: string,
@@ -48,42 +51,43 @@ export async function renderTemplate<T extends object>(
   const storageService =
     options.storageService ?? defaultTemplateStorageService;
 
-  logger.warn(
-    `Starting template rendering pipeline for: "${templateRelativePath}"`,
-  );
+  let compiledTemplate = templateCache.get(templateRelativePath);
 
-  let rawBuffer: Buffer;
-  try {
-    rawBuffer = await storageService.readTemplateContent(templateRelativePath, {
-      encoding: null,
-    });
-  } catch (storageError) {
-    const errorMsg =
-      storageError instanceof Error
-        ? storageError.message
-        : String(storageError);
-    logger.error(
-      `Storage read failure for "${templateRelativePath}": ${errorMsg}`,
-    );
-    throw storageError;
+  if (!compiledTemplate) {
+    let rawBuffer: Buffer;
+    try {
+      rawBuffer = await storageService.readTemplateContent(
+        templateRelativePath,
+        { encoding: null },
+      );
+    } catch (storageError) {
+      const errorMsg = formatErrorMessage(storageError);
+      logger.error(
+        `Storage read failure for "${templateRelativePath}": ${errorMsg}`,
+      );
+      throw storageError;
+    }
+
+    try {
+      const templateSource = rawBuffer.toString("utf8");
+      compiledTemplate = Handlebars.compile(templateSource);
+      templateCache.set(templateRelativePath, compiledTemplate);
+    } catch (compileError) {
+      const errorMsg = formatErrorMessage(compileError);
+      const runtimeExceptionMessage = `Failed to compile template "${templateRelativePath}": ${errorMsg}`;
+
+      logger.error(runtimeExceptionMessage);
+      throw new Error(runtimeExceptionMessage, { cause: compileError });
+    }
   }
 
-  const templateSource = rawBuffer.toString("utf8");
-
   try {
-    const compile = Handlebars.compile(templateSource);
-    const renderedResult = compile(context);
+    return compiledTemplate(context);
+  } catch (renderError) {
+    const errorMsg = formatErrorMessage(renderError);
+    const executionFailureMessage = `Failed to render template "${templateRelativePath}": ${errorMsg}`;
 
-    logger.warn(`Successfully rendered template: "${templateRelativePath}"`);
-    return renderedResult;
-  } catch (compileError) {
-    const errorMessage =
-      compileError instanceof Error
-        ? compileError.message
-        : String(compileError);
-    const runtimeExceptionMessage = `Failed to compile or render template "${templateRelativePath}": ${errorMessage}`;
-
-    logger.error(runtimeExceptionMessage);
-    throw new Error(runtimeExceptionMessage);
+    logger.error(executionFailureMessage);
+    throw new Error(executionFailureMessage, { cause: renderError });
   }
 }

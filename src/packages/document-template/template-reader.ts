@@ -6,7 +6,18 @@ import { getResourcePath } from "@/packages/electron-utility";
 const DEFAULT_TEMPLATES_DIR = "documents_templates";
 
 /**
- * Options de lecture basées sur les types natifs de Node.js pour fs.promises.readFile
+ * File system provider abstraction contract for reading and resolving path operations.
+ */
+export interface IFileSystemProvider {
+  realpath(path: string): Promise<string>;
+  readFile(
+    path: string,
+    options?: ReadTemplateOptions,
+  ): Promise<string | Buffer>;
+}
+
+/**
+ * Options for file reading based on Node.js fs.promises.readFile signatures.
  */
 export type ReadTemplateOptions =
   | (Omit<Parameters<typeof fsPromises.readFile>[1], "encoding"> & {
@@ -14,18 +25,29 @@ export type ReadTemplateOptions =
     } & Abortable)
   | null;
 
+/**
+ * Structure defining document template context and data mapping.
+ */
 export interface DocumentTemplateConfig {
+  /** Name or relative location of the template. */
   templateName: string;
+  /** Key-value data context used for template hydration. */
   templateData: Record<string, unknown>;
 }
 
+/**
+ * Logging contract interface for tracking warnings and system errors.
+ */
 export interface ILogger {
+  /** Logs warning events. */
   warn(...args: unknown[]): void;
+  /** Logs error events. */
   error(...args: unknown[]): void;
 }
 
 /**
- * Récupère le chemin de base configuré pour les templates.
+ * Resolves the absolute directory path where document templates are stored.
+ * @returns Absolute filesystem path string to the template repository.
  */
 export function getTemplateRepositoryPath(): string {
   const envDir = process.env.DOCUMENT_TEMPLATES_DIR;
@@ -33,34 +55,37 @@ export function getTemplateRepositoryPath(): string {
 }
 
 /**
- * @class TemplateStorageService
- * Gère l'accès sécurisé et la lecture des fichiers de templates.
- * Implémente une vérification stricte contre les attaques par traversée de fichiers (Path Traversal).
+ * Service responsible for managing secure filesystem access to template files.
  */
 export class TemplateStorageService {
   private readonly baseDirectoryPath: string;
-  private readonly resolvedBaseDirectoryPath: string;
-  private readonly fileSystemProvider: typeof fsPromises;
+  private readonly fileSystemProvider: IFileSystemProvider;
   private readonly logger?: ILogger;
 
+  /**
+   * Initializes a new instance of TemplateStorageService.
+   * @param baseDirectoryPath - Optional custom root directory path.
+   * @param fileSystemProvider - File system provider implementation (defaults to node:fs/promises).
+   * @param logger - Optional logger instance.
+   */
   constructor(
     baseDirectoryPath?: string,
-    fileSystemProvider: typeof fsPromises = fsPromises,
+    fileSystemProvider: IFileSystemProvider = fsPromises,
     logger?: ILogger,
   ) {
     this.baseDirectoryPath = path.resolve(
       baseDirectoryPath ?? getTemplateRepositoryPath(),
     );
-    this.resolvedBaseDirectoryPath = path.resolve(this.baseDirectoryPath);
     this.fileSystemProvider = fileSystemProvider;
     this.logger = logger;
   }
 
   /**
-   * Lit le contenu d'un template de manière sécurisée sous forme de Buffer.
-   * * @param templateRelativePath - Chemin relatif du template (ex: "invoice.docx")
-   * @param options - Options d'annulation ou de drapeaux système
-   * @throws {Error} Si le chemin est invalide ou sort du répertoire racine.
+   * Reads a template file securely as a Buffer, protecting against path traversal.
+   * @param templateRelativePath - Relative file path to the template.
+   * @param options - Additional read options such as abort signals.
+   * @returns Raw Buffer of the template file.
+   * @throws {Error} If path is empty, non-existent, or escapes the root directory.
    */
   public async readTemplateContent(
     templateRelativePath: string,
@@ -70,34 +95,38 @@ export class TemplateStorageService {
       throw new Error("Template path invocation error: path cannot be empty.");
     }
 
-    if (templateRelativePath.includes("..")) {
-      const securityWarning = `Potential Path Traversal detected via relative path: ${templateRelativePath}`;
-      this.logger?.warn(securityWarning);
-      throw new Error(securityWarning);
-    }
-
     const targetPath = path.join(this.baseDirectoryPath, templateRelativePath);
 
     let resolvedTargetPath: string;
     try {
       resolvedTargetPath = await this.fileSystemProvider.realpath(targetPath);
-    } catch (error) {
+    } catch {
       throw new Error(
         `Template resource not found or inaccessible: ${templateRelativePath} (Target: ${targetPath})`,
       );
     }
 
-    if (!resolvedTargetPath.startsWith(this.resolvedBaseDirectoryPath)) {
+    let resolvedBaseDir: string;
+    try {
+      resolvedBaseDir = await this.fileSystemProvider.realpath(
+        this.baseDirectoryPath,
+      );
+    } catch {
+      resolvedBaseDir = this.baseDirectoryPath;
+    }
+
+    if (!resolvedTargetPath.startsWith(resolvedBaseDir)) {
       const securityViolation = `Security Exception: Attempted access outside jail directory (${templateRelativePath})`;
       this.logger?.warn(securityViolation);
       throw new Error(securityViolation);
     }
 
     try {
-      return (await this.fileSystemProvider.readFile(
+      const content = await this.fileSystemProvider.readFile(
         resolvedTargetPath,
         options,
-      )) as Buffer;
+      );
+      return Buffer.isBuffer(content) ? content : Buffer.from(content);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
@@ -108,13 +137,15 @@ export class TemplateStorageService {
   }
 }
 
-/**
- * Instance partagée (Singleton) par défaut.
- */
+/** Default singleton instance of the TemplateStorageService. */
 export const defaultTemplateStorageService = new TemplateStorageService();
 
 /**
- * @deprecated Use `defaultTemplateStorageService.readTemplateContent` directly instead to comply with Dependency Injection standards.
+ * Reads a template file using the default storage service instance.
+ * @deprecated Use `defaultTemplateStorageService.readTemplateContent` directly instead.
+ * @param templateName - Relative path or name of the template.
+ * @param options - Additional read options.
+ * @returns Raw Buffer of the template content.
  */
 export async function readTemplate(
   templateName: string,

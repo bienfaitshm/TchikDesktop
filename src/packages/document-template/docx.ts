@@ -7,30 +7,27 @@ import {
 import { additionalJsContext } from "./additional-context";
 
 /**
- * Options d'exécution pour la génération du rapport DOCX.
+ * Options required to execute DOCX report generation.
  */
 export interface GenerateDocxReportOptions {
+  /** Name or path identifier of the target template. */
   templateName: string;
+  /** Context data payload to inject into the template. */
   templateData: Record<string, unknown>;
 }
 
 /**
- * Configuration optionnelle pour l'injection de dépendances (Mocks/Tests/Logger).
+ * Configuration contract for dependency injection (Storage, Logger).
  */
 export interface ReportGeneratorConfig {
-  /**
-   * Service d'accès aux fichiers templates. Permet de déléguer la sécurité et le I/O.
-   */
+  /** Storage service used to fetch raw template content. */
   storageService?: TemplateStorageService;
-
-  /**
-   * Système de log injectable.
-   */
+  /** Logger implementation instance. */
   logger?: ILogger;
 }
 
 /**
- * Logger silencieux par défaut (Null Object Pattern).
+ * Null Object pattern implementation for fallback logging.
  */
 const NULL_LOGGER: ILogger = {
   warn: () => {},
@@ -38,13 +35,24 @@ const NULL_LOGGER: ILogger = {
 };
 
 /**
- * @class DocxReportGeneratorService
- * Service d'entreprise responsable de la compilation et génération de rapports complexes au format DOCX.
+ * Safely extracts a human-readable message string from an unknown error type.
+ * @param error - The caught error instance or thrown value.
+ * @returns Standardized error message string.
+ */
+const formatErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+/**
+ * Service responsible for resolving templates and compiling DOCX binary reports.
  */
 export class DocxReportGeneratorService {
   private readonly storageService: TemplateStorageService;
   private readonly logger: ILogger;
 
+  /**
+   * Initializes a new instance of DocxReportGeneratorService.
+   * @param config - Optional configurations for storage and logging.
+   */
   constructor(config: ReportGeneratorConfig = {}) {
     this.storageService =
       config.storageService ?? defaultTemplateStorageService;
@@ -52,29 +60,22 @@ export class DocxReportGeneratorService {
   }
 
   /**
-   * Génère un rapport DOCX binaire à partir d'un template et de ses données d'injection.
-   * * @param options Options contenant le nom du template et les données associées.
-   * @returns Un tableau d'octets (Uint8Array) représentant le fichier DOCX généré.
-   * @throws {Error} Si le template est inaccessible ou si la compilation par le moteur échoue.
+   * Generates a binary DOCX report given a template name and context data.
+   * @param options - Object containing template identifier and rendering data.
+   * @returns Generated DOCX file content as a Uint8Array.
+   * @throws {Error} When template retrieval or report compilation fails.
    */
   public async generate(
     options: GenerateDocxReportOptions,
   ): Promise<Uint8Array> {
     const { templateName, templateData } = options;
 
-    this.logger.warn(
-      `Initiating DOCX generation for template: "${templateName}"`,
-    );
-
     let templateBuffer: Buffer;
     try {
       templateBuffer =
         await this.storageService.readTemplateContent(templateName);
     } catch (storageError) {
-      const errorMsg =
-        storageError instanceof Error
-          ? storageError.message
-          : String(storageError);
+      const errorMsg = formatErrorMessage(storageError);
       this.logger.error(
         `Aborting generation. Failed to retrieve template: ${errorMsg}`,
       );
@@ -86,19 +87,14 @@ export class DocxReportGeneratorService {
         template: templateBuffer,
         data: templateData,
         additionalJsContext,
+        maximumWalkingDepth: Infinity,
       });
 
-      this.logger.warn(
-        `Successfully generated DOCX report for: "${templateName}"`,
-      );
       return reportBytes;
     } catch (engineError) {
-      const errorMsg =
-        engineError instanceof Error
-          ? engineError.message
-          : String(engineError);
+      const errorMsg = formatErrorMessage(engineError);
       const executionFailureMessage = `Failed to assemble DOCX report for template "${templateName}": ${errorMsg}`;
-      console.log(engineError);
+
       this.logger.error(executionFailureMessage);
       throw new Error(executionFailureMessage, { cause: engineError });
     }
@@ -106,14 +102,17 @@ export class DocxReportGeneratorService {
 }
 
 /**
- * Instance Singleton par défaut pour l'application.
+ * Default singleton instance for general application usage.
  */
 export const defaultDocxReportGeneratorService =
   new DocxReportGeneratorService();
 
 /**
- * @deprecated Préférez instancier ou utiliser `defaultDocxReportGeneratorService.generate()`
- * pour respecter les standards d'injection de dépendances.
+ * Generates a DOCX report using the default or provided configuration.
+ * @deprecated Prefer using `defaultDocxReportGeneratorService.generate()` directly.
+ * @param options - Generation options containing template and payload data.
+ * @param config - Optional configuration override.
+ * @returns Generated DOCX file content as a Uint8Array.
  */
 export async function generateDocxReport(
   options: GenerateDocxReportOptions,
