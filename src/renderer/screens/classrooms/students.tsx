@@ -146,6 +146,11 @@ export const StudentPage: React.FC = () => {
         yearId,
       },
     },
+    orderBy: [
+      { table: "users", column: "lastName", order: "asc" },
+      { table: "users", column: "lastName", order: "asc" },
+      { table: "users", column: "firstName", order: "asc" },
+    ],
   });
 
   const columns = React.useMemo(
