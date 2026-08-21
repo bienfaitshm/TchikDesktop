@@ -99,7 +99,7 @@ export const StudentAvatar: React.FC<StudentAvatarProps> = ({
       <AvatarFallback
         style={{ "--avatar-hue": `${hue}deg` } as React.CSSProperties}
         className={cn(
-          "font-semibold uppercase tracking-wider text-white",
+          "text-xs capitalize tracking-wider text-white",
           "bg-[hsl(var(--avatar-hue),65%,50%)] dark:bg-[hsl(var(--avatar-hue),60%,40%)]",
           "shadow-[inset_0_1px_2px_rgba(255,255,255,0.15)]",
           "text-shadow-sm",

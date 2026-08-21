@@ -122,7 +122,11 @@ export function DataContentHead(props?: { className?: string }) {
       {headerGroups.map((headerGroup) => (
         <TableRow key={headerGroup.id}>
           {headerGroup.headers.map((header) => (
-            <TableHead key={header.id} colSpan={header.colSpan}>
+            <TableHead
+              className="text-xs"
+              key={header.id}
+              colSpan={header.colSpan}
+            >
               {header.isPlaceholder
                 ? null
                 : flexRender(
