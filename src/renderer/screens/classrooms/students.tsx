@@ -3,7 +3,14 @@
 import React from "react";
 import { useParams } from "react-router";
 import { Edit2, UserPen, UserPlus, Banknote, Trash2, Eye } from "lucide-react";
-
+import {
+  PageContainer,
+  PageHeader,
+  PageHeaderTextContent,
+  PageHeadTitle,
+  PageHeadDescription,
+  PageContent,
+} from "@/renderer/containers/page-container";
 import {
   GENDER_OPTIONS,
   STUDENT_STATUS_OPTIONS,
@@ -30,15 +37,16 @@ import {
 } from "@/renderer/dialog-actions/enrollment.dialog-actions";
 import { UpdateStudentDialog } from "@/renderer/dialog-actions/student.dialog-action";
 import { enhanceColumns } from "@/renderer/components/tables/columns";
-import { useSchoolContext } from "@/renderer/hooks/app-config-router";
 import { Button } from "@/renderer/components/ui/button";
 import { SchedulePaymentDialog } from "@/renderer/apps/finances/dialog/student-payement-schedule.dialog";
-import type { Classroom, EnrollmentDTO } from "@/packages/@core/data-access/db";
+import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
 import {
   createActionMenus,
   type ActionMenuConfig,
 } from "@/components/menus/action-menus";
 import { TutorProfileDialog } from "@/renderer/apps/schools/dialogs";
+import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
+import { useGetClassroomById } from "@/renderer/libs/queries/classrooms";
 
 export interface EnrollmentRowActionsProps extends CreateEnrollmentDialogProps {
   enrollment: EnrollmentDTO;
@@ -125,10 +133,9 @@ export const EnrollmentRowAction: React.FC<EnrollmentRowActionsProps> =
  * @returns Rendered student management page layout with data table and toolbars.
  */
 export const StudentPage: React.FC = () => {
-  const { schoolId, yearId, classroom } = useSchoolContext<{
-    classroom: Classroom;
-  }>();
+  const { schoolId, yearId } = useCurrentConfig();
   const { classroomId } = useParams();
+  const { data: classroom } = useGetClassroomById(classroomId ?? "");
   const { data: students = [], queryKey: mutationKey } = useGetEnrollments({
     where: {
       classroomEnrollments: {
@@ -145,8 +152,8 @@ export const StudentPage: React.FC = () => {
         variant: "actions",
         renderRowAction: (enrollment) => (
           <EnrollmentRowAction
-            schoolId={schoolId}
-            yearId={yearId}
+            schoolId={schoolId!}
+            yearId={yearId!}
             enrollment={enrollment}
             mutationKey={mutationKey}
           />
@@ -155,60 +162,74 @@ export const StudentPage: React.FC = () => {
     [mutationKey, schoolId, yearId],
   );
 
+  if (!schoolId || !yearId) return null;
+
   return (
-    <DataTable<EnrollmentDTO>
-      data={students}
-      columns={columns}
-      keyExtractor={(s) => s.enrollmentId}
-    >
-      <DataTableToolbar>
-        <FilteredTableToolbarContainer>
-          <SearchTableToolbar
-            searchColumn="student_fullName"
-            placeholder="Rechercher ex. SHOMARI"
-          />
-          <TableFacetedFilterItem
-            columnId="student_gender"
-            title="Genre"
-            options={GENDER_OPTIONS}
-          />
-          <TableFacetedFilterItem
-            columnId="status"
-            title="Statut"
-            options={STUDENT_STATUS_OPTIONS}
-          />
-        </FilteredTableToolbarContainer>
-        <div className="flex items-center gap-4">
-          <SchedulePaymentDialog
-            schoolId={schoolId}
-            yearId={yearId}
-            classId={classroomId as string}
-            classroomName={classroom.shortIdentifier}
-          >
-            <Button variant="outline">
-              <Banknote />
-              <span>Paiements</span>
-            </Button>
-          </SchedulePaymentDialog>
-          <CreateEnrollmentDialog
-            modal={false}
-            schoolId={schoolId}
-            yearId={yearId}
-            defaultValues={{ schoolId, yearId, classroomId }}
-          >
-            <Button size="sm" className="gap-2 shadow-xs">
-              <UserPlus className="h-4 w-4" />
-              <span>Nouvelle inscription</span>
-            </Button>
-          </CreateEnrollmentDialog>
-          <DataTableColumnToggle />
-        </div>
-      </DataTableToolbar>
-      <DataTableContent>
-        <DataContentHead className="bg-muted/10" />
-        <DataContentBody />
-      </DataTableContent>
-      <DataTablePagination />
-    </DataTable>
+    <PageContainer>
+      <PageHeader>
+        <PageHeaderTextContent>
+          <PageHeadTitle>{classroom.identifier}</PageHeadTitle>
+          <PageHeadDescription>
+            Liste des élèves inscrits dans cette classe.
+          </PageHeadDescription>
+        </PageHeaderTextContent>
+      </PageHeader>
+      <PageContent>
+        <DataTable<EnrollmentDTO>
+          data={students}
+          columns={columns}
+          keyExtractor={(s) => s.enrollmentId}
+        >
+          <DataTableToolbar>
+            <FilteredTableToolbarContainer>
+              <SearchTableToolbar
+                searchColumn="student_fullName"
+                placeholder="Rechercher ex. SHOMARI"
+              />
+              <TableFacetedFilterItem
+                columnId="student_gender"
+                title="Genre"
+                options={GENDER_OPTIONS}
+              />
+              <TableFacetedFilterItem
+                columnId="status"
+                title="Statut"
+                options={STUDENT_STATUS_OPTIONS}
+              />
+            </FilteredTableToolbarContainer>
+            <div className="flex items-center gap-4">
+              <SchedulePaymentDialog
+                schoolId={schoolId}
+                yearId={yearId}
+                classId={classroomId as string}
+                classroomName={classroom.shortIdentifier}
+              >
+                <Button variant="outline">
+                  <Banknote />
+                  <span>Paiements</span>
+                </Button>
+              </SchedulePaymentDialog>
+              <CreateEnrollmentDialog
+                modal={false}
+                schoolId={schoolId}
+                yearId={yearId}
+                defaultValues={{ schoolId, yearId, classroomId }}
+              >
+                <Button size="sm" className="gap-2 shadow-xs">
+                  <UserPlus className="h-4 w-4" />
+                  <span>Nouvelle inscription</span>
+                </Button>
+              </CreateEnrollmentDialog>
+              <DataTableColumnToggle />
+            </div>
+          </DataTableToolbar>
+          <DataTableContent>
+            <DataContentHead className="bg-muted/10" />
+            <DataContentBody />
+          </DataTableContent>
+          <DataTablePagination />
+        </DataTable>
+      </PageContent>
+    </PageContainer>
   );
 };
