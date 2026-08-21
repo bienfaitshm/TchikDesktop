@@ -68,9 +68,9 @@ export const studentColumns: ColumnDef<EnrollmentDTO>[] = [
   },
   {
     accessorKey: "studentCode",
-    header: "Code Eleve",
+    header: "Code d'inscription de l'élève",
     cell: ({ row }) => (
-      <p data-slot="table-code" className="text-xs">
+      <p data-slot="table-code" className="text-xs text-center">
         {row.original.studentCode ?? "—"}
       </p>
     ),
