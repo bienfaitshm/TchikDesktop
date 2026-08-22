@@ -8,9 +8,16 @@ import { formatDate } from "@/packages/times";
 import type { RawFileContent, ServiceResult, ContextParams } from "./types";
 
 /**
+ * Context parameters passed during dynamic form field evaluation.
+ */
+export type FormFieldContextParams = ContextParams & {
+  fileTypeFilters?: Electron.FileFilter[];
+};
+
+/**
  * Metadata contract required by the UI to render export dialogs and dynamic forms.
  */
-export interface TMeta<TFormField = unknown> {
+export interface ExportMeta<TFormField = unknown> {
   title: string;
   category: string;
   description: string;
@@ -39,7 +46,7 @@ export abstract class AbstractExportExtension<
 
   /**
    * Generates Electron FileFilter metadata for desktop file dialogs.
-   * @returns Formatted FileFilter object.
+   * @returns Formatted Electron FileFilter object.
    */
   public getExtensionFilter(): FileFilter {
     return {
@@ -57,6 +64,13 @@ export abstract class AbstractExportExtension<
 }
 
 /**
+ * Contract for data resolving logic attached to an export strategy.
+ */
+export interface DataResolver<TPayload, TData> {
+  resolveData(payload: TPayload): Promise<TData>;
+}
+
+/**
  * Contract defining domain-specific export strategies (Strategy Pattern).
  */
 export interface IExportStrategy<
@@ -65,12 +79,12 @@ export interface IExportStrategy<
   TData = unknown,
 > {
   readonly id: string;
-  getFormFields<TParams extends ContextParams>(
+  getFormFields<TParams extends FormFieldContextParams>(
     params?: TParams,
   ): Promise<readonly TFormField[]>;
-  getMeta<TParams extends ContextParams>(
+  getMeta<TParams extends FormFieldContextParams>(
     params?: TParams,
-  ): Promise<TMeta<TFormField>>;
+  ): Promise<ExportMeta<TFormField>>;
   validateContext(params: unknown): ServiceResult<TPayload>;
   getSaveOptions(targetExtension?: DOCUMENT_EXTENSION): SaveDialogOptions;
   resolveData(payload: TPayload): Promise<TData>;
@@ -82,13 +96,6 @@ export interface IExportStrategy<
 }
 
 /**
- * Contract for data resolving logic attached to an export strategy.
- */
-export interface ResolverData<TPayload, TData> {
-  resolveData(payload: TPayload): Promise<TData>;
-}
-
-/**
  * Configuration payload supplied to strategy constructors.
  */
 export interface ExportStrategyConfig<TFormField, TPayload, TData> {
@@ -96,16 +103,16 @@ export interface ExportStrategyConfig<TFormField, TPayload, TData> {
   schemaCreator?: (
     fields: TFormField[],
   ) => ZodObject<Record<string, ZodTypeAny>>;
-  extendWithFileTypeFormFields?: <TParams extends ContextParams>(
-    params?: TParams,
+  extendWithFileTypeFormFields?: <TParams extends FormFieldContextParams>(
+    params: TParams,
   ) => Promise<readonly TFormField[]>;
-  resolver: ResolverData<TPayload, TData>;
+  resolver: DataResolver<TPayload, TData>;
 }
 
 /**
- * Formats validation error issues into a single descriptive string.
+ * Formats Zod validation issues into a single descriptive string.
  * @param error - Zod validation error object.
- * @returns Formatted error string.
+ * @returns Concatenated path and error messages string.
  */
 function formatZodError(error: ZodError): string {
   return error.issues
@@ -116,7 +123,7 @@ function formatZodError(error: ZodError): string {
 /**
  * Sanitizes strings for safe file system usage.
  * @param name - Raw filename input.
- * @returns Sanitized string free of invalid path characters.
+ * @returns Cleaned string free of invalid path characters.
  */
 function sanitizeFileName(name: string): string {
   return name.replace(/[<>:"/\\|?*]/g, "_").trim();
@@ -144,12 +151,14 @@ export abstract class AbstractExportStrategy<
     DOCUMENT_EXTENSION,
     IExportExtension<TData>
   >();
-  protected resolver: ResolverData<TPayload, TData>;
+  protected resolver: DataResolver<TPayload, TData>;
   private readonly schemaCreator?: (
     fields: TFormField[],
   ) => ZodObject<Record<string, ZodTypeAny>>;
-  protected extendWithFileTypeFormFields?: <TParams extends ContextParams>(
-    params?: TParams,
+  protected extendWithFileTypeFormFields?: <
+    TParams extends FormFieldContextParams,
+  >(
+    params: TParams,
   ) => Promise<readonly TFormField[]>;
 
   constructor(config: ExportStrategyConfig<TFormField, TPayload, TData>) {
@@ -167,9 +176,9 @@ export abstract class AbstractExportStrategy<
    * @param params - Optional context parameters.
    * @returns Aggregated metadata payload.
    */
-  public async getMeta<TParams extends ContextParams>(
+  public async getMeta<TParams extends FormFieldContextParams>(
     params?: TParams,
-  ): Promise<TMeta<TFormField>> {
+  ): Promise<ExportMeta<TFormField>> {
     return {
       title: this.displayName,
       category: this.category,
@@ -181,6 +190,7 @@ export abstract class AbstractExportStrategy<
 
   /**
    * Gets all file filter descriptors registered to this strategy.
+   * @returns List of supported Electron FileFilters.
    */
   public get extensionFilters(): FileFilter[] {
     return Array.from(this.extensionsRegistry.values()).map((engine) =>
@@ -227,14 +237,15 @@ export abstract class AbstractExportStrategy<
    * @param params - Optional contextual parameters.
    * @returns Array of form field definitions.
    */
-  public async getFormFields<TParams extends ContextParams>(
+  public async getFormFields<TParams extends FormFieldContextParams>(
     params?: TParams,
   ): Promise<readonly TFormField[]> {
     if (this.extendWithFileTypeFormFields) {
-      return this.extendWithFileTypeFormFields({
+      const extendedParams = {
         fileTypeFilters: this.extensionFilters,
-        ...params,
-      });
+        ...(params ?? {}),
+      } as TParams;
+      return this.extendWithFileTypeFormFields(extendedParams);
     }
     return this.formFields;
   }
@@ -318,10 +329,9 @@ export abstract class AbstractExportStrategy<
   ): SaveDialogOptions {
     const sanitizedName = sanitizeFileName(this.displayName);
     const dateSuffix = formatDate(new Date(), "dd_MM_yyyy_HHmmss");
-    const baseName = `${sanitizedName}_${dateSuffix}`;
     const defaultPath = targetExtension
-      ? `${baseName}.${targetExtension}`
-      : baseName;
+      ? `${sanitizedName}_${dateSuffix}.${targetExtension}`
+      : `${sanitizedName}_${dateSuffix}`;
 
     return {
       title: `Export - ${this.displayName}`,

@@ -4,25 +4,34 @@ import {
   createFileTypeField,
   createSessionField,
 } from "@/packages/@core/documents-exports/form-factory/form-generators";
-import { validateAndMergeContext, type BaseExportFormConfig } from "../base";
+import {
+  validateAndMergeContext,
+  type BaseExportFormConfig,
+  DEFAULT_LAYOUT,
+} from "../base";
 
 /**
  * Creates dynamic form field definitions for document export configurations.
- * @param config - Generic configuration holding domain context and layout rules.
+ * @param config - Base configuration containing domain context, layout, and filter options.
  * @returns Array of generated dynamic form field definitions.
  */
-export const createSessionExportForm = async <
-  TContext extends { schoolId: string; yearId: string },
+export const createSessionExportForm = <
+  TContext extends Record<string, unknown> & {
+    schoolId: string;
+    yearId: string;
+  },
 >(
-  config: Readonly<BaseExportFormConfig<TContext, "fileType" | "session">>,
+  config: Readonly<BaseExportFormConfig<TContext>>,
 ): Promise<readonly FormFieldDef[]> => {
-  const { validContext, fileTypeFilters, mergedLayout } =
-    validateAndMergeContext(config, ["schoolId", "yearId"]);
+  const { validContext, fileTypeFilters } = validateAndMergeContext(config, [
+    "schoolId",
+    "yearId",
+  ]);
 
   return composeFields(
-    createFileTypeField(fileTypeFilters, { colSpan: mergedLayout.fileType }),
+    createFileTypeField(fileTypeFilters, { colSpan: DEFAULT_LAYOUT.fileType }),
     createSessionField({
-      colSpan: mergedLayout.session,
+      colSpan: 6,
       schoolId: validContext.schoolId,
       yearId: validContext.yearId,
     }),

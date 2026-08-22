@@ -127,7 +127,7 @@ export class DataExport {
       }
 
       // 4. Récupération des données
-      const dataResult = await strategy.handlerResolveData(contextParams);
+      const dataResult = await strategy.handleResolveData(contextParams);
       if (!dataResult.success) return dataResult;
 
       // 5. Génération de l'artefact
