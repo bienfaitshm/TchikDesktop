@@ -11,6 +11,7 @@ import {
   SeatingPresenceSessionDataResolver,
   SeatingResolverParams,
 } from "./resolver";
+import { DocumentCategory } from "../../constants";
 
 type ExportPayload = SeatingResolverParams & {
   schoolId: string;
@@ -24,6 +25,7 @@ export class SeatingBadgeExportStrategy extends AbstractExportStrategy<
   FormFieldDef,
   any
 > {
+  public category: string = DocumentCategory.DATA_SCHOOL;
   public readonly id = "SEATING_BADGE_EXPORT" as const;
   public readonly displayName = "Exportation des badges d'examen";
   public readonly description =
@@ -33,22 +35,9 @@ export class SeatingBadgeExportStrategy extends AbstractExportStrategy<
   constructor() {
     super({
       extensions,
-      getSchemasCreator: generateValidationSchema,
+      schemaCreator: generateValidationSchema,
+      resolver: SeatingPresenceSessionDataResolver,
+      extendWithFileTypeFormFields: createSeatingBadgeExportForm,
     });
-  }
-
-  public override async getFormFields(
-    params,
-  ): Promise<readonly FormFieldDef[]> {
-    return createSeatingBadgeExportForm({
-      fileTypeFilters: this.extensionFilters,
-      ...params,
-    });
-  }
-
-  public override async resolveData(
-    contextParams: ExportPayload,
-  ): Promise<any> {
-    return SeatingPresenceSessionDataResolver.resolveData(contextParams);
   }
 }

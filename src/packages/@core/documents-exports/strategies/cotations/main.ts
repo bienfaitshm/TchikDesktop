@@ -10,18 +10,8 @@ import {
 } from "@/packages/dynamic-form";
 import { createCotationDocumentExportForm } from "./form";
 import { CotationDataResolver } from "./resolver";
-import type { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
-import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 import { extensions } from "./extension";
 import { DocumentCategory } from "../../constants";
-
-type ExportPayload = {
-  schoolId: string;
-  yearId: string;
-  classId: string[];
-  section: SECTION_ENUM;
-  fileType: DOCUMENT_EXTENSION;
-};
 
 export class FicheCotationExportStrategy extends AbstractExportStrategy<
   FormFieldDef,
@@ -38,27 +28,9 @@ export class FicheCotationExportStrategy extends AbstractExportStrategy<
   constructor() {
     super({
       extensions,
-      getSchemasCreator: generateValidationSchema,
+      schemaCreator: generateValidationSchema,
+      resolver: CotationDataResolver,
+      extendWithFileTypeFormFields: createCotationDocumentExportForm,
     });
-  }
-
-  public override async getFormFields(
-    params,
-  ): Promise<readonly FormFieldDef[]> {
-    return createCotationDocumentExportForm({
-      fileTypeFilters: this.extensionFilters,
-      ...params,
-    });
-  }
-
-  /**
-   * Résolution des données. Ici, on transmet simplement les filtres validés.
-   * Le processeur (Extension) se chargera de la transformation.
-   */
-  public override async resolveData(payload: ExportPayload) {
-    if (payload.classId.length === 0) {
-      throw new Error("Aucune classe sélectionnée pour l'export.");
-    }
-    return CotationDataResolver.resolveData(payload);
   }
 }
