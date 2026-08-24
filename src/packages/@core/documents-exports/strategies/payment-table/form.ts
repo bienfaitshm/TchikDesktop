@@ -3,13 +3,9 @@ import {
   composeFields,
   createFileTypeField,
   createClassroomField,
-  DateInputFieldFactory,
+  createFeeTypeField,
 } from "@/packages/@core/documents-exports/form-factory";
-import {
-  validateAndMergeContext,
-  type BaseExportFormConfig,
-  DEFAULT_LAYOUT,
-} from "../base";
+import { validateAndMergeContext, type BaseExportFormConfig } from "../base";
 
 /**
  * Creates dynamic form field definitions for document export configurations.
@@ -30,19 +26,16 @@ export const createPaymentReportExportForm = <
   ]);
 
   return composeFields(
-    createFileTypeField(fileTypeFilters, { colSpan: 12 }),
+    createFileTypeField(fileTypeFilters, { colSpan: 4 }),
     createClassroomField({
       colSpan: 4,
       schoolId: validContext.schoolId,
       yearId: validContext.yearId,
     }),
-    DateInputFieldFactory.create("dateStart", "Date de Debut", {
+    createFeeTypeField({
+      schoolId: validContext.schoolId,
+      yearId: validContext.yearId,
       colSpan: 4,
-      defaultValue: new Date(),
-    }),
-    DateInputFieldFactory.create("dateEnd", "Date de fin", {
-      colSpan: 4,
-      defaultValue: new Date(),
     }),
   );
 };

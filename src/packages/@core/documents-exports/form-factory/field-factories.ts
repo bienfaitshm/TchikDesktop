@@ -104,3 +104,15 @@ export const DateInputFieldFactory = {
       .build(config);
   },
 };
+
+export const FeeTypeFieldFactory = {
+  create(config?: TBaseFieldConfig): FormFieldDef {
+    return FieldBuilder.create("feeTypeId", "select")
+      .withLabel("Type de frais")
+      .withPlaceholder("Ex. Menerval")
+      .withDefaultValue([])
+      .withColSpan(4)
+      .multiple()
+      .build(config);
+  },
+};

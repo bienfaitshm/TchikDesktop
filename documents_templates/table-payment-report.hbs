@@ -58,7 +58,6 @@
         .doc-header {
             background-color: var(--primary);
             color: var(--primary-foreground);
-            margin: -12mm -12mm 15px -12mm;
             padding: 14px 12mm;
             border-bottom: none;
         }
@@ -109,10 +108,10 @@
         }
 
         .sub-table-title {
-            font-size: 8pt; /* Réduit */
+            font-size: 7pt; /* Réduit */
             font-weight: 700;
             color: var(--primary);
-            margin: 8px 0 4px 2px;
+            margin:18px 0 17px 2px;
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }
@@ -136,7 +135,6 @@
             padding: 5px 6px;
             border: 1px solid var(--border);
             text-align: center;
-            text-transform: uppercase;
         }
 
         table.data-table th.col-name {
@@ -144,8 +142,8 @@
         }
 
         table.data-table td {
-            font-size: 7.5pt; /* Réduit */
-            padding: 4px 6px;
+            font-size: 7pt; /* Réduit */
+            padding: 2px 3px;
             border: 1px solid var(--border);
             color: var(--card-foreground);
             text-align: center;
@@ -181,7 +179,7 @@
         <table class="header-table">
             <tr>
                 <td>
-                    <div class="school-title">{{school.name}}</div>
+                    <h1 class="school-title">{{school.name}}</h1>
                     <div class="school-subtitle">{{school.address}}, {{school.town}} | {{school.studyYear.yearName}}</div>
                 </td>
                 <td>
@@ -197,15 +195,15 @@
     <!-- Boucle dynamique sur les classes -->
     {{#each classesView}}
     <div class="class-section">
-        <div class="class-header">Classe : {{this.name}} | ( {{this.shortName}})</div>
+        <h2 class="class-header">Classe : {{this.name}} | ( {{this.shortName}})</h2>
 
         <!-- Boucle dynamique sur CHAQUE TABLEAU DE FRAIS fourni dans le feeSchedule -->
         {{#each this.rowValues}}
-        <div class="sub-table-title">{{this.feeTypeName}}</div>
+        <h3 class="sub-table-title">{{this.feeTypeName}}</h3>
         <table class="data-table">
             <thead>
                 <tr>
-                    <th style="width: 30px;">N°</th>
+                    <th style="width: 25px;">N°</th>
                     <th class="col-name">Nom, postnom et prénom</th>
                     
                     <!-- En-têtes de colonnes dynamiques -->

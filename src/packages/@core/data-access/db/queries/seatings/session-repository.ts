@@ -14,6 +14,7 @@ import {
   helpers,
   betterSqlite,
   DatabaseError,
+  OptionProvider,
 } from "@/packages/drizzle-queries";
 
 export type SeatingSessionTDO = SeatingSession & {
@@ -36,12 +37,15 @@ const SESSION_SORT: BaseSeatingSessionFilters = {
 /**
  * Repository for managing seating sessions and related analytical room status queries.
  */
-export class SeatingSessionRepository extends betterSqlite.BaseRepository<
-  TableSeatingSession,
-  TDataBase,
-  SeatingSession,
-  BaseSeatingSessionFilters
-> {
+export class SeatingSessionRepository
+  extends betterSqlite.BaseRepository<
+    TableSeatingSession,
+    TDataBase,
+    SeatingSession,
+    BaseSeatingSessionFilters
+  >
+  implements OptionProvider<SeatingSession>
+{
   constructor() {
     super({
       db,
@@ -52,6 +56,9 @@ export class SeatingSessionRepository extends betterSqlite.BaseRepository<
       defaultFilters: SESSION_SORT,
       joinTables: _seatingSessionJoinTables,
     });
+  }
+  fetchOptions(filters?: BaseSeatingSessionFilters) {
+    return this.findMany(filters);
   }
 
   /**

@@ -7,6 +7,7 @@ import {
   feeTypeRepository,
 } from "@/packages/@core/data-access/db";
 import type { DataResolver } from "@/packages/electron-data-exporter";
+import { formatDate } from "@/packages/times";
 
 /**
  * Input payload required to query payment and classroom export data.
@@ -24,6 +25,7 @@ export interface PaymentResolverPayload {
 export interface PaymentResolverData {
   feetypes: FeeTypeWithSchedulesDTO[];
   classrooms: ClassroomWithEnrollment[];
+  generatedDate: string;
 }
 
 /**
@@ -72,6 +74,13 @@ export class PaymentDataResolver implements DataResolver<
                 : {}),
             },
           },
+          orderBy: [
+            {
+              table: "classrooms",
+              column: "identifier",
+              order: "asc",
+            },
+          ],
         },
         enrollment: {
           where: {
@@ -87,6 +96,7 @@ export class PaymentDataResolver implements DataResolver<
     return {
       feetypes,
       classrooms,
+      generatedDate: formatDate(new Date()),
     };
   }
 }

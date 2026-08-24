@@ -1,13 +1,20 @@
 import { ExamOptimizer, RoomReport } from "@/packages/exam-seating-engine";
-import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db";
+import {
+  SeatingSession,
+  seatingSessionRepository,
+  SeatingSessionRepository,
+  STUDENT_STATUS_ENUM,
+  type EnrollmentDTO,
+  type BaseSeatingSessionFilters,
+} from "@/packages/@core/data-access/db";
 import { type CustomLogger, getLogger } from "@/packages/logger";
 import type { EnrollmentRepository } from "@/packages/@core/data-access/db/queries/enrollments";
 import { enrollmentRepository } from "@/packages/@core/data-access/db/queries/enrollments";
-import type { EnrolementDetails } from "@/packages/@core/data-access/db/schemas/types";
 import { parsePercentage } from "./utils";
 import { SeatingSessionMapper } from "./session-mapper";
 import { type LocalRoomRepository } from "./localrooms";
 import { localRoomRepository } from "./localroom.service";
+import { SelectOptionFacade } from "@/packages/drizzle-queries";
 
 export interface SeatingConfig {
   comfortRatio: number;
@@ -22,6 +29,8 @@ export interface DataParams {
 }
 
 export class SeatingSessionService {
+  public readonly seatingSelect: SelectOptionFacade<SeatingSession>;
+
   public static readonly DEFAULT_CONFIG: SeatingConfig = {
     comfortRatio: 0.7,
   };
@@ -29,8 +38,23 @@ export class SeatingSessionService {
   constructor(
     private readonly roomRepo: LocalRoomRepository,
     private readonly enrollmentRepo: EnrollmentRepository,
+    private readonly seatingSessionRepo: SeatingSessionRepository,
     private readonly logger: CustomLogger,
-  ) {}
+  ) {
+    this.seatingSelect = new SelectOptionFacade<SeatingSession>(
+      this.seatingSessionRepo,
+      {
+        valueKey: "sessionId",
+        labelKeyLong: "sessionName",
+        labelKeyShort: "sessionName",
+        labelFormat: "long",
+      },
+    );
+  }
+
+  async getOptions(args?: BaseSeatingSessionFilters) {
+    return this.seatingSelect.loadOptions(args);
+  }
 
   /**
    * Génère un plan de placement pour les examens basé sur les contraintes physiques des salles
@@ -38,7 +62,7 @@ export class SeatingSessionService {
    */
   public async generate(
     data: DataParams,
-  ): Promise<RoomReport<EnrolementDetails>[]> {
+  ): Promise<RoomReport<EnrollmentDTO>[]> {
     const parsedRatio = parsePercentage(data.comfortRatio);
 
     const comfortRatio =
@@ -65,7 +89,7 @@ export class SeatingSessionService {
     }
 
     const students = dbEnrollments.map((enrollment) =>
-      SeatingSessionMapper.toDomainStudent(enrollment as EnrolementDetails),
+      SeatingSessionMapper.toDomainStudent(enrollment as EnrollmentDTO),
     );
     const rooms = dbRooms.map(SeatingSessionMapper.toDomainRoom);
 
@@ -93,12 +117,26 @@ export class SeatingSessionService {
 
     return Promise.all([
       this.roomRepo.findMany({
-        where: { schoolId },
-        whereIn: { localroomId: localRoomIds },
+        where: {
+          localrooms: {
+            schoolId,
+            localroomId: {
+              $in: localRoomIds,
+            },
+          },
+        },
       }),
       this.enrollmentRepo.findMany({
-        where: { schoolId, yearId, status: STUDENT_STATUS_ENUM.ACTIVE },
-        whereIn: { classroomId: classRoomIds },
+        where: {
+          classroomEnrollments: {
+            schoolId,
+            yearId,
+            status: STUDENT_STATUS_ENUM.ACTIVE,
+            classroomId: {
+              $in: classRoomIds,
+            },
+          },
+        },
       }),
     ]);
   }
@@ -117,5 +155,6 @@ export class SeatingSessionService {
 export const seatingSessionService = new SeatingSessionService(
   localRoomRepository,
   enrollmentRepository,
+  seatingSessionRepository,
   getLogger("SeatingSessionService"),
 );

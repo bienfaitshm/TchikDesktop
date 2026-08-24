@@ -1,6 +1,5 @@
 import type { Localroom } from "@/packages/@core/data-access/db/schemas";
 import type { Student, Room, RoomReport } from "@/packages/exam-seating-engine";
-import type { EnrolementDetails } from "@/packages/@core/data-access/db/schemas/types";
 
 import { withFullName } from "@/packages/@core/data-access/db/queries/query-utils";
 import {
@@ -8,12 +7,13 @@ import {
   SeatingSessionGrouped,
   SeatingSessionWithAssignment,
 } from "./type";
+import { EnrollmentDTO } from "../enrollments";
 
-export type StudentReport = Student & Pick<EnrolementDetails, "classroom">;
+export type StudentReport = Student & Pick<EnrollmentDTO, "classroom">;
 export type TSeatingGenerator = RoomReport<StudentReport>;
 
 export class SeatingSessionMapper {
-  static toDomainStudent(enrollment: EnrolementDetails): StudentReport {
+  static toDomainStudent(enrollment: EnrollmentDTO): StudentReport {
     return {
       id: enrollment.enrollmentId,
       name: [
