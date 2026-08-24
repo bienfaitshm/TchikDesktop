@@ -1,93 +1,125 @@
-export interface RawPayment {
-  paymentId: string;
-  amountReceived: number;
-  currencyReceived: string;
-  paymentMethod: string;
-  transactionReference: string;
-  createdAt: string;
-  classroom: { shortIdentifier: string };
-  student: { fullName: string; gender: string };
-  feeType: { name: string };
-  feeSchedule: { installmentName: string };
+import { formatCurrency } from "@/packages/currency";
+import type { PaymentResolverData } from "./resolver";
+import {
+  CURRENCY_ENUM,
+  type FeeAssignmentWithSummary,
+  type SchoolInfo,
+  type StudentWithFullName,
+} from "@/packages/@core/data-access/db";
+
+/** Represents a single table cell inside a fee schedule report. */
+export interface ReportCell {
+  value: string;
+  status: boolean | undefined;
+  currency: CURRENCY_ENUM | undefined;
 }
 
-export interface RawSchool {
-  schoolId: string;
+/** Represents a row item matching a student and their installment cells. */
+export type ReportRow = {
+  no: number;
   name: string;
-  address: string;
-  town: string;
-  studyYear: { yearName: string };
+  cells: ReportCell[];
+};
+
+/** Represents payment breakdown view grouped by a fee type. */
+export interface FeeTypeReportView {
+  feeTypeName: string;
+  headers: string[];
+  rows: ReportRow[];
 }
 
-export interface FormattedPayment extends RawPayment {
-  formattedAmount: string;
-  formattedCreatedAt: string;
-  installmentName: string;
-}
-
-export interface CategorySummary {
+/** Represents a classroom entry with its respective fee type reports. */
+export interface ClassroomReportView {
   name: string;
-  amount: number;
-  formattedAmount: string;
+  shortName: string;
+  rowValues: FeeTypeReportView[];
 }
 
-export interface ClassSummary {
-  className: string;
-  amount: number;
-  formattedAmount: string;
-  percentage: string;
-}
-
-export interface PaymentReportStats {
-  totalAmount: number;
-  formattedTotalAmount: string;
-  totalTransactions: number;
-  startDate: string;
-  endDate: string;
-  generatedDate: string;
-}
-
-export interface TransformedPaymentReport {
-  school: RawSchool;
-  stats: PaymentReportStats;
-  feeSummaries: CategorySummary[];
-  classSummaries: ClassSummary[];
-  payments: FormattedPayment[];
+/** Represents the complete formatted dataset ready for template rendering. */
+export interface DynamicTemplateData {
+  school: SchoolInfo;
+  classesView: ClassroomReportView[];
 }
 
 /**
- * Formats a numeric amount using the specified locale formatting.
- * @param amount - The numeric value to format.
- * @param locale - BCP 47 language tag (defaults to "fr-FR").
- * @returns Formatted currency string representation.
+ * Formats a numeric amount using the specified currency enum.
+ * @param amount - Optional numeric amount to format.
+ * @param currency - Currency enum identifier, defaults to CDF.
+ * @returns Formatted currency string or an empty string if amount is missing.
  */
-function formatCurrency(amount: number, locale = "fr-FR"): string {
-  return new Intl.NumberFormat(locale).format(amount);
-}
-
-/**
- * Formats a date value into a localized string.
- * @param date - ISO date string or Date object.
- * @param options - Formatting options for Intl.DateTimeFormat.
- * @param locale - BCP 47 language tag (defaults to "fr-FR").
- * @returns Formatted date/time string.
- */
-function formatDate(
-  date: string | Date,
-  options: Intl.DateTimeFormatOptions,
-  locale = "fr-FR",
+function innerFormatCurrency(
+  amount?: number,
+  currency: CURRENCY_ENUM = CURRENCY_ENUM.CDF as CURRENCY_ENUM,
 ): string {
-  if (!date) return "";
-  const parsedDate = typeof date === "string" ? new Date(date) : date;
-  if (isNaN(parsedDate.getTime())) return "";
-  return new Intl.DateTimeFormat(locale, options).format(parsedDate);
+  if (amount !== undefined && amount !== null && amount !== 0) {
+    return formatCurrency(amount, currency);
+  }
+  return "";
 }
 
 /**
- * Transforms raw payment records and school information into a formatted report structure.
- * @param input - The raw school data and array of payments to process.
- * @returns Structured report data with aggregated statistics and formatted values.
+ * Transforms classroom, student, and payment resolver data into a dynamic report template structure.
+ * @param input - Composite object containing school information, classroom reports, and fee types.
+ * @returns Structurally mapped template data for export view consumption.
  */
-export function transformPaymentReport(input: any): any {
-  return input;
+export function buildDynamicTemplateData(
+  input: { school: SchoolInfo } & PaymentResolverData,
+): DynamicTemplateData {
+  const classesView: ClassroomReportView[] = [];
+
+  input.classrooms.forEach((classroom) => {
+    const classes: FeeTypeReportView[] = [];
+
+    input.feetypes.forEach((feeType) => {
+      const headers = feeType.schedules.map((col) => col.installmentName);
+      const rows: ReportRow[] = [];
+
+      classroom.enrollments.forEach(({ student, ...enrollment }, idx) => {
+        const studentInfo = student as StudentWithFullName;
+        const fullName =
+          studentInfo.fullName ??
+          [studentInfo.lastName, studentInfo.middleName, studentInfo.firstName]
+            .filter(Boolean)
+            .join(" ");
+
+        const payments = new Map<string, FeeAssignmentWithSummary>(
+          (enrollment.feeAssignments as FeeAssignmentWithSummary[])?.map(
+            (feeAss) => [feeAss.scheduleId, feeAss],
+          ),
+        );
+
+        const cells: ReportCell[] = feeType.schedules.map((schedule) => {
+          const rawVal = payments.get(schedule.scheduleId);
+          return {
+            value: innerFormatCurrency(rawVal?.totalPaid, rawVal?.currency),
+            status: rawVal?.isFullyPaid,
+            currency: rawVal?.currency,
+          };
+        });
+
+        rows.push({
+          no: idx + 1,
+          name: fullName,
+          cells,
+        });
+      });
+
+      classes.push({
+        feeTypeName: feeType.name,
+        headers,
+        rows,
+      });
+    });
+
+    classesView.push({
+      name: classroom.identifier,
+      shortName: classroom.shortIdentifier,
+      rowValues: classes,
+    });
+  });
+
+  return {
+    ...input,
+    classesView,
+  };
 }

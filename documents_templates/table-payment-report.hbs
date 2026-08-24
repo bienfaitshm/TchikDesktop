@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+    <style>
+        :root {
+            /* Palette OKLCH d'origine */
+            --background: oklch(0.985 0.002 195);
+            --foreground: oklch(0.18 0.01 200);
+            
+            --card: oklch(1 0 0);
+            --card-foreground: oklch(0.18 0.01 200);
+            
+            --primary: oklch(0.66 0.185 182.5);
+            --primary-foreground: oklch(0.99 0.005 180);
+            
+            --muted: oklch(0.96 0.003 195);
+            --muted-foreground: oklch(0.55 0.01 195);
+            --accent: oklch(0.95 0.008 185);
+            --accent-foreground: oklch(0.15 0.02 185);
+            
+            --border: oklch(0.93 0.003 195);
+            --radius: 0.5rem;
+        }
+        @page {
+            size: A4;
+            margin: 12mm 12mm 15mm 12mm;
+            background-color: var(--background);
+            @bottom-right {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-size: 7.5pt;
+                color: var(--muted-foreground);
+                font-family: 'Helvetica Neue', Arial, sans-serif;
+            }
+            @bottom-left {
+                content: "{{school.name}} - Tableaux de paiment";
+                font-size: 7.5pt;
+                color: var(--muted-foreground);
+                font-family: 'Helvetica Neue', Arial, sans-serif;
+            }
+        }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--foreground);
+            font-size: 8pt; /* Taille globale réduite */
+            line-height: 1.35;
+            background-color: var(--background);
+        }
+
+        /* Top Header */
+        .doc-header {
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            margin: -12mm -12mm 15px -12mm;
+            padding: 14px 12mm;
+            border-bottom: none;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .header-title {
+            font-size: 13pt; /* Réduit */
+            font-weight: 700;
+            color: var(--primary-foreground);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 8pt; /* Réduit */
+            color: var(--primary-foreground);
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        .header-meta {
+            text-align: right;
+            font-size: 7.5pt; /* Réduit */
+            color: var(--primary-foreground);
+            opacity: 0.9;
+        }
+
+        /* Sections de classe */
+        .class-section {
+            margin-bottom: 18px;
+            page-break-inside: avoid;
+        }
+
+        .class-header {
+            font-size: 9.5pt; /* Réduit */
+            font-weight: 700;
+            color: var(--foreground);
+            background-color: var(--accent);
+            border-left: 3px solid var(--primary);
+            padding: 5px 8px;
+            margin-bottom: 8px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .sub-table-title {
+            font-size: 8pt; /* Réduit */
+            font-weight: 700;
+            color: var(--primary);
+            margin: 8px 0 4px 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        /* Tableaux dynamiques */
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        table.data-table th {
+            background-color: var(--muted);
+            color: var(--muted-foreground);
+            font-size: 7.5pt; /* Réduit */
+            font-weight: 700;
+            padding: 5px 6px;
+            border: 1px solid var(--border);
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        table.data-table th.col-name {
+            text-align: left;
+        }
+
+        table.data-table td {
+            font-size: 7.5pt; /* Réduit */
+            padding: 4px 6px;
+            border: 1px solid var(--border);
+            color: var(--card-foreground);
+            text-align: center;
+        }
+
+        table.data-table td.col-num {
+            width: 30px;
+            text-align: center;
+            font-weight: 700;
+            color: var(--muted-foreground);
+            background-color: var(--muted);
+        }
+
+        table.data-table td.col-name {
+            text-align: left;
+            font-weight: 500;
+        }
+
+        table.data-table tr:nth-child(even) {
+            background-color: var(--background);
+        }
+
+        .amount-cell {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 700;
+            color: var(--foreground);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="doc-header">
+        <table class="header-table">
+            <tr>
+                <td>
+                    <div class="school-title">{{school.name}}</div>
+                    <div class="school-subtitle">{{school.address}}, {{school.town}} | {{school.studyYear.yearName}}</div>
+                </td>
+                <td>
+                    <div class="doc-title">Tableau de Paiement par classe</div>
+                    <div class="doc-date">
+                        Généré le: {{stats.generatedDate}}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Boucle dynamique sur les classes -->
+    {{#each classesView}}
+    <div class="class-section">
+        <div class="class-header">Classe : {{this.name}} | ( {{this.shortName}})</div>
+
+        <!-- Boucle dynamique sur CHAQUE TABLEAU DE FRAIS fourni dans le feeSchedule -->
+        {{#each this.rowValues}}
+        <div class="sub-table-title">{{this.feeTypeName}}</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 30px;">N°</th>
+                    <th class="col-name">Nom, postnom et prénom</th>
+                    
+                    <!-- En-têtes de colonnes dynamiques -->
+                    {{#each this.headers}}
+                    <th>{{this}}</th>
+                    {{/each}}
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Lignes des élèves -->
+                {{#each this.rows}}
+                <tr>
+                    <td class="col-num">{{this.no}}</td>
+                    <td class="col-name">{{this.name}}</td>
+                    
+                    <!-- Cellules dynamiques -->
+                    {{#each this.cells}}
+                    <td>
+                        {{#if this.value}}
+                        <span class="amount-cell">{{this.value}}</span>
+                        {{/if}}
+                    </td>
+                    {{/each}}
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+        {{/each}}
+    </div>
+    {{/each}}
+
+</body>
+</html>

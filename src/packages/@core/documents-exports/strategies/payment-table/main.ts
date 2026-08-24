@@ -10,8 +10,8 @@ import {
 import { extensions } from "./extensions";
 import { createPaymentReportExportForm } from "./form";
 import {
-  transformPaymentReport,
-  type TransformedPaymentReport,
+  buildDynamicTemplateData,
+  type DynamicTemplateData,
 } from "./payment-transform";
 import {
   PaymentDataResolver,
@@ -26,7 +26,7 @@ import { mapResolver, withSchoolData } from "../base/resolver";
  */
 export class PaymentTableExportStrategy extends AbstractExportStrategy<
   FormFieldDef,
-  TransformedPaymentReport
+  DynamicTemplateData
 > {
   public readonly id = "PAYMENT_TABLE_EXPORT" as const;
   public readonly displayName = "Table de paiement";
@@ -50,7 +50,7 @@ export class PaymentTableExportStrategy extends AbstractExportStrategy<
       schemaCreator: generateValidationSchema,
       resolver: mapResolver(
         withSchoolData(paymentResolver),
-        transformPaymentReport,
+        buildDynamicTemplateData,
       ),
       extendWithFileTypeFormFields: createPaymentReportExportForm,
     });

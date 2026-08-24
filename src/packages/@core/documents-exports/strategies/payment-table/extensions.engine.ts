@@ -21,7 +21,7 @@ export class PaymentReportExportPdfExtension extends ExportPdfExtension {
    */
   constructor() {
     super(
-      "payment-report.hbs",
+      "table-payment-report.hbs",
       "Génère le rapport de paiement des élèves au format PDF",
     );
   }
