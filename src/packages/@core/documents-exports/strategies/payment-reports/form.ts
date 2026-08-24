@@ -28,9 +28,11 @@ export const createPaymentReportExportForm = <
     createFileTypeField(fileTypeFilters, { colSpan: 4 }),
     DateInputFieldFactory.create("dateStart", "Date de Debut", {
       colSpan: 4,
+      required: false,
     }),
     DateInputFieldFactory.create("dateEnd", "Date de fin", {
       colSpan: 4,
+      required: false,
     }),
   );
 };
