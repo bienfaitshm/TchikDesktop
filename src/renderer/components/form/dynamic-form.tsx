@@ -9,6 +9,7 @@ import { FieldValues } from "react-hook-form";
 import { MultiSelect } from "@/renderer/components/form/fields/multi-select-input";
 import { BaseFormProps } from "./base-form";
 import { GenericComboBox } from "./fields/generic-combo-box";
+import { DateInput } from "./fields/date";
 
 /**
  * Adaptateur Combobox pour DynamicForm
@@ -31,6 +32,7 @@ const SelectFieldAdapter = React.forwardRef<any, any>(
 
 const formComponents: InputComponents = {
   TextField: Input,
+  DateField: DateInput,
   SelectField: SelectFieldAdapter,
   SelectArrayField: MultiSelect,
 };

@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Rapport Officiel des Paiements</title>
+    <title>{{school.name}} - {{school.studyYear.yearName}} | Rapport Officiel des Paiements</title>
     <style>
         :root {
             /* Palette ultra-douce (OKLCH) */
@@ -46,7 +46,7 @@
                 font-family: 'Helvetica Neue', Arial, sans-serif;
             }
             @bottom-left {
-                content: "{{school.name}} | {{schol}} | Rapport de paiment";
+                content: "{{school.name}} - {{school.studyYear.yearName}} | Rapport de paiment";
                 font-size: 7.5pt;
                 color: var(--muted-foreground);
                 font-family: 'Helvetica Neue', Arial, sans-serif;

@@ -2,14 +2,9 @@ import type { FormFieldDef } from "@/packages/dynamic-form";
 import {
   composeFields,
   createFileTypeField,
-  createClassroomField,
   DateInputFieldFactory,
 } from "@/packages/@core/documents-exports/form-factory";
-import {
-  validateAndMergeContext,
-  type BaseExportFormConfig,
-  DEFAULT_LAYOUT,
-} from "../base";
+import { validateAndMergeContext, type BaseExportFormConfig } from "../base";
 
 /**
  * Creates dynamic form field definitions for document export configurations.
@@ -24,25 +19,18 @@ export const createPaymentReportExportForm = <
 >(
   config: Readonly<BaseExportFormConfig<TContext>>,
 ): Promise<readonly FormFieldDef[]> => {
-  const { validContext, fileTypeFilters } = validateAndMergeContext(config, [
+  const { fileTypeFilters } = validateAndMergeContext(config, [
     "schoolId",
     "yearId",
   ]);
 
   return composeFields(
-    createFileTypeField(fileTypeFilters, { colSpan: 12 }),
-    createClassroomField({
-      colSpan: 4,
-      schoolId: validContext.schoolId,
-      yearId: validContext.yearId,
-    }),
+    createFileTypeField(fileTypeFilters, { colSpan: 4 }),
     DateInputFieldFactory.create("dateStart", "Date de Debut", {
       colSpan: 4,
-      defaultValue: new Date(),
     }),
     DateInputFieldFactory.create("dateEnd", "Date de fin", {
       colSpan: 4,
-      defaultValue: new Date(),
     }),
   );
 };

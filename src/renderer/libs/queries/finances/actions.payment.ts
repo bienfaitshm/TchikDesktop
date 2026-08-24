@@ -106,6 +106,7 @@ export function useUpdateTableClassroomPayment(
   const queryClient = useQueryClient();
 
   return {
+    ...config,
     onSuccess: (responseData) => {
       const { feeConfig, payment, ...data } = responseData;
       const targetCacheKey = config?.mutationKey;
