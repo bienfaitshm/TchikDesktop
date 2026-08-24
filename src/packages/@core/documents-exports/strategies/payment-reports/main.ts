@@ -20,6 +20,7 @@ import {
 } from "./resolver";
 import { DocumentCategory } from "../../constants";
 import { mapResolver, withSchoolData } from "../base/resolver";
+import { studentPaymentRepository } from "@/packages/@core/data-access/db";
 
 /**
  * Strategy defining configuration and pipeline for exporting student payment reports.
@@ -42,7 +43,7 @@ export class StudentPaymentExportStrategy extends AbstractExportStrategy<
     paymentResolver: DataResolver<
       PaymentResolverPayload,
       PaymentResolverData
-    > = new PaymentDataResolver(),
+    > = new PaymentDataResolver(studentPaymentRepository),
   ) {
     super({
       extensions,

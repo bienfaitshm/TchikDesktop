@@ -96,7 +96,7 @@ export class PaymentDataResolver implements DataResolver<
     return {
       feetypes,
       classrooms,
-      generatedDate: formatDate(new Date()),
+      generatedDate: formatDate(new Date(), "dd/MM/yyyy"),
     };
   }
 }
