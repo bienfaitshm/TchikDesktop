@@ -1,5 +1,6 @@
 import { BrowserWindow } from "electron";
 import { renderTemplate } from "./html";
+import { getLogger as createLogger, type Logger } from "@/packages/logger";
 
 /** Type contract for template rendering functions. */
 export type HtmlTemplateRenderer = (
@@ -29,16 +30,22 @@ export const DEFAULT_LANDSCAPE_A4_OPTIONS: Electron.PrintToPDFOptions = {
   margins: { marginType: "none" },
 };
 
+const pdfGeneratorLogger = createLogger("Pdf Generator");
+
 /**
  * Generates a PDF binary Buffer from a raw HTML string using a headless Electron window.
  * @param htmlContent - The raw HTML string content to be rendered.
  * @param formatOptions - Print configuration options for Electron.
+ * @param logger - Logger instance used for operational tracking (defaults to pdfGeneratorLogger).
  * @returns Promise resolving to the generated PDF Buffer.
  */
 export async function generatePdfFromHtml(
   htmlContent: string,
   formatOptions: Electron.PrintToPDFOptions,
+  logger: Logger = pdfGeneratorLogger,
 ): Promise<Buffer> {
+  logger.debug("Creating headless BrowserWindow for PDF rendering.");
+
   let window: BrowserWindow | null = new BrowserWindow({
     show: false,
     webPreferences: {
@@ -48,12 +55,16 @@ export async function generatePdfFromHtml(
     },
   });
 
+  const startTime = Date.now();
+
   try {
     return await new Promise<Buffer>((resolve, reject) => {
       if (!window) {
-        return reject(
-          new Error("PDF Generation Error: BrowserWindow instance is null."),
+        const err = new Error(
+          "PDF Generation Error: BrowserWindow instance is null.",
         );
+        logger.error(err.message);
+        return reject(err);
       }
 
       const { webContents } = window;
@@ -68,17 +79,28 @@ export async function generatePdfFromHtml(
 
       const handleUnresponsive = () => {
         cleanup();
-        reject(
-          new Error("PDF Generation Timeout: Window became unresponsive."),
+        const err = new Error(
+          "PDF Generation Timeout: Window became unresponsive.",
         );
+        logger.error(err.message);
+        reject(err);
       };
 
       const handleFinishLoad = async () => {
         try {
+          logger.debug("HTML content loaded successfully. Printing to PDF.");
           const pdfBuffer = await webContents.printToPDF(formatOptions);
+          const duration = Date.now() - startTime;
+          logger.info(
+            `PDF generated successfully (${pdfBuffer.byteLength} bytes) in ${duration}ms.`,
+          );
           cleanup();
           resolve(pdfBuffer);
         } catch (printError) {
+          logger.error(
+            "Error encountered while printing window to PDF.",
+            printError,
+          );
           cleanup();
           reject(printError);
         }
@@ -90,11 +112,11 @@ export async function generatePdfFromHtml(
         errorDescription: string,
       ) => {
         cleanup();
-        reject(
-          new Error(
-            `Failed to load HTML content into PDF engine: ${errorDescription} (Code: ${errorCode})`,
-          ),
+        const err = new Error(
+          `Failed to load HTML content into PDF engine: ${errorDescription} (Code: ${errorCode})`,
         );
+        logger.error(err.message);
+        reject(err);
       };
 
       window.on("unresponsive", handleUnresponsive);
@@ -102,10 +124,16 @@ export async function generatePdfFromHtml(
       webContents.once("did-fail-load", handleFailLoad);
 
       const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`;
-      window.loadURL(dataUrl);
+
+      window.loadURL(dataUrl).catch((loadError) => {
+        cleanup();
+        logger.error("Failed to execute loadURL on BrowserWindow.", loadError);
+        reject(loadError);
+      });
     });
   } finally {
     if (window) {
+      logger.debug("Destroying BrowserWindow instance.");
       window.destroy();
       window = null;
     }
@@ -118,18 +146,22 @@ export async function generatePdfFromHtml(
 export class PdfReportGenerator {
   private readonly formatOptions: Electron.PrintToPDFOptions;
   private readonly templateRenderer: HtmlTemplateRenderer;
+  private readonly logger: Logger;
 
   /**
    * Initializes a new instance of PdfReportGenerator.
    * @param formatOptions - Printing configuration options.
    * @param templateRenderer - Custom HTML renderer implementation (defaults to base renderTemplate).
+   * @param logger - Logger instance for operational logging (defaults to pdfGeneratorLogger).
    */
   constructor(
     formatOptions: Electron.PrintToPDFOptions = DEFAULT_LANDSCAPE_A4_OPTIONS,
     templateRenderer: HtmlTemplateRenderer = renderTemplate,
+    logger: Logger = pdfGeneratorLogger,
   ) {
     this.formatOptions = formatOptions;
     this.templateRenderer = templateRenderer;
+    this.logger = logger;
   }
 
   /**
@@ -140,12 +172,28 @@ export class PdfReportGenerator {
   public async generate<T extends Record<string, unknown>>(
     payload: PdfGenerationPayload<T>,
   ): Promise<Buffer> {
-    const htmlContent = await this.templateRenderer(
-      payload.templateName,
-      payload.templateData,
+    this.logger.info(
+      `Starting PDF report generation for template: ${payload.templateName}`,
     );
 
-    return generatePdfFromHtml(htmlContent, this.formatOptions);
+    try {
+      const htmlContent = await this.templateRenderer(
+        payload.templateName,
+        payload.templateData,
+      );
+
+      return await generatePdfFromHtml(
+        htmlContent,
+        this.formatOptions,
+        this.logger,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to generate PDF report for template: ${payload.templateName}`,
+        error,
+      );
+      throw error;
+    }
   }
 }
 

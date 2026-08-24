@@ -1,34 +1,68 @@
 import {
-  schoolInfoService,
   studentPaymentRepository,
+  type StudentPaymentDTO,
 } from "@/packages/@core/data-access/db/queries";
-import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
+import type { DataResolver } from "@/packages/electron-data-exporter";
 
-type PaymentResolverParams = {
+/**
+ * Input payload required to query payment data.
+ */
+export interface PaymentResolverPayload {
   schoolId: string;
   yearId: string;
-  fileType: DOCUMENT_EXTENSION;
-};
+}
 
-export class PaymentDataResolver {
+/**
+ * Structure of the resolved payment dataset.
+ */
+export interface PaymentResolverData {
+  payments: StudentPaymentDTO[];
+}
+
+/**
+ * Data repository interface required for querying student payments.
+ */
+export interface StudentPaymentRepositoryFetcher {
+  findMany(params: {
+    where: { studentPayments: { schoolId: string; yearId: string } };
+  }): Promise<StudentPaymentDTO[]> | StudentPaymentDTO[];
+}
+
+/**
+ * Resolves student payment records for a specific school and academic year.
+ */
+export class PaymentDataResolver implements DataResolver<
+  PaymentResolverPayload,
+  PaymentResolverData
+> {
   /**
-   * Résout les données nécessaires pour la vue de placement.
+   * Initializes the resolver with its repository dependency.
+   * @param paymentRepository - Repository instance used to fetch payment records.
    */
-  static async resolveData({ schoolId, yearId }: PaymentResolverParams) {
+  constructor(
+    private readonly paymentRepository: StudentPaymentRepositoryFetcher = studentPaymentRepository,
+  ) {}
+
+  /**
+   * Fetches payment records corresponding to the provided payload identifiers.
+   * @param payload - Object containing mandatory schoolId and yearId properties.
+   * @returns Object containing the array of retrieved payment records.
+   * @throws Error if schoolId or yearId is missing.
+   */
+  async resolveData(
+    payload: PaymentResolverPayload,
+  ): Promise<PaymentResolverData> {
+    const { schoolId, yearId } = payload;
+
     if (!schoolId || !yearId) {
-      throw new Error(
-        "Paramètres requis manquants : schoolId, yearId ou sessionId.",
-      );
+      throw new Error("Missing required parameters: schoolId and yearId.");
     }
-    const [school, payments] = await Promise.all([
-      schoolInfoService.getSchoolInfo(schoolId, yearId),
-      studentPaymentRepository.findMany({
-        where: { studentPayments: { schoolId, yearId } },
-      }),
-    ]);
+
+    const payments = await this.paymentRepository.findMany({
+      where: { studentPayments: { schoolId, yearId } },
+    });
 
     return {
-      school,
       payments,
     };
   }

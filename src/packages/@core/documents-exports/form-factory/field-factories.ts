@@ -88,3 +88,19 @@ export const NumberDaysFieldFactory = {
       .build(config);
   },
 };
+
+export const DateInputFieldFactory = {
+  create(
+    name: string,
+    labelName: string,
+    config?: TBaseFieldConfig,
+  ): FormFieldDef {
+    return FieldBuilder.create(name, "date")
+      .withLabel(labelName)
+      .withPlaceholder("12/12/2026")
+      .withDefaultValue(14)
+      .withColSpan(5)
+      .required()
+      .build(config);
+  },
+};

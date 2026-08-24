@@ -9,11 +9,11 @@ import {
 } from "@/packages/@core/documents-exports/extensions/data";
 import {
   type PaymentReportPayload,
-  PaymentPresenceExportDocxExtension,
+  PaymentReportExportPdfExtension,
 } from "./extensions.engine";
 
 const EXTENSION_CLASSES: ClassConstructor<IExportExtension<unknown>>[] = [
-  PaymentPresenceExportDocxExtension,
+  PaymentReportExportPdfExtension,
   CsvExportExtension,
   JsonExportExtension,
 ];

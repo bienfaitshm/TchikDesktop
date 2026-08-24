@@ -10,6 +10,7 @@ import {
   FileTypeFieldFactory,
   LocalRoomsFieldFactory,
   SectionFieldFactory,
+  DateInputFieldFactory,
 } from "./field-factories";
 import { DataMappers } from "./data-mappers";
 import type {
@@ -102,7 +103,12 @@ export const createSessionField = async (
     const { schoolId, yearId, sessionId, ...config } = params;
 
     const sessions = await seatingSessionRepository.findMany({
-      where: { schoolId, yearId },
+      where: {
+        seatingSessions: {
+          schoolId,
+          yearId,
+        },
+      },
     });
 
     const options = DataMappers.sessionsToOptions(sessions);
@@ -131,10 +137,10 @@ export const createClassroomField = async (
   params: Readonly<IClassroomFormParams & FileTypeFieldConfig>,
 ): Promise<FormFieldDef> => {
   try {
-    const { schoolId, yearId, classId, ...config } = params;
+    const { schoolId, classId, ...config } = params;
 
     const classrooms = await classroomRepository.findMany({
-      where: { schoolId, yearId },
+      where: { classrooms: { schoolId } },
     });
 
     const options = DataMappers.classroomsToOptions(classrooms);
@@ -168,7 +174,7 @@ export const createLocalroomField = async (
     const { schoolId, ...config } = params;
 
     const localrooms = await localRoomRepository.findMany({
-      where: { schoolId },
+      where: { localrooms: { schoolId } },
     });
 
     const options = DataMappers.localroomsToOptions(localrooms);
@@ -193,6 +199,10 @@ export const createLocalroomField = async (
       error instanceof Error ? error.message : undefined,
     );
   }
+};
+
+export const createDateInputField = () => {
+  return DateInputFieldFactory.create("start", "Debut");
 };
 
 export const composeFields = async (

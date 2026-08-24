@@ -1,20 +1,28 @@
-import { ExportDocxExtension } from "@/packages/@core/documents-exports/extensions";
-import { DocxReportGeneratorService } from "@/packages/document-template";
-import type { SchoolInfo } from "@/packages/@core/data-access/db";
+import type {
+  SchoolInfo,
+  StudentPaymentDTO,
+} from "@/packages/@core/data-access/db";
+import { ExportPdfExtension } from "@/packages/@core/documents-exports/extensions/pdf";
 
-import type { StudentPaymentDTO } from "@/packages/@core/data-access/db";
-
+/**
+ * Payload data structure required by the payment report PDF template.
+ */
 export interface PaymentReportPayload {
   school: SchoolInfo;
-  assignment: StudentPaymentDTO;
+  payments: StudentPaymentDTO[];
 }
 
-export class PaymentPresenceExportDocxExtension extends ExportDocxExtension<PaymentReportPayload> {
-  constructor(reportGenerator?: DocxReportGeneratorService) {
+/**
+ * Handles PDF document generation for student payment reports.
+ */
+export class PaymentReportExportPdfExtension extends ExportPdfExtension {
+  /**
+   * Initializes the PDF export extension with its template path and localized description.
+   */
+  constructor() {
     super(
-      "payment-report.docx",
-      "Génère les fiches de presences de mise en place par local",
-      reportGenerator,
+      "payment-report.hbs",
+      "Génère le rapport de paiement des élèves au format PDF",
     );
   }
 }

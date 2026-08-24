@@ -69,7 +69,12 @@ export function extractClassroomFiltersQueryPayload(
  * Extends the BaseRepository tailored for SQLite and implements OptionProvider.
  */
 export class ClassroomRepository
-  extends betterSqlite.BaseRepository<TableClassroom, TDataBase, ClassroomDTO>
+  extends betterSqlite.BaseRepository<
+    TableClassroom,
+    TDataBase,
+    ClassroomDTO,
+    BaseClassroomFilters
+  >
   implements OptionProvider<ClassroomDTO>
 {
   /**

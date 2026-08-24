@@ -4,6 +4,7 @@ import {
   defaultTemplateStorageService,
   ILogger,
 } from "./template-reader";
+import { additionalJsContext } from "./additional-context";
 
 /** Null Object implementation for safe fallback logging. */
 const NULL_LOGGER: ILogger = {
@@ -13,6 +14,47 @@ const NULL_LOGGER: ILogger = {
 
 /** In-memory cache for compiled Handlebars template delegates. */
 const templateCache = new Map<string, HandlebarsTemplateDelegate>();
+
+/**
+ * Registers standardHandlebars helpers used across application templates.
+ */
+export function registerHandlebarsHelpers(): void {
+  if (!Handlebars.helpers["formatDate"]) {
+    Handlebars.registerHelper("formatDate", (value: unknown) => {
+      if (!value) return "";
+      const date =
+        typeof value === "string" || typeof value === "number"
+          ? new Date(value)
+          : value;
+      if (!(date instanceof Date) || isNaN(date.getTime()))
+        return String(value);
+      return new Intl.DateTimeFormat("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }).format(date);
+    });
+  }
+
+  if (!Handlebars.helpers["formatNumber"]) {
+    Handlebars.registerHelper("formatNumber", (value: unknown) => {
+      const amount = typeof value === "number" ? value : Number(value);
+      if (isNaN(amount)) return "0";
+      return new Intl.NumberFormat("fr-FR").format(amount);
+    });
+  }
+
+  if (!Handlebars.helpers["formatCurrency"]) {
+    Handlebars.registerHelper("formatCurrency", (value: unknown) => {
+      const amount = typeof value === "number" ? value : Number(value);
+      if (isNaN(amount)) return "0 CDF";
+      return `${new Intl.NumberFormat("fr-FR").format(amount)} CDF`;
+    });
+  }
+}
+
+// Automatically register helpers upon module initialization
+registerHandlebarsHelpers();
 
 /**
  * Safely extracts a string error message from an unknown error type.
@@ -31,6 +73,13 @@ export interface TemplateRenderOptions {
 
   /** Custom logger implementation for tracking render lifecycle events. */
   logger?: ILogger;
+}
+
+/**
+ * Flushes the in-memory Handlebars template cache.
+ */
+export function clearTemplateCache(): void {
+  templateCache.clear();
 }
 
 /**
@@ -70,7 +119,9 @@ export async function renderTemplate<T extends object>(
 
     try {
       const templateSource = rawBuffer.toString("utf8");
-      compiledTemplate = Handlebars.compile(templateSource);
+      compiledTemplate = Handlebars.compile(templateSource, {
+        knownHelpersOnly: false,
+      });
       templateCache.set(templateRelativePath, compiledTemplate);
     } catch (compileError) {
       const errorMsg = formatErrorMessage(compileError);
@@ -82,7 +133,12 @@ export async function renderTemplate<T extends object>(
   }
 
   try {
-    return compiledTemplate(context);
+    const mergedContext = {
+      ...additionalJsContext,
+      ...context,
+    };
+
+    return compiledTemplate(mergedContext);
   } catch (renderError) {
     const errorMsg = formatErrorMessage(renderError);
     const executionFailureMessage = `Failed to render template "${templateRelativePath}": ${errorMsg}`;

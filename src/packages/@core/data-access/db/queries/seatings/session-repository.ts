@@ -5,6 +5,8 @@ import {
   seatingAssignments,
   seatingSessions,
   localrooms,
+  type TableSeatingSession,
+  type SeatingSession,
 } from "@/packages/@core/data-access/db/schemas";
 import { compareByFullName } from "@/packages/@core/data-access/db/queries/query-utils";
 import type { SeatingSessionWithAssignment } from "./type";
@@ -13,6 +15,10 @@ import {
   betterSqlite,
   DatabaseError,
 } from "@/packages/drizzle-queries";
+
+export type SeatingSessionTDO = SeatingSession & {
+  hasAssignments?: boolean;
+};
 
 const _seatingSessionJoinTables = {
   seatingAssignments,
@@ -31,8 +37,10 @@ const SESSION_SORT: BaseSeatingSessionFilters = {
  * Repository for managing seating sessions and related analytical room status queries.
  */
 export class SeatingSessionRepository extends betterSqlite.BaseRepository<
-  typeof seatingSessions,
-  TDataBase
+  TableSeatingSession,
+  TDataBase,
+  SeatingSession,
+  BaseSeatingSessionFilters
 > {
   constructor() {
     super({
