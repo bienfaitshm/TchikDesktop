@@ -1,5 +1,4 @@
 import {
-  schoolRepository,
   schoolInfoService,
   classroomService,
 } from "@/packages/@core/data-access/db/queries";

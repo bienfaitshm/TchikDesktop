@@ -11,6 +11,7 @@ import {
   localrooms,
   seatingSessions,
   seatingAssignments,
+  feeAssignments,
 } from "./schema";
 
 /**
@@ -115,5 +116,6 @@ export const classroomEnrollmentsRelations = relations(
     }),
     actions: many(classroomEnrollmentActions),
     seatingAssignments: many(seatingAssignments),
+    feeAssignments: many(feeAssignments),
   }),
 );
