@@ -30,13 +30,19 @@ export const createPaymentReportExportForm = <
   ]);
 
   return composeFields(
-    createFileTypeField(fileTypeFilters, { colSpan: DEFAULT_LAYOUT.fileType }),
+    createFileTypeField(fileTypeFilters, { colSpan: 12 }),
     createClassroomField({
       colSpan: 4,
       schoolId: validContext.schoolId,
       yearId: validContext.yearId,
     }),
-    DateInputFieldFactory.create("dateStart", "Date de Debut"),
-    DateInputFieldFactory.create("dateEnd", "Date de fin"),
+    DateInputFieldFactory.create("dateStart", "Date de Debut", {
+      colSpan: 4,
+      defaultValue: new Date(),
+    }),
+    DateInputFieldFactory.create("dateEnd", "Date de fin", {
+      colSpan: 4,
+      defaultValue: new Date(),
+    }),
   );
 };

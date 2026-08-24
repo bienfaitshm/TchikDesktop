@@ -14,7 +14,7 @@ export interface FormFieldDef {
   helperText?: string;
   required?: boolean;
   hidden?: boolean;
-  defaultValue?: string | number | (string | number)[];
+  defaultValue?: string | number | Date | (string | number | Date)[];
   options?: Readonly<SelectOption[]>;
   multiple?: boolean;
   colSpan?: ColSpan;

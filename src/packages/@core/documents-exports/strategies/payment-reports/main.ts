@@ -8,7 +8,7 @@ import {
   generateValidationSchema,
 } from "@/packages/dynamic-form";
 import { extensions } from "./extensions";
-import { createSeatingPresenceExportForm } from "./form";
+import { createPaymentReportExportForm } from "./form";
 import {
   transformPaymentReport,
   type TransformedPaymentReport,
@@ -51,7 +51,7 @@ export class StudentPaymentExportStrategy extends AbstractExportStrategy<
         withSchoolData(paymentResolver),
         transformPaymentReport,
       ),
-      extendWithFileTypeFormFields: createSeatingPresenceExportForm,
+      extendWithFileTypeFormFields: createPaymentReportExportForm,
     });
   }
 }
