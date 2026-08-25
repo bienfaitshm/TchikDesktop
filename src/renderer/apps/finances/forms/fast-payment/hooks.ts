@@ -239,7 +239,8 @@ export const useFastPaymentStore = create<FastPaymentStore>()(
         const ticket = createTicket(
           {
             name: getStudentDisplayName(state.selectedStudent),
-            classroomName: state.selectedStudent?.classroom.identifier ?? "-",
+            classroomName:
+              state.selectedStudent?.classroom.shortIdentifier ?? "-",
             code: state.selectedStudent?.studentCode ?? "-",
           },
           data,
@@ -311,7 +312,7 @@ export const derivePreviewTicket = (
       invoiceRef: `POS-${currentYear}-PREV`,
       student: {
         name: getStudentDisplayName(selectedStudent),
-        classroomName: selectedStudent?.classroom.identifier ?? "-",
+        classroomName: selectedStudent?.classroom.shortIdentifier ?? "-",
         code: selectedStudent?.studentCode ?? "-",
       },
       payment: {
