@@ -1,3 +1,6 @@
+import { formatCurrency } from "@/packages/currency";
+import { formatDate } from "@/packages/times";
+
 export interface RawPayment {
   paymentId: string;
   amountReceived: number;
@@ -61,57 +64,46 @@ export interface TransformedPaymentReport {
 }
 
 /**
- * Formats a numeric amount using the specified locale formatting.
- * @param amount - The numeric value to format.
- * @param locale - BCP 47 language tag (defaults to "fr-FR").
- * @returns Formatted currency string representation.
+ * Extracts the most frequent currency from payments array or returns fallback currency.
+ * @param payments - List of raw payment objects.
+ * @param fallback - Default currency code when payments array is empty.
+ * @returns The dominant ISO currency string.
  */
-function formatCurrency(amount: number, locale = "fr-FR"): string {
-  return new Intl.NumberFormat(locale).format(amount);
-}
-
-/**
- * Formats a date value into a localized string.
- * @param date - ISO date string or Date object.
- * @param options - Formatting options for Intl.DateTimeFormat.
- * @param locale - BCP 47 language tag (defaults to "fr-FR").
- * @returns Formatted date/time string.
- */
-function formatDate(
-  date: string | Date,
-  options: Intl.DateTimeFormatOptions,
-  locale = "fr-FR",
+function getDominantCurrency(
+  payments: RawPayment[],
+  fallback: string = "CDF",
 ): string {
-  if (!date) return "";
-  const parsedDate = typeof date === "string" ? new Date(date) : date;
-  if (isNaN(parsedDate.getTime())) return "";
-  return new Intl.DateTimeFormat(locale, options).format(parsedDate);
+  if (payments.length === 0) return fallback;
+
+  const frequencyMap = new Map<string, number>();
+  for (const payment of payments) {
+    const currency = payment.currencyReceived || fallback;
+    frequencyMap.set(currency, (frequencyMap.get(currency) || 0) + 1);
+  }
+
+  let dominantCurrency = fallback;
+  let maxCount = 0;
+
+  for (const [currency, count] of frequencyMap.entries()) {
+    if (count > maxCount) {
+      maxCount = count;
+      dominantCurrency = currency;
+    }
+  }
+
+  return dominantCurrency;
 }
 
 /**
  * Transforms raw payment records and school information into a formatted report structure.
  * @param input - The raw school data and array of payments to process.
- * @returns Structured report data with aggregated statistics and formatted values.
+ * @returns Structured report data with aggregated statistics and dynamically formatted values.
  */
 export function transformPaymentReport(
   input: RawDataInput,
 ): TransformedPaymentReport {
   const { school, payments } = input;
-
-  const dateOnlyOptions: Intl.DateTimeFormatOptions = {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  };
-
-  const dateTimeOptions: Intl.DateTimeFormatOptions = {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  };
+  const mainCurrency = getDominantCurrency(payments);
 
   const decoratedPayments = payments.map((payment) => ({
     payment,
@@ -126,16 +118,16 @@ export function transformPaymentReport(
 
   const feeTotalsMap = new Map<string, number>();
   const classTotalsMap = new Map<string, number>();
-
   const formattedPayments: FormattedPayment[] = [];
 
   for (const item of decoratedPayments) {
     const { payment, timestamp } = item;
     const amount = payment.amountReceived;
+    const currency = payment.currencyReceived || mainCurrency;
 
     totalAmount += amount;
 
-    if (!isNaN(timestamp)) {
+    if (!Number.isNaN(timestamp)) {
       if (timestamp < minTimestamp) minTimestamp = timestamp;
       if (timestamp > maxTimestamp) maxTimestamp = timestamp;
     }
@@ -151,8 +143,8 @@ export function transformPaymentReport(
 
     formattedPayments.push({
       ...payment,
-      formattedAmount: formatCurrency(amount),
-      formattedCreatedAt: formatDate(payment.createdAt, dateTimeOptions),
+      formattedAmount: formatCurrency(amount, currency),
+      formattedCreatedAt: formatDate(payment.createdAt, "dd/MM/yyyy HH-mm-ss"),
       installmentName: payment.feeSchedule?.installmentName?.trim() || "",
     });
   }
@@ -162,19 +154,15 @@ export function transformPaymentReport(
     minTimestamp !== Infinity &&
     maxTimestamp !== -Infinity;
 
-  const startDate = hasValidDates
-    ? formatDate(new Date(minTimestamp), dateOnlyOptions)
-    : "-";
-  const endDate = hasValidDates
-    ? formatDate(new Date(maxTimestamp), dateOnlyOptions)
-    : "-";
+  const startDate = hasValidDates ? formatDate(new Date(minTimestamp)) : "-";
+  const endDate = hasValidDates ? formatDate(new Date(maxTimestamp)) : "-";
 
   const feeSummaries: CategorySummary[] = Array.from(
     feeTotalsMap.entries(),
   ).map(([name, amount]) => ({
     name,
     amount,
-    formattedAmount: formatCurrency(amount),
+    formattedAmount: formatCurrency(amount, mainCurrency),
   }));
 
   const classSummaries: ClassSummary[] = Array.from(
@@ -182,7 +170,7 @@ export function transformPaymentReport(
   ).map(([className, amount]) => ({
     className,
     amount,
-    formattedAmount: formatCurrency(amount),
+    formattedAmount: formatCurrency(amount, mainCurrency),
     percentage:
       totalAmount > 0 ? ((amount / totalAmount) * 100).toFixed(1) : "0.0",
   }));
@@ -191,11 +179,11 @@ export function transformPaymentReport(
     school,
     stats: {
       totalAmount,
-      formattedTotalAmount: formatCurrency(totalAmount),
+      formattedTotalAmount: formatCurrency(totalAmount, mainCurrency),
       totalTransactions: payments.length,
       startDate,
       endDate,
-      generatedDate: formatDate(new Date(), dateOnlyOptions),
+      generatedDate: formatDate(new Date()),
     },
     feeSummaries,
     classSummaries,

@@ -361,8 +361,10 @@
                 <td style="font-family: monospace; font-size: 7.5pt; color: var(--muted-foreground);">{{this.transactionReference}}</td>
                 <td>{{this.formattedCreatedAt}}</td>
                 <td><strong>{{this.student.fullName}}</strong></td>
-                <td>{{this.classroom.identifier}}</td>
-                <td>{{this.feeType.name}} ({{this.feeSchedule.installmentName}})</td>
+                <td>{{this.classroom.shortIdentifier}}</td>
+                <td>
+                    {{this.feeType.name}} - {{this.feeSchedule.installmentName}}
+                </td>
                 <td><span class="badge">{{this.paymentMethod}}</span></td>
                 <td class="amount-col">
                     {{this.formattedAmount}}
