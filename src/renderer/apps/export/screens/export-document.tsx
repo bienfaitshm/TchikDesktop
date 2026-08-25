@@ -6,11 +6,6 @@ import {
   PageHeadTitle,
   PageHeaderTextContent,
 } from "@/renderer/containers/page-container";
-
-import {
-  DOCUMENT_CATEGORY_OPTIONS,
-  DocumentCategory,
-} from "@/packages/@core/documents-exports/constants";
 import { ExporterFormContent } from "../components/exporter-content-form";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 
