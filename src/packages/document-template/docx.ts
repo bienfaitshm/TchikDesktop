@@ -4,7 +4,7 @@ import {
   defaultTemplateStorageService,
   ILogger,
 } from "./template-reader";
-import { additionalJsContext } from "./additional-context";
+import { additionalJsContext as defaultJsContext } from "./additional-context";
 
 /**
  * Options required to execute DOCX report generation.
@@ -17,13 +17,15 @@ export interface GenerateDocxReportOptions {
 }
 
 /**
- * Configuration contract for dependency injection (Storage, Logger).
+ * Configuration contract for dependency injection (Storage, Logger, Context).
  */
 export interface ReportGeneratorConfig {
   /** Storage service used to fetch raw template content. */
   storageService?: TemplateStorageService;
   /** Logger implementation instance. */
   logger?: ILogger;
+  /** JavaScript context to inject into the template engine. */
+  jsContext?: Record<string, unknown>;
 }
 
 /**
@@ -48,49 +50,48 @@ const formatErrorMessage = (error: unknown): string =>
 export class DocxReportGeneratorService {
   private readonly storageService: TemplateStorageService;
   private readonly logger: ILogger;
+  private readonly jsContext: Record<string, unknown>;
 
   /**
-   * Initializes a new instance of DocxReportGeneratorService.
-   * @param config - Optional configurations for storage and logging.
+   * Initializes a new instance of DocxReportGeneratorService with injected dependencies.
+   * @param config - Optional configurations for storage, logging, and JS context.
    */
   constructor(config: ReportGeneratorConfig = {}) {
     this.storageService =
       config.storageService ?? defaultTemplateStorageService;
     this.logger = config.logger ?? NULL_LOGGER;
+    this.jsContext = config.jsContext ?? defaultJsContext;
   }
 
   /**
    * Generates a binary DOCX report given a template name and context data.
    * @param options - Object containing template identifier and rendering data.
    * @returns Generated DOCX file content as a Uint8Array.
-   * @throws {Error} When template retrieval or report compilation fails.
    */
   public async generate(
     options: GenerateDocxReportOptions,
   ): Promise<Uint8Array> {
     const { templateName, templateData } = options;
-
     let templateBuffer: Buffer;
+
     try {
       templateBuffer =
         await this.storageService.readTemplateContent(templateName);
     } catch (storageError) {
       const errorMsg = formatErrorMessage(storageError);
-      this.logger.error(
-        `Aborting generation. Failed to retrieve template: ${errorMsg}`,
-      );
-      throw storageError;
+      const executionFailureMessage = `Failed to retrieve template "${templateName}": ${errorMsg}`;
+
+      this.logger.error(`Aborting generation. ${executionFailureMessage}`);
+      throw new Error(executionFailureMessage, { cause: storageError });
     }
 
     try {
-      const reportBytes = await createReport({
+      return await createReport({
         template: templateBuffer,
         data: templateData,
-        additionalJsContext,
+        additionalJsContext: this.jsContext,
         maximumWalkingDepth: Infinity,
       });
-
-      return reportBytes;
     } catch (engineError) {
       const errorMsg = formatErrorMessage(engineError);
       const executionFailureMessage = `Failed to assemble DOCX report for template "${templateName}": ${errorMsg}`;

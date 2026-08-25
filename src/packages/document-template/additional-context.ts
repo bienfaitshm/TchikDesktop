@@ -1,25 +1,27 @@
 import { formatDate as baseFormatDate } from "@/packages/times";
 
 /**
- * @fileoverview Extended JavaScript context for template rendering.
- * Provides a typed API to transform, format, and secure data before injection into views.
+ * Normalizes input values (Date, ISO string, or timestamp) into a valid Date object.
+ * @param value - The raw input to be normalized.
+ * @returns A validated native Date instance.
+ * @throws {TypeError} If the input cannot be parsed into a valid Date.
  */
+const toDate = (value: Date | string | number): Date => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new TypeError(`Invalid date value provided: ${value}`);
+  }
+  return date;
+};
 
-/**
- * Converts a Date instance, ISO string, or timestamp into a valid Date object.
- * @param value - The input value to normalize.
- * @returns A native Date instance.
- */
-const toDate = (value: Date | string | number): Date =>
-  value instanceof Date ? value : new Date(value);
-
-/** Cache map for Intl.NumberFormat instances to optimize formatting performance. */
+/** Bounded cache map for Intl.NumberFormat instances to prevent memory leaks. */
+const MAX_CACHE_SIZE = 100;
 const formattersCache = new Map<string, Intl.NumberFormat>();
 
 /**
- * Retrieves or creates a cached Intl.NumberFormat instance.
+ * Retrieves an existing Intl.NumberFormat instance or creates and caches a new one.
  * @param locale - BCP 47 language tag.
- * @param options - Formatting configuration options.
+ * @param options - Standard Intl number formatting options.
  * @returns Cached Intl.NumberFormat instance.
  */
 const getNumberFormatter = (
@@ -28,6 +30,10 @@ const getNumberFormatter = (
 ): Intl.NumberFormat => {
   const key = `${locale}-${JSON.stringify(options)}`;
   if (!formattersCache.has(key)) {
+    if (formattersCache.size >= MAX_CACHE_SIZE) {
+      const firstKey = formattersCache.keys().next().value;
+      if (firstKey) formattersCache.delete(firstKey);
+    }
     formattersCache.set(key, new Intl.NumberFormat(locale, options));
   }
   return formattersCache.get(key)!;
@@ -37,34 +43,34 @@ export const additionalJsContext = {
   // --- String Transformers ---
 
   /**
-   * Converts a string to uppercase safely.
-   * @param value - The string to convert.
-   * @returns Uppercased string or empty string if input is nullish.
+   * Safely converts a string to uppercase.
+   * @param value - Target string value.
+   * @returns Uppercased string, or empty string if input is nullish.
    */
   toUpperCase: (value: string | null | undefined): string =>
     value?.toUpperCase() ?? "",
 
   /**
-   * Converts a string to lowercase safely.
-   * @param value - The string to convert.
-   * @returns Lowercased string or empty string if input is nullish.
+   * Safely converts a string to lowercase.
+   * @param value - Target string value.
+   * @returns Lowercased string, or empty string if input is nullish.
    */
   toLowerCase: (value: string | null | undefined): string =>
     value?.toLowerCase() ?? "",
 
   /**
-   * Capitalizes the first letter of a string and lowercases the rest.
-   * @param value - The input string.
-   * @returns Capitalized string.
+   * Capitalizes the first character and lowercases the remainder of a string.
+   * @param value - Target string value.
+   * @returns Capitalized string, or empty string if input is nullish.
    */
   capitalize: (value: string | null | undefined): string =>
     value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : "",
 
   /**
-   * Truncates a string to a specified length and appends an ellipsis if necessary.
-   * @param value - The input string.
-   * @param maxLength - Maximum allowed length (default: 50).
-   * @returns Truncated string.
+   * Truncates a string to a specified length and appends ellipsis if needed.
+   * @param value - Target string value.
+   * @param maxLength - Maximum character length limit (default: 50).
+   * @returns Truncated string, or original value if within bounds.
    */
   truncate: (
     value: string | null | undefined,
@@ -77,24 +83,24 @@ export const additionalJsContext = {
   // --- Date Formatters ---
 
   /**
-   * Formats a date value into a readable string using the global date engine.
-   * @param value - Date, string, or timestamp.
+   * Formats a date using the primary date formatting provider.
+   * @param value - Target Date, string, or timestamp.
    * @returns Formatted date string.
    */
   formatDate: (value: Date | string | number): string =>
     baseFormatDate(toDate(value)),
 
   /**
-   * Alias for date-time template consistency.
-   * @param value - Date, string, or timestamp.
-   * @returns Formatted date-time string.
+   * Alias for date formatting to ensure template semantic consistency.
+   * @param value - Target Date, string, or timestamp.
+   * @returns Formatted date string.
    */
   formatDateTime: (value: Date | string | number): string =>
     baseFormatDate(toDate(value)),
 
   /**
-   * Formats a date relative to current time or falls back to full date if > 7 days.
-   * @param value - Date, string, or timestamp.
+   * Formats a date relative to current time in French, falling back to full date after 7 days.
+   * @param value - Target Date, string, or timestamp.
    * @returns Localized relative time string.
    */
   timeAgo: (value: Date | string | number): string => {
@@ -102,12 +108,12 @@ export const additionalJsContext = {
     const diffMs = Date.now() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
 
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 1) return "À l'instant";
+    if (diffMins < 60) return `Il y a ${diffMins} min`;
     const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffHours < 24) return `Il y a ${diffHours} h`;
     const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 7) return `Il y a ${diffDays} j`;
 
     return baseFormatDate(date);
   },
@@ -115,55 +121,60 @@ export const additionalJsContext = {
   // --- Boolean & Status ---
 
   /**
-   * Formats a boolean value with customizable text or icon representations.
-   * @param value - Target boolean condition.
-   * @param options - Custom mappings for true and false values.
-   * @returns Mapped label string.
+   * Maps a boolean value to customizable string representations in French.
+   * @param value - Target boolean state.
+   * @param options - Custom labels for true and false values.
+   * @returns Configured label string.
    */
   formatBoolean: (
     value: boolean,
     options: { trueLabel?: string; falseLabel?: string } = {},
   ): string => {
-    const { trueLabel = "Yes", falseLabel = "No" } = options;
+    const { trueLabel = "Oui", falseLabel = "Non" } = options;
     return value ? trueLabel : falseLabel;
   },
 
   /**
-   * Returns a standard visual icon representation for a boolean state.
-   * @param value - Target boolean condition.
-   * @returns Checkmark or cross icon.
+   * Maps a boolean condition to a standard visual indicator icon.
+   * @param value - Target boolean state.
+   * @returns Status icon string.
    */
   formatBooleanAsIcon: (value: boolean): string => (value ? "✅" : "❌"),
 
   /**
-   * Formats a status badge label based on boolean active state.
-   * @param value - Target status state.
-   * @param active - Active label (default: "Active").
-   * @param inactive - Inactive label (default: "Inactive").
-   * @returns Formatted status label.
+   * Formats an activation state using configurable badge labels in French.
+   * @param value - Active status condition.
+   * @param active - Active label text (default: "Actif").
+   * @param inactive - Inactive label text (default: "Inactif").
+   * @returns Status badge label.
    */
   formatStatusBadge: (
     value: boolean,
-    active: string = "Active",
-    inactive: string = "Inactive",
-  ): string => (value ? active : inactive),
+    active: string = "Actif",
+    inactive: string = "Inactif",
+  ): string =>
+    additionalJsContext.formatBoolean(value, {
+      trueLabel: active,
+      falseLabel: inactive,
+    }),
 
   // --- Number & Currency ---
 
   /**
-   * Formats a numeric value with controlled fraction digits.
-   * @param value - Numeric input.
-   * @param decimals - Maximum fraction digits (default: 0).
-   * @param locale - BCP 47 locale string (default: "en-US").
-   * @returns Formatted number string.
+   * Formats a numeric value with configurable decimal precision via Intl.
+   * @param value - Numeric value to format.
+   * @param decimals - Fractional digit limit (default: 0).
+   * @param locale - BCP 47 locale identifier (default: "fr-FR").
+   * @returns Formatted number string or fallback default.
    */
   formatNumber: (
     value: number | null | undefined,
     decimals: number = 0,
-    locale: string = "en-US",
+    locale: string = "fr-FR",
   ): string => {
-    if (value === null || value === undefined || Number.isNaN(value))
+    if (value === null || value === undefined || Number.isNaN(value)) {
       return "0";
+    }
     return getNumberFormatter(locale, {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
@@ -171,18 +182,20 @@ export const additionalJsContext = {
   },
 
   /**
-   * Formats a numeric value as currency.
+   * Formats a number as a localized currency value via Intl.
    * @param value - Amount to format.
-   * @param currency - ISO 4217 currency code (default: "USD").
-   * @param locale - BCP 47 locale string (default: "en-US").
-   * @returns Formatted currency string.
+   * @param currency - ISO 4217 currency code (default: "EUR").
+   * @param locale - BCP 47 locale identifier (default: "fr-FR").
+   * @returns Formatted currency string, or empty string if input is invalid.
    */
   formatCurrency: (
     value: number | null | undefined,
     currency: string = "CDF",
     locale: string = "fr-FR",
   ): string => {
-    if (value === null || value === undefined || Number.isNaN(value)) return "";
+    if (value === null || value === undefined || Number.isNaN(value)) {
+      return "";
+    }
     return getNumberFormatter(locale, {
       style: "currency",
       currency,
@@ -190,27 +203,34 @@ export const additionalJsContext = {
   },
 
   /**
-   * Formats a decimal number as a percentage string.
-   * @param value - Decimal ratio value (e.g., 0.15 for 15%).
-   * @param decimals - Decimal places precision (default: 1).
+   * Formats a numeric decimal value as a localized percentage via Intl.
+   * @param value - Decimal ratio (e.g., 0.15 for 15%).
+   * @param decimals - Fraction digits limit (default: 1).
+   * @param locale - BCP 47 locale identifier (default: "fr-FR").
    * @returns Formatted percentage string.
    */
   formatPercentage: (
     value: number | null | undefined,
     decimals: number = 1,
+    locale: string = "fr-FR",
   ): string => {
-    if (value === null || value === undefined || Number.isNaN(value))
+    if (value === null || value === undefined || Number.isNaN(value)) {
       return "0%";
-    return `${(value * 100).toFixed(decimals)}%`;
+    }
+    return getNumberFormatter(locale, {
+      style: "percent",
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value);
   },
 
   // --- Logic Helpers ---
 
   /**
-   * Evaluates a value and returns a default fallback if nullish.
-   * @param value - Target value.
-   * @param fallbackValue - Fallback string value (default: "—").
-   * @returns Original value or fallback string.
+   * Returns the value or a default string fallback if the target is nullish.
+   * @param value - Target input value.
+   * @param fallbackValue - Replacement string (default: "—").
+   * @returns Original value or default fallback.
    */
   fallback: <T>(
     value: T | null | undefined,
@@ -218,18 +238,18 @@ export const additionalJsContext = {
   ): T | string => value ?? fallbackValue,
 
   /**
-   * Type guard validating that a given value is neither null nor undefined.
-   * @param value - Target value to verify.
+   * Asserts whether a value is non-null and defined.
+   * @param value - Target input value.
    * @returns True if value is defined and non-null.
    */
   isDefined: <T>(value: T | null | undefined): value is T =>
     value !== null && value !== undefined,
 
   /**
-   * Joins array items with a specified separator string safely.
-   * @param array - Array of elements to join.
-   * @param separator - Joining separator character (default: ", ").
-   * @returns Joined string output.
+   * Safely joins array elements into a single delimited string.
+   * @param array - Target array of strings.
+   * @param separator - Delimiter character sequence (default: ", ").
+   * @returns Joined output string.
    */
   join: (
     array: string[] | null | undefined = [],
@@ -237,21 +257,11 @@ export const additionalJsContext = {
   ): string => (array ? array.join(separator) : ""),
 
   /**
-   * Safely calculates array length without throwing nullish errors.
-   * @param array - Input array instance.
-   * @returns Array length or 0 if array is nullish.
+   * Calculates the length of an array without risking runtime nullish errors.
+   * @param array - Target array.
+   * @returns Array length, or 0 if array is nullish.
    */
   count: <T>(array: T[] | null | undefined): number => array?.length ?? 0,
-
-  /**
-   * Conditional helper resolving values based on a boolean condition.
-   * @param condition - Boolean evaluation condition.
-   * @param trueValue - Return value when condition evaluates to true.
-   * @param falseValue - Return value when condition evaluates to false.
-   * @returns Evaluated conditional result value.
-   */
-  conditionalFormat: <T>(condition: boolean, trueValue: T, falseValue: T): T =>
-    condition ? trueValue : falseValue,
 };
 
 export type AdditionalJsContext = typeof additionalJsContext;

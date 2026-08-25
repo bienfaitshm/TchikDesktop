@@ -6,55 +6,34 @@ import {
 } from "./template-reader";
 import { additionalJsContext } from "./additional-context";
 
+/** Maximum allowed compiled templates stored in memory cache. */
+const MAX_CACHE_SIZE = 100;
+
 /** Null Object implementation for safe fallback logging. */
 const NULL_LOGGER: ILogger = {
   warn: () => {},
   error: () => {},
 };
 
-/** In-memory cache for compiled Handlebars template delegates. */
+/** Bounded in-memory cache for compiled Handlebars template delegates. */
 const templateCache = new Map<string, HandlebarsTemplateDelegate>();
 
 /**
- * Registers standardHandlebars helpers used across application templates.
+ * Registers standard or custom helpers used across Handlebars templates.
+ * @param helpers - Dictionary of helper functions to register (defaults to additionalJsContext).
  */
-export function registerHandlebarsHelpers(): void {
-  if (!Handlebars.helpers["formatDate"]) {
-    Handlebars.registerHelper("formatDate", (value: unknown) => {
-      if (!value) return "";
-      const date =
-        typeof value === "string" || typeof value === "number"
-          ? new Date(value)
-          : value;
-      if (!(date instanceof Date) || isNaN(date.getTime()))
-        return String(value);
-      return new Intl.DateTimeFormat("fr-FR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }).format(date);
-    });
-  }
-
-  if (!Handlebars.helpers["formatNumber"]) {
-    Handlebars.registerHelper("formatNumber", (value: unknown) => {
-      const amount = typeof value === "number" ? value : Number(value);
-      if (isNaN(amount)) return "0";
-      return new Intl.NumberFormat("fr-FR").format(amount);
-    });
-  }
-
-  if (!Handlebars.helpers["formatCurrency"]) {
-    Handlebars.registerHelper("formatCurrency", (value: unknown) => {
-      const amount = typeof value === "number" ? value : Number(value);
-      if (isNaN(amount)) return "0 CDF";
-      return `${new Intl.NumberFormat("fr-FR").format(amount)} CDF`;
-    });
+export function registerHandlebarsHelpers(
+  helpers: Record<string, unknown> = additionalJsContext as Record<
+    string,
+    unknown
+  >,
+): void {
+  for (const [key, helperFn] of Object.entries(helpers)) {
+    if (typeof helperFn === "function" && !Handlebars.helpers[key]) {
+      Handlebars.registerHelper(key, helperFn as Handlebars.HelperDelegate);
+    }
   }
 }
-
-// Automatically register helpers upon module initialization
-registerHandlebarsHelpers();
 
 /**
  * Safely extracts a string error message from an unknown error type.
@@ -83,6 +62,24 @@ export function clearTemplateCache(): void {
 }
 
 /**
+ * Stores a compiled template delegate in the cache maintaining bounded capacity.
+ * @param key - Template file path identifier.
+ * @param delegate - Compiled Handlebars template delegate function.
+ */
+const setCacheItem = (
+  key: string,
+  delegate: HandlebarsTemplateDelegate,
+): void => {
+  if (templateCache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = templateCache.keys().next().value;
+    if (oldestKey) {
+      templateCache.delete(oldestKey);
+    }
+  }
+  templateCache.set(key, delegate);
+};
+
+/**
  * Compiles and renders a Handlebars template with the provided context data.
  * @template T - Context object structure injected into the template.
  * @param templateRelativePath - Relative file path to the Handlebars template.
@@ -100,6 +97,8 @@ export async function renderTemplate<T extends object>(
   const storageService =
     options.storageService ?? defaultTemplateStorageService;
 
+  registerHandlebarsHelpers();
+
   let compiledTemplate = templateCache.get(templateRelativePath);
 
   if (!compiledTemplate) {
@@ -111,10 +110,10 @@ export async function renderTemplate<T extends object>(
       );
     } catch (storageError) {
       const errorMsg = formatErrorMessage(storageError);
-      logger.error(
-        `Storage read failure for "${templateRelativePath}": ${errorMsg}`,
-      );
-      throw storageError;
+      const storageFailureMessage = `Failed to read template "${templateRelativePath}" from storage: ${errorMsg}`;
+
+      logger.error(storageFailureMessage);
+      throw new Error(storageFailureMessage, { cause: storageError });
     }
 
     try {
@@ -122,7 +121,7 @@ export async function renderTemplate<T extends object>(
       compiledTemplate = Handlebars.compile(templateSource, {
         knownHelpersOnly: false,
       });
-      templateCache.set(templateRelativePath, compiledTemplate);
+      setCacheItem(templateRelativePath, compiledTemplate);
     } catch (compileError) {
       const errorMsg = formatErrorMessage(compileError);
       const runtimeExceptionMessage = `Failed to compile template "${templateRelativePath}": ${errorMsg}`;
@@ -133,12 +132,7 @@ export async function renderTemplate<T extends object>(
   }
 
   try {
-    const mergedContext = {
-      ...additionalJsContext,
-      ...context,
-    };
-
-    return compiledTemplate(mergedContext);
+    return compiledTemplate(context);
   } catch (renderError) {
     const errorMsg = formatErrorMessage(renderError);
     const executionFailureMessage = `Failed to render template "${templateRelativePath}": ${errorMsg}`;
