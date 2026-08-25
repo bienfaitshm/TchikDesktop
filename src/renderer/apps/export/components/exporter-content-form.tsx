@@ -80,11 +80,12 @@ export const ExporterFormContent: React.FC<
 
         <div className="py-10 gap-5 sm:gap-4">
           <LoadingButton
+            size="sm"
             form={formId}
             type="submit"
             loading={isExporting}
             disabled={isExporting || !formManager.selectedDocKey}
-            className="w-full"
+            className="w-full text-xs rounded-full"
           >
             Générer le fichier
           </LoadingButton>
