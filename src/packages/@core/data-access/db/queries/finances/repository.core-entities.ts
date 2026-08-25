@@ -36,6 +36,7 @@ export class WalletRepository
   extends betterSqlite.BaseRepository<
     TableWallet,
     TDataBase,
+    Wallet,
     BaseWalletOptionFilters
   >
   implements OptionProvider<Wallet>
@@ -91,6 +92,10 @@ export type FeeTypeDTO = FeeType & {
   wallet: Wallet;
 };
 
+export type FeeTypeWithSchedulesDTO = FeeTypeDTO & {
+  schedules: FeeSchedule[];
+};
+
 const _feeTypeJoinTables = {
   feeTypes,
   wallets,
@@ -104,10 +109,17 @@ const FEE_TYPE_OPTION_DEFAULT_SORT: BaseFeeTypeOptionFilters = {
   orderBy: [{ table: "feeTypes", column: "name", order: "asc" }],
 };
 
+export function extractFeeTypeFiltersQueryPayload(
+  filters?: BaseFeeTypeOptionFilters,
+) {
+  return helpers.extractQueryPayload(_feeTypeJoinTables, filters);
+}
+
 export class FeeTypeRepository
   extends betterSqlite.BaseRepository<
     TableFeeType,
     TDataBase,
+    FeeTypeDTO,
     BaseFeeTypeOptionFilters
   >
   implements OptionProvider<FeeTypeDTO>
@@ -133,6 +145,16 @@ export class FeeTypeRepository
       .from(this.table)
       .leftJoin(wallets, eq(wallets.walletId, this.table.walletId))
       .$dynamic();
+  }
+
+  getFeeTypeWithSchedules(filters?: BaseFeeTypeOptionFilters) {
+    return this.getClient().query.feeTypes.findMany({
+      ...extractFeeTypeFiltersQueryPayload(filters),
+      with: {
+        schedules: true,
+        wallet: true,
+      },
+    });
   }
 
   /**
@@ -162,6 +184,7 @@ export class FeeScheduleRepository
   extends betterSqlite.BaseRepository<
     TableFeeSchedule,
     TDataBase,
+    FeeSchedule,
     BaseFeeScheduleOptionFilters
   >
   implements OptionProvider<FeeSchedule>

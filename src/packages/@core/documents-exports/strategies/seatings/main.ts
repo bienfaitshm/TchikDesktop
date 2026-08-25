@@ -9,7 +9,7 @@ import {
   generateValidationSchema,
 } from "@/packages/dynamic-form";
 import { extensions } from "@/packages/@core/documents-exports/extensions/seatings";
-import { createSeatingSessionExportForm } from "./form";
+import { createSessionExportForm } from "./form";
 import { SeatingSessionDataResolver } from "./resolver";
 import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 import { DocumentCategory } from "../../constants";
@@ -23,6 +23,7 @@ type ExportPayload = {
 
 export class SeatingExportStrategy extends AbstractExportStrategy<
   FormFieldDef,
+  ExportPayload,
   any
 > {
   public readonly id = "SEATING_EXPORT" as const;
@@ -37,22 +38,9 @@ export class SeatingExportStrategy extends AbstractExportStrategy<
   constructor() {
     super({
       extensions,
-      getSchemasCreator: generateValidationSchema,
+      schemaCreator: generateValidationSchema,
+      resolver: SeatingSessionDataResolver,
+      extendWithFileTypeFormFields: createSessionExportForm,
     });
-  }
-
-  public override async getFormFields(
-    params,
-  ): Promise<readonly FormFieldDef[]> {
-    return createSeatingSessionExportForm({
-      fileTypeFilters: this.extensionFilters,
-      ...params,
-    });
-  }
-
-  public override async resolveData(
-    contextParams: ExportPayload,
-  ): Promise<any> {
-    return SeatingSessionDataResolver.resolveData(contextParams);
   }
 }

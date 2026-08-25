@@ -23,9 +23,12 @@ import {
   useZodForm,
 } from "@/renderer/libs/forms";
 import { UseZodFormReturn } from "@/packages/use-zod-form";
-import { z } from "zod";
-import { ComboboxSearch } from "@/renderer/components/form/fields/generic-search-combo-box";
-import { SearchOption } from "@/renderer/libs/queries/base";
+import {
+  ComboboxSearch,
+  ComboboxOption,
+} from "@/renderer/components/form/fields/generic-search-combo-box";
+import { SearchOptionReturn } from "@/renderer/libs/queries/base";
+import type { Option, SelectOption } from "@/packages/@core/data-access/db";
 
 const DEFAULT_VALUES: Partial<ClassroomCreate> = {
   identifier: "",
@@ -35,11 +38,9 @@ const DEFAULT_VALUES: Partial<ClassroomCreate> = {
 };
 
 type ClassroomProps = {
-  searchOption?: SearchOption;
-  sectionOptions?: { label: string; value: string }[];
-  onGenerateSuggestion?(
-    form: UseZodFormReturn<z.ZodType<ClassroomCreate>>,
-  ): void;
+  searchOption?: SearchOptionReturn<Partial<Option> & SelectOption>;
+  sectionOptions?: ComboboxOption[];
+  onGenerateSuggestion?(form: UseZodFormReturn<ClassroomCreate>): void;
   isGenerating?: boolean;
 };
 

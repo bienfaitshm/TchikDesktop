@@ -66,6 +66,7 @@ const MENUS: ActionMenuConfig<ClassroomRowActionsProps>[] = [
     dialog({ classroom, schoolId, mutationKey }) {
       return (
         <UpdateClassroomDialog
+          identifier={classroom.identifier}
           classId={classroom.classId}
           schoolId={schoolId}
           defaultValues={classroom}

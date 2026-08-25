@@ -1,11 +1,5 @@
-/**
- * @file abstractions.ts
- * @description Contrats et classes de base pour le système d'exportation.
- * Implémente le pattern Strategy pour le métier et le pattern Bridge pour les formats.
- */
-
 import type { FileFilter, SaveDialogOptions } from "electron";
-import type { ZodObject, ZodError } from "zod";
+import type { ZodObject, ZodError, ZodTypeAny } from "zod";
 import {
   DOCUMENT_EXTENSION,
   getFileDescription,
@@ -13,7 +7,17 @@ import {
 import { formatDate } from "@/packages/times";
 import type { RawFileContent, ServiceResult, ContextParams } from "./types";
 
-export interface TMeta<TFormField = unknown> {
+/**
+ * Context parameters passed during dynamic form field evaluation.
+ */
+export type FormFieldContextParams = ContextParams & {
+  fileTypeFilters?: Electron.FileFilter[];
+};
+
+/**
+ * Metadata contract required by the UI to render export dialogs and dynamic forms.
+ */
+export interface ExportMeta<TFormField = unknown> {
   title: string;
   category: string;
   description: string;
@@ -22,7 +26,7 @@ export interface TMeta<TFormField = unknown> {
 }
 
 /**
- * Interface pour un moteur de rendu de format spécifique.
+ * Extension contract for format-specific renderers (Bridge Pattern).
  */
 export interface IExportExtension<TData = unknown> {
   readonly extension: DOCUMENT_EXTENSION;
@@ -32,89 +36,149 @@ export interface IExportExtension<TData = unknown> {
 }
 
 /**
- * Base pour l'implémentation de processeurs de formats (ex: PDF, CSV).
+ * Abstract base class providing common behavior for format-specific exporters.
  */
 export abstract class AbstractExportExtension<
   TData = unknown,
 > implements IExportExtension<TData> {
-  abstract readonly extension: DOCUMENT_EXTENSION;
-  abstract description?: string;
+  public abstract readonly extension: DOCUMENT_EXTENSION;
+  public abstract readonly description?: string;
 
-  public getExtensionFilter(): FileFilter & { description?: string } {
+  /**
+   * Generates Electron FileFilter metadata for desktop file dialogs.
+   * @returns Formatted Electron FileFilter object.
+   */
+  public getExtensionFilter(): FileFilter {
     return {
       name: getFileDescription(this.extension),
-      description: this.description,
       extensions: [this.extension],
     };
   }
 
+  /**
+   * Transforms domain data into raw file payload.
+   * @param data - Resolved domain data.
+   * @returns Raw string or binary content wrapped in a promise.
+   */
   public abstract process(data: TData): Promise<RawFileContent>;
 }
 
 /**
- * Contrat définissant une stratégie d'exportation de document.
+ * Contract for data resolving logic attached to an export strategy.
  */
-export interface IExportStrategy<TFormField> {
+export interface DataResolver<TPayload, TData> {
+  resolveData(payload: TPayload): Promise<TData>;
+}
+
+/**
+ * Contract defining domain-specific export strategies (Strategy Pattern).
+ */
+export interface IExportStrategy<
+  TFormField = unknown,
+  TPayload = unknown,
+  TData = unknown,
+> {
   readonly id: string;
-  getFormFields<TParams extends ContextParams>(
+  getFormFields<TParams extends FormFieldContextParams>(
     params?: TParams,
   ): Promise<readonly TFormField[]>;
-  getMeta<TParams extends ContextParams>(
+  getMeta<TParams extends FormFieldContextParams>(
     params?: TParams,
-  ): Promise<TMeta<TFormField>>;
-  validateContext(params: unknown): ServiceResult<void>;
+  ): Promise<ExportMeta<TFormField>>;
+  validateContext(params: unknown): ServiceResult<TPayload>;
   getSaveOptions(targetExtension?: DOCUMENT_EXTENSION): SaveDialogOptions;
-  resolveData(dataContext: unknown): Promise<unknown>;
-  handlerResolveData(dataContext: unknown): Promise<ServiceResult<unknown>>;
+  resolveData(payload: TPayload): Promise<TData>;
+  handleResolveData(payload: TPayload): Promise<ServiceResult<TData>>;
   buildArtifact(
     targetExtension: DOCUMENT_EXTENSION,
-    data: unknown,
+    data: TData,
   ): Promise<ServiceResult<RawFileContent>>;
 }
 
 /**
- * Orchestrateur abstrait pour les exports.
- * Gère la validation des paramètres, les métadonnées et délègue au format approprié.
+ * Configuration payload supplied to strategy constructors.
+ */
+export interface ExportStrategyConfig<TFormField, TPayload, TData> {
+  extensions: IExportExtension<TData>[];
+  schemaCreator?: (
+    fields: TFormField[],
+  ) => ZodObject<Record<string, ZodTypeAny>>;
+  extendWithFileTypeFormFields?: <TParams extends FormFieldContextParams>(
+    params: TParams,
+  ) => Promise<readonly TFormField[]>;
+  resolver: DataResolver<TPayload, TData>;
+}
+
+/**
+ * Formats Zod validation issues into a single descriptive string.
+ * @param error - Zod validation error object.
+ * @returns Concatenated path and error messages string.
+ */
+function formatZodError(error: ZodError): string {
+  return error.issues
+    .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+    .join("; ");
+}
+
+/**
+ * Sanitizes strings for safe file system usage.
+ * @param name - Raw filename input.
+ * @returns Cleaned string free of invalid path characters.
+ */
+function sanitizeFileName(name: string): string {
+  return name.replace(/[<>:"/\\|?*]/g, "_").trim();
+}
+
+/**
+ * Core orchestrator managing export validation, metadata fetching, and engine dispatch.
  */
 export abstract class AbstractExportStrategy<
   TFormField = unknown,
+  TPayload = unknown,
   TData = unknown,
-> implements IExportStrategy<TFormField> {
+> implements IExportStrategy<TFormField, TPayload, TData> {
   public abstract readonly id: string;
   public abstract readonly category: string;
   public abstract readonly displayName: string;
   public abstract readonly description: string;
 
-  protected abstract readonly validationSchema: ZodObject;
+  protected abstract readonly validationSchema: ZodObject<
+    Record<string, ZodTypeAny>
+  >;
   protected formFields: TFormField[] = [];
 
-  /** Registre interne des moteurs de rendu supportés par cette stratégie. */
   private readonly extensionsRegistry = new Map<
     DOCUMENT_EXTENSION,
     IExportExtension<TData>
   >();
+  protected resolver: DataResolver<TPayload, TData>;
+  private readonly schemaCreator?: (
+    fields: TFormField[],
+  ) => ZodObject<Record<string, ZodTypeAny>>;
+  protected extendWithFileTypeFormFields?: <
+    TParams extends FormFieldContextParams,
+  >(
+    params: TParams,
+  ) => Promise<readonly TFormField[]>;
 
-  protected getSchemasCreator?: (fields: TFormField[]) => ZodObject;
+  constructor(config: ExportStrategyConfig<TFormField, TPayload, TData>) {
+    this.schemaCreator = config.schemaCreator;
+    this.resolver = config.resolver;
+    this.extendWithFileTypeFormFields = config.extendWithFileTypeFormFields;
 
-  constructor({
-    extensions,
-    getSchemasCreator,
-  }: {
-    extensions: IExportExtension<TData>[];
-    getSchemasCreator?: (fields: TFormField[]) => ZodObject;
-  }) {
-    this.getSchemasCreator = getSchemasCreator;
-    extensions.forEach((ext) =>
-      this.extensionsRegistry.set(ext.extension, ext),
-    );
+    for (const ext of config.extensions) {
+      this.extensionsRegistry.set(ext.extension, ext);
+    }
   }
 
   /**
-   * Métadonnées exposées pour la consommation côté UI.
+   * Retrieves user interface metadata for dialogs and dynamic forms.
+   * @param params - Optional context parameters.
+   * @returns Aggregated metadata payload.
    */
-  public async getMeta<TParams extends ContextParams>(
+  public async getMeta<TParams extends FormFieldContextParams>(
     params?: TParams,
-  ): Promise<TMeta<TFormField>> {
+  ): Promise<ExportMeta<TFormField>> {
     return {
       title: this.displayName,
       category: this.category,
@@ -125,84 +189,107 @@ export abstract class AbstractExportStrategy<
   }
 
   /**
-   * Récupère tous les filtres de fichiers supportés par cette stratégie.
+   * Gets all file filter descriptors registered to this strategy.
+   * @returns List of supported Electron FileFilters.
    */
   public get extensionFilters(): FileFilter[] {
-    return Array.from(this.extensionsRegistry.values()).map((engine) => ({
-      ...engine.getExtensionFilter(),
-      description: engine?.description,
-    }));
+    return Array.from(this.extensionsRegistry.values()).map((engine) =>
+      engine.getExtensionFilter(),
+    );
   }
 
   /**
-   * Doit être implémentée par les stratégies concrètes pour fetch les données spécifiques.
-   * On force l'implémentation via `abstract` au lieu de retourner une erreur par défaut.
+   * Fetches domain data using the configured resolver implementation.
+   * @param payload - Validated input parameters.
+   * @returns Unwrapped domain data.
    */
-  public abstract resolveData(dataContext: unknown): Promise<TData>;
+  public async resolveData(payload: TPayload): Promise<TData> {
+    return this.resolver.resolveData(payload);
+  }
 
-  public async handlerResolveData(
-    dataContext: unknown,
+  /**
+   * Safely wraps domain data fetching inside a ServiceResult container.
+   * @param payload - Validated input parameters.
+   * @returns Result wrapper containing resolved data or structured error.
+   */
+  public async handleResolveData(
+    payload: TPayload,
   ): Promise<ServiceResult<TData>> {
     try {
-      const resolvedData = await this.resolveData(dataContext);
-
-      return {
-        success: true,
-        data: resolvedData,
-      };
+      const data = await this.resolveData(payload);
+      return { success: true, data };
     } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown error occurred";
       return {
         success: false,
         error: {
           code: "DATA_FETCH_ERROR",
-          message: error instanceof Error ? error.message : "Erreur inconnue",
-          details: error instanceof Error ? error.message : "Erreur inconnue",
+          message,
+          details: message,
         },
       };
     }
   }
 
-  private resolveFilters(targetExtension?: DOCUMENT_EXTENSION): FileFilter[] {
-    if (!targetExtension) return this.extensionFilters;
-
-    const relevantFilters = this.extensionFilters.filter((filter) =>
-      filter.extensions.includes(targetExtension),
-    );
-
-    return relevantFilters.length > 0 ? relevantFilters : this.extensionFilters;
-  }
-
-  public async getFormFields<TParams extends ContextParams>(
-    _params?: TParams,
+  /**
+   * Retrieves form field definitions required for user inputs.
+   * @param params - Optional contextual parameters.
+   * @returns Array of form field definitions.
+   */
+  public async getFormFields<TParams extends FormFieldContextParams>(
+    params?: TParams,
   ): Promise<readonly TFormField[]> {
+    if (this.extendWithFileTypeFormFields) {
+      const extendedParams = {
+        fileTypeFilters: this.extensionFilters,
+        ...(params ?? {}),
+      } as TParams;
+      return this.extendWithFileTypeFormFields(extendedParams);
+    }
     return this.formFields;
   }
 
-  protected getSchemas(): ZodObject {
-    const extraSchemas = this.getSchemasCreator?.(this.formFields ?? []);
-    return extraSchemas
-      ? this.validationSchema.extend(extraSchemas.shape)
+  /**
+   * Merges static base validation schema with dynamic form field schemas.
+   * @returns Combined Zod schema.
+   */
+  protected getSchemas(): ZodObject<Record<string, ZodTypeAny>> {
+    const extraSchema = this.schemaCreator?.(this.formFields);
+    return extraSchema
+      ? this.validationSchema.extend(extraSchema.shape)
       : this.validationSchema;
   }
 
-  public validateContext(params: unknown): ServiceResult<void> {
+  /**
+   * Validates execution payload against combined Zod schemas.
+   * @param params - Unvalidated input payload.
+   * @returns Result wrapper with validated payload or validation error details.
+   */
+  public validateContext(params: unknown): ServiceResult<TPayload> {
     const result = this.getSchemas().safeParse(params);
     if (!result.success) {
       return {
         success: false,
         error: {
           code: "VALIDATION_ERROR",
-          message: "Paramètres d'export invalides",
-          details: this.formatZodError(result.error),
+          message: "Invalid export parameters",
+          details: formatZodError(result.error),
         },
       };
     }
-    return { success: true, data: undefined };
+    return { success: true, data: result.data as TPayload };
   }
 
+  /**
+   * Delegates file generation to the extension matching the target format.
+   * @param targetExtension - Desired file extension.
+   * @param data - Domain data payload.
+   * @returns Generated file content or generation error details.
+   */
   public async buildArtifact(
     targetExtension: DOCUMENT_EXTENSION,
-    data: unknown,
+    data: TData,
   ): Promise<ServiceResult<RawFileContent>> {
     const engine = this.extensionsRegistry.get(targetExtension);
 
@@ -211,70 +298,59 @@ export abstract class AbstractExportStrategy<
         success: false,
         error: {
           code: "GENERATION_ERROR",
-          message: `Le format "${targetExtension}" n'est pas supporté pour cet export.`,
+          message: `The format "${targetExtension}" is not supported for this export.`,
         },
       };
     }
 
     try {
-      const content = await engine.process(data as TData);
+      const content = await engine.process(data);
       return { success: true, data: content };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const details = error instanceof Error ? error.message : String(error);
       return {
         success: false,
         error: {
           code: "GENERATION_ERROR",
-          message: "Une erreur est survenue lors du traitement du document.",
-          details: errorMessage,
+          message: "An error occurred while building the document artifact.",
+          details,
         },
       };
     }
   }
 
-  private formatZodError(error: ZodError): string {
-    return error.issues
-      .map((e) => `${e.path.join(".")}: ${e.message}`)
-      .join("; ");
-  }
-
   /**
-   * Construit les options de dialogue de sauvegarde.
-   *
-   * @param targetExtension - Extension de fichier souhaitée (ex: "pdf", "xlsx").
-   * @returns Options prêtes pour `dialog.showSaveDialog`.
+   * Constructs desktop Save Dialog configuration options for Electron.
+   * @param targetExtension - Optional target document format filter.
+   * @returns Electron SaveDialogOptions object.
    */
   public getSaveOptions(
     targetExtension?: DOCUMENT_EXTENSION,
   ): SaveDialogOptions {
-    const sanitizedDisplayName = this.sanitizeFileName(this.displayName);
-    const dateSuffix = this.generateDateSuffix();
-    const baseName = `${sanitizedDisplayName}_${dateSuffix}`;
-    const defaultFileName = targetExtension
-      ? `${baseName}.${targetExtension}`
-      : baseName;
+    const sanitizedName = sanitizeFileName(this.displayName);
+    const dateSuffix = formatDate(new Date(), "dd_MM_yyyy_HHmmss");
+    const defaultPath = targetExtension
+      ? `${sanitizedName}_${dateSuffix}.${targetExtension}`
+      : `${sanitizedName}_${dateSuffix}`;
 
     return {
-      title: `Exporter - ${this.displayName}`,
-      defaultPath: defaultFileName,
+      title: `Export - ${this.displayName}`,
+      defaultPath,
       filters: this.resolveFilters(targetExtension),
     };
   }
 
   /**
-   * Génère un suffixe horodaté unique pour éviter les collisions.
-   * Format : "dd_MM_yyyy_HHmmss" (ex: 21_10_2025_143025).
+   * Filters available file extension filters based on target selection.
+   * @param targetExtension - Target format filter.
+   * @returns Array of applicable Electron FileFilters.
    */
-  private generateDateSuffix(): string {
-    return formatDate(new Date(), "dd_MM_yyyy_HHmmss");
-  }
+  private resolveFilters(targetExtension?: DOCUMENT_EXTENSION): FileFilter[] {
+    if (!targetExtension) return this.extensionFilters;
 
-  /**
-   * Nettoie une chaîne pour servir de nom de fichier.
-   * Remplace les caractères interdits sous Windows et Unix par un underscore.
-   */
-  private sanitizeFileName(name: string): string {
-    return name.replace(/[<>:"/\\|?*]/g, "_").trim();
+    const relevant = this.extensionFilters.filter((filter) =>
+      filter.extensions.includes(targetExtension),
+    );
+    return relevant.length > 0 ? relevant : this.extensionFilters;
   }
 }

@@ -1,17 +1,19 @@
 import type { FormFieldDef } from "@/packages/dynamic-form";
 import {
-  seatingSessionRepository,
-  classroomRepository,
-  localRoomRepository,
-} from "@/packages/@core/data-access/db/queries";
+  classroomService,
+  localRoomService,
+  seatingSessionService,
+  feeTypeService,
+} from "@/packages/@core/data-access/db";
 import {
   SeatingSessionFieldFactory,
   ClassroomFieldFactory,
   FileTypeFieldFactory,
   LocalRoomsFieldFactory,
   SectionFieldFactory,
+  DateInputFieldFactory,
+  FeeTypeFieldFactory,
 } from "./field-factories";
-import { DataMappers } from "./data-mappers";
 import type {
   IClassroomFormParams,
   ISeatingSessionFormParams,
@@ -46,7 +48,9 @@ class FieldCreationError extends Error implements FieldFactoryError {
 /**
  * Utilitaire pour extraire proprement les IDs sous forme de tableau de chaînes
  */
-const normalizeToArray = (value: unknown): string[] => {
+const normalizeToArray = (
+  value: (string | number) | (string | number)[],
+): string[] => {
   if (value == null) return [];
   if (Array.isArray(value)) return value.map(String);
   return [String(value)];
@@ -56,10 +60,11 @@ const normalizeToArray = (value: unknown): string[] => {
  * Gère dynamiquement le type de defaultValue selon la propriété 'multiple'
  */
 const determineDefaultValue = (
-  providedId: unknown,
+  providedId: (string | number | undefined) | (string | number | undefined)[],
   options: readonly SelectOption[],
   multiple?: boolean,
 ): FormFieldDef["defaultValue"] => {
+  if (!providedId) return undefined;
   const normalized = normalizeToArray(providedId);
   const fallback = options[0]?.value ? [options[0].value] : [];
   const baseValues = normalized.length > 0 ? normalized : fallback;
@@ -101,19 +106,23 @@ export const createSessionField = async (
   try {
     const { schoolId, yearId, sessionId, ...config } = params;
 
-    const sessions = await seatingSessionRepository.findMany({
-      where: { schoolId, yearId },
+    const sessions = await seatingSessionService.getOptions({
+      where: {
+        seatingSessions: {
+          schoolId,
+          yearId,
+        },
+      },
     });
 
-    const options = DataMappers.sessionsToOptions(sessions);
     const defaultValue = determineDefaultValue(
       sessionId,
-      options,
+      sessions,
       config.multiple,
     );
 
     return SeatingSessionFieldFactory.create({
-      options,
+      options: sessions,
       defaultValue,
       colSpan: 6,
       ...config,
@@ -131,21 +140,20 @@ export const createClassroomField = async (
   params: Readonly<IClassroomFormParams & FileTypeFieldConfig>,
 ): Promise<FormFieldDef> => {
   try {
-    const { schoolId, yearId, classId, ...config } = params;
+    const { schoolId, classId, ...config } = params;
 
-    const classrooms = await classroomRepository.findMany({
-      where: { schoolId, yearId },
+    const classrooms = await classroomService.getOptions({
+      where: { classrooms: { schoolId } },
     });
 
-    const options = DataMappers.classroomsToOptions(classrooms);
     const defaultValue = determineDefaultValue(
       classId,
-      options,
+      classrooms,
       config.multiple,
     );
 
     return ClassroomFieldFactory.create({
-      options,
+      options: classrooms,
       defaultValue,
       colSpan: 4,
       ...config,
@@ -167,19 +175,18 @@ export const createLocalroomField = async (
   try {
     const { schoolId, ...config } = params;
 
-    const localrooms = await localRoomRepository.findMany({
-      where: { schoolId },
+    const localrooms = await localRoomService.getOptions({
+      where: { localrooms: { schoolId } },
     });
 
-    const options = DataMappers.localroomsToOptions(localrooms);
     const defaultValue = determineDefaultValue(
       config.defaultValue,
-      options,
+      localrooms,
       config.multiple,
     );
 
     return LocalRoomsFieldFactory.create({
-      options,
+      options: localrooms,
       defaultValue,
       colSpan: 4,
       ...config,
@@ -193,6 +200,10 @@ export const createLocalroomField = async (
       error instanceof Error ? error.message : undefined,
     );
   }
+};
+
+export const createDateInputField = () => {
+  return DateInputFieldFactory.create("start", "Debut");
 };
 
 export const composeFields = async (
@@ -217,4 +228,37 @@ export const composeFields = async (
         r.status === "fulfilled",
     )
     .map((r) => r.value);
+};
+
+export const createFeeTypeField = async (
+  params: Readonly<IClassroomFormParams & FileTypeFieldConfig>,
+): Promise<FormFieldDef> => {
+  try {
+    const { schoolId, classId, ...config } = params;
+
+    const feeTypes = await feeTypeService.getOptions({
+      where: { feeTypes: { schoolId } },
+    });
+
+    const defaultValue = determineDefaultValue(
+      classId,
+      feeTypes,
+      config.multiple,
+    );
+
+    return FeeTypeFieldFactory.create({
+      options: feeTypes,
+      defaultValue,
+      colSpan: 4,
+      ...config,
+    });
+  } catch (error) {
+    if (error instanceof FieldCreationError) throw error;
+
+    throw new FieldCreationError(
+      "FETCH_ERROR",
+      "classroom",
+      error instanceof Error ? error.message : undefined,
+    );
+  }
 };

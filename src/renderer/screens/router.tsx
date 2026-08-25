@@ -51,10 +51,6 @@ function lazyNamed<T extends Record<string, any>>(
   return lazy(() => factory().then((module) => ({ default: module[name] })));
 }
 
-// ==========================================
-// ⚡ IMPORTS DYNAMIQUES (LAZY LOADING)
-// ==========================================
-
 // Base & Layouts
 const Launcher = lazy(() => import("@/renderer/screens/launcher"));
 const HomePage = lazyNamed(() => import("@/renderer/screens/home"), "HomePage");
@@ -65,6 +61,11 @@ const NotFoundPage = lazyNamed(
 );
 const WorkInProgressPage = lazy(
   () => import("@/renderer/components/work-in-progess-page"),
+);
+
+const ClassroomsLayout = lazyNamed(
+  () => import("@/renderer/layouts/classroom-layout"),
+  "ClassroomsLayout",
 );
 
 // Configuration hors-ligne (Setup initial)
@@ -282,7 +283,11 @@ export default function RouterProvider(): JSX.Element {
             <Route path={ROUTES.FIN.ROOT}>
               <Route
                 path={ROUTES.FIN.CLASSROOMS}
-                element={<FinApp.ClassroomPaymentLayout />}
+                element={
+                  <ClassroomsLayout
+                    navigateToDetail={APP_ROUTES.FIN.CLASSROOMS.DETAIL}
+                  />
+                }
               >
                 <Route index element={<FinApp.ClassroomPaymentEmptyPage />} />
                 <Route
@@ -318,10 +323,6 @@ export default function RouterProvider(): JSX.Element {
                   path={ROUTES.FIN.PAYMENTS_HISTORIES}
                   element={<FinApp.PaymentsHistoryPage />}
                 />
-                {/* <Route
-                  path={ROUTES.PARAMS.PAYMENT_ID}
-                  element={<PaymentsJournalPage />}
-                /> */}
               </Route>
               {/* Configurations de frais */}
               <Route path={ROUTES.FIN.PAYMENT_CONFIG}>
@@ -339,7 +340,6 @@ export default function RouterProvider(): JSX.Element {
                   element={<FinApp.SchoolPaymentConfigPage />}
                 />
               </Route>
-              {/* Gestion financière par classe */}
               {/* Taux de change */}
               <Route path={ROUTES.FIN.EXCHANGE_RATES}>
                 <Route index element={<WorkInProgressPage />} />
@@ -374,7 +374,11 @@ export default function RouterProvider(): JSX.Element {
               <Route index element={<ClassroomPage />} />
               <Route
                 path={ROUTES.CLASSROOMS.CLASSROOM}
-                element={<Layout.StudentLayout />}
+                element={
+                  <ClassroomsLayout
+                    navigateToDetail={APP_ROUTES.CLASSROOMS.STUDENTS}
+                  />
+                }
               >
                 <Route
                   path={ROUTES.CLASSROOMS.STUDENTS}

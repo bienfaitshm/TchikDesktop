@@ -94,6 +94,7 @@ export function PaymentForm(): React.JSX.Element {
   const form = useProcessStudentPaymentForm({
     schoolId,
     yearId,
+    mutationKey: ["fin"],
     onSuccess(data) {
       if (data) {
         resetForm(data);

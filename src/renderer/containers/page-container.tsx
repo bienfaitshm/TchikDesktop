@@ -105,7 +105,7 @@ export const PageHeadTitle: React.FC<PageHeadTitleProps> = ({
   return (
     <h1
       className={cn(
-        "text-2xl font-bold tracking-tight text-foreground",
+        "text-xl font-bold tracking-tight text-foreground",
         className,
       )}
       {...props}
@@ -127,7 +127,7 @@ export const PageHeadDescription: React.FC<PageHeadDescriptionProps> = ({
   ...props
 }) => {
   return (
-    <p className={cn("text-sm text-muted-foreground", className)} {...props}>
+    <p className={cn("text-xs text-muted-foreground", className)} {...props}>
       {children}
     </p>
   );

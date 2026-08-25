@@ -37,7 +37,7 @@ export type StudentDetails = {
   /** Unique student identification code. */
   code: string;
   /** Classroom or grade section assignment. */
-  classroom?: string;
+  classroomName?: string;
 };
 
 /**
@@ -172,8 +172,8 @@ export function PaymentInvoice({
                 isTruncated
               />
               <DetailRow label="CODE :" value={student.code} />
-              {student.classroom && (
-                <DetailRow label="CLASSE :" value={student.classroom} />
+              {student.classroomName && (
+                <DetailRow label="CLASSE :" value={student.classroomName} />
               )}
             </motion.div>
           ) : (

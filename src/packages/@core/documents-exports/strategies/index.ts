@@ -8,6 +8,8 @@ import { SeatingExportStrategy } from "./seatings";
 import { FicheCotationExportStrategy } from "./cotations";
 import { SeatingPresenceExportStrategy } from "./seatings-presence";
 import { SeatingBadgeExportStrategy } from "./seatings-badge";
+import { StudentPaymentExportStrategy } from "./payment-reports";
+import { PaymentTableExportStrategy } from "./payment-table";
 
 const STRATEGY_CLASSES: ClassConstructor<IExportStrategy<unknown>>[] = [
   EnrollmentExportStrategy,
@@ -15,6 +17,9 @@ const STRATEGY_CLASSES: ClassConstructor<IExportStrategy<unknown>>[] = [
   SeatingExportStrategy,
   SeatingPresenceExportStrategy,
   SeatingBadgeExportStrategy,
+  // Fin
+  StudentPaymentExportStrategy,
+  PaymentTableExportStrategy,
 ];
 
 export const registeredStrategies: IExportStrategy<unknown>[] =

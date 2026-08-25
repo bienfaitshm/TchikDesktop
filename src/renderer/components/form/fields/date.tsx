@@ -33,7 +33,7 @@ export interface DateInputProps {
  * @returns Formatted date string or an empty string if invalid.
  */
 const formatDateToInputValue = (date?: Date): string => {
-  if (!date || isNaN(date.getTime())) {
+  if (!date || isNaN(date.getTime?.())) {
     return "";
   }
   const year = date.getFullYear();

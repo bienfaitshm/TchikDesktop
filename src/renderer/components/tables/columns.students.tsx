@@ -1,4 +1,4 @@
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import { GenderBadge } from "@/renderer/components/user-gender";
 import { StudentStatusBadge } from "@/renderer/components/student-status";
 import { StudentAvatar } from "@/renderer/components/student-avatar";
@@ -10,9 +10,44 @@ import {
   ItemTitle,
   ItemDescription,
 } from "@/renderer/components/ui/item";
-
 import type { EnrollmentDTO } from "@/packages/@core/data-access/db/queries";
 
+/**
+ * Renders the student identity cell containing avatar, name, and status type label.
+ * @param props - Component props containing the row context.
+ * @returns The rendered React item layout.
+ */
+function StudentIdentityCell({ row }: { row: Row<EnrollmentDTO> }) {
+  const student = row.original.student;
+  const isNewStudent = row.original.isNewStudent;
+  const fullName = student?.fullName ?? "—";
+
+  return (
+    <Item className="bg-transparent border-none p-0 gap-3 min-w-37.5">
+      <ItemMedia>
+        <StudentAvatar fullName={fullName} />
+      </ItemMedia>
+      <ItemContent className="gap-0.5">
+        <ItemTitle className="text-xs font-medium leading-none text-foreground">
+          {fullName}
+        </ItemTitle>
+        <ItemDescription className="text-[10px] font-semibold tracking-wider">
+          <span
+            className={
+              isNewStudent ? "text-primary font-bold" : "text-muted-foreground"
+            }
+          >
+            {isNewStudent ? "Nouveau" : "Ancien"}
+          </span>
+        </ItemDescription>
+      </ItemContent>
+    </Item>
+  );
+}
+
+/**
+ * Column definitions configuration array for rendering student enrollment tables.
+ */
 export const studentColumns: ColumnDef<EnrollmentDTO>[] = [
   {
     accessorKey: "student.fullName",
@@ -22,51 +57,22 @@ export const studentColumns: ColumnDef<EnrollmentDTO>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Nom, postnom et prénom" />
     ),
-    cell: ({ row }) => {
-      const { student, isNewStudent } = row.original;
-
-      return (
-        <Item className="bg-transparent border-none p-0 gap-3 min-w-(200px)">
-          <ItemMedia>
-            <StudentAvatar fullName={student.fullName} />
-          </ItemMedia>
-          <ItemContent className="gap-0.5">
-            <ItemTitle className="text-xs font-medium leading-none text-foreground">
-              {student.fullName}
-            </ItemTitle>
-            <ItemDescription className="text-[10px] font-semibold uppercase tracking-wider">
-              <span
-                className={
-                  isNewStudent
-                    ? "text-primary font-bold"
-                    : "text-muted-foreground"
-                }
-              >
-                {isNewStudent ? "Nouveau" : "Ancien"}
-              </span>
-            </ItemDescription>
-          </ItemContent>
-        </Item>
-      );
-    },
+    cell: ({ row }) => <StudentIdentityCell row={row} />,
   },
   {
     accessorKey: "student.gender",
     header: "Sexe",
     cell: ({ row }) => (
-      <GenderBadge withIcon gender={row.original.student.gender} />
+      <GenderBadge withIcon gender={row.original.student?.gender} />
     ),
   },
   {
     accessorKey: "studentCode",
-    header: "Code",
+    header: "Code d'inscription de l'élève",
     cell: ({ row }) => (
-      <code
-        data-slot="table-code"
-        className="relative rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground border border-border/40"
-      >
-        {row.original.studentCode}
-      </code>
+      <p data-slot="table-code" className="text-xs text-center">
+        {row.original.studentCode ?? "—"}
+      </p>
     ),
   },
   {

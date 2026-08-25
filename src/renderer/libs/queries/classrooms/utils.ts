@@ -1,6 +1,13 @@
 import type { Option } from "@/packages/@core/data-access/schema-validations";
+
+/**
+ * Type representing a display suggestion with a standard name and a short name.
+ */
 export type TSuggestion = { name: string; shortName: string };
 
+/**
+ * Map of French ordinal text terms to their corresponding numeric values.
+ */
 const ORDINAL_TEXT_MAP: Record<string, number> = {
   premier: 1,
   premiere: 1,
@@ -31,6 +38,21 @@ const ORDINAL_TEXT_MAP: Record<string, number> = {
   "8e": 8,
 } as const;
 
+/**
+ * Configuration options for formatting French ordinals.
+ */
+interface OrdinalOptions {
+  /** Indicates whether the feminine form should be used. */
+  isFeminine?: boolean;
+  /** Indicates whether the short suffix form ('e' instead of 'ème') should be used. */
+  shortSuffix?: boolean;
+}
+
+/**
+ * Normalizes input text by trimming, lowercasing, and stripping diacritics.
+ * @param text - Raw input string.
+ * @returns Cleaned and normalized string.
+ */
 const normalizeText = (text: string): string =>
   text
     .trim()
@@ -38,20 +60,28 @@ const normalizeText = (text: string): string =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
-interface OrdinalOptions {
-  isFeminine?: boolean;
-  shortSuffix?: boolean;
-}
-
+/**
+ * Formats a number into a French ordinal string.
+ * @param num - Numeric ordinal value.
+ * @param isFem - Whether to apply feminine formatting.
+ * @param short - Whether to apply shortened suffix.
+ * @returns Formatted ordinal string.
+ */
 const formatOrdinal = (num: number, isFem: boolean, short: boolean): string => {
   if (num === 1) return isFem ? "1ère" : "1er";
   return `${num}${short ? "e" : "ème"}`;
 };
 
+/**
+ * Parses a numeric value or text representation and returns its French ordinal prefix.
+ * @param input - Numeric value or text string representing an ordinal.
+ * @param options - Ordinal formatting options.
+ * @returns Formatted ordinal string, or null if parsing fails.
+ */
 export const getFrenchOrdinalPrefix = (
   input: string | number,
   options: OrdinalOptions = {},
-): string => {
+): string | null => {
   const { isFeminine = false, shortSuffix = false } = options;
 
   if (typeof input === "number")
@@ -64,13 +94,15 @@ export const getFrenchOrdinalPrefix = (
     return formatOrdinal(mappedValue, isFeminine, shortSuffix);
 
   const parsed = parseInt(normalizedInput, 10);
-  return !isNaN(parsed)
-    ? formatOrdinal(parsed, isFeminine, shortSuffix)
-    : "Inconnu";
+  return !isNaN(parsed) ? formatOrdinal(parsed, isFeminine, shortSuffix) : null;
 };
 
 /**
- * Crée une suggestion de base en combinant un préfixe et les noms.
+ * Constructs a base suggestion by prepending a prefix to name properties.
+ * @param name - Primary display name.
+ * @param shortName - Abbreviated display name.
+ * @param prefix - Prefix to prepend.
+ * @returns Formatted suggestion object.
  */
 export function createSuggestion(
   name: string,
@@ -84,7 +116,10 @@ export function createSuggestion(
 }
 
 /**
- * Récupère une suggestion brute à partir d'une liste d'options et d'un ID.
+ * Extracts a suggestion payload from an options list based on option identifier.
+ * @param options - Array of available option records.
+ * @param optionId - Target option identifier.
+ * @returns Extracted suggestion or null if option is missing.
  */
 export function getOptionSuggestion<T extends Option>(
   options: T[],
@@ -102,15 +137,21 @@ export function getOptionSuggestion<T extends Option>(
   };
 }
 
+/**
+ * Resolves an identifier into an ordinal prefix or returns the raw identifier if invalid.
+ * @param identifier - Raw identifier string.
+ * @returns Formatted ordinal prefix or original identifier.
+ */
 export function getPrefixIdentifier(identifier: string): string {
-  const ordinalPrefix = getFrenchOrdinalPrefix(identifier);
-  const displayPrefix =
-    ordinalPrefix === "Inconnu" ? identifier : ordinalPrefix;
-  return displayPrefix;
+  return getFrenchOrdinalPrefix(identifier) ?? identifier;
 }
 
 /**
- * Crée une suggestion spécifique pour une classe en enrichissant l'option d'un préfixe ordinal.
+ * Creates a classroom suggestion by enriching an option with an ordinal prefix.
+ * @param options - Array of available option records.
+ * @param optionId - Target option identifier.
+ * @param identifier - Raw string used to generate ordinal prefix.
+ * @returns Formatted classroom suggestion or null if option is missing.
  */
 export function createClassroomSuggestion<T extends Option>(
   options: T[],

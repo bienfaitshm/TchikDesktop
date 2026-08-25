@@ -31,6 +31,7 @@ export class LocalRoomRepository
   extends betterSqlite.BaseRepository<
     TableLocalroom,
     TDataBase,
+    Localroom,
     BaseLocalRoomFilters
   >
   implements OptionProvider<Localroom, BaseLocalRoomFilters>

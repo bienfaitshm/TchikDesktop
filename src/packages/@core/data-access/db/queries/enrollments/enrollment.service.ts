@@ -33,7 +33,11 @@ export class EnrollmentService {
         labelKeyShort: ({ student }) => student.lastName,
         labelFormat: "long",
         transform(baseOption, originalItem) {
-          return { ...baseOption, ...originalItem };
+          return {
+            ...baseOption,
+            ...originalItem,
+            description: `Classe: ${originalItem.classroom.shortIdentifier} - Sexe: ${originalItem.student.gender} - code: ${originalItem.studentCode}`,
+          };
         },
       },
     );

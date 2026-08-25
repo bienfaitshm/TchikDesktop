@@ -45,11 +45,12 @@ export const ClassroomSidebarHeader = ({
         </InputGroupAddon>
         <InputGroupInput
           placeholder="Rechercher une classe..."
+          className="text-xs placeholder:text-xs"
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
         />
         {searchTerm && (
-          <InputGroupAddon align="end">
+          <InputGroupAddon align="inline-end">
             <Button
               variant="ghost"
               size="icon"
@@ -69,7 +70,7 @@ export const ClassroomSidebarHeader = ({
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-between"
+              className="w-full justify-between h-8 text-xs"
             >
               <span className="flex items-center gap-2 truncate">
                 <LayersIcon data-icon="inline-start" />
@@ -78,7 +79,7 @@ export const ClassroomSidebarHeader = ({
               <ChevronDownIcon data-icon="inline-end" />
             </Button>
           }
-        ></DropdownMenuTrigger>
+        />
         <DropdownMenuContent
           className="w-(--radix-dropdown-menu-trigger-width) min-w-48"
           align="start"
@@ -100,7 +101,7 @@ export const ClassroomSidebarHeader = ({
                 <DropdownMenuRadioItem
                   key={opt.value}
                   value={opt.value}
-                  className="cursor-pointer"
+                  className="cursor-pointer text-xs"
                 >
                   {opt.label}
                 </DropdownMenuRadioItem>

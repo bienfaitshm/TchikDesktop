@@ -88,3 +88,31 @@ export const NumberDaysFieldFactory = {
       .build(config);
   },
 };
+
+export const DateInputFieldFactory = {
+  create(
+    name: string,
+    labelName: string,
+    config?: TBaseFieldConfig,
+  ): FormFieldDef {
+    return FieldBuilder.create(name, "date")
+      .withLabel(labelName)
+      .withPlaceholder("12/12/2026")
+      .withDefaultValue(14)
+      .withColSpan(5)
+      .required()
+      .build(config);
+  },
+};
+
+export const FeeTypeFieldFactory = {
+  create(config?: TBaseFieldConfig): FormFieldDef {
+    return FieldBuilder.create("feeTypeId", "select")
+      .withLabel("Type de frais")
+      .withPlaceholder("Ex. Menerval")
+      .withDefaultValue([])
+      .withColSpan(4)
+      .multiple()
+      .build(config);
+  },
+};

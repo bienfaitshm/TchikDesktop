@@ -45,10 +45,10 @@ export function ExporterForm({
       {/* 1. Sélection du type de document */}
       <section className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="doc-type-selector" className="text-base font-bold">
+          <Label htmlFor="doc-type-selector" className="text-xs font-bold">
             Type de document
           </Label>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Sélectionnez le modèle de document pour afficher les options
             d'exportation.
           </p>
@@ -61,14 +61,14 @@ export function ExporterForm({
           onChangeValue={onDocumentChange}
           renderTrigger={(selected) => (
             <div className="flex flex-col items-start gap-0.5 overflow-hidden text-left w-full min-w-0">
-              <span className="font-medium text-sm text-wrap">
+              <span className="font-medium text-xs text-wrap">
                 {selected ? selected.data?.title : "Choisir un modèle..."}
               </span>
             </div>
           )}
           renderItem={(item) => (
             <div className="flex flex-col py-1 w-full min-w-0">
-              <p className="font-semibold text-sm truncate">
+              <p className="font-semibold text-xs truncate">
                 {item.data?.title}
               </p>
               <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 text-wrap">
@@ -99,9 +99,9 @@ export function ExporterForm({
                 : "opacity-100"
             }
           >
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-primary truncate">
-                Configuration de l'export : {selectedDoc?.data?.title}
+            <div className="my-6">
+              <h3 className="text-xs font-semibold truncate">
+                Configuration de l'export - {selectedDoc?.data?.title}
               </h3>
             </div>
 

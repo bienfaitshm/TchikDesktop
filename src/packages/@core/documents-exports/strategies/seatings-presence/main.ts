@@ -4,23 +4,14 @@
 
 import { AbstractExportStrategy } from "@/packages/electron-data-exporter";
 import { schoolYearIdBaseSchema } from "@/packages/@core/data-access/schema-validations";
-import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 import {
   type FormFieldDef,
   generateValidationSchema,
 } from "@/packages/dynamic-form";
-import { extensions } from "@/packages/@core/documents-exports/extensions/seating-presence";
+import { extensions } from "./extensions";
 import { createSeatingPresenceExportForm } from "./form";
 import { SeatingPresenceSessionDataResolver } from "./resolver";
 import { DocumentCategory } from "../../constants";
-
-type ExportPayload = {
-  schoolId: string;
-  yearId: string;
-  fileType: DOCUMENT_EXTENSION;
-  sessionId: string;
-  nDays: number;
-};
 
 export class SeatingPresenceExportStrategy extends AbstractExportStrategy<
   FormFieldDef,
@@ -38,22 +29,9 @@ export class SeatingPresenceExportStrategy extends AbstractExportStrategy<
   constructor() {
     super({
       extensions,
-      getSchemasCreator: generateValidationSchema,
+      schemaCreator: generateValidationSchema,
+      resolver: SeatingPresenceSessionDataResolver,
+      extendWithFileTypeFormFields: createSeatingPresenceExportForm,
     });
-  }
-
-  public override async getFormFields(
-    params,
-  ): Promise<readonly FormFieldDef[]> {
-    return createSeatingPresenceExportForm({
-      fileTypeFilters: this.extensionFilters,
-      ...params,
-    });
-  }
-
-  public override async resolveData(
-    contextParams: ExportPayload,
-  ): Promise<any> {
-    return SeatingPresenceSessionDataResolver.resolveData(contextParams);
   }
 }

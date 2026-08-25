@@ -73,3 +73,4 @@ export function getLogger(context: string) {
 }
 
 export type CustomLogger = ReturnType<typeof getLogger>;
+export type Logger = CustomLogger;

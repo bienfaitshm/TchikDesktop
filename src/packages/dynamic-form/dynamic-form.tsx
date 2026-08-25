@@ -14,6 +14,7 @@ import { cn } from "./utils";
 
 export interface InputComponents {
   TextField: React.ComponentType<any>;
+  DateField: React.ComponentType<any>;
   SelectField?: React.ComponentType<any>;
   SelectArrayField?: React.ComponentType<any>;
 }
@@ -82,7 +83,8 @@ export function DynamicForm<TFieldValues extends FieldValues = FieldValues>({
       descriptionId: string,
       hasError: boolean,
     ) => {
-      const { TextField, SelectField, SelectArrayField } = components;
+      const { TextField, SelectField, SelectArrayField, DateField } =
+        components;
 
       const a11yProps = {
         id: field.id,
@@ -100,6 +102,12 @@ export function DynamicForm<TFieldValues extends FieldValues = FieldValues>({
             {...a11yProps}
             options={field.options}
           />
+        );
+      }
+
+      if (field.type === "date" && DateField) {
+        return (
+          <DateField {...rhfProps} {...a11yProps} options={field.options} />
         );
       }
 
@@ -140,7 +148,7 @@ export function DynamicForm<TFieldValues extends FieldValues = FieldValues>({
               {/* Label sémantique */}
               <label
                 htmlFor={field.id}
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground"
+                className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground"
               >
                 {field.label}
                 {field.required && (
@@ -162,7 +170,7 @@ export function DynamicForm<TFieldValues extends FieldValues = FieldValues>({
                 {field.helperText && (
                   <p
                     id={descriptionId}
-                    className="text-sm text-muted-foreground"
+                    className="text-xs text-muted-foreground"
                   >
                     {field.helperText}
                   </p>
@@ -172,7 +180,7 @@ export function DynamicForm<TFieldValues extends FieldValues = FieldValues>({
                   <p
                     id={errorId}
                     role="alert"
-                    className="text-sm font-medium text-destructive"
+                    className="text-xs font-medium text-destructive"
                   >
                     {error.message?.toString()}
                   </p>

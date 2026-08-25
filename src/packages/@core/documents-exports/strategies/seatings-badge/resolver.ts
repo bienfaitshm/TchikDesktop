@@ -1,5 +1,4 @@
 import {
-  schoolRepository,
   classroomService,
   schoolInfoService,
 } from "@/packages/@core/data-access/db/queries";
@@ -33,7 +32,7 @@ export class SeatingPresenceSessionDataResolver {
     }
     const [school, classrooms] = await Promise.all([
       schoolInfoService.getSchoolInfo(schoolId, yearId),
-      classroomService.getClassroomsWithStudentAndAssignments({
+      classroomService.getClassroomsWithStudentsAndAssignments({
         classroom: {
           where: {
             classrooms: {

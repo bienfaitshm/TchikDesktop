@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{school.name}} - {{school.studyYear.yearName}} | Rapport Officiel des Paiements</title>
+    <style>
+        :root {
+            /* Palette ultra-douce (OKLCH) */
+            --background: oklch(0.985 0.002 195);
+            --foreground: oklch(0.18 0.01 200);
+            
+            /* Cartes et Popovers */
+            --card: oklch(1 0 0);
+            --card-foreground: oklch(0.18 0.01 200);
+            
+            /* Couleurs Principales (Émeraude/Cyan vibrante) */
+            --primary: oklch(0.66 0.185 182.5);
+            --primary-foreground: oklch(0.99 0.005 180);
+            
+            /* Muted & Accents */
+            --muted: oklch(0.96 0.003 195);
+            --muted-foreground: oklch(0.55 0.01 195);
+            --accent: oklch(0.95 0.008 185);
+            --accent-foreground: oklch(0.15 0.02 185);
+            
+            /* Bordures */
+            --border: oklch(0.93 0.003 195);
+            
+            /* Rayon des bordures */
+            --radius: 0.5rem; /* Ajusté pour le document pour un rendu plus net */
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        /* Support de l'impression et de la pagination PDF */
+        @page {
+            size: A4;
+            margin: 12mm 12mm 15mm 12mm;
+            background-color: var(--background);
+            @bottom-right {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-size: 7.5pt;
+                color: var(--muted-foreground);
+                font-family: 'Helvetica Neue', Arial, sans-serif;
+            }
+            @bottom-left {
+                content: "{{school.name}} - {{school.studyYear.yearName}} | Rapport de paiment";
+                font-size: 7.5pt;
+                color: var(--muted-foreground);
+                font-family: 'Helvetica Neue', Arial, sans-serif;
+            }
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: var(--foreground);
+            margin: 0;
+            padding: 0;
+            font-size: 8.5pt; /* Police globale réduite */
+            line-height: 1.4;
+            background-color: var(--background);
+        }
+
+        /* En-tête principal */
+        .header {
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            padding: 16px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            /* Suppression du dégradé et de la bordure épaisse pour un look plus moderne */
+        }
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .header-table td {
+            vertical-align: middle;
+            border: none;
+            padding: 0;
+        }
+        .school-title {
+            font-size: 14pt; /* Réduit (était 18pt) */
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin: 0;
+        }
+        .school-subtitle {
+            font-size: 8pt; /* Réduit (était 9pt) */
+            color: var(--primary-foreground);
+            opacity: 0.9;
+            margin-top: 3px;
+        }
+        .doc-title {
+            text-align: right;
+            font-size: 12pt; /* Réduit (était 14pt) */
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .doc-date {
+            text-align: right;
+            font-size: 7.5pt; /* Réduit (était 8.5pt) */
+            color: var(--primary-foreground);
+            opacity: 0.9;
+            margin-top: 3px;
+        }
+
+        /* Cartes d'indicateurs clés (Metrics) */
+        .metrics-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px 0;
+            margin-bottom: 20px;
+            margin-left: -10px;
+            margin-right: -10px;
+        }
+        .metric-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px 12px;
+            text-align: center;
+            /* Ombre supprimée (plus de box-shadow) */
+        }
+        .metric-label {
+            font-size: 7.5pt; /* Réduit */
+            text-transform: uppercase;
+            color: var(--muted-foreground);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .metric-value {
+            font-size: 12pt; /* Réduit (était 14pt) */
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: 4px;
+        }
+
+        /* Titres de sections */
+        .section-header {
+            font-size: 10pt; /* Réduit (était 11pt) */
+            font-weight: 700;
+            color: var(--foreground);
+            border-left: 3px solid var(--primary);
+            padding-left: 8px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Tableaux de données */
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            margin-bottom: 15px;
+        }
+        table.data-table th {
+            background-color: var(--muted);
+            color: var(--muted-foreground);
+            font-weight: 700;
+            font-size: 7pt; /* Réduit */
+            text-transform: uppercase;
+            padding: 7px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        table.data-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 7pt; /* Réduit */
+            color: var(--card-foreground);
+        }
+        table.data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .amount-col {
+            text-align: right; 
+            font-weight: 700; 
+            color: var(--foreground); 
+        }
+
+        .badge {
+            background-color: var(--accent);
+            color: var(--accent-foreground);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 7pt; /* Réduit */
+            font-weight: 700;
+        }
+
+        /* Mise en page 2 colonnes côte à côte */
+        .columns-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        .columns-table td {
+            vertical-align: top;
+            padding: 0;
+            border: none;
+        }
+
+        /* Zone des signatures */
+        .signature-section {
+            margin-top: 30px;
+            page-break-inside: avoid;
+        }
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .signature-table td {
+            width: 50%;
+            vertical-align: top;
+            border: none;
+            padding: 10px;
+        }
+        .signature-title {
+            font-weight: 700;
+            font-size: 8.5pt; /* Réduit */
+            color: var(--foreground);
+            text-transform: uppercase;
+            margin-bottom: 40px;
+        }
+        .signature-line {
+            border-top: 1px solid var(--border); /* Ligne continue subtile au lieu de pointillée */
+            width: 80%;
+            margin-top: 10px;
+        }
+        .signature-hint {
+            font-size: 7.5pt; 
+            color: var(--muted-foreground); 
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / En-tête -->
+    <div class="header">
+        <table class="header-table">
+            <tr>
+                <td>
+                    <div class="school-title">{{school.name}}</div>
+                    <div class="school-subtitle">{{school.address}}, {{school.town}} | {{school.studyYear.yearName}}</div>
+                </td>
+                <td>
+                    <div class="doc-title">Rapport de Paiement</div>
+                    <div class="doc-date">
+                        Période: Du {{stats.startDate}} au {{stats.endDate}}<br>
+                        Généré le: {{stats.generatedDate}}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Metrics / Indicateurs Rapides -->
+    <table class="metrics-table">
+        <tr>
+            <td width="33%">
+                <div class="metric-box">
+                    <div class="metric-label">Recettes Totales</div>
+                    <div class="metric-value">{{stats.formattedTotalAmount}} CDF</div>
+                </div>
+            </td>
+            <td width="33%">
+                <div class="metric-box">
+                    <div class="metric-label">Nombre d'opérations</div>
+                    <div class="metric-value">{{stats.totalTransactions}}</div>
+                </div>
+            </td>
+            <td width="33%">
+                <div class="metric-box">
+                    <div class="metric-label">Mode de Règlement</div>
+                    <div class="metric-value">100% CASH</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Récapitulatifs côte à côte -->
+    <table class="columns-table">
+        <tr>
+            <!-- Répartition par Type de Frais -->
+            <td style="width: 48%; padding-right: 2%;">
+                <div class="section-header">Répartition par Type de Frais</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Type de Frais</th>
+                            <th style="text-align: right;">Total Perçu</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each feeSummaries}}
+                        <tr>
+                            <td>{{this.name}}</td>
+                            <td class="amount-col">
+                                {{this.formattedAmount}} CDF
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </td>
+
+            <!-- Répartition par Classe -->
+            <td style="width: 48%; padding-left: 2%;">
+                <div class="section-header">Répartition par Classe</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Classe</th>
+                            <th style="text-align: right;">Total</th>
+                            <th style="text-align: right;">%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each classSummaries}}
+                        <tr>
+                            <td>{{this.className}}</td>
+                            <td class="amount-col">{{this.formattedAmount}}</td>
+                            <td style="text-align: right; color: var(--muted-foreground);">{{this.percentage}}</td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Table détaillée des paiements -->
+    <div class="section-header">Détail des Transactions Enregistrées</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Réf. Trans.</th>
+                <th>Date & Heure</th>
+                <th>Élève</th>
+                <th>Classe</th>
+                <th>Motif du Paiement</th>
+                <th>Mode</th>
+                <th style="text-align: right;">Montant</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {{#each payments}}
+            <tr>
+                <td style="font-family: monospace; font-size: 7.5pt; color: var(--muted-foreground);">{{this.transactionReference}}</td>
+                <td>{{this.formattedCreatedAt}}</td>
+                <td><strong>{{this.student.fullName}}</strong></td>
+                <td>{{this.classroom.shortIdentifier}}</td>
+                <td>
+                    {{this.feeType.name}} - {{this.feeSchedule.installmentName}}
+                </td>
+                <td><span class="badge">{{this.paymentMethod}}</span></td>
+                <td class="amount-col">
+                    {{this.formattedAmount}}
+                </td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <!-- Zone de validation / Signatures -->
+    <div class="signature-section">
+        <table class="signature-table">
+            <tr>
+                <td style="text-align: left;">
+                    <div class="signature-title">Le Caissier / Comptable</div>
+                    <div class="signature-line"></div>
+                    <div class="signature-hint">Nom & Signature</div>
+                </td>
+                <td style="text-align: right;">
+                    <div class="signature-title">Sceau & Approuvé par la Direction</div>
+                    <div class="signature-line" style="margin-left: auto;"></div>
+                    <div class="signature-hint">Chef d'Établissement</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+</html>

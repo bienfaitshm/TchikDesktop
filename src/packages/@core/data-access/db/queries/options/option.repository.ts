@@ -24,7 +24,12 @@ const OPTION_DEFAULT_SORT: BaseOptionFilters = {
 };
 
 export class OptionRepository
-  extends betterSqlite.BaseRepository<TableOption, TDataBase, BaseOptionFilters>
+  extends betterSqlite.BaseRepository<
+    TableOption,
+    TDataBase,
+    Option,
+    BaseOptionFilters
+  >
   implements OptionProvider<Option>
 {
   constructor(database: TDataBase = db) {

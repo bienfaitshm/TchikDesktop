@@ -45,7 +45,7 @@ export type StudentPaymentDTO = StudentPayment & {
 };
 
 const DEFAULT_SORT: BaseStudentPaymentFilters = {
-  orderBy: [{ table: "studentPayments", column: "paymentId", order: "desc" }],
+  orderBy: [{ table: "studentPayments", column: "createdAt", order: "desc" }],
 };
 
 export class StudentPaymentRepository extends betterSqlite.BaseRepository<
@@ -70,6 +70,17 @@ export class StudentPaymentRepository extends betterSqlite.BaseRepository<
     });
   }
 
+  static getDTOColumns(table: TableStudentPayment) {
+    return {
+      ...getTableColumns(table),
+      classroom: getTableColumns(classrooms),
+      student: UserRepository.getVisibleColumns(),
+      feeType: getTableColumns(feeTypes),
+      feeAssigment: getTableColumns(feeAssignments),
+      enrollment: getTableColumns(classroomEnrollments),
+      feeSchedule: getTableColumns(feeSchedules),
+    };
+  }
   /**
    * Constructs the base query set with all necessary inner joins for student payments.
    * @param tx - Optional database transaction instance.
@@ -77,15 +88,7 @@ export class StudentPaymentRepository extends betterSqlite.BaseRepository<
    */
   protected getQuerySet(tx?: TDataBase) {
     return this.getClient(tx)
-      .select({
-        ...getTableColumns(this.table),
-        classroom: getTableColumns(classrooms),
-        student: UserRepository.getVisibleColumns(),
-        feeType: getTableColumns(feeTypes),
-        feeAssigment: getTableColumns(feeAssignments),
-        enrollment: getTableColumns(classroomEnrollments),
-        feeSchedule: getTableColumns(feeSchedules),
-      })
+      .select(StudentPaymentRepository.getDTOColumns(this.table))
       .from(this.table)
       .innerJoin(
         feeAssignments,

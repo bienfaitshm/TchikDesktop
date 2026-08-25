@@ -122,7 +122,11 @@ export function DataContentHead(props?: { className?: string }) {
       {headerGroups.map((headerGroup) => (
         <TableRow key={headerGroup.id}>
           {headerGroup.headers.map((header) => (
-            <TableHead key={header.id} colSpan={header.colSpan}>
+            <TableHead
+              className="text-xs"
+              key={header.id}
+              colSpan={header.colSpan}
+            >
               {header.isPlaceholder
                 ? null
                 : flexRender(
@@ -280,7 +284,10 @@ export const SearchTableToolbar: React.FC<
       {...props}
       value={(column.getFilterValue() as string) ?? ""}
       onChange={(event) => column.setFilterValue(event.target.value)}
-      className={cn("h-9 w-37.5 lg:w-62.5", props.className)}
+      className={cn(
+        "text-xs placeholder:text-xs w-37.5 lg:w-62.5",
+        props.className,
+      )}
     />
   );
 };
@@ -306,10 +313,10 @@ export const FilteredTableToolbarContainer: React.FC<
         <Button
           variant="ghost"
           onClick={() => table.resetColumnFilters()}
-          className="h-8 px-2 lg:px-3 text-muted-foreground hover:text-foreground"
+          className="h-8 text-xs px-2 lg:px-3 text-muted-foreground hover:text-foreground"
         >
           Réinitialiser
-          <X className="ml-2 h-4 w-4" />
+          <X className="ml-2 size-3.5" />
         </Button>
       )}
     </div>
