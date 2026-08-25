@@ -10,6 +10,7 @@ import { OptionsChartSection } from "@/renderer/containers/dashboard/options-cha
 import { ActivityTabs } from "@/renderer/containers/dashboard/activity-tabs";
 import type { ChartDataPoint } from "@/packages/@core/data-access/db/queries";
 import { useMemo } from "react";
+import { PageContainer, PageContent } from "../containers/page-container";
 
 const dbFilePromise = window.electron.getBackupDbFiles() ?? [];
 
@@ -54,36 +55,38 @@ export const DashBoardPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background/50 text-foreground p-6 lg:p-10 max-w-400 mx-auto w-full space-y-8 animate-fade-in">
-      <HeroBanner />
+    <PageContainer>
+      <PageContent>
+        <HeroBanner />
 
-      <KPICards
-        totalStudents={totalStudents ?? 0}
-        activeCount={summary?.active ?? 0}
-        excludedCount={summary?.excluded ?? 0}
-        dropoutCount={summary?.dropout ?? 0}
-        newCount={rentetion?.nouveaux ?? 0}
-        oldCount={rentetion?.anciens ?? 0}
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <PromotionVolumeSection
-          studentsByClass={studentsByClass}
-          enrollmentsByYear={enrollmentsByYear}
+        <KPICards
+          totalStudents={totalStudents ?? 0}
+          activeCount={summary?.active ?? 0}
+          excludedCount={summary?.excluded ?? 0}
+          dropoutCount={summary?.dropout ?? 0}
+          newCount={rentetion?.nouveaux ?? 0}
+          oldCount={rentetion?.anciens ?? 0}
         />
-        <SystemPanel
-          genderData={genderDistribution ?? []}
-          dbFilesPromise={dbFilePromise}
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <PromotionVolumeSection
+            studentsByClass={studentsByClass}
+            enrollmentsByYear={enrollmentsByYear}
+          />
+          <SystemPanel
+            genderData={genderDistribution ?? []}
+            dbFilesPromise={dbFilePromise}
+          />
+        </div>
+
+        <OptionsChartSection data={studentsByOption ?? []} />
+
+        <ActivityTabs
+          statusDistribution={statusDistribution ?? []}
+          genderDistribution={genderDistribution ?? []}
+          enrollmentHistories={enrollmentHistories}
         />
-      </div>
-
-      <OptionsChartSection data={studentsByOption ?? []} />
-
-      <ActivityTabs
-        statusDistribution={statusDistribution ?? []}
-        genderDistribution={genderDistribution ?? []}
-        enrollmentHistories={enrollmentHistories}
-      />
-    </div>
+      </PageContent>
+    </PageContainer>
   );
 };
