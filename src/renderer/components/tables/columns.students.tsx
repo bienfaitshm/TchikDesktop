@@ -11,6 +11,7 @@ import {
   ItemDescription,
 } from "@/renderer/components/ui/item";
 import type { EnrollmentDTO } from "@/packages/@core/data-access/db/queries";
+import { formatDate } from "@/packages/times";
 
 /**
  * Renders the student identity cell containing avatar, name, and status type label.
@@ -61,6 +62,7 @@ export const studentColumns: ColumnDef<EnrollmentDTO>[] = [
   },
   {
     accessorKey: "student.gender",
+
     header: "Sexe",
     cell: ({ row }) => (
       <GenderBadge withIcon gender={row.original.student?.gender} />
@@ -68,9 +70,9 @@ export const studentColumns: ColumnDef<EnrollmentDTO>[] = [
   },
   {
     accessorKey: "studentCode",
-    header: "Code d'inscription de l'élève",
+    header: "Code d'inscription",
     cell: ({ row }) => (
-      <p data-slot="table-code" className="text-xs text-center">
+      <p data-slot="table-code" className="text-xs">
         {row.original.studentCode ?? "—"}
       </p>
     ),
@@ -79,5 +81,20 @@ export const studentColumns: ColumnDef<EnrollmentDTO>[] = [
     accessorKey: "status",
     header: "Statut",
     cell: ({ row }) => <StudentStatusBadge status={row.original.status} />,
+  },
+  {
+    accessorKey: "createdAt",
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        className="text-center"
+        column={column}
+        title="Date d'inscription"
+      />
+    ),
+    cell: ({ row }) => (
+      <p data-slot="table-code" className="text-xs">
+        {formatDate(row.original.createdAt, "dd/MM/yyyy - HH:mm") ?? "—"}
+      </p>
+    ),
   },
 ];
