@@ -127,7 +127,7 @@ export const PageHeadDescription: React.FC<PageHeadDescriptionProps> = ({
   ...props
 }) => {
   return (
-    <p className={cn("text-xs text-muted-foreground", className)} {...props}>
+    <p className={cn("text-sm text-muted-foreground", className)} {...props}>
       {children}
     </p>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useMemo, type FC } from "react";
 import { Plus, Eye, Pencil, Copy, Trash2 } from "lucide-react";
 import type { SeatingSession } from "@/packages/@core/data-access/db/schemas";
 import { useGetSeatingSessions } from "@/renderer/libs/queries/seatings";
@@ -43,6 +43,9 @@ import {
   PageHeaderTextContent,
 } from "@/renderer/containers/page-container";
 
+/**
+ * Props for the SessionRowAction component.
+ */
 export interface SessionRowActionsProps extends Pick<
   SeatingSessionDialogProps,
   "mutationKey"
@@ -53,13 +56,13 @@ export interface SessionRowActionsProps extends Pick<
 const MENUS: ActionMenuConfig<SessionRowActionsProps>[] = [
   {
     id: "details",
-    label: "View session details",
+    label: "Voir les détails de la session",
     icon: Eye,
     link: ({ session }) => APP_ROUTES.SEATING.SESSION(session.sessionId),
   },
   {
     id: "edit",
-    label: "Edit session",
+    label: "Modifier la session",
     icon: Pencil,
     dialog({ session, mutationKey }) {
       return (
@@ -74,7 +77,7 @@ const MENUS: ActionMenuConfig<SessionRowActionsProps>[] = [
   },
   {
     id: "duplicate",
-    label: "Duplicate session",
+    label: "Dupliquer la session",
     icon: Copy,
     dialog({ session, mutationKey }) {
       return (
@@ -87,7 +90,7 @@ const MENUS: ActionMenuConfig<SessionRowActionsProps>[] = [
   },
   {
     id: "delete",
-    label: "Delete session",
+    label: "Supprimer la session",
     icon: Trash2,
     separator: true,
     variant: "destructive",
@@ -104,22 +107,23 @@ const MENUS: ActionMenuConfig<SessionRowActionsProps>[] = [
 ];
 
 /**
- * Renders contextual action menus for a given seating session row.
- * @param props - Component properties containing the seating session entity and mutation key.
- * @returns The rendered action menu component.
+ * Contextual menu component displaying row-level actions for a seating session.
+ * @param props - Object containing the seating session entity and the query mutation key.
+ * @returns The rendered dropdown action menu.
  */
 export const SessionRowAction = createActionMenus(MENUS);
 
 /**
- * Main application screen component for viewing and managing seating sessions.
- * @returns Rendered seating sessions management page layout with data table and toolbars.
+ * Primary page component for managing and displaying seating sessions.
+ * @returns The page layout containing table toolbars, filters, and seating session data.
  */
-export const SeatingPage: React.FC = () => {
+export const SeatingPage: FC = () => {
   const { schoolId, yearId } = useSchoolContext();
   const { data: sessions = [], queryKey: mutationKey } = useGetSeatingSessions({
     where: { seatingSessions: { schoolId, yearId } },
   });
-  const columns = React.useMemo(
+
+  const columns = useMemo(
     () =>
       enhanceColumns(seatingSessionColumns, {
         variant: "actions",
@@ -136,10 +140,9 @@ export const SeatingPage: React.FC = () => {
     <PageContainer>
       <PageHeader>
         <PageHeaderTextContent>
-          <PageHeadTitle> Seating Sessions</PageHeadTitle>
+          <PageHeadTitle>Sessions de placement</PageHeadTitle>
           <PageHeadDescription>
-            {" "}
-            Organize seating plans and candidate distribution.
+            Organisez les plans de placement et la répartition des candidats.
           </PageHeadDescription>
         </PageHeaderTextContent>
       </PageHeader>
@@ -153,7 +156,7 @@ export const SeatingPage: React.FC = () => {
             <FilteredTableToolbarContainer>
               <SearchTableToolbar
                 searchColumn="sessionName"
-                placeholder="Search Ex. Session A"
+                placeholder="Rechercher ex. Session A"
               />
             </FilteredTableToolbarContainer>
             <div className="flex items-center gap-4">
@@ -167,7 +170,7 @@ export const SeatingPage: React.FC = () => {
                   className="rounded-full shadow-xs bg-primary hover:bg-primary/90"
                 >
                   <Plus className="mr-2 size-4" />
-                  New Session
+                  Nouvelle session
                 </Button>
               </CreateSeatingSessionDialog>
             </div>
@@ -178,7 +181,7 @@ export const SeatingPage: React.FC = () => {
               <div className="flex h-64 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/5">
                 <LoadingSpinner className="text-primary" />
                 <p className="text-sm text-muted-foreground animate-pulse">
-                  Loading sessions...
+                  Chargement des sessions...
                 </p>
               </div>
             }
