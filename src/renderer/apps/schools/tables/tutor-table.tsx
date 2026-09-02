@@ -5,13 +5,18 @@ import {
   DataContentBody,
   DataContentHead,
   DataTable,
+  DataTableColumnToggle,
   DataTableContent,
   DataTablePagination,
+  DataTableToolbar,
+  FilteredTableToolbarContainer,
+  SearchTableToolbar,
 } from "@/renderer/components/tables";
 import {
   TutorProfileDialog,
   TutorDialogDeleteForm,
   TutorDialogUpdateForm,
+  TutorDialogCreateForm,
 } from "@/renderer/apps/schools/dialogs";
 import { tutorColumns } from "./tutor-table.columns";
 import { enhanceColumns } from "@/renderer/components/tables/columns";
@@ -19,6 +24,7 @@ import {
   type ActionMenuConfig,
   createActionMenus,
 } from "@/renderer/components/menus/action-menus";
+import { ButtonCreate } from "@/renderer/components/buttons/button-actions";
 
 /**
  * Properties for the tutor row contextual actions component.
@@ -142,6 +148,26 @@ export const TutorTable: React.FC<TutorTableProps> = ({
         columns={columns}
         keyExtractor={(item) => item.tutorId}
       >
+        <DataTableToolbar>
+          <FilteredTableToolbarContainer>
+            <SearchTableToolbar
+              searchColumn="fullName"
+              placeholder="Rechercher ex. Kalenga"
+            />
+          </FilteredTableToolbarContainer>
+          <div className="flex items-center gap-4">
+            <DataTableColumnToggle />
+            <TutorDialogCreateForm
+              mutationKey={["schools"]}
+              schoolId={schoolId}
+              defaultValues={{
+                schoolId,
+              }}
+            >
+              <ButtonCreate>Nouveau tuteur</ButtonCreate>
+            </TutorDialogCreateForm>
+          </div>
+        </DataTableToolbar>
         <DataTableContent>
           <DataContentHead />
           <DataContentBody<TutorDTO> />

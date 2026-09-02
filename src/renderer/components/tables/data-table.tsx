@@ -285,7 +285,7 @@ export const SearchTableToolbar: React.FC<
       value={(column.getFilterValue() as string) ?? ""}
       onChange={(event) => column.setFilterValue(event.target.value)}
       className={cn(
-        "text-xs placeholder:text-xs w-37.5 lg:w-62.5",
+        "text-xs placeholder:text-xs w-37.5 rounded-full lg:w-62.5 px-4",
         props.className,
       )}
     />

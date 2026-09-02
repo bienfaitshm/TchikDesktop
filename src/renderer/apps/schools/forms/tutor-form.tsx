@@ -21,6 +21,7 @@ import {
 } from "@/renderer/libs/forms";
 import { GENDER_OPTIONS } from "@/packages/@core/data-access/db/options";
 import { GenderInput } from "@/renderer/components/form/fields/gender";
+import { DateInput } from "@/renderer/components/form/fields/date";
 
 export type TutorFormData = BaseTutor;
 
@@ -167,20 +168,7 @@ export const TutorForm: React.FC<BaseFormProps<TutorFormData>> = ({
                     </span>
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      type="date"
-                      value={
-                        field.value
-                          ? new Date(field.value).toISOString().split("T")[0]
-                          : ""
-                      }
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value ? new Date(e.target.value) : undefined,
-                        )
-                      }
-                      autoComplete="bday"
-                    />
+                    <DateInput {...field} />
                   </FormControl>
                   <FormDescription className="text-xs text-muted-foreground">
                     Cette information n'est pas obligatoire.

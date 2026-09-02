@@ -255,6 +255,7 @@ export const classroomEnrollments = sqliteTable(
     isNewStudent: integer("is_new_student", { mode: "boolean" })
       .notNull()
       .default(false),
+    isProDeo: integer("is_free", { mode: "boolean" }).notNull().default(false),
     studentCode: text("student_code")
       .notNull()
       .$defaultFn(generateNumericEnrollmentCode),

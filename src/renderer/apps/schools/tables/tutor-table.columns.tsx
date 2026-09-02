@@ -31,7 +31,7 @@ const renderTextCell = (value: string | null | undefined) => (
  */
 export const tutorColumns: ColumnDef<TutorDTO>[] = [
   {
-    accessorKey: "user",
+    accessorKey: "fullName",
     header: ({ column }) =>
       renderColumnHeader(column, "Nom, postnom et prénom"),
     cell: ({ row: { original } }) => {

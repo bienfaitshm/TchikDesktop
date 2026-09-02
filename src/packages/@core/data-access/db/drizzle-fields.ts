@@ -75,5 +75,6 @@ export const timestampColumn = (columnName: string) =>
  */
 export const timestamps = {
   createdAt: timestampColumn("created_at"),
-  updatedAt: timestampColumn("updated_at"),
+  updatedAt: integer("updated_at", { mode: "timestamp" }),
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
 } as const;
