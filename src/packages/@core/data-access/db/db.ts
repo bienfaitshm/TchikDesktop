@@ -1,4 +1,4 @@
-import { createClient } from "@libsql/client";
+import { Client, createClient } from "@libsql/client";
 import {
   drizzle as drizzleLibSQL,
   type LibSQLDatabase,
@@ -31,6 +31,7 @@ export class LibSqlDatabaseClient implements IDatabaseClient<
   LibSQLDatabase<typeof schema>
 > {
   public db: LibSQLDatabase<typeof schema>;
+  client: Client;
 
   /**
    * Initializes the LibSQL client with the specified connection parameters.
@@ -39,8 +40,8 @@ export class LibSqlDatabaseClient implements IDatabaseClient<
    * @param authToken - Optional authentication token for remote LibSQL instances.
    */
   constructor(url: string, logger?: boolean | Logger, authToken?: string) {
-    const client = createClient({ url, authToken });
-    this.db = drizzleLibSQL(client, {
+    this.client = createClient({ url, authToken });
+    this.db = drizzleLibSQL(this.client, {
       schema,
       logger,
     });
@@ -52,7 +53,9 @@ export class LibSqlDatabaseClient implements IDatabaseClient<
    * @returns A promise that resolves when migrations are complete.
    */
   public async migrate(migrationsFolder: string): Promise<void> {
+    await this.client.execute("PRAGMA foreign_keys = OFF;");
     await libSqlMigrate(this.db, { migrationsFolder });
+    await this.client.execute("PRAGMA foreign_keys = ON;");
   }
 }
 
@@ -63,15 +66,15 @@ export class BetterSqliteDatabaseClient implements IDatabaseClient<
   BetterSQLite3Database<typeof schema>
 > {
   public db: BetterSQLite3Database<typeof schema>;
-
+  sqlite: Database.Database;
   /**
    * Initializes the better-sqlite3 client with a local file path.
    * @param fileName - The local file path to the SQLite database.
    * @param logger - Optional Drizzle logger configuration.
    */
   constructor(fileName: string, logger?: boolean | Logger) {
-    const sqlite = new Database(fileName);
-    this.db = drizzleBetterSQlite(sqlite, {
+    this.sqlite = new Database(fileName);
+    this.db = drizzleBetterSQlite(this.sqlite, {
       schema,
       logger,
     });
@@ -83,7 +86,10 @@ export class BetterSqliteDatabaseClient implements IDatabaseClient<
    * @returns A promise that resolves immediately after synchronous migration completion.
    */
   public async migrate(migrationsFolder: string): Promise<void> {
+    this.sqlite.pragma("foreign_keys = OFF");
+
     betterSqliteMigrate(this.db, { migrationsFolder });
+    this.sqlite.pragma("foreign_keys = ON");
     return Promise.resolve();
   }
 }
