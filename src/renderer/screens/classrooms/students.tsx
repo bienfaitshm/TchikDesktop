@@ -93,6 +93,28 @@ const MENUS: ActionMenuConfig<EnrollmentRowActionsProps>[] = [
     },
   },
   {
+    id: "edit-enrollment",
+    label: "Rendre ProDeo",
+    icon: Edit2,
+    dialog({
+      enrollment: { student, classroom, ...enrollment },
+      schoolId,
+      yearId,
+      mutationKey,
+    }) {
+      return (
+        <UpdateEnrollmentDialog
+          defaultValues={enrollment}
+          fullName={student.fullName}
+          enrollmentId={enrollment.enrollmentId}
+          schoolId={schoolId}
+          yearId={yearId}
+          mutationKey={mutationKey}
+        />
+      );
+    },
+  },
+  {
     id: "view-tutor-profile",
     label: "Voir le profil du tuteur",
     icon: Eye,

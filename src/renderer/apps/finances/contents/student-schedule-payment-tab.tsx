@@ -10,6 +10,7 @@ import {
 import { FeeClassroomPaymentTable } from "../tables/payment-table";
 import { cn } from "@/renderer/utils";
 import { PaymentColorsLegend } from "../components/payment-legend-colors";
+import { Button } from "@/renderer/components/ui/button";
 
 export type StudentSchedulePaymentTabsProps = {
   schoolId: string;
@@ -81,7 +82,10 @@ export const StudentSchedulePaymentTabs: React.FC<
               ))}
             </TabsList>
 
-            <div className="shrink-0 pb-1">
+            <div className="shrink-0 pb-1 flex flex-row items-center gap-2">
+              <Button size="sm" className="h-8 rounded-full text-xs">
+                Config de paiment
+              </Button>
               <PaymentColorsLegend />
             </div>
           </div>
