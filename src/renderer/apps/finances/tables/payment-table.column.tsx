@@ -6,7 +6,6 @@ import type {
   FeeAssignment,
 } from "@/packages/@core/data-access/db";
 import { DataTableColumnHeader } from "@/renderer/components/tables/data-table.column-header";
-import { createSelectColumn } from "@/renderer/components/tables/columns.utils";
 
 /**
  * Formats a student entity into a single full name string.
@@ -25,7 +24,6 @@ const formatStudentName = (student: User): string => {
  * Static column definitions for payment assignment tables.
  */
 export const staticPaymentColumns: ColumnDef<AssignmentTableOfClassroom>[] = [
-  createSelectColumn(),
   {
     accessorKey: "student",
     header: ({ column }) => (
@@ -81,7 +79,7 @@ export const createPaymentColumns = (
           return (
             <div className="flex items-center justify-end min-h-9 px-2">
               <span className="text-muted-foreground/40 font-mono text-xs select-none">
-                —
+                -
               </span>
             </div>
           );

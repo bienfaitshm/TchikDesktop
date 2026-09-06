@@ -1,7 +1,6 @@
 import { lazy, Suspense, type JSX } from "react";
 import { HashRouter as Router, Route, Routes } from "react-router";
 import {
-  Home,
   LayoutDashboard,
   Building,
   BookOpen,
@@ -11,9 +10,6 @@ import {
   Banknote,
   UserPlus,
   LayoutGrid,
-  Presentation,
-  School,
-  CircleDollarSign,
   History,
   Calendar,
   GraduationCap,
@@ -24,6 +20,10 @@ import {
   Info,
   Code2,
 } from "lucide-react";
+import { SiGoogleclassroom } from "react-icons/si";
+import { BiSolidSchool } from "react-icons/bi";
+import { IoIosWallet } from "react-icons/io";
+import { RiHomeFill } from "react-icons/ri";
 import * as Layout from "@/renderer/screens/layouts";
 import * as Seating from "@/renderer/apps/seatings";
 import * as Export from "@/renderer/apps/export";
@@ -211,7 +211,7 @@ export const NAVIGATION_MENUS: NavSection[] = [
   {
     label: "Accès Rapide",
     items: [
-      { name: "Accueil", url: APP_ROUTES.HOME, icon: Home },
+      { name: "Accueil", url: APP_ROUTES.HOME, icon: RiHomeFill },
       { name: "Paiements", url: APP_ROUTES.PAYEMENTS, icon: Banknote },
       { name: "Inscriptions", url: APP_ROUTES.ENROLLMENTS, icon: UserPlus },
       {
@@ -224,13 +224,13 @@ export const NAVIGATION_MENUS: NavSection[] = [
   {
     label: "Gestion de l'établissement",
     items: [
-      { name: "Finances", url: ROUTES.FIN.ROOT, icon: CircleDollarSign },
+      { name: "Finances", url: ROUTES.FIN.ROOT, icon: IoIosWallet },
       {
         name: "Salles de classe",
         url: APP_ROUTES.CLASSROOMS.ROOT,
-        icon: Presentation,
+        icon: SiGoogleclassroom,
       },
-      { name: "Écoles", url: APP_ROUTES.SCHOOLS.ROOT, icon: School },
+      { name: "Écoles", url: APP_ROUTES.SCHOOLS.ROOT, icon: BiSolidSchool },
     ],
   },
 ] as const;

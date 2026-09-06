@@ -107,6 +107,7 @@ export const FeeClassroomPaymentTable: React.FC<FeeConfigTableProps> = ({
         <RowAction
           assign={assign}
           schoolId={schoolId}
+          yearId={yearId}
           mutationKey={mutationKey}
         />
       ),

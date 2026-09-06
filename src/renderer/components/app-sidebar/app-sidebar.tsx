@@ -1,4 +1,3 @@
-import { type LucideIcon } from "lucide-react";
 import { NavLink } from "react-router";
 
 import {
@@ -20,7 +19,7 @@ import { ToggleSidebarButton } from "./app-sidebar.toogle-button";
 export interface NavItem {
   name: string;
   url: string;
-  icon: LucideIcon;
+  icon: React.ReactNode | React.ElementType;
 }
 
 export interface NavSection {
@@ -33,21 +32,24 @@ const NavGroup = ({ section }: { section: NavSection }) => (
     <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
     <SidebarGroupContent>
       <SidebarMenu>
-        {section.items.map((item) => (
-          <SidebarMenuItem key={item.url}>
-            <SidebarMenuButton asChild tooltip={item.name}>
-              <NavLink
-                to={item.url}
-                className={({ isActive }) =>
-                  isActive ? "bg-sidebar-accent" : ""
-                }
-              >
-                <item.icon />
-                <span>{item.name}</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
+        {section.items.map((item) => {
+          const IconComponent = item.icon as React.ElementType;
+          return (
+            <SidebarMenuItem key={item.url}>
+              <SidebarMenuButton asChild tooltip={item.name}>
+                <NavLink
+                  to={item.url}
+                  className={({ isActive }) =>
+                    isActive ? "bg-sidebar-accent" : ""
+                  }
+                >
+                  <IconComponent />
+                  <span>{item.name}</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroupContent>
   </SidebarGroup>

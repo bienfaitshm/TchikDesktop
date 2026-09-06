@@ -3,9 +3,9 @@ import {
   Info,
   CreditCard,
   Trash2,
-  Eye,
   ExternalLink,
   MoreVerticalIcon,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/renderer/components/ui/button";
 import {
@@ -17,7 +17,11 @@ import type {
   AssignmentTableOfClassroom,
   FeeAssignment,
 } from "@/packages/@core/data-access/db";
+import { FEE_SCHEDULES_ENUM } from "@/packages/@core/data-access/db/options";
 
+/**
+ * Properties passed to the fee assignment row action handlers and dialogs.
+ */
 export interface FeeTypeRowActionsProps {
   feeAssignment: FeeAssignment;
   schoolId: string;
@@ -25,92 +29,115 @@ export interface FeeTypeRowActionsProps {
   mutationKey?: readonly unknown[];
 }
 
-// 1. Initialiser le builder typé pour ces Props spécifiques
-const menu = createMenuBuilder<FeeTypeRowActionsProps>();
+/**
+ * Shared trigger button element for table row context menus.
+ */
+export const defaultMenuTrigger = (
+  <Button
+    variant="ghost"
+    size="icon-sm"
+    aria-label="Table row actions menu"
+    className="opacity-0 group-hover/cell:opacity-100 focus-visible:opacity-100 transition-opacity"
+  >
+    <MoreVerticalIcon data-icon="inline-start" />
+  </Button>
+);
 
-// 2. Définition propre avec la syntaxe exacte demandée
-export const CellAction = menu.build(
+const feeMenu = createMenuBuilder<FeeTypeRowActionsProps>();
+
+/**
+ * Contextual action menu component for fee assignment table rows.
+ */
+export const CellAction = feeMenu.build(
   {
-    infos: menu
-      .label("Détails de l'échéance", Info)
-      .dialog(({ feeAssignment }) => (
-        <PaymentDetailDialog assignment={feeAssignment} />
-      )),
-
-    viewHistory: menu
-      .label("Historique des paiements", Eye)
-      .dialog(({ feeAssignment }) => (
-        <PaymentHistoryDialog assignmentId={feeAssignment.assignmentId} />
-      )),
-
-    pay: menu
+    pay: feeMenu
       .label("Enregistrer un paiement", CreditCard)
-      .dialog(({ yearId, schoolId, feeAssignment, mutationKey }, close) => (
+      .dialog(({ props, open, onOpenChange, close }) => (
         <SavePaymentDialog
-          yearId={yearId}
-          schoolId={schoolId}
-          totalAmount={feeAssignment.totalAmount}
-          assignmentId={feeAssignment.assignmentId}
-          amountPaid={feeAssignment.amountPaid}
-          mutationKey={mutationKey}
-          onSuccess={close} // Se ferme automatiquement !
+          open={open}
+          onOpenChange={onOpenChange}
+          schoolId={props.schoolId}
+          yearId={props.yearId}
+          totalAmount={props.feeAssignment.totalAmount}
+          assignmentId={props.feeAssignment.assignmentId}
+          amountPaid={props.feeAssignment.amountPaid}
+          mutationKey={props.mutationKey}
+          onSuccess={close}
         />
       ))
       .disabled(
         ({ feeAssignment }) =>
           feeAssignment.amountPaid >= feeAssignment.totalAmount,
+      ),
+    exampt: feeMenu
+      .label("Exampter ce moi")
+      .toggle(
+        (value) => value.feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED,
+        (props) => {
+          console.log(props);
+        },
       )
+      .disabled(
+        (props) => props.feeAssignment.status === FEE_SCHEDULES_ENUM.PAID,
+      ),
+    changeAmount: feeMenu
+      .label("Changer le montant a payer", CreditCard)
+      .dialog(({ props, open, onOpenChange, close }) => (
+        <SavePaymentDialog
+          open={open}
+          onOpenChange={onOpenChange}
+          schoolId={props.schoolId}
+          yearId={props.yearId}
+          totalAmount={props.feeAssignment.totalAmount}
+          assignmentId={props.feeAssignment.assignmentId}
+          amountPaid={props.feeAssignment.amountPaid}
+          mutationKey={props.mutationKey}
+          onSuccess={close}
+        />
+      ))
       .separator("after"),
 
-    detail: menu
-      .label("Lien Externe", ExternalLink)
-      .link(({ schoolId }) => `/schools/${schoolId}/details`),
+    consultationGroup: feeMenu
+      .submenu("Consultation & Historique", Info)
+      .submenu({
+        details: feeMenu
+          .label("Détails de l'échéance", Info)
+          .dialog(({ props, open, onOpenChange }) => (
+            <PaymentDetailDialog
+              open={open}
+              onOpenChange={onOpenChange}
+              assignment={props.feeAssignment}
+            />
+          )),
 
-    status: menu.label("Activer la ligne").toggle(
-      ({ feeAssignment }) => true,
-      (_, checked) => console.log("Nouveau statut:", checked),
-    ),
-
-    delete: menu
-      .label("Supprimer", Trash2)
-      .action(({ feeAssignment }) =>
-        console.log("Supprimer", feeAssignment.assignmentId),
-      )
-      .destructive()
-      .shortcut("⌘⌫"),
+        viewHistory: feeMenu
+          .label("Historique des paiements", Eye)
+          .dialog(({ props, open, onOpenChange }) => (
+            <PaymentHistoryDialog
+              open={open}
+              onOpenChange={onOpenChange}
+              assignmentId={props.feeAssignment.assignmentId}
+            />
+          )),
+      }),
   },
   {
-    trigger: (
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        aria-label="Menu d'actions de paiement"
-        className="opacity-0 group-hover/cell:opacity-100 focus-visible:opacity-100 transition-opacity"
-      >
-        <MoreVerticalIcon data-icon="inline-start" />
-      </Button>
-    ),
+    trigger: defaultMenuTrigger,
   },
 );
 
-const rowMemu = createMenuBuilder<AssignmentTableOfClassroom>();
+const rowMenu = createMenuBuilder<AssignmentTableOfClassroom>();
 
-export const RowAction = rowMemu.build(
+/**
+ * Contextual action menu component for classroom assignment table rows.
+ */
+export const RowAction = rowMenu.build(
   {
-    detail: rowMemu
+    externalLink: rowMenu
       .label("Lien Externe", ExternalLink)
       .link(({ enrollmentId }) => `/schools/${enrollmentId}/details`),
   },
   {
-    trigger: (
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        aria-label="Menu d'actions de paiement"
-        className="opacity-0 group-hover/cell:opacity-100 focus-visible:opacity-100 transition-opacity"
-      >
-        <MoreVerticalIcon data-icon="inline-start" />
-      </Button>
-    ),
+    trigger: defaultMenuTrigger,
   },
 );

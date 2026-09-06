@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/renderer/components/ui/button";
 
-// Tes types de Props
 export interface FeeAssignment {
   assignmentId: string;
   totalAmount: number;
@@ -25,27 +24,29 @@ export interface FeeTypeRowActionsProps {
   mutationKey?: readonly unknown[];
 }
 
-// 1. Initialiser le builder typé pour ces Props spécifiques
 const menu = createMenuBuilder<FeeTypeRowActionsProps>();
 
-// 2. Définition propre avec la syntaxe exacte demandée
+/**
+ * Configures the payment row actions dropdown cell component.
+ * @returns The executable component bound to row context.
+ */
 export const CellAction = menu.build(
   {
     infos: menu
-      .label("Détails de l'échéance", Info)
+      .label("Payment Details", Info)
       .dialog(({ feeAssignment }) => (
         <PaymentDetailDialog assignment={feeAssignment} />
       )),
 
     viewHistory: menu
-      .label("Historique des paiements", Eye)
+      .label("Payment History", Eye)
       .dialog(({ feeAssignment }) => (
         <PaymentHistoryDialog assignmentId={feeAssignment.assignmentId} />
       )),
 
     pay: menu
-      .label("Enregistrer un paiement", CreditCard)
-      .dialog(({ yearId, schoolId, feeAssignment, mutationKey }, close) => (
+      .label("Record Payment", CreditCard)
+      .dialog(({ yearId, schoolId, feeAssignment, mutationKey, close }) => (
         <SavePaymentDialog
           yearId={yearId}
           schoolId={schoolId}
@@ -53,7 +54,7 @@ export const CellAction = menu.build(
           assignmentId={feeAssignment.assignmentId}
           amountPaid={feeAssignment.amountPaid}
           mutationKey={mutationKey}
-          onSuccess={close} // Se ferme automatiquement !
+          onSuccess={close}
         />
       ))
       .disabled(
@@ -63,30 +64,29 @@ export const CellAction = menu.build(
       .separator("after"),
 
     detail: menu
-      .label("Lien Externe", ExternalLink)
+      .label("External Link", ExternalLink)
       .link(({ schoolId }) => `/schools/${schoolId}/details`),
 
-    status: menu.label("Activer la ligne").toggle(
+    status: menu.label("Activate Row").toggle(
       ({ feeAssignment }) => feeAssignment.isPaid,
-      (_, checked) => console.log("Nouveau statut:", checked),
+      (_, checked) => console.log("New status:", checked),
     ),
 
     delete: menu
-      .label("Supprimer", Trash2)
+      .label("Delete", Trash2)
       .action(({ feeAssignment }) =>
-        console.log("Supprimer", feeAssignment.assignmentId),
+        console.log("Deleted", feeAssignment.assignmentId),
       )
       .destructive()
       .shortcut("⌘⌫")
       .hidden(({ feeAssignment }) => feeAssignment.isLocked),
   },
   {
-    // Trigger optionnel par défaut
     trigger: (
       <Button
         variant="ghost"
         size="icon-sm"
-        aria-label="Menu d'actions de paiement"
+        aria-label="Payment action menu"
         className="opacity-0 group-hover/cell:opacity-100 focus-visible:opacity-100 transition-opacity"
       >
         <MoreVerticalIcon data-icon="inline-start" />
