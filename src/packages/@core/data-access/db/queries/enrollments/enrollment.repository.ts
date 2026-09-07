@@ -1,4 +1,4 @@
-import { eq, and, sql, count, getTableColumns, Table } from "drizzle-orm";
+import { eq, and, sql, count, getTableColumns } from "drizzle-orm";
 import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
@@ -81,11 +81,47 @@ export class EnrollmentRepository
       baseTableName: "classroomEnrollments",
       logger: getLogger,
       defaultFilters: ENROLLMENT_DEFAULT_SORT,
+      joinTables: JOINED_TABLES,
     });
   }
 
   fetchOptions(filters: BaseClassroomEnrollmentFilters): EnrollmentDTO[] {
     return this.findMany(filters);
+  }
+
+  public getDTOColumns() {
+    return {
+      ...getTableColumns(this.table),
+      student: UserRepository.getVisibleColumns(UserRepository.studentUsers),
+      classroom: getTableColumns(classrooms),
+      tutor: TutorRepository.getDTOColumns(tutors),
+      yearName: studyYears.yearName,
+    };
+  }
+
+  /**
+   * Marks one or multiple students as Pro Deo within a specific school.
+   * @param enrollmentIds - Single enrollment identifier or an array of enrollment identifiers.
+   * @param schoolId - The unique identifier of the school.
+   * @returns A promise resolving to the result of the database update operation.
+   */
+  public markStudentsAsProDeo(
+    enrollmentIds: string | string[],
+    schoolId: string,
+  ) {
+    const ids = Array.isArray(enrollmentIds) ? enrollmentIds : [enrollmentIds];
+
+    return this.update(
+      { isProDeo: true },
+      {
+        where: {
+          classroomEnrollments: {
+            schoolId,
+            enrollmentId: { $in: ids },
+          },
+        },
+      },
+    );
   }
 
   /**
@@ -94,13 +130,7 @@ export class EnrollmentRepository
   protected override getQuerySet(tx?: TDataBase) {
     const client = this.getClient(tx);
     return client
-      .select({
-        ...getTableColumns(this.table),
-        student: UserRepository.getVisibleColumns(UserRepository.studentUsers),
-        classroom: getTableColumns(classrooms),
-        tutor: TutorRepository.getDTOColumns(tutors),
-        yearName: studyYears.yearName,
-      })
+      .select(this.getDTOColumns())
       .from(this.table)
       .leftJoin(tutors, eq(this.table.tutorId, tutors.tutorId))
       .leftJoin(
@@ -114,14 +144,6 @@ export class EnrollmentRepository
       .innerJoin(classrooms, eq(this.table.classroomId, classrooms.classId))
       .innerJoin(studyYears, eq(this.table.yearId, studyYears.yearId))
       .$dynamic();
-  }
-
-  /**
-   * Returns the schema mapping dictionary used by dynamic query builders.
-   * @returns A record of Drizzle tables.
-   */
-  protected getJoinTable(): Record<string, Table> {
-    return JOINED_TABLES;
   }
 
   /**

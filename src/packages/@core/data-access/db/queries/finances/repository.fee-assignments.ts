@@ -2,6 +2,7 @@ import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
   feeAssignments,
+  classroomEnrollments,
   type TableFeeAssignment,
   type FeeAssignment,
   type InsertFeeAssignment,
@@ -16,6 +17,7 @@ import {
 
 export const TABLES = {
   feeAssignments,
+  classroomEnrollments,
 } as const;
 
 export type BaseFeeAssignmentFilters = helpers.FindManyOptions<typeof TABLES>;
@@ -164,6 +166,80 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
       });
       throw dbError;
     }
+  }
+
+  /**
+   * Updates the total fee amount for specific assignments and schedules.
+   * @param newTotalAmount - The new amount to be applied.
+   * @param assignmentIds - List of assignment identifiers to filter by.
+   * @param scheduleIds - List of schedule identifiers to filter by.
+   * @returns Promise resolving to the result of the update operation.
+   */
+  updateAmountByAssignments(
+    newTotalAmount: number,
+    assignmentIds: string[],
+    scheduleIds: string[],
+  ) {
+    return this.updateAmount(newTotalAmount, {
+      feeAssignments: {
+        assignmentId: { $in: assignmentIds },
+        scheduleId: { $in: scheduleIds },
+      },
+    });
+  }
+
+  /**
+   * Updates the total fee amount for specific classrooms and schedules.
+   * @param newTotalAmount - The new amount to be applied.
+   * @param classroomIds - List of classroom identifiers to filter by.
+   * @param scheduleIds - List of schedule identifiers to filter by.
+   * @returns Promise resolving to the result of the update operation.
+   */
+  updateAmountByClassrooms(
+    newTotalAmount: number,
+    classroomIds: string[],
+    scheduleIds: string[],
+  ) {
+    return this.updateAmount(newTotalAmount, {
+      feeAssignments: { scheduleId: { $in: scheduleIds } },
+      classroomEnrollments: { classroomId: { $in: classroomIds } },
+    });
+  }
+
+  /**
+   * Exempts students from payment for the specified assignments.
+   * @param studentEnrollmentIds - List of student enrollment identifiers.
+   * @param assignmentIds - List of assignment identifiers to exempt.
+   * @returns Promise resolving to the result of the update operation.
+   */
+  exemptStudentsFromFee(
+    studentEnrollmentIds: string[],
+    assignmentIds: string[],
+  ) {
+    return this.update(
+      { status: FEE_SCHEDULES_ENUM.EXEMPTED },
+      {
+        where: {
+          feeAssignments: {
+            enrollmentId: { $in: studentEnrollmentIds },
+            assignmentId: { $in: assignmentIds },
+          },
+        },
+      },
+    );
+  }
+
+  /**
+   * Private helper to update the total fee amount using a custom filter query.
+   * @param newTotalAmount - The target amount.
+   * @param whereQuery - The criteria object for filtering updates.
+   * @returns Promise resolving to the result of the update operation.
+   */
+  private updateAmount(
+    newTotalAmount: number,
+    whereQuery: BaseFeeAssignmentFilters["where"],
+  ) {
+    return this.update({ totalAmount: newTotalAmount }, { where: whereQuery });
   }
 }
 

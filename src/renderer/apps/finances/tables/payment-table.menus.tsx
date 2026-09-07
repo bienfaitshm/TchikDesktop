@@ -70,7 +70,7 @@ export const CellAction = feeMenu.build(
           feeAssignment.amountPaid >= feeAssignment.totalAmount,
       ),
     exampt: feeMenu
-      .label("Exampter ce moi")
+      .label("Exempter du paiement")
       .toggle(
         (value) => value.feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED,
         (props) => {
