@@ -69,6 +69,7 @@ export const EnrollmentRoutes = {
   ALL: "enrollments",
   SEARCH: "enrollments/search",
   DETAIL: "enrollments/:enrollmentId",
+  MARK_AS_PRODEO: "enrollments/mark-as-prodeo",
   ALL_HISTORIES: "enrollments/histories",
   QUICK_ENROLLMENT: "enrollments/quick",
   BULK: "enrollments/bulk",
@@ -211,6 +212,11 @@ export const FeeConfigurationRoutes = {
  */
 export const FeeAssignmentRoutes = {
   ALL: "fee-assignments",
+  UPDATE_TOTAL_AMOUNT_ASSIGNMENT:
+    "fee-assignments/update-total-amount/assignments",
+  UPDATE_TOTAL_AMOUNT_CLASSROOM:
+    "fee-assignments/update-total-amount/classrooms",
+  EXEMPT_FROM_FEE: "fee-assignments/exempt-from-free",
   BULK: "fee-assignments/bulk",
   SEARCH: "fee-assignments/search",
   DETAIL: "fee-assignments/:assignmentId",

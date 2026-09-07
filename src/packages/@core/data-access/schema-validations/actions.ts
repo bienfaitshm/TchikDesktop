@@ -1,55 +1,76 @@
 import { z } from "zod";
-import { schoolIdBaseSchema as SchoolIdBaseSchema } from "./model.base";
+import { schoolIdBaseSchema, ZCURRENCY_ENUM } from "./model.base";
 
 /**
- * Zod schema to validate the payload for marking multiple students as Pro Deo.
+ * Reusable Zod schema validating a non-empty array of non-empty string identifiers.
+ */
+const nonEmptyIdArraySchema = z.array(z.string().min(1));
+
+/**
+ * Shared base schema for financial amount update payloads bound to a specific school.
+ */
+const baseUpdateAmountSchema = z
+  .object({
+    newTotalAmount: z.coerce.number().nonnegative(),
+    currency: ZCURRENCY_ENUM,
+    scheduleIds: nonEmptyIdArraySchema,
+  })
+  .extend(schoolIdBaseSchema.shape);
+
+/**
+ * Zod schema validating the payload to grant Pro Deo status to student enrollments.
  */
 export const MarkStudentsAsProDeoSchema = z
   .object({
-    enrollmentIds: z.array(z.string().min(1)),
-    assignmentIds: z.array(z.string().min(1)),
+    enrollmentIds: nonEmptyIdArraySchema,
+    assignmentIds: nonEmptyIdArraySchema,
   })
-  .extend(SchoolIdBaseSchema.shape);
+  .extend(schoolIdBaseSchema.shape);
 
 /**
- * Type inferred from MarkStudentsAsProDeoSchema representing the input DTO.
+ * type inferred from MarkStudentsAsProDeoSchema for Pro Deo status assignment.
  */
-export type MarkStudentsAsProDeoDto = z.infer<
-  typeof MarkStudentsAsProDeoSchema
->;
+export type MarkStudentsAsProDeo = z.infer<typeof MarkStudentsAsProDeoSchema>;
 
 /**
- * Zod schema to validate the payload for updating total amounts by assignment IDs.
+ * Zod schema validating the payload to exempt specific student enrollments from fee assignments.
  */
-export const UpdateAmountByAssignmentsSchema = z
+export const ExemptFromFeeSchema = z
   .object({
-    newTotalAmount: z.coerce.number().nonnegative(),
-    assignmentIds: z.array(z.string().min(1)),
-    scheduleIds: z.array(z.string().min(1)),
+    studentEnrollmentIds: nonEmptyIdArraySchema,
+    assignmentIds: nonEmptyIdArraySchema,
   })
-  .extend(SchoolIdBaseSchema.shape);
+  .extend(schoolIdBaseSchema.shape);
 
 /**
- * Type inferred from UpdateAmountByAssignmentsSchema representing the input DTO.
+ * type inferred from ExemptFromFeeSchema for fee exemption requests.
  */
-export type UpdateAmountByAssignmentsDto = z.infer<
+export type ExemptFromFee = z.infer<typeof ExemptFromFeeSchema>;
+
+/**
+ * Zod schema validating payment amount updates filtered by assignment IDs.
+ */
+export const UpdateAmountByAssignmentsSchema = baseUpdateAmountSchema.extend({
+  assignmentIds: nonEmptyIdArraySchema,
+});
+
+/**
+ * type inferred from UpdateAmountByAssignmentsSchema for assignment amount updates.
+ */
+export type UpdateAmountByAssignments = z.infer<
   typeof UpdateAmountByAssignmentsSchema
 >;
 
 /**
- * Zod schema to validate the payload for updating total amounts by classroom IDs.
+ * Zod schema validating payment amount updates filtered by classroom IDs.
  */
-export const UpdateAmountByClassroomsSchema = z
-  .object({
-    newTotalAmount: z.coerce.number().nonnegative(),
-    classroomIds: z.array(z.string().min(1)),
-    scheduleIds: z.array(z.string().min(1)),
-  })
-  .extend(SchoolIdBaseSchema.shape);
+export const UpdateAmountByClassroomsSchema = baseUpdateAmountSchema.extend({
+  classroomIds: nonEmptyIdArraySchema,
+});
 
 /**
- * Type inferred from UpdateAmountByClassroomsSchema representing the input DTO.
+ * type inferred from UpdateAmountByClassroomsSchema for classroom amount updates.
  */
-export type UpdateAmountByClassroomsDto = z.infer<
+export type UpdateAmountByClassrooms = z.infer<
   typeof UpdateAmountByClassroomsSchema
 >;

@@ -13,6 +13,8 @@ import {
   EnrollmentUpdateSchema,
   EnrollmentQuickCreateSchema,
   EnrollmentSchema,
+  MarkStudentsAsProDeoSchema,
+  type MarkStudentsAsProDeo,
   type EnrollmentFilter,
   type EnrollmentCreate,
   type EnrollmentQuickCreate,
@@ -99,6 +101,19 @@ export class EnrollmentController {
   })
   static async update(req: IpcRequest<EnrollmentUpdate, EnrollmentId>) {
     return enrollmentRepository.updateById(req.params.enrollmentId, req.body);
+  }
+
+  @IpcServer.register(HttpMethod.POST, EnrollmentRoutes.MARK_AS_PRODEO, {
+    body: MarkStudentsAsProDeoSchema,
+  })
+  static async markStudentsAsProDeo({
+    body,
+  }: IpcRequest<MarkStudentsAsProDeo>) {
+    return enrollmentService.markStudentsAsProDeo(
+      body.schoolId,
+      body.enrollmentIds,
+      body.assignmentIds,
+    );
   }
 
   /**

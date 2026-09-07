@@ -7,7 +7,10 @@ import {
   type FeeAssignment,
   type InsertFeeAssignment,
 } from "@/packages/@core/data-access/db/schemas";
-import { FEE_SCHEDULES_ENUM } from "@/packages/@core/data-access/db/options";
+import {
+  CURRENCY_ENUM,
+  FEE_SCHEDULES_ENUM,
+} from "@/packages/@core/data-access/db/options";
 
 import {
   DatabaseError,
@@ -177,12 +180,14 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
    */
   updateAmountByAssignments(
     newTotalAmount: number,
+    currency: CURRENCY_ENUM,
     assignmentIds: string[],
     scheduleIds: string[],
     tx: TDataBase = this.db,
   ) {
     return this.updateAmount(
       newTotalAmount,
+      currency,
       {
         feeAssignments: {
           assignmentId: { $in: assignmentIds },
@@ -202,12 +207,14 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
    */
   updateAmountByClassrooms(
     newTotalAmount: number,
+    currency: CURRENCY_ENUM,
     classroomIds: string[],
     scheduleIds: string[],
     tx: TDataBase = this.db,
   ) {
     return this.updateAmount(
       newTotalAmount,
+      currency,
       {
         feeAssignments: { scheduleId: { $in: scheduleIds } },
         classroomEnrollments: { classroomId: { $in: classroomIds } },
@@ -251,11 +258,12 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
    */
   private updateAmount(
     newTotalAmount: number,
+    currency: CURRENCY_ENUM,
     whereQuery: BaseFeeAssignmentFilters["where"],
     tx: TDataBase,
   ) {
     return this.update(
-      { totalAmount: newTotalAmount },
+      { totalAmount: newTotalAmount, currency },
       { where: whereQuery },
       tx,
     );
