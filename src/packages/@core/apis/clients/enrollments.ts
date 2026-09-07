@@ -4,6 +4,7 @@ import {
   EnrollmentCreate,
   EnrollmentUpdate,
   EnrollmentFilter,
+  MarkStudentsAsProDeo,
 } from "@/packages/@core/data-access/schema-validations";
 import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
 import { SelectOption } from "@/packages/drizzle-queries";
@@ -73,6 +74,8 @@ export type EnrollmentApi = Readonly<{
     data: EnrollmentUpdate,
   ): Promise<EnrollmentDTO>;
 
+  markStudentAsProDeo(payload: MarkStudentsAsProDeo): Promise<EnrollmentDTO>;
+
   /**
    * Supprime une salle des inscriptions par son ID.
    * @param enrollmentId L'identifiant unique de la salle des inscriptions à supprimer.
@@ -124,6 +127,10 @@ export function createEnrollmentApis(ipcClient: IpcClient): EnrollmentApi {
       return ipcClient.put(EnrollmentRoutes.DETAIL, data, {
         params: { enrollmentId },
       });
+    },
+
+    markStudentAsProDeo(payload) {
+      return ipcClient.post(EnrollmentRoutes.MARK_AS_PRODEO, payload);
     },
 
     deleteEnrollment(enrollmentId) {
