@@ -4,6 +4,7 @@ import {
   type EnrollmentCreate,
   type EnrollmentQuickCreate,
   type EnrollmentUpdate,
+  type MarkStudentsAsProDeo,
 } from "@/packages/@core/data-access/schema-validations";
 import { enrollment as enrollmentApi } from "@/renderer/libs/apis";
 import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
@@ -34,6 +35,7 @@ export const enrollmentKeys = {
     create: () => [...enrollmentKeys.all, "create"] as const,
     quickCreate: () => [...enrollmentKeys.all, "quick-create"] as const,
     update: () => [...enrollmentKeys.all, "update"] as const,
+    marckAsProdeo: () => [...enrollmentKeys.all, "marckAsProdeo"] as const,
     delete: () => [...enrollmentKeys.all, "delete"] as const,
   },
 } as const;
@@ -116,6 +118,19 @@ export function useUpdateEnrollment(
     mutationKey: enrollmentKeys.mutations.update(),
     mutationFn: ({ data, id }: QueryUpdatePayload<EnrollmentUpdate>) =>
       enrollmentApi.updateEnrollment(id, data),
+    ...options,
+  });
+}
+
+export function useMarckStudentAsProDeo(
+  options?: Partial<
+    UseMutationOptions<EnrollmentDTO, Error, MarkStudentsAsProDeo>
+  >,
+) {
+  return useMutation({
+    mutationKey: enrollmentKeys.mutations.marckAsProdeo(),
+    mutationFn: (payload: MarkStudentsAsProDeo) =>
+      enrollmentApi.markStudentAsProDeo(payload),
     ...options,
   });
 }
