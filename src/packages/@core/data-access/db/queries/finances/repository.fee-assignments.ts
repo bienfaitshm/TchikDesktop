@@ -179,13 +179,18 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
     newTotalAmount: number,
     assignmentIds: string[],
     scheduleIds: string[],
+    tx: TDataBase = this.db,
   ) {
-    return this.updateAmount(newTotalAmount, {
-      feeAssignments: {
-        assignmentId: { $in: assignmentIds },
-        scheduleId: { $in: scheduleIds },
+    return this.updateAmount(
+      newTotalAmount,
+      {
+        feeAssignments: {
+          assignmentId: { $in: assignmentIds },
+          scheduleId: { $in: scheduleIds },
+        },
       },
-    });
+      tx,
+    );
   }
 
   /**
@@ -199,22 +204,29 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
     newTotalAmount: number,
     classroomIds: string[],
     scheduleIds: string[],
+    tx: TDataBase = this.db,
   ) {
-    return this.updateAmount(newTotalAmount, {
-      feeAssignments: { scheduleId: { $in: scheduleIds } },
-      classroomEnrollments: { classroomId: { $in: classroomIds } },
-    });
+    return this.updateAmount(
+      newTotalAmount,
+      {
+        feeAssignments: { scheduleId: { $in: scheduleIds } },
+        classroomEnrollments: { classroomId: { $in: classroomIds } },
+      },
+      tx,
+    );
   }
 
   /**
    * Exempts students from payment for the specified assignments.
    * @param studentEnrollmentIds - List of student enrollment identifiers.
    * @param assignmentIds - List of assignment identifiers to exempt.
+   * @param scheduleIds - List of schedule identifiers to filter by.
    * @returns Promise resolving to the result of the update operation.
    */
   exemptStudentsFromFee(
     studentEnrollmentIds: string[],
     assignmentIds: string[],
+    tx: TDataBase = this.db,
   ) {
     return this.update(
       { status: FEE_SCHEDULES_ENUM.EXEMPTED },
@@ -223,9 +235,11 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
           feeAssignments: {
             enrollmentId: { $in: studentEnrollmentIds },
             assignmentId: { $in: assignmentIds },
+            // scheduleId: { $in: scheduleIds },
           },
         },
       },
+      tx,
     );
   }
 
@@ -238,8 +252,13 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
   private updateAmount(
     newTotalAmount: number,
     whereQuery: BaseFeeAssignmentFilters["where"],
+    tx: TDataBase,
   ) {
-    return this.update({ totalAmount: newTotalAmount }, { where: whereQuery });
+    return this.update(
+      { totalAmount: newTotalAmount },
+      { where: whereQuery },
+      tx,
+    );
   }
 }
 

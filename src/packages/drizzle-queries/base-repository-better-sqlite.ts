@@ -283,12 +283,8 @@ export abstract class BaseRepository<
    * @param tx - Optional database transaction orchestration reference.
    * @returns Model details map reflecting final operational changes updates or null.
    */
-  public update(
-    payload: TUpdate,
-    filters?: TFilter,
-    tx?: TDb,
-  ): TSelect[] | null {
-    if (!filters) return null;
+  public update(payload: TUpdate, filters?: TFilter, tx?: TDb): TSelect[] {
+    if (!filters) return [];
 
     return this.executeWithTiming(
       "update",

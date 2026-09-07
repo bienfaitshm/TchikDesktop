@@ -108,6 +108,7 @@ export class EnrollmentRepository
   public markStudentsAsProDeo(
     enrollmentIds: string | string[],
     schoolId: string,
+    tx: TDataBase = this.db,
   ) {
     const ids = Array.isArray(enrollmentIds) ? enrollmentIds : [enrollmentIds];
 
@@ -121,6 +122,7 @@ export class EnrollmentRepository
           },
         },
       },
+      tx,
     );
   }
 
