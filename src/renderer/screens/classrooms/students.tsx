@@ -49,6 +49,7 @@ import {
 import { TutorProfileDialog } from "@/renderer/apps/schools/dialogs";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { useGetClassroomById } from "@/renderer/libs/queries/classrooms";
+import { MarStudentAsProdeoDialog } from "@/renderer/apps/schools/dialogs/enrollment.dialog";
 
 export interface EnrollmentRowActionsProps extends CreateEnrollmentDialogProps {
   enrollment: EnrollmentDTO;
@@ -99,16 +100,13 @@ const MENUS: ActionMenuConfig<EnrollmentRowActionsProps>[] = [
     dialog({
       enrollment: { student, classroom, ...enrollment },
       schoolId,
-      yearId,
       mutationKey,
     }) {
       return (
-        <UpdateEnrollmentDialog
-          defaultValues={enrollment}
+        <MarStudentAsProdeoDialog
+          schoolId={schoolId}
           fullName={student.fullName}
           enrollmentId={enrollment.enrollmentId}
-          schoolId={schoolId}
-          yearId={yearId}
           mutationKey={mutationKey}
         />
       );

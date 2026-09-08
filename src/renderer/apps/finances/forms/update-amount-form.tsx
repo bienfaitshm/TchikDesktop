@@ -1,10 +1,10 @@
 import React from "react";
 import {
-  MarkStudentsAsProDeoDto,
+  MarkStudentsAsProDeo,
   MarkStudentsAsProDeoSchema,
-  UpdateAmountByAssignmentsDto,
+  UpdateAmountByAssignments,
   UpdateAmountByAssignmentsSchema,
-  UpdateAmountByClassroomsDto,
+  UpdateAmountByClassrooms,
   UpdateAmountByClassroomsSchema,
 } from "@/packages/@core/data-access/schema-validations";
 import {
@@ -26,7 +26,7 @@ import {
 import { CURRENCY_ENUM } from "@/packages/@core/data-access/db/options";
 import { FormErrorView } from "@/renderer/components/form/form-error-view";
 
-const DEFAULT_ASSIGNMENT_VALUES: Partial<UpdateAmountByAssignmentsDto> = {
+const DEFAULT_ASSIGNMENT_VALUES: Partial<UpdateAmountByAssignments> = {
   currency: CURRENCY_ENUM.CDF,
   assignmentIds: [],
   newTotalAmount: 0,
@@ -34,7 +34,7 @@ const DEFAULT_ASSIGNMENT_VALUES: Partial<UpdateAmountByAssignmentsDto> = {
   schoolId: "",
 };
 
-const DEFAULT_CLASSROOM_VALUES: Partial<UpdateAmountByClassroomsDto> = {
+const DEFAULT_CLASSROOM_VALUES: Partial<UpdateAmountByClassrooms> = {
   currency: CURRENCY_ENUM.CDF,
   classroomIds: [],
   newTotalAmount: 0,
@@ -42,7 +42,7 @@ const DEFAULT_CLASSROOM_VALUES: Partial<UpdateAmountByClassroomsDto> = {
   schoolId: "",
 };
 
-const DEFAULT_PRO_DEO_VALUES: Partial<MarkStudentsAsProDeoDto> = {
+const DEFAULT_PRO_DEO_VALUES: Partial<MarkStudentsAsProDeo> = {
   enrollmentIds: [],
   assignmentIds: [],
   schoolId: "",
@@ -121,10 +121,7 @@ function AmountFields({
  * @returns Renders the assignment amount update form.
  */
 export const UpdateAmountByAssignmentForm: React.FC<
-  BaseFormProps<
-    Partial<UpdateAmountByAssignmentsDto>,
-    UpdateAmountByAssignmentsDto
-  > &
+  BaseFormProps<Partial<UpdateAmountByAssignments>, UpdateAmountByAssignments> &
     SharedAmountFormProps
 > = ({
   formId,
@@ -133,7 +130,7 @@ export const UpdateAmountByAssignmentForm: React.FC<
   defaultValues,
   previousAmount,
 }) => {
-  const form = useZodForm<UpdateAmountByAssignmentsDto>({
+  const form = useZodForm<UpdateAmountByAssignments>({
     schema: UpdateAmountByAssignmentsSchema,
     defaultValues: mergeDefaultValues(defaultValues, DEFAULT_ASSIGNMENT_VALUES),
     onSubmit,
@@ -166,10 +163,7 @@ UpdateAmountByAssignmentForm.displayName = "UpdateAmountByAssignmentForm";
  * @returns Renders the classroom amount update form.
  */
 export const UpdateAmountByClassroomForm: React.FC<
-  BaseFormProps<
-    Partial<UpdateAmountByClassroomsDto>,
-    UpdateAmountByClassroomsDto
-  > &
+  BaseFormProps<Partial<UpdateAmountByClassrooms>, UpdateAmountByClassrooms> &
     SharedAmountFormProps
 > = ({
   formId,
@@ -178,7 +172,7 @@ export const UpdateAmountByClassroomForm: React.FC<
   defaultValues,
   previousAmount,
 }) => {
-  const form = useZodForm<UpdateAmountByClassroomsDto>({
+  const form = useZodForm<UpdateAmountByClassrooms>({
     schema: UpdateAmountByClassroomsSchema,
     defaultValues: mergeDefaultValues(defaultValues, DEFAULT_CLASSROOM_VALUES),
     onSubmit,
@@ -211,9 +205,9 @@ UpdateAmountByClassroomForm.displayName = "UpdateAmountByClassroomForm";
  * @returns Renders the Pro Deo confirmation form.
  */
 export const MarkStudentsAsProDeoForm: React.FC<
-  BaseFormProps<Partial<MarkStudentsAsProDeoDto>, MarkStudentsAsProDeoDto>
+  BaseFormProps<Partial<MarkStudentsAsProDeo>, MarkStudentsAsProDeo>
 > = ({ formId, onSubmit, defaultValues }) => {
-  const form = useZodForm<MarkStudentsAsProDeoDto>({
+  const form = useZodForm<MarkStudentsAsProDeo>({
     schema: MarkStudentsAsProDeoSchema,
     defaultValues: mergeDefaultValues(defaultValues, DEFAULT_PRO_DEO_VALUES),
     onSubmit,

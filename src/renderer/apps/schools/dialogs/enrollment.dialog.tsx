@@ -1,0 +1,174 @@
+import type { ReactNode } from "react";
+import type {
+  EnrollmentCreate,
+  EnrollmentQuickCreate,
+} from "@/packages/@core/data-access/schema-validations";
+import {
+  EnrollmentForm,
+  QuickEnrollmentForm,
+} from "@/renderer/components/form";
+import { MarkStudentsAsProDeoForm } from "../forms/mark-as-prodeo-form";
+import {
+  useCreateQuickEnrollmentForm,
+  useDeleteEnrollmentForm,
+  useMarkStudentAsProdeoForm,
+  useUpdateEnrollmentForm,
+  type EnrollmentFormConfig,
+  type EnrollmentFormContext,
+} from "@/renderer/libs/queries/enrollements";
+import {
+  createBaseActionDialog,
+  createDeleteActionDialog,
+  type ActionDialogProps,
+} from "@/renderer/dialog-actions/base.dialog-actions";
+import { wrapUpdateFunc } from "@/renderer/libs/queries/base";
+
+export type EnrollmentDialogProps = ActionDialogProps<
+  EnrollmentCreate | EnrollmentQuickCreate,
+  EnrollmentFormConfig
+> &
+  EnrollmentFormContext;
+
+export type CreateEnrollmentDialogProps = EnrollmentDialogProps;
+
+export type UpdateEnrollmentDialogProps = EnrollmentDialogProps & {
+  enrollmentId: string;
+  fullName?: string;
+};
+
+/**
+ * Action dialog component for creating a new student enrollment record.
+ * @param props - Dialog properties containing school and academic year context.
+ * @returns Rendered enrollment creation dialog component.
+ */
+export const CreateEnrollmentDialog = createBaseActionDialog<
+  CreateEnrollmentDialogProps,
+  ReturnType<typeof useCreateQuickEnrollmentForm>
+>({
+  title: "Dossier d'Inscription",
+  description:
+    "Remplissez le formulaire complet pour procéder à l'enrôlement de l'élève.",
+  submitText: "Valider l'inscription",
+  useForm: useCreateQuickEnrollmentForm,
+  form({
+    formId,
+    onSubmit,
+    searchClassroom,
+    searchUser,
+    defaultValues,
+    searchTutor,
+  }): ReactNode {
+    return (
+      <div className="py-4">
+        <QuickEnrollmentForm
+          formId={formId}
+          onSubmit={onSubmit}
+          defaultValues={defaultValues}
+          classrooms={searchClassroom}
+          students={searchUser}
+          tutors={searchTutor}
+        />
+      </div>
+    );
+  },
+});
+
+CreateEnrollmentDialog.displayName = "CreateEnrollmentDialog";
+
+/**
+ * Action dialog component for updating an existing student enrollment record.
+ * @param props - Dialog properties containing target enrollmentId and student name.
+ * @returns Rendered enrollment update dialog component.
+ */
+export const UpdateEnrollmentDialog = createBaseActionDialog<
+  UpdateEnrollmentDialogProps,
+  ReturnType<typeof useUpdateEnrollmentForm>
+>({
+  title: ({ fullName }: UpdateEnrollmentDialogProps) =>
+    `Modifier l'Inscription${fullName ? ` de ${fullName}` : ""}`,
+  description:
+    "Mettez à jour les informations de l'élève pour l'année scolaire en cours.",
+  submitText: "Mettre à jour",
+  useForm: useUpdateEnrollmentForm,
+  form(
+    { formId, onSubmit, searchClassroom, searchTutor, defaultValues },
+    { enrollmentId },
+  ): ReactNode {
+    return (
+      <div className="py-4">
+        <EnrollmentForm
+          formId={formId}
+          onSubmit={wrapUpdateFunc(onSubmit, enrollmentId)}
+          defaultValues={defaultValues}
+          classrooms={searchClassroom}
+          tutors={searchTutor}
+        />
+      </div>
+    );
+  },
+});
+
+UpdateEnrollmentDialog.displayName = "UpdateEnrollmentDialog";
+
+type MarStudentAsProdeoDialogProps = ActionDialogProps<
+  EnrollmentCreate | EnrollmentQuickCreate,
+  EnrollmentFormConfig
+> & {
+  enrollmentId: string;
+  fullName?: string;
+  schoolId: string;
+};
+
+export const MarStudentAsProdeoDialog = createBaseActionDialog<
+  MarStudentAsProdeoDialogProps,
+  ReturnType<typeof useMarkStudentAsProdeoForm>
+>({
+  title: ({ fullName }: MarStudentAsProdeoDialogProps) =>
+    `Rendre ${fullName ? `${fullName}` : ""} comme prodeo`,
+  description:
+    "Mettez à jour les informations de l'élève pour l'année scolaire en cours.",
+  submitText: "Mettre à jour",
+  useForm: (props) =>
+    useMarkStudentAsProdeoForm({
+      fullName: props?.fullName,
+      enrollmentId: props?.enrollmentId ?? "",
+      mutationKey: props?.mutationKey,
+      onSuccess: props?.onSuccess,
+    }),
+  form(
+    { formId, onSubmit, feeAssignmentOptions },
+    { enrollmentId, schoolId },
+  ): ReactNode {
+    return (
+      <div className="py-4">
+        <MarkStudentsAsProDeoForm
+          formId={formId}
+          defaultValues={{
+            enrollmentIds: [enrollmentId],
+            schoolId: schoolId,
+          }}
+          enssignmentsOptions={feeAssignmentOptions}
+          onSubmit={(payload) => {
+            console.log(payload);
+          }}
+        />
+      </div>
+    );
+  },
+});
+
+MarStudentAsProdeoDialog.displayName = "MarStudentAsProdeoDialog";
+
+/**
+ * Action dialog component for confirming and executing student enrollment deletion.
+ * @returns Rendered delete confirmation dialog component.
+ */
+export const DeleteEnrollmentDialog = createDeleteActionDialog({
+  title: "Supprimer l'inscription",
+  description:
+    "Attention : Cette action est irréversible. L'élève sera désinscrit et ses données d'enrôlement supprimées.",
+  errorMessage: "Erreur lors de la suppression de l'inscription:",
+  useDeleteForm: useDeleteEnrollmentForm,
+});
+
+DeleteEnrollmentDialog.displayName = "DeleteEnrollmentDialog";

@@ -41,6 +41,15 @@ export class FeeAssignmentController {
     return feeAssignmentRepository.findMany(req.params);
   }
 
+  @IpcServer.register(HttpMethod.GET, FeeAssignmentRoutes.SEARCH, {
+    params: FeeAssignmentFilterSchema,
+  })
+  static async getSearchFeeAssignment(
+    req: IpcRequest<unknown, FeeAssignmentFilter>,
+  ) {
+    return feeAssignmentRepository.findMany(req.params);
+  }
+
   /**
    * Creates a new fee assignment record with the provided body specification.
    * @param req - The IPC request object containing the raw initialization payload.

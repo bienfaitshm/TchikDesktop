@@ -122,7 +122,7 @@ export function useUpdateEnrollment(
   });
 }
 
-export function useMarckStudentAsProDeo(
+export function useMarkStudentAsProDeo(
   options?: Partial<
     UseMutationOptions<EnrollmentDTO, Error, MarkStudentsAsProDeo>
   >,

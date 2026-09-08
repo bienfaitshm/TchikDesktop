@@ -4,6 +4,7 @@ import {
   useBulkCreateFeeAssignment,
   useUpdateFeeAssignment,
   useDeleteFeeAssignment,
+  useGetFeeAssignmentAsOptions,
 } from "./finances";
 import { useFormBaseNotify, useFormBase } from "../base";
 import { withNotifications } from "@/renderer/libs/notifications";

@@ -3,9 +3,13 @@ import { getLogger } from "@/packages/logger";
 import {
   feeAssignments,
   classroomEnrollments,
+  feeSchedules,
+  feeTypes,
   type TableFeeAssignment,
   type FeeAssignment,
   type InsertFeeAssignment,
+  type FeeSchedule,
+  type FeeType,
 } from "@/packages/@core/data-access/db/schemas";
 import {
   CURRENCY_ENUM,
@@ -16,11 +20,15 @@ import {
   DatabaseError,
   helpers,
   betterSqlite,
+  OptionProvider,
 } from "@/packages/drizzle-queries";
+import { getTableColumns, eq } from "drizzle-orm";
 
 export const TABLES = {
   feeAssignments,
   classroomEnrollments,
+  feeSchedules,
+  feeTypes,
 } as const;
 
 export type BaseFeeAssignmentFilters = helpers.FindManyOptions<typeof TABLES>;
@@ -28,12 +36,20 @@ const FEE_ASSIGNMENT_DEFAULT_SORT: BaseFeeAssignmentFilters = {
   orderBy: [{ table: "feeAssignments", column: "assignmentId", order: "desc" }],
 };
 
-export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
-  TableFeeAssignment,
-  TDataBase,
-  FeeAssignment,
-  BaseFeeAssignmentFilters
-> {
+export type FeeAssignmentTDO = FeeAssignment & {
+  feeType: FeeType;
+  feeSchedule: FeeSchedule;
+};
+
+export class FeeAssignmentRepository
+  extends betterSqlite.BaseRepository<
+    TableFeeAssignment,
+    TDataBase,
+    FeeAssignmentTDO,
+    BaseFeeAssignmentFilters
+  >
+  implements OptionProvider<FeeAssignmentTDO>
+{
   /**
    * Initializes a new instance of the FeeAssignmentRepository.
    * @param database - Optional database connection instance.
@@ -47,6 +63,33 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
       logger: getLogger,
       defaultFilters: FEE_ASSIGNMENT_DEFAULT_SORT,
     });
+  }
+
+  public getDTOColumns() {
+    return {
+      ...getTableColumns(this.table),
+      feeType: getTableColumns(feeTypes),
+      feeSchedule: getTableColumns(feeSchedules),
+    };
+  }
+
+  protected override getQuerySet(tx?: TDataBase) {
+    const client = this.getClient(tx);
+    return client
+      .select(this.getDTOColumns())
+      .from(this.table)
+      .innerJoin(
+        feeSchedules,
+        eq(this.table.scheduleId, feeSchedules.scheduleId),
+      )
+      .innerJoin(feeTypes, eq(feeSchedules.feeTypeId, feeTypes.feeTypeId))
+      .$dynamic();
+  }
+
+  fetchOptions(
+    filters?: BaseFeeAssignmentFilters,
+  ): FeeAssignmentTDO[] | Promise<FeeAssignmentTDO[]> {
+    return this.findMany(filters);
   }
 
   getEnrollmentAssignments(enrollmentIds: string[]) {

@@ -3,6 +3,11 @@ import { Construction } from "lucide-react";
 
 import { useState } from "react";
 import { InputSuggestion } from "@/components/inputs/input-suggestion";
+import {
+  UpdateAmountByAssignmentForm,
+  MarkStudentsAsProDeoForm,
+  UpdateAmountByClassroomForm,
+} from "../apps/finances/forms/update-amount-form";
 
 const FRAMEWORKS = [
   "Next.js",
@@ -50,6 +55,20 @@ export default function WorkInProgressPage() {
             Page en cours de développement
           </h1>
         </div>
+        <UpdateAmountByAssignmentForm
+          currencyOptions={[]}
+          previousCurrency="DCF"
+          previousAmount={25000}
+        />
+        <UpdateAmountByClassroomForm
+          currencyOptions={[]}
+          previousAmount={25000}
+          previousCurrency="CDF"
+        />
+        <MarkStudentsAsProDeoForm
+          defaultValues={{ enrollmentIds: ["1"], assignmentIds: ["2", "3"] }}
+          onSubmit={() => {}}
+        />
         {/* <Example /> */}
       </main>
 

@@ -10,6 +10,7 @@ import {
   useCreateQuickEnrollment,
   useDeleteEnrollment,
   useUpdateEnrollment,
+  useMarkStudentAsProDeo,
 } from "./enrollments";
 import {
   useFormBaseDelete,
@@ -18,6 +19,7 @@ import {
 } from "../base";
 import { useSearchTutors } from "../tutors/helper";
 import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
+import { useGetFeeAssignmentAsOptions } from "../finances/finances";
 
 /**
  * Contextual parameters required for enrollment form operations.
@@ -72,6 +74,27 @@ const getDeleteEnrollmentNotifications = (
   error: {
     title: "Erreur d'annulation",
     description: "Impossible d'annuler cet enrôlement.",
+  },
+});
+
+/**
+ * Builds the notification configurations for granting Pro Deo status to students.
+ * @param studentName - Optional full name of the student receiving the exemption.
+ * @returns The notification configuration object containing success and error states.
+ */
+export const getMarkStudentAsProDeoNotifications = (
+  studentName?: string,
+): NotificationConfig => ({
+  success: {
+    title: "Statut Pro Deo accordé",
+    description: studentName
+      ? `L'exonération financière a bien été appliquée pour ${studentName}.`
+      : "L'exonération financière a bien été appliquée aux élèves sélectionnés.",
+  },
+  error: {
+    title: "Échec de l'attribution Pro Deo",
+    description:
+      "Impossible d'accorder le statut Pro Deo. Veuillez vérifier les données et réessayer.",
   },
 });
 
@@ -174,6 +197,30 @@ export function useUpdateEnrollmentForm({
 
   const search = useEnrollmentFormBase(schoolId);
   return { ...form, ...search };
+}
+
+type MarkAsProdeoFormContext = {
+  fullName?: string;
+  enrollmentId: string;
+};
+export function useMarkStudentAsProdeoForm({
+  fullName,
+  enrollmentId,
+  ...config
+}: MarkAsProdeoFormContext & EnrollmentFormConfig) {
+  const form = useFormBaseCreate({
+    useCreate: useMarkStudentAsProDeo,
+    config,
+    notification: getMarkStudentAsProDeoNotifications(fullName),
+  });
+
+  const feeAssignmentOptions = useGetFeeAssignmentAsOptions({
+    where: {
+      feeAssignments: { enrollmentId },
+    },
+    limit: 1000,
+  });
+  return { ...form, feeAssignmentOptions };
 }
 
 /**
