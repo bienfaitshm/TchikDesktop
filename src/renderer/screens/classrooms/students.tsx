@@ -94,7 +94,7 @@ const MENUS: ActionMenuConfig<EnrollmentRowActionsProps>[] = [
     },
   },
   {
-    id: "edit-enrollment",
+    id: "edit-prodeo",
     label: "Rendre ProDeo",
     icon: Edit2,
     dialog({
