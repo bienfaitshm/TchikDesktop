@@ -18,6 +18,8 @@ import {
   mergeDefaultValues,
   useZodForm,
 } from "@/renderer/libs/forms";
+import { MultiSelect } from "@/renderer/components/inputs/multiple-select";
+import { groupFeeAssignmentsByTypeName } from "@/renderer/libs/queries/finances/utils";
 
 const DEFAULT_PRO_DEO_VALUES: Partial<MarkStudentsAsProDeo> = {
   enrollmentIds: [],
@@ -46,7 +48,8 @@ export const MarkStudentsAsProDeoForm: React.FC<
   const selectedEnrollmentsCount = form.watch("enrollmentIds")?.length || 0;
   const selectedAssignmentsCount = form.watch("assignmentIds")?.length || 0;
 
-  console.log(enssignmentsOptions);
+  const options = groupFeeAssignmentsByTypeName(enssignmentsOptions);
+  console.log(options);
   return (
     <Form {...form}>
       <form
@@ -64,6 +67,7 @@ export const MarkStudentsAsProDeoForm: React.FC<
             Frais (Affectations) concernés : {selectedAssignmentsCount}
           </p>
         </div>
+        <MultiSelect name="" groups={options} />
       </form>
     </Form>
   );

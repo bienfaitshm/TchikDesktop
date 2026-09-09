@@ -214,7 +214,7 @@ export function useMarkStudentAsProdeoForm({
     notification: getMarkStudentAsProDeoNotifications(fullName),
   });
 
-  const feeAssignmentOptions = useGetFeeAssignmentAsOptions({
+  const { data: feeAssignmentOptions } = useGetFeeAssignmentAsOptions({
     where: {
       feeAssignments: { enrollmentId },
     },
