@@ -5,6 +5,11 @@
  * Ces constantes sont utilisées par IpcClient et IpcServer pour la communication.
  */
 
+export const SearchRoutes = {
+  homeSearch: "search",
+  detailSearch: "search/results",
+} as const;
+
 export const UserRoutes = {
   ALL: "users",
   DETAIL: "users/:userId",
@@ -259,6 +264,7 @@ export const PrinteToutes = {
  * Export global mis à jour avec les nouveaux modules
  */
 export const IpcRoutes = {
+  SEARCH: SearchRoutes,
   OPTIONS: OptionRoutes,
   SCHOOLS: SchoolRoutes,
   CLASSROOMS: ClassroomRoutes,

@@ -5,6 +5,7 @@ import * as apis from "@/packages/@core/apis/clients";
  * Registry mapping domain keys to their respective API client factory functions.
  */
 const API_REGISTRY = {
+  search: apis.createSearchEngineApis,
   users: apis.createUserApis,
   tutors: apis.createTutorApis,
   classroom: apis.createClassroomApis,
@@ -117,4 +118,5 @@ export const {
   payment,
   dashboard,
   print,
+  search,
 } = api;

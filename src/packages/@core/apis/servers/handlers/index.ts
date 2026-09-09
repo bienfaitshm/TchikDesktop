@@ -17,3 +17,5 @@ export * from "./wallets";
 export * from "./statistics";
 export * from "./dashboard";
 export * from "./print.endpoint";
+
+export * from "./search-engine.endpoints";

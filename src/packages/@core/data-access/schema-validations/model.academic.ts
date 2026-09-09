@@ -165,12 +165,12 @@ export const ClassroomSchema = z
     identifier: z
       .string()
       .min(1, "Identifier is required.")
-      .max(50)
+      .max(100)
       .describe("Full classroom identifier"),
     shortIdentifier: z
       .string()
       .min(1, "Short identifier is required.")
-      .max(10)
+      .max(50)
       .describe("Short classroom identifier"),
     section: ZSECTION_ENUM.describe("Classroom section"),
     optionId: optionalNullableString.describe("Associated option identifier"),

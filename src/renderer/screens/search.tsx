@@ -12,8 +12,13 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { GoogleSearchInput } from "../apps/finances/components/search";
+import { useSearchEngine } from "../libs/queries/application";
+import { useCurrentConfig } from "../libs/stores/app-store";
 
 export default function CopilotDashboard() {
+  const { yearId, schoolId } = useCurrentConfig();
+  const search = useSearchEngine({ yearId, schoolId, limit: 50 });
+  console.log(search);
   return (
     <div className="relative min-h-screen w-full overflow-hidden flex flex-col justify-between p-6 md:p-10 font-sans select-none">
       {/* Arrière-plan inspiré de l'image (Dégradé + Image nature ou effet visuel) */}
@@ -40,6 +45,9 @@ export default function CopilotDashboard() {
       {/* --- SECTION CENTRALE : Barre de recherche / Message Copilot --- */}
       <div className="relative z-10 max-w-2xl w-full mx-auto my-6 space-y-4">
         <GoogleSearchInput
+          data={search.results}
+          query={search.search}
+          onQueryChange={search.onChangeValue}
           getItemLabel={(data) => ({ label: "", description: "" })}
         />
       </div>

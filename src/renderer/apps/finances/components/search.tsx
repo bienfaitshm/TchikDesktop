@@ -1,5 +1,11 @@
-import React, { ReactNode, useRef, useState } from "react";
-import { Search, Mic, Camera, Clock, Info } from "lucide-react";
+import React, {
+  ReactNode,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
+import { Search, Mic, Camera, Info } from "lucide-react";
 import { cn } from "@/renderer/utils";
 import {
   Popover,
@@ -8,23 +14,45 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/renderer/components/ui/button";
 
-type GoogleSearchInputProps<TData> = {
+export type GoogleSearchInputProps<TData> = {
   data?: TData[];
-  renderDetail?(data: TData): ReactNode;
-  getItemLabel(data: TData): { label: string; description?: string };
+  query?: string;
+  onQueryChange?: (query: string) => void;
+  renderDetail?: (data: TData) => ReactNode;
+  getItemLabel: (data: TData) => { label: string; description?: string };
 };
+
+/**
+ * Renders an accessible search bar with an integrated popover dropdown supporting keyboard navigation,
+ * real-time item preview, and flexible external query state management.
+ */
 export function GoogleSearchInput<TData>({
   data = [],
+  query: externalQuery,
+  onQueryChange,
   getItemLabel,
   renderDetail,
 }: GoogleSearchInputProps<TData>) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [query, setQuery] = useState<string>("");
+  const [internalQuery, setInternalQuery] = useState<string>("");
   const [activeIndex, setActiveIndex] = useState<number>(-1);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const getLabelOfIndex = React.useCallback(
+  const isControlled = externalQuery !== undefined;
+  const query = isControlled ? externalQuery : internalQuery;
+
+  const updateQuery = useCallback(
+    (newQuery: string) => {
+      if (!isControlled) {
+        setInternalQuery(newQuery);
+      }
+      onQueryChange?.(newQuery);
+    },
+    [isControlled, onQueryChange],
+  );
+
+  const getLabelOfIndex = useCallback(
     (index: number) => {
       const activeItem = data[index];
       if (activeItem) {
@@ -33,12 +61,12 @@ export function GoogleSearchInput<TData>({
       }
       return "";
     },
-    [data],
+    [data, getItemLabel],
   );
 
-  const indexItem = React.useMemo(() => data[activeIndex], [activeIndex]);
+  const indexItem = useMemo(() => data[activeIndex], [data, activeIndex]);
 
-  const handleKeyDown = React.useCallback(
+  const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (!isOpen || data.length === 0) return;
 
@@ -47,30 +75,28 @@ export function GoogleSearchInput<TData>({
       switch (e.key) {
         case "ArrowDown": {
           e.preventDefault();
-          // Logique de boucle : si on dépasse le dernier index, on revient à -1 (champ vide)
           const nextIndex =
             activeIndex === totalItems - 1 ? -1 : activeIndex + 1;
 
           setActiveIndex(nextIndex);
-          setQuery(nextIndex === -1 ? "" : getLabelOfIndex(nextIndex));
+          updateQuery(nextIndex === -1 ? "" : getLabelOfIndex(nextIndex));
           break;
         }
 
         case "ArrowUp": {
           e.preventDefault();
-          // Logique de boucle : si on recule au-delà de -1, on boucle vers le dernier élément
           const nextIndex =
             activeIndex === -1 ? totalItems - 1 : activeIndex - 1;
 
           setActiveIndex(nextIndex);
-          setQuery(nextIndex === -1 ? "" : getLabelOfIndex(nextIndex));
+          updateQuery(nextIndex === -1 ? "" : getLabelOfIndex(nextIndex));
           break;
         }
 
         case "Enter": {
           e.preventDefault();
           if (activeIndex >= 0) {
-            setQuery(getLabelOfIndex(activeIndex));
+            updateQuery(getLabelOfIndex(activeIndex));
           }
           setIsOpen(false);
           break;
@@ -85,19 +111,19 @@ export function GoogleSearchInput<TData>({
           break;
       }
     },
-    [isOpen, activeIndex, setQuery, setActiveIndex, setIsOpen],
+    [isOpen, data, activeIndex, getLabelOfIndex, updateQuery],
   );
 
-  const handleOpenChange = React.useCallback((open: boolean) => {
+  const handleOpenChange = useCallback((open: boolean) => {
     setIsOpen(open);
     if (!open) {
       setActiveIndex(-1);
     }
   }, []);
 
-  const handlerFocus = React.useCallback(() => setIsOpen(true), []);
+  const handleFocus = useCallback(() => setIsOpen(true), []);
 
-  const onInteractOutside = React.useCallback(
+  const onInteractOutside = useCallback(
     (e: Event) => {
       if (containerRef.current?.contains(e.target as Node)) {
         e.preventDefault();
@@ -106,16 +132,13 @@ export function GoogleSearchInput<TData>({
     [containerRef],
   );
 
-  const onOpenAutoFocus = React.useCallback(
-    (e: Event) => e.preventDefault(),
-    [],
-  );
+  const onOpenAutoFocus = useCallback((e: Event) => e.preventDefault(), []);
 
-  const onChangeValue = React.useCallback(
-    (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
-      setQuery(e.target.value);
+  const onChangeValue = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      updateQuery(e.target.value);
     },
-    [],
+    [updateQuery],
   );
 
   return (
@@ -131,7 +154,7 @@ export function GoogleSearchInput<TData>({
               "hover:bg-accent focus-within:bg-accent focus-within:shadow-xl",
               isOpen ? "rounded-t-3xl bg-accent" : "rounded-full",
             )}
-            onClick={handlerFocus}
+            onClick={handleFocus}
           >
             <Search className="text-muted-foreground h-5 w-5 mr-3 shrink-0" />
 
@@ -139,7 +162,7 @@ export function GoogleSearchInput<TData>({
               type="text"
               value={query}
               onChange={onChangeValue}
-              onFocus={handlerFocus}
+              onFocus={handleFocus}
               onKeyDown={handleKeyDown}
               placeholder=""
               className="flex-1 bg-transparent outline-none border-none text-base min-w-0"
@@ -147,19 +170,19 @@ export function GoogleSearchInput<TData>({
 
             <div className="flex items-center gap-4 ml-2 shrink-0">
               <button
-                title="Recherche vocale"
+                title="Voice search"
                 className="text-muted-foreground hover:text-muted-foreground transition"
               >
                 <Mic className="h-5 w-5" />
               </button>
               <button
-                title="Recherche d'image"
+                title="Image search"
                 className="text-muted-foreground hover:text-muted-foreground transition"
               >
                 <Camera className="h-5 w-5" />
               </button>
               <Button
-                title="Recherche"
+                title="Search"
                 className="text-muted-foreground hover:text-muted-foreground transition rounded-full"
                 size="icon-lg"
                 variant="secondary"
@@ -178,13 +201,9 @@ export function GoogleSearchInput<TData>({
           onOpenAutoFocus={onOpenAutoFocus}
           onInteractOutside={onInteractOutside}
         >
-          {/* Ligne de séparation supérieure */}
           <div className="mx-4 border-t bg-border" />
 
-          {/* Conteneur principal Flex au lieu de Grid */}
           <div className="flex w-full py-3 px-1 max-h-[60vh] overflow-x-hidden overflow-y-auto">
-            {/* Colonne Gauche : Historique */}
-            {/* S'anime de w-full à w-1/2 quand un élément est sélectionné */}
             <div
               className={cn(
                 "flex flex-col min-w-0 transition-all duration-300 ease-in-out shrink-0",
@@ -204,7 +223,7 @@ export function GoogleSearchInput<TData>({
                         : "hover:bg-accent-foreground/5",
                     )}
                     onClick={() => {
-                      setQuery(label);
+                      updateQuery(label);
                       setIsOpen(false);
                     }}
                   >
@@ -224,8 +243,6 @@ export function GoogleSearchInput<TData>({
               })}
             </div>
 
-            {/* Colonne Droite : Détails */}
-            {/* S'anime de w-0 à w-1/2, cache son contenu quand elle est fermée */}
             <div
               className={cn(
                 "transition-all duration-300 ease-in-out flex flex-col overflow-hidden shrink-0",
@@ -234,28 +251,24 @@ export function GoogleSearchInput<TData>({
                   : "w-0 opacity-0 border-transparent pl-0",
               )}
             >
-              {/* 
-                L'astuce anti-écrasement : on donne une largeur fixe au contenu interne basée sur la popover.
-                Ainsi le conteneur parent révèle le contenu comme un masque pendant son animation.
-              */}
               <div className="w-[calc(var(--radix-popover-trigger-width)*0.5-20px)] h-full">
                 {activeIndex >= 0 && renderDetail && (
                   <div className="flex flex-col px-4 pt-4 pb-1 h-full animate-in fade-in slide-in-from-right-8 duration-300">
                     <div className="flex items-center gap-2 mb-4 text-muted-foreground">
                       <Info className="h-4 w-4" />
                       <span className="text-xs font-medium uppercase tracking-wider">
-                        Aperçu de la recherche
+                        Search preview
                       </span>
                     </div>
 
                     {renderDetail(indexItem)}
 
                     <p className="text-xs text-right text-muted-foreground mt-auto pt-4">
-                      Appuyez sur{" "}
+                      Press{" "}
                       <kbd className="bg-accent-foreground/20 px-1.5 py-0.5 rounded-md font-mono text-[10px]">
-                        Entrée
+                        Enter
                       </kbd>{" "}
-                      pour rechercher
+                      to search
                     </p>
                   </div>
                 )}
