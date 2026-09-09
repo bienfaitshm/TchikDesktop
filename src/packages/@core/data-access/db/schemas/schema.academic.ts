@@ -5,7 +5,7 @@ import {
   uniqueIndex,
   index,
 } from "drizzle-orm/sqlite-core";
-import { type InferSelectModel, type InferInsertModel } from "drizzle-orm";
+import { type InferSelectModel, type InferInsertModel, sql } from "drizzle-orm";
 import {
   SECTION_ENUM,
   USER_GENDER_ENUM,
@@ -96,6 +96,13 @@ export const users = sqliteTable(
     index("users_school_last_name_idx").on(table.schoolId, table.lastName),
     index("users_school_middle_name_idx").on(table.schoolId, table.middleName),
     index("users_school_first_name_idx").on(table.schoolId, table.firstName),
+    /** Case-insensitive search index on user names scoped by school and role. */
+    index("users_search_names_idx").on(
+      table.schoolId,
+      table.role,
+      sql`${table.lastName} COLLATE NOCASE`,
+      sql`${table.firstName} COLLATE NOCASE`,
+    ),
   ],
 );
 
@@ -128,7 +135,8 @@ export const tutors = sqliteTable(
   (table) => [
     index("tutors_school_idx").on(table.schoolId),
     index("tutors_phone_number_idx").on(table.phoneNumber),
-    index("tutors_school_phone_idx").on(table.schoolId, table.phoneNumber),
+    /** Optimized search index for tutors by phone number scoped by school. */
+    index("tutors_search_phone_idx").on(table.schoolId, table.phoneNumber),
     index("users_idx").on(table.userId),
   ],
 );
@@ -275,6 +283,7 @@ export const classroomEnrollments = sqliteTable(
     index("enrollments_student_idx").on(table.studentId),
     index("enrollments_tutor_idx").on(table.tutorId),
     index("enrollments_year_idx").on(table.yearId),
+    /** Unique constraint index serving also as optimization for (student_id, year_id) joins. */
     uniqueIndex("student_year_unique_idx").on(table.studentId, table.yearId),
   ],
 );
