@@ -1,63 +1,66 @@
-import { eq, and, like, inArray, sql } from "drizzle-orm";
-import { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import { eq, and, like, inArray, sql, aliasedTable } from "drizzle-orm";
+
+// Schemas are assumed to be properly imported from the unified schema declarations
 import {
-  users,
-  classroomEnrollments,
-  classrooms,
-  tutors,
   feeAssignments,
   seatingAssignments,
   localrooms,
   seatingSessions,
+  classroomEnrollments,
+  users,
+  classrooms,
+  tutors,
 } from "../../schemas";
-import { UserRepository } from "../../queries";
 import type {
   SearchContext,
-  StudentPreviewData,
-  StudentSuggestion,
   SearchStrategy,
+  StudentSuggestion,
+  BaseSuggestion,
+  SearchEntityType,
+  SearchSuggestion,
+  StudentPreviewData,
+  TutorPreviewData,
+  TutorSuggestion,
 } from "./types";
-import { USER_ROLE_ENUM } from "../../options";
 import {
-  PhoneticSearchEngine,
   FrancoAfricanPhoneticEncoder,
+  PhoneticSearchEngine,
   SearchableEntity,
 } from "./phonetic-engine";
+import { USER_ROLE_ENUM } from "../../options";
+import { TDataBase } from "../../config";
 
-/**
- * Payload structure for caching phonetic engine instances per school.
- */
+type AnySQLiteDatabase = TDataBase;
+
 interface PhoneticCachePayload {
   engine: PhoneticSearchEngine<SearchableEntity>;
   timestamp: number;
 }
 
-/**
- * Implements student searching by combining phonetic name matching and SQL exact code matching.
- */
+/** Handles hybrid database and phonetic searching for student entities. */
 export class StudentSearchStrategy implements SearchStrategy {
   public readonly entityType = "STUDENT" as const;
 
-  private static readonly ENGINE_TTL_MS = 1000 * 60 * 15; // 15 minutes
+  private static readonly ENGINE_TTL_MS = 1000 * 60 * 15;
   private static readonly MIN_PHONETIC_SCORE = 0.65;
 
   private readonly phoneticEngines = new Map<string, PhoneticCachePayload>();
-  private readonly db: BetterSQLite3Database<Record<string, unknown>>;
+  private readonly db: AnySQLiteDatabase;
 
   /**
-   * Initializes the student search strategy.
-   * @param db - Drizzle ORM database instance with strong typing.
+   * Initializes the strategy with a generic Drizzle SQLite database interface.
+   * @param db Drizzle database instance.
    */
-  constructor(db: BetterSQLite3Database<Record<string, unknown>>) {
+  constructor(db: AnySQLiteDatabase) {
     this.db = db;
   }
 
   /**
-   * Orchestrates the hybrid search and contextual data aggregation.
-   * @param query - Input search text.
-   * @param ctx - Context defining school and academic year boundaries.
-   * @param limit - Maximum number of student results.
-   * @returns List of populated student suggestions.
+   * Performs hybrid search and aggregate formatting.
+   * @param query Search term.
+   * @param ctx Search scope context.
+   * @param limit Maximum results limit.
+   * @returns List of aggregated student suggestions.
    */
   public async search(
     query: string,
@@ -70,7 +73,6 @@ export class StudentSearchStrategy implements SearchStrategy {
     const phoneticEngine = await this.getOrBuildPhoneticEngine(ctx);
     const phoneticResults = phoneticEngine.search(cleanQuery, {
       type: "student",
-      // limit,
       minScore: StudentSearchStrategy.MIN_PHONETIC_SCORE,
     });
     const phoneticIds = phoneticResults.map((res) => res.item.id);
@@ -110,11 +112,6 @@ export class StudentSearchStrategy implements SearchStrategy {
     return this.buildStudentPreviews(candidateIds, aggregatedData);
   }
 
-  /**
-   * Retrieves or builds a cached phonetic search engine for a specific school.
-   * @param ctx - Search context containing the school ID.
-   * @returns Configured and indexed phonetic engine.
-   */
   private async getOrBuildPhoneticEngine(
     ctx: SearchContext,
   ): Promise<PhoneticSearchEngine<SearchableEntity>> {
@@ -126,7 +123,7 @@ export class StudentSearchStrategy implements SearchStrategy {
       return cached.engine;
     }
 
-    const students = await this.db
+    const studentRecords = await this.db
       .select({
         id: users.userId,
         firstName: users.firstName,
@@ -140,7 +137,7 @@ export class StudentSearchStrategy implements SearchStrategy {
         ),
       );
 
-    const entities: SearchableEntity[] = students.map((s) => ({
+    const entities: SearchableEntity[] = studentRecords.map((s) => ({
       id: s.id,
       type: "student",
       firstName: s.firstName || "",
@@ -160,12 +157,6 @@ export class StudentSearchStrategy implements SearchStrategy {
     return engine;
   }
 
-  /**
-   * Fetches relational data (enrollments, financials, seating) in parallel batches.
-   * @param studentIds - Array of student IDs to fetch context for.
-   * @param ctx - Search context boundary.
-   * @returns Aggregated raw relational data mapped by categories.
-   */
   private async fetchAggregatedContext(
     studentIds: string[],
     ctx: SearchContext,
@@ -174,6 +165,9 @@ export class StudentSearchStrategy implements SearchStrategy {
       inArray(classroomEnrollments.studentId, studentIds),
       eq(classroomEnrollments.yearId, ctx.yearId),
     );
+
+    const studentUsers = aliasedTable(users, "studentUsers");
+    const tutorUsers = aliasedTable(users, "tutorUsers");
 
     const [enrollmentsData, financialData, seatingData] = await Promise.all([
       this.db
@@ -186,26 +180,23 @@ export class StudentSearchStrategy implements SearchStrategy {
           tutorId: tutors.tutorId,
           tutorPhone: tutors.phoneNumber,
           tutorProfession: tutors.profession,
-          tutorLastName: users.lastName,
-          tutorFirstName: users.firstName,
-          studentLastName: UserRepository.studentUsers.lastName,
-          studentFirstName: UserRepository.studentUsers.firstName,
-          studentMiddleName: UserRepository.studentUsers.middleName,
+          tutorLastName: tutorUsers.lastName,
+          tutorFirstName: tutorUsers.firstName,
+          studentLastName: studentUsers.lastName,
+          studentFirstName: studentUsers.firstName,
+          studentMiddleName: studentUsers.middleName,
         })
         .from(classroomEnrollments)
         .innerJoin(
-          UserRepository.studentUsers,
-          eq(
-            classroomEnrollments.studentId,
-            UserRepository.studentUsers.userId,
-          ),
+          studentUsers,
+          eq(classroomEnrollments.studentId, studentUsers.userId),
         )
         .innerJoin(
           classrooms,
           eq(classroomEnrollments.classroomId, classrooms.classId),
         )
         .leftJoin(tutors, eq(classroomEnrollments.tutorId, tutors.tutorId))
-        .leftJoin(users, eq(tutors.userId, users.userId))
+        .leftJoin(tutorUsers, eq(tutors.userId, tutorUsers.userId))
         .where(baseConditions),
 
       this.db
@@ -280,12 +271,6 @@ export class StudentSearchStrategy implements SearchStrategy {
     return { enrollmentsData, financialData, seatingData, siblingsData };
   }
 
-  /**
-   * Maps raw database aggregations into structured DTO responses.
-   * @param candidateIds - Identifiers of students to map.
-   * @param data - Raw relational data payload from fetchAggregatedContext.
-   * @returns Array of final student preview payloads ready for the client.
-   */
   private buildStudentPreviews(
     candidateIds: string[],
     data: Awaited<ReturnType<typeof this.fetchAggregatedContext>>,

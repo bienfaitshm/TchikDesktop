@@ -5,7 +5,7 @@ import { SearchRoutes } from "../routes-constant";
 import type { SearchSuggestion } from "@/packages/@core/data-access/db";
 
 export type SearchEngineApi = Readonly<{
-  search(params: SearchEngineParams): Promise<SearchSuggestion[][]>;
+  search(params: SearchEngineParams): Promise<SearchSuggestion[]>;
 }>;
 
 export function createSearchEngineApis(ipcClient: IpcClient): SearchEngineApi {

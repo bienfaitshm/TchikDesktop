@@ -45,10 +45,13 @@ export default function CopilotDashboard() {
       {/* --- SECTION CENTRALE : Barre de recherche / Message Copilot --- */}
       <div className="relative z-10 max-w-2xl w-full mx-auto my-6 space-y-4">
         <GoogleSearchInput
-          data={search.results}
-          query={search.search}
-          onQueryChange={search.onChangeValue}
-          getItemLabel={(data) => ({ label: "", description: "" })}
+          data={search.options}
+          query={search.searchQuery}
+          onQueryChange={search.setSearchQuery}
+          getItemLabel={(data) => ({
+            label: data.title,
+            description: data.subtitle,
+          })}
         />
       </div>
 

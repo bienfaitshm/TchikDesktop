@@ -1,6 +1,4 @@
-/**
- * Represents a base searchable entity within the system.
- */
+/** Represents a searchable domain entity. */
 export interface SearchableEntity {
   id: string;
   type: "student" | "tutor";
@@ -8,61 +6,36 @@ export interface SearchableEntity {
   lastName: string;
 }
 
-/**
- * Represents a student domain entity.
- */
-export interface Student extends SearchableEntity {
-  type: "student";
-  gradeLevel?: string;
-}
-
-/**
- * Represents a tutor domain entity.
- */
-export interface Tutor extends SearchableEntity {
-  type: "tutor";
-  subjects?: string[];
-}
-
-/**
- * Encapsulates a search result containing the matched entity and relevance score.
- * @template T - Type extending SearchableEntity.
- */
+/** Represents a search result containing matched item and score. */
 export interface SearchResult<T extends SearchableEntity> {
   item: T;
   score: number;
   matchedField: "firstName" | "lastName" | "fullName";
 }
 
-/**
- * Configuration options to filter and control search execution.
- */
+/** Defines configuration for executing searches. */
 export interface SearchOptions {
   type?: "student" | "tutor" | "all";
   minScore?: number;
   maxResults?: number;
 }
 
-/**
- * Strategy interface defining phonetic encoding behavior.
- */
+/** Interface for defining phonetic encoding behavior. */
 export interface PhoneticEncoderStrategy {
   /**
-   * Transforms raw text into its phonetic representation.
-   * @param text - Raw text string.
+   * Encodes raw text into a phonetic representation.
+   * @param text String to encode.
    * @returns Phonetic key.
    */
   encode(text: string): string;
 }
 
-/**
- * Phonetic encoder supporting both French and African name patterns.
- */
+/** Encodes names using French and African phonetic patterns. */
 export class FrancoAfricanPhoneticEncoder implements PhoneticEncoderStrategy {
   /**
-   * Encodes a name into a unified phonetic key handling African and French phonetics.
-   * @param text - Raw text to encode.
-   * @returns Normalized phonetic key.
+   * Normalizes a string into its phonetic equivalent.
+   * @param text Raw string.
+   * @returns Phonetic string representation.
    */
   public encode(text: string): string {
     if (!text) return "";
@@ -77,13 +50,11 @@ export class FrancoAfricanPhoneticEncoder implements PhoneticEncoderStrategy {
     if (normalized.length === 0) return "";
 
     normalized = normalized
-      // African & French vowel/diphthong equivalences
       .replace(/OUA/g, "W")
       .replace(/OU/g, "U")
       .replace(/EAU|AU/g, "O")
       .replace(/AI|EI/g, "E")
       .replace(/EIN|AIN|IN|UN/g, "IN")
-      // African complex consonants & pre-nasalized initial patterns
       .replace(/TSH|TCH/g, "X")
       .replace(/DJ|DZH/g, "J")
       .replace(/NY|GN/g, "N")
@@ -94,7 +65,6 @@ export class FrancoAfricanPhoneticEncoder implements PhoneticEncoderStrategy {
       .replace(/^NG/, "G")
       .replace(/^NK/, "K")
       .replace(/^MP/, "P")
-      // Common French consonant rules
       .replace(/PH/g, "F")
       .replace(/TH/g, "T")
       .replace(/CH|SH/g, "X")
@@ -102,24 +72,20 @@ export class FrancoAfricanPhoneticEncoder implements PhoneticEncoderStrategy {
       .replace(/C(?=[EIY])/g, "S")
       .replace(/C/g, "K")
       .replace(/G(?=[EIY])/g, "J")
-      // Remove double letters
       .replace(/(.)\1+/g, "$1")
-      // Strip silent trailing letters
       .replace(/[STDXE]+$/, "");
 
     return normalized || text.toUpperCase().replace(/[^A-Z]/g, "");
   }
 }
 
-/**
- * High-performance metric calculator for string distance.
- */
+/** High-performance calculator for Levenshtein string distance. */
 export class DistanceCalculator {
   /**
-   * Calculates similarity score between two strings using optimized 1D memory Levenshtein distance.
-   * @param str1 - First comparison string.
-   * @param str2 - Second comparison string.
-   * @returns Similarity score between 0.0 and 1.0.
+   * Calculates similarity score using a 1D array Levenshtein algorithm.
+   * @param str1 First string to compare.
+   * @param str2 Second string to compare.
+   * @returns Normalized similarity score (0.0 to 1.0).
    */
   public static calculateSimilarity(str1: string, str2: string): number {
     if (str1 === str2) return 1.0;
@@ -129,14 +95,13 @@ export class DistanceCalculator {
     const len2 = str2.length;
     const maxLength = Math.max(len1, len2);
 
+    if (maxLength === 0) return 1.0;
     if (Math.abs(len1 - len2) / maxLength > 0.7) return 0.0;
 
     let prevRow = new Int32Array(len2 + 1);
     let currRow = new Int32Array(len2 + 1);
 
-    for (let j = 0; j <= len2; j++) {
-      prevRow[j] = j;
-    }
+    for (let j = 0; j <= len2; j++) prevRow[j] = j;
 
     for (let i = 1; i <= len1; i++) {
       currRow[0] = i;
@@ -156,14 +121,10 @@ export class DistanceCalculator {
       currRow = temp;
     }
 
-    const distance = prevRow[len2];
-    return 1.0 - distance / maxLength;
+    return 1.0 - prevRow[len2] / maxLength;
   }
 }
 
-/**
- * Internal index entry caching entity reference and precomputed phonetic tokens.
- */
 interface IndexedItem<T extends SearchableEntity> {
   entity: T;
   firstNamePhonetic: string;
@@ -171,10 +132,7 @@ interface IndexedItem<T extends SearchableEntity> {
   fullNamePhonetic: string;
 }
 
-/**
- * Production-ready search engine supporting fuzzy phonetic search over searchable entities.
- * @template T - Type extending SearchableEntity.
- */
+/** In-memory search engine for phonetic entity indexing and matching. */
 export class PhoneticSearchEngine<
   T extends SearchableEntity = SearchableEntity,
 > {
@@ -182,8 +140,8 @@ export class PhoneticSearchEngine<
   private readonly encoder: PhoneticEncoderStrategy;
 
   /**
-   * Initializes the search engine with a phonetic encoder strategy.
-   * @param encoder - Custom strategy or default FrancoAfricanPhoneticEncoder.
+   * Initializes the engine with the provided or default phonetic encoder.
+   * @param encoder Optional encoding strategy instance.
    */
   constructor(
     encoder: PhoneticEncoderStrategy = new FrancoAfricanPhoneticEncoder(),
@@ -192,16 +150,14 @@ export class PhoneticSearchEngine<
   }
 
   /**
-   * Pre-computes phonetic keys and indexes entities in memory.
-   * @param entities - Entities to index.
+   * Computes phonetic keys and indexes entities.
+   * @param entities Array of entities to index.
    */
   public index(entities: T[]): void {
     const store: IndexedItem<T>[] = new Array(entities.length);
-
     for (let i = 0; i < entities.length; i++) {
       const entity = entities[i];
       const fullName = `${entity.firstName} ${entity.lastName}`;
-
       store[i] = {
         entity,
         firstNamePhonetic: this.encoder.encode(entity.firstName),
@@ -209,22 +165,18 @@ export class PhoneticSearchEngine<
         fullNamePhonetic: this.encoder.encode(fullName),
       };
     }
-
     this.indexStore = store;
   }
 
   /**
-   * Executes a fuzzy phonetic search over indexed entities.
-   * @param query - Input string query.
-   * @param options - Search constraints and filtering options.
-   * @returns Matched entities sorted by descending similarity score.
+   * Executes a fuzzy search over indexed items.
+   * @param query Input text query.
+   * @param options Filtering and threshold constraints.
+   * @returns Array of matches sorted by descending score.
    */
   public search(query: string, options: SearchOptions = {}): SearchResult<T>[] {
     const cleanQuery = query.trim();
-
-    if (!cleanQuery || this.indexStore.length === 0) {
-      return [];
-    }
+    if (!cleanQuery || this.indexStore.length === 0) return [];
 
     const { type = "all", minScore = 0.6, maxResults = 20 } = options;
     const queryPhonetic = this.encoder.encode(cleanQuery);
@@ -232,37 +184,27 @@ export class PhoneticSearchEngine<
 
     for (let i = 0; i < this.indexStore.length; i++) {
       const item = this.indexStore[i];
+      if (type !== "all" && item.entity.type !== type) continue;
 
-      if (type !== "all" && item.entity.type !== type) {
-        continue;
-      }
-
-      const firstNameScore = DistanceCalculator.calculateSimilarity(
+      const fNameScore = DistanceCalculator.calculateSimilarity(
         queryPhonetic,
         item.firstNamePhonetic,
       );
-      const lastNameScore = DistanceCalculator.calculateSimilarity(
+      const lNameScore = DistanceCalculator.calculateSimilarity(
         queryPhonetic,
         item.lastNamePhonetic,
       );
-      const fullNameScore = DistanceCalculator.calculateSimilarity(
+      const fNameFullScore = DistanceCalculator.calculateSimilarity(
         queryPhonetic,
         item.fullNamePhonetic,
       );
 
-      const maxMatchedScore = Math.max(
-        firstNameScore,
-        lastNameScore,
-        fullNameScore,
-      );
+      const maxMatchedScore = Math.max(fNameScore, lNameScore, fNameFullScore);
 
       if (maxMatchedScore >= minScore) {
         let matchedField: "firstName" | "lastName" | "fullName" = "fullName";
-        if (maxMatchedScore === firstNameScore) {
-          matchedField = "firstName";
-        } else if (maxMatchedScore === lastNameScore) {
-          matchedField = "lastName";
-        }
+        if (maxMatchedScore === fNameScore) matchedField = "firstName";
+        else if (maxMatchedScore === lNameScore) matchedField = "lastName";
 
         results.push({
           item: item.entity,
@@ -271,7 +213,6 @@ export class PhoneticSearchEngine<
         });
       }
     }
-
     return results.sort((a, b) => b.score - a.score).slice(0, maxResults);
   }
 }

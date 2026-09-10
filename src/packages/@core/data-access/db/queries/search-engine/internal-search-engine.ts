@@ -1,10 +1,8 @@
-import type { SearchContext, SearchStrategy, SearchSuggestion } from "./types";
+import { SearchContext, SearchStrategy, SearchSuggestion } from "./types";
 
-/**
- * Main orchestrator executing parallel search strategies and managing results cache.
- */
+/** Orchestrator resolving multiple search domain queries via injected strategies. */
 export class InternalSearchEngine {
-  private static readonly CACHE_TTL_MS = 30000;
+  private static readonly CACHE_TTL_MS = 60000; // 1 minute TTL instead of 0
   private static readonly MAX_CACHE_SIZE = 500;
 
   private readonly strategies: SearchStrategy[];
@@ -14,19 +12,19 @@ export class InternalSearchEngine {
   >();
 
   /**
-   * Injects domain-specific search strategies.
-   * @param strategies - Array of instantiated search strategies.
+   * Initializes the engine with concrete domain search strategies.
+   * @param strategies Array of execution strategies.
    */
   constructor(strategies: SearchStrategy[]) {
     this.strategies = strategies;
   }
 
   /**
-   * Executes strategies in parallel and caches results per query context.
-   * @param query - Input string to search.
-   * @param context - Contextual boundaries (school, year).
-   * @param limitPerCategory - Maximum items per strategy type (default: 3).
-   * @returns Consolidated array of cross-domain suggestions.
+   * Coordinates concurrent searches and manages result caching logic.
+   * @param query Term to search.
+   * @param context Active context boundaries.
+   * @param limitPerCategory Maximum entries per domain strategy.
+   * @returns Flattened array of consolidated search results.
    */
   public async search(
     query: string,
@@ -43,7 +41,6 @@ export class InternalSearchEngine {
       cached &&
       Date.now() - cached.timestamp < InternalSearchEngine.CACHE_TTL_MS
     ) {
-      // True LRU: Delete and re-insert to move key to the end of the Map
       this.cache.delete(cacheKey);
       this.cache.set(cacheKey, cached);
       return cached.data;
