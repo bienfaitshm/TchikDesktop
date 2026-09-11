@@ -1,83 +1,68 @@
+import type { Preview } from "./preview-repository";
+
+/**
+ * Defines the supported entity types for global search operations.
+ */
 export type SearchEntityType = "STUDENT" | "TUTOR";
 
+/**
+ * Encapsulates organizational boundary parameters required for contextual queries.
+ */
 export interface SearchContext {
+  /** Target school identifier. */
   schoolId: string;
-  yearId: string; // Année académique en cours
+  /** Active academic year identifier. */
+  yearId: string;
 }
 
+/**
+ * Base UI projection model for any search result suggestion.
+ * @template T - The specific search entity type discriminator.
+ * @template P - The preview payload structure associated with the entity.
+ */
 export interface BaseSuggestion<T extends SearchEntityType, P> {
+  /** Unique entity identifier. */
   id: string;
+  /** Entity category discriminator. */
   type: T;
-  title: string; // Nom complet
-  subtitle: string; // Code élève ou numéro de téléphone
+  /** Primary label display text (e.g., full name). */
+  title: string;
+  /** Secondary label display text (e.g., code, phone number). */
+  subtitle: string;
+  /** Optional URL for the entity portrait or logo. */
   avatarUrl?: string;
+  /** Detailed domain object for previewing the entity. */
   preview: P;
 }
 
-// Aperçu ÉLÈVE
-export interface StudentPreviewData {
-  studentCode: string;
-  enrollment: {
-    enrollmentId: string;
-    classroomName: string;
-    status: string;
-  } | null;
-  tutor: {
-    tutorId: string;
-    fullName: string;
-    phone: string | null;
-    profession: string | null;
-  } | null;
-  financials: {
-    totalAssigned: number;
-    totalPaid: number;
-    balance: number;
-    status: "PAID" | "PARTIAL" | "UNPAID" | "NO_FEES";
-  };
-  seating: {
-    roomName: string;
-    row: number;
-    column: number;
-    sessionName: string;
-  } | null;
-  siblings: Array<{
-    studentId: string;
-    fullName: string;
-    classroomName: string;
-  }>;
-}
+/**
+ * Search suggestion specific to student entities.
+ */
+export type StudentSuggestion = BaseSuggestion<"STUDENT", Preview>;
 
-// Aperçu TUTEUR / PARENT
-export interface TutorPreviewData {
-  tutorId: string;
-  phoneNumber: string | null;
-  profession: string | null;
-  address: string | null;
-  children: Array<{
-    studentId: string;
-    fullName: string;
-    studentCode: string;
-    classroomName: string;
-    financialStatus: "PAID" | "PARTIAL" | "UNPAID";
-  }>;
-}
+/**
+ * Search suggestion specific to tutor entities.
+ */
+export type TutorSuggestion = BaseSuggestion<"TUTOR", Preview>;
 
-export type StudentSuggestion = BaseSuggestion<"STUDENT", StudentPreviewData>;
-export type TutorSuggestion = BaseSuggestion<"TUTOR", TutorPreviewData>;
+/**
+ * Polymorphic union of all available search suggestion domain types.
+ */
 export type SearchSuggestion = StudentSuggestion | TutorSuggestion;
 
 /**
- * Defines the contract for a bounded search strategy.
- * Implementations handle specific domain entities like students or tutors.
+ * Defines the contract for a bounded search strategy targeting a specific entity.
  */
 export interface SearchStrategy {
+  /** The specific entity category handled by this strategy. */
   readonly entityType: SearchEntityType;
+
   /**
-   * Executes a search query returning strongly-typed suggestions.
-   * @param query - Raw search query string.
+   * Executes a search query returning strongly-typed suggestions within a given context.
+   * @param query - Raw search term entered by the user.
    * @param context - Organizational context boundary (school, year).
-   * @param limit - Maximum number of results to return.
-   * @returns Array of formatted search suggestions.
+   * @param limit - Maximum amount of results to retrieve.
+   * @returns Array of formatted search suggestions matching the query.
    */
   search(
     query: string,

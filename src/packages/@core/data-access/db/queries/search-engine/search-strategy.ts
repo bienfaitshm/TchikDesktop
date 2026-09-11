@@ -1,132 +1,96 @@
-import { eq, and, like, inArray, sql, aliasedTable } from "drizzle-orm";
-
-// Schemas are assumed to be properly imported from the unified schema declarations
-import {
-  feeAssignments,
-  seatingAssignments,
-  localrooms,
-  seatingSessions,
-  classroomEnrollments,
-  users,
-  classrooms,
-  tutors,
-} from "../../schemas";
-import type {
-  SearchContext,
-  SearchStrategy,
-  StudentSuggestion,
-  BaseSuggestion,
-  SearchEntityType,
-  SearchSuggestion,
-  StudentPreviewData,
-  TutorPreviewData,
-  TutorSuggestion,
-} from "./types";
+import { eq, and, or, like, sql } from "drizzle-orm";
+import { classroomEnrollments, users, type User } from "../../schemas";
+import type { SearchContext, SearchStrategy, StudentSuggestion } from "./types";
 import {
   FrancoAfricanPhoneticEncoder,
   PhoneticSearchEngine,
   SearchableEntity,
 } from "./phonetic-engine";
 import { USER_ROLE_ENUM } from "../../options";
-import { TDataBase } from "../../config";
+import { db, TDataBase } from "../../config";
+import { formatFullName } from "./utils";
+import { Preview, StudentPreviewRepository } from "./preview-repository";
 
 type AnySQLiteDatabase = TDataBase;
+
+type UserEntityName = { id: string } & Pick<
+  User,
+  "userId" | "lastName" | "middleName" | "firstName"
+>;
 
 interface PhoneticCachePayload {
   engine: PhoneticSearchEngine<SearchableEntity>;
   timestamp: number;
 }
 
-/** Handles hybrid database and phonetic searching for student entities. */
-export class StudentSearchStrategy implements SearchStrategy {
-  public readonly entityType = "STUDENT" as const;
+export interface StudentAggregatedRawData {
+  enrollmentsData: Array<{
+    studentId: string;
+    enrollmentId: string;
+    studentCode: string;
+    status: string;
+    classIdentifier: string;
+    tutorId: string | null;
+    tutorPhone: string | null;
+    tutorProfession: string | null;
+    tutorLastName: string | null;
+    tutorFirstName: string | null;
+    studentLastName: string;
+    studentFirstName: string | null;
+    studentMiddleName: string | null;
+  }>;
+  financialData: Array<{
+    studentId: string;
+    totalAssigned: number;
+    totalPaid: number;
+  }>;
+  seatingData: Array<{
+    studentId: string;
+    roomName: string;
+    rowPosition: number;
+    columnPosition: number;
+    sessionName: string;
+  }>;
+  siblingsData: Array<{
+    tutorId: string | null;
+    studentId: string;
+    lastName: string;
+    middleName: string;
+    firstName: string | null;
+    classIdentifier: string;
+  }>;
+}
 
+/**
+ * Handles caching and indexing of phonetic search engines per school.
+ */
+export class StudentPhoneticCache {
   private static readonly ENGINE_TTL_MS = 1000 * 60 * 15;
-  private static readonly MIN_PHONETIC_SCORE = 0.65;
-
   private readonly phoneticEngines = new Map<string, PhoneticCachePayload>();
-  private readonly db: AnySQLiteDatabase;
 
   /**
-   * Initializes the strategy with a generic Drizzle SQLite database interface.
-   * @param db Drizzle database instance.
+   * Retrieves an existing valid cache engine or builds a new one.
+   * @param db Database connection instance.
+   * @param ctx Current search context.
+   * @returns The active phonetic search engine for the context school.
    */
-  constructor(db: AnySQLiteDatabase) {
-    this.db = db;
-  }
-
-  /**
-   * Performs hybrid search and aggregate formatting.
-   * @param query Search term.
-   * @param ctx Search scope context.
-   * @param limit Maximum results limit.
-   * @returns List of aggregated student suggestions.
-   */
-  public async search(
-    query: string,
-    ctx: SearchContext,
-    limit: number,
-  ): Promise<StudentSuggestion[]> {
-    const cleanQuery = query.trim();
-    if (!cleanQuery) return [];
-
-    const phoneticEngine = await this.getOrBuildPhoneticEngine(ctx);
-    const phoneticResults = phoneticEngine.search(cleanQuery, {
-      type: "student",
-      minScore: StudentSearchStrategy.MIN_PHONETIC_SCORE,
-    });
-    const phoneticIds = phoneticResults.map((res) => res.item.id);
-
-    const sqlWildcardQuery = `%${cleanQuery.toLowerCase()}%`;
-    const codeMatches = await this.db
-      .select({ userId: users.userId })
-      .from(users)
-      .innerJoin(
-        classroomEnrollments,
-        and(
-          eq(classroomEnrollments.studentId, users.userId),
-          eq(classroomEnrollments.yearId, ctx.yearId),
-        ),
-      )
-      .where(
-        and(
-          eq(users.schoolId, ctx.schoolId),
-          eq(users.role, USER_ROLE_ENUM.STUDENT),
-          like(
-            sql`LOWER(${classroomEnrollments.studentCode})`,
-            sqlWildcardQuery,
-          ),
-        ),
-      )
-      .limit(limit);
-
-    const codeIds = codeMatches.map((res) => res.userId);
-    const candidateIds = [...new Set([...phoneticIds, ...codeIds])].slice(
-      0,
-      limit,
-    );
-
-    if (candidateIds.length === 0) return [];
-
-    const aggregatedData = await this.fetchAggregatedContext(candidateIds, ctx);
-    return this.buildStudentPreviews(candidateIds, aggregatedData);
-  }
-
-  private async getOrBuildPhoneticEngine(
+  public async getOrBuild(
+    db: AnySQLiteDatabase,
     ctx: SearchContext,
   ): Promise<PhoneticSearchEngine<SearchableEntity>> {
     const cached = this.phoneticEngines.get(ctx.schoolId);
     if (
       cached &&
-      Date.now() - cached.timestamp < StudentSearchStrategy.ENGINE_TTL_MS
+      Date.now() - cached.timestamp < StudentPhoneticCache.ENGINE_TTL_MS
     ) {
       return cached.engine;
     }
 
-    const studentRecords = await this.db
+    const studentRecords = await db
       .select({
         id: users.userId,
         firstName: users.firstName,
+        middleName: users.middleName,
         lastName: users.lastName,
       })
       .from(users)
@@ -141,6 +105,7 @@ export class StudentSearchStrategy implements SearchStrategy {
       id: s.id,
       type: "student",
       firstName: s.firstName || "",
+      middleName: s.middleName || "",
       lastName: s.lastName || "",
     }));
 
@@ -156,198 +121,184 @@ export class StudentSearchStrategy implements SearchStrategy {
 
     return engine;
   }
+}
 
-  private async fetchAggregatedContext(
-    studentIds: string[],
+/**
+ * Executes relational database operations for student search queries.
+ */
+export class StudentSearchRepository {
+  /**
+   * Finds student IDs matching a text pattern in code, last name, or first name.
+   * @param db Database connection instance.
+   * @param cleanQuery Clean search query string.
+   * @param ctx Search context.
+   * @param limit Maximum record threshold.
+   * @returns Array of matched student user IDs.
+   */
+  public async findByText(
+    db: AnySQLiteDatabase,
+    cleanQuery: string,
     ctx: SearchContext,
-  ) {
-    const baseConditions = and(
-      inArray(classroomEnrollments.studentId, studentIds),
-      eq(classroomEnrollments.yearId, ctx.yearId),
-    );
-
-    const studentUsers = aliasedTable(users, "studentUsers");
-    const tutorUsers = aliasedTable(users, "tutorUsers");
-
-    const [enrollmentsData, financialData, seatingData] = await Promise.all([
-      this.db
-        .select({
-          studentId: classroomEnrollments.studentId,
-          enrollmentId: classroomEnrollments.enrollmentId,
-          studentCode: classroomEnrollments.studentCode,
-          status: classroomEnrollments.status,
-          classIdentifier: classrooms.identifier,
-          tutorId: tutors.tutorId,
-          tutorPhone: tutors.phoneNumber,
-          tutorProfession: tutors.profession,
-          tutorLastName: tutorUsers.lastName,
-          tutorFirstName: tutorUsers.firstName,
-          studentLastName: studentUsers.lastName,
-          studentFirstName: studentUsers.firstName,
-          studentMiddleName: studentUsers.middleName,
-        })
-        .from(classroomEnrollments)
-        .innerJoin(
-          studentUsers,
-          eq(classroomEnrollments.studentId, studentUsers.userId),
-        )
-        .innerJoin(
-          classrooms,
-          eq(classroomEnrollments.classroomId, classrooms.classId),
-        )
-        .leftJoin(tutors, eq(classroomEnrollments.tutorId, tutors.tutorId))
-        .leftJoin(tutorUsers, eq(tutors.userId, tutorUsers.userId))
-        .where(baseConditions),
-
-      this.db
-        .select({
-          studentId: classroomEnrollments.studentId,
-          totalAssigned: sql<number>`COALESCE(SUM(${feeAssignments.totalAmount}), 0)`,
-          totalPaid: sql<number>`COALESCE(SUM(${feeAssignments.amountPaid}), 0)`,
-        })
-        .from(classroomEnrollments)
-        .innerJoin(
-          feeAssignments,
-          eq(feeAssignments.enrollmentId, classroomEnrollments.enrollmentId),
-        )
-        .where(baseConditions)
-        .groupBy(classroomEnrollments.studentId),
-
-      this.db
-        .select({
-          studentId: classroomEnrollments.studentId,
-          roomName: localrooms.name,
-          rowPosition: seatingAssignments.rowPosition,
-          columnPosition: seatingAssignments.columnPosition,
-          sessionName: seatingSessions.sessionName,
-        })
-        .from(seatingAssignments)
-        .innerJoin(
-          classroomEnrollments,
-          eq(
-            seatingAssignments.enrollmentId,
-            classroomEnrollments.enrollmentId,
+    limit: number,
+  ): Promise<UserEntityName[]> {
+    const sqlWildcardQuery = `%${cleanQuery.toLowerCase()}%`;
+    return await db
+      .select({
+        userId: users.userId,
+        id: users.userId,
+        firstName: users.firstName,
+        middleName: users.middleName,
+        lastName: users.lastName,
+      })
+      .from(users)
+      .innerJoin(
+        classroomEnrollments,
+        and(eq(classroomEnrollments.studentId, users.userId)),
+      )
+      .where(
+        and(
+          eq(users.schoolId, ctx.schoolId),
+          eq(users.role, USER_ROLE_ENUM.STUDENT),
+          or(
+            like(
+              sql`LOWER(${classroomEnrollments.studentCode})`,
+              sqlWildcardQuery,
+            ),
+            like(sql`LOWER(${users.lastName})`, sqlWildcardQuery),
+            like(sql`LOWER(${users.middleName})`, sqlWildcardQuery),
+            like(sql`LOWER(${users.firstName})`, sqlWildcardQuery),
           ),
-        )
-        .innerJoin(
-          localrooms,
-          eq(seatingAssignments.localroomId, localrooms.localroomId),
-        )
-        .innerJoin(
-          seatingSessions,
-          eq(seatingAssignments.sessionId, seatingSessions.sessionId),
-        )
-        .where(baseConditions),
-    ]);
-
-    const tutorIds = enrollmentsData
-      .map((e) => e.tutorId)
-      .filter((id): id is string => Boolean(id));
-
-    const siblingsData =
-      tutorIds.length > 0
-        ? await this.db
-            .select({
-              tutorId: classroomEnrollments.tutorId,
-              studentId: users.userId,
-              lastName: users.lastName,
-              firstName: users.firstName,
-              classIdentifier: classrooms.identifier,
-            })
-            .from(classroomEnrollments)
-            .innerJoin(users, eq(classroomEnrollments.studentId, users.userId))
-            .innerJoin(
-              classrooms,
-              eq(classroomEnrollments.classroomId, classrooms.classId),
-            )
-            .where(
-              and(
-                inArray(classroomEnrollments.tutorId, tutorIds),
-                eq(classroomEnrollments.yearId, ctx.yearId),
-              ),
-            )
-        : [];
-
-    return { enrollmentsData, financialData, seatingData, siblingsData };
+        ),
+      )
+      .limit(limit);
   }
+}
 
-  private buildStudentPreviews(
-    candidateIds: string[],
-    data: Awaited<ReturnType<typeof this.fetchAggregatedContext>>,
+/**
+ * Transforms raw database query results into UI preview DTOs.
+ */
+export class StudentPreviewMapper {
+  /**
+   * Maps candidate student records and raw relational data into formatted suggestions.
+   * @param students List of student.
+   * @param data Raw aggregated database datasets.
+   * @returns Array of UI ready student suggestions preserving the input order.
+   */
+  public static mapToPreviews(
+    students: UserEntityName[],
+    data: Map<string, Preview>,
   ): StudentSuggestion[] {
-    const enrollmentMap = new Map(
-      data.enrollmentsData.map((e) => [e.studentId, e]),
-    );
-    const finMap = new Map(data.financialData.map((f) => [f.studentId, f]));
-    const seatMap = new Map(data.seatingData.map((s) => [s.studentId, s]));
+    return students.map((student) => {
+      const preview = data.get(student.userId);
 
-    return candidateIds.map((userId) => {
-      const enr = enrollmentMap.get(userId);
-      const fin = finMap.get(userId);
-      const seat = seatMap.get(userId);
-
-      const fullName = enr
-        ? `${enr.studentLastName} ${enr.studentMiddleName || ""} ${enr.studentFirstName || ""}`.trim()
-        : "Unknown Student";
-
-      const totalAssigned = fin?.totalAssigned || 0;
-      const totalPaid = fin?.totalPaid || 0;
-      const balance = totalAssigned - totalPaid;
-
-      let finStatus: StudentPreviewData["financials"]["status"] = "NO_FEES";
-      if (totalAssigned > 0) {
-        if (balance <= 0) finStatus = "PAID";
-        else if (totalPaid > 0) finStatus = "PARTIAL";
-        else finStatus = "UNPAID";
-      }
-
-      const siblings = enr?.tutorId
-        ? data.siblingsData
-            .filter((s) => s.tutorId === enr.tutorId && s.studentId !== userId)
-            .map((s) => ({
-              studentId: s.studentId,
-              fullName: `${s.lastName} ${s.firstName || ""}`.trim(),
-              classroomName: s.classIdentifier,
-            }))
-        : [];
+      const fullName = formatFullName(
+        student.lastName,
+        student.middleName,
+        student.firstName,
+      );
 
       return {
-        id: userId,
+        id: student.userId,
         type: "STUDENT",
-        title: fullName,
-        subtitle: enr
-          ? `Code: ${enr.studentCode} • ${enr.classIdentifier}`
-          : "Unregistered",
-        preview: {
-          studentCode: enr?.studentCode || "N/A",
-          enrollment: enr
-            ? {
-                enrollmentId: enr.enrollmentId,
-                classroomName: enr.classIdentifier,
-                status: enr.status,
-              }
-            : null,
-          tutor: enr?.tutorId
-            ? {
-                tutorId: enr.tutorId,
-                fullName:
-                  `${enr.tutorLastName} ${enr.tutorFirstName || ""}`.trim(),
-                phone: enr.tutorPhone,
-                profession: enr.tutorProfession,
-              }
-            : null,
-          financials: { totalAssigned, totalPaid, balance, status: finStatus },
-          seating: seat
-            ? {
-                roomName: seat.roomName,
-                row: seat.rowPosition,
-                column: seat.columnPosition,
-                sessionName: seat.sessionName,
-              }
-            : null,
-          siblings,
-        },
-      };
+        title: fullName.toUpperCase(),
+        subtitle: preview?.subTitle ?? "",
+        preview,
+      } as StudentSuggestion;
     });
+  }
+}
+
+/**
+ * Coordinates hybrid search strategy for student entities using modular components.
+ */
+export class StudentSearchStrategy implements SearchStrategy {
+  public readonly entityType = "STUDENT" as const;
+
+  private static readonly MIN_PHONETIC_SCORE = 0.65;
+  private static readonly SQL_EXACT_MATCH_SCORE = 2.0;
+
+  private readonly db: AnySQLiteDatabase;
+  private readonly phoneticCache: StudentPhoneticCache;
+  private readonly repository: StudentSearchRepository;
+
+  /**
+   * Initializes the student search strategy.
+   * @param db Database instance.
+   * @param phoneticCache Service handling phonetic engine lifecycle.
+   * @param repository Data repository for student database queries.
+   */
+  constructor(
+    db: AnySQLiteDatabase,
+    phoneticCache = new StudentPhoneticCache(),
+    repository = new StudentSearchRepository(),
+  ) {
+    this.db = db;
+    this.phoneticCache = phoneticCache;
+    this.repository = repository;
+  }
+
+  /**
+   * Performs a scored hybrid search for student entities and maps previews.
+   * @param query Raw user search input.
+   * @param ctx Scope and filtering parameters.
+   * @param limit Result limit.
+   * @returns Aggregated, sorted list of student suggestion DTOs.
+   */
+  public async search(
+    query: string,
+    ctx: SearchContext,
+    limit: number,
+  ): Promise<StudentSuggestion[]> {
+    const cleanQuery = query.trim();
+    if (!cleanQuery) return [];
+
+    const phoneticEngine = await this.phoneticCache.getOrBuild(this.db, ctx);
+    const phoneticResults = phoneticEngine.search(cleanQuery, {
+      type: "student",
+      minScore: StudentSearchStrategy.MIN_PHONETIC_SCORE,
+    });
+
+    const students = await this.repository.findByText(
+      this.db,
+      cleanQuery,
+      ctx,
+      limit,
+    );
+
+    const relevanceScores = new Map<
+      string,
+      { score: number; student: UserEntityName }
+    >(
+      students.map((student) => [
+        student.userId,
+        { score: StudentSearchStrategy.SQL_EXACT_MATCH_SCORE, student },
+      ]),
+    );
+
+    // Merge phonetic scores, keeping the highest score if duplicate
+    for (const res of phoneticResults) {
+      const existingScore = relevanceScores.get(res.item.id)?.score || 0;
+      if (res.score > existingScore) {
+        relevanceScores.set(res.item.id, {
+          score: res.score,
+          student: { ...res.item, userId: res.item.id },
+        });
+      }
+    }
+
+    // Sort descending by relevance score
+    const candidateIds = Array.from(relevanceScores.entries())
+      .sort((a, b) => b[1].score - a[1].score)
+      .map((entry) => entry[1].student)
+      .slice(0, limit);
+
+    if (candidateIds.length === 0) return [];
+
+    const previewMapper = new StudentPreviewRepository(db, ctx);
+    const aggregatedData = await previewMapper.mapPreview(
+      candidateIds.map((st) => st.userId),
+    );
+
+    return StudentPreviewMapper.mapToPreviews(candidateIds, aggregatedData);
   }
 }

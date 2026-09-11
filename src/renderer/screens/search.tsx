@@ -33,14 +33,14 @@ export default function CopilotDashboard() {
       </div>
 
       {/* --- SECTION HAUTE : Salutation --- */}
-      <div className="relative z-10 text-center mt-8 space-y-2">
+      {/* <div className="relative z-10 text-center mt-8 space-y-2">
         <h1 className="text-3xl md:text-4xl font-normal text-white tracking-tight drop-shadow-sm">
           Good morning, Charles
         </h1>
         <p className="text-2xl md:text-3xl font-medium text-white/90 tracking-tight drop-shadow-sm">
           What&apos;s on your mind?
         </p>
-      </div>
+      </div> */}
 
       {/* --- SECTION CENTRALE : Barre de recherche / Message Copilot --- */}
       <div className="relative z-10 max-w-2xl w-full mx-auto my-6 space-y-4">
@@ -52,6 +52,12 @@ export default function CopilotDashboard() {
             label: data.title,
             description: data.subtitle,
           })}
+
+          renderDetail={(item) => (
+            <div>
+              <p>{JSON.stringify(item, null, 4)}</p>
+            </div>
+          )}
         />
       </div>
 

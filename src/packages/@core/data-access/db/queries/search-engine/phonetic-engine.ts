@@ -1,8 +1,12 @@
+import { formatFullName } from "./utils";
+
+type MatchedField = "firstName" | "middleName" | "lastName" | "fullName";
 /** Represents a searchable domain entity. */
 export interface SearchableEntity {
   id: string;
   type: "student" | "tutor";
   firstName: string;
+  middleName: string;
   lastName: string;
 }
 
@@ -10,7 +14,7 @@ export interface SearchableEntity {
 export interface SearchResult<T extends SearchableEntity> {
   item: T;
   score: number;
-  matchedField: "firstName" | "lastName" | "fullName";
+  matchedField: MatchedField;
 }
 
 /** Defines configuration for executing searches. */
@@ -128,6 +132,7 @@ export class DistanceCalculator {
 interface IndexedItem<T extends SearchableEntity> {
   entity: T;
   firstNamePhonetic: string;
+  middleNamePhonetic: string;
   lastNamePhonetic: string;
   fullNamePhonetic: string;
 }
@@ -157,11 +162,16 @@ export class PhoneticSearchEngine<
     const store: IndexedItem<T>[] = new Array(entities.length);
     for (let i = 0; i < entities.length; i++) {
       const entity = entities[i];
-      const fullName = `${entity.firstName} ${entity.lastName}`;
+      const fullName = formatFullName(
+        entity.lastName,
+        entity.middleName,
+        entity.firstName,
+      );
       store[i] = {
         entity,
         firstNamePhonetic: this.encoder.encode(entity.firstName),
         lastNamePhonetic: this.encoder.encode(entity.lastName),
+        middleNamePhonetic: this.encoder.encode(entity.middleName),
         fullNamePhonetic: this.encoder.encode(fullName),
       };
     }
@@ -169,50 +179,72 @@ export class PhoneticSearchEngine<
   }
 
   /**
-   * Executes a fuzzy search over indexed items.
-   * @param query Input text query.
-   * @param options Filtering and threshold constraints.
-   * @returns Array of matches sorted by descending score.
+   * Executes a phonetic search on indexed items using distance calculations.
+   * @param query - The raw input search string.
+   * @param options - Filtering and scoring options (type, minScore, maxResults).
+   * @returns Array of search results matching criteria, sorted by score descending.
    */
   public search(query: string, options: SearchOptions = {}): SearchResult<T>[] {
     const cleanQuery = query.trim();
     if (!cleanQuery || this.indexStore.length === 0) return [];
 
-    const { type = "all", minScore = 0.6, maxResults = 20 } = options;
+    const { type = "all", minScore = 0.5, maxResults = 40 } = options;
     const queryPhonetic = this.encoder.encode(cleanQuery);
     const results: SearchResult<T>[] = [];
 
-    for (let i = 0; i < this.indexStore.length; i++) {
-      const item = this.indexStore[i];
+    for (const item of this.indexStore) {
       if (type !== "all" && item.entity.type !== type) continue;
 
-      const fNameScore = DistanceCalculator.calculateSimilarity(
+      const { bestScore, matchedField } = this.getBestMatch(
         queryPhonetic,
-        item.firstNamePhonetic,
-      );
-      const lNameScore = DistanceCalculator.calculateSimilarity(
-        queryPhonetic,
-        item.lastNamePhonetic,
-      );
-      const fNameFullScore = DistanceCalculator.calculateSimilarity(
-        queryPhonetic,
-        item.fullNamePhonetic,
+        item,
       );
 
-      const maxMatchedScore = Math.max(fNameScore, lNameScore, fNameFullScore);
-
-      if (maxMatchedScore >= minScore) {
-        let matchedField: "firstName" | "lastName" | "fullName" = "fullName";
-        if (maxMatchedScore === fNameScore) matchedField = "firstName";
-        else if (maxMatchedScore === lNameScore) matchedField = "lastName";
-
+      if (bestScore >= minScore) {
         results.push({
           item: item.entity,
-          score: maxMatchedScore,
+          score: bestScore,
           matchedField,
         });
       }
     }
+
     return results.sort((a, b) => b.score - a.score).slice(0, maxResults);
+  }
+
+  /**
+   * Calculates similarity across all phonetic fields of an item to find the highest match.
+   * @param queryPhonetic - The encoded phonetic string of the search query.
+   * @param item - The target indexed item containing phonetic fields.
+   * @returns An object containing the maximum score achieved and the corresponding field name.
+   */
+  private getBestMatch(
+    queryPhonetic: string,
+    item: IndexedItem<T>,
+  ): { bestScore: number; matchedField: MatchedField } {
+    const fields: Array<{ field: MatchedField; value?: string }> = [
+      { field: "firstName", value: item.firstNamePhonetic },
+      { field: "lastName", value: item.lastNamePhonetic },
+      { field: "middleName", value: item.middleNamePhonetic },
+      { field: "fullName", value: item.fullNamePhonetic },
+    ];
+
+    let bestScore = -1;
+    let matchedField: MatchedField = "fullName";
+
+    for (const { field, value } of fields) {
+      if (!value) continue;
+
+      const score = DistanceCalculator.calculateSimilarity(
+        queryPhonetic,
+        value,
+      );
+      if (score > bestScore) {
+        bestScore = score;
+        matchedField = field;
+      }
+    }
+
+    return { bestScore, matchedField };
   }
 }

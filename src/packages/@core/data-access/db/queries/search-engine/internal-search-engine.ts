@@ -32,7 +32,7 @@ export class InternalSearchEngine {
     limitPerCategory = 3,
   ): Promise<SearchSuggestion[]> {
     const cleanQuery = query.trim().toLowerCase();
-    if (cleanQuery.length < 2) return [];
+    if (cleanQuery.length <= 1) return [];
 
     const cacheKey = `${context.schoolId}:${context.yearId}:${cleanQuery}:${limitPerCategory}`;
     const cached = this.cache.get(cacheKey);
