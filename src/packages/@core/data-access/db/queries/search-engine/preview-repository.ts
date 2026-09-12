@@ -162,7 +162,15 @@ export class StudentPreviewRepository {
           },
         },
       ),
-      columns: { userId: true },
+      columns: {
+        userId: true,
+        birthDate: true,
+        birthPlace: true,
+        gender: true,
+        firstName: true,
+        middleName: true,
+        lastName: true,
+      },
       with: {
         enrollments: {
           with: {
