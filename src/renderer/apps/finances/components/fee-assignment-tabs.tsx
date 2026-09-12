@@ -48,18 +48,18 @@ export const FeeAssignmentTab: React.FC<FeeAssignmentTabProps> = ({
                 className="bg-card rounded-md flex flex-col"
               >
                 {/* Header : nom de l'installment */}
-                <div className="flex items-center justify-center gap-2.5 bg-primary px-4 py-1 rounded-t-md">
-                  <span className="text-xs font-medium text-primary-foreground text-center">
+                <div className="flex items-center justify-center gap-2.5 bg-primary px-2 py-1 rounded-t-md">
+                  <span className="text-[10px] font-medium text-primary-foreground text-center">
                     {ass.feeSchedule.installmentName}
                   </span>
                 </div>
 
                 {/* Montant */}
-                <div className="px-4 py-2 flex flex-col">
-                  <span className="text-xs font-semibold">
+                <div className="px-2 py-1 flex flex-col">
+                  <span className="text-[10px] font-semibold">
                     {formatCurrency(ass.amountPaid, ass.currency)}
                   </span>
-                  <span className="text-[10px] truncate">
+                  <span className="text-[9px] truncate">
                     {getFeeScheduleLabel(ass.status)}
                   </span>
                 </div>

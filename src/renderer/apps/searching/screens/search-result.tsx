@@ -61,19 +61,24 @@ export const ResultSearch: React.FC = () => {
   return (
     <PageContainer>
       <PageContent>
-        <div>
-          <h1 className="text-xl">{fullName}</h1>
-          <p className="text-sm text-muted-foreground">
-            Eleve de {preview.currentEnrollment?.classroom.identifier}
-          </p>
-        </div>
-        <div className="w-full">
-          {/* {JSON.stringify(preview.currentEnrollment, null, 4)} */}
-          {preview.currentEnrollment?.enrollmentId && (
-            <FeeAssignmentTab
-              enrollmentId={preview.currentEnrollment?.enrollmentId}
-            />
-          )}
+        <div className="grid grid-cols-4 gap-2">
+          <div className="col-span-3">
+            <div>
+              <h1 className="text-xl">{fullName}</h1>
+              <p className="text-sm text-muted-foreground">
+                Eleve de {preview.currentEnrollment?.classroom.identifier}
+              </p>
+            </div>
+            <div className="w-full">
+              {/* {JSON.stringify(preview.currentEnrollment, null, 4)} */}
+              {preview.currentEnrollment?.enrollmentId && (
+                <FeeAssignmentTab
+                  enrollmentId={preview.currentEnrollment?.enrollmentId}
+                />
+              )}
+            </div>
+          </div>
+          <div className="bg-blue-300"></div>
         </div>
       </PageContent>
     </PageContainer>
