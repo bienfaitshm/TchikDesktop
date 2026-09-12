@@ -12,6 +12,7 @@ export interface UseSearchEngineOptions extends Omit<
 > {
   /** Debounce delay in milliseconds before triggering the query (default: 300ms) */
   debounceMs?: number;
+  search?: string;
 }
 
 /**
@@ -20,13 +21,19 @@ export interface UseSearchEngineOptions extends Omit<
  * @returns Search query state, options list, loading indicator, and query setter function.
  */
 export function useSearchEngine(options: UseSearchEngineOptions) {
-  const { schoolId, yearId, limit = 50, debounceMs } = options;
+  const {
+    schoolId,
+    yearId,
+    limit = 50,
+    debounceMs,
+    search: externalSearch,
+  } = options;
 
   const buildSearchQuery = useCallback(
     (search: string): SearchEngineParams => ({
       limit,
       schoolId,
-      search,
+      search: search ?? externalSearch,
       yearId,
     }),
     [limit, schoolId, yearId],

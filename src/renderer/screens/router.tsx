@@ -19,8 +19,8 @@ import {
   LifeBuoy,
   Info,
   Code2,
+  Presentation,
 } from "lucide-react";
-import { SiGoogleclassroom } from "react-icons/si";
 import { BiSolidSchool } from "react-icons/bi";
 import { IoIosWallet } from "react-icons/io";
 import { RiHomeFill } from "react-icons/ri";
@@ -37,6 +37,7 @@ import type {
 
 import * as FinApp from "@/renderer/apps/finances";
 import * as SchoolApp from "@/renderer/apps/schools";
+import * as SearchApp from "@/renderer/apps/searching";
 
 // ==========================================
 //  HELPER SENIOR POUR IMPORTS DE TYPE LAZY
@@ -228,7 +229,7 @@ export const NAVIGATION_MENUS: NavSection[] = [
       {
         name: "Salles de classe",
         url: APP_ROUTES.CLASSROOMS.ROOT,
-        icon: SiGoogleclassroom,
+        icon: Presentation,
       },
       { name: "Écoles", url: APP_ROUTES.SCHOOLS.ROOT, icon: BiSolidSchool },
     ],
@@ -252,7 +253,11 @@ export default function RouterProvider(): JSX.Element {
             errorElement={<Launcher />}
           >
             {/* Base Routes */}
-            <Route index element={<HomePage />} />
+            <Route index element={<SearchApp.HomeSearch />} />
+            <Route
+              path={ROUTES.SEARCH_RESULT}
+              element={<SearchApp.SearchResult />}
+            />
             <Route path={ROUTES.ENROLLMENTS} element={<EnrollmentPage />} />
             <Route path={ROUTES.PAYMENTS} element={<FinApp.PaymentPage />} />
             <Route

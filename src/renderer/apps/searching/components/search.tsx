@@ -7,7 +7,7 @@ import {
   KeyboardEvent,
   ChangeEvent,
 } from "react";
-import { Search, Mic, Camera, Info } from "lucide-react";
+import { Search, Info } from "lucide-react";
 import { cn } from "@/renderer/utils";
 import {
   Popover,
@@ -17,10 +17,11 @@ import {
 import { Button } from "@/renderer/components/ui/button";
 
 /**
- * Props configuration for the GoogleSearchInput component.
+ * Props configuration for the SearchInput component.
  * @template TData Generic type representing the suggestions data item.
  */
-export type GoogleSearchInputProps<TData> = {
+export type SearchInputProps<TData> = {
+  name?: string;
   /** Array of suggestion items to be rendered in the popover list. */
   data?: TData[];
   /** Controlled search query string value. */
@@ -31,6 +32,7 @@ export type GoogleSearchInputProps<TData> = {
   renderDetail?: (data: TData) => ReactNode;
   /** Function to extract label and optional description from a data item. */
   getItemLabel: (data: TData) => { label: string; description?: string };
+  onSelect?: (data: TData) => void;
 };
 
 /**
@@ -39,13 +41,15 @@ export type GoogleSearchInputProps<TData> = {
  * @param props Configuration properties for the search component.
  * @returns The rendered search input with popover suggestions.
  */
-export function GoogleSearchInput<TData>({
+export function SearchInput<TData>({
+  name,
   data = [],
   query: externalQuery,
   onQueryChange,
   getItemLabel,
   renderDetail,
-}: GoogleSearchInputProps<TData>) {
+  onSelect,
+}: SearchInputProps<TData>) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [internalQuery, setInternalQuery] = useState<string>("");
   const [activeIndex, setActiveIndex] = useState<number>(-1);
@@ -202,6 +206,7 @@ export function GoogleSearchInput<TData>({
             <input
               type="text"
               value={currentQuery}
+              name={name}
               onChange={handleInputChange}
               onFocus={handleFocus}
               onKeyDown={handleKeyDown}
@@ -217,7 +222,7 @@ export function GoogleSearchInput<TData>({
 
             <div className="flex items-center gap-2 ml-2 shrink-0">
               <Button
-                type="button"
+                type="submit"
                 title="Search"
                 className="text-muted-foreground hover:text-foreground transition-colors rounded-full"
                 size="icon"
@@ -261,6 +266,7 @@ export function GoogleSearchInput<TData>({
                       updateQuery(label);
                       setIsOpen(false);
                       setActiveIndex(-1);
+                      onSelect?.(item);
                     }}
                     className={cn(
                       "flex items-center px-4 py-2.5 cursor-pointer transition-colors duration-150 rounded-r-full mr-2 min-w-0 select-none",

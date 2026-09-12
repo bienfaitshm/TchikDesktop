@@ -1,8 +1,4 @@
 import {
-  Plus,
-  ChevronDown,
-  Sparkles,
-  Mic,
   Clock,
   Compass,
   MessageSquare,
@@ -11,14 +7,56 @@ import {
   Table,
   MoreHorizontal,
 } from "lucide-react";
-import { GoogleSearchInput } from "../apps/finances/components/search";
-import { useSearchEngine } from "../libs/queries/application";
-import { useCurrentConfig } from "../libs/stores/app-store";
+import { SearchInput } from "../components/search";
+import { useSearchEngine } from "../../../libs/queries/application";
+import { useCurrentConfig } from "../../../libs/stores/app-store";
+import { ROUTES } from "@/renderer/constants";
+import { useNavigate } from "react-router";
 
-export default function CopilotDashboard() {
-  const { yearId, schoolId } = useCurrentConfig();
+const SearchForm: React.FC<{ yearId?: string; schoolId?: string }> = ({
+  schoolId = "",
+  yearId = "",
+}) => {
   const search = useSearchEngine({ yearId, schoolId, limit: 50 });
+  const navigate = useNavigate();
   console.log(search);
+  return (
+    <form
+      method="GET"
+      action={ROUTES.SEARCH_RESULT}
+      onSubmit={(e) => {
+        e.preventDefault();
+        navigate({
+          pathname: ROUTES.SEARCH_RESULT,
+          search: new URLSearchParams({
+            q: String(search.searchQuery),
+          }).toString(),
+        });
+      }}
+    >
+      <SearchInput
+        name="q"
+        data={search.options}
+        query={search.searchQuery}
+        onQueryChange={search.setSearchQuery}
+        getItemLabel={(data) => ({
+          label: data.title,
+          description: data.subtitle,
+        })}
+
+        renderDetail={(item) => (
+          <div>
+            <p>{JSON.stringify(item, null, 4)}</p>
+          </div>
+        )}
+      />
+    </form>
+  );
+};
+
+export function HomeSearch() {
+  const { yearId, schoolId } = useCurrentConfig();
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden flex flex-col justify-between p-6 md:p-10 font-sans select-none">
       {/* Arrière-plan inspiré de l'image (Dégradé + Image nature ou effet visuel) */}
@@ -44,21 +82,7 @@ export default function CopilotDashboard() {
 
       {/* --- SECTION CENTRALE : Barre de recherche / Message Copilot --- */}
       <div className="relative z-10 max-w-2xl w-full mx-auto my-6 space-y-4">
-        <GoogleSearchInput
-          data={search.options}
-          query={search.searchQuery}
-          onQueryChange={search.setSearchQuery}
-          getItemLabel={(data) => ({
-            label: data.title,
-            description: data.subtitle,
-          })}
-
-          renderDetail={(item) => (
-            <div>
-              <p>{JSON.stringify(item, null, 4)}</p>
-            </div>
-          )}
-        />
+        <SearchForm schoolId={schoolId} yearId={yearId} />
       </div>
 
       {/* --- SECTION BASSE : Les 3 Cartes Widgets --- */}
