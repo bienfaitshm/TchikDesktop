@@ -60,13 +60,8 @@ export function buildEnrollmentSearchQuery(
     { users: { lastName: { $like: `%${term}%` } } },
     { users: { middleName: { $like: `%${term}%` } } },
     { users: { firstName: { $like: `%${term}%` } } },
-    // { classroomEnrollments: { studentCode: { $like: `%${term}%` } } },
+    { classroomEnrollments: { studentCode: { $like: `%${term}%` } } },
   ]);
-  // const result = searchTerms.flatMap((term) => [
-  //     { users: { lastName: { $like: `%${term}%` } } },
-  //     { users: { middleName: { $like: `%${term}%` } } },
-  //     { users: { firstName: { $like: `%${term}%` } } },
-  // ]);
 
   return {
     ...baseQuery,

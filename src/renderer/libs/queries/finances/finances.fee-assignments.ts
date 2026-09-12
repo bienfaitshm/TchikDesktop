@@ -1,7 +1,6 @@
 import { useMutation, useSuspenseQuery } from "../base";
 import { feeAssignment as feeAssignmentApi } from "@/renderer/libs/apis";
 import type {
-  FeeAssignment,
   FeeAssignmentCreate,
   FeeAssignmentFilter,
   FeeAssignmentUpdate,
@@ -12,6 +11,10 @@ import type {
   UseMutationOptions,
   UseSuspenseQueryOptions,
 } from "@tanstack/react-query";
+import type {
+  FeeAssignment,
+  FeeAssignmentTDO,
+} from "@/packages/@core/data-access/db";
 
 type FeeBulkAssignmentData = any;
 export const feeAssignmentKeys = {
@@ -36,7 +39,7 @@ export const feeAssignmentKeys = {
 
 export function useGetFeeAssignments(
   params?: FeeAssignmentFilter,
-  options?: Partial<UseSuspenseQueryOptions<FeeAssignment[]>>,
+  options?: Partial<UseSuspenseQueryOptions<FeeAssignmentTDO[]>>,
 ) {
   return useSuspenseQuery({
     queryKey: feeAssignmentKeys.lists(params),
@@ -47,7 +50,9 @@ export function useGetFeeAssignments(
 
 export function useGetFeeAssignmentAsOptions(
   params?: FeeAssignmentFilter,
-  options?: Partial<UseSuspenseQueryOptions<(SelectOption & FeeAssignment)[]>>,
+  options?: Partial<
+    UseSuspenseQueryOptions<(SelectOption & FeeAssignmentTDO)[]>
+  >,
 ) {
   return useSuspenseQuery({
     queryKey: feeAssignmentKeys.options(params),
@@ -58,7 +63,7 @@ export function useGetFeeAssignmentAsOptions(
 
 export function useGetFeeAssignmentById(
   assignmentId: string,
-  options?: Partial<UseSuspenseQueryOptions<FeeAssignment>>,
+  options?: Partial<UseSuspenseQueryOptions<FeeAssignmentTDO>>,
 ) {
   return useSuspenseQuery({
     queryKey: feeAssignmentKeys.detail(assignmentId),
@@ -73,7 +78,7 @@ export function useGetFeeAssignmentById(
 
 export function useCreateFeeAssignment(
   options?: Partial<
-    UseMutationOptions<FeeAssignment, Error, FeeAssignmentCreate>
+    UseMutationOptions<FeeAssignmentTDO, Error, FeeAssignmentCreate>
   >,
 ) {
   return useMutation({

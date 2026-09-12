@@ -51,10 +51,12 @@ type StudentEnrollment = ClassroomEnrollment & {
     | null;
 };
 
+export type StudentPreview = Omit<User, "password">;
+
 /**
  * Composite shape of the raw student preview query result.
  */
-export type StudentPreviewResult = Pick<User, "userId"> & {
+export type StudentPreviewResult = StudentPreview & {
   enrollments: StudentEnrollment[];
 };
 
@@ -63,6 +65,7 @@ export type StudentPreviewResult = Pick<User, "userId"> & {
  */
 export type Preview = {
   subTitle: string;
+  student: StudentPreview;
   currentEnrollment: StudentEnrollment | null;
   enrollments: StudentEnrollment[];
 };
@@ -86,20 +89,24 @@ export class StudentPreviewRepository {
    * @param student - Raw student preview result.
    * @returns Formatted Preview instance.
    */
-  private buildPreview(student: StudentPreviewResult): Preview {
+  private buildPreview({
+    enrollments,
+    ...student
+  }: StudentPreviewResult): Preview {
     const currentEnrollment =
-      student.enrollments.find((enr) => enr.yearId === this.ctx.yearId) ?? null;
+      enrollments.find((enr) => enr.yearId === this.ctx.yearId) ?? null;
 
     const subTitle = currentEnrollment
       ? `${currentEnrollment.classroom.shortIdentifier} • Code: ${currentEnrollment.studentCode}`
       : "Not re-enrolled for the current academic year";
 
-    const historicalEnrollments = student.enrollments.filter(
+    const historicalEnrollments = enrollments.filter(
       (enr) => enr.yearId !== this.ctx.yearId,
     );
 
     return {
       subTitle,
+      student,
       currentEnrollment,
       enrollments: historicalEnrollments,
     };
