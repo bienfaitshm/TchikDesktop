@@ -1,30 +1,53 @@
+import { db as defaultDb, type TDataBase } from "../../config";
+import { StudentPreviewRepository, type Preview } from "./preview-repository";
 import { SearchContext, SearchStrategy, SearchSuggestion } from "./types";
 
-/** Orchestrator resolving multiple search domain queries via injected strategies. */
+/**
+ * Orchestrator resolving multiple search domain queries via injected strategies with caching capabilities.
+ */
 export class InternalSearchEngine {
-  private static readonly CACHE_TTL_MS = 60000; // 1 minute TTL instead of 0
+  private static readonly CACHE_TTL_MS = 60000;
   private static readonly MAX_CACHE_SIZE = 500;
 
   private readonly strategies: SearchStrategy[];
+  private readonly db: TDataBase;
   private readonly cache = new Map<
     string,
     { timestamp: number; data: SearchSuggestion[] }
   >();
 
   /**
-   * Initializes the engine with concrete domain search strategies.
-   * @param strategies Array of execution strategies.
+   * Initializes the engine with concrete domain search strategies and a database client instance.
+   * @param strategies - Array of execution strategies handling specific domain entities.
+   * @param dbInstance - Optional database client instance, defaults to the system configuration DB.
    */
-  constructor(strategies: SearchStrategy[]) {
+  constructor(strategies: SearchStrategy[], dbInstance: TDataBase = defaultDb) {
     this.strategies = strategies;
+    this.db = dbInstance;
   }
 
   /**
-   * Coordinates concurrent searches and manages result caching logic.
-   * @param query Term to search.
-   * @param context Active context boundaries.
-   * @param limitPerCategory Maximum entries per domain strategy.
-   * @returns Flattened array of consolidated search results.
+   * Fetches detailed preview information for a specific user ID within a scoping context.
+   * @param context - Active organizational context boundary (school, year).
+   * @param userId - Optional unique student identifier to retrieve preview for.
+   * @returns Resolves to the student Preview object or null if not provided or found.
+   */
+  public async getPreviewOfUser(
+    context: SearchContext,
+    userId?: string,
+  ): Promise<Preview | null> {
+    if (!userId) return null;
+
+    const previewRepository = new StudentPreviewRepository(this.db, context);
+    return previewRepository.mapSinglePreview(userId);
+  }
+
+  /**
+   * Coordinates concurrent domain searches across all strategies and handles result caching.
+   * @param query - Raw search query string.
+   * @param context - Active organizational context boundaries.
+   * @param limitPerCategory - Maximum result count allowed per domain category (defaults to 3).
+   * @returns Consolidated array of flattened search suggestions.
    */
   public async search(
     query: string,
@@ -37,13 +60,13 @@ export class InternalSearchEngine {
     const cacheKey = `${context.schoolId}:${context.yearId}:${cleanQuery}:${limitPerCategory}`;
     const cached = this.cache.get(cacheKey);
 
-    if (
-      cached &&
-      Date.now() - cached.timestamp < InternalSearchEngine.CACHE_TTL_MS
-    ) {
+    if (cached) {
+      if (Date.now() - cached.timestamp < InternalSearchEngine.CACHE_TTL_MS) {
+        this.cache.delete(cacheKey);
+        this.cache.set(cacheKey, cached);
+        return cached.data;
+      }
       this.cache.delete(cacheKey);
-      this.cache.set(cacheKey, cached);
-      return cached.data;
     }
 
     const tasks = this.strategies.map((strategy) =>

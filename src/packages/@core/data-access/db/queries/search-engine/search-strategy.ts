@@ -185,10 +185,13 @@ export class StudentPreviewMapper {
    * @returns Array of UI ready student suggestions preserving the input order.
    */
   public static mapToPreviews(
-    students: UserEntityName[],
+    students: {
+      score: number;
+      student: UserEntityName;
+    }[],
     data: Map<string, Preview>,
   ): StudentSuggestion[] {
-    return students.map((student) => {
+    return students.map(({ score, student }) => {
       const preview = data.get(student.userId);
 
       const fullName = formatFullName(
@@ -199,6 +202,7 @@ export class StudentPreviewMapper {
 
       return {
         id: student.userId,
+        score,
         type: "STUDENT",
         title: fullName.toUpperCase(),
         subtitle: preview?.subTitle ?? "",
@@ -289,14 +293,14 @@ export class StudentSearchStrategy implements SearchStrategy {
     // Sort descending by relevance score
     const candidateIds = Array.from(relevanceScores.entries())
       .sort((a, b) => b[1].score - a[1].score)
-      .map((entry) => entry[1].student)
+      .map((entry) => entry[1])
       .slice(0, limit);
 
     if (candidateIds.length === 0) return [];
 
     const previewMapper = new StudentPreviewRepository(db, ctx);
     const aggregatedData = await previewMapper.mapPreview(
-      candidateIds.map((st) => st.userId),
+      candidateIds.map(({ student }) => student.userId),
     );
 
     return StudentPreviewMapper.mapToPreviews(candidateIds, aggregatedData);

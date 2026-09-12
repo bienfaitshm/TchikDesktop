@@ -23,6 +23,7 @@ export interface SearchContext {
 export interface BaseSuggestion<T extends SearchEntityType, P> {
   /** Unique entity identifier. */
   id: string;
+  score: number;
   /** Entity category discriminator. */
   type: T;
   /** Primary label display text (e.g., full name). */
