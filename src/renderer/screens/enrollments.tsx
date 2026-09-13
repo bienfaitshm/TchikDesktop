@@ -206,7 +206,7 @@ export function EnrollmentPage(): React.JSX.Element {
         </PageHeaderTextContent>
       </PageHeader>
 
-      <PageContent className="pt-5">
+      <PageContent className="pt-5" key={`${schoolId}-${yearId}`}>
         <InvoiceGridContainer>
           <InvoiceGridFormContainer>
             {isConfigReady ? (

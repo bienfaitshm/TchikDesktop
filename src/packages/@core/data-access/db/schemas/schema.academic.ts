@@ -284,7 +284,11 @@ export const classroomEnrollments = sqliteTable(
     index("enrollments_tutor_idx").on(table.tutorId),
     index("enrollments_year_idx").on(table.yearId),
     /** Unique constraint index serving also as optimization for (student_id, year_id) joins. */
-    uniqueIndex("student_year_unique_idx").on(table.studentId, table.yearId),
+    uniqueIndex("student_year_unique_idx").on(
+      table.studentId,
+      table.yearId,
+      table.schoolId,
+    ),
   ],
 );
 

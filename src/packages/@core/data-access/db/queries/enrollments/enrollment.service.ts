@@ -116,8 +116,10 @@ export class EnrollmentService {
       }
 
       // 2. GESTION TUTEUR
-      if (tutorData?.isTutorInSystem === true) {
-        targetTutorId = tutorData.tutorId;
+      if (tutorData?.isTutorInSystem === true && Boolean(tutorData.tutorId)) {
+        if (tutorData.tutorId && tutorData.tutorId.length > 0) {
+          targetTutorId = tutorData.tutorId;
+        }
       } else if (tutorData?.isTutorInSystem === false) {
         const tutor = this.tutorService.createTutor(
           { ...tutorData.tutor, schoolId: payload.schoolId },
