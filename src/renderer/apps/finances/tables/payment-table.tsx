@@ -13,7 +13,10 @@ import {
 } from "@/renderer/components/tables";
 import { createPaymentColumns } from "./payment-table.column";
 import { formatCurrency } from "@/packages/currency";
-import { getFeeScheduleLabel } from "@/packages/@core/data-access/db/options";
+import {
+  FEE_SCHEDULES_ENUM,
+  getFeeScheduleLabel,
+} from "@/packages/@core/data-access/db/options";
 import { cn } from "@/renderer/utils";
 import { STATUS_INDICATORS } from "../components/payment-legend-colors";
 import { enhanceColumns } from "@/renderer/components/tables/columns";
@@ -50,7 +53,13 @@ export const RenderPaymentCell: React.FC<FeeTypeRowActionsProps> = ({
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="font-mono text-xs font-medium tabular-nums text-foreground">
+        <span
+          className={cn(
+            "font-mono text-xs font-medium tabular-nums text-foreground",
+            feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED &&
+              "line-through",
+          )}
+        >
           {formatCurrency(feeAssignment.amountPaid, feeAssignment.currency)}
         </span>
 

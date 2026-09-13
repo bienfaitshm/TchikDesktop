@@ -8,9 +8,7 @@ import type {
 import { DataTableColumnHeader } from "@/renderer/components/tables/data-table.column-header";
 
 /**
- * Formats a student entity into a single full name string.
- * @param student - User record containing student name attributes.
- * @returns Formatted full name string or fallback label.
+ * Formate les informations de l'élève en une chaîne unique.
  */
 const formatStudentName = (student: User): string => {
   return (
@@ -21,7 +19,7 @@ const formatStudentName = (student: User): string => {
 };
 
 /**
- * Static column definitions for payment assignment tables.
+ * Colonnes statiques de base pour le tableau des paiements.
  */
 export const staticPaymentColumns: ColumnDef<AssignmentTableOfClassroom>[] = [
   {
@@ -36,14 +34,22 @@ export const staticPaymentColumns: ColumnDef<AssignmentTableOfClassroom>[] = [
     accessorFn: (row) => formatStudentName(row.student),
     cell: ({ row }) => {
       const studentName = formatStudentName(row.original.student);
+      const isProDeo = row.original.isProDeo;
+
       return (
-        <div className="flex items-center min-h-9 px-2">
+        <div className="flex items-center gap-2 py-1 px-1 min-h-8">
           <span
-            className="font-medium text-xs text-foreground truncate max-w-64 uppercase"
+            className="font-semibold text-xs text-foreground truncate max-w-56 uppercase tracking-tight"
             title={studentName}
           >
             {studentName}
           </span>
+
+          {isProDeo && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+              Pro Deo
+            </span>
+          )}
         </div>
       );
     },
@@ -52,10 +58,7 @@ export const staticPaymentColumns: ColumnDef<AssignmentTableOfClassroom>[] = [
 ];
 
 /**
- * Generates table column definitions including dynamic fee schedule columns.
- * @param heads - List of payment schedule headers containing identifiers and display names.
- * @param renderCell - Custom render callback function for active fee assignments.
- * @returns Array of table column definitions.
+ * Génère l'ensemble des colonnes du tableau en y ajoutant les échéances dynamiques.
  */
 export const createPaymentColumns = (
   heads: { id: string; name: string }[],
@@ -77,9 +80,9 @@ export const createPaymentColumns = (
 
         if (!feeAssignment) {
           return (
-            <div className="flex items-center justify-end min-h-9 px-2">
-              <span className="text-muted-foreground/40 font-mono text-xs select-none">
-                -
+            <div className="flex items-center justify-end min-h-8 px-2">
+              <span className="text-muted-foreground/30 font-mono text-xs select-none">
+                —
               </span>
             </div>
           );
