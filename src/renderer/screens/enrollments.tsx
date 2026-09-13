@@ -53,7 +53,12 @@ export function EnrollmentForm({
   yearId,
   onSuccess,
 }: EnrollmentFormProps): React.JSX.Element {
-  const form = useCreateQuickEnrollmentForm({ schoolId, yearId, onSuccess });
+  const form = useCreateQuickEnrollmentForm({
+    schoolId,
+    yearId,
+    onSuccess,
+    mutationKey: ["schools"],
+  });
 
   return (
     <div className="space-y-4">

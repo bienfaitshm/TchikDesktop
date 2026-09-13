@@ -20,10 +20,10 @@ import {
   Info,
   Code2,
   Presentation,
+  WalletIcon,
+  HomeIcon,
+  School,
 } from "lucide-react";
-import { BiSolidSchool } from "react-icons/bi";
-import { IoIosWallet } from "react-icons/io";
-import { RiHomeFill } from "react-icons/ri";
 import * as Layout from "@/renderer/screens/layouts";
 import * as Seating from "@/renderer/apps/seatings";
 import * as Export from "@/renderer/apps/export";
@@ -212,7 +212,7 @@ export const NAVIGATION_MENUS: NavSection[] = [
   {
     label: "Accès Rapide",
     items: [
-      { name: "Accueil", url: APP_ROUTES.HOME, icon: RiHomeFill },
+      { name: "Accueil", url: APP_ROUTES.HOME, icon: HomeIcon },
       { name: "Paiements", url: APP_ROUTES.PAYEMENTS, icon: Banknote },
       { name: "Inscriptions", url: APP_ROUTES.ENROLLMENTS, icon: UserPlus },
       {
@@ -225,13 +225,13 @@ export const NAVIGATION_MENUS: NavSection[] = [
   {
     label: "Gestion de l'établissement",
     items: [
-      { name: "Finances", url: ROUTES.FIN.ROOT, icon: IoIosWallet },
+      { name: "Finances", url: ROUTES.FIN.ROOT, icon: WalletIcon },
       {
         name: "Salles de classe",
         url: APP_ROUTES.CLASSROOMS.ROOT,
         icon: Presentation,
       },
-      { name: "Écoles", url: APP_ROUTES.SCHOOLS.ROOT, icon: BiSolidSchool },
+      { name: "Écoles", url: APP_ROUTES.SCHOOLS.ROOT, icon: School },
     ],
   },
 ] as const;
