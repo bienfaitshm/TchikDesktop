@@ -11,6 +11,7 @@ import {
   createBaseActionDialog,
   type ActionDialogProps,
 } from "@/renderer/dialog-actions/base.dialog-actions";
+import { UpdateAmountByAssignmentForm } from "../forms/update-amount-form";
 
 export type FeeBulkAssignmentDialogProps = ActionDialogProps<
   FeeBulkAssignmentData,
@@ -54,3 +55,29 @@ export const FeeBulkAssignmentDialog = createBaseActionDialog<
 });
 
 FeeBulkAssignmentDialog.displayName = "FeeBulkAssignmentDialog";
+
+export type UpdateAmountDialogProps = ActionDialogProps<
+  FeeBulkAssignmentData,
+  BulkFeeAssignmentFormConfig
+> & {};
+export const UpdateAmountDialog = createBaseActionDialog<
+  UpdateAmountDialogProps,
+  ReturnType<typeof useCreateBulkFeeAssignmentForm>
+>({
+  title: "Facturation collective / Assignation de masse",
+  description:
+    "Générez instantanément des fiches de frais pour tout un groupe d'élèves en fonction des critères sélectionnés.",
+  useForm: useCreateBulkFeeAssignmentForm,
+  form({ formId, onSubmit }): ReactNode {
+    return (
+      <UpdateAmountByAssignmentForm
+        formId={formId}
+        onSubmit={onSubmit}
+        defaultValues={{}}
+        currencyOptions={[]}
+      />
+    );
+  },
+});
+
+UpdateAmountDialog.displayName = "UpdateAmountDialog";

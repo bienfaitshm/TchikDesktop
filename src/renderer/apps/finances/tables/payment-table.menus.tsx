@@ -1,17 +1,20 @@
-import { createMenuBuilder } from "@/components/menus/more-menus";
 import {
   Info,
   CreditCard,
-  Trash2,
   ExternalLink,
-  MoreVerticalIcon,
-  Eye,
+  MoreVertical,
+  History,
+  ShieldOff,
+  Pencil,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/renderer/components/ui/button";
+import { createMenuBuilder } from "@/components/menus/more-menus";
 import {
   SavePaymentDialog,
   PaymentHistoryDialog,
   PaymentDetailDialog,
+  UpdateAmountDialog,
 } from "../dialog";
 import type {
   AssignmentTableOfClassroom,
@@ -20,7 +23,7 @@ import type {
 import { FEE_SCHEDULES_ENUM } from "@/packages/@core/data-access/db/options";
 
 /**
- * Properties passed to the fee assignment row action handlers and dialogs.
+ * Propriétés transmises aux actions de ligne des échéances de frais.
  */
 export interface FeeTypeRowActionsProps {
   feeAssignment: FeeAssignment;
@@ -30,23 +33,23 @@ export interface FeeTypeRowActionsProps {
 }
 
 /**
- * Shared trigger button element for table row context menus.
+ * Bouton déclencheur standard pour les menus contextuels de tableau.
  */
 export const defaultMenuTrigger = (
   <Button
     variant="ghost"
     size="icon-sm"
-    aria-label="Table row actions menu"
+    aria-label="Menu d'actions"
     className="opacity-0 group-hover/cell:opacity-100 focus-visible:opacity-100 transition-opacity"
   >
-    <MoreVerticalIcon data-icon="inline-start" />
+    <MoreVertical className="h-4 w-4 text-muted-foreground" />
   </Button>
 );
 
 const feeMenu = createMenuBuilder<FeeTypeRowActionsProps>();
 
 /**
- * Contextual action menu component for fee assignment table rows.
+ * Menu contextuel d'actions pour chaque cellule d'échéance/frais.
  */
 export const CellAction = feeMenu.build(
   {
@@ -67,21 +70,27 @@ export const CellAction = feeMenu.build(
       ))
       .disabled(
         ({ feeAssignment }) =>
-          feeAssignment.amountPaid >= feeAssignment.totalAmount,
+          feeAssignment.amountPaid >= feeAssignment.totalAmount ||
+          feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED,
       ),
-    exampt: feeMenu
-      .label("Exempter du paiement")
+
+    exempt: feeMenu
+      .label("Exempter du paiement", ShieldOff)
       .toggle(
-        (value) => value.feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED,
+        (props) => props.feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED,
         (props) => {
-          console.log(props);
+          console.log(
+            "Toggle exemption pour :",
+            props.feeAssignment.assignmentId,
+          );
         },
       )
       .disabled(
-        (props) => props.feeAssignment.status === FEE_SCHEDULES_ENUM.PAID,
+        ({ feeAssignment }) => feeAssignment.status === FEE_SCHEDULES_ENUM.PAID,
       ),
+
     changeAmount: feeMenu
-      .label("Changer le montant a payer", CreditCard)
+      .label("Ajuster le montant à payer", Pencil)
       .dialog(({ props, open, onOpenChange, close }) => (
         <SavePaymentDialog
           open={open}
@@ -101,7 +110,7 @@ export const CellAction = feeMenu.build(
       .submenu("Consultation & Historique", Info)
       .submenu({
         details: feeMenu
-          .label("Détails de l'échéance", Info)
+          .label("Détails de l'échéance", FileText)
           .dialog(({ props, open, onOpenChange }) => (
             <PaymentDetailDialog
               open={open}
@@ -111,7 +120,7 @@ export const CellAction = feeMenu.build(
           )),
 
         viewHistory: feeMenu
-          .label("Historique des paiements", Eye)
+          .label("Historique des paiements", History)
           .dialog(({ props, open, onOpenChange }) => (
             <PaymentHistoryDialog
               open={open}
@@ -129,13 +138,19 @@ export const CellAction = feeMenu.build(
 const rowMenu = createMenuBuilder<AssignmentTableOfClassroom>();
 
 /**
- * Contextual action menu component for classroom assignment table rows.
+ * Menu contextuel d'actions pour chaque ligne du tableau (niveau élève).
  */
 export const RowAction = rowMenu.build(
   {
-    externalLink: rowMenu
-      .label("Lien Externe", ExternalLink)
+    viewStudentProfile: rowMenu
+      .label("Fiche de l'élève", ExternalLink)
       .link(({ enrollmentId }) => `/schools/${enrollmentId}/details`),
+    changeAmount: rowMenu
+      .label("Ajuster le montant à payer", Pencil)
+      .dialog(({ props, open, onOpenChange, close }) => (
+        <UpdateAmountDialog open={open} onOpenChange={onOpenChange} />
+      ))
+      .separator("after"),
   },
   {
     trigger: defaultMenuTrigger,
