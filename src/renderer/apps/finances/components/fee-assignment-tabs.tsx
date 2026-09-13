@@ -59,7 +59,7 @@ export const FeeAssignmentTab: React.FC<FeeAssignmentTabProps> = ({
                   <span className="text-[10px] font-semibold">
                     {formatCurrency(ass.amountPaid, ass.currency)}
                   </span>
-                  <span className="text-[9px] truncate">
+                  <span className="text-[8px] truncate">
                     {getFeeScheduleLabel(ass.status)}
                   </span>
                 </div>

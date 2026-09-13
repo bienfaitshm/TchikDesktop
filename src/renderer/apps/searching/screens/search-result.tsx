@@ -1,19 +1,12 @@
-import React, { useMemo, useState } from "react";
+import React from "react";
 import { useSearchParams } from "react-router";
 import { useGetPreviewOfUserQuery } from "@/renderer/libs/queries/application";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
-import { FeeAssignmentTab } from "../../finances/components/fee-assignment-tabs";
+import { FeeAssignmentTab } from "@/renderer/apps/finances/components/fee-assignment-tabs";
 import {
   PageContainer,
   PageContent,
 } from "@/renderer/containers/page-container";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { StudentAvatar } from "@/renderer/components/student-avatar";
-
-/* -------------------------------------------------------------------------- */
-/*                             Container / Search                             */
-/* -------------------------------------------------------------------------- */
 
 export const ResultSearch: React.FC = () => {
   const { yearId, schoolId } = useCurrentConfig();
