@@ -1,4 +1,5 @@
 import React from "react";
+import { Info } from "lucide-react";
 import {
   MarkStudentsAsProDeo,
   MarkStudentsAsProDeoSchema,
@@ -12,7 +13,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/renderer/components/ui/form";
-
 import {
   type BaseFormProps,
   mergeDefaultValues,
@@ -20,6 +20,7 @@ import {
 } from "@/renderer/libs/forms";
 import { MultiSelect } from "@/renderer/components/inputs/multiple-select";
 import { groupFeeAssignmentsByTypeName } from "@/renderer/libs/queries/finances/utils";
+import { FeeAssignmentTab } from "../../finances/components/fee-assignment-tabs";
 
 const DEFAULT_PRO_DEO_VALUES: Partial<MarkStudentsAsProDeo> = {
   enrollmentIds: [],
@@ -28,46 +29,91 @@ const DEFAULT_PRO_DEO_VALUES: Partial<MarkStudentsAsProDeo> = {
 };
 
 type MarkStudentsAsProDeoFormProps = {
-  enssignmentsOptions: unknown[];
+  enrollmentId: string;
+  assignmentsOptions?: unknown[];
+  /** @deprecated Utilisez `assignmentsOptions` à la place */
+  enssignmentsOptions?: unknown[];
 };
+
 /**
- * Form component to mark selected students as Pro Deo (granted exemption).
- * @param props - Base form props for Pro Deo schema payload.
- * @returns Renders the Pro Deo confirmation form.
+ * Composant de formulaire pour attribuer le statut Pro Deo (exonération de frais).
  */
 export const MarkStudentsAsProDeoForm: React.FC<
   MarkStudentsAsProDeoFormProps &
     BaseFormProps<Partial<MarkStudentsAsProDeo>, MarkStudentsAsProDeo>
-> = ({ formId, onSubmit, defaultValues, enssignmentsOptions = [] }) => {
+> = ({
+  formId,
+  onSubmit,
+  defaultValues,
+  enrollmentId,
+  assignmentsOptions,
+  enssignmentsOptions = [],
+}) => {
   const form = useZodForm<MarkStudentsAsProDeo>({
     schema: MarkStudentsAsProDeoSchema,
     defaultValues: mergeDefaultValues(defaultValues, DEFAULT_PRO_DEO_VALUES),
     onSubmit,
   });
 
-  const selectedEnrollmentsCount = form.watch("enrollmentIds")?.length || 0;
-  const selectedAssignmentsCount = form.watch("assignmentIds")?.length || 0;
+  // Support de l'ancienne prop si 'assignmentsOptions' n'est pas transmis
+  const rawAssignments = assignmentsOptions ?? enssignmentsOptions;
+  const options = groupFeeAssignmentsByTypeName(rawAssignments);
 
-  const options = groupFeeAssignmentsByTypeName(enssignmentsOptions);
-  console.log(options);
   return (
     <Form {...form}>
       <form
         id={formId}
         onSubmit={form.submit}
-        className="space-y-6"
+        className="space-y-5"
         aria-label="Formulaire d'attribution du statut Pro Deo"
       >
-        <div className="p-4 rounded-md bg-muted/50 border space-y-2">
-          <p className="text-sm font-medium">Résumé de l'exonération Pro Deo</p>
-          <p className="text-xs text-muted-foreground">
-            Élèves (Inscriptions) sélectionnés : {selectedEnrollmentsCount}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Frais (Affectations) concernés : {selectedAssignmentsCount}
-          </p>
+        {/* Bannière d'information synthétique */}
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-xs flex items-start gap-2.5 text-amber-900 dark:text-amber-200">
+          <Info
+            size={16}
+            className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5"
+          />
+          <div className="space-y-0.5">
+            <p className="font-semibold">Exonération Pro Deo</p>
+            <p className="text-[11px] text-muted-foreground leading-tight">
+              Les frais sélectionnés ci-dessous seront marqués comme exonérés
+              pour cet élève.
+            </p>
+          </div>
         </div>
-        <MultiSelect name="" groups={options} />
+
+        {/* Champ de sélection des frais */}
+        <FormField
+          control={form.control}
+          name="assignmentIds"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-semibold">
+                Frais à exempter
+              </FormLabel>
+              <FormControl>
+                <MultiSelect
+                  {...field}
+                  groups={options}
+                  placeholder="Sélectionnez un ou plusieurs frais..."
+                />
+              </FormControl>
+              <FormDescription className="text-[11px]">
+                Choisissez les tranches ou frais pour lesquels l&apos;élève
+                bénéficiera d&apos;une dispense Pro Deo.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Aperçu financier contextuel */}
+        <div className="pt-3 border-t border-border/60 space-y-2">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Aperçu de la situation financière
+          </h4>
+          <FeeAssignmentTab enrollmentId={enrollmentId} />
+        </div>
       </form>
     </Form>
   );

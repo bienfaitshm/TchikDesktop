@@ -22,6 +22,7 @@ import {
   type ActionDialogProps,
 } from "@/renderer/dialog-actions/base.dialog-actions";
 import { wrapUpdateFunc } from "@/renderer/libs/queries/base";
+import { Suspense } from "@/renderer/libs/queries/suspense";
 
 export type EnrollmentDialogProps = ActionDialogProps<
   EnrollmentCreate | EnrollmentQuickCreate,
@@ -110,7 +111,7 @@ export const UpdateEnrollmentDialog = createBaseActionDialog<
 
 UpdateEnrollmentDialog.displayName = "UpdateEnrollmentDialog";
 
-type MarStudentAsProdeoDialogProps = ActionDialogProps<
+type MarkStudentAsProDeoDialogProps = ActionDialogProps<
   EnrollmentCreate | EnrollmentQuickCreate,
   EnrollmentFormConfig
 > & {
@@ -119,15 +120,20 @@ type MarStudentAsProdeoDialogProps = ActionDialogProps<
   schoolId: string;
 };
 
-export const MarStudentAsProdeoDialog = createBaseActionDialog<
-  MarStudentAsProdeoDialogProps,
+/**
+ * Dialogue d'action pour accorder le statut Pro Deo (exonération de frais) à un élève.
+ */
+export const MarkStudentAsProDeoDialog = createBaseActionDialog<
+  MarkStudentAsProDeoDialogProps,
   ReturnType<typeof useMarkStudentAsProdeoForm>
 >({
-  title: ({ fullName }: MarStudentAsProdeoDialogProps) =>
-    `Rendre ${fullName ? `${fullName}` : ""} comme prodeo`,
+  title: ({ fullName }: MarkStudentAsProDeoDialogProps) =>
+    fullName
+      ? `Accorder le statut Pro Deo à ${fullName}`
+      : "Accorder le statut Pro Deo",
   description:
-    "Mettez à jour les informations de l'élève pour l'année scolaire en cours.",
-  submitText: "Mettre à jour",
+    "Sélectionnez les frais ou tranches pour lesquels cet élève bénéficiera d'une exonération.",
+  submitText: "Appliquer l'exonération",
   useForm: (props) =>
     useMarkStudentAsProdeoForm({
       fullName: props?.fullName,
@@ -140,24 +146,33 @@ export const MarStudentAsProdeoDialog = createBaseActionDialog<
     { enrollmentId, schoolId },
   ): ReactNode {
     return (
-      <div className="py-4">
-        <MarkStudentsAsProDeoForm
-          formId={formId}
-          defaultValues={{
-            enrollmentIds: [enrollmentId],
-            schoolId: schoolId,
-          }}
-          enssignmentsOptions={feeAssignmentOptions}
-          onSubmit={(payload) => {
-            console.log(payload);
-          }}
-        />
+      <div className="py-2">
+        <Suspense
+          fallback={
+            <div className="space-y-3 py-3 animate-pulse">
+              <div className="h-8 bg-muted rounded-md w-full" />
+              <div className="h-10 bg-muted rounded-md w-full" />
+              <div className="h-28 bg-muted rounded-lg w-full" />
+            </div>
+          }
+        >
+          <MarkStudentsAsProDeoForm
+            formId={formId}
+            enrollmentId={enrollmentId}
+            defaultValues={{
+              enrollmentIds: [enrollmentId],
+              schoolId: schoolId,
+            }}
+            assignmentsOptions={feeAssignmentOptions}
+            onSubmit={onSubmit}
+          />
+        </Suspense>
       </div>
     );
   },
 });
 
-MarStudentAsProdeoDialog.displayName = "MarStudentAsProdeoDialog";
+MarkStudentAsProDeoDialog.displayName = "MarkStudentAsProDeoDialog";
 
 /**
  * Action dialog component for confirming and executing student enrollment deletion.
