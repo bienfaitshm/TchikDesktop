@@ -155,6 +155,10 @@ export class EnrollmentRepository
     filters: BaseClassroomEnrollmentFilters,
     tx?: TDataBase,
   ) {
+    console.log(
+      "+++++++++++++++++++++++++++++++++++++++++++++++=",
+      "getActiveEnrollments",
+    );
     try {
       const query = this.getQuerySet(tx);
       const result = helpers.applyQueryOptions(

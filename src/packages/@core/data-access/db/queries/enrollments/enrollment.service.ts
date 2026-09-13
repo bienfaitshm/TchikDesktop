@@ -159,6 +159,7 @@ export class EnrollmentService {
 }
 
 export const enrollmentRepository = new EnrollmentRepository();
+console.log("enrollmentRepository", enrollmentRepository);
 export const enrollmentService = new EnrollmentService(
   enrollmentRepository,
   userRepository,
