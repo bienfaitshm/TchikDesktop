@@ -15,6 +15,7 @@ export const FeeAssignmentTab: React.FC<FeeAssignmentTabProps> = ({
   const { data: assignments = [] } = useGetFeeAssignments({
     where: { feeAssignments: { enrollmentId } },
     orderBy: [{ table: "feeSchedules", column: "createdAt", order: "asc" }],
+    limit: 5000,
   });
 
   const grouped = groupFeeAssignmentsByTypeName(assignments);

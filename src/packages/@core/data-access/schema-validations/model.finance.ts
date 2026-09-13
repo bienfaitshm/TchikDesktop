@@ -237,7 +237,6 @@ export const FeeAssignmentSchema = z
       .number()
       .int()
       .min(0, "Le montant payé ne peut pas être négatif.")
-      .default(0)
       .describe("Montant déjà payé (en centimes)"),
     status: ZFEE_SCHEDULES_ENUM.describe(
       "Statut de l'échéancier (UNPAID, PARTIAL, PAID, ...)",
