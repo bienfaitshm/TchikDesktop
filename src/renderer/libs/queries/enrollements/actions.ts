@@ -130,7 +130,7 @@ const getQuickEnrollmentNotifications: NotificationResolver<EnrollmentDTO> = (
  * @returns Object containing user, classroom, and tutor search hook instances.
  */
 function useEnrollmentFormBase(schoolId: string) {
-  const searchUser = useSearchStudents();
+  const searchUser = useSearchStudents(schoolId);
   const searchClassroom = useSearchClassrooms({ schoolId });
   const searchTutor = useSearchTutors({ schoolId });
 

@@ -381,7 +381,7 @@ export const StudentInputSchema = z.discriminatedUnion("isInSystem", [
 // 2. Gestion Tuteur (Discriminated Union propre + Cas Optionnel)
 const ExistingTutorSchema = z.object({
   isTutorInSystem: z.literal(true),
-  tutorId: z.string().min(1, "Tutor ID is required."),
+  tutorId: z.string().optional(),
 });
 
 const NewTutorSchema = z.object({
@@ -392,7 +392,6 @@ const NewTutorSchema = z.object({
 export const TutorQuickInputSchema = z.discriminatedUnion("isTutorInSystem", [
   ExistingTutorSchema,
   NewTutorSchema,
-  // Astuce : On peut aussi gérer le cas "Pas de tuteur" proprement
 ]);
 
 /* =========================================================================

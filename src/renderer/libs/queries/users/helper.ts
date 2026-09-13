@@ -12,6 +12,7 @@ import type { UserFilter } from "@/packages/@core/data-access/schema-validations
  */
 export function buildStudentSearchQuery(
   search: string,
+  schoolId: string,
   limit: number = 25,
 ): UserFilter {
   const sanitizedSearch = search.trim();
@@ -22,6 +23,7 @@ export function buildStudentSearchQuery(
     where: {
       users: {
         role: USER_ROLE_ENUM.STUDENT,
+        schoolId: schoolId,
       },
     },
     orderBy: [
@@ -51,9 +53,9 @@ export function buildStudentSearchQuery(
  * Custom React hook providing debounced search options for student selection components.
  * @returns Object containing search state, option results, loading indicator, and query updater.
  */
-export function useSearchStudents() {
+export function useSearchStudents(schoolId: string) {
   const buildSearchQuery = useCallback(
-    (search: string): UserFilter => buildStudentSearchQuery(search),
+    (search: string): UserFilter => buildStudentSearchQuery(search, schoolId),
     [],
   );
 
