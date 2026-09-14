@@ -10,23 +10,33 @@ import { eq, and, sql, count, SQL, asc } from "drizzle-orm";
 import type { SQLiteTable, SQLiteColumn } from "drizzle-orm/sqlite-core";
 import { getLogger } from "@/packages/logger";
 import {
-  USER_ROLE_ENUM,
+  SECTION_ENUM,
   STUDENT_STATUS_ENUM,
   USER_GENDER_ENUM,
 } from "@/packages/@core/data-access/db/enum";
 
-const logger = getLogger("StatsService");
+const logger = getLogger("statsService");
 
+/**
+ * Defines a standard data point for charting libraries.
+ */
 export interface ChartDataPoint {
   label: string;
   value: number;
 }
 
+/**
+ * Data transfer object for classroom statistics.
+ */
 export interface ClassStatsDTO extends ChartDataPoint {
   classId: string;
   shortName: string;
+  section: SECTION_ENUM | null;
 }
 
+/**
+ * Represents yearly enrollment metrics divided by gender.
+ */
 export interface EnrollmentStatsByYear {
   yearId: string;
   yearName: string;
@@ -35,6 +45,9 @@ export interface EnrollmentStatsByYear {
   male: number;
 }
 
+/**
+ * Summary of student distribution by academic status.
+ */
 export interface StatsSummary {
   total: number;
   active: number;
@@ -43,14 +56,12 @@ export interface StatsSummary {
 }
 
 /**
- * Exécute une agrégation `COUNT` groupée par une colonne.
- * Applique les filtres passés et traduit éventuellement les clés de groupe via `labelMapping`.
- *
- * @param table - Table Drizzle
- * @param column - Colonne de regroupement
- * @param filters - Condition(s) WHERE (objet ou array d'opérateurs Drizzle)
- * @param labelMapping - Mapping optionnel pour renommer les labels
- * @returns Liste de points de données { label, value }
+ * Executes a COUNT aggregation grouped by a specified column.
+ * @param table - The Drizzle SQLite table target.
+ * @param column - The column to group the counts by.
+ * @param filters - SQL conditions to filter the queried rows.
+ * @param labelMapping - Optional map to translate database keys to UI labels.
+ * @returns Array of chart data points representing the counts.
  */
 async function aggregateCount(
   table: SQLiteTable,
@@ -80,16 +91,16 @@ async function aggregateCount(
 }
 
 /**
- * Statistiques liées aux inscriptions et à la répartition par année.
+ * Retrieves the total number of enrolled students for a given school year.
+ * @param schoolId - The unique identifier of the school.
+ * @param yearId - The academic year identifier.
+ * @returns The total student count.
  */
-export namespace EnrollmentStats {
-  /**
-   * Nombre total d'élèves pour une école et une année donnée.
-   */
-  export async function getTotalStudents(
-    schoolId: string,
-    yearId: string,
-  ): Promise<number> {
+export async function getTotalStudents(
+  schoolId: string,
+  yearId: string,
+): Promise<number> {
+  try {
     const [result] = await db
       .select({ value: count() })
       .from(classroomEnrollments)
@@ -100,167 +111,172 @@ export namespace EnrollmentStats {
         ),
       );
     return result?.value ?? 0;
-  }
-
-  /**
-   * Répartition des inscriptions par année scolaire avec détails par genre.
-   * Retourne pour chaque année : total, nombre de filles, nombre de garçons.
-   */
-  export async function getStatsByYear(
-    schoolId: string,
-  ): Promise<EnrollmentStatsByYear[]> {
-    try {
-      const results = await db
-        .select({
-          yearId: studyYears.yearId,
-          yearName: studyYears.yearName,
-          total: count(classroomEnrollments.enrollmentId),
-          female: sql<number>`COUNT(CASE WHEN ${users.gender} = ${USER_GENDER_ENUM.FEMALE} THEN 1 END)`,
-          male: sql<number>`COUNT(CASE WHEN ${users.gender} = ${USER_GENDER_ENUM.MALE} THEN 1 END)`,
-        })
-        .from(studyYears)
-        .leftJoin(
-          classroomEnrollments,
-          and(
-            eq(studyYears.yearId, classroomEnrollments.yearId),
-            eq(classroomEnrollments.schoolId, schoolId),
-          ),
-        )
-        .leftJoin(users, eq(classroomEnrollments.studentId, users.userId))
-        .where(eq(studyYears.yearId, classroomEnrollments.yearId))
-        .groupBy(studyYears.yearId)
-        .orderBy(asc(studyYears.startDate))
-        .all();
-
-      return results.map((row) => ({
-        ...row,
-        total: Number(row.total),
-        female: Number(row.female),
-        male: Number(row.male),
-      }));
-    } catch (error) {
-      logger.error("EnrollmentStats.getStatsByYear failed", error as Error);
-      return [];
-    }
+  } catch (error) {
+    logger.error("getTotalStudents failed", error as Error);
+    return 0;
   }
 }
 
 /**
- * Statistiques de répartition par genre (étudiants uniquement).
+ * Fetches enrollment statistics divided by academic year and gender.
+ * @param schoolId - The unique identifier of the school.
+ * @returns Array containing the yearly historical enrollment data.
  */
-export namespace GenderStats {
-  /**
-   * Distribution des genres pour les élèves d'une école.
-   * Labels retournés : "masculin", "feminin", "autre".
-   */
-  export async function getDistribution(
-    schoolId: string,
-  ): Promise<ChartDataPoint[]> {
-    const labels: Record<string, string> = {
-      MALE: "masculin",
-      FEMALE: "feminin",
-      OTHER: "autre",
-    };
+export async function getEnrollmentStatsByYear(
+  schoolId: string,
+): Promise<EnrollmentStatsByYear[]> {
+  try {
+    const results = await db
+      .select({
+        yearId: studyYears.yearId,
+        yearName: studyYears.yearName,
+        total: count(classroomEnrollments.enrollmentId),
+        female: sql<number>`COUNT(CASE WHEN ${users.gender} = ${USER_GENDER_ENUM.FEMALE} THEN 1 END)`,
+        male: sql<number>`COUNT(CASE WHEN ${users.gender} = ${USER_GENDER_ENUM.MALE} THEN 1 END)`,
+      })
+      .from(studyYears)
+      .leftJoin(
+        classroomEnrollments,
+        and(
+          eq(studyYears.yearId, classroomEnrollments.yearId),
+          eq(classroomEnrollments.schoolId, schoolId),
+        ),
+      )
+      .leftJoin(users, eq(classroomEnrollments.studentId, users.userId))
+      .where(eq(studyYears.yearId, classroomEnrollments.yearId))
+      .groupBy(studyYears.yearId)
+      .orderBy(asc(studyYears.startDate))
+      .all();
 
-    return aggregateCount(
-      users,
-      users.gender,
-      and(eq(users.schoolId, schoolId), eq(users.role, USER_ROLE_ENUM.STUDENT)),
-      labels,
-    );
+    return results.map((row) => ({
+      ...row,
+      total: Number(row.total),
+      female: Number(row.female),
+      male: Number(row.male),
+    }));
+  } catch (error) {
+    logger.error("getEnrollmentStatsByYear failed", error as Error);
+    return [];
   }
 }
 
 /**
- * Statistiques par classe.
+ * Gets the gender distribution of enrolled students.
+ * @param schoolId - The unique identifier of the school.
+ * @param yearId - The academic year identifier.
+ * @returns Array of chart data points for male, female, and other genders.
  */
-export namespace ClassroomStats {
-  /**
-   * Nombre d'élèves par classe pour une année donnée.
-   * Retourne l'identifiant de la classe, son libellé, son nom court et l'effectif.
-   */
-  export async function getStudentsCountByClass(
-    schoolId: string,
-  ): Promise<ClassStatsDTO[]> {
-    try {
-      const results = await db
-        .select({
-          classId: classrooms.classId,
-          label: classrooms.identifier,
-          shortName: classrooms.shortIdentifier,
-          value: count(classroomEnrollments.studentId),
-        })
-        .from(classroomEnrollments)
-        .innerJoin(
-          classrooms,
-          eq(classroomEnrollments.classroomId, classrooms.classId),
-        )
-        .where(and(eq(classroomEnrollments.schoolId, schoolId)))
-        .groupBy(classrooms.classId)
-        .orderBy(classrooms.shortIdentifier);
+export async function getGenderDistribution(
+  schoolId: string,
+  yearId: string,
+): Promise<ChartDataPoint[]> {
+  const labels: Record<string, string> = {
+    [USER_GENDER_ENUM.MALE]: "male",
+    [USER_GENDER_ENUM.FEMALE]: "female",
+    OTHER: "other",
+  };
 
-      return results.map((item) => ({
-        ...item,
-        value: Number(item.value),
-      }));
-    } catch (error) {
-      logger.error(
-        "ClassroomStats.getStudentsCountByClass failed",
-        error as Error,
-      );
-      return [];
-    }
+  return aggregateCount(
+    classroomEnrollments,
+    users.gender,
+    and(
+      eq(classroomEnrollments.schoolId, schoolId),
+      eq(classroomEnrollments.yearId, yearId),
+    ),
+    labels,
+  );
+}
+
+/**
+ * Retrieves the total number of students enrolled per classroom.
+ * @param schoolId - The unique identifier of the school.
+ * @param yearId - The academic year identifier.
+ * @returns Array of DTOs detailing counts per classroom.
+ */
+export async function getStudentsCountByClass(
+  schoolId: string,
+  yearId: string,
+): Promise<ClassStatsDTO[]> {
+  try {
+    const results = await db
+      .select({
+        classId: classrooms.classId,
+        label: classrooms.identifier,
+        shortName: classrooms.shortIdentifier,
+        section: classrooms.section,
+        value: count(classroomEnrollments.studentId),
+      })
+      .from(classroomEnrollments)
+      .innerJoin(
+        classrooms,
+        eq(classroomEnrollments.classroomId, classrooms.classId),
+      )
+      .where(
+        and(
+          eq(classroomEnrollments.schoolId, schoolId),
+          eq(classroomEnrollments.yearId, yearId),
+        ),
+      )
+      .groupBy(classrooms.classId)
+      .orderBy(classrooms.shortIdentifier);
+
+    return results.map((item) => ({
+      ...item,
+      value: Number(item.value),
+    }));
+  } catch (error) {
+    logger.error("getStudentsCountByClass failed", error as Error);
+    return [];
   }
 }
 
 /**
- * Statistiques par option.
+ * Retrieves student counts grouped by their selected study options.
+ * @param schoolId - The unique identifier of the school.
+ * @param yearId - The academic year identifier.
+ * @returns Array of chart data points representing counts per study option.
  */
-export namespace OptionStats {
-  /**
-   * Nombre d'élèves par option pour une année donnée.
-   * Le label correspond au nom court de l'option.
-   */
-  export async function getStudentsCountByOption(
-    schoolId: string,
-  ): Promise<ChartDataPoint[]> {
-    try {
-      return await db
-        .select({
-          label: options.optionShortName,
-          value: count(classroomEnrollments.studentId),
-        })
-        .from(classroomEnrollments)
-        .innerJoin(
-          classrooms,
-          eq(classroomEnrollments.classroomId, classrooms.classId),
-        )
-        .innerJoin(options, eq(classrooms.optionId, options.optionId))
-        .where(and(eq(classroomEnrollments.schoolId, schoolId)))
-        .groupBy(options.optionShortName)
-        .orderBy(options.optionShortName);
-    } catch (error) {
-      logger.error(
-        "OptionStats.getStudentsCountByOption failed",
-        error as Error,
-      );
-      return [];
-    }
+export async function getStudentsCountByOption(
+  schoolId: string,
+  yearId: string,
+): Promise<ChartDataPoint[]> {
+  try {
+    return await db
+      .select({
+        label: options.optionShortName,
+        value: count(classroomEnrollments.studentId),
+      })
+      .from(classroomEnrollments)
+      .innerJoin(
+        classrooms,
+        eq(classroomEnrollments.classroomId, classrooms.classId),
+      )
+      .innerJoin(options, eq(classrooms.optionId, options.optionId))
+      .where(
+        and(
+          eq(classroomEnrollments.schoolId, schoolId),
+          eq(classroomEnrollments.yearId, yearId),
+        ),
+      )
+      .groupBy(options.optionShortName)
+      .orderBy(options.optionShortName);
+  } catch (error) {
+    logger.error("getStudentsCountByOption failed", error as Error);
+    return [];
   }
 }
 
 /**
- * Statistiques de rétention (anciens vs nouveaux élèves).
+ * Analyzes the retention metrics comparing returning vs newly enrolled students.
+ * @param schoolId - The unique identifier of the school.
+ * @param yearId - The academic year identifier.
+ * @returns Array of chart data points representing returning and new students.
  */
-export namespace RetentionStats {
-  /**
-   * Calcule le nombre d'anciens élèves et de nouveaux élèves actifs.
-   * Labels : "anciens", "nouveaux".
-   */
-  export async function getMetrics(
-    schoolId: string,
-    yearId: string,
-  ): Promise<ChartDataPoint[]> {
+export async function getRetentionMetrics(
+  schoolId: string,
+  yearId: string,
+): Promise<ChartDataPoint[]> {
+  try {
     const baseFilter = and(
       eq(classroomEnrollments.schoolId, schoolId),
       eq(classroomEnrollments.yearId, yearId),
@@ -270,145 +286,100 @@ export namespace RetentionStats {
     const [results] = await db
       .select({
         total: count(),
-        newStudents: sql<number>`count(case when ${classroomEnrollments.isNewStudent} = 1 then 1 end)`,
+        newStudents: sql<number>`COUNT(CASE WHEN ${classroomEnrollments.isNewStudent} = 1 THEN 1 END)`,
       })
       .from(classroomEnrollments)
       .where(baseFilter);
 
     const total = results?.total ?? 0;
-    const news = results?.newStudents ?? 0;
-    const oldStudents = total - news;
+    const newStudents = results?.newStudents ?? 0;
+    const returningStudents = total - newStudents;
 
     return [
-      { label: "anciens", value: oldStudents },
-      { label: "nouveaux", value: news },
+      { label: "returning", value: returningStudents },
+      { label: "new", value: newStudents },
     ];
+  } catch (error) {
+    logger.error("getRetentionMetrics failed", error as Error);
+    return [];
   }
 }
 
 /**
- * Statistiques des statuts d'élèves (actif, abandon, exclu).
+ * Aggregates the student body based on their current academic status.
+ * @param schoolId - The unique identifier of the school.
+ * @param yearId - The academic year identifier.
+ * @returns Array of chart data points representing status counts.
  */
-export namespace StatusStats {
-  /**
-   * Répartition des élèves par statut pour une école et une année.
-   * Labels retournés : "active", "abandon", "exclu".
-   */
-  export async function getStudentStatusStats(
-    schoolId: string,
-    yearId: string,
-  ): Promise<ChartDataPoint[]> {
-    const statusKeys: Record<string, string> = {
-      [STUDENT_STATUS_ENUM.ACTIVE]: "active",
-      [STUDENT_STATUS_ENUM.DROPOUT]: "abandon",
-      [STUDENT_STATUS_ENUM.EXPELLED]: "exclu",
+export async function getStudentStatusStats(
+  schoolId: string,
+  yearId: string,
+): Promise<ChartDataPoint[]> {
+  const statusLabels: Record<string, string> = {
+    [STUDENT_STATUS_ENUM.ACTIVE]: "active",
+    [STUDENT_STATUS_ENUM.DROPOUT]: "dropout",
+    [STUDENT_STATUS_ENUM.EXPELLED]: "expelled",
+  };
+
+  return aggregateCount(
+    classroomEnrollments,
+    classroomEnrollments.status,
+    and(
+      eq(classroomEnrollments.schoolId, schoolId),
+      eq(classroomEnrollments.yearId, yearId),
+    ),
+    statusLabels,
+  );
+}
+
+/**
+ * Computes high-level Key Performance Indicators for the dashboard in a single query.
+ * @param schoolId - The unique identifier of the school.
+ * @param yearId - The academic year identifier.
+ * @returns Object summarizing the total KPIs.
+ */
+export async function getQuickKpis(
+  schoolId: string,
+  yearId: string,
+): Promise<StatsSummary> {
+  try {
+    const [result] = await db
+      .select({
+        total: count(),
+        active: sql<number>`COUNT(CASE WHEN ${classroomEnrollments.status} = ${STUDENT_STATUS_ENUM.ACTIVE} THEN 1 END)`,
+        dropout: sql<number>`COUNT(CASE WHEN ${classroomEnrollments.status} = ${STUDENT_STATUS_ENUM.DROPOUT} THEN 1 END)`,
+        excluded: sql<number>`COUNT(CASE WHEN ${classroomEnrollments.status} = ${STUDENT_STATUS_ENUM.EXPELLED} THEN 1 END)`,
+      })
+      .from(classroomEnrollments)
+      .where(
+        and(
+          eq(classroomEnrollments.schoolId, schoolId),
+          eq(classroomEnrollments.yearId, yearId),
+        ),
+      );
+
+    return {
+      total: result?.total ?? 0,
+      active: result?.active ?? 0,
+      excluded: result?.excluded ?? 0,
+      dropout: result?.dropout ?? 0,
     };
-
-    try {
-      const results = await db
-        .select({
-          status: classroomEnrollments.status,
-          count: count(),
-        })
-        .from(classroomEnrollments)
-        .where(
-          and(
-            eq(classroomEnrollments.schoolId, schoolId),
-            eq(classroomEnrollments.yearId, yearId),
-          ),
-        )
-        .groupBy(classroomEnrollments.status);
-
-      return results.map((item) => ({
-        label: statusKeys[item.status] ?? item.status,
-        value: Number(item.count),
-      }));
-    } catch (error) {
-      logger.error("StatusStats.getStudentStatusStats failed", error as Error);
-      return [];
-    }
+  } catch (error) {
+    logger.error("getQuickKpis failed", error as Error);
+    return { total: 0, active: 0, excluded: 0, dropout: 0 };
   }
 }
 
 /**
- * Indicateurs clés rapides (KPI) pour les cartes de résumé.
+ * Facade providing backward compatibility for existing statistical service calls.
  */
-export namespace KpiStats {
-  /**
-   * Retourne les totaux agrégés : nombre total d'élèves, actifs et exclus.
-   * Optimisé via une seule requête d'agrégation.
-   */
-  export async function getQuickKpis(
-    schoolId: string,
-    yearId: string,
-  ): Promise<StatsSummary> {
-    try {
-      const [result] = await db
-        .select({
-          total: count(),
-          active: sql<number>`COUNT(CASE WHEN ${classroomEnrollments.status} = ${STUDENT_STATUS_ENUM.ACTIVE} THEN 1 END)`,
-          dropout: sql<number>`COUNT(CASE WHEN ${classroomEnrollments.status} = ${STUDENT_STATUS_ENUM.DROPOUT} THEN 1 END)`,
-          excluded: sql<number>`COUNT(CASE WHEN ${classroomEnrollments.status} = ${STUDENT_STATUS_ENUM.EXPELLED} THEN 1 END)`,
-        })
-        .from(classroomEnrollments)
-        .where(
-          and(
-            eq(classroomEnrollments.schoolId, schoolId),
-            eq(classroomEnrollments.yearId, yearId),
-          ),
-        );
-
-      return {
-        total: result?.total ?? 0,
-        active: result?.active ?? 0,
-        excluded: result?.excluded ?? 0,
-        dropout: result?.dropout ?? 0,
-      };
-    } catch (error) {
-      logger.error("KpiStats.getQuickKpis failed", error as Error);
-      return { total: 0, active: 0, excluded: 0, dropout: 0 };
-    }
-  }
-}
-
-/**
- * Service de statistiques scolaires (façade).
- * Toutes les méthodes conservent la signature originale pour la rétrocompatibilité.
- * La logique métier est déléguée aux modules spécialisés.
- *
- * **Toutes les données renvoyées sont sans style** (couleurs, etc.) pour respecter
- * la séparation backend / frontend.
- */
-export class StatsService {
-  static getTotalStudents(schoolId: string, yearId: string) {
-    return EnrollmentStats.getTotalStudents(schoolId, yearId);
-  }
-
-  static getGenderDistribution(schoolId: string) {
-    return GenderStats.getDistribution(schoolId);
-  }
-
-  static getEnrollmentStatsByYear(schoolId: string) {
-    return EnrollmentStats.getStatsByYear(schoolId);
-  }
-
-  static getStudentsCountByClass(schoolId: string, yearId: string) {
-    return ClassroomStats.getStudentsCountByClass(schoolId);
-  }
-
-  static getStudentsCountByOption(schoolId: string, yearId: string) {
-    return OptionStats.getStudentsCountByOption(schoolId);
-  }
-
-  static getRetentionMetrics(schoolId: string, yearId: string) {
-    return RetentionStats.getMetrics(schoolId, yearId);
-  }
-
-  static getStudentStatusStats(schoolId: string, yearId: string) {
-    return StatusStats.getStudentStatusStats(schoolId, yearId);
-  }
-
-  static getQuickKpis(schoolId: string, yearId: string) {
-    return KpiStats.getQuickKpis(schoolId, yearId);
-  }
-}
+export const StatsService = {
+  getTotalStudents,
+  getGenderDistribution,
+  getEnrollmentStatsByYear,
+  getStudentsCountByClass,
+  getStudentsCountByOption,
+  getRetentionMetrics,
+  getStudentStatusStats,
+  getQuickKpis,
+};

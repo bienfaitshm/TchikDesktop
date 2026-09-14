@@ -1,7 +1,7 @@
 import { useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
 import type { UseSuspenseQueryOptions } from "@tanstack/react-query";
 import { stats as apis, enrollment } from "@/renderer/libs/apis";
-import type { TStatsFilter } from "@/packages/@core/data-access/schema-validations";
+import type { StatsFilter } from "@/packages/@core/data-access/schema-validations";
 import type {
   ChartDataPoint,
   ClassStatsDTO,
@@ -9,14 +9,20 @@ import type {
   StatsSummary,
 } from "@/packages/@core/data-access/db/queries";
 
+const STALE_TIME_SHORT = 1000 * 60 * 5; // 5 minutes
+const STALE_TIME_LONG = 1000 * 60 * 10; // 10 minutes
+
+/**
+ * Query key factory for stats domain to ensure cache consistency across the application.
+ */
 export const statsKeys = {
-  all: ["stats"] as const,
+  all: ["schools", "stats"] as const,
   summary: (schoolId: string, yearId: string) =>
     [...statsKeys.all, "summary", { schoolId, yearId }] as const,
   status: (schoolId: string, yearId: string) =>
     [...statsKeys.all, "status", { schoolId, yearId }] as const,
-  gender: (schoolId: string) =>
-    [...statsKeys.all, "gender", { schoolId }] as const,
+  gender: (schoolId: string, yearId: string) =>
+    [...statsKeys.all, "gender", { schoolId, yearId }] as const,
   class: (schoolId: string, yearId: string) =>
     [...statsKeys.all, "class", { schoolId, yearId }] as const,
   option: (schoolId: string, yearId: string) =>
@@ -27,18 +33,16 @@ export const statsKeys = {
     [...statsKeys.all, "totalStudents", { schoolId, yearId }] as const,
   enrollmentsByYear: (schoolId: string) =>
     [...statsKeys.all, "enrollmentsByYear", { schoolId }] as const,
-  enrollmentHistory: (schoolId: string, yearId: string) => [
-    ...statsKeys.all,
-    "histories",
-    { schoolId, yearId },
-  ],
+  enrollmentHistory: (schoolId: string, yearId: string) =>
+    [...statsKeys.all, "histories", { schoolId, yearId }] as const,
 } as const;
 
 /**
- * Hook synchronisé pour récupérer l'ensemble des analytics du dashboard.
- * Utilise le mode Suspense pour garantir la parallélisation et la préparation des données.
+ * Aggregates all dashboard statistical queries using React Query Suspense mode.
+ * @param params - Filter parameters containing schoolId and yearId.
+ * @returns Object containing all dashboard metrics and a global refetching status.
  */
-export function useDashboardStatistics(params: TStatsFilter) {
+export function useDashboardStatistics(params: StatsFilter) {
   const { schoolId, yearId } = params;
 
   const results = useSuspenseQueries({
@@ -46,56 +50,51 @@ export function useDashboardStatistics(params: TStatsFilter) {
       {
         queryKey: statsKeys.summary(schoolId, yearId),
         queryFn: () => apis.fetchSummary({ schoolId, yearId }),
-        staleTime: 1000 * 60 * 5,
+        staleTime: STALE_TIME_SHORT,
       },
       {
         queryKey: statsKeys.status(schoolId, yearId),
         queryFn: () => apis.fetchByStatus({ schoolId, yearId }),
-        staleTime: 1000 * 60 * 5,
+        staleTime: STALE_TIME_SHORT,
       },
       {
-        queryKey: statsKeys.gender(schoolId),
-        queryFn: () => apis.fetchByGender(schoolId),
-        staleTime: 1000 * 60 * 10,
+        queryKey: statsKeys.gender(schoolId, yearId),
+        queryFn: () => apis.fetchByGender({ schoolId, yearId }),
+        staleTime: STALE_TIME_LONG,
       },
       {
         queryKey: statsKeys.class(schoolId, yearId),
         queryFn: () => apis.fetchByClass({ schoolId, yearId }),
-        staleTime: 1000 * 60 * 5,
+        staleTime: STALE_TIME_SHORT,
       },
       {
         queryKey: statsKeys.option(schoolId, yearId),
         queryFn: () => apis.fetchByOption({ schoolId, yearId }),
-        staleTime: 1000 * 60 * 5,
+        staleTime: STALE_TIME_SHORT,
       },
       {
         queryKey: statsKeys.retention(schoolId, yearId),
         queryFn: () => apis.fetchRetention({ schoolId, yearId }),
-        staleTime: 1000 * 60 * 5,
+        staleTime: STALE_TIME_SHORT,
       },
       {
         queryKey: statsKeys.totalStudents(schoolId, yearId),
         queryFn: () => apis.fetchTotalStudents({ schoolId, yearId }),
-        staleTime: 1000 * 60 * 5,
+        staleTime: STALE_TIME_SHORT,
       },
       {
         queryKey: statsKeys.enrollmentsByYear(schoolId),
         queryFn: () => apis.fetchEnrollmentsByYear(schoolId),
-        staleTime: 1000 * 60 * 10,
+        staleTime: STALE_TIME_LONG,
       },
-
       {
         queryKey: statsKeys.enrollmentHistory(schoolId, yearId),
         queryFn: () =>
           enrollment.fetchEnrollments({
             where: {
               classroomEnrollments: {
-                yearId: {
-                  $eq: yearId,
-                },
-                schoolId: {
-                  $eq: schoolId,
-                },
+                yearId: { $eq: yearId },
+                schoolId: { $eq: schoolId },
               },
             },
             orderBy: [
@@ -107,133 +106,169 @@ export function useDashboardStatistics(params: TStatsFilter) {
             ],
             limit: 5,
           }),
-        staleTime: 1000 * 60 * 10,
+        staleTime: STALE_TIME_LONG,
       },
     ],
   });
 
+  const [
+    summaryQuery,
+    statusQuery,
+    genderQuery,
+    classQuery,
+    optionQuery,
+    retentionQuery,
+    totalStudentsQuery,
+    enrollmentsByYearQuery,
+    enrollmentHistoryQuery,
+  ] = results;
+
   return {
-    summary: results[0].data,
-    statusDistribution: results[1].data,
-    genderDistribution: results[2].data,
-    studentsByClass: results[3].data,
-    studentsByOption: results[4].data,
-    retentionData: results[5].data,
-    totalStudents: results[6].data,
-    enrollmentsByYear: results[7].data,
-    enrollmentHistories: results[8].data,
-    isRefetching: results.some((r) => r.isFetching),
+    summary: summaryQuery.data,
+    statusDistribution: statusQuery.data,
+    genderDistribution: genderQuery.data,
+    studentsByClass: classQuery.data,
+    studentsByOption: optionQuery.data,
+    retentionData: retentionQuery.data,
+    totalStudents: totalStudentsQuery.data,
+    enrollmentsByYear: enrollmentsByYearQuery.data,
+    enrollmentHistories: enrollmentHistoryQuery.data,
+    isRefetching: results.some((query) => query.isFetching),
   };
 }
 
 /**
- * Récupère les KPIs rapides (Total, Actifs, Exclus)
+ * Fetches dashboard KPI summary (Total, Active, Dropout, Expelled).
+ * @param params - Filter parameters containing schoolId and yearId.
+ * @param options - Additional React Query options.
+ * @returns Suspense query result containing StatsSummary.
  */
 export function useGetStatsSummary(
-  params: TStatsFilter,
+  params: StatsFilter,
   options?: Partial<UseSuspenseQueryOptions<StatsSummary>>,
 ) {
   return useSuspenseQuery({
+    ...options,
     queryKey: statsKeys.summary(params.schoolId, params.yearId),
     queryFn: () => apis.fetchSummary(params),
-    ...options,
   });
 }
 
 /**
- * Récupère la répartition par statut (Actif, Abandon, Exclu)
+ * Fetches student distribution by academic status.
+ * @param params - Filter parameters containing schoolId and yearId.
+ * @param options - Additional React Query options.
+ * @returns Suspense query result containing ChartDataPoint array.
  */
 export function useGetStatsByStatus(
-  params: TStatsFilter,
+  params: StatsFilter,
   options?: Partial<UseSuspenseQueryOptions<ChartDataPoint[]>>,
 ) {
   return useSuspenseQuery({
+    ...options,
     queryKey: statsKeys.status(params.schoolId, params.yearId),
     queryFn: () => apis.fetchByStatus(params),
-    ...options,
   });
 }
 
 /**
- * Récupère la répartition par genre
+ * Fetches student distribution by gender.
+ * @param params - Filter parameters containing schoolId and yearId.
+ * @param options - Additional React Query options.
+ * @returns Suspense query result containing ChartDataPoint array.
  */
 export function useGetStatsByGender(
-  schoolId: string,
+  params: StatsFilter,
   options?: Partial<UseSuspenseQueryOptions<ChartDataPoint[]>>,
 ) {
   return useSuspenseQuery({
-    queryKey: statsKeys.gender(schoolId),
-    queryFn: () => apis.fetchByGender(schoolId),
     ...options,
+    queryKey: statsKeys.gender(params.schoolId, params.yearId),
+    queryFn: () => apis.fetchByGender(params),
   });
 }
 
 /**
- * Récupère le nombre d'élèves par classe
+ * Fetches student count per classroom.
+ * @param params - Filter parameters containing schoolId and yearId.
+ * @param options - Additional React Query options.
+ * @returns Suspense query result containing ClassStatsDTO array.
  */
 export function useGetStatsByClass(
-  params: TStatsFilter,
+  params: StatsFilter,
   options?: Partial<UseSuspenseQueryOptions<ClassStatsDTO[]>>,
 ) {
   return useSuspenseQuery({
+    ...options,
     queryKey: statsKeys.class(params.schoolId, params.yearId),
     queryFn: () => apis.fetchByClass(params),
-    ...options,
   });
 }
 
 /**
- * Récupère le nombre d'élèves par option
+ * Fetches student count per option/track.
+ * @param params - Filter parameters containing schoolId and yearId.
+ * @param options - Additional React Query options.
+ * @returns Suspense query result containing ChartDataPoint array.
  */
 export function useGetStatsByOption(
-  params: TStatsFilter,
+  params: StatsFilter,
   options?: Partial<UseSuspenseQueryOptions<ChartDataPoint[]>>,
 ) {
   return useSuspenseQuery({
+    ...options,
     queryKey: statsKeys.option(params.schoolId, params.yearId),
     queryFn: () => apis.fetchByOption(params),
-    ...options,
   });
 }
 
 /**
- * Récupère les données de rétention (Anciens vs Nouveaux)
+ * Fetches student retention metrics (New vs Returning).
+ * @param params - Filter parameters containing schoolId and yearId.
+ * @param options - Additional React Query options.
+ * @returns Suspense query result containing ChartDataPoint array.
  */
 export function useGetRetention(
-  params: TStatsFilter,
+  params: StatsFilter,
   options?: Partial<UseSuspenseQueryOptions<ChartDataPoint[]>>,
 ) {
   return useSuspenseQuery({
+    ...options,
     queryKey: statsKeys.retention(params.schoolId, params.yearId),
     queryFn: () => apis.fetchRetention(params),
-    ...options,
   });
 }
 
 /**
- * Récupère le nombre total d'élèves
+ * Fetches the total number of enrolled students.
+ * @param params - Filter parameters containing schoolId and yearId.
+ * @param options - Additional React Query options.
+ * @returns Suspense query result containing total count.
  */
 export function useGetTotalStudents(
-  params: TStatsFilter,
+  params: StatsFilter,
   options?: Partial<UseSuspenseQueryOptions<number>>,
 ) {
   return useSuspenseQuery({
+    ...options,
     queryKey: statsKeys.totalStudents(params.schoolId, params.yearId),
     queryFn: () => apis.fetchTotalStudents(params),
-    ...options,
   });
 }
 
 /**
- * Récupère les inscriptions par année avec détails H/F
+ * Fetches yearly enrollment statistics with gender distribution.
+ * @param schoolId - Unique school identifier.
+ * @param options - Additional React Query options.
+ * @returns Suspense query result containing EnrollmentStatsByYear array.
  */
 export function useGetEnrollmentsByYear(
   schoolId: string,
   options?: Partial<UseSuspenseQueryOptions<EnrollmentStatsByYear[]>>,
 ) {
   return useSuspenseQuery({
+    ...options,
     queryKey: statsKeys.enrollmentsByYear(schoolId),
     queryFn: () => apis.fetchEnrollmentsByYear(schoolId),
-    ...options,
   });
 }

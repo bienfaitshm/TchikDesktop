@@ -15,6 +15,7 @@ import {
   Table2Icon,
 } from "lucide-react";
 import { StudentPreview } from "../components/search-preview";
+import { CapacityInfo } from "../components/capcity-infos";
 
 const QUICK_ACCESS = [
   { label: "Inscription", url: APP_ROUTES.ENROLLMENTS, icon: UserPlus },
@@ -79,7 +80,7 @@ const SearchForm: React.FC<{ yearId?: string; schoolId?: string }> = ({
 };
 
 export function HomeSearch() {
-  const { yearId, schoolId, school } = useCurrentConfig();
+  const { yearId = "", schoolId = "", school } = useCurrentConfig();
 
   return (
     <PageContainer>
@@ -87,19 +88,7 @@ export function HomeSearch() {
         {/* Conteneur principal centré façon "Nouvel Onglet" */}
         <div className="relative min-h-[85vh] w-full flex flex-col items-center justify-center px-4">
           {/* Widget d'info style météo (Fixé en haut à droite) */}
-          <div className="absolute top-4 right-4 bg-card/60 backdrop-blur-md border border-border p-3.5 rounded-2xl flex items-center gap-3 shadow-sm">
-            <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
-              <Users size={20} />
-            </div>
-            <div className="flex flex-col text-right">
-              <span className="text-xs text-muted-foreground font-medium">
-                Total Élèves
-              </span>
-              <span className="text-base font-bold text-foreground leading-none mt-1">
-                1 234
-              </span>
-            </div>
-          </div>
+          <CapacityInfo schoolId={schoolId} yearId={yearId} />
 
           {/* Bloc Central */}
           <div className="w-full max-w-2xl flex flex-col items-center gap-8 -mt-12">

@@ -24,7 +24,7 @@ export type StatsApi = Readonly<{
   fetchByStatus(params: StatsFilter): Promise<ChartDataPoint[]>;
 
   /** Récupère la répartition par genre (M/F) */
-  fetchByGender(schoolId: string): Promise<ChartDataPoint[]>;
+  fetchByGender(params: StatsFilter): Promise<ChartDataPoint[]>;
 
   /** Récupère le nombre d'élèves par classe */
   fetchByClass(params: StatsFilter): Promise<ClassStatsDTO[]>;
@@ -58,9 +58,9 @@ export function createStatsApis(ipcClient: IpcClient): StatsApi {
       return ipcClient.get(StatsRoutes.STUDENTS_BY_STATUS, { params });
     },
 
-    fetchByGender(schoolId) {
+    fetchByGender(params) {
       return ipcClient.get(StatsRoutes.STUDENTS_BY_GENDER, {
-        params: { schoolId },
+        params,
       });
     },
 
