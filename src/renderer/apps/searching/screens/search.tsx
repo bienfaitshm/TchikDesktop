@@ -7,13 +7,7 @@ import {
   PageContainer,
   PageContent,
 } from "@/renderer/containers/page-container";
-import {
-  UserPlus,
-  Banknote,
-  Presentation,
-  Users,
-  Table2Icon,
-} from "lucide-react";
+import { UserPlus, Banknote, Presentation, Table2Icon } from "lucide-react";
 import { StudentPreview } from "../components/search-preview";
 import { CapacityInfo } from "../components/capcity-infos";
 
@@ -100,7 +94,7 @@ export function HomeSearch() {
             </div>
 
             {/* Barre de Recherche Pilule (style Firefox) */}
-            <div className="w-full shadow-lg rounded-full">
+            <div className="w-full rounded-full">
               <SearchForm schoolId={schoolId} yearId={yearId} />
             </div>
 
@@ -113,7 +107,7 @@ export function HomeSearch() {
                   className="group flex flex-col items-center gap-2 w-20 md:w-24 focus:outline-none"
                 >
                   {/* Carré de la vignette */}
-                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-card border border-border/60 flex items-center justify-center text-foreground/80 group-hover:bg-accent group-hover:text-primary group-hover:scale-105 group-hover:border-primary/40 transition-all duration-200 shadow-sm">
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-card border border-border/60 flex items-center justify-center text-foreground/80 group-hover:bg-accent group-hover:text-primary group-hover:scale-105 group-hover:border-primary/40 transition-all duration-200">
                     <item.icon size={26} strokeWidth={1.75} />
                   </div>
 

@@ -4,6 +4,7 @@ import {
   useState,
   useCallback,
   useMemo,
+  useEffect,
   KeyboardEvent,
   ChangeEvent,
 } from "react";
@@ -18,7 +19,7 @@ import { Button } from "@/renderer/components/ui/button";
 
 /**
  * Props configuration for the SearchInput component.
- * @template TData Generic type representing the suggestions data item.
+ * @template TData Generic type representing the suggestion data item.
  */
 export type SearchInputProps<TData> = {
   name?: string;
@@ -32,14 +33,15 @@ export type SearchInputProps<TData> = {
   renderDetail?: (data: TData) => ReactNode;
   /** Function to extract label and optional description from a data item. */
   getItemLabel: (data: TData) => { label: string; description?: string };
+  /** Callback fired when a suggestion item is selected. */
   onSelect?: (data: TData) => void;
 };
 
 /**
- * Renders an accessible, animated Google-style search input with autocomplete suggestions and detail preview.
- * @template TData Generic type representing the search result items.
- * @param props Configuration properties for the search component.
- * @returns The rendered search input with popover suggestions.
+ * Renders an accessible search input with stable popover suggestions and detailed preview.
+ * @template TData Generic type representing search result items.
+ * @param props Configuration properties for the component.
+ * @returns The rendered search input component.
  */
 export function SearchInput<TData>({
   name,
@@ -53,6 +55,7 @@ export function SearchInput<TData>({
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [internalQuery, setInternalQuery] = useState<string>("");
   const [activeIndex, setActiveIndex] = useState<number>(-1);
+  const [isFocused, setIsFocused] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -62,8 +65,17 @@ export function SearchInput<TData>({
   const showPopover = isOpen && hasData;
 
   /**
-   * Updates the search query state for both controlled and uncontrolled usages.
-   * @param newQuery The new query string value.
+   * Synchronizes popover visibility when asynchronous data arrives while input retains focus.
+   */
+  useEffect(() => {
+    if (hasData && isFocused) {
+      setIsOpen(true);
+    }
+  }, [hasData, isFocused]);
+
+  /**
+   * Updates internal and external query states seamlessly.
+   * @param newQuery - The updated query string.
    */
   const updateQuery = useCallback(
     (newQuery: string) => {
@@ -76,9 +88,9 @@ export function SearchInput<TData>({
   );
 
   /**
-   * Retrieves the label string of an item at a given index.
-   * @param index The index of the item in the data array.
-   * @returns The label string or an empty string if out of bounds.
+   * Retrieves the display label of a suggestion item at a specific index.
+   * @param index - Index of the targeted item.
+   * @returns Extracted string label or empty string.
    */
   const getLabelOfIndex = useCallback(
     (index: number): string => {
@@ -94,8 +106,8 @@ export function SearchInput<TData>({
   );
 
   /**
-   * Handles keyboard navigation within the search input and suggestion list.
-   * @param e Keyboard event triggered by the input element.
+   * Handles keyboard navigation and item selection via Enter or Escape.
+   * @param e - React keyboard event.
    */
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
@@ -118,8 +130,10 @@ export function SearchInput<TData>({
 
         case "Enter": {
           e.preventDefault();
-          if (activeIndex >= 0) {
-            updateQuery(getLabelOfIndex(activeIndex));
+          if (activeIndex >= 0 && data[activeIndex]) {
+            const selectedItem = data[activeIndex];
+            updateQuery(getItemLabel(selectedItem).label);
+            onSelect?.(selectedItem);
           }
           setIsOpen(false);
           setActiveIndex(-1);
@@ -137,12 +151,12 @@ export function SearchInput<TData>({
           break;
       }
     },
-    [showPopover, data.length, activeIndex, getLabelOfIndex, updateQuery],
+    [showPopover, data, activeIndex, getItemLabel, updateQuery, onSelect],
   );
 
   /**
-   * Toggles popover visibility and resets active selection on close.
-   * @param open Boolean indicating whether popover should be open.
+   * Manages open state changes and cleans up selection index when closed.
+   * @param open - Target open state.
    */
   const handleOpenChange = useCallback((open: boolean) => {
     setIsOpen(open);
@@ -152,31 +166,39 @@ export function SearchInput<TData>({
   }, []);
 
   /**
-   * Opens popover on input focus.
+   * Handles input focus and activates suggestions if data exists.
    */
   const handleFocus = useCallback(() => {
+    setIsFocused(true);
     if (hasData) {
       setIsOpen(true);
     }
   }, [hasData]);
 
   /**
-   * Handles input change events and re-opens popover if data is present.
-   * @param e React input change event.
+   * Tracks blur state for input field.
+   */
+  const handleBlur = useCallback(() => {
+    setIsFocused(false);
+  }, []);
+
+  /**
+   * Handles text changes and ensures popover display on active results.
+   * @param e - Input change event.
    */
   const handleInputChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       updateQuery(e.target.value);
-      if (!isOpen && hasData) {
+      if (hasData) {
         setIsOpen(true);
       }
     },
-    [updateQuery, isOpen, hasData],
+    [updateQuery, hasData],
   );
 
   /**
-   * Prevents popover closure when interacting inside the search container.
-   * @param e Interaction event from popover content.
+   * Prevents premature closure when clicking internal input container elements.
+   * @param e - DOM event.
    */
   const handleInteractOutside = useCallback((e: Event) => {
     if (containerRef.current?.contains(e.target as Node)) {
@@ -193,13 +215,10 @@ export function SearchInput<TData>({
         <PopoverAnchor asChild>
           <div
             className={cn(
-              "flex items-center w-full h-12 px-4 bg-accent/90 border border-transparent transition-all duration-200 ease-in-out",
-              "hover:bg-accent focus-within:bg-accent focus-within:shadow-xl",
-              showPopover
-                ? "rounded-t-3xl bg-accent border-b-border/30"
-                : "rounded-full",
+              "flex items-center w-full h-12 px-4 bg-background border transition-all duration-200 ease-in-out shadow-none",
+              "focus-within:shadow-sm",
+              showPopover ? "rounded-t-3xl bg-background" : "rounded-full",
             )}
-            onClick={handleFocus}
           >
             <Search className="text-muted-foreground h-5 w-5 mr-3 shrink-0" />
 
@@ -209,6 +228,7 @@ export function SearchInput<TData>({
               name={name}
               onChange={handleInputChange}
               onFocus={handleFocus}
+              onBlur={handleBlur}
               onKeyDown={handleKeyDown}
               role="combobox"
               aria-expanded={showPopover}
@@ -216,14 +236,14 @@ export function SearchInput<TData>({
               aria-activedescendant={
                 activeIndex >= 0 ? `suggestion-item-${activeIndex}` : undefined
               }
-              placeholder="Search..."
+              placeholder="Rechercher..."
               className="flex-1 bg-transparent outline-none border-none text-base min-w-0"
             />
 
             <div className="flex items-center gap-2 ml-2 shrink-0">
               <Button
                 type="submit"
-                title="Search"
+                title="Rechercher"
                 className="text-muted-foreground hover:text-foreground transition-colors rounded-full"
                 size="icon"
                 variant="ghost"
@@ -238,7 +258,7 @@ export function SearchInput<TData>({
           align="start"
           sideOffset={0}
           style={{ width: "var(--radix-popover-trigger-width)" }}
-          className="p-0 ring-0 border border-accent border-t-0 shadow-2xl bg-accent rounded-b-3xl rounded-t-none overflow-hidden transition-all duration-200"
+          className="p-0 ring-0 border border-accent border-t-0 shadow-xl bg-background rounded-b-3xl rounded-t-none overflow-hidden transition-all duration-200"
           onOpenAutoFocus={(e) => e.preventDefault()}
           onInteractOutside={handleInteractOutside}
         >
@@ -246,6 +266,8 @@ export function SearchInput<TData>({
 
           <div className="flex w-full py-2 px-1 max-h-[60vh] overflow-hidden">
             <div
+              role="listbox"
+              aria-label="Suggestions de recherche"
               className={cn(
                 "flex flex-col min-w-0 transition-all duration-300 ease-in-out shrink-0 overflow-y-auto scrollbar-thin scrollbar-thumb-accent",
                 activeIndex >= 0 && renderDetail ? "w-full md:w-1/2" : "w-full",
@@ -257,7 +279,7 @@ export function SearchInput<TData>({
 
                 return (
                   <div
-                    key={index}
+                    key={`${label}-${index}`}
                     id={`suggestion-item-${index}`}
                     role="option"
                     aria-selected={isSelected}
@@ -306,7 +328,7 @@ export function SearchInput<TData>({
                       <div className="flex items-center gap-2 mb-3 text-muted-foreground">
                         <Info className="h-4 w-4" />
                         <span className="text-xs font-semibold uppercase tracking-wider">
-                          Search preview
+                          Aperçu de la recherche
                         </span>
                       </div>
 
@@ -315,11 +337,11 @@ export function SearchInput<TData>({
                       </div>
 
                       <p className="text-xs text-right text-muted-foreground mt-auto pt-3">
-                        Press{" "}
+                        Appuyez sur{" "}
                         <kbd className="bg-accent-foreground/15 px-1.5 py-0.5 rounded font-mono text-[10px]">
-                          Enter
+                          Entrée
                         </kbd>{" "}
-                        to select
+                        pour sélectionner
                       </p>
                     </div>
                   )}

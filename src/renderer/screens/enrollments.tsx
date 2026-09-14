@@ -9,6 +9,7 @@ import {
   PageHeadDescription,
   PageHeader,
   PageHeaderTextContent,
+  PageHeadAction,
 } from "@/renderer/containers/page-container";
 import {
   InvoiceGridContainer,
@@ -23,13 +24,14 @@ import {
 import { useCreateQuickEnrollmentForm } from "@/renderer/libs/queries/enrollements";
 import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
 import { LoadingButton } from "@/components/buttons/button-loading";
-import { EnrollmentInvoice } from "../components/invoices/enrollment-invoice";
+import { EnrollmentInvoice } from "@/components/invoices/enrollment-invoice";
 import {
   ActionPrintContainer,
   PrinterConfigView,
   PrintInvoiceButton,
 } from "@/components/invoices/invoice-print";
 import { usePrintInvoiceForm } from "@/renderer/libs/queries/printing";
+import { CapacityInfo } from "@/renderer/apps/searching/components/capcity-infos";
 
 /**
  * Properties for the EnrollmentForm component.
@@ -209,6 +211,9 @@ export function EnrollmentPage(): React.JSX.Element {
             en cours.
           </PageHeadDescription>
         </PageHeaderTextContent>
+        <PageHeadAction>
+          <CapacityInfo schoolId={schoolId} yearId={yearId} />
+        </PageHeadAction>
       </PageHeader>
 
       <PageContent className="pt-5" key={`${schoolId}-${yearId}`}>
