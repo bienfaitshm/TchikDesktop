@@ -6,7 +6,7 @@ import type {
   FeeAssignment,
 } from "@/packages/@core/data-access/db";
 import { DataTableColumnHeader } from "@/renderer/components/tables/data-table.column-header";
-
+import { defaultMenuTrigger } from "./payment-table.menus";
 /**
  * Formate les informations de l'élève en une chaîne unique.
  */
@@ -26,7 +26,7 @@ export const staticPaymentColumns: ColumnDef<AssignmentTableOfClassroom>[] = [
     accessorKey: "student",
     header: ({ column }) => (
       <DataTableColumnHeader
-        className="max-w-64"
+        className="max-w-16"
         column={column}
         title="Élève"
       />
@@ -37,7 +37,7 @@ export const staticPaymentColumns: ColumnDef<AssignmentTableOfClassroom>[] = [
       const isProDeo = row.original.isProDeo;
 
       return (
-        <div className="flex items-center gap-2 py-1 px-1 min-h-8">
+        <div className="flex items-center gap-2 min-w-16 truncate">
           <span
             className="font-semibold text-xs text-foreground truncate max-w-56 uppercase tracking-tight"
             title={studentName}
@@ -71,7 +71,7 @@ export const createPaymentColumns = (
         <DataTableColumnHeader
           column={column}
           title={head.name}
-          className="justify-end text-right min-w-28"
+          className="justify-end text-right min-w-16 truncate"
         />
       ),
       cell: ({ row }) => {

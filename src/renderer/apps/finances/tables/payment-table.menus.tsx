@@ -14,13 +14,19 @@ import {
   SavePaymentDialog,
   PaymentHistoryDialog,
   PaymentDetailDialog,
-  UpdateAmountDialog,
+  UpdateAmountByAssignmentsDialog,
 } from "../dialog";
 import type {
   AssignmentTableOfClassroom,
   FeeAssignment,
 } from "@/packages/@core/data-access/db";
-import { FEE_SCHEDULES_ENUM } from "@/packages/@core/data-access/db/options";
+import {
+  FEE_SCHEDULES_ENUM,
+  getFeeScheduleLabel,
+} from "@/packages/@core/data-access/db/options";
+import { cn } from "@/renderer/utils";
+import { STATUS_INDICATORS } from "../components/payment-legend-colors";
+import { formatCurrency } from "@/packages/currency";
 
 /**
  * Propriétés transmises aux actions de ligne des échéances de frais.
@@ -131,7 +137,31 @@ export const CellAction = feeMenu.build(
       }),
   },
   {
-    trigger: defaultMenuTrigger,
+    trigger: ({ feeAssignment }) => {
+      const statusLabel = getFeeScheduleLabel(feeAssignment.status);
+      return (
+        <div className="flex items-center gap-2 p-2 bg-accent/50 hover:bg-accent rounded-md">
+          <span
+            className={cn(
+              "font-mono text-xs font-medium tabular-nums text-foreground",
+              feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED &&
+                "line-through",
+            )}
+          >
+            {formatCurrency(feeAssignment.amountPaid, feeAssignment.currency)}
+          </span>
+
+          <span
+            title={statusLabel}
+            aria-label={`Statut : ${statusLabel}`}
+            className={cn(
+              "size-2 rounded-full shrink-0 ring-2 ring-background transition-transform group-hover/cell:scale-110",
+              STATUS_INDICATORS[feeAssignment.status],
+            )}
+          />
+        </div>
+      );
+    },
   },
 );
 
@@ -142,17 +172,31 @@ const rowMenu = createMenuBuilder<AssignmentTableOfClassroom>();
  */
 export const RowAction = rowMenu.build(
   {
-    viewStudentProfile: rowMenu
-      .label("Fiche de l'élève", ExternalLink)
-      .link(({ enrollmentId }) => `/schools/${enrollmentId}/details`),
+    // viewStudentProfile: rowMenu
+    //   .label("Fiche de l'élève", ExternalLink)
+    //   .link(({ enrollmentId }) => `/schools/${enrollmentId}/details`),
     changeAmount: rowMenu
       .label("Ajuster le montant à payer", Pencil)
-      .dialog(({ props, open, onOpenChange, close }) => (
-        <UpdateAmountDialog open={open} onOpenChange={onOpenChange} />
-      ))
-      .separator("after"),
+      .dialog(
+        ({
+          props: { payments, enrollmentId, schoolId },
+          open,
+          onOpenChange,
+        }) => (
+          <UpdateAmountByAssignmentsDialog
+            mutationKey={["fin"]}
+            enrollmentIds={[enrollmentId]}
+            schoolId={schoolId}
+            assignments={Object.entries(payments || {})
+              .map((item) => item[1])
+              .filter((i) => !!i)}
+            open={open}
+            onOpenChange={onOpenChange}
+          />
+        ),
+      ),
   },
   {
-    trigger: defaultMenuTrigger,
+    trigger: () => defaultMenuTrigger,
   },
 );

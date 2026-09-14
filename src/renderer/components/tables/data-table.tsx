@@ -162,7 +162,7 @@ export function DataContentBody<T>({
   const rowIds = ctx?.rowIds ?? [];
 
   return (
-    <TableBody className="w-full [&_[data-slot=table-cell]:first-child]:w-8 overflow-x-scroll">
+    <TableBody className="w-full [&_[data-slot=table-cell]:first-child]:w-8 overflow-x-scroll scrollbar-thin">
       {rows.length > 0 ? (
         <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
           {rows.map((row) => {

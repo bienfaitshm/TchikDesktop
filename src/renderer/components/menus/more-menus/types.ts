@@ -5,8 +5,9 @@ export type ActionType =
 
 export type SeparatorPosition = "before" | "after" | "both" | "none";
 
-export type Trigger =
-  React.ReactElement | ComponentRenderFn<HTMLProps, unknown>;
+export type Trigger<TProps> = (
+  props: TProps,
+) => React.ReactElement | ComponentRenderFn<HTMLProps, unknown>;
 
 export type DynamicProp<TProps, TValue> = TValue | ((props: TProps) => TValue);
 

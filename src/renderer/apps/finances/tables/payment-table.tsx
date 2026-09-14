@@ -12,13 +12,6 @@ import {
   DataTablePagination,
 } from "@/renderer/components/tables";
 import { createPaymentColumns } from "./payment-table.column";
-import { formatCurrency } from "@/packages/currency";
-import {
-  FEE_SCHEDULES_ENUM,
-  getFeeScheduleLabel,
-} from "@/packages/@core/data-access/db/options";
-import { cn } from "@/renderer/utils";
-import { STATUS_INDICATORS } from "../components/payment-legend-colors";
 import { enhanceColumns } from "@/renderer/components/tables/columns";
 import { RowAction, CellAction } from "./payment-table.menus";
 export interface FeeTypeRowActionsProps {
@@ -39,40 +32,13 @@ export const RenderPaymentCell: React.FC<FeeTypeRowActionsProps> = ({
   yearId,
   mutationKey,
 }) => {
-  const statusLabel = getFeeScheduleLabel(feeAssignment.status);
-
   return (
-    <div className="group/cell relative flex items-center justify-end gap-2 px-2 py-1.5 min-h-9 select-none rounded-md transition-colors hover:bg-muted/40">
-      <div className="flex items-center">
-        <CellAction
-          feeAssignment={feeAssignment}
-          schoolId={schoolId}
-          yearId={yearId}
-          mutationKey={mutationKey}
-        />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <span
-          className={cn(
-            "font-mono text-xs font-medium tabular-nums text-foreground",
-            feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED &&
-              "line-through",
-          )}
-        >
-          {formatCurrency(feeAssignment.amountPaid, feeAssignment.currency)}
-        </span>
-
-        <span
-          title={statusLabel}
-          aria-label={`Statut : ${statusLabel}`}
-          className={cn(
-            "size-2 rounded-full shrink-0 ring-2 ring-background transition-transform group-hover/cell:scale-110",
-            STATUS_INDICATORS[feeAssignment.status],
-          )}
-        />
-      </div>
-    </div>
+    <CellAction
+      feeAssignment={feeAssignment}
+      schoolId={schoolId}
+      yearId={yearId}
+      mutationKey={mutationKey}
+    />
   );
 };
 

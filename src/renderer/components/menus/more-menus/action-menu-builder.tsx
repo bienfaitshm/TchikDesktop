@@ -483,8 +483,8 @@ function MenuItemRenderer<TProps>({
 
 interface ActionMenuProps<TProps> {
   items: MenuItemConfig<TProps>[];
-  defaultTrigger?: Trigger;
-  contextProps: TProps & { trigger?: Trigger };
+  defaultTrigger?: Trigger<TProps>;
+  contextProps: TProps & { trigger?: Trigger<TProps> };
 }
 
 /**
@@ -502,7 +502,10 @@ function ActionMenuComponent<TProps>({
     <DialogMenuProvider>
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={contextProps.trigger ?? defaultTrigger ?? <ButtonMenu />}
+          render={
+            contextProps.trigger ??
+            defaultTrigger?.(contextProps) ?? <ButtonMenu />
+          }
         ></DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-xs">
           {items.map((item, index) => (
@@ -536,11 +539,13 @@ export function createMenuBuilder<TProps>() {
 
     build: (
       schema: MenuSchemaInput<TProps> | MenuItemConfig<TProps>[],
-      defaultOptions?: { trigger?: Trigger },
-    ): React.FC<TProps & { trigger?: Trigger }> => {
+      defaultOptions?: { trigger?: Trigger<TProps> },
+    ): React.FC<TProps & { trigger?: Trigger<TProps> }> => {
       const compiledItems = normalizeSchema(schema);
 
-      const ActionMenu: React.FC<TProps & { trigger?: Trigger }> = (props) => (
+      const ActionMenu: React.FC<TProps & { trigger?: Trigger<TProps> }> = (
+        props,
+      ) => (
         <ActionMenuComponent
           items={compiledItems}
           defaultTrigger={defaultOptions?.trigger}
