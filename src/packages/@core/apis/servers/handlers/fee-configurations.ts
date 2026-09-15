@@ -1,13 +1,20 @@
-import z from "zod";
-import { feeConfigurationRepository } from "@/packages/@core/data-access/db/queries";
 import {
-  FeeConfigurationBase,
+  feeConfigurationRepository,
+  feeConfigurationService,
+} from "@/packages/@core/data-access/db/queries";
+import {
+  feeApplicableConfigurationSchema,
+  feeConfigIdSchema,
   FeeConfigurationCreateSchema,
   FeeConfigurationFilterSchema,
   FeeConfigurationUpdateSchema,
-  type FeeConfigurationFilter,
+  finClassroomApplicableConfigParamsSchema,
+  type FeeApplicableConfiguration,
+  type FeeConfigId,
   type FeeConfigurationCreate,
+  type FeeConfigurationFilter,
   type FeeConfigurationUpdate,
+  type FinClassroomApplicableConfigParams,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -16,42 +23,14 @@ import {
 } from "@/packages/electron-ipc-rest";
 import { FeeConfigurationRoutes } from "../../routes-constant";
 
-/* =========================================================================
-   SCHEMAS & TYPES DE PARAMÈTRES DÉDIÉS
-   ========================================================================= */
-
-const FeeConfigIdSchema = FeeConfigurationBase.pick({ feeConfigId: true });
-type FeeConfigId = z.infer<typeof FeeConfigIdSchema>;
-
-export const FeeApplicableConfigurationSchema = FeeConfigurationBase.pick({
-  optionId: true,
-  section: true,
-  schoolId: true,
-  yearId: true,
-})
-  .required({ schoolId: true, yearId: true })
-  .extend(
-    z.object({
-      classroomId: z.string().min(1, "L'identifiant de la classe est requis."),
-    }).shape,
-  );
-
-type FeeApplicableConfiguration = z.infer<
-  typeof FeeApplicableConfigurationSchema
->;
-
-/* =========================================================================
-   CONTROLLER IMPLEMENTATION
-   ========================================================================= */
-
 /**
- * Handles Inter-Process Communication (IPC) inbound requests for fee configuration management.
+ * Controller handling Inter-Process Communication (IPC) requests for fee configuration operations.
  */
 export class FeeConfigurationController {
   /**
-   * Retrieves all fee configurations based on standard lookup query filters.
-   * @param req - The IPC request object containing filtering parameters.
-   * @returns A promise resolving to an array of matching fee configurations.
+   * Retrieves all fee configurations matching the provided filter parameters.
+   * @param req - The IPC request containing filtering query parameters.
+   * @returns A promise resolving to an array of fee configuration records.
    */
   @IpcServer.register(HttpMethod.GET, FeeConfigurationRoutes.ALL, {
     params: FeeConfigurationFilterSchema,
@@ -61,9 +40,9 @@ export class FeeConfigurationController {
   }
 
   /**
-   * Creates a new fee configuration record with the provided body specification.
-   * @param req - The IPC request object containing the raw initialization payload.
-   * @returns A promise resolving to the newly initialized fee configuration instance.
+   * Creates a new fee configuration record.
+   * @param req - The IPC request containing the creation payload in its body.
+   * @returns A promise resolving to the created fee configuration instance.
    */
   @IpcServer.register(HttpMethod.POST, FeeConfigurationRoutes.ALL, {
     body: FeeConfigurationCreateSchema,
@@ -73,24 +52,24 @@ export class FeeConfigurationController {
   }
 
   /**
-   * Fetches a specific fee configuration details by its unique identifier.
-   * @param req - The IPC request object containing target parameters.
-   * @returns A promise resolving to the target fee configuration object or null.
+   * Fetches a specific fee configuration by its unique identifier.
+   * @param req - The IPC request containing the target fee configuration identifier.
+   * @returns A promise resolving to the target fee configuration or null.
    */
   @IpcServer.register(HttpMethod.GET, FeeConfigurationRoutes.DETAIL, {
-    params: FeeConfigIdSchema,
+    params: feeConfigIdSchema,
   })
   static async getById(req: IpcRequest<unknown, FeeConfigId>) {
     return feeConfigurationRepository.findById(req.params.feeConfigId);
   }
 
   /**
-   * Resolves relevant fee configurations matching dynamic context parameters.
-   * @param req - The IPC request object carrying target contextual properties.
-   * @returns A promise resolving to the applicable configuration structures.
+   * Resolves applicable fee configurations matching general contextual properties.
+   * @param req - The IPC request containing applicable configuration parameters.
+   * @returns A promise resolving to the matching applicable configurations.
    */
   @IpcServer.register(HttpMethod.GET, FeeConfigurationRoutes.APPLICABLE, {
-    params: FeeApplicableConfigurationSchema,
+    params: feeApplicableConfigurationSchema,
   })
   static async getApplicable(
     req: IpcRequest<unknown, FeeApplicableConfiguration>,
@@ -99,12 +78,30 @@ export class FeeConfigurationController {
   }
 
   /**
-   * Updates fields on an existing fee configuration designated by route parameters.
-   * @param req - The IPC request object carrying the identification parameters and payload.
-   * @returns A promise resolving to the mutated fee configuration object.
+   * Resolves applicable fee configurations specific to a classroom context.
+   * @param req - The IPC request containing classroom contextual parameters.
+   * @returns A promise resolving to the classroom applicable configurations.
+   */
+  @IpcServer.register(
+    HttpMethod.GET,
+    FeeConfigurationRoutes.APPLICABLE_CLASSROOM,
+    {
+      params: finClassroomApplicableConfigParamsSchema,
+    },
+  )
+  static async getClassroomFeeConfigApplicable(
+    req: IpcRequest<unknown, FinClassroomApplicableConfigParams>,
+  ) {
+    return feeConfigurationService.getApplicableOfClassroom(req.params);
+  }
+
+  /**
+   * Updates an existing fee configuration by its unique identifier.
+   * @param req - The IPC request containing the target identifier and update payload.
+   * @returns A promise resolving to the updated fee configuration instance.
    */
   @IpcServer.register(HttpMethod.PUT, FeeConfigurationRoutes.DETAIL, {
-    params: FeeConfigIdSchema,
+    params: feeConfigIdSchema,
     body: FeeConfigurationUpdateSchema,
   })
   static async update(req: IpcRequest<FeeConfigurationUpdate, FeeConfigId>) {
@@ -115,12 +112,12 @@ export class FeeConfigurationController {
   }
 
   /**
-   * Deletes a specific target fee configuration record.
-   * @param req - The IPC request object holding target identification params.
-   * @returns A promise resolving to the operation completion result.
+   * Deletes a specific fee configuration record.
+   * @param req - The IPC request containing the target fee configuration identifier.
+   * @returns A promise resolving to the deletion result.
    */
   @IpcServer.register(HttpMethod.DELETE, FeeConfigurationRoutes.DETAIL, {
-    params: FeeConfigIdSchema,
+    params: feeConfigIdSchema,
   })
   static async delete(req: IpcRequest<unknown, FeeConfigId>) {
     return feeConfigurationRepository.delete(req.params.feeConfigId);

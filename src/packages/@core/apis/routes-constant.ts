@@ -209,6 +209,7 @@ export const FeeConfigurationRoutes = {
   DETAIL: "fee-configurations/:feeConfigId",
   BULK: "fee-configurations/bulk",
   APPLICABLE: "fee-configurations/applicable",
+  APPLICABLE_CLASSROOM: "fee-configurations/applicable/CLASSROOM",
 } as const;
 
 /**

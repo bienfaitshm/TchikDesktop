@@ -1,18 +1,18 @@
 import { CURRENCY_ENUM } from "@/packages/@core/data-access/db/options";
+import { SelectOptionFacade } from "@/packages/drizzle-queries";
 import type { TDataBase } from "@/packages/@core/data-access/db/config";
+import type { FeeConfiguration } from "@/packages/@core/data-access/db/schemas";
 import {
   DailyExchangeRateRepository,
   DailyExchangeRateFilters,
   dailyExchangeRateRepository,
 } from "@/packages/@core/data-access/db/queries/finances";
-
-import { SelectOptionFacade } from "@/packages/@core/data-access/db/queries/select-option.transformer";
-import type { FeeConfiguration } from "@/packages/@core/data-access/db/schemas";
 import {
   FeeConfigurationRepository,
   feeConfigurationRepository,
   type FeeConfigurationFilters,
 } from "./repository";
+import { classroomRepository, ClassroomRepository } from "../classrooms";
 
 /**
  * Service managing fee configuration options for UI components.
@@ -26,6 +26,7 @@ export class FeeConfigurationService {
    */
   constructor(
     private readonly feeConfigRepo: FeeConfigurationRepository = feeConfigurationRepository,
+    private readonly classroomRepo: ClassroomRepository = classroomRepository,
   ) {
     this.selectOptions = new SelectOptionFacade<FeeConfiguration>(
       this.feeConfigRepo,
@@ -45,6 +46,25 @@ export class FeeConfigurationService {
    */
   getOptions(filters?: FeeConfigurationFilters) {
     return this.selectOptions.loadOptions(filters);
+  }
+
+  getApplicableOfClassroom(ctx: {
+    classroomId: string;
+    schoolId;
+    yearId: string;
+  }) {
+    const classroom = this.classroomRepo.findById(ctx.classroomId);
+    if (!classroom) {
+      return [];
+    }
+    const config = this.feeConfigRepo.findApplicableConfigurations({
+      classroomId: classroom.classId,
+      optionId: classroom.optionId,
+      schoolId: ctx.schoolId,
+      section: classroom.section,
+      yearId: ctx.yearId,
+    });
+    return config;
   }
 }
 

@@ -7,3 +7,4 @@ export * from "./bulk-schema";
 export * from "./model.base";
 export * from "./printing";
 export * from "./actions";
+export * from "./fin-params";
