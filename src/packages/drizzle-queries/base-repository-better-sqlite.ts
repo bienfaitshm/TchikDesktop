@@ -283,8 +283,8 @@ export abstract class BaseRepository<
    * @param tx - Optional database transaction orchestration reference.
    * @returns Model details map reflecting final operational changes updates or null.
    */
-  public update(payload: TUpdate, filters?: TFilter, tx?: TDb): TSelect | null {
-    if (!filters) return null;
+  public update(payload: TUpdate, filters?: TFilter, tx?: TDb): TSelect[] {
+    if (!filters) return [];
 
     return this.executeWithTiming(
       "update",
@@ -313,7 +313,7 @@ export abstract class BaseRepository<
         if (!updated || updated.length === 0) {
           throw new RecordNotFoundError(this.baseTableName);
         }
-        return updated[0] as TSelect;
+        return updated as TSelect[];
       },
       { payload, filters },
     );

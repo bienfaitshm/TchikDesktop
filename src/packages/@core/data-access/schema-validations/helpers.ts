@@ -95,7 +95,13 @@ export function withQueryOptions<TShapes extends ShapesRecord>(
   target: TShapes,
 ): z.ZodType<QueryOptionsOutput<TShapes>> {
   const paginationShape = {
-    limit: z.coerce.number().int().positive().max(500).default(100).optional(),
+    limit: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(50000)
+      .default(100)
+      .optional(),
     offset: z.coerce.number().int().nonnegative().default(0).optional(),
   };
 

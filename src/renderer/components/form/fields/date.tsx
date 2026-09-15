@@ -10,7 +10,7 @@ import { Input } from "../../ui/input";
  */
 export interface DateInputProps {
   /** Selected date value. */
-  value?: Date;
+  value?: Date | null;
   /** Form input name attribute. */
   name?: string;
   /** Callback invoked when the date value changes. */
@@ -32,7 +32,7 @@ export interface DateInputProps {
  * @param date - The Date object to format.
  * @returns Formatted date string or an empty string if invalid.
  */
-const formatDateToInputValue = (date?: Date): string => {
+const formatDateToInputValue = (date?: Date | null): string => {
   if (!date || isNaN(date.getTime?.())) {
     return "";
   }

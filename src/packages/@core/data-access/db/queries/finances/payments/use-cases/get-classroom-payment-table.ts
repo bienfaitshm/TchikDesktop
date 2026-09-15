@@ -107,8 +107,7 @@ export class GetClassroomPaymentTable {
         table: {
           head,
           body: enrollments.map((enrollment) => ({
-            enrollmentId: enrollment.enrollmentId,
-            student: enrollment.student,
+            ...enrollment,
             payments: head.reduce(
               (acc, current) => {
                 const key = buildAssignmentKey(

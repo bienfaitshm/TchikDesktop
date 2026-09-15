@@ -13,6 +13,10 @@ import {
   EnrollmentDTO,
   BaseClassroomEnrollmentFilters,
 } from "./enrollment.repository";
+import {
+  feeAssignmentRepository,
+  FeeAssignmentRepository,
+} from "@/packages/@core/data-access/db/queries/finances";
 import { SelectOptionFacade } from "@/packages/drizzle-queries";
 
 export class EnrollmentService {
@@ -22,6 +26,7 @@ export class EnrollmentService {
     private readonly enrollmentRepo: EnrollmentRepository,
     private readonly userRepo: UserRepository,
     private readonly tutorService: TutorService,
+    private readonly feeAssignment: FeeAssignmentRepository,
     private readonly clientDb: TDataBase = db,
   ) {
     this.enrollmentSelectService = new SelectOptionFacade<EnrollmentDTO>(
@@ -66,6 +71,24 @@ export class EnrollmentService {
     return this.enrollmentRepo.getCountByClass(filters);
   }
 
+  public markStudentsAsProDeo(
+    schoolId: string,
+    enrollmentIds: string[],
+    assignmentIds: string[],
+  ) {
+    return this.clientDb.transaction((tx) => {
+      this.feeAssignment.exemptStudentsFromFee(
+        enrollmentIds,
+        assignmentIds,
+        tx,
+      );
+      return this.enrollmentRepo.markStudentsAsProDeo(
+        enrollmentIds,
+        schoolId,
+        tx,
+      );
+    });
+  }
   /**
    * Processus transactionnel de création rapide
    */
@@ -93,8 +116,10 @@ export class EnrollmentService {
       }
 
       // 2. GESTION TUTEUR
-      if (tutorData?.isTutorInSystem === true) {
-        targetTutorId = tutorData.tutorId;
+      if (tutorData?.isTutorInSystem === true && Boolean(tutorData.tutorId)) {
+        if (tutorData.tutorId && tutorData.tutorId.length > 0) {
+          targetTutorId = tutorData.tutorId;
+        }
       } else if (tutorData?.isTutorInSystem === false) {
         const tutor = this.tutorService.createTutor(
           { ...tutorData.tutor, schoolId: payload.schoolId },
@@ -134,8 +159,10 @@ export class EnrollmentService {
 }
 
 export const enrollmentRepository = new EnrollmentRepository();
+console.log("enrollmentRepository", enrollmentRepository);
 export const enrollmentService = new EnrollmentService(
   enrollmentRepository,
   userRepository,
   tutorService,
+  feeAssignmentRepository,
 );

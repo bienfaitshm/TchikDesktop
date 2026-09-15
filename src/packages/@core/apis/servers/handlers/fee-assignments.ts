@@ -4,9 +4,15 @@ import {
   FeeAssignmentCreateSchema,
   FeeAssignmentUpdateSchema,
   FeeAssignmentFilterSchema,
+  UpdateAmountByAssignmentsSchema,
+  UpdateAmountByClassroomsSchema,
+  ExemptFromFeeSchema,
   type FeeAssignmentFilter,
   type FeeAssignmentCreate,
   type FeeAssignmentUpdate,
+  type UpdateAmountByAssignments,
+  type UpdateAmountByClassrooms,
+  type ExemptFromFee,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -32,6 +38,15 @@ export class FeeAssignmentController {
     params: FeeAssignmentFilterSchema,
   })
   static async getAll(req: IpcRequest<unknown, FeeAssignmentFilter>) {
+    return feeAssignmentRepository.findMany(req.params);
+  }
+
+  @IpcServer.register(HttpMethod.GET, FeeAssignmentRoutes.SEARCH, {
+    params: FeeAssignmentFilterSchema,
+  })
+  static async getSearchFeeAssignment(
+    req: IpcRequest<unknown, FeeAssignmentFilter>,
+  ) {
     return feeAssignmentRepository.findMany(req.params);
   }
 
@@ -72,6 +87,52 @@ export class FeeAssignmentController {
     return feeAssignmentRepository.updateById(
       req.params.assignmentId,
       req.body,
+    );
+  }
+
+  @IpcServer.register(HttpMethod.POST, FeeAssignmentRoutes.EXEMPT_FROM_FEE, {
+    body: ExemptFromFeeSchema,
+  })
+  static async exemptStudentsFromFee({ body }: IpcRequest<ExemptFromFee>) {
+    return feeAssignmentRepository.exemptStudentsFromFee(
+      body.studentEnrollmentIds,
+      body.assignmentIds,
+    );
+  }
+
+  @IpcServer.register(
+    HttpMethod.POST,
+    FeeAssignmentRoutes.UPDATE_TOTAL_AMOUNT_ASSIGNMENT,
+    {
+      body: UpdateAmountByAssignmentsSchema,
+    },
+  )
+  static async updateAmountByAssignments({
+    body,
+  }: IpcRequest<UpdateAmountByAssignments>) {
+    return feeAssignmentRepository.updateAmountByAssignments(
+      body.newTotalAmount,
+      body.currency,
+      body.assignmentIds,
+      body.scheduleIds,
+    );
+  }
+
+  @IpcServer.register(
+    HttpMethod.POST,
+    FeeAssignmentRoutes.UPDATE_TOTAL_AMOUNT_CLASSROOM,
+    {
+      body: UpdateAmountByClassroomsSchema,
+    },
+  )
+  static async updateAmountByClassrooms({
+    body,
+  }: IpcRequest<UpdateAmountByClassrooms>) {
+    return feeAssignmentRepository.updateAmountByClassrooms(
+      body.newTotalAmount,
+      body.currency,
+      body.classroomIds,
+      body.scheduleIds,
     );
   }
 

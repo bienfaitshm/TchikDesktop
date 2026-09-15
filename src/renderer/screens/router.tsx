@@ -1,7 +1,6 @@
 import { lazy, Suspense, type JSX } from "react";
 import { HashRouter as Router, Route, Routes } from "react-router";
 import {
-  Home,
   LayoutDashboard,
   Building,
   BookOpen,
@@ -11,9 +10,6 @@ import {
   Banknote,
   UserPlus,
   LayoutGrid,
-  Presentation,
-  School,
-  CircleDollarSign,
   History,
   Calendar,
   GraduationCap,
@@ -23,6 +19,10 @@ import {
   LifeBuoy,
   Info,
   Code2,
+  Presentation,
+  WalletIcon,
+  HomeIcon,
+  School,
 } from "lucide-react";
 import * as Layout from "@/renderer/screens/layouts";
 import * as Seating from "@/renderer/apps/seatings";
@@ -37,6 +37,7 @@ import type {
 
 import * as FinApp from "@/renderer/apps/finances";
 import * as SchoolApp from "@/renderer/apps/schools";
+import * as SearchApp from "@/renderer/apps/searching";
 
 // ==========================================
 //  HELPER SENIOR POUR IMPORTS DE TYPE LAZY
@@ -211,7 +212,7 @@ export const NAVIGATION_MENUS: NavSection[] = [
   {
     label: "Accès Rapide",
     items: [
-      { name: "Accueil", url: APP_ROUTES.HOME, icon: Home },
+      { name: "Accueil", url: APP_ROUTES.HOME, icon: HomeIcon },
       { name: "Paiements", url: APP_ROUTES.PAYEMENTS, icon: Banknote },
       { name: "Inscriptions", url: APP_ROUTES.ENROLLMENTS, icon: UserPlus },
       {
@@ -224,7 +225,7 @@ export const NAVIGATION_MENUS: NavSection[] = [
   {
     label: "Gestion de l'établissement",
     items: [
-      { name: "Finances", url: ROUTES.FIN.ROOT, icon: CircleDollarSign },
+      { name: "Finances", url: ROUTES.FIN.ROOT, icon: WalletIcon },
       {
         name: "Salles de classe",
         url: APP_ROUTES.CLASSROOMS.ROOT,
@@ -252,7 +253,11 @@ export default function RouterProvider(): JSX.Element {
             errorElement={<Launcher />}
           >
             {/* Base Routes */}
-            <Route index element={<HomePage />} />
+            <Route index element={<SearchApp.HomeSearch />} />
+            <Route
+              path={ROUTES.SEARCH_RESULT}
+              element={<SearchApp.SearchResult />}
+            />
             <Route path={ROUTES.ENROLLMENTS} element={<EnrollmentPage />} />
             <Route path={ROUTES.PAYMENTS} element={<FinApp.PaymentPage />} />
             <Route

@@ -65,15 +65,23 @@ export const foreignKeyIdNull = (
  * Crée un champ de type Timestamp (stocké en INTEGER pour SQLite).
  * Compatible avec les migrations de lignes existantes.
  */
+
 export const timestampColumn = (columnName: string) =>
-  integer(columnName, { mode: "timestamp" })
-    .notNull()
-    .$defaultFn(() => new Date());
+  integer(columnName, { mode: "timestamp" });
+
 /**
- * Mixin pour ajouter automatiquement les colonnes de suivi temporel.
- * Utilise le snake_case pour la base de données et le camelCase pour le code applicatif.
+ * Colonnes de suivi temporel réutilisables.
+ * Utiliser des fonctions (factories) évite les problèmes de mutation/partage d'instances.
  */
 export const timestamps = {
-  createdAt: timestampColumn("created_at"),
-  updatedAt: timestampColumn("updated_at"),
-} as const;
+  createdAt: timestampColumn("created_at")
+    .notNull()
+    .$defaultFn(() => new Date()),
+
+  updatedAt: timestampColumn("updated_at")
+    .notNull()
+    .$defaultFn(() => new Date())
+    .$onUpdateFn(() => new Date()),
+
+  deletedAt: timestampColumn("deleted_at"),
+};

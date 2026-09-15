@@ -6,13 +6,10 @@ import {
   PageHeadTitle,
   PageHeader,
   PageHeaderTextContent,
-  PageHeadAction,
 } from "@/renderer/containers/page-container";
 import { useGetTutors } from "@/renderer/libs/queries/tutors";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
-import { TutorDialogCreateForm } from "@/renderer/apps/schools/dialogs";
 import { TutorTable } from "../tables/tutor-table";
-import { Button } from "@/renderer/components/ui/button";
 
 /**
  * Renders the primary tutors management page, handling data fetching and action dialog integrations.
@@ -39,19 +36,6 @@ export const TutorsPage: React.FC = () => {
             accédez aux profils des élèves associés.
           </PageHeadDescription>
         </PageHeaderTextContent>
-        <PageHeadAction>
-          <TutorDialogCreateForm
-            mutationKey={["schools"]}
-            schoolId={schoolId}
-            defaultValues={{
-              schoolId,
-            }}
-          >
-            <Button size="sm" className="rounded-full text-xs px-2">
-              Ajouter un nouveau tuteur
-            </Button>
-          </TutorDialogCreateForm>
-        </PageHeadAction>
       </PageHeader>
 
       <PageContent>

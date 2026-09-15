@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import {
   useMutation as useMutationTQ,
   useSuspenseQuery as useSuspenseQueryTQ,
@@ -12,63 +12,6 @@ import {
   type UseSuspenseQueryResult,
 } from "@tanstack/react-query";
 import { useDebounce } from "./utils";
-
-/**
- * Enriches the mutation result with its corresponding mutationKey for performance tracking.
- * @param options - TanStack useMutation hook options.
- * @param queryClient - Optional custom QueryClient instance.
- * @returns Enhanced mutation result containing the mutationKey property.
- */
-export function useMutation<
-  TData = unknown,
-  TError = DefaultError,
-  TVariables = void,
-  TContext = unknown,
->(
-  options: UseMutationOptions<TData, TError, TVariables, TContext>,
-  queryClient?: QueryClient,
-): UseMutationResult<TData, TError, TVariables, TContext> & {
-  readonly mutationKey: MutationKey | undefined;
-} {
-  const mutationResult = useMutationTQ(options, queryClient);
-  const mutationKey = options.mutationKey;
-
-  return useMemo(
-    () => ({
-      ...mutationResult,
-      mutationKey,
-    }),
-    [mutationResult, mutationKey],
-  );
-}
-
-/**
- * Returns the suspense query result alongside a stable queryKey reference.
- * @param options - TanStack useSuspenseQuery hook options.
- * @param queryClient - Optional custom QueryClient instance.
- * @returns Enhanced suspense query result containing the queryKey property.
- */
-export function useSuspenseQuery<
-  TQueryFnData = unknown,
-  TError = DefaultError,
-  TData = TQueryFnData,
->(
-  options: UseSuspenseQueryOptions<TQueryFnData, TError, TData>,
-  queryClient?: QueryClient,
-): UseSuspenseQueryResult<TData, TError> & {
-  readonly queryKey: QueryKey;
-} {
-  const queryResult = useSuspenseQueryTQ(options, queryClient);
-  const queryKey = options.queryKey;
-
-  return useMemo(
-    () => ({
-      ...queryResult,
-      queryKey,
-    }),
-    [queryResult, queryKey],
-  );
-}
 
 export type SearchOptionReturn<TData> = {
   searchQuery: string;
@@ -85,15 +28,100 @@ export interface SearchHookOptions<TFilters = Record<string, unknown>> {
 }
 
 /**
- * Generic search hook encapsulating debounced input handling and dynamic query fetching.
- * @param useQueryHook - Custom query hook executing the search operation.
- * @param querySearch - Function mapping search text to query filter parameters.
- * @param options - Search configuration options including filters and debounce timing.
- * @returns Search query state, formatted options, loading indicators, and setter function.
+ * Combines search text and extra filters into final query parameters.
+ * @param search - The debounced search string input.
+ * @param querySearch - Strategy function mapping search text to filters.
+ * @param extraFilters - Optional secondary filter parameters.
+ * @returns Combined filter parameters for the query.
  */
+export function buildSearchParams<TFilters>(
+  search: string,
+  querySearch: (search: string, extraFilters?: TFilters) => TFilters,
+  extraFilters?: TFilters,
+): TFilters {
+  return querySearch(search, extraFilters);
+}
 
+/**
+ * Enriches a mutation result object with its mutation key.
+ * @param result - Mutation result from TanStack Query.
+ * @param key - Optional mutation key to append.
+ * @returns Enhanced mutation result with mutationKey property.
+ */
+export function enrichWithMutationKey<TData, TError, TVariables, TContext>(
+  result: UseMutationResult<TData, TError, TVariables, TContext>,
+  key?: MutationKey,
+): UseMutationResult<TData, TError, TVariables, TContext> & {
+  readonly mutationKey: MutationKey | undefined;
+} {
+  return Object.assign(result, { mutationKey: key });
+}
+
+/**
+ * Enriches a suspense query result object with its query key.
+ * @param result - Suspense query result from TanStack Query.
+ * @param key - Query key to append.
+ * @returns Enhanced query result with queryKey property.
+ */
+export function enrichWithQueryKey<TQueryFnData, TError, TData>(
+  result: UseSuspenseQueryResult<TData, TError>,
+  key: QueryKey,
+): UseSuspenseQueryResult<TData, TError> & {
+  readonly queryKey: QueryKey;
+} {
+  return Object.assign(result, { queryKey: key });
+}
+
+/**
+ * Executes a TanStack mutation and attaches the mutation key to the output.
+ * @param options - TanStack useMutation hook options.
+ * @param queryClient - Optional custom QueryClient instance.
+ * @returns Enhanced mutation result with mutationKey.
+ */
+export function useMutation<
+  TData = unknown,
+  TError = DefaultError,
+  TVariables = void,
+  TContext = unknown,
+>(
+  options: UseMutationOptions<TData, TError, TVariables, TContext>,
+  queryClient?: QueryClient,
+): UseMutationResult<TData, TError, TVariables, TContext> & {
+  readonly mutationKey: MutationKey | undefined;
+} {
+  const mutationResult = useMutationTQ(options, queryClient);
+  return enrichWithMutationKey(mutationResult, options.mutationKey);
+}
+
+/**
+ * Executes a TanStack suspense query and attaches the query key to the output.
+ * @param options - TanStack useSuspenseQuery hook options.
+ * @param queryClient - Optional custom QueryClient instance.
+ * @returns Enhanced suspense query result with queryKey.
+ */
+export function useSuspenseQuery<
+  TQueryFnData = unknown,
+  TError = DefaultError,
+  TData = TQueryFnData,
+>(
+  options: UseSuspenseQueryOptions<TQueryFnData, TError, TData>,
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  readonly queryKey: QueryKey;
+} {
+  const queryResult = useSuspenseQueryTQ(options, queryClient);
+  return enrichWithQueryKey(queryResult, options.queryKey);
+}
+
+/**
+ * Handles debounced search input state and executes a custom query hook.
+ * @param useQueryHook - Target hook performing the query execution.
+ * @param querySearch - Function mapping text to query parameters.
+ * @param options - Search configuration options.
+ * @returns Active search state, options payload, loading flag, and state setter.
+ */
 export function useGenericSearchOptions<TData, TFilters>(
-  useQueryHook: (filters?: TFilters) => {
+  useQueryHook: (filters: TFilters) => {
     data?: TData[];
     isLoading: boolean;
     isFetching: boolean;
@@ -106,18 +134,7 @@ export function useGenericSearchOptions<TData, TFilters>(
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, debounceMs);
 
-  // 1. Référence stable pour querySearch (évite que les fonctions anonymes n'invalident le mémo)
-  const querySearchRef = useRef(querySearch);
-  querySearchRef.current = querySearch;
-
-  // 2. Sérialisation optimisée des filtres
-  const serializedFilters = useMemo(() => JSON.stringify(filters), [filters]);
-
-  // 3. Calcul des paramètres combinant la recherche et les filtres
-  const queryParams = useMemo(
-    () => querySearchRef.current(debouncedSearch, filters),
-    [debouncedSearch, serializedFilters],
-  );
+  const queryParams = buildSearchParams(debouncedSearch, querySearch, filters);
 
   const { data = [], isLoading, isFetching } = useQueryHook(queryParams);
 

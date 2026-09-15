@@ -2,6 +2,7 @@ export const ROUTES = {
   HOME: "/",
   ENROLLMENTS: "/enrollments",
   PAYMENTS: "/payments",
+  SEARCH_RESULT: "/search-results",
   EXPORTS: {
     DOCUMENT_EXPORT: "/export/docs",
     DOCUMENT_IMPORT: "/import/docs",

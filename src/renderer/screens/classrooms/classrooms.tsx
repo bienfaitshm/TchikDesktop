@@ -44,6 +44,8 @@ import {
   PageContent,
 } from "@/renderer/containers/page-container";
 
+const MUTATION_KEY = ["schools"];
+
 export interface ClassroomRowActionsProps extends Pick<
   ClassroomDialogProps,
   "mutationKey"
@@ -114,7 +116,7 @@ export const ClassroomPage: React.FC = () => {
   const { schoolId } = useSchoolContext();
   const { options } = useGetOptionAsOptions(schoolId);
 
-  const { data: classrooms = [], queryKey: mutationKey } = useGetClassrooms({
+  const { data: classrooms = [] } = useGetClassrooms({
     where: {
       classrooms: {
         schoolId,
@@ -128,13 +130,13 @@ export const ClassroomPage: React.FC = () => {
         variant: "actions",
         renderRowAction: (classroom) => (
           <ClassroomRowAction
-            mutationKey={mutationKey}
+            mutationKey={MUTATION_KEY}
             classroom={classroom}
             schoolId={schoolId}
           />
         ),
       }),
-    [mutationKey, schoolId],
+    [schoolId],
   );
 
   return (
@@ -177,7 +179,7 @@ export const ClassroomPage: React.FC = () => {
               <CreateClassroomDialog
                 schoolId={schoolId}
                 defaultValues={{ schoolId }}
-                mutationKey={mutationKey}
+                mutationKey={MUTATION_KEY}
               >
                 <Button size="sm" className="gap-2 rounded-full shadow-xs">
                   <Plus className="size-4" />

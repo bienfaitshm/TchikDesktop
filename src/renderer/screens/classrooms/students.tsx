@@ -2,7 +2,15 @@
 
 import React from "react";
 import { useParams } from "react-router";
-import { Edit2, UserPen, UserPlus, Banknote, Trash2, Eye } from "lucide-react";
+import {
+  Edit2,
+  UserPen,
+  UserPlus,
+  Banknote,
+  Trash2,
+  Eye,
+  BadgePercent,
+} from "lucide-react";
 import {
   PageContainer,
   PageHeader,
@@ -49,6 +57,7 @@ import {
 import { TutorProfileDialog } from "@/renderer/apps/schools/dialogs";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { useGetClassroomById } from "@/renderer/libs/queries/classrooms";
+import { MarkStudentAsProDeoDialog } from "@/renderer/apps/schools/dialogs/enrollment.dialog";
 
 export interface EnrollmentRowActionsProps extends CreateEnrollmentDialogProps {
   enrollment: EnrollmentDTO;
@@ -87,6 +96,37 @@ const MENUS: ActionMenuConfig<EnrollmentRowActionsProps>[] = [
           enrollmentId={enrollment.enrollmentId}
           schoolId={schoolId}
           yearId={yearId}
+          mutationKey={mutationKey}
+        />
+      );
+    },
+  },
+  {
+    id: "edit-prodeo",
+    label: "Accorder le statut Pro Deo",
+    icon: BadgePercent,
+    dialog({
+      enrollment: { student, ...enrollment },
+      schoolId,
+      mutationKey,
+    }: {
+      enrollment: {
+        enrollmentId: string;
+        student: { fullName?: string; lastName?: string; firstName?: string };
+      };
+      schoolId: string;
+      mutationKey?: unknown;
+    }) {
+      // Construction sécurisée du nom complet si fullName n'est pas directement disponible
+      const computedFullName =
+        student.fullName ||
+        [student.firstName, student.lastName].filter(Boolean).join(" ");
+
+      return (
+        <MarkStudentAsProDeoDialog
+          schoolId={schoolId}
+          fullName={computedFullName}
+          enrollmentId={enrollment.enrollmentId}
           mutationKey={mutationKey}
         />
       );

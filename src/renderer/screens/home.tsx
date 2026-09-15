@@ -1,6 +1,5 @@
 "use client";
 
-// import { AdvancedSearchEngine } from "@/renderer/components/search-engin";
 import { DashBoardPage } from "./dashboard";
 import { ScrollArea } from "../components/ui/scroll-area";
 

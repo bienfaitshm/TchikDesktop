@@ -3,22 +3,39 @@ import type {
   FeeAssignmentCreate,
   FeeAssignmentUpdate,
   FeeAssignmentFilter,
+  UpdateAmountByAssignments,
+  UpdateAmountByClassrooms,
+  ExemptFromFee,
 } from "@/packages/@core/data-access/schema-validations";
 import type { FeeAssignment } from "@/packages/@core/data-access/db/schemas";
-import type { SelectOption } from "@/packages/@core/data-access/db/queries";
+import type {
+  FeeAssignmentTDO,
+  SelectOption,
+} from "@/packages/@core/data-access/db/queries";
 import { FeeAssignmentRoutes } from "../routes-constant";
 
 export type FeeAssignmentApi = Readonly<{
-  fetchFeeAssignments(params?: FeeAssignmentFilter): Promise<FeeAssignment[]>;
+  fetchFeeAssignments(
+    params?: FeeAssignmentFilter,
+  ): Promise<FeeAssignmentTDO[]>;
   fetchFeeAssignmentsAsOptions(
     params?: FeeAssignmentFilter,
-  ): Promise<(SelectOption & FeeAssignment)[]>;
-  fetchFeeAssignmentById(assignmentId: string): Promise<FeeAssignment>;
+  ): Promise<(SelectOption & FeeAssignmentTDO)[]>;
+  fetchFeeAssignmentById(assignmentId: string): Promise<FeeAssignmentTDO>;
   createFeeAssignment(data: FeeAssignmentCreate): Promise<FeeAssignment>;
   updateFeeAssignment(
     assignmentId: string,
     data: FeeAssignmentUpdate,
   ): Promise<FeeAssignment>;
+  //
+  updateAmountByAssignments(
+    payload: UpdateAmountByAssignments,
+  ): Promise<FeeAssignment[]>;
+  updateAmountByClassroom(
+    payload: UpdateAmountByClassrooms,
+  ): Promise<FeeAssignment[]>;
+  exemptFromFee(payload: ExemptFromFee): Promise<FeeAssignment[]>;
+  //
   bulkCreateFeeAssignment(
     data: FeeAssignmentCreate[],
   ): Promise<FeeAssignment[]>;
@@ -51,6 +68,22 @@ export function createFeeAssignmentApis(
         params: { assignmentId },
       });
     },
+    exemptFromFee(payload) {
+      return ipcClient.post(FeeAssignmentRoutes.EXEMPT_FROM_FEE, payload);
+    },
+    updateAmountByAssignments(payload) {
+      return ipcClient.post(
+        FeeAssignmentRoutes.UPDATE_TOTAL_AMOUNT_ASSIGNMENT,
+        payload,
+      );
+    },
+    updateAmountByClassroom(payload) {
+      return ipcClient.post(
+        FeeAssignmentRoutes.UPDATE_TOTAL_AMOUNT_CLASSROOM,
+        payload,
+      );
+    },
+    //
     deleteFeeAssignment(assignmentId) {
       return ipcClient.delete(FeeAssignmentRoutes.DETAIL, {
         params: { assignmentId },

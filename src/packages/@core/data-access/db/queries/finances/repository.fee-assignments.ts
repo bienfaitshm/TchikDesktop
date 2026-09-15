@@ -2,20 +2,33 @@ import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
   feeAssignments,
+  classroomEnrollments,
+  feeSchedules,
+  feeTypes,
   type TableFeeAssignment,
   type FeeAssignment,
   type InsertFeeAssignment,
+  type FeeSchedule,
+  type FeeType,
 } from "@/packages/@core/data-access/db/schemas";
-import { FEE_SCHEDULES_ENUM } from "@/packages/@core/data-access/db/options";
+import {
+  CURRENCY_ENUM,
+  FEE_SCHEDULES_ENUM,
+} from "@/packages/@core/data-access/db/options";
 
 import {
   DatabaseError,
   helpers,
   betterSqlite,
+  OptionProvider,
 } from "@/packages/drizzle-queries";
+import { getTableColumns, eq } from "drizzle-orm";
 
 export const TABLES = {
   feeAssignments,
+  classroomEnrollments,
+  feeSchedules,
+  feeTypes,
 } as const;
 
 export type BaseFeeAssignmentFilters = helpers.FindManyOptions<typeof TABLES>;
@@ -23,12 +36,20 @@ const FEE_ASSIGNMENT_DEFAULT_SORT: BaseFeeAssignmentFilters = {
   orderBy: [{ table: "feeAssignments", column: "assignmentId", order: "desc" }],
 };
 
-export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
-  TableFeeAssignment,
-  TDataBase,
-  FeeAssignment,
-  BaseFeeAssignmentFilters
-> {
+export type FeeAssignmentTDO = FeeAssignment & {
+  feeType: FeeType;
+  feeSchedule: FeeSchedule;
+};
+
+export class FeeAssignmentRepository
+  extends betterSqlite.BaseRepository<
+    TableFeeAssignment,
+    TDataBase,
+    FeeAssignmentTDO,
+    BaseFeeAssignmentFilters
+  >
+  implements OptionProvider<FeeAssignmentTDO>
+{
   /**
    * Initializes a new instance of the FeeAssignmentRepository.
    * @param database - Optional database connection instance.
@@ -42,6 +63,33 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
       logger: getLogger,
       defaultFilters: FEE_ASSIGNMENT_DEFAULT_SORT,
     });
+  }
+
+  public getDTOColumns() {
+    return {
+      ...getTableColumns(this.table),
+      feeType: getTableColumns(feeTypes),
+      feeSchedule: getTableColumns(feeSchedules),
+    };
+  }
+
+  protected override getQuerySet(tx?: TDataBase) {
+    const client = this.getClient(tx);
+    return client
+      .select(this.getDTOColumns())
+      .from(this.table)
+      .innerJoin(
+        feeSchedules,
+        eq(this.table.scheduleId, feeSchedules.scheduleId),
+      )
+      .innerJoin(feeTypes, eq(feeSchedules.feeTypeId, feeTypes.feeTypeId))
+      .$dynamic();
+  }
+
+  fetchOptions(
+    filters?: BaseFeeAssignmentFilters,
+  ): FeeAssignmentTDO[] | Promise<FeeAssignmentTDO[]> {
+    return this.findMany(filters);
   }
 
   getEnrollmentAssignments(enrollmentIds: string[]) {
@@ -164,6 +212,104 @@ export class FeeAssignmentRepository extends betterSqlite.BaseRepository<
       });
       throw dbError;
     }
+  }
+
+  /**
+   * Updates the total fee amount for specific assignments and schedules.
+   * @param newTotalAmount - The new amount to be applied.
+   * @param assignmentIds - List of assignment identifiers to filter by.
+   * @param scheduleIds - List of schedule identifiers to filter by.
+   * @returns Promise resolving to the result of the update operation.
+   */
+  updateAmountByAssignments(
+    newTotalAmount: number,
+    currency: CURRENCY_ENUM,
+    assignmentIds: string[],
+    scheduleIds: string[],
+    tx: TDataBase = this.db,
+  ) {
+    return this.updateAmount(
+      newTotalAmount,
+      currency,
+      {
+        feeAssignments: {
+          assignmentId: { $in: assignmentIds },
+          scheduleId: { $in: scheduleIds },
+        },
+      },
+      tx,
+    );
+  }
+
+  /**
+   * Updates the total fee amount for specific classrooms and schedules.
+   * @param newTotalAmount - The new amount to be applied.
+   * @param classroomIds - List of classroom identifiers to filter by.
+   * @param scheduleIds - List of schedule identifiers to filter by.
+   * @returns Promise resolving to the result of the update operation.
+   */
+  updateAmountByClassrooms(
+    newTotalAmount: number,
+    currency: CURRENCY_ENUM,
+    classroomIds: string[],
+    scheduleIds: string[],
+    tx: TDataBase = this.db,
+  ) {
+    return this.updateAmount(
+      newTotalAmount,
+      currency,
+      {
+        feeAssignments: { scheduleId: { $in: scheduleIds } },
+        classroomEnrollments: { classroomId: { $in: classroomIds } },
+      },
+      tx,
+    );
+  }
+
+  /**
+   * Exempts students from payment for the specified assignments.
+   * @param studentEnrollmentIds - List of student enrollment identifiers.
+   * @param assignmentIds - List of assignment identifiers to exempt.
+   * @param scheduleIds - List of schedule identifiers to filter by.
+   * @returns Promise resolving to the result of the update operation.
+   */
+  exemptStudentsFromFee(
+    studentEnrollmentIds: string[],
+    assignmentIds: string[],
+    tx: TDataBase = this.db,
+  ) {
+    return this.update(
+      { status: FEE_SCHEDULES_ENUM.EXEMPTED },
+      {
+        where: {
+          feeAssignments: {
+            enrollmentId: { $in: studentEnrollmentIds },
+            assignmentId: { $in: assignmentIds },
+            // scheduleId: { $in: scheduleIds },
+          },
+        },
+      },
+      tx,
+    );
+  }
+
+  /**
+   * Private helper to update the total fee amount using a custom filter query.
+   * @param newTotalAmount - The target amount.
+   * @param whereQuery - The criteria object for filtering updates.
+   * @returns Promise resolving to the result of the update operation.
+   */
+  private updateAmount(
+    newTotalAmount: number,
+    currency: CURRENCY_ENUM,
+    whereQuery: BaseFeeAssignmentFilters["where"],
+    tx: TDataBase,
+  ) {
+    return this.update(
+      { totalAmount: newTotalAmount, currency },
+      { where: whereQuery },
+      tx,
+    );
   }
 }
 

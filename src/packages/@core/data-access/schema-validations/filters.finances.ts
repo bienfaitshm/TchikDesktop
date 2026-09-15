@@ -50,6 +50,8 @@ export type FeeConfigurationFilter = z.infer<
    ========================================================================= */
 export const FeeAssignmentFilterSchema = withQueryOptions({
   feeAssignments: FeeAssignmentSchema,
+  feeTypes: FeeTypeSchema,
+  feeSchedules: FeeScheduleSchema,
 });
 export type FeeAssignmentFilter = z.infer<typeof FeeAssignmentFilterSchema>;
 

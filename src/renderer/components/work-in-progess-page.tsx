@@ -3,7 +3,6 @@ import { Construction } from "lucide-react";
 
 import { useState } from "react";
 import { InputSuggestion } from "@/components/inputs/input-suggestion";
-
 const FRAMEWORKS = [
   "Next.js",
   "React",
@@ -50,6 +49,7 @@ export default function WorkInProgressPage() {
             Page en cours de développement
           </h1>
         </div>
+
         {/* <Example /> */}
       </main>
 

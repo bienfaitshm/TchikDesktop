@@ -8,7 +8,7 @@ import {
 } from "@/packages/@core/data-access/db/queries/finances";
 import { dailyExchangeRateService } from "../services";
 import { classroomRepository } from "@/packages/@core/data-access/db/queries/classrooms";
-import { enrollmentRepository } from "@/packages/@core/data-access/db/queries/enrollments";
+import { EnrollmentRepository } from "@/packages/@core/data-access/db/queries/enrollments";
 
 import {
   type StudentPaymentTable,
@@ -27,6 +27,7 @@ import { OnSyncMessage } from "./types";
 
 const logger = getLogger("PaymentService");
 
+const enrollmentRepository = new EnrollmentRepository();
 const feeManagementService = new FeeManagementService(
   classroomRepository,
   enrollmentRepository,

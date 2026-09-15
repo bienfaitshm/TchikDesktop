@@ -3,6 +3,8 @@ import {
   useCreateFeeAssignment,
   useBulkCreateFeeAssignment,
   useUpdateFeeAssignment,
+  useUpdateAmountByAssignments,
+  useUpdateAmountByClassrooms,
   useDeleteFeeAssignment,
 } from "./finances";
 import { useFormBaseNotify, useFormBase } from "../base";
@@ -12,8 +14,11 @@ import type {
   FeeAssignmentCreate,
   FeeAssignmentUpdate,
   FeeBulkAssignmentData,
+  UpdateAmountByAssignments,
+  UpdateAmountByClassrooms,
 } from "@/packages/@core/data-access/schema-validations";
 import type { BaseMutationConfig, QueryUpdatePayload } from "../base";
+import { CURRENCY_OPTIONS } from "@/packages/@core/data-access/db/options";
 
 const CREATE_FEE_ASSIGNMENT_NOTIFICATIONS = {
   success: {
@@ -40,6 +45,23 @@ const UPDATE_FEE_ASSIGNMENT_NOTIFICATIONS = {
   error: { title: "Échec de la mise à jour de l'attribution." },
 };
 
+const UPDATE_AMOUNT_BY_ASSIGNMENTS_NOTIFICATIONS = {
+  success: {
+    title: "Montants mis à jour",
+    description:
+      "Les montants des attributions sélectionnées ont été modifiés.",
+  },
+  error: { title: "Erreur lors de la mise à jour des montants." },
+};
+
+const UPDATE_AMOUNT_BY_CLASSROOMS_NOTIFICATIONS = {
+  success: {
+    title: "Montants des classes mis à jour",
+    description: "Les montants pour les classes ciblées ont été mis à jour.",
+  },
+  error: { title: "Erreur lors de la mise à jour par classe." },
+};
+
 /**
  * Builds deletion notifications based on student context.
  * @param studentName - Optional student name to customize the success message.
@@ -53,6 +75,20 @@ const getDeleteFeeAssignmentNotifications = (studentName?: string) => ({
       : "L'attribution a été supprimée.",
   },
 });
+
+/**
+ * Helper hook to handle repetitive search input states.
+ * @returns Object containing search state and update handler.
+ */
+function useSearchInputState() {
+  const [searchQuery, setSearchQuery] = useState("");
+  return {
+    searchQuery,
+    setSearchQuery,
+    isSearching: false,
+    options: [],
+  };
+}
 
 /**
  * Custom hook for managing individual fee assignment creation.
@@ -85,10 +121,10 @@ export function useCreateBulkFeeAssignmentForm(
 ) {
   const mutation = useBulkCreateFeeAssignment();
 
-  const [configSearch, setConfigSearch] = useState("");
-  const [scheduleSearch, setScheduleSearch] = useState("");
-  const [classroomSearch, setClassroomSearch] = useState("");
-  const [optionSearch, setOptionSearch] = useState("");
+  const feeConfigSearch = useSearchInputState();
+  const scheduleSearch = useSearchInputState();
+  const classroomSearch = useSearchInputState();
+  const optionSearch = useSearchInputState();
 
   const formBase = useFormBaseNotify<
     FeeBulkAssignmentData,
@@ -103,30 +139,10 @@ export function useCreateBulkFeeAssignmentForm(
 
   return {
     ...formBase,
-    feeConfigSearch: {
-      searchQuery: configSearch,
-      setSearchQuery: setConfigSearch,
-      isSearching: false,
-      options: [],
-    },
-    scheduleSearch: {
-      searchQuery: scheduleSearch,
-      setSearchQuery: setScheduleSearch,
-      isSearching: false,
-      options: [],
-    },
-    classroomSearch: {
-      searchQuery: classroomSearch,
-      setSearchQuery: setClassroomSearch,
-      isSearching: false,
-      options: [],
-    },
-    optionSearch: {
-      searchQuery: optionSearch,
-      setSearchQuery: setOptionSearch,
-      isSearching: false,
-      options: [],
-    },
+    feeConfigSearch,
+    scheduleSearch,
+    classroomSearch,
+    optionSearch,
   };
 }
 
@@ -136,19 +152,65 @@ export function useCreateBulkFeeAssignmentForm(
  * @returns Form state and handlers bound to the update mutation.
  */
 export function useUpdateFeeAssignmentForm(
-  config?: BaseMutationConfig<FeeAssignmentUpdate>,
+  config?: BaseMutationConfig<FeeAssignment>,
 ) {
   const mutation = useUpdateFeeAssignment();
   return useFormBaseNotify<
     QueryUpdatePayload<FeeAssignmentUpdate>,
     { data: FeeAssignmentUpdate; id: string },
-    FeeAssignmentUpdate
+    FeeAssignment
   >({
     mutation,
     config,
     getNotifications: () => UPDATE_FEE_ASSIGNMENT_NOTIFICATIONS,
     adaptData: ({ data, id }) => ({ data, id }),
   });
+}
+
+/**
+ * Custom hook for updating fee amounts across specific assignment IDs.
+ * @param config - Optional base mutation configuration.
+ * @returns Form state and handlers for updating assignment amounts.
+ */
+export function useUpdateAmountByAssignmentsForm(
+  config?: BaseMutationConfig<FeeAssignment[]>,
+) {
+  const mutation = useUpdateAmountByAssignments();
+  const base = useFormBaseNotify<
+    UpdateAmountByAssignments,
+    UpdateAmountByAssignments,
+    FeeAssignment[]
+  >({
+    mutation,
+    config,
+    getNotifications: () => UPDATE_AMOUNT_BY_ASSIGNMENTS_NOTIFICATIONS,
+    adaptData: (data) => data,
+  });
+
+  return { currencyOptions: CURRENCY_OPTIONS, ...base };
+}
+
+/**
+ * Custom hook for updating fee amounts across targeted classrooms.
+ * @param config - Optional base mutation configuration.
+ * @returns Form state and handlers for updating amounts by classrooms.
+ */
+export function useUpdateAmountByClassroomsForm(
+  config?: BaseMutationConfig<FeeAssignment[]>,
+) {
+  const mutation = useUpdateAmountByClassrooms();
+  const base = useFormBaseNotify<
+    UpdateAmountByClassrooms,
+    UpdateAmountByClassrooms,
+    FeeAssignment[]
+  >({
+    mutation,
+    config,
+    getNotifications: () => UPDATE_AMOUNT_BY_CLASSROOMS_NOTIFICATIONS,
+    adaptData: (data) => data,
+  });
+
+  return { currencyOptions: CURRENCY_OPTIONS, ...base };
 }
 
 /**

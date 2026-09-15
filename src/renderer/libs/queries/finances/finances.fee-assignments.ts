@@ -1,10 +1,12 @@
 import { useMutation, useSuspenseQuery } from "../base";
 import { feeAssignment as feeAssignmentApi } from "@/renderer/libs/apis";
 import type {
-  FeeAssignment,
   FeeAssignmentCreate,
   FeeAssignmentFilter,
   FeeAssignmentUpdate,
+  FeeBulkAssignmentData,
+  UpdateAmountByAssignments,
+  UpdateAmountByClassrooms,
 } from "@/packages/@core/data-access/schema-validations";
 import type { TQueryUpdate } from "../type";
 import type { SelectOption } from "@/packages/@core/data-access/db/queries";
@@ -12,8 +14,14 @@ import type {
   UseMutationOptions,
   UseSuspenseQueryOptions,
 } from "@tanstack/react-query";
+import type {
+  FeeAssignment,
+  FeeAssignmentTDO,
+} from "@/packages/@core/data-access/db";
 
-type FeeBulkAssignmentData = any;
+/**
+ * Factory for React Query keys related to fee assignments.
+ */
 export const feeAssignmentKeys = {
   all: ["fin", "fee-assignments"] as const,
   lists: (params?: FeeAssignmentFilter) =>
@@ -24,8 +32,12 @@ export const feeAssignmentKeys = {
   detail: (id: string) => [...feeAssignmentKeys.details(), id] as const,
   mutations: {
     create: () => [...feeAssignmentKeys.all, "create"] as const,
-    bulkCreate: () => [...feeAssignmentKeys.all, "bulk-create"] as const, // <-- NOUVELLE CLÉ COMPTABLE
+    bulkCreate: () => [...feeAssignmentKeys.all, "bulk-create"] as const,
     update: () => [...feeAssignmentKeys.all, "update"] as const,
+    updateAmountByAssignments: () =>
+      [...feeAssignmentKeys.all, "update-amount-by-assignments"] as const,
+    updateAmountByClassrooms: () =>
+      [...feeAssignmentKeys.all, "update-amount-by-classrooms"] as const,
     delete: () => [...feeAssignmentKeys.all, "delete"] as const,
   },
 } as const;
@@ -34,9 +46,15 @@ export const feeAssignmentKeys = {
    QUERIES (SUSPENSE)
    ========================================================================= */
 
+/**
+ * Suspense query hook to fetch filtered fee assignments.
+ * @param params - Optional filters to refine the list result.
+ * @param options - Additional suspense query configuration options.
+ * @returns Suspense query result containing fee assignment DTOs.
+ */
 export function useGetFeeAssignments(
   params?: FeeAssignmentFilter,
-  options?: Partial<UseSuspenseQueryOptions<FeeAssignment[]>>,
+  options?: Partial<UseSuspenseQueryOptions<FeeAssignmentTDO[]>>,
 ) {
   return useSuspenseQuery({
     queryKey: feeAssignmentKeys.lists(params),
@@ -45,9 +63,17 @@ export function useGetFeeAssignments(
   });
 }
 
+/**
+ * Suspense query hook to fetch fee assignments formatted as select options.
+ * @param params - Optional filters to refine options.
+ * @param options - Additional suspense query configuration options.
+ * @returns Suspense query result containing select options.
+ */
 export function useGetFeeAssignmentAsOptions(
   params?: FeeAssignmentFilter,
-  options?: Partial<UseSuspenseQueryOptions<(SelectOption & FeeAssignment)[]>>,
+  options?: Partial<
+    UseSuspenseQueryOptions<(SelectOption & FeeAssignmentTDO)[]>
+  >,
 ) {
   return useSuspenseQuery({
     queryKey: feeAssignmentKeys.options(params),
@@ -56,9 +82,15 @@ export function useGetFeeAssignmentAsOptions(
   });
 }
 
+/**
+ * Suspense query hook to fetch a single fee assignment by identifier.
+ * @param assignmentId - The target fee assignment unique ID.
+ * @param options - Additional suspense query configuration options.
+ * @returns Suspense query result containing the single fee assignment DTO.
+ */
 export function useGetFeeAssignmentById(
   assignmentId: string,
-  options?: Partial<UseSuspenseQueryOptions<FeeAssignment>>,
+  options?: Partial<UseSuspenseQueryOptions<FeeAssignmentTDO>>,
 ) {
   return useSuspenseQuery({
     queryKey: feeAssignmentKeys.detail(assignmentId),
@@ -71,6 +103,11 @@ export function useGetFeeAssignmentById(
    MUTATIONS
    ========================================================================= */
 
+/**
+ * Mutation hook to create a single fee assignment.
+ * @param options - Additional mutation configuration options.
+ * @returns Mutation object for creating a fee assignment.
+ */
 export function useCreateFeeAssignment(
   options?: Partial<
     UseMutationOptions<FeeAssignment, Error, FeeAssignmentCreate>
@@ -84,7 +121,9 @@ export function useCreateFeeAssignment(
 }
 
 /**
- * Assigne collectivement des lignes de frais à un lot ciblé d'élèves
+ * Mutation hook to bulk create fee assignments for multiple targets.
+ * @param options - Additional mutation configuration options.
+ * @returns Mutation object for bulk creation.
  */
 export function useBulkCreateFeeAssignment(
   options?: Partial<UseMutationOptions<void, Error, FeeBulkAssignmentData>>,
@@ -96,6 +135,11 @@ export function useBulkCreateFeeAssignment(
   });
 }
 
+/**
+ * Mutation hook to update an existing fee assignment by ID.
+ * @param options - Additional mutation configuration options.
+ * @returns Mutation object for updating a fee assignment.
+ */
 export function useUpdateFeeAssignment(
   options?: Partial<
     UseMutationOptions<FeeAssignment, Error, TQueryUpdate<FeeAssignmentUpdate>>
@@ -109,6 +153,46 @@ export function useUpdateFeeAssignment(
   });
 }
 
+/**
+ * Mutation hook to update fee amounts by assignment IDs.
+ * @param options - Additional mutation configuration options.
+ * @returns Mutation object for updating amounts by assignments.
+ */
+export function useUpdateAmountByAssignments(
+  options?: Partial<
+    UseMutationOptions<FeeAssignment[], Error, UpdateAmountByAssignments>
+  >,
+) {
+  return useMutation({
+    mutationKey: feeAssignmentKeys.mutations.updateAmountByAssignments(),
+    mutationFn: (payload) =>
+      feeAssignmentApi.updateAmountByAssignments(payload),
+    ...options,
+  });
+}
+
+/**
+ * Mutation hook to update fee amounts by classroom IDs.
+ * @param options - Additional mutation configuration options.
+ * @returns Mutation object for updating amounts by classrooms.
+ */
+export function useUpdateAmountByClassrooms(
+  options?: Partial<
+    UseMutationOptions<FeeAssignment[], Error, UpdateAmountByClassrooms>
+  >,
+) {
+  return useMutation({
+    mutationKey: feeAssignmentKeys.mutations.updateAmountByClassrooms(),
+    mutationFn: (payload) => feeAssignmentApi.updateAmountByClassrooms(payload),
+    ...options,
+  });
+}
+
+/**
+ * Mutation hook to delete a fee assignment by identifier.
+ * @param options - Additional mutation configuration options.
+ * @returns Mutation object for deleting a fee assignment.
+ */
 export function useDeleteFeeAssignment(
   options?: Partial<UseMutationOptions<void, Error, string>>,
 ) {

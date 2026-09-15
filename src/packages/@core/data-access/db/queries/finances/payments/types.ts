@@ -1,7 +1,10 @@
-import { User, FeeAssignment } from "@/packages/@core/data-access/db/schemas";
+import {
+  User,
+  FeeAssignment,
+  ClassroomEnrollment,
+} from "@/packages/@core/data-access/db/schemas";
 
-export type AssignmentTableOfClassroom = {
-  enrollmentId: string;
+export type AssignmentTableOfClassroom = ClassroomEnrollment & {
   student: User;
   payments: { [scheduleId: string]: FeeAssignment | null };
 };

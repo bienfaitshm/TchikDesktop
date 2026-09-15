@@ -21,14 +21,15 @@ import {
 } from "@/renderer/libs/forms";
 import { GENDER_OPTIONS } from "@/packages/@core/data-access/db/options";
 import { GenderInput } from "@/renderer/components/form/fields/gender";
+import { DateInput } from "@/renderer/components/form/fields/date";
 
 export type TutorFormData = BaseTutor;
 
 /**
- * Returns clean default initial values for the tutor form.
- * Ensures optional fields such as birthDate are initialized as undefined.
+ * Returns default initial values for the tutor form to ensure controlled input states.
+ * @returns The default empty tutor form state.
  */
-const getInitialDefaultValues = (): TutorFormData => ({
+export const getInitialDefaultValues = (): TutorFormData => ({
   lastName: "",
   middleName: "",
   firstName: "",
@@ -42,11 +43,9 @@ const getInitialDefaultValues = (): TutorFormData => ({
 });
 
 /**
- * Form component for entering and editing tutor profile information.
- * Features semantic grouping, responsive grid layout, accessibility attributes, and schema validation.
- *
- * @param props - Component options including form ID, submit handler, and default overrides.
- * @returns Accessible HTML form structure for tutor data capture.
+ * Accessible form component for creating and editing tutor profiles.
+ * @param props - Form configuration including submit handlers and initial state overrides.
+ * @returns The rendered JSX form structure.
  */
 export const TutorForm: React.FC<BaseFormProps<TutorFormData>> = ({
   onSubmit,
@@ -90,6 +89,7 @@ export const TutorForm: React.FC<BaseFormProps<TutorFormData>> = ({
                   <FormControl>
                     <Input
                       {...field}
+                      value={field.value ?? ""}
                       placeholder="Ex: KABANGE"
                       autoComplete="family-name"
                     />
@@ -167,20 +167,7 @@ export const TutorForm: React.FC<BaseFormProps<TutorFormData>> = ({
                     </span>
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      type="date"
-                      value={
-                        field.value
-                          ? new Date(field.value).toISOString().split("T")[0]
-                          : ""
-                      }
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value ? new Date(e.target.value) : undefined,
-                        )
-                      }
-                      autoComplete="bday"
-                    />
+                    <DateInput {...field} />
                   </FormControl>
                   <FormDescription className="text-xs text-muted-foreground">
                     Cette information n'est pas obligatoire.
