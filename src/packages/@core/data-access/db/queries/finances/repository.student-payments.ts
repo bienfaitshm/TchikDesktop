@@ -1,21 +1,15 @@
 import { db, type TDataBase } from "@/packages/@core/data-access/db/config";
 import { getLogger } from "@/packages/logger";
 import {
-  feeConfigurations,
-  feeAssignments,
-  studentPayments,
-  options,
+  feeOverrides,
   feeTypes,
   classrooms,
   classroomEnrollments,
   users,
-  feeSchedules,
-  type FeeSchedule,
+  type TableFeeOverride,
+  type FeeOverride,
   type FeeType,
   type Classroom,
-  type TableStudentPayment,
-  type StudentPayment,
-  type FeeAssignment,
   type ClassroomEnrollment,
 } from "@/packages/@core/data-access/db/schemas";
 import { helpers, betterSqlite } from "@/packages/drizzle-queries";
@@ -23,97 +17,84 @@ import { eq, getTableColumns } from "drizzle-orm";
 import { UserDTO, UserRepository } from "../users";
 
 const TABLES = {
-  classrooms,
-  options,
-  studentPayments,
-  feeAssignments,
-  classroomEnrollments,
-  feeConfigurations,
+  feeOverrides,
   feeTypes,
+  classrooms,
+  classroomEnrollments,
   users,
 } as const;
 
-export type BaseStudentPaymentFilters = helpers.FindManyOptions<typeof TABLES>;
+export type BaseFeeOverrideFilters = helpers.FindManyOptions<typeof TABLES>;
 
-export type StudentPaymentDTO = StudentPayment & {
+export type FeeOverrideDTO = FeeOverride & {
   feeType: FeeType;
-  classroom: Classroom;
-  student: UserDTO;
-  feeAssigment: FeeAssignment;
-  feeSchedule: FeeSchedule;
-  enrollment: ClassroomEnrollment;
+  classroom: Classroom | null;
+  enrollment: ClassroomEnrollment | null;
+  student: UserDTO | null;
 };
 
-const DEFAULT_SORT: BaseStudentPaymentFilters = {
-  orderBy: [{ table: "studentPayments", column: "createdAt", order: "desc" }],
+const DEFAULT_SORT: BaseFeeOverrideFilters = {
+  orderBy: [{ table: "feeOverrides", column: "createdAt", order: "desc" }],
 };
 
-export class StudentPaymentRepository extends betterSqlite.BaseRepository<
-  TableStudentPayment,
+/**
+ * Data access repository for managing fee override entities and their relations.
+ */
+export class FeeOverrideRepository extends betterSqlite.BaseRepository<
+  TableFeeOverride,
   TDataBase,
-  StudentPaymentDTO,
-  BaseStudentPaymentFilters
+  FeeOverrideDTO,
+  BaseFeeOverrideFilters
 > {
   /**
-   * Initializes a new instance of the StudentPaymentRepository.
-   * @param database - Optional database connection instance.
+   * Initializes a new instance of the FeeOverrideRepository class.
+   * @param database - Optional database connection or transaction instance.
    */
   constructor(database: TDataBase = db) {
     super({
       db: database,
-      table: studentPayments,
-      idColumn: studentPayments.paymentId,
-      baseTableName: "StudentPayment",
+      table: feeOverrides,
+      idColumn: feeOverrides.feeOverrideId,
+      baseTableName: "FeeOverride",
       logger: getLogger,
       defaultFilters: DEFAULT_SORT,
       joinTables: TABLES,
     });
   }
 
-  static getDTOColumns(table: TableStudentPayment) {
+  /**
+   * Constructs the selection columns mapping required for building the FeeOverrideDTO.
+   * @param table - The primary fee overrides table schema.
+   * @returns An object containing table column definitions for primary and joined entities.
+   */
+  static getDTOColumns(table: TableFeeOverride) {
     return {
       ...getTableColumns(table),
-      classroom: getTableColumns(classrooms),
-      student: UserRepository.getVisibleColumns(),
       feeType: getTableColumns(feeTypes),
-      feeAssigment: getTableColumns(feeAssignments),
+      classroom: getTableColumns(classrooms),
       enrollment: getTableColumns(classroomEnrollments),
-      feeSchedule: getTableColumns(feeSchedules),
+      student: UserRepository.getVisibleColumns(),
     };
   }
+
   /**
-   * Constructs the base query set with all necessary inner joins for student payments.
+   * Constructs the base query set with necessary joins for fetching fee overrides.
    * @param tx - Optional database transaction instance.
-   * @returns The dynamic query builder populated with joined relations.
+   * @returns Dynamic query builder populated with required inner and left joins.
    */
   protected getQuerySet(tx?: TDataBase) {
     return this.getClient(tx)
-      .select(StudentPaymentRepository.getDTOColumns(this.table))
+      .select(FeeOverrideRepository.getDTOColumns(this.table))
       .from(this.table)
-      .innerJoin(
-        feeAssignments,
-        eq(this.table.assignmentId, feeAssignments.assignmentId),
-      )
-      .innerJoin(
-        feeSchedules,
-        eq(feeAssignments.scheduleId, feeSchedules.scheduleId),
-      )
-      .innerJoin(
+      .innerJoin(feeTypes, eq(this.table.feeTypeId, feeTypes.feeTypeId))
+      .leftJoin(classrooms, eq(this.table.classId, classrooms.classId))
+      .leftJoin(
         classroomEnrollments,
-        eq(feeAssignments.enrollmentId, classroomEnrollments.enrollmentId),
+        eq(this.table.enrollmentId, classroomEnrollments.enrollmentId),
       )
-      .innerJoin(
-        classrooms,
-        eq(classroomEnrollments.classroomId, classrooms.classId),
-      )
-      .innerJoin(users, eq(classroomEnrollments.studentId, users.userId))
-      .innerJoin(
-        feeConfigurations,
-        eq(feeAssignments.feeConfigId, feeConfigurations.feeConfigId),
-      )
-      .innerJoin(feeTypes, eq(feeConfigurations.feeTypeId, feeTypes.feeTypeId))
+      .leftJoin(users, eq(classroomEnrollments.studentId, users.userId))
       .$dynamic();
   }
 }
 
-export const studentPaymentRepository = new StudentPaymentRepository(db);
+export const feeOverrideRepository = new FeeOverrideRepository(db);
