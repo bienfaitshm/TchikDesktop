@@ -62,17 +62,20 @@ export class FeeOverrideRepository
       db: database,
       table: feeOverrides,
       idColumn: feeOverrides.feeOverrideId,
-      baseTableName: "feeOverrides",
+      baseTableName: "FeeOverride",
       logger: getLogger,
       defaultFilters: DEFAULT_SORT,
       joinTables: TABLES,
     });
   }
 
+  /**
+   * Fetches fee override options matching the specified filters for select components.
+   * @param filters - Optional query options and criteria to filter records.
+   * @returns A promise resolving to an array of FeeOverrideDTO instances.
+   */
   fetchOptions(filters?: BaseFeeOverrideFilters) {
-    this.logger.info(
-      "[FeeConfigurationRepository] Fetching fee configuration options.",
-    );
+    this.logger.info("[FeeOverrideRepository] Fetching fee override options.");
     return this.findMany(filters);
   }
 

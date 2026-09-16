@@ -17,12 +17,13 @@ import {
   betterSqlite,
   OptionProvider,
 } from "@/packages/drizzle-queries";
-
 import { STUDENT_STATUS_ENUM } from "@/packages/@core/data-access/db/options";
-
 import { UserRepository } from "../users";
 import { TutorDTO, TutorRepository } from "../tutors";
 
+/**
+ * Data transfer object representing a classroom enrollment with full relational details.
+ */
 export type EnrollmentDTO = ClassroomEnrollment & {
   student: User & { fullName: string };
   classroom: Omit<Classroom, "classId" | "schoolId">;
@@ -50,7 +51,7 @@ const ENROLLMENT_DEFAULT_SORT: BaseClassroomEnrollmentFilters = {
   ],
 };
 
-const ACTIVE_ENROLLEMENTS: BaseClassroomEnrollmentFilters = {
+const ACTIVE_ENROLLMENTS: BaseClassroomEnrollmentFilters = {
   where: {
     classroomEnrollments: {
       status: STUDENT_STATUS_ENUM.ACTIVE,
@@ -58,12 +59,20 @@ const ACTIVE_ENROLLEMENTS: BaseClassroomEnrollmentFilters = {
   },
 };
 
+/**
+ * Extracts query payload for filtering classroom enrollments.
+ * @param filters - The filtration options to process.
+ * @returns Formatted query payload object.
+ */
 export function extractEnrollmentFiltersQueryPayload(
   filters: BaseClassroomEnrollmentFilters,
 ) {
   return helpers.extractQueryPayload(JOINED_TABLES, filters);
 }
 
+/**
+ * Repository class for managing classroom enrollment data access and aggregations.
+ */
 export class EnrollmentRepository
   extends betterSqlite.BaseRepository<
     TableClassroomEnrollment,
@@ -71,8 +80,12 @@ export class EnrollmentRepository
     EnrollmentDTO,
     BaseClassroomEnrollmentFilters
   >
-  implements OptionProvider<EnrollmentDTO>
+  implements OptionProvider<EnrollmentDTO, BaseClassroomEnrollmentFilters>
 {
+  /**
+   * Initializes a new instance of the EnrollmentRepository class.
+   * @param database - Optional database connection or transaction client.
+   */
   constructor(database: TDataBase = db) {
     super({
       db: database,
@@ -85,10 +98,21 @@ export class EnrollmentRepository
     });
   }
 
-  fetchOptions(filters: BaseClassroomEnrollmentFilters): EnrollmentDTO[] {
+  /**
+   * Fetches enrollment options matching the provided filters.
+   * @param filters - Query filters to restrict records.
+   * @returns Array of EnrollmentDTO entities.
+   */
+  public fetchOptions(
+    filters: BaseClassroomEnrollmentFilters,
+  ): EnrollmentDTO[] {
     return this.findMany(filters);
   }
 
+  /**
+   * Constructs the selection columns map for building EnrollmentDTO.
+   * @returns Column selections mapping object.
+   */
   public getDTOColumns() {
     return {
       ...getTableColumns(this.table),
@@ -101,9 +125,10 @@ export class EnrollmentRepository
 
   /**
    * Marks one or multiple students as Pro Deo within a specific school.
-   * @param enrollmentIds - Single enrollment identifier or an array of enrollment identifiers.
+   * @param enrollmentIds - Single enrollment identifier or an array of identifiers.
    * @param schoolId - The unique identifier of the school.
-   * @returns A promise resolving to the result of the database update operation.
+   * @param tx - Optional transaction client.
+   * @returns Result of the database update operation.
    */
   public markStudentsAsProDeo(
     enrollmentIds: string | string[],
@@ -127,7 +152,9 @@ export class EnrollmentRepository
   }
 
   /**
-   * Surcharge propre du QuerySet de base pour inclure systématiquement les relations
+   * Constructs the base query set including all required relational joins.
+   * @param tx - Optional transaction client.
+   * @returns Prepared dynamic query builder.
    */
   protected override getQuerySet(tx?: TDataBase) {
     const client = this.getClient(tx);
@@ -149,38 +176,40 @@ export class EnrollmentRepository
   }
 
   /**
-   * Récupère uniquement les inscriptions actives (allégées pour traitement lourd ou filtres internes)
+   * Fetches active student enrollments applied with specific filters.
+   * @param filters - Filtration options.
+   * @param tx - Optional transaction client.
+   * @returns List of active EnrollmentDTO items.
    */
-  getActiveEnrollments(
+  public getActiveEnrollments(
     filters: BaseClassroomEnrollmentFilters,
     tx?: TDataBase,
   ) {
-    console.log(
-      "+++++++++++++++++++++++++++++++++++++++++++++++=",
-      "getActiveEnrollments",
-    );
     try {
       const query = this.getQuerySet(tx);
       const result = helpers.applyQueryOptions(
         query,
         this.getJoinTable(),
-        helpers.mergeFindManyOptions(filters, ACTIVE_ENROLLEMENTS),
+        helpers.mergeFindManyOptions(filters, ACTIVE_ENROLLMENTS),
       );
       return result.all();
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
-        `Failed to fetch active enrollments for school ${filters}`,
+        "Failed to fetch active classroom enrollments.",
       );
-      this.logError("getActiveEnrollments", dbError, filters as any);
+      this.logError("getActiveEnrollments", dbError, { filters });
       throw dbError;
     }
   }
 
   /**
-   * Métriques du Dashboard (Total élèves, Nouveaux, Anciens)
+   * Computes dashboard metrics including total, new, and returning students count.
+   * @param ctx - Context containing school and academic year identifiers.
+   * @param tx - Optional transaction client.
+   * @returns Object containing metric calculations.
    */
-  async getDashboardMetrics(
+  public async getDashboardMetrics(
     ctx: { schoolId: string; yearId: string },
     tx?: TDataBase,
   ) {
@@ -210,7 +239,7 @@ export class EnrollmentRepository
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
-        "Impossible de récupérer les métriques du tableau de bord.",
+        "Failed to retrieve dashboard metrics.",
       );
       this.logError("getDashboardMetrics", dbError, ctx);
       throw dbError;
@@ -218,9 +247,12 @@ export class EnrollmentRepository
   }
 
   /**
-   * Calcul des effectifs groupés par classe
+   * Calculates enrolled student count grouped per classroom.
+   * @param ctx - Context containing school and academic year identifiers.
+   * @param tx - Optional transaction client.
+   * @returns Array of classroom student count records.
    */
-  async getCountByClass(
+  public async getCountByClass(
     ctx: { schoolId: string; yearId: string },
     tx?: TDataBase,
   ) {
@@ -250,10 +282,12 @@ export class EnrollmentRepository
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
-        "Erreur lors du calcul des effectifs par classe.",
+        "Failed to calculate student count per class.",
       );
       this.logError("getCountByClass", dbError, ctx);
       throw dbError;
     }
   }
 }
+
+export const enrollmentRepository = new EnrollmentRepository(db);
