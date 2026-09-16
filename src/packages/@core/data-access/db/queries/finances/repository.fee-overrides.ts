@@ -12,7 +12,11 @@ import {
   type Classroom,
   type ClassroomEnrollment,
 } from "@/packages/@core/data-access/db/schemas";
-import { helpers, betterSqlite } from "@/packages/drizzle-queries";
+import {
+  helpers,
+  betterSqlite,
+  OptionProvider,
+} from "@/packages/drizzle-queries";
 import { eq, getTableColumns } from "drizzle-orm";
 import { UserDTO, UserRepository } from "../users";
 
@@ -40,12 +44,15 @@ const DEFAULT_SORT: BaseFeeOverrideFilters = {
 /**
  * Data access repository for managing fee override entities and their relations.
  */
-export class FeeOverrideRepository extends betterSqlite.BaseRepository<
-  TableFeeOverride,
-  TDataBase,
-  FeeOverrideDTO,
-  BaseFeeOverrideFilters
-> {
+export class FeeOverrideRepository
+  extends betterSqlite.BaseRepository<
+    TableFeeOverride,
+    TDataBase,
+    FeeOverrideDTO,
+    BaseFeeOverrideFilters
+  >
+  implements OptionProvider<FeeOverrideDTO, BaseFeeOverrideFilters>
+{
   /**
    * Initializes a new instance of the FeeOverrideRepository class.
    * @param database - Optional database connection or transaction instance.
@@ -55,11 +62,18 @@ export class FeeOverrideRepository extends betterSqlite.BaseRepository<
       db: database,
       table: feeOverrides,
       idColumn: feeOverrides.feeOverrideId,
-      baseTableName: "FeeOverride",
+      baseTableName: "feeOverrides",
       logger: getLogger,
       defaultFilters: DEFAULT_SORT,
       joinTables: TABLES,
     });
+  }
+
+  fetchOptions(filters?: BaseFeeOverrideFilters) {
+    this.logger.info(
+      "[FeeConfigurationRepository] Fetching fee configuration options.",
+    );
+    return this.findMany(filters);
   }
 
   /**
