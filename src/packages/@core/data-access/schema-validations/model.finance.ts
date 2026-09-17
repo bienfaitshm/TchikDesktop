@@ -14,6 +14,9 @@ import {
    WALLETS
    ========================================================================= */
 
+/**
+ * Validates complete Wallet entity data.
+ */
 export const WalletSchema = z
   .object({
     walletId: z
@@ -37,6 +40,9 @@ export const WalletSchema = z
 
 export type Wallet = z.infer<typeof WalletSchema>;
 
+/**
+ * Validates payload required to create a Wallet.
+ */
 export const WalletCreateSchema = WalletSchema.omit({
   walletId: true,
   createdAt: true,
@@ -44,6 +50,9 @@ export const WalletCreateSchema = WalletSchema.omit({
 });
 export type WalletCreate = z.infer<typeof WalletCreateSchema>;
 
+/**
+ * Validates payload required to update a Wallet.
+ */
 export const WalletUpdateSchema = WalletCreateSchema.omit({
   schoolId: true,
 }).partial();
@@ -53,6 +62,9 @@ export type WalletUpdate = z.infer<typeof WalletUpdateSchema>;
    FEE TYPES
    ========================================================================= */
 
+/**
+ * Validates complete FeeType entity data.
+ */
 export const FeeTypeSchema = z
   .object({
     feeTypeId: z
@@ -73,6 +85,9 @@ export const FeeTypeSchema = z
 
 export type FeeType = z.infer<typeof FeeTypeSchema>;
 
+/**
+ * Validates payload required to create a FeeType.
+ */
 export const FeeTypeCreateSchema = FeeTypeSchema.omit({
   feeTypeId: true,
   createdAt: true,
@@ -80,6 +95,9 @@ export const FeeTypeCreateSchema = FeeTypeSchema.omit({
 });
 export type FeeTypeCreate = z.infer<typeof FeeTypeCreateSchema>;
 
+/**
+ * Validates payload required to update a FeeType.
+ */
 export const FeeTypeUpdateSchema = FeeTypeCreateSchema.omit({
   schoolId: true,
   yearId: true,
@@ -90,6 +108,9 @@ export type FeeTypeUpdate = z.infer<typeof FeeTypeUpdateSchema>;
    FEE SCHEDULES
    ========================================================================= */
 
+/**
+ * Validates complete FeeSchedule entity data.
+ */
 export const FeeScheduleSchema = z
   .object({
     scheduleId: z
@@ -109,6 +130,9 @@ export const FeeScheduleSchema = z
 
 export type FeeSchedule = z.infer<typeof FeeScheduleSchema>;
 
+/**
+ * Validates payload required to create a FeeSchedule.
+ */
 export const FeeScheduleCreateSchema = FeeScheduleSchema.omit({
   scheduleId: true,
   createdAt: true,
@@ -116,6 +140,9 @@ export const FeeScheduleCreateSchema = FeeScheduleSchema.omit({
 });
 export type FeeScheduleCreate = z.infer<typeof FeeScheduleCreateSchema>;
 
+/**
+ * Validates payload required to update a FeeSchedule.
+ */
 export const FeeScheduleUpdateSchema = FeeScheduleCreateSchema.omit({
   feeTypeId: true,
 }).partial();
@@ -125,6 +152,9 @@ export type FeeScheduleUpdate = z.infer<typeof FeeScheduleUpdateSchema>;
    FEE CONFIGURATIONS
    ========================================================================= */
 
+/**
+ * Base schema definition for FeeConfiguration entity.
+ */
 export const FeeConfigurationBase = z
   .object({
     feeConfigId: z
@@ -156,9 +186,15 @@ export const FeeConfigurationBase = z
   .extend(timestampBaseSchema.shape)
   .extend(schoolYearIdBaseSchema.shape);
 
-export const addFeeConfigurationRefine = <T extends z.ZodObject>(schema: T) => {
+/**
+ * Applies target validation checking that exactly one target entity is set.
+ * @param schema - The base Zod schema to refine.
+ * @returns Refined Zod schema enforcing target uniqueness.
+ */
+export const addFeeConfigurationRefine = <T extends z.ZodObject<any>>(
+  schema: T,
+) => {
   return schema.superRefine((data, ctx) => {
-    // Compatibilité 'partial()' & nullability
     const hasSection = data.section !== undefined && data.section !== null;
     const hasOption = data.optionId !== undefined && data.optionId !== null;
     const hasClassroom =
@@ -185,10 +221,16 @@ export const addFeeConfigurationRefine = <T extends z.ZodObject>(schema: T) => {
   });
 };
 
+/**
+ * Validates complete FeeConfiguration entity data.
+ */
 export const FeeConfigurationSchema =
   addFeeConfigurationRefine(FeeConfigurationBase);
 export type FeeConfiguration = z.infer<typeof FeeConfigurationSchema>;
 
+/**
+ * Validates payload required to create a FeeConfiguration.
+ */
 export const FeeConfigurationCreateSchema = addFeeConfigurationRefine(
   FeeConfigurationBase.omit({
     feeConfigId: true,
@@ -200,6 +242,9 @@ export type FeeConfigurationCreate = z.infer<
   typeof FeeConfigurationCreateSchema
 >;
 
+/**
+ * Validates payload required to update a FeeConfiguration.
+ */
 export const FeeConfigurationUpdateSchema = FeeConfigurationBase.omit({
   feeConfigId: true,
   createdAt: true,
@@ -215,6 +260,9 @@ export type FeeConfigurationUpdate = z.infer<
    FEE ASSIGNMENTS
    ========================================================================= */
 
+/**
+ * Validates complete FeeAssignment entity data.
+ */
 export const FeeAssignmentSchema = z
   .object({
     assignmentId: z
@@ -237,15 +285,30 @@ export const FeeAssignmentSchema = z
       .number()
       .int()
       .min(0, "Le montant payé ne peut pas être négatif.")
+      .default(0)
       .describe("Montant déjà payé (en centimes)"),
+    totalAmount: z.coerce
+      .number()
+      .int()
+      .min(0, "Le montant total ne peut pas être négatif.")
+      .default(0)
+      .describe("Montant total dû (en centimes)"),
+    currency: ZCURRENCY_ENUM.describe("Devise de l'attribution"),
     status: ZFEE_SCHEDULES_ENUM.describe(
       "Statut de l'échéancier (UNPAID, PARTIAL, PAID, ...)",
     ),
+    isCustomized: z
+      .boolean()
+      .default(false)
+      .describe("Indique si l'attribution a fait l'objet d'un ajustement"),
   })
   .extend(timestampBaseSchema.shape);
 
 export type FeeAssignment = z.infer<typeof FeeAssignmentSchema>;
 
+/**
+ * Validates payload required to create a FeeAssignment.
+ */
 export const FeeAssignmentCreateSchema = FeeAssignmentSchema.omit({
   assignmentId: true,
   createdAt: true,
@@ -253,6 +316,9 @@ export const FeeAssignmentCreateSchema = FeeAssignmentSchema.omit({
 });
 export type FeeAssignmentCreate = z.infer<typeof FeeAssignmentCreateSchema>;
 
+/**
+ * Validates payload required to update a FeeAssignment.
+ */
 export const FeeAssignmentUpdateSchema = FeeAssignmentCreateSchema.omit({
   enrollmentId: true,
   feeConfigId: true,
@@ -264,6 +330,9 @@ export type FeeAssignmentUpdate = z.infer<typeof FeeAssignmentUpdateSchema>;
    STUDENT PAYMENTS
    ========================================================================= */
 
+/**
+ * Validates complete StudentPayment entity data.
+ */
 export const StudentPaymentSchema = z
   .object({
     paymentId: z
@@ -303,6 +372,9 @@ export const StudentPaymentSchema = z
 
 export type StudentPayment = z.infer<typeof StudentPaymentSchema>;
 
+/**
+ * Validates payload required to create a StudentPayment.
+ */
 export const StudentPaymentCreateSchema = StudentPaymentSchema.omit({
   paymentId: true,
   createdAt: true,
@@ -310,6 +382,9 @@ export const StudentPaymentCreateSchema = StudentPaymentSchema.omit({
 });
 export type StudentPaymentCreate = z.infer<typeof StudentPaymentCreateSchema>;
 
+/**
+ * Validates payload required to update a StudentPayment.
+ */
 export const StudentPaymentUpdateSchema = StudentPaymentCreateSchema.omit({
   schoolId: true,
   yearId: true,
@@ -321,6 +396,9 @@ export type StudentPaymentUpdate = z.infer<typeof StudentPaymentUpdateSchema>;
    DAILY EXCHANGE RATES
    ========================================================================= */
 
+/**
+ * Validates complete DailyExchangeRate entity data.
+ */
 export const DailyExchangeRateSchema = z
   .object({
     rateId: z
@@ -341,6 +419,9 @@ export const DailyExchangeRateSchema = z
 
 export type DailyExchangeRate = z.infer<typeof DailyExchangeRateSchema>;
 
+/**
+ * Validates payload required to create a DailyExchangeRate.
+ */
 export const DailyExchangeRateCreateSchema = DailyExchangeRateSchema.omit({
   rateId: true,
   createdAt: true,
@@ -350,6 +431,9 @@ export type DailyExchangeRateCreate = z.infer<
   typeof DailyExchangeRateCreateSchema
 >;
 
+/**
+ * Validates payload required to update a DailyExchangeRate.
+ */
 export const DailyExchangeRateUpdateSchema = DailyExchangeRateCreateSchema.omit(
   { schoolId: true },
 ).partial();
@@ -358,9 +442,91 @@ export type DailyExchangeRateUpdate = z.infer<
 >;
 
 /* =========================================================================
+   FEE OVERRIDES
+   ========================================================================= */
+
+/**
+ * Base schema definition for FeeOverride entity.
+ */
+export const FeeOverrideBase = z
+  .object({
+    feeOverrideId: z
+      .string()
+      .min(1, "L'ID du surpassement est requis.")
+      .describe("ID unique du surpassement de frais (UUID)"),
+    feeTypeId: z
+      .string()
+      .min(1, "Le type de frais est requis.")
+      .describe("Type de frais concerné"),
+    classId: optionalNullableString.describe("Classe cible (si applicable)"),
+    enrollmentId: optionalNullableString.describe(
+      "Inscription cible (si applicable)",
+    ),
+    customAmount: z.coerce
+      .number()
+      .int("Le montant personnalisé doit être un entier.")
+      .min(0, "Le montant personnalisé ne peut pas être négatif.")
+      .describe("Montant personnalisé (en centimes)"),
+    reason: optionalNullableString.describe("Motif de la dérogation"),
+  })
+  .extend(timestampBaseSchema.shape);
+
+/**
+ * Applies refinement checking that at least one target (classId or enrollmentId) is present.
+ * @param schema - The base Zod schema to refine.
+ * @returns Refined Zod schema enforcing target validation.
+ */
+export const addFeeOverrideRefine = <T extends z.ZodObject<any>>(schema: T) => {
+  return schema.superRefine((data, ctx) => {
+    const hasClass = data.classId !== undefined && data.classId !== null;
+    const hasEnrollment =
+      data.enrollmentId !== undefined && data.enrollmentId !== null;
+
+    if (!hasClass && !hasEnrollment) {
+      const msg =
+        "Vous devez spécifier au moins une cible (soit une classe, soit une inscription).";
+      ctx.addIssue({ message: msg, path: ["classId"], code: "custom" });
+      ctx.addIssue({ message: msg, path: ["enrollmentId"], code: "custom" });
+    }
+  });
+};
+
+/**
+ * Validates complete FeeOverride entity data.
+ */
+export const FeeOverrideSchema = addFeeOverrideRefine(FeeOverrideBase);
+export type FeeOverride = z.infer<typeof FeeOverrideSchema>;
+
+/**
+ * Validates payload required to create a FeeOverride.
+ */
+export const FeeOverrideCreateSchema = addFeeOverrideRefine(
+  FeeOverrideBase.omit({
+    feeOverrideId: true,
+    createdAt: true,
+    updatedAt: true,
+  }),
+);
+export type FeeOverrideCreate = z.infer<typeof FeeOverrideCreateSchema>;
+
+/**
+ * Validates payload required to update a FeeOverride.
+ */
+export const FeeOverrideUpdateSchema = FeeOverrideBase.omit({
+  feeOverrideId: true,
+  createdAt: true,
+  updatedAt: true,
+  feeTypeId: true,
+}).partial();
+export type FeeOverrideUpdate = z.infer<typeof FeeOverrideUpdateSchema>;
+
+/* =========================================================================
    PROCESS PAYMENT PAYLOAD
    ========================================================================= */
 
+/**
+ * Validates payload required to execute payment processing logic.
+ */
 export const ProcessPaymentSchema = z
   .object({
     assignmentId: z.string().min(1, "L'attribution est requise."),

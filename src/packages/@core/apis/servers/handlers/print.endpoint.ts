@@ -3,7 +3,7 @@ import {
   IpcServer,
   type IpcRequest,
 } from "@/packages/electron-ipc-rest";
-import { PrinteToutes } from "../../routes-constant";
+import { PrinterRoutes } from "../../routes-constant";
 import {
   PrintInvoiceSchema,
   PrinterValueSchema,
@@ -24,7 +24,7 @@ export class PrinterController {
    * Retrieves all system printers installed on the host machine.
    * @returns A promise resolving to the list of available system printers.
    */
-  @IpcServer.register(HttpMethod.GET, PrinteToutes.GET_PRINTERS)
+  @IpcServer.register(HttpMethod.GET, PrinterRoutes.GET_PRINTERS)
   static async getPrinters({}: IpcRequest<unknown>) {
     return printingService.getPrinters();
   }
@@ -34,7 +34,7 @@ export class PrinterController {
    * @param request - IPC request containing the target printer name payload.
    * @returns A promise resolving to the printer connection status result.
    */
-  @IpcServer.register(HttpMethod.POST, PrinteToutes.CHECK_PRINTER, {
+  @IpcServer.register(HttpMethod.POST, PrinterRoutes.CHECK_PRINTER, {
     body: PrinterValueSchema,
   })
   static async checkPrinter({ body }: IpcRequest<PrinterValuePayload>) {
@@ -46,7 +46,7 @@ export class PrinterController {
    * @param request - IPC request containing validated ticket details.
    * @returns A promise resolving to the receipt printing execution result.
    */
-  @IpcServer.register(HttpMethod.POST, PrinteToutes.PRINT_RECEIPT, {
+  @IpcServer.register(HttpMethod.POST, PrinterRoutes.PRINT_RECEIPT, {
     body: PrintInvoiceSchema,
   })
   static async printReceipt({ body }: IpcRequest<PrintInvoicePayload>) {
@@ -58,7 +58,7 @@ export class PrinterController {
    * @param request - IPC request containing the target printer name payload.
    * @returns A promise resolving to the test printing execution result.
    */
-  @IpcServer.register(HttpMethod.POST, PrinteToutes.PRINT_TEST, {
+  @IpcServer.register(HttpMethod.POST, PrinterRoutes.PRINT_TEST, {
     body: PrinterValueSchema,
   })
   static async testPrinter({ body }: IpcRequest<PrinterValuePayload>) {
