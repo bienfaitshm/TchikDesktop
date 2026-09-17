@@ -66,28 +66,36 @@ function ApplicationLogo({
 export function SidebarTrigger({
   className,
   onClick,
+  title = "Tchik",
   ...props
-}: React.ComponentProps<typeof Button>): React.JSX.Element {
+}: React.ComponentProps<typeof Button> & {
+  title?: string;
+}): React.JSX.Element {
   const { toggleSidebar, ToggleIcon, tooltipText } = useSidebarToggleState();
 
   return (
-    <Button
-      data-sidebar="trigger"
-      data-slot="sidebar-trigger"
-      variant="ghost"
-      size="icon-sm"
-      className={cn("group relative", className)}
+    <div
+      className="group flex items-center gap-2 cursor-pointer"
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
       }}
-      title={tooltipText}
-      {...props}
     >
-      <ApplicationLogo />
-      <ToggleIcon className="absolute size-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
-      <span className="sr-only">{tooltipText}</span>
-    </Button>
+      <Button
+        data-sidebar="trigger"
+        data-slot="sidebar-trigger"
+        variant="ghost"
+        size="icon-sm"
+        className={cn("relative", className)}
+        title={tooltipText}
+        {...props}
+      >
+        <ApplicationLogo />
+        <ToggleIcon className="absolute size-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+        <span className="sr-only">{tooltipText}</span>
+      </Button>
+      {title && <span className="text-sm font-semibold">{title}</span>}
+    </div>
   );
 }
 

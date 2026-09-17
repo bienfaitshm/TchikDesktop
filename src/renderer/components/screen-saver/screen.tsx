@@ -302,7 +302,7 @@ export function Screensaver({
   return (
     <div
       onClick={toggleUnlockPanel}
-      className="fixed inset-0 z-40 flex flex-col items-center justify-between bg-background/90 p-8 select-none transition-all duration-500 overflow-hidden cursor-pointer"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-background/90 p-8 select-none transition-all duration-500 overflow-hidden cursor-pointer"
     >
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-purple-500/30 rounded-full mix-blend-screen filter blur-[100px] opacity-70 animate-pulse" />
