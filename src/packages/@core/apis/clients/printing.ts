@@ -1,6 +1,6 @@
 import { IpcClient } from "@/packages/electron-ipc-rest/ipc.client";
 import {} from "@/packages/@core/data-access/schema-validations";
-import { PrinterRoutes } from "../routes-constant";
+import { PrinteToutes } from "../routes-constant";
 import type { SystemPrinter } from "@/packages/pos-printer";
 
 export type PrinterApis = Readonly<{
@@ -13,18 +13,18 @@ export type PrinterApis = Readonly<{
 export function createPrintingApis(ipcClient: IpcClient): PrinterApis {
   return {
     getPrinters() {
-      return ipcClient.get(PrinterRoutes.GET_PRINTERS);
+      return ipcClient.get(PrinteToutes.GET_PRINTERS);
     },
 
     checkPrinter(payload) {
-      return ipcClient.post(PrinterRoutes.CHECK_PRINTER, payload);
+      return ipcClient.post(PrinteToutes.CHECK_PRINTER, payload);
     },
 
     printInvoice(payload) {
-      return ipcClient.post(PrinterRoutes.PRINT_RECEIPT, payload);
+      return ipcClient.post(PrinteToutes.PRINT_RECEIPT, payload);
     },
     testPrinter(payload) {
-      return ipcClient.post(PrinterRoutes.PRINT_TEST, payload);
+      return ipcClient.post(PrinteToutes.PRINT_TEST, payload);
     },
   } as const;
 }
