@@ -95,6 +95,7 @@ export function FastPaymentForm({
                           schoolId,
                           yearId,
                           assignmentId,
+                          amountReceived: totalAmount - amountPaid,
                           transactionReference,
                         }}
                         totalAmount={totalAmount}
