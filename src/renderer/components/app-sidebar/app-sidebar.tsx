@@ -18,24 +18,24 @@ import { Suspense } from "@/renderer/libs/queries/suspense";
 import { ToggleSidebarButton } from "./app-sidebar.toggle-button";
 
 /**
- * Interface representing an individual navigation menu item.
+ * Represents an individual navigation menu item configuration.
  */
 export interface NavItem {
   /** The display name of the navigation item. */
   name: string;
   /** The destination path or URL for navigation. */
   url: string;
-  /** The icon component or React node associated with the link. */
+  /** The icon component (React.ElementType) or an already instantiated React node. */
   icon: React.ElementType | React.ReactNode;
 }
 
 /**
- * Interface representing a group section of navigation items.
+ * Represents a group section containing multiple navigation items.
  */
 export interface NavSection {
-  /** Section header label. */
+  /** Section header label displayed above the group. */
   label: string;
-  /** List of navigation items contained in the section. */
+  /** List of navigation items contained within this section. */
   items: NavItem[];
 }
 
@@ -43,14 +43,14 @@ export interface NavSection {
  * Props definition for the NavGroup component.
  */
 export interface NavGroupProps {
-  /** The navigation section data object. */
+  /** The navigation section data object containing the label and items. */
   section: NavSection;
 }
 
 /**
  * Renders a group of navigation links under a labeled section header.
  * @param props - Component properties containing the section configuration.
- * @returns The rendered sidebar group node.
+ * @returns The rendered sidebar group React node.
  */
 export function NavGroup({ section }: NavGroupProps): React.JSX.Element {
   return (
@@ -59,9 +59,8 @@ export function NavGroup({ section }: NavGroupProps): React.JSX.Element {
       <SidebarGroupContent>
         <SidebarMenu>
           {section.items.map((item) => {
-            const isComponent =
-              typeof item.icon === "function" || typeof item.icon === "object";
-            const IconComponent = isComponent
+            const isElement = React.isValidElement(item.icon);
+            const IconComponent = !isElement
               ? (item.icon as React.ElementType)
               : null;
 
@@ -74,11 +73,11 @@ export function NavGroup({ section }: NavGroupProps): React.JSX.Element {
                       isActive ? "bg-sidebar-accent" : ""
                     }
                   >
-                    {IconComponent ? (
+                    {isElement ? (
+                      item.icon
+                    ) : IconComponent ? (
                       <IconComponent />
-                    ) : (
-                      (item.icon as React.ReactNode)
-                    )}
+                    ) : null}
                     <span>{item.name}</span>
                   </NavLink>
                 </SidebarMenuButton>
@@ -95,12 +94,13 @@ export function NavGroup({ section }: NavGroupProps): React.JSX.Element {
  * Props definition for the ApplicationSidebar component.
  */
 export type ApplicationSidebarProps = {
-  /** Array of navigation sections to render within the sidebar. */
+  /** Array of navigation sections to render within the sidebar. Defaults to an empty array. */
   menus?: NavSection[];
 };
 
 /**
  * Collapsible application sidebar component presenting header controls, structured menus, and footer status.
+ * Positioned explicitly on desktop to preserve spacing for top header (2.5rem / top-10) and bottom footer (1.5rem / bottom-6).
  * @param props - Component properties containing menu configurations.
  * @returns The application sidebar element hierarchy.
  */
@@ -108,9 +108,13 @@ export function ApplicationSidebar({
   menus = [],
 }: ApplicationSidebarProps): React.JSX.Element {
   return (
-    <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarHeader>
-        <ToggleSidebarButton />
+    <Sidebar
+      variant="sidebar"
+      collapsible="icon"
+      className="md:h-[calc(100svh-4rem)]! md:z-20!"
+    >
+      <SidebarHeader className="">
+        {/* <ToggleSidebarButton /> */}
       </SidebarHeader>
 
       <SidebarContent>
@@ -119,7 +123,7 @@ export function ApplicationSidebar({
         ))}
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="mb-5">
         <Suspense>
           <SidebarFoot />
         </Suspense>

@@ -1,9 +1,6 @@
 import React from "react";
 import { Outlet } from "react-router";
-import {
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/renderer/components/ui/sidebar";
+import { SidebarProvider } from "@/renderer/components/ui/sidebar";
 import {
   ApplicationSidebar,
   ApplicationSidebarProps,
@@ -15,13 +12,14 @@ import {
   ScreenSaveProvider,
   LockScreenButton,
 } from "@/renderer/components/screen-saver";
+import { SidebarTrigger } from "@/renderer/components/app-sidebar/app-sidebar.toggle-button";
 
 // Application version injected via environment variables or fallback
 const APP_VERSION = import.meta.env?.VITE_APP_VERSION || "1.0.0";
 
 // Sidebar styling configuration
 const SIDEBAR_CONFIG_STYLES: React.CSSProperties = {
-  "--sidebar-width": "15rem",
+  "--sidebar-width": "14rem",
   "--sidebar-width-mobile": "20rem",
 } as React.CSSProperties;
 
