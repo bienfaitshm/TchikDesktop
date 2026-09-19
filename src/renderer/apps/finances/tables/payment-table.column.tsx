@@ -1,12 +1,12 @@
 import type * as React from "react";
-import type { ColumnDef } from "@tanstack/react-table";
 import type {
   AssignmentTableOfClassroom,
   User,
   FeeAssignment,
 } from "@/packages/@core/data-access/db";
 import { DataTableColumnHeader } from "@/renderer/components/tables/data-table.column-header";
-import { defaultMenuTrigger } from "./payment-table.menus";
+import { StudentCellIdentity } from "@/renderer/components/student-cell-indentity";
+import type { TableColumnDef } from "@/renderer/components/tables/hooks";
 /**
  * Formate les informations de l'élève en une chaîne unique.
  */
@@ -21,41 +21,31 @@ const formatStudentName = (student: User): string => {
 /**
  * Colonnes statiques de base pour le tableau des paiements.
  */
-export const staticPaymentColumns: ColumnDef<AssignmentTableOfClassroom>[] = [
-  {
-    accessorKey: "student",
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        className="max-w-16"
-        column={column}
-        title="Élève"
-      />
-    ),
-    accessorFn: (row) => formatStudentName(row.student),
-    cell: ({ row }) => {
-      const studentName = formatStudentName(row.original.student);
-      const isProDeo = row.original.isProDeo;
-
-      return (
-        <div className="flex items-center gap-2 min-w-16 truncate">
-          <span
-            className="font-semibold text-xs text-foreground truncate max-w-56 uppercase tracking-tight"
-            title={studentName}
-          >
-            {studentName}
-          </span>
-
-          {isProDeo && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
-              Pro Deo
-            </span>
-          )}
-        </div>
-      );
+export const staticPaymentColumns: TableColumnDef<AssignmentTableOfClassroom>[] =
+  [
+    {
+      accessorKey: "student",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          className="max-w-16"
+          column={column}
+          title="Élève"
+        />
+      ),
+      accessorFn: (row) => formatStudentName(row.student),
+      cell: ({ row: { original: enrollment } }) => {
+        return (
+          <StudentCellIdentity
+            fullName={formatStudentName(enrollment.student)}
+            gender={enrollment.student.gender}
+            isNewStudent={enrollment.isNewStudent}
+            isProDeo={enrollment.isProDeo}
+          />
+        );
+      },
+      enableSorting: true,
     },
-    enableSorting: true,
-  },
-];
+  ];
 
 /**
  * Génère l'ensemble des colonnes du tableau en y ajoutant les échéances dynamiques.
@@ -63,9 +53,9 @@ export const staticPaymentColumns: ColumnDef<AssignmentTableOfClassroom>[] = [
 export const createPaymentColumns = (
   heads: { id: string; name: string }[],
   renderCell: (feeAssignment: FeeAssignment) => React.ReactNode,
-): ColumnDef<AssignmentTableOfClassroom>[] => {
-  const dynamicColumns: ColumnDef<AssignmentTableOfClassroom>[] = heads.map(
-    (head) => ({
+): TableColumnDef<AssignmentTableOfClassroom>[] => {
+  const dynamicColumns: TableColumnDef<AssignmentTableOfClassroom>[] =
+    heads.map((head) => ({
       id: `schedule_${head.id}`,
       header: ({ column }) => (
         <DataTableColumnHeader
@@ -91,8 +81,7 @@ export const createPaymentColumns = (
         return renderCell(feeAssignment);
       },
       enableSorting: false,
-    }),
-  );
+    }));
 
   return [...staticPaymentColumns, ...dynamicColumns];
 };

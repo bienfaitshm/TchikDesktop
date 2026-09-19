@@ -36,6 +36,7 @@ import {
   type SortFn,
   type SortingState,
   type TableFeatures,
+  Row,
 } from "@tanstack/react-table";
 import {
   compareItems,
@@ -129,6 +130,8 @@ export type TableColumnDef<Data extends RowData> = ColumnDef<
   TableFeature,
   Data
 >;
+
+export type TableRow<Data extends RowData> = Row<TableFeature, Data>;
 
 /**
  * Generates inline CSS properties for sticky column pinning.
