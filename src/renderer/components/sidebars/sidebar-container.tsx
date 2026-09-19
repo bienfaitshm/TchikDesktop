@@ -78,7 +78,7 @@ type SidebarLayoutProps = React.ComponentProps<
 export const SidebarLayout = React.forwardRef<
   React.ComponentRef<typeof ResizablePanelGroupPrimitive>,
   SidebarLayoutProps
->(({ className, orientation = "horizontal", children, ...props }, ref) => {
+>(({ className, orientation = "horizontal", children, ...props }, _) => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
@@ -87,7 +87,6 @@ export const SidebarLayout = React.forwardRef<
   return (
     <SidebarContext.Provider value={{ isOpen, toggle, isMobile }}>
       <ResizablePanelGroupPrimitive
-        ref={ref}
         orientation={orientation}
         className={cn("h-full flex-1 items-stretch relative", className)}
         {...props}
@@ -162,13 +161,13 @@ export const SidebarPanel = React.forwardRef<
     {
       children,
       className,
-      defaultSize = "25%",
-      minSize = "15%",
+      defaultSize = "20%",
+      minSize = "12%",
       maxSize = "30%",
       fallback = <SidebarSkeleton />,
       ...props
     },
-    ref,
+    _,
   ) => {
     const { isMobile, isOpen, toggle } = useSidebar();
 
@@ -197,14 +196,10 @@ export const SidebarPanel = React.forwardRef<
 
     return (
       <ResizablePanelPrimitive
-        ref={ref}
         defaultSize={defaultSize}
         minSize={minSize}
         maxSize={maxSize}
-        className={cn(
-          "bg-sidebar/50 backdrop-blur-xs overflow-y-auto",
-          className,
-        )}
+        className={cn("backdrop-blur-xs overflow-y-auto w-full", className)}
         {...props}
       >
         <Suspense fallback={fallback}>{children}</Suspense>
@@ -224,17 +219,16 @@ type SidebarHandleProps = React.ComponentProps<typeof ResizableHandlePrimitive>;
 export const SidebarHandle = React.forwardRef<
   React.ComponentRef<typeof ResizableHandlePrimitive>,
   SidebarHandleProps
->(({ className, withHandle = true, ...props }, ref) => {
+>(({ className, withHandle = true, ...props }, _) => {
   const { isMobile } = useSidebar();
 
   if (isMobile) return null;
 
   return (
     <ResizableHandlePrimitive
-      ref={ref}
       withHandle={withHandle}
       className={cn(
-        "bg-border/50 hover:bg-primary/20 transition-colors",
+        "bg-border/50 hover:bg-primary/20 transition-colors cursor-ew-resize",
         className,
       )}
       {...props}
@@ -253,9 +247,8 @@ type SidebarMainProps = React.ComponentProps<typeof ResizablePanelPrimitive>;
 export const SidebarMain = React.forwardRef<
   React.ComponentRef<typeof ResizablePanelPrimitive>,
   SidebarMainProps
->(({ children, className, defaultSize = 75, ...props }, ref) => (
+>(({ children, className, defaultSize = 75, ...props }, _) => (
   <ResizablePanelPrimitive
-    ref={ref}
     defaultSize={defaultSize}
     className={cn("flex flex-col relative", className)}
     {...props}
