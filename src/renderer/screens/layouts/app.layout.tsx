@@ -72,7 +72,7 @@ export function AppLayout({ menus = [] }: AppLayoutProps): React.JSX.Element {
           <div className="relative flex w-full min-w-0 flex-1 overflow-hidden">
             <ApplicationSidebar menus={menus} />
 
-            <main className="h-full min-w-0 flex-1 overflow-y-auto">
+            <main className="h-full w-full min-w-0 flex-1 overflow-hidden">
               <Suspense fallback={<MainLoader />}>
                 <Outlet context={outletContext} />
               </Suspense>

@@ -253,7 +253,7 @@ export const SidebarMain = React.forwardRef<
     className={cn("flex flex-col relative", className)}
     {...props}
   >
-    <main className="flex-1 overflow-auto p-4">{children}</main>
+    <main className="flex-1 overflow-hidden">{children}</main>
   </ResizablePanelPrimitive>
 ));
 SidebarMain.displayName = "SidebarMain";
