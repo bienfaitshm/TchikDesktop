@@ -104,9 +104,7 @@ export class FeeAssignmentRepository
    * @param filters - Query filters.
    * @returns Array of FeeAssignmentDTO objects.
    */
-  public fetchOptions(
-    filters?: BaseFeeAssignmentFilters,
-  ): FeeAssignmentDTO[] | Promise<FeeAssignmentDTO[]> {
+  public fetchOptions(filters?: BaseFeeAssignmentFilters): FeeAssignmentDTO[] {
     return this.findMany(filters);
   }
 
@@ -115,9 +113,7 @@ export class FeeAssignmentRepository
    * @param enrollmentIds - Array of enrollment identifiers.
    * @returns Array of matching fee assignments.
    */
-  public getEnrollmentAssignments(
-    enrollmentIds: string[],
-  ): FeeAssignmentDTO[] | Promise<FeeAssignmentDTO[]> {
+  public getEnrollmentAssignments(enrollmentIds: string[]): FeeAssignmentDTO[] {
     return this.findMany({
       where: {
         feeAssignments: { enrollmentId: { $in: enrollmentIds } },

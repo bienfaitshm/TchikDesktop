@@ -55,13 +55,7 @@ export class FeeManagementService {
     private readonly feeAssignmentRepo: FeeAssignmentRepository,
     private readonly clientDb: TDataBase,
     private readonly logger: CustomLogger,
-  ) {
-    console.log(
-      "FeeManagementService ======><",
-      enrollmentRepo,
-      this.enrollmentRepo,
-    );
-  }
+  ) {}
 
   /**
    * Synchronizes fee assignments for all active students in a given classroom.
