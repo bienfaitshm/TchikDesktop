@@ -7,7 +7,7 @@ import { TableCell, TableRow } from "@/renderer/components/ui/table";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { cn } from "@/renderer/utils";
 import { useCallback } from "react";
-import { TableFeature } from "./hooks";
+import { getCommonPinningStyles, TableFeature } from "./hooks";
 
 export type DraggableRowProps<T extends RowData> = {
   row: Row<TableFeature, T>;
@@ -49,6 +49,7 @@ export function DraggableRow<T extends RowData>({
         return (
           <TableCell
             key={cell.id}
+            style={getCommonPinningStyles(cell.column)}
             className={cn(
               "p-2 text-xs h-10",
               isActionColumn && "w-15 text-center min-w-15 max-w-15",

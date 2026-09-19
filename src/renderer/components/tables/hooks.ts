@@ -168,6 +168,7 @@ export const getCommonPinningStyles = <TData extends RowData>(
     position: isPinned ? "sticky" : "relative",
     width: column.getSize(),
     zIndex: isPinned ? 1 : 0,
+    backgroundColor: "Background",
   };
 };
 

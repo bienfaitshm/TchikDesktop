@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/renderer/components/ui/table";
-import { useDataTable, TableFeature } from "./hooks";
+import { useDataTable, TableFeature, getCommonPinningStyles } from "./hooks";
 import { DraggableRow } from "./data-table.draggable-row";
 import { cn } from "@/renderer/utils";
 import { TableFacetedFilter } from "./data-table.faceted-filter";
@@ -142,6 +142,7 @@ export function DataContentHead({ className }: { className?: string }) {
           {headerGroup.headers.map((header) => (
             <TableHead
               className="text-xs"
+              style={getCommonPinningStyles(header)}
               key={header.id}
               colSpan={header.colSpan}
             >
