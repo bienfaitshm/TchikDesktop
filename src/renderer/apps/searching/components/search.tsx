@@ -92,13 +92,13 @@ export function SearchInput<TData>({
    * @param index - Index of the targeted item.
    * @returns Extracted string label or empty string.
    */
-  const getLabelOfIndex = useCallback(
-    (index: number): string => {
-      const activeItem = data[index];
-      return activeItem ? getItemLabel(activeItem).label : "";
-    },
-    [data, getItemLabel],
-  );
+  // const getLabelOfIndex = useCallback(
+  //   (index: number): string => {
+  //     const activeItem = data[index];
+  //     return activeItem ? getItemLabel(activeItem).label : "";
+  //   },
+  //   [data, getItemLabel],
+  // );
 
   const activeItem = useMemo(
     () => (activeIndex >= 0 ? data[activeIndex] : null),
@@ -264,7 +264,7 @@ export function SearchInput<TData>({
         >
           <div className="mx-4 border-t border-border/40" />
 
-          <div className="flex w-full py-2 px-1 max-h-[60vh] overflow-hidden">
+          <div className="flex w-full py-2 px-1 max-h-[50vh] overflow-hidden">
             <div
               role="listbox"
               aria-label="Suggestions de recherche"
@@ -322,11 +322,11 @@ export function SearchInput<TData>({
                     : "w-0 opacity-0 translate-x-4 pl-0 pointer-events-none",
                 )}
               >
-                <div className="w-full h-full flex flex-col px-4 pt-3 pb-2">
+                <div className="w-full h-full flex flex-col px-4 py-1">
                   {activeItem && (
                     <div className="flex flex-col h-full animate-in fade-in duration-200">
-                      <div className="flex items-center gap-2 mb-3 text-muted-foreground">
-                        <Info className="h-4 w-4" />
+                      <div className="flex items-center gap-2 mb-2 text-muted-foreground">
+                        <Info className="sizd-3" />
                         <span className="text-xs font-semibold uppercase tracking-wider">
                           Aperçu de la recherche
                         </span>
