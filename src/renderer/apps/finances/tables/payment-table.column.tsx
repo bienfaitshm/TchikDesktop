@@ -26,17 +26,13 @@ export const staticPaymentColumns: TableColumnDef<AssignmentTableOfClassroom>[] 
     {
       accessorKey: "student",
       header: ({ column }) => (
-        <DataTableColumnHeader
-          className="min-w-64"
-          column={column}
-          title="Élève"
-        />
+        <DataTableColumnHeader className="w-72" column={column} title="Élève" />
       ),
       accessorFn: (row) => formatStudentName(row.student),
       cell: ({ row: { original: enrollment } }) => {
         return (
           <StudentCellIdentity
-            className="min-w-64"
+            className="w-72"
             fullName={formatStudentName(enrollment.student)}
             gender={enrollment.student.gender}
             isNewStudent={enrollment.isNewStudent}
