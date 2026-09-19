@@ -16,10 +16,15 @@ export const studentColumns: TableColumnDef<EnrollmentDTO>[] = [
     enableColumnFilter: true,
     enableHiding: false,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Nom, postnom et prénom" />
+      <DataTableColumnHeader
+        className="w-72"
+        column={column}
+        title="Nom, postnom et prénom"
+      />
     ),
     cell: ({ row: { original: enrollment } }) => (
       <StudentCellIdentity
+        className="w-72"
         fullName={enrollment.student.fullName}
         gender={enrollment.student.gender}
         isNewStudent={enrollment.isNewStudent}
