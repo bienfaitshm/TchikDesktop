@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Settings2 } from "lucide-react";
 import type { Table, Column, RowData } from "@tanstack/react-table";
-
 import { Button } from "@/renderer/components/ui/button";
 import {
   DropdownMenu,
@@ -16,34 +15,36 @@ import {
 } from "@/renderer/components/ui/dropdown-menu";
 import { cn } from "@/renderer/utils";
 import { TableFeature } from "./hooks";
-interface TableColumnVisibilityProps<
+
+export interface TableColumnVisibilityProps<
   TData extends RowData,
 > extends React.HTMLAttributes<HTMLDivElement> {
   table: Table<TableFeature, TData>;
 }
 
 /**
- * Récupère un libellé propre et lisible pour l'option de visibilité de la colonne.
+ * Generates a human-readable label from column definition or falls back to column ID.
+ * @param column - The table column instance.
+ * @returns A formatted string label for the column.
  */
 function getColumnLabel<TData extends RowData>(
   column: Column<TableFeature, TData, unknown>,
 ): string {
   const header = column.columnDef.header;
-
-  if (typeof header === "string") {
-    return header;
-  }
+  if (typeof header === "string") return header;
 
   const customMeta = column.columnDef.meta as { label?: string } | undefined;
-  if (customMeta?.label) {
-    return customMeta.label;
-  }
+  if (customMeta?.label) return customMeta.label;
 
-  const fallback = column.id;
-  const humanized = fallback.replace(/_/g, " ").replace(/([A-Z])/g, " $1");
+  const humanized = column.id.replace(/_/g, " ").replace(/([A-Z])/g, " $1");
   return humanized.charAt(0).toUpperCase() + humanized.slice(1).trim();
 }
 
+/**
+ * Provides a dropdown menu to toggle the visibility of maskable table columns.
+ * @param props - Contains the table instance to manage column visibility.
+ * @returns The visibility toggle dropdown component.
+ */
 export function TableColumnVisibility<TData extends RowData>({
   table,
   className,
@@ -79,7 +80,6 @@ export function TableColumnVisibility<TData extends RowData>({
         <Settings2 className="h-4 w-4" />
         <span>Affichage</span>
       </DropdownMenuTrigger>
-
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
@@ -88,20 +88,16 @@ export function TableColumnVisibility<TData extends RowData>({
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {maskableColumns.map((column) => {
-            const cleanLabel = getColumnLabel(column);
-
-            return (
-              <DropdownMenuCheckboxItem
-                key={column.id}
-                className="cursor-pointer text-xs"
-                checked={column.getIsVisible()}
-                onCheckedChange={(value) => column.toggleVisibility(!!value)}
-              >
-                <span className="truncate">{cleanLabel}</span>
-              </DropdownMenuCheckboxItem>
-            );
-          })}
+          {maskableColumns.map((column) => (
+            <DropdownMenuCheckboxItem
+              key={column.id}
+              className="cursor-pointer text-xs"
+              checked={column.getIsVisible()}
+              onCheckedChange={(value) => column.toggleVisibility(!!value)}
+            >
+              <span className="truncate">{getColumnLabel(column)}</span>
+            </DropdownMenuCheckboxItem>
+          ))}
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

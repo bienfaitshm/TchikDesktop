@@ -2,23 +2,26 @@
 
 import * as React from "react";
 import { X } from "lucide-react";
-import type { Table } from "@tanstack/react-table";
-
+import type { RowData, Table } from "@tanstack/react-table";
 import { Button } from "@/renderer/components/ui/button";
 import { Input } from "@/renderer/components/ui/input";
 import { cn } from "@/renderer/utils";
-
 import { TableColumnVisibility } from "./data-table.column-visibility";
-
-interface TableToolbarProps<
-  TData,
+import { TableFeature } from "./hooks";
+export interface TableToolbarProps<
+  TData extends RowData,
 > extends React.HTMLAttributes<HTMLDivElement> {
-  table: Table<TData>;
+  table: Table<TableFeature, TData>;
   searchColumn?: string;
   searchPlaceholder?: string;
 }
 
-export function TableToolbar<TData>({
+/**
+ * Renders the top bar of the table containing a global search input and column visibility settings.
+ * @param props - Contains table reference, optional column to search, and text placeholders.
+ * @returns The toolbar component.
+ */
+export function TableToolbar<TData extends RowData>({
   table,
   searchColumn,
   searchPlaceholder = "Filtrer...",
@@ -26,8 +29,7 @@ export function TableToolbar<TData>({
   children,
   ...props
 }: TableToolbarProps<TData>) {
-  // En v9, accès direct à l'état via table.state
-  const isFiltered = table.state.columnFilters.length > 0;
+  const isFiltered = table.store.state.columnFilters.length > 0;
   const column = searchColumn ? table.getColumn(searchColumn) : undefined;
 
   return (
@@ -36,7 +38,6 @@ export function TableToolbar<TData>({
       {...props}
     >
       <div className="flex flex-1 items-center gap-2">
-        {/* Filtre de recherche principal */}
         {column && (
           <Input
             placeholder={searchPlaceholder}
@@ -45,10 +46,7 @@ export function TableToolbar<TData>({
             className="h-9 w-37.5 lg:w-62.5"
           />
         )}
-
         {children}
-
-        {/* Bouton de réinitialisation */}
         {isFiltered && (
           <Button
             variant="ghost"
@@ -60,9 +58,7 @@ export function TableToolbar<TData>({
           </Button>
         )}
       </div>
-
-      {/* Options de visibilité des colonnes */}
-      <TableColumnVisibility table={table} />
+      <TableColumnVisibility table={table as any} />
     </div>
   );
 }

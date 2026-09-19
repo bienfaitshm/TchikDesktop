@@ -14,7 +14,7 @@ import {
 } from "@/renderer/components/ui/dropdown-menu";
 import { TableFeature } from "./hooks";
 
-interface DataTableColumnHeaderProps<
+export interface DataTableColumnHeaderProps<
   TData extends RowData,
   TValue,
 > extends React.HTMLAttributes<HTMLDivElement> {
@@ -22,6 +22,11 @@ interface DataTableColumnHeaderProps<
   title: string;
 }
 
+/**
+ * Renders a sortable and toggleable column header for the data table.
+ * @param props - Column reference, display title, and optional styling.
+ * @returns The column header component.
+ */
 export function DataTableColumnHeader<TData extends RowData, TValue>({
   column,
   title,
@@ -72,12 +77,10 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
           <ArrowDown className="mr-2 size-3.5 text-muted-foreground/70 text-xs" />
           Décroissant
         </DropdownMenuItem>
-
         <DropdownMenuItem onClick={() => column.clearSorting()}>
           <ChevronsUpDown className="mr-2 size-3.5 text-muted-foreground/70 text-xs" />
           Réinitialiser
         </DropdownMenuItem>
-
         {column.getCanHide() && (
           <>
             <DropdownMenuSeparator />

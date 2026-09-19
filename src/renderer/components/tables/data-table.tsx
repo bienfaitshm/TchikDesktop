@@ -30,7 +30,7 @@ import {
   TableRow,
 } from "@/renderer/components/ui/table";
 import { useDataTable, TableFeature } from "./hooks";
-import { DraggableRow } from "./data-table.fraggablr-row";
+import { DraggableRow } from "./data-table.draggable-row";
 import { cn } from "@/renderer/utils";
 import { TableFacetedFilter } from "./data-table.faceted-filter";
 import {
@@ -42,7 +42,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { X } from "lucide-react";
 
-type ContextTable<T extends RowData> = {
+export type ContextTable<T extends RowData> = {
   dndId?: string;
   dndSensors?: SensorDescriptor<SensorOptions>[];
   handleRowDragEnd?: (event: DragEndEvent) => void;
@@ -52,10 +52,20 @@ type ContextTable<T extends RowData> = {
   keyExtractor: (item: T) => string;
 };
 
+// We use `any` initially but assert it in the strict hook to maintain type safety over generic T.
 const DataTableContext = createContext<ContextTable<any> | null>(null);
 
-function useDataTableContext() {
-  return useContext(DataTableContext);
+/**
+ * Accesses the generic DataTable context and asserts its existence.
+ * @returns The strongly-typed table context.
+ */
+function useDataTableContext<T extends RowData>(): ContextTable<T> {
+  const context = useContext(DataTableContext);
+  if (!context)
+    throw new Error(
+      "useDataTableContext must be used within a DataTableProvider",
+    );
+  return context;
 }
 
 export type DataTableProps<T extends RowData> = {
@@ -65,10 +75,11 @@ export type DataTableProps<T extends RowData> = {
   children?: React.ReactNode;
 };
 
-export type DataTableRef = {
-  updateData(): void;
-};
-
+/**
+ * Root Provider wrapper initializing the table and sorting contexts.
+ * @param props - Table data array, configurations, and children nodes.
+ * @returns The contextual root table component.
+ */
 export function DataTable<T extends RowData>({
   data,
   keyExtractor,
@@ -87,6 +98,9 @@ export function DataTable<T extends RowData>({
   );
 }
 
+/**
+ * Encapsulates the core HTML Table layout while maintaining DND support constraints.
+ */
 export function DataTableContent({
   children,
   className,
@@ -96,7 +110,6 @@ export function DataTableContent({
 }) {
   const ctx = useDataTableContext();
   return (
-    /* overflow-x-auto permet le scroll horizontal sans casser la mise en page de la sidebar */
     <div
       className={cn(
         "relative w-full min-w-0 overflow-x-auto rounded-lg border scrollbar-thin",
@@ -106,9 +119,9 @@ export function DataTableContent({
       <DndContext
         collisionDetection={closestCenter}
         modifiers={[restrictToVerticalAxis]}
-        onDragEnd={ctx?.handleRowDragEnd}
-        sensors={ctx?.dndSensors}
-        id={ctx?.dndId}
+        onDragEnd={ctx.handleRowDragEnd}
+        sensors={ctx.dndSensors}
+        id={ctx.dndId}
       >
         <TableView>{children}</TableView>
       </DndContext>
@@ -116,11 +129,14 @@ export function DataTableContent({
   );
 }
 
-export function DataContentHead(props?: { className?: string }) {
+/**
+ * Renders the primary header layer for the main active columns.
+ */
+export function DataContentHead({ className }: { className?: string }) {
   const ctx = useDataTableContext();
-  const headerGroups = ctx?.tableInstance?.getHeaderGroups() ?? [];
+  const headerGroups = ctx.tableInstance.getHeaderGroups();
   return (
-    <TableHeader className={cn("sticky top-0 z-10 bg-muted", props?.className)}>
+    <TableHeader className={cn("sticky top-0 z-10 bg-muted", className)}>
       {headerGroups.map((headerGroup) => (
         <TableRow key={headerGroup.id}>
           {headerGroup.headers.map((header) => (
@@ -143,48 +159,51 @@ export function DataContentHead(props?: { className?: string }) {
   );
 }
 
-interface RowComponentProps<T extends RowData> {
+export interface RowComponentProps<T extends RowData> {
   row: Row<TableFeature, T>;
   rowOriginalId: string | number;
   onRowClick?: (row: Row<TableFeature, T>) => void;
 }
 
-interface DataContentBodyProps<T extends RowData> {
+export interface DataContentBodyProps<T extends RowData> {
   onRowClick?: (row: Row<TableFeature, T>) => void;
   children?: (props: RowComponentProps<T>) => React.ReactNode;
 }
 
+/**
+ * Constructs the main table body rows, providing them context for DND.
+ */
 export function DataContentBody<T extends RowData>({
   onRowClick,
   children = (props) => <DraggableRow {...props} />,
 }: DataContentBodyProps<T>) {
-  const ctx = useDataTableContext();
-
-  const rows = ctx?.tableInstance?.getRowModel().rows ?? [];
-  const rowIds = ctx?.rowIds ?? [];
+  const ctx = useDataTableContext<T>();
+  const rows = ctx.tableInstance.getRowModel().rows;
 
   return (
     <TableBody className="w-full [&_[data-slot=table-cell]:first-child]:w-8 overflow-x-scroll scrollbar-thin">
       {rows.length > 0 ? (
-        <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
-          {rows.map((row) => {
-            const rowOriginalId = ctx?.keyExtractor
-              ? ctx.keyExtractor(row.original)
-              : row.id;
-            return (
-              <React.Fragment key={row.id}>
-                {children({ row, onRowClick, rowOriginalId })}
-              </React.Fragment>
-            );
-          })}
+        <SortableContext
+          items={ctx.rowIds}
+          strategy={verticalListSortingStrategy}
+        >
+          {rows.map((row) => (
+            <React.Fragment key={row.id}>
+              {children({
+                row,
+                onRowClick,
+                rowOriginalId: ctx.keyExtractor(row.original),
+              })}
+            </React.Fragment>
+          ))}
         </SortableContext>
       ) : (
         <TableRow>
           <TableCell
-            colSpan={ctx?.columns.length ?? 1}
+            colSpan={ctx.columns.length}
             className="h-24 text-center text-muted-foreground"
           >
-            No results.
+            Aucun résultat.
           </TableCell>
         </TableRow>
       )}
@@ -192,93 +211,62 @@ export function DataContentBody<T extends RowData>({
   );
 }
 
-interface DataTablePaginationProps {}
-
+/**
+ * Thin wrapper providing strict context values for TablePagination features.
+ */
 export function DataTablePagination({
   pageSizeOptions,
   className,
   ...props
-}: DataTablePaginationProps & Omit<TablePaginationProps<any>, "table">) {
+}: Omit<TablePaginationProps<any>, "table">) {
   const ctx = useDataTableContext();
-  const table = ctx?.tableInstance;
-
-  if (!table) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "DataTablePagination must be used within a DataTableProvider. Rendering null.",
-      );
-    }
-    return null;
-  }
-
   return (
     <TablePagination
       {...props}
-      table={table}
+      table={ctx.tableInstance}
       pageSizeOptions={pageSizeOptions}
       className={className}
     />
   );
 }
-
 DataTablePagination.displayName = "DataTablePagination";
 
-interface DataTableColumnToggleProps {
-  className?: string;
-}
-
-export function DataTableColumnToggle({
-  className,
-}: DataTableColumnToggleProps) {
+/**
+ * Thin wrapper supplying the current table context to the column toggler.
+ */
+export function DataTableColumnToggle({ className }: { className?: string }) {
   const ctx = useDataTableContext();
-  const table = ctx?.tableInstance;
-
-  if (!table) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "DataTableColumnToggle: table instance not found in context.",
-      );
-    }
-    return null;
-  }
-
-  return <TableColumnVisibility table={table} className={className} />;
+  return (
+    <TableColumnVisibility table={ctx.tableInstance} className={className} />
+  );
 }
-
 DataTableColumnToggle.displayName = "DataTableColumnToggle";
 
 export const DataTableToolbar: React.FC<React.ComponentProps<"div">> = ({
   className,
   ...props
-}) => {
-  return (
-    <div
-      className={cn(
-        "flex flex-wrap items-center justify-between gap-4 mb-4",
-        className,
-      )}
-      {...props}
-    />
-  );
-};
-
+}) => (
+  <div
+    className={cn(
+      "flex flex-wrap items-center justify-between gap-4 mb-4",
+      className,
+    )}
+    {...props}
+  />
+);
 DataTableToolbar.displayName = "DataTableToolbar";
 
-export type SearchTableToolbarProps = {
-  searchColumn?: string;
-};
+export type SearchTableToolbarProps = { searchColumn?: string };
 
+/**
+ * Renders an inline search input field bounded to a precise column key.
+ */
 export const SearchTableToolbar: React.FC<
   SearchTableToolbarProps & React.ComponentProps<"input">
 > = ({ searchColumn, ...props }) => {
   const ctx = useDataTableContext();
-  const table = ctx?.tableInstance;
-
-  if (!table || !searchColumn) {
-    return null;
-  }
-
-  const column = table.getColumn(searchColumn);
+  if (!searchColumn) return null;
+  const column = ctx.tableInstance.getColumn(searchColumn);
   if (!column) return null;
 
   return (
@@ -294,17 +282,15 @@ export const SearchTableToolbar: React.FC<
   );
 };
 
+/**
+ * Manages the layout container embedding active filters and clear buttons.
+ */
 export const FilteredTableToolbarContainer: React.FC<
   React.ComponentProps<"div">
 > = ({ children, className, ...props }) => {
   const ctx = useDataTableContext();
-  const table = ctx?.tableInstance;
+  const isFiltered = ctx.tableInstance.store.state.columnFilters.length > 0;
 
-  if (!table) {
-    return null;
-  }
-
-  const isFiltered = table.store.state.columnFilters.length > 0;
   return (
     <div
       {...props}
@@ -314,18 +300,17 @@ export const FilteredTableToolbarContainer: React.FC<
       {isFiltered && (
         <Button
           variant="ghost"
-          onClick={() => table.resetColumnFilters()}
+          onClick={() => ctx.tableInstance.resetColumnFilters()}
           className="h-8 text-xs px-2 lg:px-3 text-muted-foreground hover:text-foreground"
         >
-          Réinitialiser
-          <X className="ml-2 size-3.5" />
+          Réinitialiser <X className="ml-2 size-3.5" />
         </Button>
       )}
     </div>
   );
 };
 
-interface TableFacetedFilterItemProps {
+export interface TableFacetedFilterItemProps {
   columnId: string;
   title: string;
   options: {
@@ -335,24 +320,18 @@ interface TableFacetedFilterItemProps {
   }[];
 }
 
+/**
+ * Plugs a configured faceted filter onto a specified table column via contextual ID.
+ */
 export function TableFacetedFilterItem({
   columnId,
   title,
   options,
 }: TableFacetedFilterItemProps) {
   const ctx = useDataTableContext();
-  const table = ctx?.tableInstance;
-
-  if (!table) return null;
-  const column = table.getColumn(columnId);
-  if (!column) {
-    console.warn(
-      `TableFacetedFilterItem: Column "${columnId}" not found in table instance.`,
-    );
-    return null;
-  }
+  const column = ctx.tableInstance.getColumn(columnId);
+  if (!column) return null;
 
   return <TableFacetedFilter column={column} title={title} options={options} />;
 }
-
 TableFacetedFilterItem.displayName = "TableFacetedFilterItem";

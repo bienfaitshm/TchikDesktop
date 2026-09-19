@@ -3,7 +3,6 @@
 import * as React from "react";
 import { CheckIcon, PlusCircle } from "lucide-react";
 import type { Column, RowData } from "@tanstack/react-table";
-
 import { cn } from "@/renderer/utils";
 import { Badge } from "@/renderer/components/ui/badge";
 import { Button } from "@/renderer/components/ui/button";
@@ -25,36 +24,23 @@ import {
 import { Separator } from "@/renderer/components/ui/separator";
 import { TableFeature } from "./hooks";
 
-/**
- * Represents a single option item within the faceted filter menu.
- */
 export interface TableFacetedFilterOption {
-  /** The human-readable label displayed in the option item. */
   label: string;
-  /** The unique primitive value used for filtering dataset rows. */
   value: string;
-  /** Optional icon component rendered alongside the option label. */
   icon?: React.ComponentType<{ className?: string }>;
 }
 
-/**
- * Component properties for the faceted column filter menu.
- */
 export interface TableFacetedFilterProps<TData extends RowData, TValue> {
-  /** The TanStack Table column instance to apply filters to. */
   column?: Column<TableFeature, TData, TValue>;
-  /** Display title for the filter button trigger and input placeholder. */
   title?: string;
-  /** Available selectable filter options. */
   options: TableFacetedFilterOption[];
-  /** Optional additional CSS class names for styling customization. */
   className?: string;
 }
 
 /**
- * Renders a reactive multi-select faceted filter dropdown for a table column.
- * @param props - Filter options, column reference, title, and styling classes.
- * @returns React node representing the filter UI component.
+ * Renders a multi-select faceted filter dropdown for applying search filters on a table column.
+ * @param props - Filter options, column reference, and UI strings.
+ * @returns The faceted filter popover component.
  */
 export function TableFacetedFilter<TData extends RowData, TValue>({
   column,
@@ -63,7 +49,6 @@ export function TableFacetedFilter<TData extends RowData, TValue>({
   className,
 }: TableFacetedFilterProps<TData, TValue>): React.ReactElement {
   const filterValue = column?.getFilterValue() as string[] | undefined;
-
   const selectedValuesSet = React.useMemo(
     () => new Set(filterValue),
     [filterValue],
@@ -72,20 +57,18 @@ export function TableFacetedFilter<TData extends RowData, TValue>({
   const handleSelect = React.useCallback(
     (value: string) => {
       const current = (column?.getFilterValue() as string[]) || [];
-      const isSelected = current.includes(value);
-      const newValue = isSelected
+      const newValue = current.includes(value)
         ? current.filter((v) => v !== value)
         : [...current, value];
-
       column?.setFilterValue(newValue.length > 0 ? newValue : undefined);
     },
     [column],
   );
 
-  const handleReset = React.useCallback(() => {
-    column?.setFilterValue(undefined);
-  }, [column]);
-
+  const handleReset = React.useCallback(
+    () => column?.setFilterValue(undefined),
+    [column],
+  );
   const facets = column?.getFacetedUniqueValues();
   const selectedCount = filterValue?.length ?? 0;
 
@@ -134,7 +117,7 @@ export function TableFacetedFilter<TData extends RowData, TValue>({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-50 p-0" align="start">
+      <PopoverContent className="min-w-52 w-fit p-0" align="start">
         <Command>
           <CommandInput placeholder={title} className="text-xs" />
           <CommandList
@@ -146,7 +129,6 @@ export function TableFacetedFilter<TData extends RowData, TValue>({
               {options.map((option) => {
                 const isSelected = selectedValuesSet.has(option.value);
                 const facetValue = facets?.get(option.value);
-
                 return (
                   <CommandItem
                     key={option.value}

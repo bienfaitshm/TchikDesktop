@@ -169,7 +169,7 @@ export const ClassroomPage: React.FC = () => {
               />
               <TableFacetedFilterItem
                 title="Option"
-                columnId="option_optionName"
+                columnId="option.optionName"
                 options={options}
               />
             </FilteredTableToolbarContainer>

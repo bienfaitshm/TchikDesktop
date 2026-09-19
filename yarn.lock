@@ -2662,6 +2662,13 @@
     goober "^2.1.16"
     solid-js "^1.9.9"
 
+"@tanstack/match-sorter-utils@^9.1.2":
+  version "9.1.2"
+  resolved "https://registry.yarnpkg.com/@tanstack/match-sorter-utils/-/match-sorter-utils-9.1.2.tgz#88734bc01787175e28a4f5cc58775f0f5783c630"
+  integrity sha512-aPkUQctDzpXLSWhlx7jUDi3mInsI18xcnrK1hvIyIa88ab1ax88cACr7xU+BKMCGB4NZYNwh4SoNSEbv3RY2NA==
+  dependencies:
+    remove-accents "0.5.0"
+
 "@tanstack/query-core@5.101.4":
   version "5.101.4"
   resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.101.4.tgz#c01b4289b3094144d8ef96235aa506242cf83efa"

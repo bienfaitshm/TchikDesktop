@@ -26,6 +26,11 @@ export interface TablePaginationProps<
   pageSizeOptions?: number[];
 }
 
+/**
+ * Provides pagination controls and row statistics for the data table.
+ * @param props - Table instance and page size configuration array.
+ * @returns The pagination container component.
+ */
 export function TablePagination<TData extends RowData>({
   table,
   className,
@@ -59,7 +64,6 @@ export function TablePagination<TData extends RowData>({
       )}
       {...props}
     >
-      {/* Statistiques de sélection */}
       <div className="text-xs mr-4 text-muted-foreground w-full text-center sm:w-auto sm:text-left">
         {selectedRows > 0 ? (
           <p>
@@ -83,7 +87,6 @@ export function TablePagination<TData extends RowData>({
       </div>
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
-        {/* Sélecteur de taille de page */}
         <div className="flex items-center gap-2">
           <Label
             htmlFor="rows-per-page"
@@ -97,13 +100,9 @@ export function TablePagination<TData extends RowData>({
             onChange={(value) => table.setPageSize(Number(value))}
           />
         </div>
-
-        {/* Indicateur de position */}
         <div className="flex min-w-25 items-center justify-center text-xs font-medium">
           Page {pageCount > 0 ? pageIndex + 1 : 0} sur {pageCount}
         </div>
-
-        {/* Navigation par boutons */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -115,7 +114,6 @@ export function TablePagination<TData extends RowData>({
             <span className="sr-only">Première page</span>
             <ChevronsLeft className="h-4 w-4" />
           </Button>
-
           <Button
             variant="outline"
             size="icon"
@@ -126,7 +124,6 @@ export function TablePagination<TData extends RowData>({
             <span className="sr-only">Page précédente</span>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-
           <Button
             variant="outline"
             size="icon"
@@ -137,7 +134,6 @@ export function TablePagination<TData extends RowData>({
             <span className="sr-only">Page suivante</span>
             <ChevronRight className="h-4 w-4" />
           </Button>
-
           <Button
             variant="outline"
             size="icon"

@@ -9,24 +9,26 @@ import { cn } from "@/renderer/utils";
 import { useCallback } from "react";
 import { TableFeature } from "./hooks";
 
-type DraggableRowProps<T extends RowData> = {
+export type DraggableRowProps<T extends RowData> = {
   row: Row<TableFeature, T>;
   rowOriginalId: UniqueIdentifier;
-  onRowClick?(row: Row<TableFeature, T>): void;
+  onRowClick?: (row: Row<TableFeature, T>) => void;
 };
 
+/**
+ * A specialized table row component that supports drag-and-drop reordering.
+ * @param props - Table row data, strict unique ID, and optional click handler.
+ * @returns The draggable table row component.
+ */
 export function DraggableRow<T extends RowData>({
   row,
-  rowOriginalId: id,
+  rowOriginalId,
   onRowClick,
 }: DraggableRowProps<T>) {
-  const { transform, transition, setNodeRef, isDragging } = useSortable({ id });
-
-  const handleClick = useCallback(() => {
-    onRowClick?.(row);
-  }, [onRowClick, row]);
-
-  const visibleCells = row.getVisibleCells();
+  const { transform, transition, setNodeRef, isDragging } = useSortable({
+    id: rowOriginalId,
+  });
+  const handleClick = useCallback(() => onRowClick?.(row), [onRowClick, row]);
 
   return (
     <TableRow
@@ -37,13 +39,10 @@ export function DraggableRow<T extends RowData>({
         "relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80 select-none",
         !!onRowClick && "cursor-pointer",
       )}
-      style={{
-        transform: CSS.Translate.toString(transform),
-        transition: transition,
-      }}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
       onClick={handleClick}
     >
-      {visibleCells.map((cell) => {
+      {row.getVisibleCells().map((cell) => {
         const isActionColumn = cell.column.id === "actions";
         const isSelectColumn = cell.column.id === "select";
 
@@ -52,11 +51,8 @@ export function DraggableRow<T extends RowData>({
             key={cell.id}
             className={cn(
               "p-2 text-xs h-10",
-              // Si c'est l'action, on lui donne une taille fixe minimale et on l'aligne à droite
               isActionColumn && "w-15 text-center min-w-15 max-w-15",
-              // Si c'est la checkbox de sélection, taille fixe aussi
               isSelectColumn && "w-10 text-center",
-              // Pour les autres colonnes, on les laisse prendre le reste de l'espace de manière stable
               !isActionColumn && !isSelectColumn && "w-auto",
             )}
           >
