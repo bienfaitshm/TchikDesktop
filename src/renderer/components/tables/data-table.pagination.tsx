@@ -7,43 +7,49 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
-import { type Table } from "@tanstack/react-table";
+import type { RowData, Table } from "@tanstack/react-table";
 import { Button } from "@/renderer/components/ui/button";
 import { Label } from "@/renderer/components/ui/label";
 import {
   SelectInput,
-  Option,
+  type Option,
 } from "@/renderer/components/form/fields/select-input";
 import { cn } from "@/renderer/utils";
+import type { TableFeature } from "./hooks";
 
 const DEFAULT_PAGE_SIZES = [10, 20, 30, 40, 50, 80];
-const SELECT_PAGE_SIZE_OPTIONS: Option[] = DEFAULT_PAGE_SIZES.map((sz) => ({
-  label: sz.toString(),
-  value: sz.toString(),
-}));
 
 export interface TablePaginationProps<
-  TData,
+  TData extends RowData,
 > extends React.HTMLAttributes<HTMLDivElement> {
-  table: Table<TData>;
+  table: Table<TableFeature, TData>;
   pageSizeOptions?: number[];
 }
 
-export function TablePagination<TData>({
+export function TablePagination<TData extends RowData>({
   table,
   className,
   pageSizeOptions = DEFAULT_PAGE_SIZES,
   ...props
-}: TablePaginationProps<TData>) {
+}: TablePaginationProps<TData>): React.ReactElement | null {
   if (!table) return null;
 
-  const { pageIndex, pageSize } = table.getState().pagination;
+  const { pageIndex, pageSize } = table.store.state.pagination;
   const pageCount = table.getPageCount();
   const selectedRows = table.getFilteredSelectedRowModel().rows.length;
   const totalRows = table.getFilteredRowModel().rows.length;
 
   const formattedSelected = selectedRows.toLocaleString("fr-FR");
   const formattedTotal = totalRows.toLocaleString("fr-FR");
+
+  const selectPageSizeOptions: Option[] = React.useMemo(
+    () =>
+      pageSizeOptions.map((sz) => ({
+        label: sz.toString(),
+        value: sz.toString(),
+      })),
+    [pageSizeOptions],
+  );
 
   return (
     <div
@@ -86,7 +92,7 @@ export function TablePagination<TData>({
             Lignes par page
           </Label>
           <SelectInput
-            options={SELECT_PAGE_SIZE_OPTIONS}
+            options={selectPageSizeOptions}
             value={pageSize.toString()}
             onChange={(value) => table.setPageSize(Number(value))}
           />

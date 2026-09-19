@@ -1,28 +1,27 @@
 "use client";
 
 import * as React from "react";
-// import {
-//   KeyboardSensor,
-//   MouseSensor,
-//   TouchSensor,
-//   useSensor,
-//   useSensors,
-//   type DragEndEvent,
-// } from "@dnd-kit/core";
 
 import {
   ColumnDef,
   ColumnFiltersState,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   SortingState,
-  useReactTable,
-  VisibilityState,
+  useTable,
+  tableFeatures,
+  columnFilteringFeature,
+  rowSortingFeature,
+  rowPaginationFeature,
+  rowSelectionFeature,
+  columnVisibilityFeature,
+  columnFacetingFeature,
+  createFilteredRowModel,
+  createSortedRowModel,
+  createPaginatedRowModel,
+  createFacetedRowModel,
+  createFacetedUniqueValues,
+  RowData,
 } from "@tanstack/react-table";
+import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 
 import { TableActionHandler } from "./utils";
 
@@ -35,20 +34,37 @@ import { TableActionHandler } from "./utils";
  * @property {(item: TData) => string} keyExtractor - A function that returns a unique string identifier for each data item.
  * This is crucial for features like row selection and drag-and-drop.
  */
-export interface UseTableOptions<TData> {
+
+// 1. Configuration V9 de tableFeatures avec l'ensemble des slots requis
+const features = tableFeatures({
+  columnFilteringFeature,
+  rowSortingFeature,
+  rowPaginationFeature,
+  rowSelectionFeature,
+  columnVisibilityFeature,
+  columnFacetingFeature,
+  // Slots de Row Models V9
+  filteredRowModel: createFilteredRowModel(),
+  sortedRowModel: createSortedRowModel(),
+  paginatedRowModel: createPaginatedRowModel(),
+  facetedRowModel: createFacetedRowModel(),
+  facetedUniqueValues: createFacetedUniqueValues(),
+});
+
+export type TableFeature = typeof features;
+export interface UseTableOptions<TData extends RowData> {
   initialData: TData[];
-  columns: ColumnDef<TData>[];
+  columns: ColumnDef<TableFeature, TData>[];
   keyExtractor: (item: TData) => string;
 }
 
-export function useDataTable<TData>({
+export function useDataTable<TData extends RowData>({
   initialData: data,
   columns,
   keyExtractor,
 }: UseTableOptions<TData>) {
   const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = React.useState({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   );
@@ -74,7 +90,10 @@ export function useDataTable<TData>({
     [data, keyExtractor],
   );
 
-  const tableInstance = useReactTable({
+  // 2. Instanciation via useTable V9
+  const tableInstance = useTable({
+    key: "users-table",
+    features,
     data,
     columns,
     state,
@@ -84,13 +103,9 @@ export function useDataTable<TData>({
     onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPagination,
     getRowId: (row) => keyExtractor(row),
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
+
+  useTanStackTableDevtools(tableInstance);
 
   return {
     tableInstance,
@@ -99,6 +114,7 @@ export function useDataTable<TData>({
     keyExtractor,
   } as const;
 }
+
 export function useTableActionController() {
   const handlerRef = React.useRef<TableActionHandler>(new TableActionHandler());
   return handlerRef.current;

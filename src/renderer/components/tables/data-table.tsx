@@ -1,10 +1,12 @@
 "use client";
+
 import React, { createContext, useContext } from "react";
 import {
   Table as TanstackTable,
   ColumnDef,
   flexRender,
   Row,
+  RowData,
 } from "@tanstack/react-table";
 import {
   DndContext,
@@ -27,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/renderer/components/ui/table";
-import { useDataTable } from "./hooks";
+import { useDataTable, TableFeature } from "./hooks";
 import { DraggableRow } from "./data-table.fraggablr-row";
 import { cn } from "@/renderer/utils";
 import { TableFacetedFilter } from "./data-table.faceted-filter";
@@ -40,12 +42,12 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { X } from "lucide-react";
 
-type ContextTable<T> = {
+type ContextTable<T extends RowData> = {
   dndId?: string;
   dndSensors?: SensorDescriptor<SensorOptions>[];
   handleRowDragEnd?: (event: DragEndEvent) => void;
-  tableInstance: TanstackTable<T>;
-  columns: ColumnDef<T>[];
+  tableInstance: TanstackTable<TableFeature, T>;
+  columns: ColumnDef<TableFeature, T>[];
   rowIds: UniqueIdentifier[];
   keyExtractor: (item: T) => string;
 };
@@ -56,10 +58,10 @@ function useDataTableContext() {
   return useContext(DataTableContext);
 }
 
-export type DataTableProps<T> = {
+export type DataTableProps<T extends RowData> = {
   data: T[];
   keyExtractor: (value: T) => string;
-  columns: ColumnDef<T>[];
+  columns: ColumnDef<TableFeature, T>[];
   children?: React.ReactNode;
 };
 
@@ -67,7 +69,7 @@ export type DataTableRef = {
   updateData(): void;
 };
 
-export function DataTable<T>({
+export function DataTable<T extends RowData>({
   data,
   keyExtractor,
   columns,
@@ -141,18 +143,18 @@ export function DataContentHead(props?: { className?: string }) {
   );
 }
 
-interface RowComponentProps<T> {
-  row: Row<T>;
+interface RowComponentProps<T extends RowData> {
+  row: Row<TableFeature, T>;
   rowOriginalId: string | number;
-  onRowClick?: (row: Row<T>) => void;
+  onRowClick?: (row: Row<TableFeature, T>) => void;
 }
 
-interface DataContentBodyProps<T> {
-  onRowClick?: (row: Row<T>) => void;
+interface DataContentBodyProps<T extends RowData> {
+  onRowClick?: (row: Row<TableFeature, T>) => void;
   children?: (props: RowComponentProps<T>) => React.ReactNode;
 }
 
-export function DataContentBody<T>({
+export function DataContentBody<T extends RowData>({
   onRowClick,
   children = (props) => <DraggableRow {...props} />,
 }: DataContentBodyProps<T>) {
@@ -302,7 +304,7 @@ export const FilteredTableToolbarContainer: React.FC<
     return null;
   }
 
-  const isFiltered = table.getState().columnFilters.length > 0;
+  const isFiltered = table.store.state.columnFilters.length > 0;
   return (
     <div
       {...props}

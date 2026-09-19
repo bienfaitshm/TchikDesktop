@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Settings2 } from "lucide-react";
-import type { Table, Column } from "@tanstack/react-table";
+import type { Table, Column, RowData } from "@tanstack/react-table";
 
 import { Button } from "@/renderer/components/ui/button";
 import {
@@ -15,17 +15,19 @@ import {
   DropdownMenuGroup,
 } from "@/renderer/components/ui/dropdown-menu";
 import { cn } from "@/renderer/utils";
-
+import { TableFeature } from "./hooks";
 interface TableColumnVisibilityProps<
-  TData,
+  TData extends RowData,
 > extends React.HTMLAttributes<HTMLDivElement> {
-  table: Table<TData>;
+  table: Table<TableFeature, TData>;
 }
 
 /**
  * Récupère un libellé propre et lisible pour l'option de visibilité de la colonne.
  */
-function getColumnLabel<TData>(column: Column<TData, unknown>): string {
+function getColumnLabel<TData extends RowData>(
+  column: Column<TableFeature, TData, unknown>,
+): string {
   const header = column.columnDef.header;
 
   if (typeof header === "string") {
@@ -42,7 +44,7 @@ function getColumnLabel<TData>(column: Column<TData, unknown>): string {
   return humanized.charAt(0).toUpperCase() + humanized.slice(1).trim();
 }
 
-export function TableColumnVisibility<TData>({
+export function TableColumnVisibility<TData extends RowData>({
   table,
   className,
 }: TableColumnVisibilityProps<TData>) {
@@ -52,7 +54,8 @@ export function TableColumnVisibility<TData>({
         .getAllColumns()
         .filter(
           (column) =>
-            typeof column.accessorFn !== "undefined" && column.getCanHide(),
+            (column.accessorFn != null || column.id != null) &&
+            column.getCanHide(),
         ),
     [table],
   );

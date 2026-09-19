@@ -26,7 +26,9 @@ export function TableToolbar<TData>({
   children,
   ...props
 }: TableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0;
+  // En v9, accès direct à l'état via table.state
+  const isFiltered = table.state.columnFilters.length > 0;
+  const column = searchColumn ? table.getColumn(searchColumn) : undefined;
 
   return (
     <div
@@ -35,15 +37,11 @@ export function TableToolbar<TData>({
     >
       <div className="flex flex-1 items-center gap-2">
         {/* Filtre de recherche principal */}
-        {searchColumn && table.getColumn(searchColumn) && (
+        {column && (
           <Input
             placeholder={searchPlaceholder}
-            value={
-              (table.getColumn(searchColumn)?.getFilterValue() as string) ?? ""
-            }
-            onChange={(event) =>
-              table.getColumn(searchColumn)?.setFilterValue(event.target.value)
-            }
+            value={(column.getFilterValue() as string) ?? ""}
+            onChange={(event) => column.setFilterValue(event.target.value)}
             className="h-9 w-37.5 lg:w-62.5"
           />
         )}

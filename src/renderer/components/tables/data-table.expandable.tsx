@@ -3,20 +3,20 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { flexRender, type Row } from "@tanstack/react-table";
+import { flexRender, RowData, type Row } from "@tanstack/react-table";
 import { Button } from "@/renderer/components/ui/button";
 import { TableCell, TableRow } from "@/renderer/components/ui/table";
 import { cn } from "@/renderer/utils";
-
+import { TableFeature } from "./hooks";
 interface ExpandableContextValue {
   isExpanded: boolean;
   toggle: () => void;
 }
 
 interface ExpandableRowProps<
-  TData,
+  TData extends RowData,
 > extends React.HTMLAttributes<HTMLTableRowElement> {
-  row: Row<TData>;
+  row: Row<TableFeature, TData>;
   renderDetail?: React.ReactNode;
   showDetailOnClick?: boolean;
 }
@@ -122,7 +122,7 @@ const ExpandableContent = ({
  * Main ExpandableRow Component
  */
 export const ExpandableRow = React.memo(
-  <TData,>({
+  <TData extends RowData>({
     row,
     renderDetail,
     children,
@@ -137,7 +137,8 @@ export const ExpandableRow = React.memo(
       setIsExpanded((prev) => !prev);
     }, []);
 
-    const visibleColumnsCount = row.getVisibleCells().length;
+    const visibleCells = row.getVisibleCells();
+    const visibleColumnsCount = visibleCells.length;
 
     return (
       <ExpandableContext.Provider value={{ isExpanded, toggle }}>
@@ -152,7 +153,7 @@ export const ExpandableRow = React.memo(
           onClick={onClick}
           {...props}
         >
-          {row.getVisibleCells().map((cell) => (
+          {visibleCells.map((cell) => (
             <TableCell key={cell.id} className="p-3 text-sm font-medium">
               {flexRender(cell.column.columnDef.cell, cell.getContext())}
             </TableCell>

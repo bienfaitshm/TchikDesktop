@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { CheckIcon, PlusCircle } from "lucide-react";
-import type { Column } from "@tanstack/react-table";
+import type { Column, RowData } from "@tanstack/react-table";
 
 import { cn } from "@/renderer/utils";
 import { Badge } from "@/renderer/components/ui/badge";
@@ -23,6 +23,7 @@ import {
   PopoverTrigger,
 } from "@/renderer/components/ui/popover";
 import { Separator } from "@/renderer/components/ui/separator";
+import { TableFeature } from "./hooks";
 
 /**
  * Represents a single option item within the faceted filter menu.
@@ -39,9 +40,9 @@ export interface TableFacetedFilterOption {
 /**
  * Component properties for the faceted column filter menu.
  */
-export interface TableFacetedFilterProps<TData, TValue> {
+export interface TableFacetedFilterProps<TData extends RowData, TValue> {
   /** The TanStack Table column instance to apply filters to. */
-  column?: Column<TData, TValue>;
+  column?: Column<TableFeature, TData, TValue>;
   /** Display title for the filter button trigger and input placeholder. */
   title?: string;
   /** Available selectable filter options. */
@@ -55,7 +56,7 @@ export interface TableFacetedFilterProps<TData, TValue> {
  * @param props - Filter options, column reference, title, and styling classes.
  * @returns React node representing the filter UI component.
  */
-export function TableFacetedFilter<TData, TValue>({
+export function TableFacetedFilter<TData extends RowData, TValue>({
   column,
   title,
   options,

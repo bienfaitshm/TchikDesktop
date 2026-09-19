@@ -2,19 +2,20 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { flexRender, Row } from "@tanstack/react-table";
+import { flexRender, RowData, type Row } from "@tanstack/react-table";
 import { TableCell, TableRow } from "@/renderer/components/ui/table";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { cn } from "@/renderer/utils";
 import { useCallback } from "react";
+import { TableFeature } from "./hooks";
 
-type DraggableRowProps<T> = {
-  row: Row<T>;
+type DraggableRowProps<T extends RowData> = {
+  row: Row<TableFeature, T>;
   rowOriginalId: UniqueIdentifier;
-  onRowClick?(row: Row<T>): void;
+  onRowClick?(row: Row<TableFeature, T>): void;
 };
 
-export function DraggableRow<T>({
+export function DraggableRow<T extends RowData>({
   row,
   rowOriginalId: id,
   onRowClick,
@@ -25,9 +26,11 @@ export function DraggableRow<T>({
     onRowClick?.(row);
   }, [onRowClick, row]);
 
+  const visibleCells = row.getVisibleCells();
+
   return (
     <TableRow
-      data-state={row.getIsSelected() && "selected"}
+      data-state={row.getIsSelected() ? "selected" : undefined}
       data-dragging={isDragging}
       ref={setNodeRef}
       className={cn(
@@ -40,7 +43,7 @@ export function DraggableRow<T>({
       }}
       onClick={handleClick}
     >
-      {row.getVisibleCells().map((cell) => {
+      {visibleCells.map((cell) => {
         const isActionColumn = cell.column.id === "actions";
         const isSelectColumn = cell.column.id === "select";
 
