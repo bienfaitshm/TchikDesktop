@@ -31,6 +31,7 @@ import {
   type ColumnPinningState,
   type ColumnSizingState,
   type FilterFn,
+  type Header,
   type RowData,
   type SortFn,
   type SortingState,
@@ -82,13 +83,16 @@ export const fuzzySort: SortFn<CustomTableFeatures, RowData> = (
   rowB,
   columnId,
 ) => {
+  const rankA = rowA.columnFiltersMeta?.[columnId]?.itemRank as
+    RankingInfo | undefined;
+  const rankB = rowB.columnFiltersMeta?.[columnId]?.itemRank as
+    RankingInfo | undefined;
+
   let dir = 0;
-  if (rowA.columnFiltersMeta[columnId]) {
-    dir = compareItems(
-      rowA.columnFiltersMeta[columnId].itemRank as RankingInfo,
-      rowB.columnFiltersMeta[columnId].itemRank as RankingInfo,
-    );
+  if (rankA && rankB) {
+    dir = compareItems(rankA, rankB);
   }
+
   return dir === 0 ? sortFn_alphanumeric(rowA, rowB, columnId) : dir;
 };
 
@@ -128,17 +132,23 @@ export type TableColumnDef<Data extends RowData> = ColumnDef<
 
 /**
  * Generates inline CSS properties for sticky column pinning.
- * @param column - The column instance to calculate styles for.
- * @returns The CSS properties handling shadows, inset, and z-index.
+ * Accepts either a Column or a Header instance to determine boundary shadows safely.
+ * @param target - The column or header instance to compute styles for.
+ * @returns The CSS properties handling inset, shadows, and z-index.
  */
 export const getCommonPinningStyles = <TData extends RowData>(
-  column: Column<TableFeature, TData>,
+  target: Column<TableFeature, TData> | Header<TableFeature, TData>,
 ): CSSProperties => {
+  const column = "column" in target ? target.column : target;
   const isPinned = column.getIsPinned();
+
   const isLastLeftPinnedColumn =
-    isPinned === "start" && column.getIsLastColumn("start");
+    isPinned === "start" &&
+    ("getIsLastColumn" in target ? target.getIsLastColumn("start") : false);
+
   const isFirstRightPinnedColumn =
-    isPinned === "end" && column.getIsFirstColumn("end");
+    isPinned === "end" &&
+    ("getIsFirstColumn" in target ? target.getIsFirstColumn("end") : false);
 
   return {
     boxShadow: isLastLeftPinnedColumn
@@ -165,6 +175,7 @@ export interface UseTableOptions<TData extends RowData> {
 
 /**
  * Initializes and orchestrates the TanStack Table instance with built-in state management.
+ * Uses React transitions to prevent Suspense fallbacks during state updates.
  * @param options - Table configuration containing initial data, columns, and a key extractor.
  * @returns An object containing the table instance, columns, and extracted row IDs.
  */
@@ -173,6 +184,8 @@ export function useDataTable<TData extends RowData>({
   columns,
   keyExtractor,
 }: UseTableOptions<TData>) {
+  const [isPending, startTransition] = React.useTransition();
+
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -190,16 +203,28 @@ export function useDataTable<TData extends RowData>({
     pageSize: 10,
   });
 
-  const state = {
-    sorting,
-    columnVisibility,
-    rowSelection,
-    columnFilters,
-    globalFilter,
-    columnPinning,
-    columnSizing,
-    pagination,
-  };
+  const state = React.useMemo(
+    () => ({
+      sorting,
+      columnVisibility,
+      rowSelection,
+      columnFilters,
+      globalFilter,
+      columnPinning,
+      columnSizing,
+      pagination,
+    }),
+    [
+      sorting,
+      columnVisibility,
+      rowSelection,
+      columnFilters,
+      globalFilter,
+      columnPinning,
+      columnSizing,
+      pagination,
+    ],
+  );
 
   const rowIds = React.useMemo(
     () => data.map(keyExtractor),
@@ -215,15 +240,22 @@ export function useDataTable<TData extends RowData>({
       state,
       globalFilterFn: "fuzzy",
       columnResizeMode: "onChange",
-      onRowSelectionChange: setRowSelection,
-      onSortingChange: setSorting,
-      onColumnFiltersChange: setColumnFilters,
-      onGlobalFilterChange: setGlobalFilter,
-      onColumnVisibilityChange: setColumnVisibility,
-      onColumnPinningChange: setColumnPinning,
-      onColumnSizingChange: setColumnSizing,
-      onPaginationChange: setPagination,
-      getRowId: (row) => keyExtractor(row),
+      onRowSelectionChange: (updater) =>
+        startTransition(() => setRowSelection(updater)),
+      onSortingChange: (updater) => startTransition(() => setSorting(updater)),
+      onColumnFiltersChange: (updater) =>
+        startTransition(() => setColumnFilters(updater)),
+      onGlobalFilterChange: (updater) =>
+        startTransition(() => setGlobalFilter(updater)),
+      onColumnVisibilityChange: (updater) =>
+        startTransition(() => setColumnVisibility(updater)),
+      onColumnPinningChange: (updater) =>
+        startTransition(() => setColumnPinning(updater)),
+      onColumnSizingChange: (updater) =>
+        startTransition(() => setColumnSizing(updater)),
+      onPaginationChange: (updater) =>
+        startTransition(() => setPagination(updater)),
+      getRowId: keyExtractor,
     },
     (tableState) => tableState,
   );
@@ -235,6 +267,7 @@ export function useDataTable<TData extends RowData>({
     columns,
     rowIds,
     keyExtractor,
+    isPending,
   } as const;
 }
 
