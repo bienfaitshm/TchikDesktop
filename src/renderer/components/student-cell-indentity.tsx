@@ -7,12 +7,14 @@ import {
 } from "@/components/ui/item";
 import { StudentAvatar } from "./student-avatar";
 import type { USER_GENDER_ENUM } from "@/packages/@core/data-access/db";
+import { cn } from "../utils";
 
 export type StudentCellIdentityProps = {
   fullName?: string;
   isNewStudent?: boolean;
   isProDeo?: boolean;
   gender: USER_GENDER_ENUM;
+  className?: string;
 };
 
 /**
@@ -44,11 +46,17 @@ export const StudentCellIdentity: React.FC<StudentCellIdentityProps> = ({
   isNewStudent,
   isProDeo,
   gender,
+  className,
 }) => {
   const statusLabel = getStudentStatusLabel(isNewStudent, gender);
 
   return (
-    <Item className="bg-transparent border-none p-0 gap-3 min-w-37.5">
+    <Item
+      className={cn(
+        "bg-transparent border-none p-0 gap-3 min-w-37.5",
+        className,
+      )}
+    >
       <ItemMedia>
         <StudentAvatar fullName={fullName} />
       </ItemMedia>

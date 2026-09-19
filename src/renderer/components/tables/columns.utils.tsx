@@ -1,13 +1,14 @@
-import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ExpandableTrigger } from "@/renderer/components/tables/data-table.expandable";
 import { Checkbox } from "@/renderer/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import React from "react";
-
+import { TableColumnDef, TableData, TableRow } from "./hooks";
 /**
  * Creates a standard row selection column with a select-all header.
  */
-export const createSelectColumn = <T,>(): ColumnDef<T> => ({
+export const createSelectColumn = <
+  T extends TableData,
+>(): TableColumnDef<T> => ({
   id: "select",
   size: 40,
   minSize: 40,
@@ -47,7 +48,9 @@ export const createSelectColumn = <T,>(): ColumnDef<T> => ({
 /**
  * Creates an expandable row trigger column.
  */
-export const createExpandableColumn = <T,>(): ColumnDef<T> => ({
+export const createExpandableColumn = <
+  T extends TableData,
+>(): TableColumnDef<T> => ({
   id: "expandable",
   size: 48,
   minSize: 48,
@@ -70,9 +73,9 @@ export const createExpandableColumn = <T,>(): ColumnDef<T> => ({
 /**
  * Creates a custom row actions column.
  */
-export const createActionsColumn = <T,>(
-  renderRowAction: (item: T, row: Row<T>) => React.ReactNode,
-): ColumnDef<T> => ({
+export const createActionsColumn = <T extends TableData>(
+  renderRowAction: (item: T, row: TableRow<T>) => React.ReactNode,
+): TableColumnDef<T> => ({
   id: "actions",
   cell: ({ row }) => <>{renderRowAction(row.original, row)}</>,
   enableSorting: false,
@@ -80,22 +83,22 @@ export const createActionsColumn = <T,>(
   enableResizing: false,
 });
 
-type EnhanceColumnsOptions<T> = {
+type EnhanceColumnsOptions<T extends TableData> = {
   enableSelection?: boolean;
   variant?: "actions" | "expandable" | "none";
-  renderRowAction?: (item: T, row: Row<T>) => React.ReactNode;
+  renderRowAction?: (item: T, row: TableRow<T>) => React.ReactNode;
 };
 
 /**
  * Rehausse un tableau de colonnes TanStack avec des fonctionnalités standardisées (Sélection, Actions, Expansion).
  */
-export function enhanceColumns<T>(
-  columns: ColumnDef<T>[],
+export function enhanceColumns<T extends TableData>(
+  columns: TableColumnDef<T>[],
   options: EnhanceColumnsOptions<T> = {},
-): ColumnDef<T>[] {
+): TableColumnDef<T>[] {
   const { enableSelection = true, variant = "none", renderRowAction } = options;
 
-  const enhanced: ColumnDef<T>[] = [];
+  const enhanced: TableColumnDef<T>[] = [];
 
   if (enableSelection) {
     enhanced.push(createSelectColumn<T>());
@@ -115,9 +118,9 @@ export function enhanceColumns<T>(
 /**
  * Standard shortcut helper to enhance columns with selection and expansion capabilities.
  */
-export function enhanceColumnsExpandable<T>(
-  columns: ColumnDef<T>[],
-): ColumnDef<T>[] {
+export function enhanceColumnsExpandable<T extends TableData>(
+  columns: TableColumnDef<T>[],
+): TableColumnDef<T>[] {
   return enhanceColumns(columns, {
     enableSelection: true,
     variant: "expandable",

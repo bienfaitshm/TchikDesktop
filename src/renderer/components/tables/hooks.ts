@@ -125,6 +125,7 @@ export const features = tableFeatures({
 });
 
 export type TableFeature = typeof features;
+export type TableData = RowData;
 
 export type TableColumnDef<Data extends RowData> = ColumnDef<
   TableFeature,

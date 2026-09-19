@@ -27,7 +27,7 @@ export const staticPaymentColumns: TableColumnDef<AssignmentTableOfClassroom>[] 
       accessorKey: "student",
       header: ({ column }) => (
         <DataTableColumnHeader
-          className="max-w-16"
+          className="min-w-64"
           column={column}
           title="Élève"
         />
@@ -36,6 +36,7 @@ export const staticPaymentColumns: TableColumnDef<AssignmentTableOfClassroom>[] 
       cell: ({ row: { original: enrollment } }) => {
         return (
           <StudentCellIdentity
+            className="min-w-64"
             fullName={formatStudentName(enrollment.student)}
             gender={enrollment.student.gender}
             isNewStudent={enrollment.isNewStudent}
@@ -44,6 +45,7 @@ export const staticPaymentColumns: TableColumnDef<AssignmentTableOfClassroom>[] 
         );
       },
       enableSorting: true,
+      enablePinning: true,
     },
   ];
 
