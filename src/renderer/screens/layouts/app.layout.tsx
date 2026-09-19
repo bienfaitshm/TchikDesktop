@@ -14,9 +14,6 @@ import {
 } from "@/renderer/components/screen-saver";
 import { SidebarTrigger } from "@/renderer/components/app-sidebar/app-sidebar.toggle-button";
 
-// Application version injected via environment variables or fallback
-const APP_VERSION = import.meta.env?.VITE_APP_VERSION || "1.0.0";
-
 // Sidebar styling configuration
 const SIDEBAR_CONFIG_STYLES: React.CSSProperties = {
   "--sidebar-width": "14rem",
@@ -81,8 +78,8 @@ export function AppLayout({ menus = [] }: AppLayoutProps): React.JSX.Element {
 
           {/* Full-width Status Bar Footer */}
           <footer className="z-30 flex h-7 w-full shrink-0 select-none items-center justify-between gap-2 border-t bg-background/95 px-4 text-xs text-muted-foreground backdrop-blur-sm">
-            <span>Ready</span>
-            <span>App Version {APP_VERSION}</span>
+            {/* <span>Ready</span>
+            <span>App Version {APP_VERSION}</span> */}
           </footer>
         </div>
       </SidebarProvider>
