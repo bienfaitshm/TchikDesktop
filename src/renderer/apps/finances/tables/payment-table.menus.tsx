@@ -1,12 +1,12 @@
 import {
   Info,
   CreditCard,
-  ExternalLink,
   MoreVertical,
   History,
   ShieldOff,
   Pencil,
   FileText,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "@/renderer/components/ui/button";
 import { createMenuBuilder } from "@/components/menus/more-menus";
@@ -29,7 +29,7 @@ import { STATUS_INDICATORS } from "../components/payment-legend-colors";
 import { formatCurrency } from "@/packages/currency";
 
 /**
- * Propriétés transmises aux actions de ligne des échéances de frais.
+ * Properties passed to fee type row actions.
  */
 export interface FeeTypeRowActionsProps {
   feeAssignment: FeeAssignment;
@@ -39,7 +39,7 @@ export interface FeeTypeRowActionsProps {
 }
 
 /**
- * Bouton déclencheur standard pour les menus contextuels de tableau.
+ * Standard trigger button for table context menus.
  */
 export const defaultMenuTrigger = (
   <Button
@@ -55,7 +55,7 @@ export const defaultMenuTrigger = (
 const feeMenu = createMenuBuilder<FeeTypeRowActionsProps>();
 
 /**
- * Menu contextuel d'actions pour chaque cellule d'échéance/frais.
+ * Contextual action menu for each fee schedule cell.
  */
 export const CellAction = feeMenu.build(
   {
@@ -93,6 +93,33 @@ export const CellAction = feeMenu.build(
       )
       .disabled(
         ({ feeAssignment }) => feeAssignment.status === FEE_SCHEDULES_ENUM.PAID,
+      )
+      .hidden(
+        ({ feeAssignment }) => feeAssignment.status === FEE_SCHEDULES_ENUM.PAID,
+      ),
+
+    markPaid: feeMenu
+      .label(
+        // Dynamic label evaluation based on row context props
+        ({ feeAssignment }) =>
+          feeAssignment.status === FEE_SCHEDULES_ENUM.UNPAID
+            ? "Marquer comme payé"
+            : "Payé",
+        // Dynamic icon evaluation based on row context props
+        ({ feeAssignment }) =>
+          feeAssignment.status === FEE_SCHEDULES_ENUM.UNPAID
+            ? CheckCircle
+            : CheckCircle,
+      )
+      .action((props) => {
+        console.log(
+          "Exécution de la logique Marquer comme payé pour :",
+          props.feeAssignment.assignmentId,
+        );
+      })
+      .hidden(
+        ({ feeAssignment }) =>
+          feeAssignment.status !== FEE_SCHEDULES_ENUM.UNPAID,
       ),
 
     changeAmount: feeMenu
@@ -168,13 +195,10 @@ export const CellAction = feeMenu.build(
 const rowMenu = createMenuBuilder<AssignmentTableOfClassroom>();
 
 /**
- * Menu contextuel d'actions pour chaque ligne du tableau (niveau élève).
+ * Contextual action menu for each table row (student level).
  */
 export const RowAction = rowMenu.build(
   {
-    // viewStudentProfile: rowMenu
-    //   .label("Fiche de l'élève", ExternalLink)
-    //   .link(({ enrollmentId }) => `/schools/${enrollmentId}/details`),
     changeAmount: rowMenu
       .label("Ajuster le montant à payer", Pencil)
       .dialog(

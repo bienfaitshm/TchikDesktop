@@ -9,6 +9,8 @@ export type Trigger<TProps> = (
   props: TProps,
 ) => React.ReactElement | ComponentRenderFn<HTMLProps, unknown>;
 
+export type LabelMenu<TProps> = string | ((props: TProps) => string);
+
 export type DynamicProp<TProps, TValue> = TValue | ((props: TProps) => TValue);
 
 export interface DialogRenderProps<TProps> {
@@ -19,7 +21,7 @@ export interface DialogRenderProps<TProps> {
 }
 
 export interface BaseMenuItemConfig<TProps> {
-  label?: string;
+  label?: LabelMenu<TProps>;
   icon?: React.ReactNode | React.ElementType;
   separatorPos?: SeparatorPosition;
   variant?: "default" | "destructive";
@@ -31,25 +33,25 @@ export interface BaseMenuItemConfig<TProps> {
 
 export interface ActionItemConfig<TProps> extends BaseMenuItemConfig<TProps> {
   type: "action";
-  label: string;
+  label: LabelMenu<TProps>;
   onAction?: (props: TProps) => void;
 }
 
 export interface LinkItemConfig<TProps> extends BaseMenuItemConfig<TProps> {
   type: "link";
-  label: string;
+  label: LabelMenu<TProps>;
   url: DynamicProp<TProps, string>;
 }
 
 export interface DialogItemConfig<TProps> extends BaseMenuItemConfig<TProps> {
   type: "dialog";
-  label: string;
+  label: LabelMenu<TProps>;
   renderDialog: (options: DialogRenderProps<TProps>) => React.ReactNode;
 }
 
 export interface ToggleItemConfig<TProps> extends BaseMenuItemConfig<TProps> {
   type: "toggle";
-  label: string;
+  label: LabelMenu<TProps>;
   isChecked: DynamicProp<TProps, boolean>;
   onToggleChange: (props: TProps, checked: boolean) => void;
 }
@@ -62,7 +64,7 @@ export interface GroupItemConfig<TProps> extends BaseMenuItemConfig<TProps> {
 
 export interface SubmenuItemConfig<TProps> extends BaseMenuItemConfig<TProps> {
   type: "submenu";
-  label: string;
+  label: LabelMenu<TProps>;
   items: MenuItemConfig<TProps>[] | Record<string, MenuItemConfig<TProps>>;
 }
 
