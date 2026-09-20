@@ -1,5 +1,5 @@
 import React from "react";
-import type { DialogItemConfig } from "./types";
+import type { DialogItemConfig, DialogRenderProps } from "./types";
 
 interface DialogMenuState {
   activeDialogKey: string | null;
@@ -12,12 +12,15 @@ interface DialogMenuActions {
 }
 
 const DialogStateContext = React.createContext<DialogMenuState | null>(null);
+DialogStateContext.displayName = "DialogStateContext";
+
 const DialogActionContext = React.createContext<DialogMenuActions | null>(null);
+DialogActionContext.displayName = "DialogActionContext";
 
 /**
- * Provides state management and action handlers for active dialog menus.
- * @param props - React properties containing child elements.
- * @returns The context providers wrapping the children.
+ * Contextual boundary coordinating dialog visibility state tracking.
+ * @param props - Children nodes demanding context subscription dependencies.
+ * @returns Wrapped component architectures feeding rendering state.
  */
 export const DialogMenuProvider: React.FC<React.PropsWithChildren> = ({
   children,
@@ -54,6 +57,7 @@ export const DialogMenuProvider: React.FC<React.PropsWithChildren> = ({
     </DialogStateContext.Provider>
   );
 };
+DialogMenuProvider.displayName = "DialogMenuProvider";
 
 interface DialogContainerProps<T = unknown> {
   contextProps: T;
@@ -61,11 +65,11 @@ interface DialogContainerProps<T = unknown> {
 }
 
 /**
- * Renders the active dialog component corresponding to the current context state.
- * @param props - Properties including dialog items and context payload.
- * @returns The rendered active dialog element or null if none is active.
+ * Evaluates mapping parameters to render conditionally invoked overlay layouts.
+ * @param props - Contextual properties carrying active identifiers and render callbacks.
+ * @returns Evaluated React elements correlating strictly to the current active key.
  */
-export const DialogContainer = <T extends {}>({
+export const DialogContainer = <T extends Record<string, unknown>>({
   items,
   contextProps,
 }: DialogContainerProps<T>): React.ReactElement | null => {
@@ -77,43 +81,44 @@ export const DialogContainer = <T extends {}>({
   const renderDialog = items.get(activeDialogKey);
 
   if (renderDialog) {
-    return (
-      <>
-        {renderDialog({
-          props: contextProps,
-          open: true,
-          close: closeDialog,
-          onOpenChange: handleOpenChange,
-        } as any)}
-      </>
-    );
+    const dialogProps: DialogRenderProps<T> = {
+      props: contextProps,
+      open: true,
+      close: closeDialog,
+      onOpenChange: handleOpenChange,
+    };
+
+    return <>{renderDialog(dialogProps)}</>;
   }
 
   return null;
 };
+DialogContainer.displayName = "DialogContainer";
 
 /**
- * Custom hook safely consuming the DialogStateContext.
- * @throws Error if used outside of a DialogMenuProvider.
- * @returns The active DialogMenuState object.
+ * Retrieves the read-only operational state of structural visibility contexts.
+ * @throws When called physically outside of `DialogMenuProvider` hierarchies.
+ * @returns Current state holding the active dialog key.
  */
 export function useDialogState(): DialogMenuState {
   const context = React.useContext(DialogStateContext);
-  if (!context)
+  if (!context) {
     throw new Error("useDialogState must be used within a DialogMenuProvider");
+  }
   return context;
 }
 
 /**
- * Custom hook safely consuming the DialogActionContext.
- * @throws Error if used outside of a DialogMenuProvider.
- * @returns The active DialogMenuActions object.
+ * Accesses operational dispatch functions driving UI mutation logic interactively.
+ * @throws When called physically outside of `DialogMenuProvider` hierarchies.
+ * @returns Hooks mapped specifically to orchestrate active overlays.
  */
 export function useDialogActions(): DialogMenuActions {
   const context = React.useContext(DialogActionContext);
-  if (!context)
+  if (!context) {
     throw new Error(
       "useDialogActions must be used within a DialogMenuProvider",
     );
+  }
   return context;
 }

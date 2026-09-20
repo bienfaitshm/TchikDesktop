@@ -1,18 +1,40 @@
 import type { ComponentRenderFn, HTMLProps } from "@base-ui/react/types";
 
+/**
+ * Union of supported action element types.
+ */
 export type ActionType =
   "dialog" | "link" | "toggle" | "action" | "group" | "submenu";
 
+/**
+ * Position options for visual separators around menu items.
+ */
 export type SeparatorPosition = "before" | "after" | "both" | "none";
 
+/**
+ * Render function signature for custom component triggers.
+ */
 export type Trigger<TProps> = (
   props: TProps,
-) => React.ReactElement | ComponentRenderFn<HTMLProps, unknown>;
+) => React.ReactNode | ComponentRenderFn<HTMLProps, unknown>;
 
-export type LabelMenu<TProps> = string | ((props: TProps) => string);
-
+/**
+ * Value that can be provided statically or computed dynamically from props.
+ */
 export type DynamicProp<TProps, TValue> = TValue | ((props: TProps) => TValue);
 
+export type DynamicLabel<TProps> = DynamicProp<TProps, React.ReactNode>;
+export type DynamicIcon<TProps> = DynamicProp<TProps, React.ElementType>;
+
+export type ExtendedMenuItemConfig<TProps> = MenuItemConfig<TProps> & {
+  label?: DynamicLabel<TProps>;
+  icon?: DynamicIcon<TProps>;
+  className?: DynamicProp<TProps, string>;
+};
+
+/**
+ * Context properties passed to dialog rendering functions.
+ */
 export interface DialogRenderProps<TProps> {
   props: TProps;
   open: boolean;
@@ -20,54 +42,79 @@ export interface DialogRenderProps<TProps> {
   close: () => void;
 }
 
+/**
+ * Base configuration properties shared across all menu items.
+ */
 export interface BaseMenuItemConfig<TProps> {
-  label?: LabelMenu<TProps>;
-  icon?: React.ReactNode | React.ElementType;
+  key: string;
+  label?: DynamicLabel<TProps>;
+  icon?: DynamicIcon<TProps>;
   separatorPos?: SeparatorPosition;
   variant?: "default" | "destructive";
   shortcut?: string;
   isDisabled?: DynamicProp<TProps, boolean>;
   isHidden?: DynamicProp<TProps, boolean>;
-  key: string;
+  customClass?: string;
 }
 
+/**
+ * Configuration for direct execution action items.
+ */
 export interface ActionItemConfig<TProps> extends BaseMenuItemConfig<TProps> {
   type: "action";
-  label: LabelMenu<TProps>;
+  label: DynamicLabel<TProps>;
   onAction?: (props: TProps) => void;
 }
 
+/**
+ * Configuration for anchor link navigation items.
+ */
 export interface LinkItemConfig<TProps> extends BaseMenuItemConfig<TProps> {
   type: "link";
-  label: LabelMenu<TProps>;
+  label: DynamicLabel<TProps>;
   url: DynamicProp<TProps, string>;
 }
 
+/**
+ * Configuration for modal dialog trigger items.
+ */
 export interface DialogItemConfig<TProps> extends BaseMenuItemConfig<TProps> {
   type: "dialog";
-  label: LabelMenu<TProps>;
+  label: DynamicLabel<TProps>;
   renderDialog: (options: DialogRenderProps<TProps>) => React.ReactNode;
 }
 
+/**
+ * Configuration for binary toggle/checkbox items.
+ */
 export interface ToggleItemConfig<TProps> extends BaseMenuItemConfig<TProps> {
   type: "toggle";
-  label: LabelMenu<TProps>;
+  label: DynamicLabel<TProps>;
   isChecked: DynamicProp<TProps, boolean>;
   onToggleChange: (props: TProps, checked: boolean) => void;
 }
 
+/**
+ * Configuration for grouped collections of menu items.
+ */
 export interface GroupItemConfig<TProps> extends BaseMenuItemConfig<TProps> {
   type: "group";
   label?: string;
   items: MenuItemConfig<TProps>[] | Record<string, MenuItemConfig<TProps>>;
 }
 
+/**
+ * Configuration for nested submenu containers.
+ */
 export interface SubmenuItemConfig<TProps> extends BaseMenuItemConfig<TProps> {
   type: "submenu";
-  label: LabelMenu<TProps>;
+  label: DynamicLabel<TProps>;
   items: MenuItemConfig<TProps>[] | Record<string, MenuItemConfig<TProps>>;
 }
 
+/**
+ * Discriminatory union representing any valid menu item configuration.
+ */
 export type MenuItemConfig<TProps> =
   | ActionItemConfig<TProps>
   | LinkItemConfig<TProps>
@@ -76,13 +123,26 @@ export type MenuItemConfig<TProps> =
   | GroupItemConfig<TProps>
   | SubmenuItemConfig<TProps>;
 
+/**
+ * Dictionary or builder map accepted as input for menu schema definitions.
+ */
 export type MenuSchemaInput<TProps> = Record<
   string,
   IMenuItemBuilder<TProps> | MenuItemConfig<TProps>
 >;
 
+/**
+ * Fluent builder pattern interface for constructing menu item configurations.
+ */
 export interface IMenuItemBuilder<TProps> {
   config: Partial<MenuItemConfig<TProps>>;
+
+  /**
+   * Sets the primary label and optional icon for the menu item.
+   * @param text - Static label or evaluator function returning text.
+   * @param icon - Optional visual icon component or node.
+   */
+  label(text: DynamicLabel<TProps>, icon?: DynamicIcon<TProps>): this;
 
   /**
    * Configures the item to trigger a dialog component.
@@ -111,16 +171,23 @@ export interface IMenuItemBuilder<TProps> {
     checked: DynamicProp<TProps, boolean>,
     onChange: (props: TProps, checked: boolean) => void,
   ): this;
+
   /**
-   * Configures the item as a nested submenu container.
-   * @param items - Child schema definitions or builder instances.
+   * Configures child items for submenus or grouped structures.
+   * @param items - Child schema definitions or array of configurations.
    */
-  submenu(items: MenuSchemaInput<TProps> | MenuItemConfig<TProps>[]): this;
+  submenu(
+    // label: DynamicLabel<TProps>,
+    // icon?: DynamicIcon<TProps>,
+    items: MenuSchemaInput<TProps> | MenuItemConfig<TProps>[],
+  ): this;
+
   /**
    * Configures the item as a grouped collection of menu items.
    * @param items - Child schema definitions or builder instances.
    */
   group(items: MenuSchemaInput<TProps> | MenuItemConfig<TProps>[]): this;
+
   /**
    * Sets a dynamic or static disabled condition.
    * @param condition - Boolean or evaluator function determining disabled state.
@@ -143,6 +210,7 @@ export interface IMenuItemBuilder<TProps> {
    * Sets the item visual variant to destructive styling.
    */
   destructive(): this;
+
   /**
    * Assigns a keyboard shortcut label to the item.
    * @param shortcut - Text string representing the keyboard shortcut.
