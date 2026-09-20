@@ -1,14 +1,13 @@
 import {
   Info,
   CreditCard,
-  MoreVertical,
   History,
   ShieldOff,
   Pencil,
   FileText,
   CheckCircle,
+  BadgePercent,
 } from "lucide-react";
-import { Button } from "@/renderer/components/ui/button";
 import { createMenuBuilder } from "@/components/menus/more-menus";
 import {
   SavePaymentDialog,
@@ -27,6 +26,8 @@ import {
 import { cn } from "@/renderer/utils";
 import { STATUS_INDICATORS } from "../components/payment-legend-colors";
 import { formatCurrency } from "@/packages/currency";
+import { ButtonMenu } from "@/renderer/components/buttons/button-menu";
+import { MarkStudentAsProDeoDialog } from "../../schools/dialogs/enrollment.dialog";
 
 /**
  * Properties passed to fee type row actions.
@@ -37,20 +38,6 @@ export interface FeeTypeRowActionsProps {
   yearId: string;
   mutationKey?: readonly unknown[];
 }
-
-/**
- * Standard trigger button for table context menus.
- */
-export const defaultMenuTrigger = (
-  <Button
-    variant="ghost"
-    size="icon-sm"
-    aria-label="Menu d'actions"
-    className="opacity-0 group-hover/cell:opacity-100 focus-visible:opacity-100 transition-opacity"
-  >
-    <MoreVertical className="h-4 w-4 text-muted-foreground" />
-  </Button>
-);
 
 const feeMenu = createMenuBuilder<FeeTypeRowActionsProps>();
 
@@ -199,6 +186,30 @@ const rowMenu = createMenuBuilder<AssignmentTableOfClassroom>();
  */
 export const RowAction = rowMenu.build(
   {
+    editProdeo: rowMenu
+      .label(() => "Accorder le statut Pro Deo", BadgePercent)
+      .dialog(
+        ({
+          props: { student, schoolId, enrollmentId },
+          open,
+          onOpenChange,
+        }) => {
+          const computedFullName = [student.firstName, student.lastName]
+            .filter(Boolean)
+            .join(" ");
+
+          return (
+            <MarkStudentAsProDeoDialog
+              schoolId={schoolId}
+              fullName={computedFullName}
+              enrollmentId={enrollmentId}
+              mutationKey={["fin"]}
+              onOpenChange={onOpenChange}
+              open={open}
+            />
+          );
+        },
+      ),
     changeAmount: rowMenu
       .label("Ajuster le montant à payer", Pencil)
       .dialog(
@@ -221,6 +232,6 @@ export const RowAction = rowMenu.build(
       ),
   },
   {
-    trigger: () => defaultMenuTrigger,
+    trigger: () => <ButtonMenu />,
   },
 );
