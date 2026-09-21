@@ -7,6 +7,7 @@ import {
   feeAssignments,
   studentPayments,
   dailyExchangeRates,
+  feeOverrides,
 } from "./schema.finance";
 import {
   schools,
@@ -17,6 +18,9 @@ import {
   users,
 } from "./schema";
 
+/**
+ * Defines relations for the wallets table, mapping owning school and child fee types.
+ */
 export const walletsRelations = relations(wallets, ({ one, many }) => ({
   school: one(schools, {
     fields: [wallets.schoolId],
@@ -25,6 +29,9 @@ export const walletsRelations = relations(wallets, ({ one, many }) => ({
   feeTypes: many(feeTypes),
 }));
 
+/**
+ * Defines relations for fee types, linking wallet, academic year, school, schedules, configs, and overrides.
+ */
 export const feeTypesRelations = relations(feeTypes, ({ one, many }) => ({
   wallet: one(wallets, {
     fields: [feeTypes.walletId],
@@ -40,8 +47,12 @@ export const feeTypesRelations = relations(feeTypes, ({ one, many }) => ({
   }),
   feeConfigurations: many(feeConfigurations),
   schedules: many(feeSchedules),
+  feeOverrides: many(feeOverrides),
 }));
 
+/**
+ * Defines relations for fee schedules, linking parent fee type to child assignments.
+ */
 export const feeSchedulesRelations = relations(
   feeSchedules,
   ({ one, many }) => ({
@@ -53,6 +64,9 @@ export const feeSchedulesRelations = relations(
   }),
 );
 
+/**
+ * Defines relations for fee configurations, linking fee type, context scope, and student assignments.
+ */
 export const feeConfigurationsRelations = relations(
   feeConfigurations,
   ({ one, many }) => ({
@@ -80,6 +94,9 @@ export const feeConfigurationsRelations = relations(
   }),
 );
 
+/**
+ * Defines relations for fee assignments, linking student enrollment, fee config, schedule, and payments.
+ */
 export const feeAssignmentsRelations = relations(
   feeAssignments,
   ({ one, many }) => ({
@@ -99,6 +116,9 @@ export const feeAssignmentsRelations = relations(
   }),
 );
 
+/**
+ * Defines relations for student payments, linking assignments, collector user, school, and year.
+ */
 export const studentPaymentsRelations = relations(
   studentPayments,
   ({ one }) => ({
@@ -121,6 +141,9 @@ export const studentPaymentsRelations = relations(
   }),
 );
 
+/**
+ * Defines relations for daily exchange rates, linking exchange records to their respective school.
+ */
 export const dailyExchangeRatesRelations = relations(
   dailyExchangeRates,
   ({ one }) => ({
@@ -130,3 +153,21 @@ export const dailyExchangeRatesRelations = relations(
     }),
   }),
 );
+
+/**
+ * Defines relations for fee overrides, linking override rules to fee type, classroom, or specific enrollment.
+ */
+export const feeOverridesRelations = relations(feeOverrides, ({ one }) => ({
+  feeType: one(feeTypes, {
+    fields: [feeOverrides.feeTypeId],
+    references: [feeTypes.feeTypeId],
+  }),
+  classroom: one(classrooms, {
+    fields: [feeOverrides.classId],
+    references: [classrooms.classId],
+  }),
+  enrollment: one(classroomEnrollments, {
+    fields: [feeOverrides.enrollmentId],
+    references: [classroomEnrollments.enrollmentId],
+  }),
+}));

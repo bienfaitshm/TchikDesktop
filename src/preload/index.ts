@@ -6,6 +6,7 @@ import type {
   PosPrintConfig,
   ThemeMode,
 } from "@/packages/@core/data-access/stores";
+import { windowControlsBridge } from "./windows";
 
 export const STORE_IPC_CHANNELS = {
   GET_CURRENT_CONFIG: "store:getCurrentConfig",
@@ -163,8 +164,8 @@ const customUpdaterAPI = {
 
 if (process.contextIsolated) {
   try {
+    contextBridge.exposeInMainWorld("windowControls", windowControlsBridge);
     contextBridge.exposeInMainWorld("electron", electronAPI);
-
     contextBridge.exposeInMainWorld("api", {
       updater: customUpdaterAPI,
     });

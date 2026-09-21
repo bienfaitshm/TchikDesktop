@@ -3,20 +3,21 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { flexRender, type Row } from "@tanstack/react-table";
+import { flexRender, RowData, type Row } from "@tanstack/react-table";
 import { Button } from "@/renderer/components/ui/button";
 import { TableCell, TableRow } from "@/renderer/components/ui/table";
 import { cn } from "@/renderer/utils";
+import { TableFeature } from "./hooks";
 
 interface ExpandableContextValue {
   isExpanded: boolean;
   toggle: () => void;
 }
 
-interface ExpandableRowProps<
-  TData,
+export interface ExpandableRowProps<
+  TData extends RowData,
 > extends React.HTMLAttributes<HTMLTableRowElement> {
-  row: Row<TData>;
+  row: Row<TableFeature, TData>;
   renderDetail?: React.ReactNode;
   showDetailOnClick?: boolean;
 }
@@ -25,16 +26,19 @@ const ExpandableContext = React.createContext<
   ExpandableContextValue | undefined
 >(undefined);
 
-const useExpandable = () => {
+/**
+ * Accesses the expandable row context, throwing an error if used outside a provider.
+ * @returns The boolean expanded state and toggle function.
+ */
+function useExpandable(): ExpandableContextValue {
   const context = React.useContext(ExpandableContext);
-  if (!context) {
+  if (!context)
     throw new Error("useExpandable must be used within an <ExpandableRow />");
-  }
   return context;
-};
+}
 
 /**
- * ExpandableRowTrigger: La flèche de rotation isolée
+ * Renders a clickable trigger icon to toggle the expandable row state.
  */
 export const ExpandableTrigger = React.forwardRef<
   HTMLButtonElement,
@@ -55,11 +59,7 @@ export const ExpandableTrigger = React.forwardRef<
         animate={{ rotate: isExpanded ? 180 : 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
       >
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 rotate-none group-hover:text-foreground transition-all",
-          )}
-        />
+        <ChevronDown className="h-4 w-4 rotate-none group-hover:text-foreground transition-all" />
       </motion.div>
     </Button>
   );
@@ -67,15 +67,17 @@ export const ExpandableTrigger = React.forwardRef<
 ExpandableTrigger.displayName = "ExpandableTrigger";
 
 /**
- * ExpandableContent: Gère l'animation et le colspan automatique
+ * Renders the animated hidden content cell spanning all visible table columns.
+ * @param props - Wrapper properties containing the child elements and total column span.
+ * @returns The animated expandable cell component.
  */
-const ExpandableContent = ({
+function ExpandableContent({
   children,
   colSpan,
 }: {
   children?: React.ReactNode;
   colSpan: number;
-}) => {
+}) {
   const { isExpanded } = useExpandable();
 
   return (
@@ -116,13 +118,13 @@ const ExpandableContent = ({
       )}
     </AnimatePresence>
   );
-};
+}
 
 /**
- * Main ExpandableRow Component
+ * A table row component that can be expanded to reveal additional sub-content.
  */
 export const ExpandableRow = React.memo(
-  <TData,>({
+  <TData extends RowData>({
     row,
     renderDetail,
     children,
@@ -132,12 +134,8 @@ export const ExpandableRow = React.memo(
     ...props
   }: ExpandableRowProps<TData>) => {
     const [isExpanded, setIsExpanded] = React.useState(false);
-
-    const toggle = React.useCallback(() => {
-      setIsExpanded((prev) => !prev);
-    }, []);
-
-    const visibleColumnsCount = row.getVisibleCells().length;
+    const toggle = React.useCallback(() => setIsExpanded((prev) => !prev), []);
+    const visibleCells = row.getVisibleCells();
 
     return (
       <ExpandableContext.Provider value={{ isExpanded, toggle }}>
@@ -152,14 +150,13 @@ export const ExpandableRow = React.memo(
           onClick={onClick}
           {...props}
         >
-          {row.getVisibleCells().map((cell) => (
+          {visibleCells.map((cell) => (
             <TableCell key={cell.id} className="p-3 text-sm font-medium">
               {flexRender(cell.column.columnDef.cell, cell.getContext())}
             </TableCell>
           ))}
         </TableRow>
-
-        <ExpandableContent colSpan={visibleColumnsCount}>
+        <ExpandableContent colSpan={visibleCells.length}>
           {renderDetail}
         </ExpandableContent>
       </ExpandableContext.Provider>

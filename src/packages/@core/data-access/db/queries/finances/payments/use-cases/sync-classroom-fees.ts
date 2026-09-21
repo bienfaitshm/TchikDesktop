@@ -55,13 +55,7 @@ export class FeeManagementService {
     private readonly feeAssignmentRepo: FeeAssignmentRepository,
     private readonly clientDb: TDataBase,
     private readonly logger: CustomLogger,
-  ) {
-    console.log(
-      "FeeManagementService ======><",
-      enrollmentRepo,
-      this.enrollmentRepo,
-    );
-  }
+  ) {}
 
   /**
    * Synchronizes fee assignments for all active students in a given classroom.
@@ -104,7 +98,6 @@ export class FeeManagementService {
         pourcent: 30,
       });
 
-      console.log("==========================================>");
       console.log(ctx, classroom);
       const { enrollments, configs } = this.fetchContextData(
         ctx.schoolId,
@@ -120,7 +113,6 @@ export class FeeManagementService {
         return { configs, enrollments };
       }
 
-      console.log("data ============ processAssignments ===============>");
       await this.processAssignments(enrollments, configs, onSyncMessage);
 
       onSyncMessage?.({
@@ -227,10 +219,6 @@ export class FeeManagementService {
     yearId: string,
     classroom: Classroom,
   ) {
-    console.log(
-      ".....fetchContextData===================================================>",
-      this.enrollmentRepo,
-    );
     const enrollments = this.enrollmentRepo.getActiveEnrollments(
       {
         where: {

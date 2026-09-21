@@ -1,14 +1,13 @@
 import {
   Info,
   CreditCard,
-  ExternalLink,
-  MoreVertical,
   History,
   ShieldOff,
   Pencil,
   FileText,
+  CheckCircle,
+  BadgePercent,
 } from "lucide-react";
-import { Button } from "@/renderer/components/ui/button";
 import { createMenuBuilder } from "@/components/menus/more-menus";
 import {
   SavePaymentDialog,
@@ -27,9 +26,11 @@ import {
 import { cn } from "@/renderer/utils";
 import { STATUS_INDICATORS } from "../components/payment-legend-colors";
 import { formatCurrency } from "@/packages/currency";
+import { ButtonMenu } from "@/renderer/components/buttons/button-menu";
+import { MarkStudentAsProDeoDialog } from "../../schools/dialogs/enrollment.dialog";
 
 /**
- * Propriétés transmises aux actions de ligne des échéances de frais.
+ * Contextual properties passed down to individual fee schedule row items.
  */
 export interface FeeTypeRowActionsProps {
   feeAssignment: FeeAssignment;
@@ -38,42 +39,35 @@ export interface FeeTypeRowActionsProps {
   mutationKey?: readonly unknown[];
 }
 
-/**
- * Bouton déclencheur standard pour les menus contextuels de tableau.
- */
-export const defaultMenuTrigger = (
-  <Button
-    variant="ghost"
-    size="icon-sm"
-    aria-label="Menu d'actions"
-    className="opacity-0 group-hover/cell:opacity-100 focus-visible:opacity-100 transition-opacity"
-  >
-    <MoreVertical className="h-4 w-4 text-muted-foreground" />
-  </Button>
-);
-
 const feeMenu = createMenuBuilder<FeeTypeRowActionsProps>();
 
 /**
- * Menu contextuel d'actions pour chaque cellule d'échéance/frais.
+ * Contextual action menu configuration bound to fee schedule cells.
  */
 export const CellAction = feeMenu.build(
   {
     pay: feeMenu
       .label("Enregistrer un paiement", CreditCard)
-      .dialog(({ props, open, onOpenChange, close }) => (
-        <SavePaymentDialog
-          open={open}
-          onOpenChange={onOpenChange}
-          schoolId={props.schoolId}
-          yearId={props.yearId}
-          totalAmount={props.feeAssignment.totalAmount}
-          assignmentId={props.feeAssignment.assignmentId}
-          amountPaid={props.feeAssignment.amountPaid}
-          mutationKey={props.mutationKey}
-          onSuccess={close}
-        />
-      ))
+      .dialog(
+        ({
+          props: { schoolId, yearId, feeAssignment, mutationKey },
+          open,
+          onOpenChange,
+          close,
+        }) => (
+          <SavePaymentDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            schoolId={schoolId}
+            yearId={yearId}
+            totalAmount={feeAssignment.totalAmount}
+            assignmentId={feeAssignment.assignmentId}
+            amountPaid={feeAssignment.amountPaid}
+            mutationKey={mutationKey}
+            onSuccess={close}
+          />
+        ),
+      )
       .disabled(
         ({ feeAssignment }) =>
           feeAssignment.amountPaid >= feeAssignment.totalAmount ||
@@ -83,55 +77,85 @@ export const CellAction = feeMenu.build(
     exempt: feeMenu
       .label("Exempter du paiement", ShieldOff)
       .toggle(
-        (props) => props.feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED,
-        (props) => {
+        ({ feeAssignment }) =>
+          feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED,
+        async ({ feeAssignment }, checked) => {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           console.log(
-            "Toggle exemption pour :",
-            props.feeAssignment.assignmentId,
+            "Exemption toggled for:",
+            feeAssignment.assignmentId,
+            checked,
           );
         },
       )
       .disabled(
         ({ feeAssignment }) => feeAssignment.status === FEE_SCHEDULES_ENUM.PAID,
+      )
+      .hidden(
+        ({ feeAssignment }) => feeAssignment.status === FEE_SCHEDULES_ENUM.PAID,
+      ),
+
+    markPaid: feeMenu
+      .label(
+        ({ feeAssignment }) =>
+          feeAssignment.status === FEE_SCHEDULES_ENUM.UNPAID
+            ? "Marquer comme payé"
+            : "Payé",
+        CheckCircle,
+      )
+      .action(async ({ feeAssignment }) => {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        console.log("Executed mark as paid for:", feeAssignment.assignmentId);
+      })
+      .hidden(
+        ({ feeAssignment }) =>
+          feeAssignment.status !== FEE_SCHEDULES_ENUM.UNPAID,
       ),
 
     changeAmount: feeMenu
       .label("Ajuster le montant à payer", Pencil)
-      .dialog(({ props, open, onOpenChange, close }) => (
-        <SavePaymentDialog
-          open={open}
-          onOpenChange={onOpenChange}
-          schoolId={props.schoolId}
-          yearId={props.yearId}
-          totalAmount={props.feeAssignment.totalAmount}
-          assignmentId={props.feeAssignment.assignmentId}
-          amountPaid={props.feeAssignment.amountPaid}
-          mutationKey={props.mutationKey}
-          onSuccess={close}
-        />
-      ))
+      .dialog(
+        ({
+          props: { schoolId, yearId, feeAssignment, mutationKey },
+          open,
+          onOpenChange,
+          close,
+        }) => (
+          <SavePaymentDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            schoolId={schoolId}
+            yearId={yearId}
+            totalAmount={feeAssignment.totalAmount}
+            assignmentId={feeAssignment.assignmentId}
+            amountPaid={feeAssignment.amountPaid}
+            mutationKey={mutationKey}
+            onSuccess={close}
+          />
+        ),
+      )
       .separator("after"),
 
     consultationGroup: feeMenu
-      .submenu("Consultation & Historique", Info)
+      .label("Consultation & Historique", Info)
       .submenu({
         details: feeMenu
           .label("Détails de l'échéance", FileText)
-          .dialog(({ props, open, onOpenChange }) => (
+          .dialog(({ props: { feeAssignment }, open, onOpenChange }) => (
             <PaymentDetailDialog
               open={open}
               onOpenChange={onOpenChange}
-              assignment={props.feeAssignment}
+              assignment={feeAssignment}
             />
           )),
 
         viewHistory: feeMenu
           .label("Historique des paiements", History)
-          .dialog(({ props, open, onOpenChange }) => (
+          .dialog(({ props: { feeAssignment }, open, onOpenChange }) => (
             <PaymentHistoryDialog
               open={open}
               onOpenChange={onOpenChange}
-              assignmentId={props.feeAssignment.assignmentId}
+              assignmentId={feeAssignment.assignmentId}
             />
           )),
       }),
@@ -165,38 +189,60 @@ export const CellAction = feeMenu.build(
   },
 );
 
-const rowMenu = createMenuBuilder<AssignmentTableOfClassroom>();
+const rowMenu = createMenuBuilder<{ assign: AssignmentTableOfClassroom }>();
 
 /**
- * Menu contextuel d'actions pour chaque ligne du tableau (niveau élève).
+ * Contextual action menu configuration bound to student row records.
  */
 export const RowAction = rowMenu.build(
   {
-    // viewStudentProfile: rowMenu
-    //   .label("Fiche de l'élève", ExternalLink)
-    //   .link(({ enrollmentId }) => `/schools/${enrollmentId}/details`),
-    changeAmount: rowMenu
-      .label("Ajuster le montant à payer", Pencil)
+    editProdeo: rowMenu
+      .label("Accorder le statut Pro Deo", BadgePercent)
       .dialog(
         ({
-          props: { payments, enrollmentId, schoolId },
+          props: {
+            assign: { student, schoolId, enrollmentId },
+            ...props
+          },
           open,
           onOpenChange,
-        }) => (
-          <UpdateAmountByAssignmentsDialog
-            mutationKey={["fin"]}
-            enrollmentIds={[enrollmentId]}
-            schoolId={schoolId}
-            assignments={Object.entries(payments || {})
-              .map((item) => item[1])
-              .filter((i) => !!i)}
-            open={open}
-            onOpenChange={onOpenChange}
-          />
-        ),
+        }) => {
+          const computedFullName = [student.firstName, student.lastName]
+            .filter(Boolean)
+            .join(" ");
+
+          return (
+            <MarkStudentAsProDeoDialog
+              schoolId={schoolId}
+              fullName={computedFullName}
+              enrollmentId={enrollmentId}
+              mutationKey={["fin"]}
+              onOpenChange={onOpenChange}
+              open={open}
+            />
+          );
+        },
       ),
+    changeAmount: rowMenu.label("Ajuster le montant à payer", Pencil).dialog(
+      ({
+        props: {
+          assign: { payments, enrollmentId, schoolId },
+        },
+        open,
+        onOpenChange,
+      }) => (
+        <UpdateAmountByAssignmentsDialog
+          mutationKey={["fin"]}
+          enrollmentIds={[enrollmentId]}
+          schoolId={schoolId}
+          assignments={[]}
+          open={open}
+          onOpenChange={onOpenChange}
+        />
+      ),
+    ),
   },
   {
-    trigger: () => defaultMenuTrigger,
+    trigger: () => <ButtonMenu />,
   },
 );

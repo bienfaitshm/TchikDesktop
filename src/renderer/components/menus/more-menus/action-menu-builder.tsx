@@ -1,5 +1,6 @@
-import React from "react";
+import React, { memo, useState } from "react";
 import { Link } from "react-router";
+import { Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -18,19 +19,19 @@ import { ButtonMenu } from "@/renderer/components/buttons/button-menu";
 import { cn } from "@/renderer/utils";
 import type {
   ActionItemConfig,
-  BaseMenuItemConfig,
-  DialogItemConfig,
   DialogRenderProps,
   DynamicProp,
   GroupItemConfig,
   LinkItemConfig,
-  MenuItemConfig,
   MenuSchemaInput,
   SeparatorPosition,
   SubmenuItemConfig,
   ToggleItemConfig,
   Trigger,
   IMenuItemBuilder,
+  DynamicLabel,
+  DynamicIcon,
+  ExtendedMenuItemConfig,
 } from "./types";
 import { isIn, mapDialogItems } from "./utils";
 import {
@@ -40,18 +41,46 @@ import {
 } from "./context";
 
 /**
- * Fluent builder class used to construct strongly typed menu item configurations.
- * @template TProps - Context properties passed to dynamic evaluators.
+ * Manages the asynchronous execution state for interactions.
+ * @returns Object containing the pending boolean flag and the execution wrapper function.
+ */
+function useAsyncAction() {
+  const [isPending, setIsPending] = useState(false);
+
+  const execute = async (
+    promiseFn: () => void | Promise<void>,
+    e?: Event | React.SyntheticEvent,
+  ) => {
+    if (e && "preventDefault" in e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+    }
+    const result = promiseFn();
+    if (result instanceof Promise) {
+      setIsPending(true);
+      try {
+        await result;
+      } finally {
+        setIsPending(false);
+      }
+    }
+  };
+
+  return { isPending, execute };
+}
+
+/**
+ * Fluent builder class for constructing strictly typed menu item configurations.
+ * @template TProps - The contextual property type injected at runtime.
  */
 export class MenuItemBuilder<TProps> implements IMenuItemBuilder<TProps> {
-  config: Partial<MenuItemConfig<TProps>>;
+  config: Partial<ExtendedMenuItemConfig<TProps>>;
 
   /**
-   * Initializes a new builder instance with default settings.
-   * @param label - Display text for the menu item.
-   * @param icon - Component reference for the menu item icon.
+   * Initializes a new menu item builder.
+   * @param label - The dynamic or static label for the item.
+   * @param icon - The dynamic or static icon component for the item.
    */
-  constructor(label?: string, icon?: React.ElementType) {
+  constructor(label?: DynamicLabel<TProps>, icon?: DynamicIcon<TProps>) {
     this.config = {
       label,
       icon,
@@ -62,49 +91,61 @@ export class MenuItemBuilder<TProps> implements IMenuItemBuilder<TProps> {
   }
 
   /**
-   * Configures the item to trigger a dialog component.
-   * @param render - Render callback providing dialog control props and context.
+   * Sets the label and icon for the menu item.
+   * @param label - The primary text label.
+   * @param icon - The optional leading icon.
+   * @returns The current builder instance.
+   */
+  public label(label: DynamicLabel<TProps>, icon?: DynamicIcon<TProps>): this {
+    this.config.label = label;
+    if (icon) this.config.icon = icon;
+    return this;
+  }
+
+  /**
+   * Configures the item to trigger a dialog overlay.
+   * @param render - The function resolving the dialog UI.
    * @returns The current builder instance.
    */
   public dialog(
     render: (options: DialogRenderProps<TProps>) => React.ReactNode,
   ): this {
     this.config.type = "dialog";
-    (this.config as DialogItemConfig<TProps>).renderDialog = render;
+    (this.config as any).renderDialog = render;
     return this;
   }
 
   /**
-   * Configures the item as a navigation link.
-   * @param url - Static URL string or dynamic URL evaluator function.
+   * Configures the item to navigate to a provided URL.
+   * @param url - The routing destination.
    * @returns The current builder instance.
    */
   public link(url: DynamicProp<TProps, string>): this {
     this.config.type = "link";
-    (this.config as LinkItemConfig<TProps>).url = url;
+    (this.config as any).url = url;
     return this;
   }
 
   /**
-   * Configures the item as a standard actionable button.
-   * @param onClick - Execution callback receiving context properties.
+   * Configures a standard clickable action item.
+   * @param onClick - The handler to execute on selection.
    * @returns The current builder instance.
    */
-  public action(onClick: (props: TProps) => void): this {
+  public action(onClick: (props: TProps) => void | Promise<void>): this {
     this.config.type = "action";
-    (this.config as ActionItemConfig<TProps>).onAction = onClick;
+    (this.config as any).onAction = onClick;
     return this;
   }
 
   /**
-   * Configures the item as a toggleable checkbox.
-   * @param checked - Static boolean or dynamic evaluator function for state.
-   * @param onChange - Callback executed upon state mutation.
+   * Configures the item as a controllable toggle (checkbox).
+   * @param checked - Evaluator for the checked state.
+   * @param onChange - The handler for state mutation.
    * @returns The current builder instance.
    */
   public toggle(
     checked: DynamicProp<TProps, boolean>,
-    onChange: (props: TProps, checked: boolean) => void,
+    onChange: (props: TProps, checked: boolean) => void | Promise<void>,
   ): this {
     this.config.type = "toggle";
     (this.config as ToggleItemConfig<TProps>).isChecked = checked;
@@ -113,12 +154,12 @@ export class MenuItemBuilder<TProps> implements IMenuItemBuilder<TProps> {
   }
 
   /**
-   * Configures the item as a nested submenu container.
-   * @param items - Child schema definitions or builder instances.
+   * Configures the item to render a nested submenu.
+   * @param items - Child elements forming the nested menu.
    * @returns The current builder instance.
    */
   public submenu(
-    items: MenuSchemaInput<TProps> | MenuItemConfig<TProps>[],
+    items: MenuSchemaInput<TProps> | ExtendedMenuItemConfig<TProps>[],
   ): this {
     this.config.type = "submenu";
     (this.config as SubmenuItemConfig<TProps>).items = normalizeSchema(items);
@@ -126,21 +167,22 @@ export class MenuItemBuilder<TProps> implements IMenuItemBuilder<TProps> {
   }
 
   /**
-   * Configures the item as a grouped collection of items.
-   * @param items - Child schema definitions or builder instances.
+   * Configures the item to act as a group wrapper for nested items.
+   * @param items - Child elements forming the group.
    * @returns The current builder instance.
    */
   public group(
-    items: MenuSchemaInput<TProps> | MenuItemConfig<TProps>[],
+    items: MenuSchemaInput<TProps> | ExtendedMenuItemConfig<TProps>[],
   ): this {
     this.config.type = "group";
+
     (this.config as GroupItemConfig<TProps>).items = normalizeSchema(items);
     return this;
   }
 
   /**
-   * Sets a dynamic or static disabled condition.
-   * @param condition - Boolean or evaluator determining disabled state.
+   * Applies a conditional disabled state.
+   * @param condition - Function or boolean dictating interactions.
    * @returns The current builder instance.
    */
   public disabled(condition: DynamicProp<TProps, boolean>): this {
@@ -149,8 +191,8 @@ export class MenuItemBuilder<TProps> implements IMenuItemBuilder<TProps> {
   }
 
   /**
-   * Sets a dynamic or static visibility condition.
-   * @param condition - Boolean or evaluator determining hidden state.
+   * Applies a conditional hidden state to exclude it from the DOM.
+   * @param condition - Function or boolean dictating visibility.
    * @returns The current builder instance.
    */
   public hidden(condition: DynamicProp<TProps, boolean>): this {
@@ -159,8 +201,8 @@ export class MenuItemBuilder<TProps> implements IMenuItemBuilder<TProps> {
   }
 
   /**
-   * Sets the visual separator layout mode.
-   * @param position - Layout position for the separator.
+   * Defines adjacent UI separators.
+   * @param position - The relative location of the separator.
    * @returns The current builder instance.
    */
   public separator(position: SeparatorPosition = "after"): this {
@@ -169,7 +211,7 @@ export class MenuItemBuilder<TProps> implements IMenuItemBuilder<TProps> {
   }
 
   /**
-   * Applies destructive styling to the menu item.
+   * Decorates the item with a destructive (danger) visual intent.
    * @returns The current builder instance.
    */
   public destructive(): this {
@@ -178,8 +220,8 @@ export class MenuItemBuilder<TProps> implements IMenuItemBuilder<TProps> {
   }
 
   /**
-   * Assigns a keyboard shortcut label.
-   * @param shortcut - Text string representing the shortcut.
+   * Sets a visual keyboard shortcut hint.
+   * @param shortcut - The key sequence text.
    * @returns The current builder instance.
    */
   public shortcut(shortcut: string): this {
@@ -188,19 +230,29 @@ export class MenuItemBuilder<TProps> implements IMenuItemBuilder<TProps> {
   }
 
   /**
-   * Finalizes and builds the immutable item configuration object.
-   * @returns The compiled MenuItemConfig instance.
+   * Applies supplementary CSS classes dynamically or statically.
+   * @param classes - The class string payload.
+   * @returns The current builder instance.
    */
-  public build(): MenuItemConfig<TProps> {
-    return this.config as MenuItemConfig<TProps>;
+  public className(className: DynamicProp<TProps, string>): this {
+    this.config.className = className;
+    return this;
+  }
+
+  /**
+   * Finalizes the builder operations and returns the finalized configuration object.
+   * @returns The read-only configuration payload.
+   */
+  public build(): ExtendedMenuItemConfig<TProps> {
+    return this.config as ExtendedMenuItemConfig<TProps>;
   }
 }
 
 /**
- * Resolves a value that can be static or derived dynamically from properties.
- * @param value - Static value or function to evaluate.
- * @param props - Properties injected into the evaluator.
- * @returns The resolved static value.
+ * Resolves context-dependent properties into strict primitive outputs.
+ * @param value - The executable closure or static primitive.
+ * @param props - The context values injected into closures.
+ * @returns The resolved standard value.
  */
 function resolveDynamicValue<TProps, TReturn>(
   value: DynamicProp<TProps, TReturn> | undefined,
@@ -212,116 +264,131 @@ function resolveDynamicValue<TProps, TReturn>(
 }
 
 /**
- * Normalizes input schemas into a flat array of compiled item configurations.
- * @param schema - Raw input schema mapping or array.
- * @returns An array of compiled MenuItemConfig entries.
+ * Converts varying map/array schemas into a normalized flat array configuration.
+ * @param schema - Object maps or direct configuration arrays.
+ * @returns Array representing strictly typed configuration nodes.
  */
 function normalizeSchema<TProps>(
-  schema: MenuSchemaInput<TProps> | MenuItemConfig<TProps>[],
-): MenuItemConfig<TProps>[] {
+  schema: MenuSchemaInput<TProps> | ExtendedMenuItemConfig<TProps>[],
+): ExtendedMenuItemConfig<TProps>[] {
   if (Array.isArray(schema)) return schema;
 
   return Object.entries(schema).map(([key, entry]) => {
-    const _menu = entry instanceof MenuItemBuilder ? entry.build() : entry;
-    return { key, ..._menu };
+    const parsedMenu = entry instanceof MenuItemBuilder ? entry.build() : entry;
+    return { key, ...parsedMenu } as ExtendedMenuItemConfig<TProps>;
   });
 }
 
 /**
- * Renders the internal layout for a menu item including icon, label, and shortcut.
- * @param props - Configuration holding the visual definition.
- * @returns The structured content fragment.
+ * Computes and renders internal fragments for dynamic icons and labels.
+ * @param props - Contains the underlying item configuration and context parameters.
+ * @returns Fragment containing icon, label, and shortcut elements.
  */
-function MenuItemContent<TProps>({
+const MenuItemContent = memo(function MenuItemContent<TProps>({
   item,
+  contextProps,
+  isLoading = false,
 }: {
-  item: BaseMenuItemConfig<TProps>;
+  item: ExtendedMenuItemConfig<TProps>;
+  contextProps: TProps;
+  isLoading?: boolean;
 }) {
-  const IconComponent = item.icon as React.ElementType;
+  const ResolvedIcon = resolveDynamicValue(
+    item.icon,
+    contextProps,
+  ) as React.ElementType;
+  const resolvedLabel = resolveDynamicValue(item.label, contextProps);
+
   return (
     <>
-      {IconComponent && <IconComponent className="size-4 shrink-0" />}
-      {item.label && <span>{item.label}</span>}
+      {isLoading ? (
+        <Loader2 className="size-4 shrink-0 animate-spin" />
+      ) : (
+        ResolvedIcon && <ResolvedIcon className="size-4 shrink-0" />
+      )}
+      {resolvedLabel && <span>{resolvedLabel}</span>}
       {item.shortcut && (
         <DropdownMenuShortcut>{item.shortcut}</DropdownMenuShortcut>
       )}
     </>
   );
+}) as <TProps>(props: {
+  item: ExtendedMenuItemConfig<TProps>;
+  contextProps: TProps;
+  isLoading?: boolean;
+}) => React.ReactElement;
+// MenuItemContent.displayName = "MenuItemContent";
+
+interface SharedRendererProps<TProps> {
+  item: ExtendedMenuItemConfig<TProps>;
+  contextProps: TProps;
+  itemClasses?: string;
+  isDisabled?: boolean;
 }
 
 /**
- * Renders a dialog-triggering menu item.
- * @param props - Component props containing item config and classes.
- * @returns The rendered dropdown menu item.
+ * Renders a menu item that triggers a modal dialog.
+ * @param props - Core renderer attributes shared across components.
+ * @returns Dropdown node integrated with dialog events.
  */
 function DialogMenuItemRenderer<TProps>({
   item,
   itemClasses,
   isDisabled,
-}: {
-  item: MenuItemConfig<TProps>;
-  itemClasses: string;
-  isDisabled: boolean;
-}) {
+  contextProps,
+}: SharedRendererProps<TProps>) {
   const { showDialog } = useDialogActions();
   return (
     <DropdownMenuItem
       disabled={isDisabled}
       className={itemClasses}
-      onClick={() => {
-        showDialog(item.key!);
-      }}
+      onClick={() => showDialog(item.key!)}
     >
-      <MenuItemContent item={item} />
+      <MenuItemContent contextProps={contextProps} item={item} />
     </DropdownMenuItem>
   );
 }
 
 /**
- * Renders an actionable standard menu item.
- * @param props - Component props containing context and item details.
- * @returns The rendered dropdown menu item.
+ * Renders a menu item that executes an asynchronous action.
+ * @param props - Core renderer attributes shared across components.
+ * @returns Dropdown node firing custom runtime logic.
  */
 function ActionMenuItemRenderer<TProps>({
   item,
   contextProps,
   itemClasses,
   isDisabled,
-}: {
-  item: MenuItemConfig<TProps>;
-  contextProps: TProps;
-  itemClasses: string;
-  isDisabled: boolean;
-}) {
+}: SharedRendererProps<TProps>) {
+  const { isPending, execute } = useAsyncAction();
+  const actionItem = item as ActionItemConfig<TProps>;
+
   return (
     <DropdownMenuItem
-      disabled={isDisabled}
+      disabled={isDisabled || isPending}
       className={itemClasses}
-      onSelect={() =>
-        (item as ActionItemConfig<TProps>).onAction?.(contextProps)
-      }
+      onSelect={(e) => execute(() => actionItem.onAction?.(contextProps), e)}
     >
-      <MenuItemContent item={item} />
+      <MenuItemContent
+        contextProps={contextProps}
+        item={item}
+        isLoading={isPending}
+      />
     </DropdownMenuItem>
   );
 }
 
 /**
- * Renders a link-based menu item.
- * @param props - Component props containing context and item details.
- * @returns The rendered dropdown menu item wrapper.
+ * Renders a menu item that acts as a router link.
+ * @param props - Core renderer attributes shared across components.
+ * @returns Node linked to the application router framework.
  */
 function LinkMenuItemRenderer<TProps>({
   item,
   contextProps,
   itemClasses,
   isDisabled,
-}: {
-  item: MenuItemConfig<TProps>;
-  contextProps: TProps;
-  itemClasses: string;
-  isDisabled: boolean;
-}) {
+}: SharedRendererProps<TProps>) {
   const url =
     resolveDynamicValue((item as LinkItemConfig<TProps>).url, contextProps) ??
     "#";
@@ -330,7 +397,7 @@ function LinkMenuItemRenderer<TProps>({
       disabled={isDisabled}
       render={
         <Link to={url} className={itemClasses}>
-          <MenuItemContent item={item} />
+          <MenuItemContent contextProps={contextProps} item={item} />
         </Link>
       }
     ></DropdownMenuItem>
@@ -338,52 +405,55 @@ function LinkMenuItemRenderer<TProps>({
 }
 
 /**
- * Renders a toggleable checkbox menu item.
- * @param props - Component props containing context and item details.
- * @returns The rendered dropdown checkbox item.
+ * Renders a menu item that toggles a boolean state.
+ * @param props - Core renderer attributes shared across components.
+ * @returns Toggleable structural component locked securely during mutations.
  */
 function ToggleMenuItemRenderer<TProps>({
   item,
   contextProps,
   itemClasses,
   isDisabled,
-}: {
-  item: MenuItemConfig<TProps>;
-  contextProps: TProps;
-  itemClasses: string;
-  isDisabled: boolean;
-}) {
+}: SharedRendererProps<TProps>) {
   const toggleItem = item as ToggleItemConfig<TProps>;
+  const { isPending, execute } = useAsyncAction();
+
   return (
     <DropdownMenuCheckboxItem
-      disabled={isDisabled}
+      disabled={isDisabled || isPending}
       checked={resolveDynamicValue(toggleItem.isChecked, contextProps) ?? false}
       onCheckedChange={(checked) =>
-        toggleItem.onToggleChange(contextProps, checked)
+        execute(() => toggleItem.onToggleChange(contextProps, checked))
       }
+      onSelect={(e) => {
+        if (isPending) e.preventDefault();
+      }}
       className={itemClasses}
     >
-      <MenuItemContent item={item} />
+      <MenuItemContent
+        contextProps={contextProps}
+        item={item}
+        isLoading={isPending}
+      />
     </DropdownMenuCheckboxItem>
   );
 }
 
 /**
- * Renders a grouped collection of menu items.
- * @param props - Component props containing context and item details.
- * @returns The rendered dropdown group.
+ * Renders a static group wrapper for nested items.
+ * @param props - Core renderer attributes shared across components.
+ * @returns Group wrapper mapping inner definitions recursively.
  */
 function GroupMenuItemRenderer<TProps>({
   item,
   contextProps,
-}: {
-  item: MenuItemConfig<TProps>;
-  contextProps: TProps;
-}) {
+}: SharedRendererProps<TProps>) {
   const children = normalizeSchema((item as GroupItemConfig<TProps>).items);
+  const resolvedLabel = resolveDynamicValue(item.label, contextProps);
+
   return (
     <DropdownMenuGroup>
-      {item.label && <DropdownMenuLabel>{item.label}</DropdownMenuLabel>}
+      {resolvedLabel && <DropdownMenuLabel>{resolvedLabel}</DropdownMenuLabel>}
       {children.map((child, index) => (
         <MenuItemRenderer
           key={index}
@@ -396,26 +466,21 @@ function GroupMenuItemRenderer<TProps>({
 }
 
 /**
- * Renders a nested submenu.
- * @param props - Component props containing context and item details.
- * @returns The rendered dropdown submenu tree.
+ * Renders a structural nested submenu spanning horizontally.
+ * @param props - Core renderer attributes shared across components.
+ * @returns Functional submenu spanning nested layouts horizontally.
  */
 function SubmenuMenuItemRenderer<TProps>({
   item,
   contextProps,
   itemClasses,
   isDisabled,
-}: {
-  item: MenuItemConfig<TProps>;
-  contextProps: TProps;
-  itemClasses: string;
-  isDisabled: boolean;
-}) {
+}: SharedRendererProps<TProps>) {
   const children = normalizeSchema((item as SubmenuItemConfig<TProps>).items);
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger disabled={isDisabled} className={itemClasses}>
-        <MenuItemContent item={item} />
+        <MenuItemContent contextProps={contextProps} item={item} />
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent>
         {children.map((child, index) => (
@@ -430,7 +495,10 @@ function SubmenuMenuItemRenderer<TProps>({
   );
 }
 
-const RENDERER_MAP: Record<string, React.FC<any>> = {
+const RENDERER_MAP: Record<
+  string,
+  React.ElementType<SharedRendererProps<any>>
+> = {
   dialog: DialogMenuItemRenderer,
   action: ActionMenuItemRenderer,
   link: LinkMenuItemRenderer,
@@ -440,15 +508,15 @@ const RENDERER_MAP: Record<string, React.FC<any>> = {
 };
 
 /**
- * Renders an individual menu item, handling separators and visibility.
- * @param props - The item configuration and execution context properties.
- * @returns The structured menu item component.
+ * Selects the appropriate internal renderer based on the item configuration.
+ * @param props - The core layout properties linking rendering layers.
+ * @returns Extracted components enriched by lifecycle dependencies.
  */
-function MenuItemRenderer<TProps>({
+const MenuItemRenderer = memo(function MenuItemRenderer<TProps>({
   item,
   contextProps,
 }: {
-  item: MenuItemConfig<TProps>;
+  item: ExtendedMenuItemConfig<TProps>;
   contextProps: TProps;
 }): React.ReactNode {
   if (resolveDynamicValue(item.isHidden, contextProps)) return null;
@@ -457,11 +525,13 @@ function MenuItemRenderer<TProps>({
     resolveDynamicValue(item.isDisabled, contextProps) ?? false;
   const showBeforeSeparator = isIn(item.separatorPos, ["before", "both"]);
   const showAfterSeparator = isIn(item.separatorPos, ["after", "both"]);
+  const customClass = resolveDynamicValue(item.customClass, contextProps);
 
   const itemClasses = cn(
     "gap-2 cursor-pointer flex items-center",
     item.variant === "destructive" &&
       "text-destructive focus:text-destructive focus:bg-destructive/10",
+    customClass,
   );
 
   const SpecificRenderer = RENDERER_MAP[item.type];
@@ -479,18 +549,22 @@ function MenuItemRenderer<TProps>({
       {showAfterSeparator && <DropdownMenuSeparator />}
     </>
   );
-}
+}) as <TProps>(props: {
+  item: ExtendedMenuItemConfig<TProps>;
+  contextProps: TProps;
+}) => React.ReactElement;
+(MenuItemRenderer as unknown as React.FC).displayName = "MenuItemRenderer";
 
 interface ActionMenuProps<TProps> {
-  items: MenuItemConfig<TProps>[];
+  items: ExtendedMenuItemConfig<TProps>[];
   defaultTrigger?: Trigger<TProps>;
   contextProps: TProps & { trigger?: Trigger<TProps> };
 }
 
 /**
- * Orchestrates the rendering of the dropdown menu tree and context triggers.
- * @param props - Contains compiled items and execution context.
- * @returns The complete DropdownMenu component wrapper.
+ * Initializes the dropdown structural UI encapsulating provider interactions.
+ * @param props - Data nodes combined with structural trigger parameters.
+ * @returns Comprehensive menu handling interactions.
  */
 function ActionMenuComponent<TProps>({
   items,
@@ -498,13 +572,14 @@ function ActionMenuComponent<TProps>({
   contextProps,
 }: ActionMenuProps<TProps>): React.ReactElement {
   const dialogItems = mapDialogItems(items);
+  const TriggerComponent = contextProps.trigger ?? defaultTrigger;
+
   return (
     <DialogMenuProvider>
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            contextProps.trigger ??
-            defaultTrigger?.(contextProps) ?? <ButtonMenu />
+            TriggerComponent ? TriggerComponent(contextProps) : <ButtonMenu />
           }
         ></DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-xs">
@@ -521,24 +596,25 @@ function ActionMenuComponent<TProps>({
     </DialogMenuProvider>
   );
 }
+ActionMenuComponent.displayName = "ActionMenuComponent";
 
 /**
- * Factory function creating a type-safe menu builder context.
- * @returns An object containing builder helpers and schema compiler.
+ * Factory constructing reusable interface definitions supporting nested compositions.
+ * @returns Interface handling generic builder instantiations securely.
  */
 export function createMenuBuilder<TProps>() {
   return {
-    label: (label: string, icon?: React.ElementType) =>
+    label: (label: DynamicLabel<TProps>, icon?: DynamicIcon<TProps>) =>
       new MenuItemBuilder<TProps>(label, icon),
 
-    group: (label?: string, icon?: React.ElementType) =>
+    group: (label?: DynamicLabel<TProps>, icon?: DynamicIcon<TProps>) =>
       new MenuItemBuilder<TProps>(label, icon).group([]),
 
-    submenu: (label: string, icon?: React.ElementType) =>
+    submenu: (label: DynamicLabel<TProps>, icon?: DynamicIcon<TProps>) =>
       new MenuItemBuilder<TProps>(label, icon),
 
     build: (
-      schema: MenuSchemaInput<TProps> | MenuItemConfig<TProps>[],
+      schema: MenuSchemaInput<TProps> | ExtendedMenuItemConfig<TProps>[],
       defaultOptions?: { trigger?: Trigger<TProps> },
     ): React.FC<TProps & { trigger?: Trigger<TProps> }> => {
       const compiledItems = normalizeSchema(schema);
@@ -554,7 +630,7 @@ export function createMenuBuilder<TProps>() {
       );
 
       ActionMenu.displayName = "ActionMenu";
-      return ActionMenu;
+      return memo(ActionMenu);
     },
   };
 }

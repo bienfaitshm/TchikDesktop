@@ -80,3 +80,11 @@ export interface StoreAPI {
    */
   resetSchoolAndYear: () => Promise<boolean>;
 }
+
+export interface ElectronWindowControl {
+  minimize: () => void;
+  maximize: () => void;
+  close: () => void;
+  isMaximized: () => Promise<boolean>;
+  onMaximizeChange: (cb: (isMax: boolean) => void) => () => void;
+}

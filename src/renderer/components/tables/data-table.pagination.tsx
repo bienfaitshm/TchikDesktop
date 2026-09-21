@@ -7,43 +7,54 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
-import { type Table } from "@tanstack/react-table";
+import type { RowData, Table } from "@tanstack/react-table";
 import { Button } from "@/renderer/components/ui/button";
 import { Label } from "@/renderer/components/ui/label";
 import {
   SelectInput,
-  Option,
+  type Option,
 } from "@/renderer/components/form/fields/select-input";
 import { cn } from "@/renderer/utils";
+import type { TableFeature } from "./hooks";
 
 const DEFAULT_PAGE_SIZES = [10, 20, 30, 40, 50, 80];
-const SELECT_PAGE_SIZE_OPTIONS: Option[] = DEFAULT_PAGE_SIZES.map((sz) => ({
-  label: sz.toString(),
-  value: sz.toString(),
-}));
 
 export interface TablePaginationProps<
-  TData,
+  TData extends RowData,
 > extends React.HTMLAttributes<HTMLDivElement> {
-  table: Table<TData>;
+  table: Table<TableFeature, TData>;
   pageSizeOptions?: number[];
 }
 
-export function TablePagination<TData>({
+/**
+ * Provides pagination controls and row statistics for the data table.
+ * @param props - Table instance and page size configuration array.
+ * @returns The pagination container component.
+ */
+export function TablePagination<TData extends RowData>({
   table,
   className,
   pageSizeOptions = DEFAULT_PAGE_SIZES,
   ...props
-}: TablePaginationProps<TData>) {
+}: TablePaginationProps<TData>): React.ReactElement | null {
   if (!table) return null;
 
-  const { pageIndex, pageSize } = table.getState().pagination;
+  const { pageIndex, pageSize } = table.store.state.pagination;
   const pageCount = table.getPageCount();
   const selectedRows = table.getFilteredSelectedRowModel().rows.length;
   const totalRows = table.getFilteredRowModel().rows.length;
 
   const formattedSelected = selectedRows.toLocaleString("fr-FR");
   const formattedTotal = totalRows.toLocaleString("fr-FR");
+
+  const selectPageSizeOptions: Option[] = React.useMemo(
+    () =>
+      pageSizeOptions.map((sz) => ({
+        label: sz.toString(),
+        value: sz.toString(),
+      })),
+    [pageSizeOptions],
+  );
 
   return (
     <div
@@ -53,7 +64,6 @@ export function TablePagination<TData>({
       )}
       {...props}
     >
-      {/* Statistiques de sélection */}
       <div className="text-xs mr-4 text-muted-foreground w-full text-center sm:w-auto sm:text-left">
         {selectedRows > 0 ? (
           <p>
@@ -77,7 +87,6 @@ export function TablePagination<TData>({
       </div>
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
-        {/* Sélecteur de taille de page */}
         <div className="flex items-center gap-2">
           <Label
             htmlFor="rows-per-page"
@@ -86,18 +95,14 @@ export function TablePagination<TData>({
             Lignes par page
           </Label>
           <SelectInput
-            options={SELECT_PAGE_SIZE_OPTIONS}
+            options={selectPageSizeOptions}
             value={pageSize.toString()}
             onChange={(value) => table.setPageSize(Number(value))}
           />
         </div>
-
-        {/* Indicateur de position */}
         <div className="flex min-w-25 items-center justify-center text-xs font-medium">
           Page {pageCount > 0 ? pageIndex + 1 : 0} sur {pageCount}
         </div>
-
-        {/* Navigation par boutons */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -109,7 +114,6 @@ export function TablePagination<TData>({
             <span className="sr-only">Première page</span>
             <ChevronsLeft className="h-4 w-4" />
           </Button>
-
           <Button
             variant="outline"
             size="icon"
@@ -120,7 +124,6 @@ export function TablePagination<TData>({
             <span className="sr-only">Page précédente</span>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-
           <Button
             variant="outline"
             size="icon"
@@ -131,7 +134,6 @@ export function TablePagination<TData>({
             <span className="sr-only">Page suivante</span>
             <ChevronRight className="h-4 w-4" />
           </Button>
-
           <Button
             variant="outline"
             size="icon"

@@ -134,6 +134,13 @@
       "when": 1789310618276,
       "tag": "0018_striped_kree",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1789541857784,
+      "tag": "0019_chubby_chamber",
+      "breakpoints": true
     }
   ]
 }

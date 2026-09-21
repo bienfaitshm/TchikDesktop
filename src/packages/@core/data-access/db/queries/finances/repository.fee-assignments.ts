@@ -15,14 +15,13 @@ import {
   CURRENCY_ENUM,
   FEE_SCHEDULES_ENUM,
 } from "@/packages/@core/data-access/db/options";
-
 import {
   DatabaseError,
   helpers,
   betterSqlite,
   OptionProvider,
 } from "@/packages/drizzle-queries";
-import { getTableColumns, eq } from "drizzle-orm";
+import { getTableColumns, eq, and, sql } from "drizzle-orm";
 
 export const TABLES = {
   feeAssignments,
@@ -32,39 +31,48 @@ export const TABLES = {
 } as const;
 
 export type BaseFeeAssignmentFilters = helpers.FindManyOptions<typeof TABLES>;
+
 const FEE_ASSIGNMENT_DEFAULT_SORT: BaseFeeAssignmentFilters = {
   orderBy: [{ table: "feeAssignments", column: "assignmentId", order: "desc" }],
 };
 
-export type FeeAssignmentTDO = FeeAssignment & {
+export type FeeAssignmentDTO = FeeAssignment & {
   feeType: FeeType;
   feeSchedule: FeeSchedule;
 };
 
+/**
+ * Data access repository for managing fee assignments and schedule calculations.
+ */
 export class FeeAssignmentRepository
   extends betterSqlite.BaseRepository<
     TableFeeAssignment,
     TDataBase,
-    FeeAssignmentTDO,
+    FeeAssignmentDTO,
     BaseFeeAssignmentFilters
   >
-  implements OptionProvider<FeeAssignmentTDO>
+  implements OptionProvider<FeeAssignmentDTO, BaseFeeAssignmentFilters>
 {
   /**
    * Initializes a new instance of the FeeAssignmentRepository.
-   * @param database - Optional database connection instance.
+   * @param database - Optional database connection or transaction instance.
    */
   constructor(database: TDataBase = db) {
     super({
       db: database,
       table: feeAssignments,
       idColumn: feeAssignments.assignmentId,
-      baseTableName: "feeAssignments",
+      baseTableName: "FeeAssignment",
       logger: getLogger,
       defaultFilters: FEE_ASSIGNMENT_DEFAULT_SORT,
+      joinTables: TABLES,
     });
   }
 
+  /**
+   * Constructs the DTO columns selection map for query projections.
+   * @returns Column selections object for primary and joined tables.
+   */
   public getDTOColumns() {
     return {
       ...getTableColumns(this.table),
@@ -73,6 +81,11 @@ export class FeeAssignmentRepository
     };
   }
 
+  /**
+   * Constructs the base query set with joins required for building FeeAssignmentDTO.
+   * @param tx - Optional transaction client.
+   * @returns Prepared dynamic query.
+   */
   protected override getQuerySet(tx?: TDataBase) {
     const client = this.getClient(tx);
     return client
@@ -86,13 +99,21 @@ export class FeeAssignmentRepository
       .$dynamic();
   }
 
-  fetchOptions(
-    filters?: BaseFeeAssignmentFilters,
-  ): FeeAssignmentTDO[] | Promise<FeeAssignmentTDO[]> {
+  /**
+   * Fetches fee assignment options for select facade components.
+   * @param filters - Query filters.
+   * @returns Array of FeeAssignmentDTO objects.
+   */
+  public fetchOptions(filters?: BaseFeeAssignmentFilters): FeeAssignmentDTO[] {
     return this.findMany(filters);
   }
 
-  getEnrollmentAssignments(enrollmentIds: string[]) {
+  /**
+   * Retrieves fee assignments corresponding to a list of enrollment IDs.
+   * @param enrollmentIds - Array of enrollment identifiers.
+   * @returns Array of matching fee assignments.
+   */
+  public getEnrollmentAssignments(enrollmentIds: string[]): FeeAssignmentDTO[] {
     return this.findMany({
       where: {
         feeAssignments: { enrollmentId: { $in: enrollmentIds } },
@@ -102,12 +123,114 @@ export class FeeAssignmentRepository
   }
 
   /**
+   * Fetches pending (unpaid or partially paid) fee schedules for a specific student enrollment and fee type.
+   * @param enrollmentId - Student enrollment identifier.
+   * @param feeTypeId - Fee type identifier.
+   * @param tx - Optional database transaction instance.
+   * @returns List of pending fee assignment DTOs.
+   */
+  public async getPendingSchedulesForEnrollment(
+    enrollmentId: string,
+    feeTypeId: string,
+    tx: TDataBase = this.db,
+  ): Promise<FeeAssignmentDTO[]> {
+    return this.findMany(
+      {
+        where: {
+          feeAssignments: {
+            enrollmentId: { $eq: enrollmentId },
+            status: { $ne: FEE_SCHEDULES_ENUM.PAID },
+          },
+          feeTypes: {
+            feeTypeId: { $eq: feeTypeId },
+          },
+        },
+      },
+      tx,
+    );
+  }
+
+  /**
+   * Computes total amount already paid by a student enrollment for a given fee type.
+   * @param enrollmentId - Student enrollment identifier.
+   * @param feeTypeId - Fee type identifier.
+   * @param tx - Optional database transaction instance.
+   * @returns Sum of paid amounts.
+   */
+  public async getAlreadyPaidAmountForFee(
+    enrollmentId: string,
+    feeTypeId: string,
+    tx: TDataBase = this.db,
+  ): Promise<number> {
+    const client = this.getClient(tx);
+
+    const result = await client
+      .select({
+        totalPaid: sql<number>`COALESCE(SUM(${feeAssignments.amountPaid}), 0)`,
+      })
+      .from(feeAssignments)
+      .innerJoin(
+        feeSchedules,
+        eq(feeAssignments.scheduleId, feeSchedules.scheduleId),
+      )
+      .where(
+        and(
+          eq(feeAssignments.enrollmentId, enrollmentId),
+          eq(feeSchedules.feeTypeId, feeTypeId),
+        ),
+      );
+
+    return Number(result[0]?.totalPaid ?? 0);
+  }
+
+  /**
+   * Updates amounts due for specified pending assignment schedules.
+   * @param assignmentIds - Array of assignment IDs to update.
+   * @param newAmountDue - Updated amount to set per schedule.
+   * @param tx - Optional database transaction instance.
+   */
+  public async updatePendingSchedules(
+    assignmentIds: string[],
+    newAmountDue: number,
+    tx: TDataBase = this.db,
+  ): Promise<void> {
+    if (assignmentIds.length === 0) return;
+
+    try {
+      this.update(
+        { totalAmount: newAmountDue },
+        {
+          where: {
+            feeAssignments: {
+              assignmentId: { $in: assignmentIds },
+            },
+          },
+        },
+        tx,
+      );
+    } catch (error) {
+      const dbError = DatabaseError.from(
+        error,
+        "Failed to update pending schedule amounts.",
+      );
+      this.logError("updatePendingSchedules", dbError, {
+        assignmentIds,
+        newAmountDue,
+      });
+      throw dbError;
+    }
+  }
+
+  /**
    * Determines the payment status based on the paid amount and the total expected amount.
    * @param amount - The current paid amount.
    * @param totalAmount - The total expected amount.
    * @returns The corresponding payment schedule status enum.
    */
-  getPaymentStatus(amount: number, totalAmount: number): FEE_SCHEDULES_ENUM {
+  public getPaymentStatus(
+    amount: number,
+    totalAmount: number,
+  ): FEE_SCHEDULES_ENUM {
     if (amount >= totalAmount) {
       return amount > totalAmount
         ? FEE_SCHEDULES_ENUM.OVERPAID
@@ -127,7 +250,10 @@ export class FeeAssignmentRepository
    * @param tx - Optional database transaction instance.
    * @returns The amount already paid.
    */
-  getAssignmentAmount(assignmentId: string, tx: TDataBase = this.db): number {
+  public getAssignmentAmount(
+    assignmentId: string,
+    tx: TDataBase = this.db,
+  ): number {
     const current = this.findById(assignmentId, tx, {
       amountPaid: this.table.amountPaid,
     });
@@ -143,7 +269,10 @@ export class FeeAssignmentRepository
    * @param tx - Optional database transaction instance.
    * @returns The result of the batch insert operation.
    */
-  assignFees(assignments: InsertFeeAssignment[], tx: TDataBase = this.db) {
+  public assignFees(
+    assignments: InsertFeeAssignment[],
+    tx: TDataBase = this.db,
+  ) {
     try {
       const assignmentClient = this.getClient(tx);
       return assignmentClient
@@ -169,7 +298,7 @@ export class FeeAssignmentRepository
    * @param tx - Optional database transaction instance.
    * @returns The updated fee assignment record.
    */
-  updateAssignmentProgress(
+  public updateAssignmentProgress(
     assignmentId: string,
     amountConverted: number,
     totalAmount: number,
@@ -217,11 +346,13 @@ export class FeeAssignmentRepository
   /**
    * Updates the total fee amount for specific assignments and schedules.
    * @param newTotalAmount - The new amount to be applied.
-   * @param assignmentIds - List of assignment identifiers to filter by.
-   * @param scheduleIds - List of schedule identifiers to filter by.
-   * @returns Promise resolving to the result of the update operation.
+   * @param currency - Currency code.
+   * @param assignmentIds - List of assignment identifiers.
+   * @param scheduleIds - List of schedule identifiers.
+   * @param tx - Transaction client.
+   * @returns Result of update query.
    */
-  updateAmountByAssignments(
+  public updateAmountByAssignments(
     newTotalAmount: number,
     currency: CURRENCY_ENUM,
     assignmentIds: string[],
@@ -244,11 +375,13 @@ export class FeeAssignmentRepository
   /**
    * Updates the total fee amount for specific classrooms and schedules.
    * @param newTotalAmount - The new amount to be applied.
-   * @param classroomIds - List of classroom identifiers to filter by.
-   * @param scheduleIds - List of schedule identifiers to filter by.
-   * @returns Promise resolving to the result of the update operation.
+   * @param currency - Currency code.
+   * @param classroomIds - List of classroom identifiers.
+   * @param scheduleIds - List of schedule identifiers.
+   * @param tx - Transaction client.
+   * @returns Result of update query.
    */
-  updateAmountByClassrooms(
+  public updateAmountByClassrooms(
     newTotalAmount: number,
     currency: CURRENCY_ENUM,
     classroomIds: string[],
@@ -270,10 +403,10 @@ export class FeeAssignmentRepository
    * Exempts students from payment for the specified assignments.
    * @param studentEnrollmentIds - List of student enrollment identifiers.
    * @param assignmentIds - List of assignment identifiers to exempt.
-   * @param scheduleIds - List of schedule identifiers to filter by.
-   * @returns Promise resolving to the result of the update operation.
+   * @param tx - Transaction client.
+   * @returns Result of update query.
    */
-  exemptStudentsFromFee(
+  public exemptStudentsFromFee(
     studentEnrollmentIds: string[],
     assignmentIds: string[],
     tx: TDataBase = this.db,
@@ -285,7 +418,6 @@ export class FeeAssignmentRepository
           feeAssignments: {
             enrollmentId: { $in: studentEnrollmentIds },
             assignmentId: { $in: assignmentIds },
-            // scheduleId: { $in: scheduleIds },
           },
         },
       },
@@ -294,10 +426,12 @@ export class FeeAssignmentRepository
   }
 
   /**
-   * Private helper to update the total fee amount using a custom filter query.
+   * Private helper to update total fee amount using a custom filter query.
    * @param newTotalAmount - The target amount.
-   * @param whereQuery - The criteria object for filtering updates.
-   * @returns Promise resolving to the result of the update operation.
+   * @param currency - Target currency.
+   * @param whereQuery - Criteria object for filtering.
+   * @param tx - Transaction instance.
+   * @returns Update query result.
    */
   private updateAmount(
     newTotalAmount: number,

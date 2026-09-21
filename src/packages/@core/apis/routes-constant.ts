@@ -1,15 +1,20 @@
 /**
  * @file routes-constant.ts
- * @description Centralise toutes les définitions de routes IPC (Main - Renderer)
- * en utilisant une structure RESTful standardisée.
- * Ces constantes sont utilisées par IpcClient et IpcServer pour la communication.
+ * @description Centralizes all IPC route channel definitions between Main and Renderer processes
+ * using a standardized RESTful URI format.
  */
 
+/**
+ * IPC routes for global search operations.
+ */
 export const SearchRoutes = {
   homeSearch: "search",
   detailSearch: "search/results",
 } as const;
 
+/**
+ * IPC routes for user profile management.
+ */
 export const UserRoutes = {
   ALL: "users",
   DETAIL: "users/:userId",
@@ -17,6 +22,9 @@ export const UserRoutes = {
   BULK: "users/bulk",
 } as const;
 
+/**
+ * IPC routes for student tutor operations.
+ */
 export const TutorRoutes = {
   ALL: "tutors",
   DETAIL: "tutors/:tutorId",
@@ -26,8 +34,7 @@ export const TutorRoutes = {
 } as const;
 
 /**
- * Routes IPC pour la gestion des OPTIONS.
- * Utilisées pour les choix et configurations simples.
+ * IPC routes for option configurations.
  */
 export const OptionRoutes = {
   ALL: "options",
@@ -37,7 +44,7 @@ export const OptionRoutes = {
 } as const;
 
 /**
- * Routes IPC pour la gestion des SCHOOLS (Écoles).
+ * IPC routes for school entity operations.
  */
 export const SchoolRoutes = {
   ALL: "schools",
@@ -47,7 +54,7 @@ export const SchoolRoutes = {
 } as const;
 
 /**
- * Routes IPC pour la gestion des STUDY YEARS (Années scolaires).
+ * IPC routes for academic study year records.
  */
 export const StudyYearRoutes = {
   ALL: "studyYear",
@@ -57,7 +64,7 @@ export const StudyYearRoutes = {
 } as const;
 
 /**
- * Routes IPC pour la gestion des CLASSROOMS (Salles de Classe).
+ * IPC routes for classroom entity operations.
  */
 export const ClassroomRoutes = {
   ALL: "classrooms",
@@ -68,7 +75,7 @@ export const ClassroomRoutes = {
 } as const;
 
 /**
- * Routes IPC pour la gestion de l'ENROLLEMENT (Inscription).
+ * IPC routes for student enrollment lifecycles.
  */
 export const EnrollmentRoutes = {
   ALL: "enrollments",
@@ -80,34 +87,37 @@ export const EnrollmentRoutes = {
   BULK: "enrollments/bulk",
 } as const;
 
+/**
+ * IPC routes for document export operations.
+ */
 export const DocumentExportRoutes = {
   INFOS: "documents/infos",
   EXPORTS: "documents/exports",
 } as const;
 
 /**
- * Routes IPC pour les STATISTIQUES et ANALYTICS.
- * Permet de récupérer les données agrégées pour les graphiques et KPI.
+ * IPC routes for system statistics and analytics.
  */
 export const StatsRoutes = {
   SUMMARY: "stats/summary",
-
   STUDENTS_BY_STATUS: "stats/students/status",
   STUDENTS_BY_GENDER: "stats/students/gender",
   STUDENTS_BY_CLASS: "stats/students/class",
   STUDENTS_BY_OPTION: "stats/students/option",
   TOTAL_STUDENTS: "stats/students/total",
-
   RETENTION: "stats/retention",
   ENROLLMENTS_BY_YEAR: "stats/enrollments/by-year",
 } as const;
 
+/**
+ * IPC routes for system information readout.
+ */
 export const AppInfosRoutes = {
   SYS_INFOS: "app-infos/sys-infos",
 } as const;
 
 /**
- * Routes IPC pour la gestion des LOCAUX (Salles physiques).
+ * IPC routes for exam room physical location management.
  */
 export const LocalRoomRoutes = {
   ALL: "seating/rooms",
@@ -118,7 +128,7 @@ export const LocalRoomRoutes = {
 } as const;
 
 /**
- * Routes IPC pour la gestion des SESSIONS de placement.
+ * IPC routes for exam seating session setup.
  */
 export const SeatingSessionRoutes = {
   ALL: "seating/sessions",
@@ -132,8 +142,7 @@ export const SeatingSessionRoutes = {
 } as const;
 
 /**
- * Routes IPC pour les ASSIGNATIONS (Le placement réel).
- * (BULK déjà présent)
+ * IPC routes for dynamic student seating assignments.
  */
 export const SeatingAssignmentRoutes = {
   GENERATING: "seating/generating",
@@ -149,28 +158,19 @@ export const SeatingAssignmentRoutes = {
    FINANCE MODULE ROUTES
    ========================================================================= */
 
+/**
+ * IPC routes for high-level payment views and workflow processing.
+ */
 export const PaymentRoutes = {
-  /**
-   * Récupérer le tableau matriciel des assignations et statuts de paiement d'une classe.
-   * Utile pour la vue globale de type grille/table côté Front.
-   */
   CLASSROOM_TABLE: "payments/classroom-table",
   STUDENT_PAYMENT_OVERVIEW: "payments/student/overview",
-
-  /**
-   * Route POST pour l'assignation automatique ou manuelle de frais initiaux à un étudiant.
-   */
   ASSIGN_FEES: "payments/assign-fees",
-
-  /**
-   * Route POST centrale pour traiter un encaissement au guichet (Ledger + Wallet sync).
-   */
   PROCESS_PAYMENT: "payments/process",
   PRINT_TICKET: "payments/ticket/print",
 } as const;
 
 /**
- * Routes IPC pour la gestion des PORTEFEUILLES.
+ * IPC routes for financial wallet management.
  */
 export const WalletRoutes = {
   ALL: "wallets",
@@ -180,7 +180,7 @@ export const WalletRoutes = {
 } as const;
 
 /**
- * Routes IPC pour la gestion des TYPES DE FRAIS.
+ * IPC routes for fee types catalog.
  */
 export const FeeTypeRoutes = {
   ALL: "fee-types",
@@ -190,7 +190,7 @@ export const FeeTypeRoutes = {
 } as const;
 
 /**
- * Routes IPC pour la gestion des ÉCHÉANCIERS
+ * IPC routes for fee schedule configurations.
  */
 export const FeeScheduleRoutes = {
   ALL: "fee-schedules",
@@ -201,7 +201,7 @@ export const FeeScheduleRoutes = {
 } as const;
 
 /**
- * Routes IPC pour la gestion des CONFIGURATIONS DE FRAIS.
+ * IPC routes for applicable fee configurations.
  */
 export const FeeConfigurationRoutes = {
   ALL: "fee-configurations",
@@ -209,11 +209,11 @@ export const FeeConfigurationRoutes = {
   DETAIL: "fee-configurations/:feeConfigId",
   BULK: "fee-configurations/bulk",
   APPLICABLE: "fee-configurations/applicable",
+  APPLICABLE_CLASSROOM: "fee-configurations/applicable/CLASSROOM",
 } as const;
 
 /**
- * Routes IPC pour la gestion des ATTRIBUTIONS (échéanciers élèves).
- * (BULK déjà présent)
+ * IPC routes for individual student fee assignment records.
  */
 export const FeeAssignmentRoutes = {
   ALL: "fee-assignments",
@@ -221,14 +221,14 @@ export const FeeAssignmentRoutes = {
     "fee-assignments/update-total-amount/assignments",
   UPDATE_TOTAL_AMOUNT_CLASSROOM:
     "fee-assignments/update-total-amount/classrooms",
-  EXEMPT_FROM_FEE: "fee-assignments/exempt-from-free",
+  EXEMPT_FROM_FEE: "fee-assignments/exempt-from-fee",
   BULK: "fee-assignments/bulk",
   SEARCH: "fee-assignments/search",
   DETAIL: "fee-assignments/:assignmentId",
 } as const;
 
 /**
- * Routes IPC pour la gestion des PAIEMENTS ÉLÈVES.
+ * IPC routes for individual student payments ledger.
  */
 export const StudentPaymentRoutes = {
   ALL: "student-payments",
@@ -238,7 +238,7 @@ export const StudentPaymentRoutes = {
 } as const;
 
 /**
- * Routes IPC pour la gestion des TAUX DE CHANGE QUOTIDIENS.
+ * IPC routes for currency exchange rates.
  */
 export const DailyExchangeRateRoutes = {
   ALL: "daily-exchange-rates",
@@ -248,27 +248,33 @@ export const DailyExchangeRateRoutes = {
   LTS: "daily-exchange-rates/lts",
 } as const;
 
+/**
+ * IPC routes for system dashboard views.
+ */
 export const DashboardRoutes = {
   FIN_DASHBOARD: "dashboard/fin",
   SCHOOL_DASHBOARD: "dashboard/school",
-};
+} as const;
 
-export const PrinteToutes = {
+/**
+ * IPC routes for thermal hardware printer integration.
+ */
+export const PrinterRoutes = {
   GET_PRINTERS: "prints/get-printers",
   PRINT_TEST: "prints/test-printer",
   PRINT_RECEIPT: "prints/receipt/payment",
   CHECK_PRINTER: "prints/check-printer",
-};
+} as const;
 
 /**
- * Export global mis à jour avec les nouveaux modules
+ * Global IPC route map aggregating all application feature routes.
  */
 export const IpcRoutes = {
   SEARCH: SearchRoutes,
   OPTIONS: OptionRoutes,
   SCHOOLS: SchoolRoutes,
   CLASSROOMS: ClassroomRoutes,
-  ENROLLEMENTS: EnrollmentRoutes,
+  ENROLLMENTS: EnrollmentRoutes,
   STUDY_YEAR: StudyYearRoutes,
   DOCUMENT_EXPORT: DocumentExportRoutes,
   STATS: StatsRoutes,
@@ -287,5 +293,10 @@ export const IpcRoutes = {
   DAILY_EXCHANGE_RATES: DailyExchangeRateRoutes,
   PAYMENT: PaymentRoutes,
   DASHBOARD: DashboardRoutes,
-  PRINT: PrinteToutes,
+  PRINT: PrinterRoutes,
 } as const;
+
+/**
+ * Type utility representing the entirety of valid IPC route mappings.
+ */
+export type IpcRoutesType = typeof IpcRoutes;

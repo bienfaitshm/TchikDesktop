@@ -81,7 +81,7 @@ export const StudentPreview: React.FC<StudentPreviewProps> = ({ data }) => {
   return (
     <div className="w-full space-y-6 text-foreground">
       {/* 1. En-tête : Nom, Genre & Statut d'inscription */}
-      <div className="flex items-start justify-between border-b border-border gap-4">
+      <div className="flex items-start justify-between border-b border-border gap-2 pb-2">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">
             <User size={18} />
@@ -126,7 +126,7 @@ export const StudentPreview: React.FC<StudentPreviewProps> = ({ data }) => {
 
       {/* 3. Détails Scolaires (si inscrit) */}
       {isEnrolled && currentEnrollment && (
-        <div className="grid grid-cols-2 gap-4 rounded-xl bg-accent/40 border border-border/50">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               Classe
@@ -203,7 +203,7 @@ export const StudentPreview: React.FC<StudentPreviewProps> = ({ data }) => {
 
           {siblings.length > 0 ? (
             <div className="grid grid-cols-1 gap-2">
-              {siblings.map((item) => {
+              {siblings.slice(0, 4).map((item) => {
                 const siblingName = [
                   item.student?.lastName,
                   item.student?.middleName,

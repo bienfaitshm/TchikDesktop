@@ -33,7 +33,7 @@ export const SelectInput: React.FC<SelectInputProps> = ({
     <Select name={name} value={value} onValueChange={onChange}>
       <SelectTrigger
         aria-label={placeholder}
-        className={cn("w-full", className)}
+        className={cn("w-full text-xs", className)}
         disabled={disabled}
       >
         <SelectValue placeholder={placeholder} />
@@ -41,7 +41,11 @@ export const SelectInput: React.FC<SelectInputProps> = ({
       <SelectContent>
         <SelectGroup>
           {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
+            <SelectItem
+              className="text-xs"
+              key={option.value}
+              value={option.value}
+            >
               {option.label}
             </SelectItem>
           ))}

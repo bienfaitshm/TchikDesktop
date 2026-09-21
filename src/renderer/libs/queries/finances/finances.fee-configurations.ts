@@ -1,15 +1,13 @@
 import { useMutation, useSuspenseQuery } from "../base";
 import { feeConfiguration as feeConfigApi } from "@/renderer/libs/apis";
 import type {
+  FeeApplicableConfiguration,
   FeeConfigurationCreate,
   FeeConfigurationFilter,
   FeeConfigurationUpdate,
+  FinClassroomApplicableConfigParams,
 } from "@/packages/@core/data-access/schema-validations";
-import type {
-  FeeConfigurationDTO,
-  FeeApplicableConfiguration,
-} from "@/packages/@core/data-access/db";
-import type { FeeApplicableConfiguration as ApplicableParams } from "@/packages/@core/apis/servers/handlers/fee-configurations";
+import type { FeeConfigurationDTO } from "@/packages/@core/data-access/db";
 import type { TQueryUpdate } from "../type";
 import type { SelectOption } from "@/packages/@core/data-access/db/queries";
 import type {
@@ -17,14 +15,17 @@ import type {
   UseSuspenseQueryOptions,
 } from "@tanstack/react-query";
 
-export type ApplicableFeeConfigParams = ApplicableParams;
-
+/**
+ * Factory for React Query keys related to fee configurations.
+ */
 export const feeConfigurationKeys = {
   all: ["fin", "fee-configurations"] as const,
   lists: (params?: FeeConfigurationFilter) =>
     [...feeConfigurationKeys.all, "list", { params }] as const,
-  applicable: (params?: ApplicableParams) =>
+  applicable: (params?: FeeApplicableConfiguration) =>
     [...feeConfigurationKeys.all, "applicable", { params }] as const,
+  applicableClassroom: (params: FinClassroomApplicableConfigParams) =>
+    [...feeConfigurationKeys.all, "applicable-classroom", { params }] as const,
   options: (params?: FeeConfigurationFilter) =>
     [...feeConfigurationKeys.all, "options", { params }] as const,
   details: () => [...feeConfigurationKeys.all, "detail"] as const,
@@ -36,6 +37,16 @@ export const feeConfigurationKeys = {
   },
 } as const;
 
+/* =========================================================================
+   QUERIES (SUSPENSE)
+   ========================================================================= */
+
+/**
+ * Suspense query hook to fetch filtered fee configurations.
+ * @param params - Optional query filters.
+ * @param options - Additional suspense query configuration options.
+ * @returns Suspense query result with list of fee configuration DTOs.
+ */
 export function useGetFeeConfigurations(
   params?: FeeConfigurationFilter,
   options?: Partial<UseSuspenseQueryOptions<FeeConfigurationDTO[]>>,
@@ -47,8 +58,14 @@ export function useGetFeeConfigurations(
   });
 }
 
+/**
+ * Suspense query hook to fetch applicable fee configurations for global context.
+ * @param params - Optional applicable lookup parameters.
+ * @param options - Additional suspense query configuration options.
+ * @returns Suspense query result with applicable fee configurations.
+ */
 export function useGetFeeApplicableConfigurations(
-  params?: ApplicableParams,
+  params?: FeeApplicableConfiguration,
   options?: Partial<UseSuspenseQueryOptions<FeeApplicableConfiguration[]>>,
 ) {
   return useSuspenseQuery({
@@ -58,6 +75,29 @@ export function useGetFeeApplicableConfigurations(
   });
 }
 
+/**
+ * Suspense query hook to fetch applicable fee configurations for a specific classroom.
+ * @param params - Classroom contextual lookup parameters.
+ * @param options - Additional suspense query configuration options.
+ * @returns Suspense query result with classroom applicable fee configurations.
+ */
+export function useGetClassroomFeeConfigApplicable(
+  params: FinClassroomApplicableConfigParams,
+  options?: Partial<UseSuspenseQueryOptions<FeeApplicableConfiguration[]>>,
+) {
+  return useSuspenseQuery({
+    queryKey: feeConfigurationKeys.applicableClassroom(params),
+    queryFn: () => feeConfigApi.fetchClassroomFeeConfigApplicable(params),
+    ...options,
+  });
+}
+
+/**
+ * Suspense query hook to fetch fee configurations formatted as UI select options.
+ * @param params - Optional query filters.
+ * @param options - Additional suspense query configuration options.
+ * @returns Suspense query result with select options merged with DTOs.
+ */
 export function useGetFeeConfigurationAsOptions(
   params?: FeeConfigurationFilter,
   options?: Partial<
@@ -71,6 +111,12 @@ export function useGetFeeConfigurationAsOptions(
   });
 }
 
+/**
+ * Suspense query hook to fetch a single fee configuration by identifier.
+ * @param feeConfigId - Unique identifier of the fee configuration.
+ * @param options - Additional suspense query configuration options.
+ * @returns Suspense query result with target fee configuration DTO.
+ */
 export function useGetFeeConfigurationById(
   feeConfigId: string,
   options?: Partial<UseSuspenseQueryOptions<FeeConfigurationDTO>>,
@@ -82,6 +128,15 @@ export function useGetFeeConfigurationById(
   });
 }
 
+/* =========================================================================
+   MUTATIONS
+   ========================================================================= */
+
+/**
+ * Mutation hook to create a new fee configuration.
+ * @param options - Additional mutation configuration options.
+ * @returns Mutation object for creating fee configurations.
+ */
 export function useCreateFeeConfiguration(
   options?: Partial<
     UseMutationOptions<FeeConfigurationDTO, Error, FeeConfigurationCreate>
@@ -94,6 +149,11 @@ export function useCreateFeeConfiguration(
   });
 }
 
+/**
+ * Mutation hook to update an existing fee configuration by identifier.
+ * @param options - Additional mutation configuration options.
+ * @returns Mutation object for updating fee configurations.
+ */
 export function useUpdateFeeConfiguration(
   options?: Partial<
     UseMutationOptions<
@@ -110,6 +170,11 @@ export function useUpdateFeeConfiguration(
   });
 }
 
+/**
+ * Mutation hook to delete a fee configuration by identifier.
+ * @param options - Additional mutation configuration options.
+ * @returns Mutation object for deleting fee configurations.
+ */
 export function useDeleteFeeConfiguration(
   options?: Partial<UseMutationOptions<void, Error, string>>,
 ) {

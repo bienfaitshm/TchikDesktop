@@ -23,14 +23,17 @@ import {
 } from "../options";
 import {
   primaryKeyId,
-  foreignKeyId,
   foreignKeyIdNoNull,
   enumColumn,
   timestamps,
   timestampColumn,
+  foreignKeyIdNull,
 } from "../drizzle-fields";
 import type { AsUpdatePayload } from "./types";
 
+/**
+ * Represents financial wallets tied to a specific school.
+ */
 export const wallets = sqliteTable(
   "wallets",
   {
@@ -51,6 +54,9 @@ export type Wallet = InferSelectModel<TableWallet>;
 export type InsertWallet = InferInsertModel<TableWallet>;
 export type UpdateWallet = AsUpdatePayload<InsertWallet, "walletId">;
 
+/**
+ * Categorizes fee types linked to a wallet for a school year.
+ */
 export const feeTypes = sqliteTable(
   "fee_types",
   {
@@ -74,6 +80,9 @@ export type FeeType = InferSelectModel<TableFeeType>;
 export type InsertFeeType = InferInsertModel<TableFeeType>;
 export type UpdateFeeType = AsUpdatePayload<InsertFeeType, "feeTypeId">;
 
+/**
+ * Defines payment schedules or installments for a specific fee type.
+ */
 export const feeSchedules = sqliteTable(
   "fee_schedules",
   {
@@ -96,6 +105,9 @@ export type UpdateFeeSchedule = AsUpdatePayload<
   "scheduleId"
 >;
 
+/**
+ * Configures fee amounts targeting exactly one entity (section, option, or classroom).
+ */
 export const feeConfigurations = sqliteTable(
   "fee_configurations",
   {
@@ -106,13 +118,11 @@ export const feeConfigurations = sqliteTable(
       .notNull()
       .default(CURRENCY_ENUM.CDF),
     section: enumColumn("section", SECTION_ENUM),
-    optionId: foreignKeyId("option_id", {
-      type: "NULL",
+    optionId: foreignKeyIdNull("option_id", {
       ref: () => options.optionId,
       actions: { onDelete: "cascade" },
     }),
-    classroomId: foreignKeyId("classroom_id", {
-      type: "NULL",
+    classroomId: foreignKeyIdNull("classroom_id", {
       ref: () => classrooms.classId,
       actions: { onDelete: "cascade" },
     }),
@@ -149,6 +159,9 @@ export type UpdateFeeConfiguration = AsUpdatePayload<
   "feeConfigId"
 >;
 
+/**
+ * Tracks fee obligations assigned to student enrollments per schedule.
+ */
 export const feeAssignments = sqliteTable(
   "fee_assignments",
   {
@@ -173,6 +186,9 @@ export const feeAssignments = sqliteTable(
     status: enumColumn("status", FEE_SCHEDULES_ENUM)
       .notNull()
       .default(FEE_SCHEDULES_ENUM.UNPAID),
+    isCustomized: integer("is_customized", { mode: "boolean" })
+      .notNull()
+      .default(false),
     ...timestamps,
   },
   (table) => [
@@ -194,6 +210,9 @@ export type UpdateFeeAssignment = AsUpdatePayload<
   "assignmentId"
 >;
 
+/**
+ * Stores individual payment transactions made towards fee assignments.
+ */
 export const studentPayments = sqliteTable(
   "student_payments",
   {
@@ -202,19 +221,16 @@ export const studentPayments = sqliteTable(
       ref: () => feeAssignments.assignmentId,
       actions: { onDelete: "cascade" },
     }),
-
     amountReceived: integer("amount_received").notNull(),
     currencyReceived: enumColumn("currency_received", CURRENCY_ENUM)
       .notNull()
       .default(CURRENCY_ENUM.CDF),
     appliedExchangeRate: integer("applied_exchange_rate").notNull(),
     amountConverted: integer("amount_converted").notNull(),
-
     paymentMethod: enumColumn("payment_method", PAYMENT_METHOD_ENUM).notNull(),
     transactionReference: text("transaction_reference"),
-    userId: foreignKeyId("user_id", {
-      type: "NULL",
-      actions: { onDelete: "set default" },
+    userId: foreignKeyIdNull("user_id", {
+      actions: { onDelete: "set null" },
       ref: () => users.userId,
     }),
     ...withYearAndSchoolIds,
@@ -235,16 +251,17 @@ export type UpdateStudentPayment = AsUpdatePayload<
   "paymentId"
 >;
 
+/**
+ * Maintains daily currency conversion rates for school operations.
+ */
 export const dailyExchangeRates = sqliteTable(
   "daily_exchange_rates",
   {
     rateId: primaryKeyId("rate_id"),
     date: timestampColumn("date").notNull(),
-
     currencyFrom: enumColumn("currency_from", CURRENCY_ENUM).notNull(),
     currencyTo: enumColumn("currency_to", CURRENCY_ENUM).notNull(),
     rate: integer("rate").notNull(),
-
     ...withSchoolId,
     ...timestamps,
   },
@@ -265,4 +282,46 @@ export type InsertDailyExchangeRate = InferInsertModel<TableDailyExchangeRate>;
 export type UpdateDailyExchangeRate = AsUpdatePayload<
   InsertDailyExchangeRate,
   "rateId"
+>;
+
+/**
+ * Manages custom fee overrides for specific classrooms or student enrollments.
+ */
+export const feeOverrides = sqliteTable(
+  "fee_overrides",
+  {
+    feeOverrideId: primaryKeyId("fee_override_id"),
+    feeTypeId: foreignKeyIdNoNull("fee_type_id", {
+      ref: () => feeTypes.feeTypeId,
+      actions: { onDelete: "cascade" },
+    }),
+    classId: foreignKeyIdNull("class_id", {
+      ref: () => classrooms.classId,
+      actions: { onDelete: "cascade" },
+    }),
+    enrollmentId: foreignKeyIdNull("enrollment_id", {
+      ref: () => classroomEnrollments.enrollmentId,
+      actions: { onDelete: "cascade" },
+    }),
+    customAmount: integer("custom_amount").notNull(),
+    reason: text("reason"),
+    ...timestamps,
+  },
+  (table) => [
+    check(
+      "override_target_check",
+      sql`${table.classId} IS NOT NULL OR ${table.enrollmentId} IS NOT NULL`,
+    ),
+    index("fee_overrides_fee_type_idx").on(table.feeTypeId),
+    index("fee_overrides_class_idx").on(table.classId),
+    index("fee_overrides_enrollment_idx").on(table.enrollmentId),
+  ],
+);
+
+export type TableFeeOverride = typeof feeOverrides;
+export type FeeOverride = InferSelectModel<TableFeeOverride>;
+export type InsertFeeOverride = InferInsertModel<TableFeeOverride>;
+export type UpdateFeeOverride = AsUpdatePayload<
+  InsertFeeOverride,
+  "feeOverrideId"
 >;

@@ -1,5 +1,4 @@
 import type { ClassroomDTO } from "@/packages/@core/data-access/db/queries";
-import type { ColumnDef } from "@tanstack/react-table";
 import { TypographySmall } from "@/renderer/components/ui/typography";
 import { SectionBadge } from "@/renderer/components/section-badge";
 import { DataTableColumnHeader } from "./data-table.column-header";
@@ -7,8 +6,12 @@ import { SECTION_ENUM } from "@/packages/@core/data-access/db/enum";
 import { getSectionLabel } from "@/packages/@core/data-access/db/options";
 import { APP_ROUTES } from "@/renderer/constants";
 import { Link } from "react-router";
+import type { TableColumnDef } from "./hooks";
 
-export const classroomColumns: ColumnDef<ClassroomDTO>[] = [
+/**
+ * Defines column configurations for the classroom management table view.
+ */
+export const classroomColumns: TableColumnDef<ClassroomDTO>[] = [
   {
     accessorKey: "identifier",
     header: ({ column }) => (
@@ -24,7 +27,7 @@ export const classroomColumns: ColumnDef<ClassroomDTO>[] = [
           className="hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           <TypographySmall
-            className="text-foreground max-w-32 lg:max-w-44 inline-block truncate"
+            className="text-foreground max-w-48 lg:max-w-56 inline-block truncate"
             title={value}
           >
             {value}
@@ -56,15 +59,18 @@ export const classroomColumns: ColumnDef<ClassroomDTO>[] = [
       <DataTableColumnHeader column={column} title="Section" />
     ),
     cell: ({ getValue }) => <SectionBadge section={getValue<SECTION_ENUM>()} />,
+    filterFn: "includesString",
     enableSorting: true,
     enableHiding: true,
     enableColumnFilter: true,
   },
   {
-    accessorKey: "option.optionName",
+    id: "option.optionName",
+    accessorFn: (row) => row.option?.optionName ?? null,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Option" />
     ),
+    filterFn: "includesString",
     enableHiding: true,
     enableSorting: true,
     enableColumnFilter: true,

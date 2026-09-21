@@ -3,7 +3,9 @@ import {
   QueryClientProvider,
   useQueryClient as useTSQueryClient,
 } from "@tanstack/react-query";
+import { TanStackDevtools } from "@tanstack/react-devtools";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { tableDevtoolsPlugin } from "@tanstack/react-table-devtools";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +34,7 @@ export default function QueryProvider({
     <QueryClientProvider client={queryClient}>
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
+      <TanStackDevtools plugins={[tableDevtoolsPlugin()]} />
     </QueryClientProvider>
   );
 }
