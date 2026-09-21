@@ -8,11 +8,8 @@ import {
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
-import {
-  ScreenSaveProvider,
-  LockScreenButton,
-} from "@/renderer/components/screen-saver";
-import { SidebarTrigger } from "@/renderer/components/app-sidebar/app-sidebar.toggle-button";
+import { ScreenSaveProvider } from "@/renderer/components/screen-saver";
+import { WindowTitleBar } from "@/renderer/components/win-title-bar";
 
 // Sidebar styling configuration
 const SIDEBAR_CONFIG_STYLES: React.CSSProperties = {
@@ -56,14 +53,7 @@ export function AppLayout({ menus = [] }: AppLayoutProps): React.JSX.Element {
       <SidebarProvider style={SIDEBAR_CONFIG_STYLES}>
         <div className="flex h-svh w-full flex-col overflow-hidden bg-background">
           {/* Full-width Header */}
-          <header className="z-30 flex h-10 w-full shrink-0 items-center justify-between gap-2 border-b bg-background/95 px-4 backdrop-blur-sm">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger />
-            </div>
-            <div className="flex items-center gap-2">
-              <LockScreenButton />
-            </div>
-          </header>
+          <WindowTitleBar />
 
           {/* Central Workspace */}
           <div className="relative flex w-full min-w-0 flex-1 overflow-hidden">

@@ -16,6 +16,7 @@ import {
 } from "@/packages/@core/data-access/stores";
 
 import "@/main/apps/system-infos";
+import { registerWindowHandlers } from "./custom-windows-handler";
 
 debug();
 
@@ -40,6 +41,7 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
     show: false,
     title: "Tchik",
     icon: appIcon,
+    frame: false,
     autoHideMenuBar: true,
     titleBarStyle: "default",
     webPreferences: {
@@ -111,6 +113,7 @@ const initializeAppServices = async (): Promise<void> => {
 const setupAppWindow = async (): Promise<BrowserWindow> => {
   nativeTheme.themeSource = tchikAppStore.getTheme();
   const window = await createMainWindow();
+  registerWindowHandlers();
 
   tchikAppStore.setWindow(window);
   initializeTextModifiers(window);
