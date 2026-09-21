@@ -1,6 +1,6 @@
 {
   "name": "tchik",
-  "version": "1.11.0-beta.8",
+  "version": "1.12.0",
   "description": "application de gestion d'une ecole",
   "main": "./out/main/index.js",
   "author": "Bienfait Shomari",
