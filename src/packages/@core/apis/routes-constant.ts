@@ -222,6 +222,7 @@ export const FeeAssignmentRoutes = {
   UPDATE_TOTAL_AMOUNT_CLASSROOM:
     "fee-assignments/update-total-amount/classrooms",
   EXEMPT_FROM_FEE: "fee-assignments/exempt-from-fee",
+  MARK_AS_PAID: "fee-assignments/mark-as-paid",
   BULK: "fee-assignments/bulk",
   SEARCH: "fee-assignments/search",
   DETAIL: "fee-assignments/:assignmentId",

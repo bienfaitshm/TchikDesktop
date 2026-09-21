@@ -20,7 +20,7 @@ const API_REGISTRY = {
   feeType: apis.createFeeTypeApis,
   feeSchedule: apis.createFeeScheduleApis,
   feeConfiguration: apis.createFeeConfigurationApis,
-  feeAssignment: apis.createFeeAssignmentApis,
+  feeAssignment: apis.createFeeAssignmentApi,
   studentPayment: apis.createStudentPaymentApis,
   dailyExchangeRate: apis.createDailyExchangeRateApis,
   payment: apis.createPaymentApis,
@@ -34,7 +34,7 @@ type ApiRegistry = typeof API_REGISTRY;
  * Mapped type representing all available domain API client instances.
  */
 export type AppClients = {
-  readonly [K in keyof ApiRegistry]: ReturnType<ApiRegistry[K]>;
+  [K in keyof ApiRegistry]: ReturnType<ApiRegistry[K]>;
 };
 
 /**

@@ -45,7 +45,7 @@ export interface DetailRowProps {
 }
 
 export type SavePaymentDialogProps = ActionDialogProps<
-  unknown,
+  {},
   ProcessPaymentFormConfig
 > & {
   schoolId: string;
@@ -123,7 +123,7 @@ export const PaymentDetailDialog: React.FC<PaymentDetailDialogProps> = ({
 
   return (
     <Dialog {...props}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-100">
         <DialogHeader>
           <DialogTitle className="text-base font-semibold">
             Détails de l’échéance
@@ -180,6 +180,7 @@ export const SavePaymentDialog = createBaseActionDialog<
     { formId, onSubmit, currencyOptions, paymentMethodOptions, defaultValues },
     { schoolId, yearId, assignmentId, totalAmount, amountPaid },
   ): ReactNode {
+    const amountReceived = (totalAmount ?? 0) - (amountPaid ?? 0);
     return (
       <PaymentProcessForm
         formId={formId}
@@ -188,7 +189,13 @@ export const SavePaymentDialog = createBaseActionDialog<
         onSubmit={onSubmit}
         totalAmount={totalAmount}
         amountPaid={amountPaid}
-        defaultValues={{ ...defaultValues, schoolId, yearId, assignmentId }}
+        defaultValues={{
+          ...defaultValues,
+          amountReceived: amountReceived,
+          schoolId,
+          yearId,
+          assignmentId,
+        }}
       />
     );
   },

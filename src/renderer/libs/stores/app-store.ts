@@ -18,33 +18,6 @@ export interface AppConfiguration {
   currentStudyYear: StudyYear | null;
 }
 
-declare global {
-  interface Window {
-    electron: {
-      store: {
-        getCurrentConfig: () => Promise<AppConfiguration>;
-        setCurrentSchool: (school: School | null) => Promise<School | null>;
-        setCurrentStudyYear: (
-          year: StudyYear | null,
-        ) => Promise<StudyYear | null>;
-        setSchoolAndYear: (
-          school: School | null,
-          year: StudyYear | null,
-        ) => Promise<{ school: School | null; year: StudyYear | null }>;
-        setTheme: (theme: ThemeMode) => Promise<ThemeMode>;
-        setPosPrintConfig: (
-          config: Partial<PosPrintConfig>,
-        ) => Promise<PosPrintConfig>;
-        syncSchoolAndYearWithDb: () => Promise<{
-          school: School | null;
-          year: StudyYear | null;
-        }>;
-        resetSchoolAndYear: () => Promise<boolean>;
-      };
-    };
-  }
-}
-
 interface ConfigurationState {
   currentSchool: School | null;
   currentStudyYear: StudyYear | null;

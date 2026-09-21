@@ -47,6 +47,14 @@ export const ExemptFromFeeSchema = z
  */
 export type ExemptFromFee = z.infer<typeof ExemptFromFeeSchema>;
 
+export const MarkAsPaidSchema = z.object({
+  assignmentId: z.string().nonempty(),
+  amountConverted: z.coerce.number(),
+  totalAmount: z.coerce.number(),
+});
+
+export type MarkAsPaid = z.infer<typeof MarkAsPaidSchema>;
+
 /**
  * Zod schema validating payment amount updates filtered by assignment IDs.
  */

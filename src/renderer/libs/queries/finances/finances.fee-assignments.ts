@@ -7,6 +7,8 @@ import type {
   FeeBulkAssignmentData,
   UpdateAmountByAssignments,
   UpdateAmountByClassrooms,
+  ExemptFromFee,
+  MarkAsPaid,
 } from "@/packages/@core/data-access/schema-validations";
 import type { TQueryUpdate } from "../type";
 import type { SelectOption } from "@/packages/@core/data-access/db/queries";
@@ -16,8 +18,9 @@ import type {
 } from "@tanstack/react-query";
 import type {
   FeeAssignment,
-  FeeAssignmentTDO,
+  FeeAssignmentDTO,
 } from "@/packages/@core/data-access/db";
+import { queryClient } from "../providers";
 
 /**
  * Factory for React Query keys related to fee assignments.
@@ -42,6 +45,16 @@ export const feeAssignmentKeys = {
   },
 } as const;
 
+// toogle actions
+
+export async function markAsPaid(payload: MarkAsPaid) {
+  return feeAssignmentApi.markAsPaid(payload);
+}
+
+export async function exemptFromFee(payload: ExemptFromFee) {
+  return feeAssignmentApi.exemptFromFee(payload);
+}
+
 /* =========================================================================
    QUERIES (SUSPENSE)
    ========================================================================= */
@@ -54,7 +67,7 @@ export const feeAssignmentKeys = {
  */
 export function useGetFeeAssignments(
   params?: FeeAssignmentFilter,
-  options?: Partial<UseSuspenseQueryOptions<FeeAssignmentTDO[]>>,
+  options?: Partial<UseSuspenseQueryOptions<FeeAssignmentDTO[]>>,
 ) {
   return useSuspenseQuery({
     queryKey: feeAssignmentKeys.lists(params),
@@ -72,7 +85,7 @@ export function useGetFeeAssignments(
 export function useGetFeeAssignmentAsOptions(
   params?: FeeAssignmentFilter,
   options?: Partial<
-    UseSuspenseQueryOptions<(SelectOption & FeeAssignmentTDO)[]>
+    UseSuspenseQueryOptions<(SelectOption & FeeAssignmentDTO)[]>
   >,
 ) {
   return useSuspenseQuery({
@@ -90,7 +103,7 @@ export function useGetFeeAssignmentAsOptions(
  */
 export function useGetFeeAssignmentById(
   assignmentId: string,
-  options?: Partial<UseSuspenseQueryOptions<FeeAssignmentTDO>>,
+  options?: Partial<UseSuspenseQueryOptions<FeeAssignmentDTO>>,
 ) {
   return useSuspenseQuery({
     queryKey: feeAssignmentKeys.detail(assignmentId),
@@ -183,7 +196,7 @@ export function useUpdateAmountByClassrooms(
 ) {
   return useMutation({
     mutationKey: feeAssignmentKeys.mutations.updateAmountByClassrooms(),
-    mutationFn: (payload) => feeAssignmentApi.updateAmountByClassrooms(payload),
+    mutationFn: (payload) => feeAssignmentApi.updateAmountByClassroom(payload),
     ...options,
   });
 }
