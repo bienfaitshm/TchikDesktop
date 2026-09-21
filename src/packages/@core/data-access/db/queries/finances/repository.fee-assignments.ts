@@ -41,6 +41,41 @@ export type FeeAssignmentDTO = FeeAssignment & {
   feeSchedule: FeeSchedule;
 };
 
+export type AdjustAmountPayload = {
+  newTotalAmount: number;
+  currency: CURRENCY_ENUM;
+  scheduleIds: string[];
+  assignmentIds?: string[];
+  classroomIds?: string[];
+};
+
+export type MarkAsPaidPayload = {
+  assignmentId: string;
+  amountConverted: number;
+  totalAmount: number;
+};
+
+/**
+ * Calculates the payment schedule status based on current and target amounts.
+ * @param amount - The accumulated paid amount.
+ * @param totalAmount - The target amount due.
+ * @returns The resolved payment status enum value.
+ */
+export function calculatePaymentStatus(
+  amount: number,
+  totalAmount: number,
+): FEE_SCHEDULES_ENUM {
+  if (amount >= totalAmount) {
+    return amount > totalAmount
+      ? FEE_SCHEDULES_ENUM.OVERPAID
+      : FEE_SCHEDULES_ENUM.PAID;
+  }
+  if (amount <= 0) {
+    return FEE_SCHEDULES_ENUM.UNPAID;
+  }
+  return FEE_SCHEDULES_ENUM.PARTIALLY_PAID;
+}
+
 /**
  * Data access repository for managing fee assignments and schedule calculations.
  */
@@ -55,7 +90,7 @@ export class FeeAssignmentRepository
 {
   /**
    * Initializes a new instance of the FeeAssignmentRepository.
-   * @param database - Optional database connection or transaction instance.
+   * @param database - Database connection or transaction instance.
    */
   constructor(database: TDataBase = db) {
     super({
@@ -123,7 +158,7 @@ export class FeeAssignmentRepository
   }
 
   /**
-   * Fetches pending (unpaid or partially paid) fee schedules for a specific student enrollment and fee type.
+   * Fetches pending fee schedules for a specific student enrollment and fee type.
    * @param enrollmentId - Student enrollment identifier.
    * @param feeTypeId - Fee type identifier.
    * @param tx - Optional database transaction instance.
@@ -197,7 +232,7 @@ export class FeeAssignmentRepository
     if (assignmentIds.length === 0) return;
 
     try {
-      this.update(
+      await this.update(
         { totalAmount: newAmountDue },
         {
           where: {
@@ -219,29 +254,6 @@ export class FeeAssignmentRepository
       });
       throw dbError;
     }
-  }
-
-  /**
-   * Determines the payment status based on the paid amount and the total expected amount.
-   * @param amount - The current paid amount.
-   * @param totalAmount - The total expected amount.
-   * @returns The corresponding payment schedule status enum.
-   */
-  public getPaymentStatus(
-    amount: number,
-    totalAmount: number,
-  ): FEE_SCHEDULES_ENUM {
-    if (amount >= totalAmount) {
-      return amount > totalAmount
-        ? FEE_SCHEDULES_ENUM.OVERPAID
-        : FEE_SCHEDULES_ENUM.PAID;
-    }
-
-    if (amount <= 0) {
-      return FEE_SCHEDULES_ENUM.UNPAID;
-    }
-
-    return FEE_SCHEDULES_ENUM.PARTIALLY_PAID;
   }
 
   /**
@@ -269,13 +281,13 @@ export class FeeAssignmentRepository
    * @param tx - Optional database transaction instance.
    * @returns The result of the batch insert operation.
    */
-  public assignFees(
+  public async assignFees(
     assignments: InsertFeeAssignment[],
     tx: TDataBase = this.db,
-  ) {
+  ): Promise<unknown> {
     try {
       const assignmentClient = this.getClient(tx);
-      return assignmentClient
+      return await assignmentClient
         .insert(this.table)
         .values(assignments)
         .onConflictDoNothing()
@@ -303,11 +315,11 @@ export class FeeAssignmentRepository
     amountConverted: number,
     totalAmount: number,
     tx: TDataBase = this.db,
-  ) {
+  ): FeeAssignment[] {
     try {
       const previousAmount = this.getAssignmentAmount(assignmentId, tx);
       const newAmountPaid = previousAmount + amountConverted;
-      const newStatus = this.getPaymentStatus(newAmountPaid, totalAmount);
+      const newStatus = calculatePaymentStatus(newAmountPaid, totalAmount);
 
       const filters: BaseFeeAssignmentFilters = {
         where: { feeAssignments: { assignmentId: { $eq: assignmentId } } },
@@ -358,7 +370,7 @@ export class FeeAssignmentRepository
     assignmentIds: string[],
     scheduleIds: string[],
     tx: TDataBase = this.db,
-  ) {
+  ): FeeAssignment[] {
     return this.updateAmount(
       newTotalAmount,
       currency,
@@ -387,7 +399,7 @@ export class FeeAssignmentRepository
     classroomIds: string[],
     scheduleIds: string[],
     tx: TDataBase = this.db,
-  ) {
+  ): FeeAssignment[] {
     return this.updateAmount(
       newTotalAmount,
       currency,
@@ -410,7 +422,7 @@ export class FeeAssignmentRepository
     studentEnrollmentIds: string[],
     assignmentIds: string[],
     tx: TDataBase = this.db,
-  ) {
+  ): FeeAssignment[] {
     return this.update(
       { status: FEE_SCHEDULES_ENUM.EXEMPTED },
       {
@@ -438,7 +450,7 @@ export class FeeAssignmentRepository
     currency: CURRENCY_ENUM,
     whereQuery: BaseFeeAssignmentFilters["where"],
     tx: TDataBase,
-  ) {
+  ): FeeAssignment[] {
     return this.update(
       { totalAmount: newTotalAmount, currency },
       { where: whereQuery },
