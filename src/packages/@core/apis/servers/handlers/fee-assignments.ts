@@ -1,4 +1,9 @@
-import { feeAssignmentRepository } from "@/packages/@core/data-access/db/queries";
+import {
+  feeAssignmentService,
+  FeeAssignmentService,
+  FeeAssignmentRepository,
+  feeAssignmentRepository,
+} from "@/packages/@core/data-access/db";
 import {
   FeeAssignmentSchema,
   FeeAssignmentCreateSchema,
@@ -29,6 +34,8 @@ type AssignmentId = z.infer<typeof AssignmentIdSchema>;
  * Handles Inter-Process Communication (IPC) inbound requests for student fee assignments.
  */
 export class FeeAssignmentController {
+  static feeAssignService: FeeAssignmentService = feeAssignmentService;
+  static feeAssignRepo: FeeAssignmentRepository = feeAssignmentRepository;
   /**
    * Retrieves all fee assignments based on lookup query filters.
    * @param req - The IPC request object containing filtering parameters.
@@ -37,17 +44,22 @@ export class FeeAssignmentController {
   @IpcServer.register(HttpMethod.GET, FeeAssignmentRoutes.ALL, {
     params: FeeAssignmentFilterSchema,
   })
-  static async getAll(req: IpcRequest<unknown, FeeAssignmentFilter>) {
-    return feeAssignmentRepository.findMany(req.params);
+  static async getAll({ params }: IpcRequest<unknown, FeeAssignmentFilter>) {
+    return FeeAssignmentController.feeAssignRepo.findMany(params);
   }
 
+  /**
+   * Searches fee assignments based on matching search criteria.
+   * @param req - The IPC request object containing search filtering parameters.
+   * @returns A promise resolving to matching fee assignments.
+   */
   @IpcServer.register(HttpMethod.GET, FeeAssignmentRoutes.SEARCH, {
     params: FeeAssignmentFilterSchema,
   })
-  static async getSearchFeeAssignment(
-    req: IpcRequest<unknown, FeeAssignmentFilter>,
-  ) {
-    return feeAssignmentRepository.findMany(req.params);
+  static async getSearchFeeAssignment({
+    params,
+  }: IpcRequest<unknown, FeeAssignmentFilter>) {
+    return FeeAssignmentController.feeAssignService.getOptions(params);
   }
 
   /**
@@ -58,20 +70,20 @@ export class FeeAssignmentController {
   @IpcServer.register(HttpMethod.POST, FeeAssignmentRoutes.ALL, {
     body: FeeAssignmentCreateSchema,
   })
-  static async create(req: IpcRequest<FeeAssignmentCreate>) {
-    return feeAssignmentRepository.create(req.body);
+  static async create({ body }: IpcRequest<FeeAssignmentCreate>) {
+    return FeeAssignmentController.feeAssignRepo.create(body);
   }
 
   /**
-   * Fetches a specific fee assignment details by its unique identifier.
+   * Fetches specific fee assignment details by its unique identifier.
    * @param req - The IPC request object containing target parameters.
    * @returns A promise resolving to the target fee assignment object or null.
    */
   @IpcServer.register(HttpMethod.GET, FeeAssignmentRoutes.DETAIL, {
     params: AssignmentIdSchema,
   })
-  static async getById(req: IpcRequest<unknown, AssignmentId>) {
-    return feeAssignmentRepository.findById(req.params.assignmentId);
+  static async getById({ params }: IpcRequest<unknown, AssignmentId>) {
+    return FeeAssignmentController.feeAssignRepo.findById(params.assignmentId);
   }
 
   /**
@@ -83,23 +95,36 @@ export class FeeAssignmentController {
     params: AssignmentIdSchema,
     body: FeeAssignmentUpdateSchema,
   })
-  static async update(req: IpcRequest<FeeAssignmentUpdate, AssignmentId>) {
-    return feeAssignmentRepository.updateById(
-      req.params.assignmentId,
-      req.body,
+  static async update({
+    params,
+    body,
+  }: IpcRequest<FeeAssignmentUpdate, AssignmentId>) {
+    return FeeAssignmentController.feeAssignRepo.updateById(
+      params.assignmentId,
+      body,
     );
   }
 
+  /**
+   * Exempts specified students from fee obligations for given assignments.
+   * @param req - The IPC request object containing student enrollment and assignment IDs.
+   * @returns A promise resolving to the result of the exemption operation.
+   */
   @IpcServer.register(HttpMethod.POST, FeeAssignmentRoutes.EXEMPT_FROM_FEE, {
     body: ExemptFromFeeSchema,
   })
   static async exemptStudentsFromFee({ body }: IpcRequest<ExemptFromFee>) {
-    return feeAssignmentRepository.exemptStudentsFromFee(
+    return feeAssignmentService.exemptFromPayment(
       body.studentEnrollmentIds,
       body.assignmentIds,
     );
   }
 
+  /**
+   * Updates total fee amount and currency for targeted assignment identifiers.
+   * @param req - The IPC request carrying target assignment IDs and new fee details.
+   * @returns A promise resolving to the updated fee assignments result.
+   */
   @IpcServer.register(
     HttpMethod.POST,
     FeeAssignmentRoutes.UPDATE_TOTAL_AMOUNT_ASSIGNMENT,
@@ -110,14 +135,19 @@ export class FeeAssignmentController {
   static async updateAmountByAssignments({
     body,
   }: IpcRequest<UpdateAmountByAssignments>) {
-    return feeAssignmentRepository.updateAmountByAssignments(
-      body.newTotalAmount,
-      body.currency,
-      body.assignmentIds,
-      body.scheduleIds,
-    );
+    return feeAssignmentService.adjustAmount({
+      newTotalAmount: body.newTotalAmount,
+      currency: body.currency,
+      assignmentIds: body.assignmentIds,
+      scheduleIds: body.scheduleIds,
+    });
   }
 
+  /**
+   * Updates total fee amount and currency for all students enrolled in specified classrooms.
+   * @param req - The IPC request carrying classroom IDs and new fee details.
+   * @returns A promise resolving to the updated classroom fee assignments result.
+   */
   @IpcServer.register(
     HttpMethod.POST,
     FeeAssignmentRoutes.UPDATE_TOTAL_AMOUNT_CLASSROOM,
@@ -128,12 +158,12 @@ export class FeeAssignmentController {
   static async updateAmountByClassrooms({
     body,
   }: IpcRequest<UpdateAmountByClassrooms>) {
-    return feeAssignmentRepository.updateAmountByClassrooms(
-      body.newTotalAmount,
-      body.currency,
-      body.classroomIds,
-      body.scheduleIds,
-    );
+    return feeAssignmentService.adjustAmount({
+      newTotalAmount: body.newTotalAmount,
+      currency: body.currency,
+      classroomIds: body.classroomIds,
+      scheduleIds: body.scheduleIds,
+    });
   }
 
   /**
@@ -144,7 +174,7 @@ export class FeeAssignmentController {
   @IpcServer.register(HttpMethod.DELETE, FeeAssignmentRoutes.DETAIL, {
     params: AssignmentIdSchema,
   })
-  static async delete(req: IpcRequest<unknown, AssignmentId>) {
-    return feeAssignmentRepository.delete(req.params.assignmentId);
+  static async delete({ params }: IpcRequest<unknown, AssignmentId>) {
+    return FeeAssignmentController.feeAssignRepo.delete(params.assignmentId);
   }
 }

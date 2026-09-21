@@ -9,7 +9,7 @@ import type {
 } from "@/packages/@core/data-access/schema-validations";
 import type { FeeAssignment } from "@/packages/@core/data-access/db/schemas";
 import type {
-  FeeAssignmentTDO,
+  FeeAssignmentDTO,
   SelectOption,
 } from "@/packages/@core/data-access/db/queries";
 import { FeeAssignmentRoutes } from "../routes-constant";
@@ -17,11 +17,11 @@ import { FeeAssignmentRoutes } from "../routes-constant";
 export type FeeAssignmentApi = Readonly<{
   fetchFeeAssignments(
     params?: FeeAssignmentFilter,
-  ): Promise<FeeAssignmentTDO[]>;
+  ): Promise<FeeAssignmentDTO[]>;
   fetchFeeAssignmentsAsOptions(
     params?: FeeAssignmentFilter,
-  ): Promise<(SelectOption & FeeAssignmentTDO)[]>;
-  fetchFeeAssignmentById(assignmentId: string): Promise<FeeAssignmentTDO>;
+  ): Promise<(SelectOption & FeeAssignmentDTO)[]>;
+  fetchFeeAssignmentById(assignmentId: string): Promise<FeeAssignmentDTO>;
   createFeeAssignment(data: FeeAssignmentCreate): Promise<FeeAssignment>;
   updateFeeAssignment(
     assignmentId: string,
