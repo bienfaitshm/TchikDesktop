@@ -70,9 +70,9 @@ const ClassroomsLayout = lazyNamed(
 );
 
 // Configuration hors-ligne (Setup initial)
-const ConfigurationLayoutScreen = lazy(() =>
+const ConfigurationLayout = lazy(() =>
   import("@/renderer/screens/config").then((m) => ({
-    default: m.ConfigurationLayoutScreen,
+    default: m.ConfigurationLayout,
   })),
 );
 const SchoolConfigPage = lazyNamed(
@@ -416,10 +416,7 @@ export default function RouterProvider(): JSX.Element {
           </Route>
 
           {/* ========== CONFIGURATION (Hors-Layout) ========== */}
-          <Route
-            path={ROUTES.CONFIG.ROOT}
-            element={<ConfigurationLayoutScreen />}
-          >
+          <Route path={ROUTES.CONFIG.ROOT} element={<ConfigurationLayout />}>
             <Route index element={<SchoolConfigPage />} />
             <Route
               path={ROUTES.CONFIG.SCHOOL_NEW}
