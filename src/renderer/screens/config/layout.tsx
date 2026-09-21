@@ -1,32 +1,22 @@
 import React from "react";
 import { Outlet } from "react-router";
-import { Cog } from "lucide-react";
 import { TypographyH2 } from "@/renderer/components/ui/typography";
-import { WindowTitleBar } from "@/renderer/components/win-title-bar";
+import { Cog } from "lucide-react";
 
-/**
- * Layout component providing a dedicated wrapper and title bar for configuration screens.
- * @returns A React functional component rendering the configuration template layout.
- */
-export const ConfigurationLayout: React.FC = () => {
+export const ConfigurationLayoutScreen: React.FC = () => {
   return (
-    <div className="relative flex min-h-screen flex-col bg-background">
-      <WindowTitleBar />
-
-      <main className="flex flex-1 items-center justify-center p-4">
-        <div className="container mx-auto max-w-md space-y-8 p-6">
-          <header className="flex items-center gap-4 border-b border-border pb-4">
-            <Cog className="size-10 animate-spin-slow text-muted-foreground" />
-            <TypographyH2 className="mb-0 pb-0 text-foreground">
-              Configuration Requise
-            </TypographyH2>
-          </header>
-
-          <section className="py-4">
-            <Outlet />
-          </section>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 ">
+      <div className="container mx-auto max-w-(--breakpoint-md) space-y-8 p-6">
+        <div className="flex items-center gap-4 border-b pb-4 border-neutral-200 dark:border-neutral-700">
+          <Cog className="size-10 text-neutral-600 dark:text-neutral-400 animate-spin-slow" />
+          <TypographyH2 className="mb-0 pb-0 text-gray-800 dark:text-gray-100">
+            Configuration Requise
+          </TypographyH2>
         </div>
-      </main>
+        <div className="py-4">
+          <Outlet />
+        </div>
+      </div>
     </div>
   );
 };

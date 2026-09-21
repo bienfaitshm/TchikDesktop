@@ -8,8 +8,13 @@ import {
   DataContentBody,
   DataContentHead,
   DataTable,
+  DataTableColumnToggle,
   DataTableContent,
   DataTablePagination,
+  DataTableToolbar,
+  FilteredTableToolbarContainer,
+  SearchTableToolbar,
+  // TableFacetedFilterItem,
 } from "@/renderer/components/tables";
 import { createPaymentColumns } from "./payment-table.column";
 import { enhanceColumns } from "@/renderer/components/tables/columns";
@@ -96,6 +101,23 @@ export const FeeClassroomPaymentTable: React.FC<FeeConfigTableProps> = ({
         columns={columns}
         keyExtractor={(item) => item.enrollmentId}
       >
+        <DataTableToolbar>
+          <FilteredTableToolbarContainer>
+            <SearchTableToolbar
+              searchColumn="student"
+              placeholder="Rechercher ex. SHOMARI"
+            />
+
+            {/* <TableFacetedFilterItem
+                        columnId="status"
+                        title="Statut"
+                        options={STUDENT_STATUS_OPTIONS}
+                      /> */}
+          </FilteredTableToolbarContainer>
+          <div className="flex items-center gap-4">
+            <DataTableColumnToggle />
+          </div>
+        </DataTableToolbar>
         <DataTableContent>
           <DataContentHead />
           <DataContentBody<AssignmentTableOfClassroom> />

@@ -28,7 +28,8 @@ import { STATUS_INDICATORS } from "../components/payment-legend-colors";
 import { formatCurrency } from "@/packages/currency";
 import { ButtonMenu } from "@/renderer/components/buttons/button-menu";
 import { MarkStudentAsProDeoDialog } from "../../schools/dialogs/enrollment.dialog";
-
+import { feeAssignment as feeAssignmentApis } from "@/renderer/libs/apis";
+import { queryClient } from "@/renderer/libs/queries/providers";
 /**
  * Contextual properties passed down to individual fee schedule row items.
  */
@@ -79,13 +80,21 @@ export const CellAction = feeMenu.build(
       .toggle(
         ({ feeAssignment }) =>
           feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED,
-        async ({ feeAssignment }, checked) => {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          console.log(
-            "Exemption toggled for:",
-            feeAssignment.assignmentId,
-            checked,
-          );
+        async ({ feeAssignment, schoolId }, checked) => {
+          feeAssignmentApis
+            .exemptFromFee({
+              assignmentIds: [feeAssignment.assignmentId],
+              schoolId: schoolId,
+              studentEnrollmentIds: [feeAssignment.enrollmentId],
+            })
+            .catch(() => {
+              queryClient.invalidateQueries({ queryKey: ["fin"] });
+              console.log(
+                "Exemption toggled for:",
+                feeAssignment.assignmentId,
+                checked,
+              );
+            });
         },
       )
       .disabled(
@@ -103,13 +112,20 @@ export const CellAction = feeMenu.build(
             : "Payé",
         CheckCircle,
       )
-      .action(async ({ feeAssignment }) => {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        console.log("Executed mark as paid for:", feeAssignment.assignmentId);
-      })
-      .hidden(
+      .toggle(
         ({ feeAssignment }) =>
-          feeAssignment.status !== FEE_SCHEDULES_ENUM.UNPAID,
+          feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED,
+        async ({ feeAssignment }, checked) => {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          console.log(
+            "payment toggled for:",
+            feeAssignment.assignmentId,
+            checked,
+          );
+        },
+      )
+      .hidden(
+        ({ feeAssignment }) => feeAssignment.status !== FEE_SCHEDULES_ENUM.PAID,
       ),
 
     changeAmount: feeMenu
@@ -202,7 +218,6 @@ export const RowAction = rowMenu.build(
         ({
           props: {
             assign: { student, schoolId, enrollmentId },
-            ...props
           },
           open,
           onOpenChange,
