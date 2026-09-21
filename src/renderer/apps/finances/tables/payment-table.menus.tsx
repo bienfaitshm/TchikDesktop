@@ -32,6 +32,7 @@ import {
   markAsPaidForm,
   exemptFromFeeForm,
 } from "@/renderer/libs/queries/finances";
+import { Button } from "@/renderer/components/ui/button";
 
 /**
  * Contextual properties passed down to individual fee schedule row items.
@@ -235,7 +236,7 @@ export const CellAction = feeMenu.build(
     trigger: ({ feeAssignment }) => {
       const statusLabel = getFeeScheduleLabel(feeAssignment.status);
       return (
-        <div className="flex items-center justify-end bg-accent/50 gap-2 p-2 hover:bg-accent rounded-md">
+        <Button className="w-full flex items-center justify-end bg-accent/50 gap-2 p-2 hover:bg-accent rounded-md">
           <span
             className={cn(
               "font-mono text-xs font-medium tabular-nums text-foreground",
@@ -254,7 +255,7 @@ export const CellAction = feeMenu.build(
               STATUS_INDICATORS[feeAssignment.status],
             )}
           />
-        </div>
+        </Button>
       );
     },
   },
