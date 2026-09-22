@@ -178,8 +178,7 @@ export const CellAction = feeMenu.build(
         ({ feeAssignment }) => feeAssignment.status === FEE_SCHEDULES_ENUM.PAID,
         async ({ feeAssignment }) => {
           await markAsPaidForm({
-            amountConverted:
-              feeAssignment.totalAmount - feeAssignment.amountPaid,
+            amountConverted: feeAssignment.amountPaid,
             assignmentId: feeAssignment.assignmentId,
             totalAmount: feeAssignment.totalAmount,
           });
@@ -236,25 +235,39 @@ export const CellAction = feeMenu.build(
     trigger: ({ feeAssignment }) => {
       const statusLabel = getFeeScheduleLabel(feeAssignment.status);
       return (
-        <Button className="w-full flex items-center justify-end bg-accent/50 gap-2 p-2 hover:bg-accent rounded-md">
-          <span
-            className={cn(
-              "font-mono text-xs font-medium tabular-nums text-foreground",
-              feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED &&
-                "line-through",
-            )}
-          >
-            {formatCurrency(feeAssignment.amountPaid, feeAssignment.currency)}
-          </span>
+        <Button className="w-full flex flex-col h-9  bg-accent/50  p-2 hover:bg-accent rounded-md">
+          <div className="w-full flex items-center justify-end gap-2">
+            <div className="flex flex-col gap-0.5">
+              <span
+                className={cn(
+                  "font-mono text-xs font-medium tabular-nums text-foreground",
+                  feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED &&
+                    "line-through",
+                )}
+              >
+                {formatCurrency(
+                  feeAssignment.amountPaid,
+                  feeAssignment.currency,
+                )}
+              </span>
+              <span className="text-muted-foreground text-[8px]">
+                sur{" "}
+                {formatCurrency(
+                  feeAssignment.totalAmount,
+                  feeAssignment.currency,
+                )}
+              </span>
+            </div>
 
-          <span
-            title={statusLabel}
-            aria-label={`Statut : ${statusLabel}`}
-            className={cn(
-              "size-2 rounded-full shrink-0 ring-2 ring-background transition-transform group-hover/cell:scale-110",
-              STATUS_INDICATORS[feeAssignment.status],
-            )}
-          />
+            <span
+              title={statusLabel}
+              aria-label={`Statut : ${statusLabel}`}
+              className={cn(
+                "size-2 rounded-full shrink-0 ring-2 ring-background transition-transform group-hover/cell:scale-110",
+                STATUS_INDICATORS[feeAssignment.status],
+              )}
+            />
+          </div>
         </Button>
       );
     },
