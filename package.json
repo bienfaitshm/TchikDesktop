@@ -99,7 +99,7 @@
     "radix-ui": "^1.4.3",
     "react": "^19.2.6",
     "react-call": "^2.0.2",
-    "react-day-picker": "^9.8.1",
+    "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.6",
     "react-error-boundary": "^6.0.0",
     "react-hook-form": "^7.81.0",
