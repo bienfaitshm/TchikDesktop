@@ -19,20 +19,22 @@ import {
   FeeAssignmentRepository,
 } from "@/packages/@core/data-access/db/queries/finances";
 import { SelectOptionFacade } from "@/packages/drizzle-queries";
+import { getLogger } from "@/packages/logger";
 
 /**
- * Service for managing classroom enrollment operations, metrics, and transactions.
+ * Service managing classroom enrollment workflows, financial exemptions, and metrics.
  */
 export class EnrollmentService {
   public readonly enrollmentSelectService: SelectOptionFacade<EnrollmentDTO>;
+  public readonly logger = getLogger("EnrollmentService");
 
   /**
-   * Initializes dependencies and configures the selection option facade.
-   * @param enrollmentRepo - Repository for enrollment data access.
-   * @param userRepo - Repository for user data access.
-   * @param tutorService - Service for managing tutors.
+   * Initializes dependencies and configures the select option facade.
+   * @param enrollmentRepo - Repository for enrollment data operations.
+   * @param userRepo - Repository for user data operations.
+   * @param tutorService - Service for tutor domain logic.
    * @param feeAssignment - Repository for fee assignment operations.
-   * @param clientDb - Database client connection or transaction.
+   * @param clientDb - Database client or active transaction.
    */
   constructor(
     private readonly enrollmentRepo: EnrollmentRepository,
@@ -61,17 +63,17 @@ export class EnrollmentService {
   }
 
   /**
-   * Retrieves UI selection options for enrollments using provided filters.
-   * @param filters - Filtration conditions for enrollments.
-   * @returns List of formatted options for UI controls.
+   * Retrieves selection option items for UI components.
+   * @param filters - Filtering parameters for classroom enrollments.
+   * @returns Formatted options array.
    */
   public getOptions(filters: BaseClassroomEnrollmentFilters) {
     return this.enrollmentSelectService.loadOptions(filters);
   }
 
   /**
-   * Validates required execution context identifiers.
-   * @param filters - Context containing schoolId and yearId.
+   * Asserts that required execution context fields are present.
+   * @param filters - Object containing optional schoolId and yearId parameters.
    */
   private validateContext(filters: {
     schoolId?: string;
@@ -83,42 +85,45 @@ export class EnrollmentService {
   }
 
   /**
-   * Fetches dashboard metric aggregations for a given school and academic year.
-   * @param filters - Context parameters containing schoolId and yearId.
-   * @returns Calculated total, new, and existing student metrics.
+   * Fetches classroom metrics summary for the dashboard.
+   * @param filters - Context filters containing schoolId and yearId.
+   * @returns Aggregated metrics data.
    */
-  public async getDashboardMetrics(filters: {
-    schoolId: string;
-    yearId: string;
-  }) {
+  public getDashboardMetrics(filters: { schoolId: string; yearId: string }) {
     this.validateContext(filters);
     return this.enrollmentRepo.getDashboardMetrics(filters);
   }
 
   /**
-   * Retrieves student count metrics grouped by classroom.
-   * @param filters - Context parameters containing schoolId and yearId.
-   * @returns List of student counts per classroom.
+   * Fetches enrollment counts grouped by classroom.
+   * @param filters - Context filters containing schoolId and yearId.
+   * @returns Student counts grouped by classroom ID.
    */
-  public async getCountByClass(filters: { schoolId: string; yearId: string }) {
+  public getCountByClass(filters: { schoolId: string; yearId: string }) {
     this.validateContext(filters);
     return this.enrollmentRepo.getCountByClass(filters);
   }
 
   /**
-   * Exempts students from fee assignments and marks them as Pro Deo in a transaction.
-   * @param schoolId - Unique school identifier.
-   * @param enrollmentIds - Array of enrollment identifiers to mark.
-   * @param assignmentIds - Array of fee assignment identifiers to exempt.
-   * @returns Result of the transaction update operation.
+   * Synchronously exempts students from fee assignments and marks them as Pro Deo.
+   * @param schoolId - Unique identifier of the school.
+   * @param enrollmentIds - Identifiers of target enrollments.
+   * @param assignmentIds - Identifiers of fee assignments to exempt.
+   * @returns Result of the update operation.
    */
-  public async markStudentsAsProDeo(
+  public markStudentsAsProDeo(
     schoolId: string,
     enrollmentIds: string[],
     assignmentIds: string[],
   ) {
-    return this.clientDb.transaction(async (tx) => {
-      await this.feeAssignment.exemptStudentsFromFee(
+    this.logger.info("Marking students as Pro Deo", {
+      schoolId,
+      enrollmentCount: enrollmentIds.length,
+      assignmentCount: assignmentIds.length,
+    });
+
+    return this.clientDb.transaction((tx) => {
+      this.feeAssignment.exemptStudentsFromFee(
         enrollmentIds,
         assignmentIds,
         tx,
@@ -132,29 +137,35 @@ export class EnrollmentService {
   }
 
   /**
-   * Executes a transactional workflow to rapidly create or assign students and tutors.
-   * @param payload - Data payload for quick enrollment creation.
-   * @returns The created EnrollmentDTO entity with full relations.
+   * Synchronously executes quick creation of student, tutor, and enrollment records within a transaction.
+   * @param payload - Enrollment quick creation context and payload data.
+   * @returns The newly created EnrollmentDTO instance.
    */
-  public async quickCreate({
+  public quickCreate({
     studentData,
     tutorData,
     ...payload
   }: EnrollmentQuickCreate) {
     this.validateContext(payload);
 
-    return this.clientDb.transaction(async (tx) => {
+    this.logger.info("Starting quick enrollment creation", {
+      schoolId: payload.schoolId,
+      yearId: payload.yearId,
+      classroomId: payload.classroomId,
+      isNewStudent: payload.isNewStudent,
+    });
+
+    return this.clientDb.transaction((tx) => {
       let targetStudentId: string;
       let targetTutorId: string | null = null;
 
       if (studentData.isInSystem) {
         targetStudentId = studentData.studentId;
+        this.logger.debug("Using existing student", {
+          studentId: targetStudentId,
+        });
       } else {
-        if (!studentData.student.birthDate) {
-          throw new Error("Student birthDate is required for new entries.");
-        }
-
-        const student = await this.userRepo.createStudent(
+        const student = this.userRepo.createStudent(
           {
             ...studentData.student,
             birthDate: studentData.student.birthDate,
@@ -162,34 +173,55 @@ export class EnrollmentService {
           },
           tx,
         );
-
         targetStudentId = student.userId;
+        this.logger.debug("Created new student", {
+          studentId: targetStudentId,
+        });
       }
 
-      if (tutorData?.isTutorInSystem && tutorData.tutorId) {
-        targetTutorId = tutorData.tutorId;
+      if (tutorData?.isTutorInSystem && Boolean(tutorData.tutorId)) {
+        targetTutorId = tutorData.tutorId ?? null;
+        this.logger.debug("Using existing tutor", { tutorId: targetTutorId });
       } else if (tutorData?.isTutorInSystem === false && tutorData.tutor) {
-        const tutor = await this.tutorService.createTutor(
+        const tutor = this.tutorService.createTutor(
           { ...tutorData.tutor, schoolId: payload.schoolId },
           tx,
         );
         targetTutorId = tutor.tutorId;
+        this.logger.debug("Created new tutor", { tutorId: targetTutorId });
       }
 
-      const enrollment = await this.enrollmentRepo.create(
-        {
-          classroomId: payload.classroomId,
-          schoolId: payload.schoolId,
-          yearId: payload.yearId,
-          status: payload.status,
-          isNewStudent: payload.isNewStudent,
-          studentId: targetStudentId,
-          tutorId: targetTutorId,
-        },
-        tx,
-      );
+      try {
+        const enrollment = this.enrollmentRepo.create(
+          {
+            classroomId: payload.classroomId,
+            schoolId: payload.schoolId,
+            yearId: payload.yearId,
+            status: payload.status,
+            isNewStudent: payload.isNewStudent,
+            studentId: targetStudentId,
+            tutorId: targetTutorId,
+          },
+          tx,
+        );
 
-      return this.enrollmentRepo.findById(enrollment.enrollmentId, tx);
+        const createdEnrollment = this.enrollmentRepo.findById(
+          enrollment.enrollmentId,
+          tx,
+        );
+
+        this.logger.info("Quick enrollment created successfully", {
+          enrollmentId: enrollment.enrollmentId,
+        });
+
+        return createdEnrollment;
+      } catch (error) {
+        this.logger.error("Failed to execute quick enrollment transaction", {
+          error,
+          payload,
+        });
+        throw error;
+      }
     });
   }
 }

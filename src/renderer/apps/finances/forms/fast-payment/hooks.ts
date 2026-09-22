@@ -320,7 +320,7 @@ export const derivePreviewTicket = (
         feeTypeName: getFeeTypeDisplayName(selectedFeeType),
         scheduleName: getScheduleDisplayName(selectedSchedule),
         status: FEE_SCHEDULES_ENUM.UNPAID,
-        currency: CURRENCY_ENUM.USD,
+        currency: selectedSchedule?.currency ?? CURRENCY_ENUM.CDF,
         amountPaid: amountDue,
         totalDue: selectedSchedule?.totalAmount ?? 0,
         paymentMethod: PAYMENT_METHOD_ENUM.CASH,

@@ -6,26 +6,34 @@ import {
   useUpdateAmountByAssignments,
   useUpdateAmountByClassrooms,
   useDeleteFeeAssignment,
+  markAsPaid,
+  exemptFromFee,
 } from "./finances";
 import { useFormBaseNotify, useFormBase } from "../base";
-import { withNotifications } from "@/renderer/libs/notifications";
+import { notifier, withNotifications } from "@/renderer/libs/notifications";
 import type {
+  ExemptFromFee as ExemptFromFeePayload,
   FeeAssignment,
   FeeAssignmentCreate,
   FeeAssignmentUpdate,
   FeeBulkAssignmentData,
+  MarkAsPaid as MarkAsPaidPayload,
   UpdateAmountByAssignments,
   UpdateAmountByClassrooms,
 } from "@/packages/@core/data-access/schema-validations";
 import type { BaseMutationConfig, QueryUpdatePayload } from "../base";
 import { CURRENCY_OPTIONS } from "@/packages/@core/data-access/db/options";
+import { queryClient } from "../providers";
 
 const CREATE_FEE_ASSIGNMENT_NOTIFICATIONS = {
   success: {
     title: "Attribution créée",
-    description: "L'attribution de frais a été enregistrée.",
+    description: "L'attribution de frais a été enregistrée avec succès.",
   },
-  error: { title: "Erreur lors de la création de l'attribution." },
+  error: {
+    title: "Erreur de création",
+    description: "Impossible de créer l'attribution de frais.",
+  },
 };
 
 const BULK_CREATE_FEE_ASSIGNMENT_NOTIFICATIONS = {
@@ -34,7 +42,10 @@ const BULK_CREATE_FEE_ASSIGNMENT_NOTIFICATIONS = {
     description:
       "Les lignes de frais ont été propagées au lot d'élèves sélectionné.",
   },
-  error: { title: "Erreur lors de l'assignation collective des frais." },
+  error: {
+    title: "Erreur de facturation collective",
+    description: "Échec lors de l'assignation collective des frais.",
+  },
 };
 
 const UPDATE_FEE_ASSIGNMENT_NOTIFICATIONS = {
@@ -42,7 +53,10 @@ const UPDATE_FEE_ASSIGNMENT_NOTIFICATIONS = {
     title: "Attribution mise à jour",
     description: "L'attribution a été modifiée avec succès.",
   },
-  error: { title: "Échec de la mise à jour de l'attribution." },
+  error: {
+    title: "Erreur de mise à jour",
+    description: "Échec de la mise à jour de l'attribution.",
+  },
 };
 
 const UPDATE_AMOUNT_BY_ASSIGNMENTS_NOTIFICATIONS = {
@@ -51,7 +65,10 @@ const UPDATE_AMOUNT_BY_ASSIGNMENTS_NOTIFICATIONS = {
     description:
       "Les montants des attributions sélectionnées ont été modifiés.",
   },
-  error: { title: "Erreur lors de la mise à jour des montants." },
+  error: {
+    title: "Erreur de mise à jour",
+    description: "Impossible de mettre à jour les montants des attributions.",
+  },
 };
 
 const UPDATE_AMOUNT_BY_CLASSROOMS_NOTIFICATIONS = {
@@ -59,26 +76,89 @@ const UPDATE_AMOUNT_BY_CLASSROOMS_NOTIFICATIONS = {
     title: "Montants des classes mis à jour",
     description: "Les montants pour les classes ciblées ont été mis à jour.",
   },
-  error: { title: "Erreur lors de la mise à jour par classe." },
+  error: {
+    title: "Erreur de mise à jour",
+    description: "Impossible de mettre à jour les montants par classe.",
+  },
 };
+
+const MARK_AS_PAID_NOTIFICATIONS = {
+  success: {
+    title: "Paiement enregistré",
+    description: "L'attribution a été marquée comme payée.",
+  },
+  error: {
+    title: "Erreur de traitement",
+    description: "Impossible d'enregistrer le paiement de l'attribution.",
+  },
+};
+
+const EXEMPT_FROM_FEE_NOTIFICATIONS = {
+  success: {
+    title: "Exemption accordée",
+    description: "L'élève a été exempté des frais spécifiés.",
+  },
+  error: {
+    title: "Erreur d'exemption",
+    description: "Impossible d'appliquer l'exemption de frais.",
+  },
+};
+
+/**
+ * Submits a payment status update and displays feedback notifications.
+ * @param payload - Data required to mark a fee assignment as paid.
+ */
+export async function markAsPaidForm(
+  payload: MarkAsPaidPayload,
+): Promise<void> {
+  try {
+    await markAsPaid(payload);
+    queryClient.invalidateQueries({ queryKey: ["fin"] });
+    notifier.success(MARK_AS_PAID_NOTIFICATIONS.success);
+  } catch (error) {
+    notifier.error(MARK_AS_PAID_NOTIFICATIONS.error);
+    throw error;
+  }
+}
+
+/**
+ * Submits a fee exemption request and displays feedback notifications.
+ * @param payload - Data required to exempt an assignment from fees.
+ */
+export async function exemptFromFeeForm(
+  payload: ExemptFromFeePayload,
+): Promise<void> {
+  try {
+    await exemptFromFee(payload);
+    queryClient.invalidateQueries({ queryKey: ["fin"] });
+    notifier.success(EXEMPT_FROM_FEE_NOTIFICATIONS.success);
+  } catch (error) {
+    notifier.error(EXEMPT_FROM_FEE_NOTIFICATIONS.error);
+    throw error;
+  }
+}
 
 /**
  * Builds deletion notifications based on student context.
  * @param studentName - Optional student name to customize the success message.
- * @returns Notification object for the deletion action.
+ * @returns Notification object containing success titles and descriptions.
  */
 const getDeleteFeeAssignmentNotifications = (studentName?: string) => ({
   success: {
     title: "Attribution supprimée",
     description: studentName
       ? `L'attribution de ${studentName} a été supprimée.`
-      : "L'attribution a été supprimée.",
+      : "L'attribution de frais a été supprimée.",
+  },
+  error: {
+    title: "Erreur de suppression",
+    description: "Impossible de supprimer l'attribution de frais.",
   },
 });
 
 /**
  * Helper hook to handle repetitive search input states.
- * @returns Object containing search state and update handler.
+ * @returns Object containing search query state, updater function, and empty defaults.
  */
 function useSearchInputState() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -93,7 +173,7 @@ function useSearchInputState() {
 /**
  * Custom hook for managing individual fee assignment creation.
  * @param config - Optional base mutation configuration.
- * @returns Form state and handlers bound to the creation mutation.
+ * @returns Form state and submission handlers bound to the creation mutation.
  */
 export function useCreateFeeAssignmentForm(
   config?: BaseMutationConfig<FeeAssignment>,
@@ -114,7 +194,7 @@ export function useCreateFeeAssignmentForm(
 /**
  * Custom hook for managing bulk fee assignment creation for multiple students.
  * @param config - Optional base mutation configuration.
- * @returns Combined form state and search handlers for multi-select inputs.
+ * @returns Combined form state, search handlers, and bulk creation mutation.
  */
 export function useCreateBulkFeeAssignmentForm(
   config?: BaseMutationConfig<void>,
@@ -170,7 +250,7 @@ export function useUpdateFeeAssignmentForm(
 /**
  * Custom hook for updating fee amounts across specific assignment IDs.
  * @param config - Optional base mutation configuration.
- * @returns Form state and handlers for updating assignment amounts.
+ * @returns Form state and currency options for updating assignment amounts.
  */
 export function useUpdateAmountByAssignmentsForm(
   config?: BaseMutationConfig<FeeAssignment[]>,
@@ -193,7 +273,7 @@ export function useUpdateAmountByAssignmentsForm(
 /**
  * Custom hook for updating fee amounts across targeted classrooms.
  * @param config - Optional base mutation configuration.
- * @returns Form state and handlers for updating amounts by classrooms.
+ * @returns Form state and currency options for updating amounts by classrooms.
  */
 export function useUpdateAmountByClassroomsForm(
   config?: BaseMutationConfig<FeeAssignment[]>,

@@ -26,3 +26,8 @@ export type MutateOptionsWithNotifications<
 > = MutateOptions<TData, TError, TVariables, TContext> & {
   notifications?: UseMutationNotificationOptions;
 };
+
+export interface Notifier {
+  success: (msg: NotificationMessages) => void;
+  error: (msg: NotificationMessages) => void;
+}

@@ -1,8 +1,5 @@
 import type { MutateOptions } from "@tanstack/react-query";
-import type {
-  MutateOptionsWithNotifications,
-  NotificationMessages,
-} from "./types";
+import type { MutateOptionsWithNotifications, Notifier } from "./types";
 
 const DEFAULT_MESSAGES = {
   success: {
@@ -28,10 +25,7 @@ const extractErrorMessage = (error: unknown): string => {
  * Créateur de décorateur de mutation (Open/Closed Principle)
  * Permet de lier n'importe quelle librairie de Toast à TanStack Query.
  */
-export function createMutationNotifier(notifier: {
-  success: (msg: NotificationMessages) => void;
-  error: (msg: NotificationMessages) => void;
-}) {
+export function createMutationNotifier(notifier: Notifier) {
   return function useMutationWithNotifications<
     TData,
     TError,

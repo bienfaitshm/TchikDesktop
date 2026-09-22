@@ -1,17 +1,16 @@
-import {
-  QueryClient,
-  QueryClientProvider,
-  useQueryClient as useTSQueryClient,
-} from "@tanstack/react-query";
+import React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { tableDevtoolsPlugin } from "@tanstack/react-table-devtools";
 
+/**
+ * Shared React Query client instance configured with default query behavior.
+ */
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 10 * 60 * 1000,
-
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       refetchInterval: false,
@@ -19,22 +18,27 @@ export const queryClient = new QueryClient({
   },
 });
 
-export const useQueryClient = () => {
-  return useTSQueryClient(queryClient);
-};
+interface QueryProviderProps {
+  children: React.ReactNode;
+}
 
-// if (process.env.NODE_ENV !== 'production') {
-//   window.TANSTACK_QUERY_CLIENT = queryClient;
-// }
-
+/**
+ * Provides the React Query context and renders development tools in development mode.
+ * @param props - Component props containing React children.
+ * @returns The provider wrapper component tree.
+ */
 export default function QueryProvider({
   children,
-}: React.PropsWithChildren<unknown>): React.ReactNode {
+}: QueryProviderProps): React.ReactNode {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <ReactQueryDevtools initialIsOpen={false} />
-      <TanStackDevtools plugins={[tableDevtoolsPlugin()]} />
+      {import.meta.env.DEV && (
+        <>
+          <ReactQueryDevtools initialIsOpen={false} />
+          <TanStackDevtools plugins={[tableDevtoolsPlugin()]} />
+        </>
+      )}
     </QueryClientProvider>
   );
 }

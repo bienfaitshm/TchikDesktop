@@ -59,7 +59,7 @@ export const createPaymentColumns = (
         <DataTableColumnHeader
           column={column}
           title={head.name}
-          className="justify-end text-right min-w-16 truncate"
+          className="flex items-center justify-end text-right min-w-32 truncate"
         />
       ),
       cell: ({ row }) => {

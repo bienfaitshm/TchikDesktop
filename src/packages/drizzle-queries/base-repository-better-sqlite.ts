@@ -134,6 +134,7 @@ export abstract class BaseRepository<
           ? error
           : DatabaseError.from(error, `Operational failure during ${opName}.`);
 
+      console.log("Error DETAIL:", error);
       this.logError(opName, dbError, logContext);
       throw dbError;
     }

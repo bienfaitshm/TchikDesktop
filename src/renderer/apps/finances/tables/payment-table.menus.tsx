@@ -28,8 +28,12 @@ import { STATUS_INDICATORS } from "../components/payment-legend-colors";
 import { formatCurrency } from "@/packages/currency";
 import { ButtonMenu } from "@/renderer/components/buttons/button-menu";
 import { MarkStudentAsProDeoDialog } from "../../schools/dialogs/enrollment.dialog";
-import { feeAssignment as feeAssignmentApis } from "@/renderer/libs/apis";
-import { queryClient } from "@/renderer/libs/queries/providers";
+import {
+  markAsPaidForm,
+  exemptFromFeeForm,
+} from "@/renderer/libs/queries/finances";
+import { Button } from "@/renderer/components/ui/button";
+
 /**
  * Contextual properties passed down to individual fee schedule row items.
  */
@@ -40,10 +44,83 @@ export interface FeeTypeRowActionsProps {
   mutationKey?: readonly unknown[];
 }
 
+/**
+ * Checks whether a fee assignment has been fully paid.
+ * @param feeAssignment - The target fee assignment entity.
+ * @returns True if the paid amount meets or exceeds the total amount.
+ */
+export function isFullyPaid(feeAssignment: FeeAssignment): boolean {
+  return feeAssignment.amountPaid >= feeAssignment.totalAmount;
+}
+
+/**
+ * Checks whether a fee assignment is in read-only mode (already paid or total amount is zero).
+ * @param feeAssignment - The target fee assignment entity.
+ * @returns True if no modification actions should be allowed.
+ */
+export function isReadOnlyAssignment(feeAssignment: FeeAssignment): boolean {
+  return (
+    feeAssignment.status === FEE_SCHEDULES_ENUM.PAID ||
+    feeAssignment.totalAmount === 0
+  );
+}
+
+/**
+ * Determines whether a new payment can be registered for a fee assignment.
+ * Forbidden if the total amount is zero, status is already paid, or status is exempted.
+ * @param feeAssignment - The target fee assignment entity.
+ * @returns True if payment registration should be allowed.
+ */
+export function canPayFeeAssignment(feeAssignment: FeeAssignment): boolean {
+  if (isReadOnlyAssignment(feeAssignment)) return false;
+  if (feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED) return false;
+  return !isFullyPaid(feeAssignment);
+}
+
+/**
+ * Determines whether a student can be exempted from a fee assignment.
+ * Exemption is forbidden if any payment advance has been made, total amount is zero, or status is paid/exempted.
+ * @param feeAssignment - The target fee assignment entity.
+ * @returns True if fee exemption should be allowed.
+ */
+export function canExemptFeeAssignment(feeAssignment: FeeAssignment): boolean {
+  if (isReadOnlyAssignment(feeAssignment)) return false;
+  if (feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED) return false;
+  return feeAssignment.amountPaid === 0;
+}
+
+/**
+ * Determines whether a fee assignment can be manually marked as paid.
+ * Forbidden if total amount is zero, status is paid, or status is exempted.
+ * @param feeAssignment - The target fee assignment entity.
+ * @returns True if marking as paid should be allowed.
+ */
+export function canMarkFeeAssignmentAsPaid(
+  feeAssignment: FeeAssignment,
+): boolean {
+  if (isReadOnlyAssignment(feeAssignment)) return false;
+  if (feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED) return false;
+  return feeAssignment.amountPaid > 0;
+}
+
+/**
+ * Extracts a flattened list of valid fee assignments from a payment mapping dictionary.
+ * @param payments - Record mapping of fee schedules or undefined.
+ * @returns Array of valid fee assignment entities.
+ */
+export function extractAssignmentsFromPayments(
+  payments?: Record<string, FeeAssignment | null | undefined>,
+): FeeAssignment[] {
+  if (!payments) return [];
+  return Object.values(payments).filter(
+    (assignment): assignment is FeeAssignment => Boolean(assignment),
+  );
+}
+
 const feeMenu = createMenuBuilder<FeeTypeRowActionsProps>();
 
 /**
- * Contextual action menu configuration bound to fee schedule cells.
+ * Contextual action menu configuration bound to individual fee schedule cells.
  */
 export const CellAction = feeMenu.build(
   {
@@ -61,6 +138,7 @@ export const CellAction = feeMenu.build(
             onOpenChange={onOpenChange}
             schoolId={schoolId}
             yearId={yearId}
+            defaultValues={{}}
             totalAmount={feeAssignment.totalAmount}
             assignmentId={feeAssignment.assignmentId}
             amountPaid={feeAssignment.amountPaid}
@@ -69,87 +147,64 @@ export const CellAction = feeMenu.build(
           />
         ),
       )
-      .disabled(
-        ({ feeAssignment }) =>
-          feeAssignment.amountPaid >= feeAssignment.totalAmount ||
-          feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED,
-      ),
+      .disabled(({ feeAssignment }) => !canPayFeeAssignment(feeAssignment))
+      .hidden(({ feeAssignment }) => !canPayFeeAssignment(feeAssignment)),
 
     exempt: feeMenu
       .label("Exempter du paiement", ShieldOff)
       .toggle(
         ({ feeAssignment }) =>
           feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED,
-        async ({ feeAssignment, schoolId }, checked) => {
-          feeAssignmentApis
-            .exemptFromFee({
-              assignmentIds: [feeAssignment.assignmentId],
-              schoolId: schoolId,
-              studentEnrollmentIds: [feeAssignment.enrollmentId],
-            })
-            .catch(() => {
-              queryClient.invalidateQueries({ queryKey: ["fin"] });
-              console.log(
-                "Exemption toggled for:",
-                feeAssignment.assignmentId,
-                checked,
-              );
-            });
+        async ({ feeAssignment, schoolId }) => {
+          await exemptFromFeeForm({
+            assignmentIds: [feeAssignment.assignmentId],
+            schoolId,
+            studentEnrollmentIds: [feeAssignment.enrollmentId],
+          });
         },
       )
-      .disabled(
-        ({ feeAssignment }) => feeAssignment.status === FEE_SCHEDULES_ENUM.PAID,
-      )
-      .hidden(
-        ({ feeAssignment }) => feeAssignment.status === FEE_SCHEDULES_ENUM.PAID,
-      ),
+      .disabled(({ feeAssignment }) => !canExemptFeeAssignment(feeAssignment))
+      .hidden(({ feeAssignment }) => !canExemptFeeAssignment(feeAssignment)),
 
     markPaid: feeMenu
       .label(
         ({ feeAssignment }) =>
-          feeAssignment.status === FEE_SCHEDULES_ENUM.UNPAID
-            ? "Marquer comme payé"
-            : "Payé",
+          feeAssignment.amountPaid > 0
+            ? "Solder le reste à payer"
+            : "Marquer comme payé",
         CheckCircle,
       )
       .toggle(
-        ({ feeAssignment }) =>
-          feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED,
-        async ({ feeAssignment }, checked) => {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          console.log(
-            "payment toggled for:",
-            feeAssignment.assignmentId,
-            checked,
-          );
+        ({ feeAssignment }) => feeAssignment.status === FEE_SCHEDULES_ENUM.PAID,
+        async ({ feeAssignment }) => {
+          await markAsPaidForm({
+            amountConverted: feeAssignment.amountPaid,
+            assignmentId: feeAssignment.assignmentId,
+            totalAmount: feeAssignment.totalAmount,
+          });
         },
       )
+      .disabled(
+        ({ feeAssignment }) => !canMarkFeeAssignmentAsPaid(feeAssignment),
+      )
       .hidden(
-        ({ feeAssignment }) => feeAssignment.status !== FEE_SCHEDULES_ENUM.PAID,
+        ({ feeAssignment }) => !canMarkFeeAssignmentAsPaid(feeAssignment),
       ),
 
     changeAmount: feeMenu
       .label("Ajuster le montant à payer", Pencil)
-      .dialog(
-        ({
-          props: { schoolId, yearId, feeAssignment, mutationKey },
-          open,
-          onOpenChange,
-          close,
-        }) => (
-          <SavePaymentDialog
-            open={open}
-            onOpenChange={onOpenChange}
-            schoolId={schoolId}
-            yearId={yearId}
-            totalAmount={feeAssignment.totalAmount}
-            assignmentId={feeAssignment.assignmentId}
-            amountPaid={feeAssignment.amountPaid}
-            mutationKey={mutationKey}
-            onSuccess={close}
-          />
-        ),
-      )
+      .dialog(({ props: { schoolId, feeAssignment }, open, onOpenChange }) => (
+        <UpdateAmountByAssignmentsDialog
+          mutationKey={["fin"]}
+          enrollmentIds={[feeAssignment.enrollmentId]}
+          schoolId={schoolId}
+          assignments={[feeAssignment]}
+          open={open}
+          onOpenChange={onOpenChange}
+        />
+      ))
+      .disabled(({ feeAssignment }) => isReadOnlyAssignment(feeAssignment))
+      .hidden(({ feeAssignment }) => isReadOnlyAssignment(feeAssignment))
       .separator("after"),
 
     consultationGroup: feeMenu
@@ -180,26 +235,40 @@ export const CellAction = feeMenu.build(
     trigger: ({ feeAssignment }) => {
       const statusLabel = getFeeScheduleLabel(feeAssignment.status);
       return (
-        <div className="flex items-center gap-2 p-2 bg-accent/50 hover:bg-accent rounded-md">
-          <span
-            className={cn(
-              "font-mono text-xs font-medium tabular-nums text-foreground",
-              feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED &&
-                "line-through",
-            )}
-          >
-            {formatCurrency(feeAssignment.amountPaid, feeAssignment.currency)}
-          </span>
+        <Button className="w-full flex flex-col h-9  bg-accent/50  p-2 hover:bg-accent rounded-md">
+          <div className="w-full flex items-center justify-end gap-2">
+            <div className="flex flex-col gap-0.5">
+              <span
+                className={cn(
+                  "font-mono text-xs font-medium tabular-nums text-foreground",
+                  feeAssignment.status === FEE_SCHEDULES_ENUM.EXEMPTED &&
+                    "line-through",
+                )}
+              >
+                {formatCurrency(
+                  feeAssignment.amountPaid,
+                  feeAssignment.currency,
+                )}
+              </span>
+              <span className="text-muted-foreground text-[8px]">
+                sur{" "}
+                {formatCurrency(
+                  feeAssignment.totalAmount,
+                  feeAssignment.currency,
+                )}
+              </span>
+            </div>
 
-          <span
-            title={statusLabel}
-            aria-label={`Statut : ${statusLabel}`}
-            className={cn(
-              "size-2 rounded-full shrink-0 ring-2 ring-background transition-transform group-hover/cell:scale-110",
-              STATUS_INDICATORS[feeAssignment.status],
-            )}
-          />
-        </div>
+            <span
+              title={statusLabel}
+              aria-label={`Statut : ${statusLabel}`}
+              className={cn(
+                "size-2 rounded-full shrink-0 ring-2 ring-background transition-transform group-hover/cell:scale-110",
+                STATUS_INDICATORS[feeAssignment.status],
+              )}
+            />
+          </div>
+        </Button>
       );
     },
   },
@@ -238,6 +307,7 @@ export const RowAction = rowMenu.build(
           );
         },
       ),
+
     changeAmount: rowMenu.label("Ajuster le montant à payer", Pencil).dialog(
       ({
         props: {
@@ -245,16 +315,19 @@ export const RowAction = rowMenu.build(
         },
         open,
         onOpenChange,
-      }) => (
-        <UpdateAmountByAssignmentsDialog
-          mutationKey={["fin"]}
-          enrollmentIds={[enrollmentId]}
-          schoolId={schoolId}
-          assignments={[]}
-          open={open}
-          onOpenChange={onOpenChange}
-        />
-      ),
+      }) => {
+        const assignments = extractAssignmentsFromPayments(payments);
+        return (
+          <UpdateAmountByAssignmentsDialog
+            mutationKey={["fin"]}
+            enrollmentIds={[enrollmentId]}
+            schoolId={schoolId}
+            assignments={assignments}
+            open={open}
+            onOpenChange={onOpenChange}
+          />
+        );
+      },
     ),
   },
   {

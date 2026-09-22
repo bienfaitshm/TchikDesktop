@@ -1,4 +1,4 @@
-import { FeeAssignment, TDataBase } from "../..";
+import { db, FEE_SCHEDULES_ENUM, FeeAssignment, TDataBase } from "../..";
 import {
   type BaseFeeAssignmentFilters,
   FeeAssignmentRepository,
@@ -21,6 +21,7 @@ export class FeeAssignmentService {
    */
   constructor(
     private readonly feeAssignmentRepo: FeeAssignmentRepository = feeAssignmentRepository,
+    private readonly _db: TDataBase = db,
   ) {
     this.selectOptions = new SelectOptionFacade<FeeAssignmentDTO>(
       this.feeAssignmentRepo,
@@ -91,26 +92,43 @@ export class FeeAssignmentService {
 
   /**
    * Records a payment against an assignment and updates its progress and status.
-   * @param payload - Payment information including assignment ID and converted payment amount.
+   * @param payload - Payment information including assignment ID.
    * @param tx - Optional transaction instance.
    * @returns Updated fee assignment DTO.
    */
-  public markAsPaid(
-    payload: MarkAsPaidPayload,
-    tx?: TDataBase,
-  ): FeeAssignment[] {
-    const { assignmentId, amountConverted, totalAmount } = payload;
+  public markAsPaid(payload: MarkAsPaidPayload, tx?: TDataBase): FeeAssignment {
+    const { assignmentId } = payload;
+    const dbContext = tx ?? this._db;
 
-    if (amountConverted <= 0) {
-      throw new Error("Payment amount must be greater than zero.");
-    }
+    return dbContext.transaction((transactionContext) => {
+      const assignment = this.feeAssignmentRepo.findById(
+        assignmentId,
+        transactionContext,
+      );
 
-    return this.feeAssignmentRepo.updateAssignmentProgress(
-      assignmentId,
-      amountConverted,
-      totalAmount,
-      tx,
-    );
+      if (!assignment) {
+        throw new Error(
+          `Fee assignment with ID "${assignmentId}" was not found.`,
+        );
+      }
+
+      const updatedAssignment = this.feeAssignmentRepo.updateById(
+        assignmentId,
+        {
+          status: FEE_SCHEDULES_ENUM.PAID,
+          totalAmount: assignment.amountPaid,
+        },
+        transactionContext,
+      );
+
+      if (!updatedAssignment) {
+        throw new Error(
+          `Failed to update fee assignment with ID "${assignmentId}".`,
+        );
+      }
+
+      return updatedAssignment;
+    });
   }
 
   /**

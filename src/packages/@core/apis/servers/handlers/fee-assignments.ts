@@ -12,12 +12,14 @@ import {
   UpdateAmountByAssignmentsSchema,
   UpdateAmountByClassroomsSchema,
   ExemptFromFeeSchema,
+  MarkAsPaidSchema,
   type FeeAssignmentFilter,
   type FeeAssignmentCreate,
   type FeeAssignmentUpdate,
   type UpdateAmountByAssignments,
   type UpdateAmountByClassrooms,
   type ExemptFromFee,
+  type MarkAsPaid,
 } from "@/packages/@core/data-access/schema-validations";
 import {
   HttpMethod,
@@ -141,6 +143,13 @@ export class FeeAssignmentController {
       assignmentIds: body.assignmentIds,
       scheduleIds: body.scheduleIds,
     });
+  }
+
+  @IpcServer.register(HttpMethod.POST, FeeAssignmentRoutes.MARK_AS_PAID, {
+    body: MarkAsPaidSchema,
+  })
+  static async markAsPaid({ body }: IpcRequest<MarkAsPaid>) {
+    return feeAssignmentService.markAsPaid(body);
   }
 
   /**

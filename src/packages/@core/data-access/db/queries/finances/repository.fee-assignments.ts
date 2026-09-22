@@ -316,6 +316,9 @@ export class FeeAssignmentRepository
     totalAmount: number,
     tx: TDataBase = this.db,
   ): FeeAssignment[] {
+    this.logger.info(
+      `[FeeAssignmentRepository]: updateAssignmentProgress amountConverted: ( ${amountConverted}) , totalAmount ( ${totalAmount} )`,
+    );
     try {
       const previousAmount = this.getAssignmentAmount(assignmentId, tx);
       const newAmountPaid = previousAmount + amountConverted;
@@ -452,7 +455,7 @@ export class FeeAssignmentRepository
     tx: TDataBase,
   ): FeeAssignment[] {
     return this.update(
-      { totalAmount: newTotalAmount, currency },
+      { totalAmount: newTotalAmount, currency, isCustomized: true },
       { where: whereQuery },
       tx,
     );
