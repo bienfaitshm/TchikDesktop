@@ -10,6 +10,7 @@ import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 import { ScreenSaveProvider } from "@/renderer/components/screen-saver";
 import { WindowTitleBar } from "@/renderer/components/win-title-bar";
+import { StateBar } from "@/renderer/components/state-bars";
 
 // Sidebar styling configuration
 const SIDEBAR_CONFIG_STYLES: React.CSSProperties = {
@@ -67,10 +68,7 @@ export function AppLayout({ menus = [] }: AppLayoutProps): React.JSX.Element {
           </div>
 
           {/* Full-width Status Bar Footer */}
-          <footer className="z-30 flex h-7 w-full shrink-0 select-none items-center justify-between gap-2 border-t bg-background/95 px-4 text-xs text-muted-foreground backdrop-blur-sm">
-            {/* <span>Ready</span>
-            <span>App Version {APP_VERSION}</span> */}
-          </footer>
+          <StateBar />
         </div>
       </SidebarProvider>
     </ScreenSaveProvider>

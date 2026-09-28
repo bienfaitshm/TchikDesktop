@@ -6,18 +6,20 @@ directories:
   output: release/${version}
 
 files:
-  - '!**/.vscode/**'
-  - '!src/**'
-  - '!electron.vite.config.*'
-  - '!.eslint*'
-  - '!.prettier*'
-  - '!dev-app-update.yml'
-  - '!CHANGELOG.md'
-  - '!README.md'
-  - '!.env*'
-  - '!.npmrc'
-  - '!pnpm-lock.yaml'
-  - '!tsconfig*.json'
+  - "out/**/*"
+  - "node_modules/**/*"
+  - "!**/.vscode/**"
+  - "!src/**"
+  - "!electron.vite.config.*"
+  - "!.eslint*"
+  - "!.prettier*"
+  - "!dev-app-update.yml"
+  - "!CHANGELOG.md"
+  - "!README.md"
+  - "!.env*"
+  - "!.npmrc"
+  - "!pnpm-lock.yaml"
+  - "!tsconfig*.json"
 
 extraResources:
   - from: "documents_templates"
@@ -26,11 +28,10 @@ extraResources:
     to: "drizzle"
 
 asarUnpack:
-  - node_modules/sqlite3
-  - node_modules/better-sqlite3
-  - node_modules/@libsql/**/*
-  - out/main/chunks/*.node
-  - resources/**
+  - "**/node_modules/better-sqlite3/**/*"
+  - "**/node_modules/sqlite3/**/*"
+  - "**/node_modules/@libsql/**/*"
+  - "**/*.node"
 
 # ----------------------------------------------------
 # CONFIGURATION WINDOWS
@@ -39,37 +40,20 @@ win:
   executableName: Tchik
   icon: build/icon.ico
   target:
-    - target: msi        # Installateur MSI Offline (Déploiement Entreprise/École)
+    - target: nsis
       arch: [x64]
-    - target: nsis       # Installateur EXE Offline (Classique)
-      arch: [x64, arm64]
-    - target: nsis-web   # Installateur EXE Online (Léger)
-      arch: [x64, arm64]
 
-# 1. Format MSI (Windows Offline MSI)
-msi:
-  perMachine: true
-  artifactName: ${productName}_Installer_Windows_${version}.${ext}
-  createDesktopShortcut: true
-  menuCategory: "Education"
-
-# 2. Format NSIS (Windows Offline EXE)
+# Format NSIS (Compatible Auto-Update)
 nsis:
   oneClick: false
-  perMachine: true
+  perMachine: false                      # Permet la mise à jour sans demande UAC systématique
   allowElevation: true
   allowToChangeInstallationDirectory: true
   displayLanguageSelector: false
-  shortcutName: ${productName}
-  artifactName: ${productName}_Installer_Windows_${version}-setup.${ext}
+  shortcutName: Tchik
   createDesktopShortcut: always
   createStartMenuShortcut: true
-
-# 3. Format NSIS-Web (Windows Online EXE)
-nsisWeb:
-  artifactName: ${productName}_Online_Setup_Windows_${version}.${ext}
-  appPackageUrl: "https://github.com/bienfaitshm/TchikDesktop/releases/download/v${version}"
-
+  differentialPackage: true             # Télécharge uniquement les deltas de mise à jour
 
 # ----------------------------------------------------
 # CONFIGURATION MAC
@@ -84,9 +68,7 @@ mac:
     NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   target:
     - target: dmg
-      arch:
-        - x64
-        - arm64
+      arch: [x64, arm64]
   notarize: false
 
 dmg:
@@ -112,22 +94,12 @@ linux:
       Terminal: false
       Type: Application
       StartupWMClass: Tchik
-    desktopActions:
-      NewWindow:
-        Name: New Window
-        Exec: Tchik --new-window
-      NewFile:
-        Name: New File
-        Exec: Tchik --new-file
-  artifactName: ${productName}_Installer_Linux_${version}.${ext}
-
-appImage:
   artifactName: ${productName}_Installer_Linux_${version}.${ext}
 
 # ----------------------------------------------------
-# PUBLICATION & REGISTRE
+# PUBLICATION & REBUILD
 # ----------------------------------------------------
-npmRebuild: true
+npmRebuild: false                        # Évite de recompiler si déjà géré par electron-rebuild en amont
 
 publish:
   provider: github
