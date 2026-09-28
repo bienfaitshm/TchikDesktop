@@ -1,3 +1,7 @@
+# ----------------------------------------------------
+# GENERAL METADATA & BUILD CONFIGURATION
+# ----------------------------------------------------
+# Defines application identity and output directories.
 productName: Tchik
 appId: com.bienfaitshm.tchik
 
@@ -5,6 +9,7 @@ directories:
   buildResources: build
   output: release/${version}
 
+# Specifies files to include/exclude in the final package to optimize size.
 files:
   - "out/**/*"
   - "node_modules/**/*"
@@ -21,12 +26,14 @@ files:
   - "!pnpm-lock.yaml"
   - "!tsconfig*.json"
 
+# Copies additional static resources outside the asar archive.
 extraResources:
   - from: "documents_templates"
     to: "documents_templates"
   - from: "drizzle"
     to: "drizzle"
 
+# Excludes native modules from asar compression to ensure they execute correctly.
 asarUnpack:
   - "**/node_modules/better-sqlite3/**/*"
   - "**/node_modules/sqlite3/**/*"
@@ -34,30 +41,40 @@ asarUnpack:
   - "**/*.node"
 
 # ----------------------------------------------------
-# CONFIGURATION WINDOWS
+# WINDOWS CONFIGURATION
 # ----------------------------------------------------
+# Defines Windows executable targets (offline and web installers).
 win:
   executableName: Tchik
   icon: build/icon.ico
   target:
     - target: nsis
       arch: [x64]
+    - target: nsis-web
+      arch: [x64]
 
-# Format NSIS (Compatible Auto-Update)
+# Configures the offline installer behavior.
+# perMachine is set to true to allow installation in C:/Program Files without permission errors.
 nsis:
   oneClick: false
-  perMachine: false                      # Permet la mise à jour sans demande UAC systématique
+  perMachine: true
   allowElevation: true
   allowToChangeInstallationDirectory: true
   displayLanguageSelector: false
   shortcutName: Tchik
   createDesktopShortcut: always
   createStartMenuShortcut: true
-  differentialPackage: true             # Télécharge uniquement les deltas de mise à jour
+  differentialPackage: true
+
+# Configures the web installer.
+# appPackageUrl is intentionally omitted to let the GitHub publish provider resolve it automatically.
+nsisWeb:
+  artifactName: ${productName}_WebInstaller_Windows_${version}.${ext}
 
 # ----------------------------------------------------
-# CONFIGURATION MAC
+# MAC CONFIGURATION
 # ----------------------------------------------------
+# Defines macOS security entitlements and user permission requests.
 mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
@@ -76,8 +93,9 @@ dmg:
   icon: build/icon.icns
 
 # ----------------------------------------------------
-# CONFIGURATION LINUX
+# LINUX CONFIGURATION
 # ----------------------------------------------------
+# Defines Linux distribution targets and desktop environment integrations.
 linux:
   target:
     - target: AppImage
@@ -85,11 +103,11 @@ linux:
   maintainer: Bienfait Shomari <bienfaitshm@google.com>
   category: Education
   icon: build/icon.png
-  description: "Gestionnaire Tchik pour l'éducation"
+  description: "Tchik Manager for Education"
   desktop:
     entry:
       Name: Tchik
-      Comment: Gestionnaire Tchik pour l'éducation
+      Comment: Tchik Manager for Education
       Categories: Education;Utility;
       Terminal: false
       Type: Application
@@ -99,7 +117,8 @@ linux:
 # ----------------------------------------------------
 # PUBLICATION & REBUILD
 # ----------------------------------------------------
-npmRebuild: false                        # Évite de recompiler si déjà géré par electron-rebuild en amont
+# Links to the remote repository for auto-updates and release hosting.
+npmRebuild: false
 
 publish:
   provider: github
