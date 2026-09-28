@@ -7,6 +7,7 @@ import type {
   ThemeMode,
 } from "@/packages/@core/data-access/stores";
 import { windowControlsBridge } from "./windows";
+import { Updater } from "./updater";
 
 export const STORE_IPC_CHANNELS = {
   GET_CURRENT_CONFIG: "store:getCurrentConfig",
@@ -139,36 +140,12 @@ const electronAPI = {
 };
 
 export default electronAPI;
-const customUpdaterAPI = {
-  checkUpdate: () => ipcRenderer.invoke("check-update"),
-  startDownload: () => ipcRenderer.invoke("start-download"),
-  quitAndInstall: () => ipcRenderer.invoke("quit-and-install"),
-
-  onUpdateAvailable: (callback: (event: any, data: any) => void) => {
-    ipcRenderer.on("update-can-available", callback);
-    return () => ipcRenderer.removeListener("update-can-available", callback);
-  },
-  onDownloadProgress: (callback: (event: any, data: any) => void) => {
-    ipcRenderer.on("download-progress", callback);
-    return () => ipcRenderer.removeListener("download-progress", callback);
-  },
-  onUpdateDownloaded: (callback: () => void) => {
-    ipcRenderer.on("update-downloaded", callback);
-    return () => ipcRenderer.removeListener("update-downloaded", callback);
-  },
-  onUpdateError: (callback: (event: any, error: any) => void) => {
-    ipcRenderer.on("update-error", callback);
-    return () => ipcRenderer.removeListener("update-error", callback);
-  },
-};
 
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld("windowControls", windowControlsBridge);
     contextBridge.exposeInMainWorld("electron", electronAPI);
-    contextBridge.exposeInMainWorld("api", {
-      updater: customUpdaterAPI,
-    });
+    contextBridge.exposeInMainWorld("updater", Updater);
   } catch (error) {
     console.error("Erreur d'exposition Preload :", error);
   }

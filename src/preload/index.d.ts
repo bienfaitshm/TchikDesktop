@@ -1,8 +1,8 @@
 import type { ElectronAPI } from "@electron-toolkit/preload";
 import type { AppConfig, PosPrintConfig, ThemeMode } from "@/main/store";
 import type { School, StudyYear } from "@/packages/@core/data-access/db";
-import { TEndPoint } from "./apis";
 import type { ElectronWindowControl, StoreAPI } from "./types";
+import type { UpdaterAPI } from "./updater";
 
 interface AppInfo {
   name: string;
@@ -98,10 +98,9 @@ declare global {
       getSystemInformationFeature: () => Promise<SystemInformation>;
 
       store: StoreAPI;
-
-      api: TEndPoint;
     };
 
+    updater: UpdaterAPI;
     windowControls: ElectronWindowControl;
   }
 }
