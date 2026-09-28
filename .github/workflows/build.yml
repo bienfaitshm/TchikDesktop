@@ -46,6 +46,12 @@ jobs:
 
       - name: Install Project Dependencies
         run: yarn install --frozen-lockfile
+      - name: Install Windows Build Tools / C++ (Windows only)
+        if: matrix.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Rebuild Native Modules for Electron
+        run: yarn rebuild:native
 
       - name: Install Linux Build Dependencies (Ubuntu only)
         if: matrix.os == 'ubuntu-latest'
