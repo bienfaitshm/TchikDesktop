@@ -10,7 +10,7 @@ import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 import { ScreenSaveProvider } from "@/renderer/components/screen-saver";
 import { WindowTitleBar } from "@/renderer/components/win-title-bar";
-import { StateBar } from "@/renderer/components/state-bars";
+import { StateBar } from "@/renderer/components/statebars";
 
 // Sidebar styling configuration
 const SIDEBAR_CONFIG_STYLES: React.CSSProperties = {
