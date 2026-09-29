@@ -3,6 +3,7 @@ import type { AppConfig, PosPrintConfig, ThemeMode } from "@/main/store";
 import type { School, StudyYear } from "@/packages/@core/data-access/db";
 import type { ElectronWindowControl, StoreAPI } from "./types";
 import type { UpdaterAPI } from "./updater";
+import type { ApplicationApi } from "./app";
 
 interface AppInfo {
   name: string;
@@ -101,6 +102,7 @@ declare global {
     };
 
     updater: UpdaterAPI;
+    application: ApplicationApi;
     windowControls: ElectronWindowControl;
   }
 }

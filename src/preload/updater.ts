@@ -1,5 +1,5 @@
 import { ipcRenderer } from "electron";
-import type { IpcRendererEvent } from "electron";
+import { registerListener, UnsubscribeFunction } from "./utils";
 
 /**
  * Payload describing update availability status.
@@ -30,11 +30,6 @@ export interface UpdateErrorPayload {
 }
 
 /**
- * Function contract returned by event subscriptions to remove IPC listeners.
- */
-export type UnsubscribeFunction = () => void;
-
-/**
  * Contract defining the client-side updater IPC interface.
  */
 export interface UpdaterAPI {
@@ -58,23 +53,6 @@ export interface UpdaterAPI {
   onUpdateError: (
     callback: (error: UpdateErrorPayload) => void,
   ) => UnsubscribeFunction;
-}
-
-/**
- * Subscribes to an IPC channel and returns an unsubscribe cleanup function.
- * @param channel - The target IPC channel name.
- * @param callback - The handler invoked with the received payload.
- * @returns Unsubscribe function removing the registered listener.
- */
-function registerListener<T>(
-  channel: string,
-  callback: (data: T) => void,
-): UnsubscribeFunction {
-  const listener = (_event: IpcRendererEvent, data: T) => callback(data);
-  ipcRenderer.on(channel, listener);
-  return () => {
-    ipcRenderer.removeListener(channel, listener);
-  };
 }
 
 /**

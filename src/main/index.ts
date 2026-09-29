@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, nativeTheme } from "electron";
+import { app, shell, BrowserWindow, nativeTheme, ipcMain } from "electron";
 import debug from "electron-debug";
 import path from "node:path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
@@ -9,7 +9,10 @@ import { initializeTextModifiers } from "@/main/features/text-transformation";
 import { setupDevelopmentEnvironment } from "@/main/electron-dev-extension";
 import { updateInit } from "@/main/update";
 import { getAppIcon } from "@/main/utils";
-import { handleFatalError } from "./error-handler";
+import {
+  handleFatalError,
+  handleFrontError,
+} from "@/main/features/error-handler";
 import {
   registerStoreIpcHandlers,
   tchikAppStore,
@@ -175,6 +178,10 @@ const registerGlobalProcessErrorHandler = (): void => {
 
   process.on("uncaughtException", (err) => {
     handleFatalError("Uncaught Exception", err, mainLogger);
+  });
+
+  ipcMain.on("error-front-log", (_event, error) => {
+    handleFrontError(error, mainLogger);
   });
 };
 
