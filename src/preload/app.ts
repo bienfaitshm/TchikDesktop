@@ -27,6 +27,11 @@ export const applicationAPI: ApplicationApi = {
    * @param error
    */
   sendErrorLog(error) {
-    ipcRenderer.send("error-front-log", error);
+    ipcRenderer.send("error-front-log", {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause,
+    });
   },
 };

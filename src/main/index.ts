@@ -181,7 +181,7 @@ const registerGlobalProcessErrorHandler = (): void => {
   });
 
   ipcMain.on("error-front-log", (_event, error) => {
-    handleFrontError(error, mainLogger);
+    handleFrontError(error);
   });
 };
 

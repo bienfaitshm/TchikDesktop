@@ -1,9 +1,11 @@
 import { dialog, app } from "electron";
-import type { CustomLogger } from "@/packages/logger";
+import { CustomLogger, getLogger } from "@/packages/logger";
 import { sendErrorReport } from "./api-sender";
 
 const SEND_REPORT_BUTTON_INDEX = 0;
 const EXIT_BUTTON_INDEX = 1;
+
+const FRONT_UI_LOGGER = getLogger("FONT UI");
 
 /**
  * Displays an asynchronous native error dialog asking the user whether to send an error report.
@@ -75,15 +77,9 @@ export async function handleFatalError(
  * @param mainLogger - Optional contextual logger used to record the error event.
  */
 export async function handleFrontError(
-  error: unknown,
-  mainLogger?: CustomLogger,
+  error: { message: string; name: string; stack: string; cause: string },
+  mainLogger: CustomLogger = FRONT_UI_LOGGER,
 ): Promise<void> {
-  const errorMessage = error instanceof Error ? error.message : String(error);
-  const errorStack = error instanceof Error ? error.stack : undefined;
-
-  mainLogger?.error("FRONT_VIEW_ERROR", {
-    message: errorMessage,
-    stack: errorStack,
-    rawError: error,
-  });
+  const errorMessage = `${error.name} -${error.message}`;
+  mainLogger?.error(errorMessage, error);
 }

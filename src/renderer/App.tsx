@@ -10,6 +10,7 @@ import ErrorPage from "@/renderer/screens/error";
 import { apiClient } from "@/renderer/libs/apis";
 import { getConfig } from "@/renderer/libs/stores/app-store";
 import { StoreProvider } from "@/renderer/libs/stores/provider";
+import { APP_ROUTES } from "./constants";
 
 /**
  * Configures global API request interceptors to inject tenant headers.
@@ -63,6 +64,9 @@ function SplashRemover(): null {
  * @returns The rendered React application tree.
  */
 function App(): JSX.Element {
+  const onGoHome = () => {
+    navigation.navigate(APP_ROUTES.HOME);
+  };
   return (
     <ThemeProvider>
       <TooltipProvider>
@@ -78,12 +82,15 @@ function App(): JSX.Element {
           <SplashRemover />
           <QueryProvider>
             <SuspenseErrorBoundary
-              fallbackRender={({ error, resetErrorBoundary }) => (
-                <ErrorPage
-                  error={error as Error}
-                  onRetry={resetErrorBoundary}
-                />
-              )}
+              fallbackRender={({ error, resetErrorBoundary }) => {
+                return (
+                  <ErrorPage
+                    error={error as Error}
+                    onRetry={resetErrorBoundary}
+                    onGoHome={onGoHome}
+                  />
+                );
+              }}
             >
               <Router />
               <Toaster position="top-center" />
