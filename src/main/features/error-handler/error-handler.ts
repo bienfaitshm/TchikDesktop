@@ -5,7 +5,7 @@ import { sendErrorReport } from "./api-sender";
 const SEND_REPORT_BUTTON_INDEX = 0;
 const EXIT_BUTTON_INDEX = 1;
 
-const FRONT_UI_LOGGER = getLogger("FONT UI");
+const FRONT_UI_LOGGER = getLogger("FRONT UI");
 
 /**
  * Displays an asynchronous native error dialog asking the user whether to send an error report.
