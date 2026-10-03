@@ -11,6 +11,8 @@ import { LoadingSpinner } from "@/renderer/components/loaders/loading-spinner";
 import { ScreenSaveProvider } from "@/renderer/components/screen-saver";
 import { WindowTitleBar } from "@/renderer/components/win-title-bar";
 import { StateBar } from "@/renderer/components/statebars";
+import { CapacityInfoContainer } from "@/renderer/apps/searching/components/capacity-infos";
+import { APP_ROUTES } from "@/renderer/constants";
 
 // Sidebar styling configuration
 const SIDEBAR_CONFIG_STYLES: React.CSSProperties = {
@@ -62,7 +64,13 @@ export function AppLayout({ menus = [] }: AppLayoutProps): React.JSX.Element {
 
             <main className="h-full w-full min-w-0 flex-1 overflow-hidden">
               <Suspense fallback={<MainLoader />}>
-                <Outlet context={outletContext} />
+                <CapacityInfoContainer
+                  schoolId={schoolId}
+                  yearId={yearId}
+                  onClickClassroom={APP_ROUTES.CLASSROOMS.STUDENTS}
+                >
+                  <Outlet context={outletContext} />
+                </CapacityInfoContainer>
               </Suspense>
             </main>
           </div>

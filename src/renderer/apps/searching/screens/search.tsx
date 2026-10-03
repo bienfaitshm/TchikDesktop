@@ -9,7 +9,6 @@ import {
 } from "@/renderer/containers/page-container";
 import { UserPlus, Banknote, Presentation, Table2Icon } from "lucide-react";
 import { StudentPreview } from "../components/search-preview";
-import { CapacityInfo } from "../components/capcity-infos";
 
 const QUICK_ACCESS = [
   { label: "Inscription", url: APP_ROUTES.ENROLLMENTS, icon: UserPlus },
@@ -81,9 +80,6 @@ export function HomeSearch() {
       <PageContent>
         {/* Conteneur principal centré façon "Nouvel Onglet" */}
         <div className="relative min-h-[85vh] w-full flex flex-col items-center justify-center px-4">
-          {/* Widget d'info style météo (Fixé en haut à droite) */}
-          <CapacityInfo schoolId={schoolId} yearId={yearId} />
-
           {/* Bloc Central */}
           <div className="w-full max-w-2xl flex flex-col items-center gap-8 -mt-12">
             {/* Logo / Nom de l'établissement */}
