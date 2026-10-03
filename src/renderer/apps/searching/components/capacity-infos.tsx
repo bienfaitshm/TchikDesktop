@@ -6,9 +6,15 @@ import React, {
   useRef,
 } from "react";
 import { Link } from "react-router";
-import { Users, ChevronLeft, Pin, PinOff, Move } from "lucide-react";
+import { Users, ChevronDown, Pin, PinOff, Move } from "lucide-react";
 import { useGetStatsByClass } from "@/renderer/libs/queries/dashboard";
 import type { ClassStatsDTO } from "@/packages/@core/data-access/db";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/renderer/utils";
 
 /**
  * Represents a section group with computed cumulative total.
@@ -59,18 +65,18 @@ const SECTION_LABELS: Record<string, string> = {
 };
 
 /**
- * Formats numeric values to locale string.
- * @param value - The numeric value to format.
- * @returns Formatted string representation.
+ * Formats a numeric value into a localized string.
+ * @param value - Numeric value to format.
+ * @returns Formatted number string.
  */
 function formatNumber(value: number): string {
   return new Intl.NumberFormat().format(value);
 }
 
 /**
- * Groups class items by section and computes total counts per group.
- * @param classStats - Array of individual class statistics.
- * @returns Array of grouped sections sorted with computed totals.
+ * Groups class items by section and computes total counts per section.
+ * @param classStats - Array of class statistics objects.
+ * @returns Array of grouped section items.
  */
 export function groupClassStatsBySection(
   classStats: ClassStatsDTO[],
@@ -97,9 +103,9 @@ export function groupClassStatsBySection(
 }
 
 /**
- * Manages floating coordinates, drag-and-drop interactions, pin state, and LocalStorage synchronization.
- * @param storageKey - LocalStorage key string for persisting widget configuration.
- * @returns Widget position state, pin state, and interaction handlers.
+ * Manages floating widget coordinates, drag-and-drop interactions, pin state, and LocalStorage persistence.
+ * @param storageKey - Storage key for local persistence.
+ * @returns Object containing widget state and interaction handlers.
  */
 export function useWidgetPosition(storageKey: string = STORAGE_KEY) {
   const [state, setState] = useState<WidgetState>(() => {
@@ -162,12 +168,12 @@ export function useWidgetPosition(storageKey: string = STORAGE_KEY) {
 
         const nextX = Math.max(
           0,
-          Math.min(window.innerWidth - 320, dragRef.current!.initialX + deltaX),
+          Math.min(window.innerWidth - 280, dragRef.current!.initialX + deltaX),
         );
         const nextY = Math.max(
           0,
           Math.min(
-            window.innerHeight - 200,
+            window.innerHeight - 100,
             dragRef.current!.initialY + deltaY,
           ),
         );
@@ -204,54 +210,18 @@ export function useWidgetPosition(storageKey: string = STORAGE_KEY) {
 }
 
 /**
- * Renders the compact trigger button displaying total student count.
- */
-interface CapacityTriggerProps {
-  totalStudents: number;
-  isExpanded: boolean;
-  onToggle: () => void;
-}
-
-const CapacityTrigger: React.FC<CapacityTriggerProps> = ({
-  totalStudents,
-  isExpanded,
-  onToggle,
-}) => (
-  <button
-    type="button"
-    onClick={onToggle}
-    aria-expanded={isExpanded}
-    aria-controls="capacity-details-panel"
-    className="bg-background/90 backdrop-blur-md border border-border/80 hover:border-border p-3 rounded-2xl flex items-center gap-3 transition-all duration-200 select-none outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm hover:shadow-md"
-  >
-    <div className="p-2 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
-      <Users size={14} />
-    </div>
-    <div className="flex flex-col text-left">
-      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-        Total Élèves
-      </span>
-      <span className="text-sm font-bold text-foreground leading-none mt-0.5">
-        {formatNumber(totalStudents)}
-      </span>
-    </div>
-    <ChevronLeft
-      size={16}
-      className={`text-muted-foreground transition-transform duration-200 ${
-        isExpanded ? "-rotate-90" : "rotate-0"
-      }`}
-    />
-  </button>
-);
-
-/**
- * Renders individual classroom link or static badge.
+ * Props for the ClassItem component.
  */
 interface ClassItemProps {
   item: ClassStatsDTO;
   onClickClassroom?: (classId: string) => string;
 }
 
+/**
+ * Renders an individual classroom link or static item.
+ * @param props - Item payload and click action handler.
+ * @returns Classroom view element.
+ */
 const ClassItem: React.FC<ClassItemProps> = ({ item, onClickClassroom }) => {
   const targetUrl = onClickClassroom?.(item.classId);
   const content = (
@@ -283,17 +253,16 @@ const ClassItem: React.FC<ClassItemProps> = ({ item, onClickClassroom }) => {
 };
 
 /**
- * Displays total student count and an expandable breakdown grouped by academic section.
- * Supports sticky section headers, React Router class links, and draggable/pinned position state.
- * @param props - Component parameters including schoolId and yearId.
- * @returns Accessible interactive floating capacity widget.
+ * Interactive floating widget displaying total school capacity with popover details.
+ * @param props - School, academic year identifiers, and classroom link handler.
+ * @returns Interactive floating capacity widget React element.
  */
 export const CapacityInfo: React.FC<CapacityInfoProps> = ({
   schoolId,
   yearId,
   onClickClassroom,
 }) => {
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const { position, isPinned, isDragging, togglePin, handleMouseDown } =
     useWidgetPosition();
 
@@ -307,10 +276,6 @@ export const CapacityInfo: React.FC<CapacityInfoProps> = ({
     return groupClassStatsBySection(classStats);
   }, [classStats]);
 
-  const toggleExpand = useCallback(() => {
-    setIsExpanded((previous) => !previous);
-  }, []);
-
   const widgetContainerStyle: React.CSSProperties = {
     transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
   };
@@ -318,51 +283,43 @@ export const CapacityInfo: React.FC<CapacityInfoProps> = ({
   return (
     <div
       style={widgetContainerStyle}
-      className={`fixed top-4 left-4 z-50 flex flex-col items-start gap-2 transition-shadow duration-200 ${
-        isDragging ? "cursor-grabbing opacity-90 select-none" : ""
-      }`}
+      className={cn(
+        "fixed top-4 left-4 z-50 flex items-center gap-1.5 transition-shadow duration-200",
+        isDragging && "cursor-grabbing opacity-90 select-none",
+      )}
     >
-      <div className="flex items-center gap-1.5">
-        <CapacityTrigger
-          totalStudents={totalStudents}
-          isExpanded={isExpanded}
-          onToggle={toggleExpand}
-        />
-
-        <div className="flex items-center gap-0.5 bg-background/90 backdrop-blur-md border border-border/80 p-1 rounded-xl shadow-sm">
-          {!isPinned && (
-            <button
-              type="button"
-              onMouseDown={handleMouseDown}
-              title="Cliquer et glisser pour déplacer"
-              aria-label="Déplacer le widget"
-              className="p-1.5 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing rounded-lg hover:bg-muted transition-colors"
-            >
-              <Move size={14} />
-            </button>
-          )}
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
           <button
             type="button"
-            onClick={togglePin}
-            title={isPinned ? "Désépingler le widget" : "Épingler le widget"}
-            aria-label={
-              isPinned ? "Désépingler le widget" : "Épingler le widget"
-            }
-            className={`p-1.5 rounded-lg transition-colors ${
-              isPinned
-                ? "text-primary bg-primary/10 hover:bg-primary/20"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
+            className="bg-background/90 backdrop-blur-md border border-border/80 hover:border-border p-3 rounded-2xl flex items-center gap-3 transition-all duration-200 select-none outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm hover:shadow-md cursor-pointer"
           >
-            {isPinned ? <Pin size={14} /> : <PinOff size={14} />}
+            <div className="p-2 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+              <Users size={14} />
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                Total Élèves
+              </span>
+              <span className="text-sm font-bold text-foreground leading-none mt-0.5">
+                {formatNumber(totalStudents)}
+              </span>
+            </div>
+            <ChevronDown
+              size={16}
+              className={cn(
+                "text-muted-foreground transition-transform duration-200",
+                isOpen ? "rotate-180" : "rotate-0",
+              )}
+            />
           </button>
-        </div>
-      </div>
+        </PopoverTrigger>
 
-      {isExpanded && (
-        <div
-          id="capacity-details-panel"
-          className="w-80 bg-background/95 backdrop-blur-md border border-border/80 rounded-2xl shadow-xl p-4 transition-all duration-200 ease-in-out"
+        <PopoverContent
+          side="bottom"
+          align="start"
+          sideOffset={8}
+          className="w-80 bg-background/95 backdrop-blur-md border border-border/80 rounded-2xl shadow-xl p-4"
         >
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-border/40">
             <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -403,15 +360,43 @@ export const CapacityInfo: React.FC<CapacityInfoProps> = ({
               </div>
             )}
           </div>
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
+
+      <div className="flex items-center gap-0.5 bg-background/90 backdrop-blur-md border border-border/80 p-1 rounded-xl shadow-sm">
+        {!isPinned && (
+          <button
+            type="button"
+            onMouseDown={handleMouseDown}
+            title="Cliquer et glisser pour déplacer"
+            aria-label="Déplacer le widget"
+            className="p-1.5 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing rounded-lg hover:bg-muted transition-colors"
+          >
+            <Move size={14} />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={togglePin}
+          title={isPinned ? "Désépingler le widget" : "Épingler le widget"}
+          aria-label={isPinned ? "Désépingler le widget" : "Épingler le widget"}
+          className={`p-1.5 rounded-lg transition-colors ${
+            isPinned
+              ? "text-primary bg-primary/10 hover:bg-primary/20"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          }`}
+        >
+          {isPinned ? <Pin size={14} /> : <PinOff size={14} />}
+        </button>
+      </div>
     </div>
   );
 };
 
 /**
- * Container component wrapping application content with the CapacityInfo overlay.
- * @param props - Children and CapacityInfo properties.
+ * Layout container embedding children with CapacityInfo overlay layer.
+ * @param props - Wrapped React children and capacity parameters.
+ * @returns Wrapped component layout React element.
  */
 export const CapacityInfoContainer: React.FC<
   React.PropsWithChildren<Partial<CapacityInfoProps>>
