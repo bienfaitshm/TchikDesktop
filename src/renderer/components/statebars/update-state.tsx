@@ -18,16 +18,17 @@ import type {
   DownloadProgressPayload,
   UpdateStatusPayload,
 } from "../../../preload/updater";
+import { cn } from "@/renderer/utils";
 
 /**
- * Status union representing all possible states of the application updater workflow.
+ * Union type representing all possible updater status states.
  */
 export type UpdateStateStatus =
   "idle" | "checking" | "available" | "downloading" | "downloaded" | "error";
 
 /**
- * Custom hook to manage electron updater state and IPC subscriptions.
- * @returns Object containing update states and trigger methods.
+ * Custom hook to manage Electron updater IPC events and update state transitions.
+ * @returns Object containing current update status, version information, and action handlers.
  */
 function useAppUpdater() {
   const [currentVersion, setCurrentVersion] = useState<string>("");
@@ -113,7 +114,7 @@ function useAppUpdater() {
   const startDownload = useCallback(async (): Promise<void> => {
     try {
       setStatus("downloading");
-      await window.updater.startDownload();
+      await window.updater?.startDownload();
     } catch (error) {
       setStatus("error");
       setErrorMessage("Échec du téléchargement");
@@ -121,7 +122,7 @@ function useAppUpdater() {
   }, []);
 
   const quitAndInstall = useCallback((): void => {
-    window.updater.quitAndInstall();
+    window.updater?.quitAndInstall();
   }, []);
 
   return {
@@ -136,10 +137,10 @@ function useAppUpdater() {
 }
 
 /**
- * Renders the status bar element managing auto-update states and user actions via a Popover.
- * @returns React functional component element.
+ * Renders the application update status bar badge with pulse indicator and popover controls.
+ * @returns React element displaying the updater status interface.
  */
-export const UpdateBarState: React.FC = () => {
+export const UpdateStatusBar: React.FC = () => {
   const {
     currentVersion,
     newVersion,
@@ -150,13 +151,13 @@ export const UpdateBarState: React.FC = () => {
     quitAndInstall,
   } = useAppUpdater();
 
-  // Derive an indicator color for the badge based on current status
-  const badgeColor =
-    status === "available" || status === "downloaded"
-      ? "text-blue-500 border-blue-500/50"
-      : status === "error"
-        ? "text-destructive border-destructive/50"
-        : "text-muted-foreground";
+  const isUpdateAvailable = status === "available" || status === "downloaded";
+
+  const badgeColor = isUpdateAvailable
+    ? "text-primary border-primary/50"
+    : status === "error"
+      ? "text-destructive border-destructive/50"
+      : "text-muted-foreground";
 
   return (
     <div className="flex items-center justify-end gap-3 text-xs">
@@ -164,16 +165,25 @@ export const UpdateBarState: React.FC = () => {
         <PopoverTrigger asChild>
           <Badge
             variant="outline"
-            className={`font-mono text-[10px] cursor-pointer transition-colors hover:bg-accent ${badgeColor}`}
+            className={cn(
+              "relative inline-flex items-center gap-1.5 font-mono text-[10px] cursor-pointer transition-colors hover:bg-accent px-2 py-0.5",
+              badgeColor,
+            )}
           >
-            v{currentVersion || "0.0.0"}
+            {isUpdateAvailable && (
+              <span className="relative flex size-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex size-2 rounded-full bg-primary animate-pulse" />
+              </span>
+            )}
+            <span>v{currentVersion || "0.0.0"}</span>
           </Badge>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-80 p-4" sideOffset={8}>
           <div className="space-y-3">
             <div className="space-y-1">
               <h4 className="font-semibold leading-none flex items-center gap-2 text-sm">
-                <Info className="h-4 w-4 text-muted-foreground" />
+                <Info className="size-4 text-muted-foreground" />
                 Centre de mise à jour
               </h4>
               <p className="text-xs text-muted-foreground">
@@ -181,35 +191,39 @@ export const UpdateBarState: React.FC = () => {
               </p>
             </div>
 
-            <div className="rounded-md border bg-muted/40 p-3">
+            <div className="flex items-center justify-center rounded-md border bg-muted/40 p-2">
               {status === "idle" && (
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs text-muted-foreground text-center">
                   L'application est à jour.
                 </span>
               )}
 
               {status === "checking" && (
                 <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <RefreshCw className="size-4 animate-spin" />
                   Vérification des mises à jour...
                 </span>
               )}
 
               {status === "available" && (
-                <div className="flex flex-col gap-3">
-                  <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                    La version v{newVersion} est disponible !
+                <div className="flex flex-col gap-3 w-full">
+                  <span className="text-xs font-medium text-primary text-center">
+                    Une nouvelle version (v{newVersion}) est disponible !
                   </span>
-                  <Button size="sm" className="w-full" onClick={startDownload}>
-                    <Download className="mr-2 h-4 w-4" />
+                  <Button
+                    size="sm"
+                    className="w-full rounded-full text-xs"
+                    onClick={startDownload}
+                  >
+                    <Download className="mr-2 size-4" />
                     Télécharger
                   </Button>
                 </div>
               )}
 
               {status === "downloading" && (
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between text-xs font-medium">
+                <div className="flex flex-col gap-2 w-full">
+                  <div className="flex justify-between text-xs font-medium gap-2">
                     <span>Téléchargement en cours</span>
                     <span>{progress}%</span>
                   </div>
@@ -218,25 +232,26 @@ export const UpdateBarState: React.FC = () => {
               )}
 
               {status === "downloaded" && (
-                <div className="flex flex-col gap-3">
-                  <span className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
-                    <CheckCircle2 className="h-4 w-4" />
+                <div className="flex flex-col gap-3 py-2 w-full">
+                  <span className="flex items-center justify-center gap-2 text-xs font-medium text-primary">
+                    <CheckCircle2 className="size-4" />
                     Mise à jour prête
                   </span>
                   <Button
                     size="sm"
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    variant="default"
+                    className="w-full rounded-full px-6 text-xs bg-primary text-primary-foreground"
                     onClick={quitAndInstall}
                   >
-                    <RefreshCw className="mr-2 h-4 w-4" />
+                    <RefreshCw className="mr-2 size-4" />
                     Redémarrer & Installer
                   </Button>
                 </div>
               )}
 
               {status === "error" && (
-                <span className="flex items-start gap-2 text-sm font-medium text-destructive">
-                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span className="flex items-start gap-2 text-xs font-medium text-destructive">
+                  <AlertCircle className="size-4 shrink-0 mt-0.5" />
                   <span>{errorMessage}</span>
                 </span>
               )}
