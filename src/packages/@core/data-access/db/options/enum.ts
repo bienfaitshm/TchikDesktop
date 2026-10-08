@@ -127,6 +127,11 @@ export enum FEE_SCHEDULE_STATUS_ENUM {
 }
 
 /**
+ * @deprecated use FEE_SCHEDULE_STATUS_ENUM
+ */
+export const FEE_SCHEDULES_ENUM = FEE_SCHEDULE_STATUS_ENUM;
+
+/**
  * French display translations for fee schedule payment statuses.
  */
 export const FEE_SCHEDULE_STATUS_ENUM_TRANSLATIONS: Record<
