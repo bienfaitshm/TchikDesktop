@@ -9,6 +9,7 @@ import type {
 import { windowControlsBridge } from "./windows";
 import { Updater } from "./updater";
 import { applicationAPI } from "./app";
+import { printerApi } from "./printers";
 
 export const STORE_IPC_CHANNELS = {
   GET_CURRENT_CONFIG: "store:getCurrentConfig",
@@ -147,6 +148,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("windowControls", windowControlsBridge);
     contextBridge.exposeInMainWorld("electron", electronAPI);
     contextBridge.exposeInMainWorld("updater", Updater);
+    contextBridge.exposeInMainWorld("printer", printerApi);
     contextBridge.exposeInMainWorld("application", applicationAPI);
   } catch (error) {
     console.error("Erreur d'exposition Preload :", error);

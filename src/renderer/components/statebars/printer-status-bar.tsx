@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -6,94 +6,64 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Printer,
-  RefreshCw,
   AlertCircle,
   CheckCircle2,
+  Printer,
+  RefreshCw,
   Settings,
   XCircle,
 } from "lucide-react";
 import { cn } from "@/renderer/utils";
+import { usePrintConfig } from "@/renderer/hooks/use-print-config";
 
-/**
- * Represented state statuses for the attached receipt or document printer.
- */
+/** High level state representing connection & configuration status. */
 export type PrinterStateStatus =
-  "checking" | "disconnected" | "connected" | "configured" | "error";
+  "checking" | "disconnected" | "unconfigured" | "configured" | "error";
 
 /**
- * Payload interface representing technical printer configuration details.
- */
-export interface PrinterInfoPayload {
-  name?: string;
-  isDefault?: boolean;
-  isConfigured?: boolean;
-}
-
-/**
- * Global interface extending the window object for printer IPC bridge typing.
- */
-declare global {
-  interface Window {
-    printer?: {
-      getPrinterInfo: () => Promise<PrinterInfoPayload>;
-      onStatusChange: (
-        callback: (
-          status: PrinterStateStatus,
-          info?: PrinterInfoPayload,
-        ) => void,
-      ) => () => void;
-    };
-  }
-}
-
-/**
- * Custom hook managing printer connection listening and IPC subscription state.
- * @returns Object containing current printer status, info, error message, and refresh handler.
+ * Hook subscribing to IPC hardware changes and resolving configuration state.
+ * @returns State object describing status flags, active target printer, and refresh handler.
  */
 export function usePrinterStatus() {
   const [status, setStatus] = useState<PrinterStateStatus>("checking");
-  const [printerInfo, setPrinterInfo] = useState<PrinterInfoPayload | null>(
-    null,
-  );
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const { posPrint, isConfigured, isConnected } = usePrintConfig();
 
   const checkStatus = useCallback(async (): Promise<void> => {
     setStatus("checking");
     setErrorMessage("");
     try {
-      if (window.printer?.getPrinterInfo) {
-        const info = await window.printer.getPrinterInfo();
-        setPrinterInfo(info);
-        if (!info.name) {
-          setStatus("disconnected");
-        } else if (info.isConfigured) {
-          setStatus("configured");
-        } else {
-          setStatus("connected");
-        }
-      } else {
+      if (!window.printer?.getPrinterInfo) {
         setStatus("disconnected");
+        return;
       }
+      const data = await window.printer.getPrinterInfo();
+      setStatus("configured");
+      // if (!data.hasDevices || data.printers.length === 0) {
+      //   setStatus("disconnected");
+      // } else if (isConnected && isConfigured) {
+      //   setStatus("configured");
+      // } else {
+      //   setStatus("unconfigured");
+      // }
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       setStatus("error");
-      setErrorMessage(msg || "Échec de détection de l'imprimante");
+      setErrorMessage(msg || "Printer detection failure");
     }
-  }, []);
+  }, [isConfigured, isConnected]);
 
   useEffect(() => {
     let isMounted = true;
 
     checkStatus();
 
-    const unsubscribe = window.printer?.onStatusChange(
-      (newStatus: PrinterStateStatus, info?: PrinterInfoPayload) => {
-        if (!isMounted) return;
-        setStatus(newStatus);
-        if (info) setPrinterInfo(info);
-      },
-    );
+    const unsubscribe = window.printer?.onStatusChange(() => {
+      console.log("Status..... onStatusChange");
+      if (isMounted) {
+        checkStatus();
+      }
+    });
 
     return () => {
       isMounted = false;
@@ -103,27 +73,30 @@ export function usePrinterStatus() {
 
   return {
     status,
-    printerInfo,
+    activePrinterName:
+      posPrint?.posPrinter?.name ||
+      posPrint?.posPrinter?.name ||
+      "activePrinterName",
     errorMessage,
     refreshPrinterStatus: checkStatus,
   };
 }
 
 /**
- * Component rendering the printer connection state with an animated status dot and detail popover.
- * @returns Interactive printer status bar React element.
+ * Renders real-time printer connectivity and configuration status bar element.
+ * @returns JSX element.
  */
 export const PrinterStatusBar: React.FC = () => {
-  const { status, printerInfo, errorMessage, refreshPrinterStatus } =
+  const { status, activePrinterName, errorMessage, refreshPrinterStatus } =
     usePrinterStatus();
 
   const isConfigured = status === "configured";
-  const isConnected = status === "connected" || isConfigured;
+  const isUnconfigured = status === "unconfigured";
   const isError = status === "error";
 
   const badgeColor = isConfigured
     ? "text-emerald-600 border-emerald-500/50 bg-emerald-500/10"
-    : status === "connected"
+    : isUnconfigured
       ? "text-amber-600 border-amber-500/50 bg-amber-500/10"
       : isError
         ? "text-destructive border-destructive/50"
@@ -131,7 +104,7 @@ export const PrinterStatusBar: React.FC = () => {
 
   const dotColor = isConfigured
     ? "bg-emerald-500"
-    : status === "connected"
+    : isUnconfigured
       ? "bg-amber-500"
       : "bg-destructive";
 
@@ -141,7 +114,7 @@ export const PrinterStatusBar: React.FC = () => {
         <PopoverTrigger asChild>
           <div
             className={cn(
-              "relative inline-flex items-center gap-1.5 font-mono text-[10px] cursor-pointer transition-colors hover:bg-accent px-2 py-0.5 select-none",
+              "relative inline-flex items-center gap-1.5 font-mono text-[10px] cursor-pointer transition-colors hover:bg-accent px-2 py-0.5 select-none rounded border",
               badgeColor,
             )}
           >
@@ -149,7 +122,7 @@ export const PrinterStatusBar: React.FC = () => {
               <RefreshCw className="size-2.5 animate-spin" />
             ) : (
               <span className="relative flex size-2">
-                {isConnected && (
+                {(isConfigured || isUnconfigured) && (
                   <span
                     className={cn(
                       "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
@@ -170,10 +143,10 @@ export const PrinterStatusBar: React.FC = () => {
               {status === "checking"
                 ? "Détection..."
                 : isConfigured
-                  ? printerInfo?.name || "Imprimante prête"
-                  : status === "connected"
-                    ? "Non configurée"
-                    : "Non détectée"}
+                  ? activePrinterName || "Imprimante prête"
+                  : isUnconfigured
+                    ? "À configurer"
+                    : "Déconnectée"}
             </span>
           </div>
         </PopoverTrigger>
@@ -202,32 +175,25 @@ export const PrinterStatusBar: React.FC = () => {
                 <div className="flex flex-col gap-2 w-full">
                   <span className="flex items-center gap-2 text-xs font-medium text-emerald-600">
                     <CheckCircle2 className="size-4 shrink-0" />
-                    Imprimante connectée et prête
+                    Imprimante connectée et configurée
                   </span>
                   <div className="text-xs text-muted-foreground bg-background p-2 rounded border space-y-1">
                     <p className="font-medium text-foreground truncate">
-                      {printerInfo?.name}
+                      {activePrinterName}
                     </p>
-                    {printerInfo?.isDefault && (
-                      <p className="text-[10px] text-emerald-600 font-semibold">
-                        Imprimante par défaut du système
-                      </p>
-                    )}
                   </div>
                 </div>
               )}
 
-              {status === "connected" && (
+              {status === "unconfigured" && (
                 <div className="flex flex-col gap-3 w-full">
                   <span className="flex items-center gap-2 text-xs font-medium text-amber-600">
                     <Settings className="size-4 shrink-0" />
                     Imprimante détectée mais non configurée
                   </span>
                   <p className="text-xs text-muted-foreground">
-                    Modèle détecté :{" "}
-                    <span className="font-semibold text-foreground">
-                      {printerInfo?.name || "Inconnu"}
-                    </span>
+                    Un périphérique est branché. Veuillez sélectionner cette
+                    imprimante dans les paramètres POS.
                   </p>
                 </div>
               )}
@@ -239,8 +205,8 @@ export const PrinterStatusBar: React.FC = () => {
                     Aucune imprimante détectée
                   </span>
                   <p className="text-[11px] text-muted-foreground">
-                    Vérifiez que le câble USB est branché ou que l'imprimante
-                    est sous tension.
+                    Vérifiez le branchement USB ou la mise sous tension de
+                    l'imprimante.
                   </p>
                 </div>
               )}

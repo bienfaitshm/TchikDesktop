@@ -4,6 +4,7 @@ import type { School, StudyYear } from "@/packages/@core/data-access/db";
 import type { ElectronWindowControl, StoreAPI } from "./types";
 import type { UpdaterAPI } from "./updater";
 import type { ApplicationApi } from "./app";
+import type { PrinterApi } from "./printers";
 
 interface AppInfo {
   name: string;
@@ -102,6 +103,7 @@ declare global {
     };
 
     updater: UpdaterAPI;
+    printer: PrinterApi;
     application: ApplicationApi;
     windowControls: ElectronWindowControl;
   }

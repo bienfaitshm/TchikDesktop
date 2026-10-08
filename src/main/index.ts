@@ -20,6 +20,7 @@ import {
 
 import "@/main/apps/system-infos";
 import { registerWindowHandlers } from "./custom-windows-handler";
+import { registerUsbDetectorHandlers } from "@/main/features/usb-detector";
 
 debug();
 
@@ -133,10 +134,11 @@ const setupAppWindow = async (): Promise<BrowserWindow> => {
  * Binds global application events and orchestrates the startup sequence.
  */
 const bootstrapApp = (): void => {
+  let usbDetector: null | (() => void) = null;
   app.whenReady().then(async () => {
     mainLogger.info("Application ready event triggered.");
     electronApp.setAppUserModelId("com.electron.tchik");
-
+    usbDetector = registerUsbDetectorHandlers();
     const mainWindow = await setupAppWindow();
 
     await initializeAppServices();
@@ -164,6 +166,9 @@ const bootstrapApp = (): void => {
     if (process.platform !== "darwin") {
       mainLogger.info("All windows closed: Exiting application.");
       app.quit();
+      if (usbDetector) {
+        usbDetector();
+      }
     }
   });
 };
