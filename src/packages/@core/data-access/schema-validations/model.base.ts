@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createZodEnum } from "./utils";
 import {
   CURRENCY_ENUM,
-  FEE_SCHEDULES_ENUM,
+  FEE_SCHEDULE_STATUS_ENUM,
   PAYMENT_METHOD_ENUM,
   ENROLLMENT_ACTION_ENUM,
   SECTION_ENUM,
@@ -21,7 +21,7 @@ export const ZENROLLMENT_ACTION_ENUM = createZodEnum(ENROLLMENT_ACTION_ENUM);
 export const ZCURRENCY_ENUM = createZodEnum(CURRENCY_ENUM);
 
 /** Validation Zod pour le statut d'un échéancier de frais. */
-export const ZFEE_SCHEDULES_ENUM = createZodEnum(FEE_SCHEDULES_ENUM);
+export const ZFEE_SCHEDULES_ENUM = createZodEnum(FEE_SCHEDULE_STATUS_ENUM);
 
 /** Validation Zod pour les modes de paiement acceptés. */
 export const ZPAYMENT_METHOD_ENUM = createZodEnum(PAYMENT_METHOD_ENUM);
