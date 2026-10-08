@@ -16,10 +16,11 @@ import {
   users,
 } from "./schema";
 import {
-  FEE_SCHEDULES_ENUM,
+  FEE_SCHEDULE_STATUS_ENUM,
   CURRENCY_ENUM,
   PAYMENT_METHOD_ENUM,
   SECTION_ENUM,
+  PAYMENT_STATUS_ENUM,
 } from "../options";
 import {
   primaryKeyId,
@@ -183,9 +184,9 @@ export const feeAssignments = sqliteTable(
     currency: enumColumn("currency", CURRENCY_ENUM)
       .notNull()
       .default(CURRENCY_ENUM.CDF),
-    status: enumColumn("status", FEE_SCHEDULES_ENUM)
+    status: enumColumn("status", FEE_SCHEDULE_STATUS_ENUM)
       .notNull()
-      .default(FEE_SCHEDULES_ENUM.UNPAID),
+      .default(FEE_SCHEDULE_STATUS_ENUM.UNPAID),
     isCustomized: integer("is_customized", { mode: "boolean" })
       .notNull()
       .default(false),
@@ -225,6 +226,9 @@ export const studentPayments = sqliteTable(
     currencyReceived: enumColumn("currency_received", CURRENCY_ENUM)
       .notNull()
       .default(CURRENCY_ENUM.CDF),
+    status: enumColumn("payment_status", PAYMENT_STATUS_ENUM)
+      .notNull()
+      .default(PAYMENT_STATUS_ENUM.VALIDATED),
     appliedExchangeRate: integer("applied_exchange_rate").notNull(),
     amountConverted: integer("amount_converted").notNull(),
     paymentMethod: enumColumn("payment_method", PAYMENT_METHOD_ENUM).notNull(),

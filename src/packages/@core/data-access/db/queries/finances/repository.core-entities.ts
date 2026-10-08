@@ -32,6 +32,9 @@ const WALLET_OPTION_DEFAULT_SORT: BaseWalletOptionFilters = {
   orderBy: [{ table: "wallets", column: "name", order: "asc" }],
 };
 
+/**
+ * Repository providing access to wallet records in SQLite.
+ */
 export class WalletRepository
   extends betterSqlite.BaseRepository<
     TableWallet,
@@ -41,6 +44,10 @@ export class WalletRepository
   >
   implements OptionProvider<Wallet>
 {
+  /**
+   * Initializes the wallet repository with default table configurations and default filters.
+   * @param database - Optional database instance override, defaulting to core db connection.
+   */
   constructor(database: TDataBase = db) {
     super({
       db: database,
@@ -53,24 +60,38 @@ export class WalletRepository
     });
   }
 
-  fetchOptions(filters?: BaseWalletOptionFilters) {
+  /**
+   * Fetches wallet options matching the given filter criteria.
+   * @param filters - Optional filters to restrict and sort the retrieved records.
+   * @returns Array of wallet entities.
+   */
+  fetchOptions(filters?: BaseWalletOptionFilters): Wallet[] {
     return this.findMany(filters);
   }
 
   /**
-   * Mettre à jour le solde d'un portefeuille (Incrémentation atomique sur la DB)
-   * Synchrone.
+   * Atomically updates a wallet balance in the database.
+   * @param walletId - Unique identifier of the target wallet.
+   * @param amount - Numerical amount to increase or decrease.
+   * @param type - Adjustment direction, either "INCREASE" or "DECREASE".
+   * @param tx - Optional transaction handle for atomic execution.
    */
-  incrementWalletBalance(
+  updateWalletBalance(
     walletId: string,
     amount: number,
+    type: "INCREASE" | "DECREASE" = "INCREASE",
     tx: TDataBase = this.db,
-  ) {
+  ): void {
     try {
+      const balanceExpression =
+        type === "INCREASE"
+          ? sql`${this.table.currentBalance} + ${amount}`
+          : sql`${this.table.currentBalance} - ${amount}`;
+
       this.getClient(tx)
         .update(this.table)
         .set({
-          currentBalance: sql`${this.table.currentBalance} + ${Number(amount)}`,
+          currentBalance: balanceExpression,
           updatedAt: sql`CURRENT_TIMESTAMP`,
         })
         .where(eq(this.table.walletId, walletId))
@@ -78,9 +99,9 @@ export class WalletRepository
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
-        `Failed to increment balance for wallet ID: ${walletId}`,
+        `Failed to update balance for wallet ID: ${walletId}`,
       );
-      this.logError("incrementWalletBalance", dbError, { walletId, amount });
+      this.logError("updateWalletBalance", dbError, { walletId, amount, type });
       throw dbError;
     }
   }
@@ -109,12 +130,20 @@ const FEE_TYPE_OPTION_DEFAULT_SORT: BaseFeeTypeOptionFilters = {
   orderBy: [{ table: "feeTypes", column: "name", order: "asc" }],
 };
 
+/**
+ * Converts fee type filter options into a structured Drizzle query payload.
+ * @param filters - Option filters to extract payloads from.
+ * @returns Query payload object for data access helpers.
+ */
 export function extractFeeTypeFiltersQueryPayload(
   filters?: BaseFeeTypeOptionFilters,
 ) {
   return helpers.extractQueryPayload(_feeTypeJoinTables, filters);
 }
 
+/**
+ * Repository providing operations for fee types and associated structures.
+ */
 export class FeeTypeRepository
   extends betterSqlite.BaseRepository<
     TableFeeType,
@@ -124,6 +153,10 @@ export class FeeTypeRepository
   >
   implements OptionProvider<FeeTypeDTO>
 {
+  /**
+   * Initializes the fee type repository with core configuration.
+   * @param database - Optional database instance override.
+   */
   constructor(database: TDataBase = db) {
     super({
       db: database,
@@ -136,6 +169,11 @@ export class FeeTypeRepository
     });
   }
 
+  /**
+   * Constructs a base dynamic query joining fee types with associated wallets.
+   * @param tx - Optional transaction handle.
+   * @returns Dynamic selection query builder.
+   */
   protected getQuerySet(tx?: TDataBase | undefined) {
     return this.getClient(tx)
       .select({
@@ -147,6 +185,11 @@ export class FeeTypeRepository
       .$dynamic();
   }
 
+  /**
+   * Retrieves fee types enriched with nested schedules and wallet details.
+   * @param filters - Query filters to apply during retrieval.
+   * @returns List of fee types containing schedules and wallet associations.
+   */
   getFeeTypeWithSchedules(filters?: BaseFeeTypeOptionFilters) {
     return this.getClient().query.feeTypes.findMany({
       ...extractFeeTypeFiltersQueryPayload(filters),
@@ -158,10 +201,11 @@ export class FeeTypeRepository
   }
 
   /**
-   * Récupère les types de frais pour les composants Select / Combobox.
-   * Synchrone.
+   * Fetches fee type options matching specified filters.
+   * @param filters - Optional filters to filter fee types.
+   * @returns List of FeeTypeDTO entities.
    */
-  fetchOptions(filters?: BaseFeeTypeOptionFilters) {
+  fetchOptions(filters?: BaseFeeTypeOptionFilters): FeeTypeDTO[] {
     return this.findMany(filters);
   }
 }
@@ -180,6 +224,9 @@ const FEE_SCHEDULE_OPTION_DEFAULT_SORT: BaseFeeScheduleOptionFilters = {
   orderBy: [{ table: "feeSchedules", column: "createdAt", order: "asc" }],
 };
 
+/**
+ * Repository managing fee schedule records.
+ */
 export class FeeScheduleRepository
   extends betterSqlite.BaseRepository<
     TableFeeSchedule,
@@ -189,6 +236,10 @@ export class FeeScheduleRepository
   >
   implements OptionProvider<FeeSchedule>
 {
+  /**
+   * Initializes the fee schedule repository.
+   * @param database - Optional database instance override.
+   */
   constructor(database: TDataBase = db) {
     super({
       db: database,
@@ -202,10 +253,11 @@ export class FeeScheduleRepository
   }
 
   /**
-   * Récupère les échéances de paiement pour les composants Select / Combobox.
-   * Synchrone.
+   * Synchronously fetches fee schedule options for UI selection fields.
+   * @param filters - Optional criteria to filter fee schedule records.
+   * @returns List of fee schedule entities.
    */
-  async fetchOptions(filters?: BaseFeeScheduleOptionFilters) {
+  fetchOptions(filters?: BaseFeeScheduleOptionFilters): FeeSchedule[] {
     return this.findMany(filters);
   }
 }

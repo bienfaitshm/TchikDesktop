@@ -38,12 +38,14 @@ export interface ProcessPaymentResult extends FeeAssignment {
   feeConfig: FeeConfiguration;
 }
 
+export interface CancelPaymentResult extends ProcessPaymentResult {}
+
 /**
- * Use case service responsible for processing student payments atomically.
+ * Domain service managing student payment lifecycle including processing and rollbacks.
  */
-export class ProcessStudentPayment {
+export class StudentPaymentService {
   /**
-   * Initializes a new instance of ProcessStudentPayment.
+   * Initializes a new instance of StudentPaymentService.
    * @param feeConfigRepo - Repository for fee configurations.
    * @param feeAssignmentRepo - Repository for fee assignments.
    * @param studentPaymentRepo - Repository for student payments.
@@ -67,7 +69,7 @@ export class ProcessStudentPayment {
    * @param payload - Details of the payment transaction to process.
    * @returns The updated assignment record along with created payment and config details.
    */
-  execute(payload: ProcessPaymentPayload): ProcessPaymentResult {
+  public execute(payload: ProcessPaymentPayload): ProcessPaymentResult {
     validateContext(payload.schoolId, payload.yearId);
     this.logger.info(
       `[Payment processing] Initiating payment for assignment ${payload.assignmentId}`,
@@ -139,9 +141,10 @@ export class ProcessStudentPayment {
             tx,
           );
 
-        this.walletRepo.incrementWalletBalance(
+        this.walletRepo.updateWalletBalance(
           configRecord.wallet.walletId,
           amountConverted,
+          "INCREASE",
           tx,
         );
 
@@ -158,6 +161,88 @@ export class ProcessStudentPayment {
     } catch (error) {
       this.logger.error(
         `[Payment processing] Transaction failed for assignment ${payload.assignmentId}`,
+        error,
+      );
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Cancels an existing student payment and reverts all associated financial state changes.
+   * @param paymentId - Unique identifier of the payment to revert.
+   * @returns The updated assignment record with canceled payment and config details.
+   */
+  public cancelPayment(paymentId: string): CancelPaymentResult {
+    this.logger.info(
+      `[Payment rollback] Initiating cancellation for payment ${paymentId}`,
+    );
+
+    try {
+      return this.clientDb.transaction((tx) => {
+        const payment = this.studentPaymentRepo.findById(paymentId, tx);
+        if (!payment) {
+          throw new RecordNotFoundError(`Payment [${paymentId}]`);
+        }
+
+        const assignmentRecord = this.feeAssignmentRepo.findById(
+          payment.assignmentId,
+          tx,
+        );
+        if (!assignmentRecord) {
+          throw new RecordNotFoundError(
+            `Fee assignment [${payment.assignmentId}]`,
+          );
+        }
+
+        if (!assignmentRecord.feeConfigId) {
+          throw new BusinessRuleError(
+            `Fee assignment [${payment.assignmentId}] lacks a valid configuration ID.`,
+          );
+        }
+
+        const configRecord = this.feeConfigRepo.findById(
+          assignmentRecord.feeConfigId,
+          tx,
+        );
+        if (!configRecord) {
+          throw new RecordNotFoundError(
+            `Fee configuration [${assignmentRecord.feeConfigId}]`,
+          );
+        }
+
+        const canceledPayment = this.studentPaymentRepo.cancelPayment(
+          paymentId,
+          tx,
+        );
+
+        const updatedAssignment =
+          this.feeAssignmentRepo.revertAssignmentProgress(
+            payment.assignmentId,
+            payment.amountConverted,
+            configRecord.totalAmount,
+            tx,
+          );
+
+        this.walletRepo.updateWalletBalance(
+          configRecord.wallet.walletId,
+          payment.amountConverted,
+          "DECREASE",
+          tx,
+        );
+
+        this.logger.info(
+          `[Payment rollback] Success for payment ${paymentId}. Assignment ID: ${payment.assignmentId}`,
+        );
+
+        return {
+          ...updatedAssignment,
+          payment: canceledPayment,
+          feeConfig: configRecord,
+        };
+      });
+    } catch (error) {
+      this.logger.error(
+        `[Payment rollback] Transaction failed for payment ${paymentId}`,
         error,
       );
       throw this.handleError(error);
@@ -191,7 +276,8 @@ export class ProcessStudentPayment {
   private handleError(error: unknown): Error {
     if (
       error instanceof BusinessRuleError ||
-      error instanceof RecordNotFoundError
+      error instanceof RecordNotFoundError ||
+      error instanceof OverpaymentError
     ) {
       return error;
     }
