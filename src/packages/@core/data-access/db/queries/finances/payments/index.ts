@@ -18,9 +18,10 @@ import {
 import { GetClassroomPaymentTable } from "./use-cases/get-classroom-payment-table";
 
 import {
-  ProcessStudentPayment,
+  StudentPaymentService,
   type ProcessPaymentPayload,
   type ProcessPaymentResult,
+  type CancelPaymentResult,
 } from "./use-cases/process-student-payment";
 
 import { OnSyncMessage } from "./types";
@@ -43,7 +44,7 @@ const getClassroomPaymentTableUseCase = new GetClassroomPaymentTable(
   logger,
 );
 
-const processStudentPaymentUseCase = new ProcessStudentPayment(
+const processStudentPaymentUseCase = new StudentPaymentService(
   feeConfigurationRepository,
   feeAssignmentRepository,
   studentPaymentRepository,
@@ -72,7 +73,7 @@ export const paymentService = {
    * @param onSyncMessage - Optional callback invoked during progress updates.
    * @returns The sync execution result.
    */
-  syncClassroomFeeAssignments(
+  async syncClassroomFeeAssignments(
     ctx: {
       schoolId: string;
       yearId: string;
@@ -89,7 +90,7 @@ export const paymentService = {
    * @param onSyncMessage - Optional callback invoked during sync operations.
    * @returns Array of classroom payment assignments.
    */
-  getClassroomPaymentTable(
+  async getClassroomPaymentTable(
     filters: {
       schoolId: string;
       yearId: string;
@@ -108,10 +109,21 @@ export const paymentService = {
    * @param payload - Details of the payment transaction.
    * @returns Resulting updated fee assignment and payment details.
    */
-  processStudentPayment(payload: ProcessPaymentPayload): ProcessPaymentResult {
+  async processStudentPayment(
+    payload: ProcessPaymentPayload,
+  ): Promise<ProcessPaymentResult> {
     return processStudentPaymentUseCase.execute(payload);
+  },
+
+  /**
+   * Cancels an existing student payment transaction by its unique identifier.
+   * @param paymentId - Unique identifier of the payment to be canceled.
+   * @returns Resulting status and details of the cancellation.
+   */
+  async cancelStudentPayment(paymentId: string): Promise<CancelPaymentResult> {
+    return processStudentPaymentUseCase.cancelPayment(paymentId);
   },
 };
 
 export * from "./types";
-export { type StudentPaymentTable, EnrollmentPayment };
+export type { StudentPaymentTable, EnrollmentPayment };

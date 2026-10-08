@@ -1,4 +1,4 @@
-import { db, FEE_SCHEDULES_ENUM, FeeAssignment, TDataBase } from "../..";
+import { db, FEE_SCHEDULE_STATUS_ENUM, FeeAssignment, TDataBase } from "../..";
 import {
   type BaseFeeAssignmentFilters,
   FeeAssignmentRepository,
@@ -115,7 +115,7 @@ export class FeeAssignmentService {
       const updatedAssignment = this.feeAssignmentRepo.updateById(
         assignmentId,
         {
-          status: FEE_SCHEDULES_ENUM.PAID,
+          status: FEE_SCHEDULE_STATUS_ENUM.PAID,
           totalAmount: assignment.amountPaid,
         },
         transactionContext,

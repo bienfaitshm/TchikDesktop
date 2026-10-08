@@ -1,6 +1,6 @@
 import { type TDataBase } from "@/packages/@core/data-access/db/config";
 import {
-  FEE_SCHEDULES_ENUM,
+  FEE_SCHEDULE_STATUS_ENUM,
   SECTION_ENUM,
 } from "@/packages/@core/data-access/db/options";
 import type {
@@ -299,7 +299,7 @@ export class FeeManagementService {
           toCreate.push({
             totalAmount: req.totalAmount,
             amountPaid: 0,
-            status: FEE_SCHEDULES_ENUM.UNPAID,
+            status: FEE_SCHEDULE_STATUS_ENUM.UNPAID,
             enrollmentId: enrollment.enrollmentId,
             feeConfigId: req.feeConfigId,
             scheduleId: req.scheduleId,
