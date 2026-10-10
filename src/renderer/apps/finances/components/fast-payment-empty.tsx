@@ -185,7 +185,7 @@ const getStatusConfigMap = (
       badgeClass:
         "border-amber-300 text-amber-800 dark:text-amber-300 text-[10px] font-mono",
       actionLabel: "Payer le solde",
-      actionVariant: "default" as const,
+      actionVariant: "outline" as const,
       actionClass: "bg-amber-600 hover:bg-amber-700 text-white gap-1.5",
     },
     [FEE_SCHEDULE_STATUS_ENUM.UNPAID]: {
@@ -193,13 +193,13 @@ const getStatusConfigMap = (
       description:
         "Aucun versement n'a encore été enregistré pour cette échéance.",
       icon: AlertCircle,
-      cardClass: "border-muted bg-muted/20 text-muted-foreground",
+      cardClass: "border-muted bg-muted/20",
       iconClass: "text-muted-foreground",
       badgeText: null,
       badgeClass: "",
       actionLabel: "Modifier le prix",
-      actionVariant: "default" as const,
-      actionClass: "gap-1.5",
+      actionVariant: "outline" as const,
+      actionClass: "border gap-1.5",
     },
   };
 };
@@ -269,7 +269,7 @@ export const PaymentOverview: React.FC<
                   variant={currentConfig.actionVariant}
                   size="sm"
                   className={cn(
-                    "h-8 px-3 rounded-md text-xs",
+                    "h-6 px-3 rounded-full text-[10px]",
                     currentConfig.actionClass,
                   )}
                 >
