@@ -58,7 +58,7 @@ export const InvoiceViewerPrinting: React.FC<InvoiceViewerPrintingProps> = ({
     <ActionPrintContainer isPending={isSubmitting} isPrinted={isPrinted}>
       {invoiceViewer}
       <PrinterConfigView>
-        {() => (
+        {(isConfig, isConnected) => (
           <div className="flex items-center justify-end gap-3 w-full max-w-md">
             <LoadingButton
               variant="destructive"
@@ -72,6 +72,7 @@ export const InvoiceViewerPrinting: React.FC<InvoiceViewerPrintingProps> = ({
               <span>Annuler le paiement</span>
             </LoadingButton>
             <PrintInvoiceButton
+              disabled={!isConnected || !isConfig}
               isPrinted={isPrinted}
               isPrinting={isSubmitting}
               isReady={isReady}

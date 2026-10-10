@@ -2,7 +2,10 @@ import React, { useState, useEffect } from "react";
 import { formatDate } from "@/packages/times";
 import { useGetStudentPayments } from "@/renderer/libs/queries/finances";
 import { Calendar, Receipt, Coins } from "lucide-react";
-import { PAYMENT_METHOD_ENUM } from "@/packages/@core/data-access/db/options";
+import {
+  PAYMENT_METHOD_ENUM,
+  getPaymentStatusLabel,
+} from "@/packages/@core/data-access/db/options";
 import { cn } from "@/renderer/utils";
 import { formatCurrency } from "@/packages/currency";
 import { PaymentInvoice } from "@/renderer/components/invoices/payment-invoice";
@@ -57,8 +60,8 @@ const PaymentItem: React.FC<PaymentItemProps> = ({
     <div
       onClick={onClick}
       className={cn(
-        "flex items-start p-2 justify-between text-sm transition-all cursor-pointer rounded-md",
-        isSelected ? "bg-accent/80 border" : "hover:bg-accent/50",
+        "flex items-start p-2 justify-between text-sm transition-all cursor-pointer rounded-md border",
+        isSelected ? "bg-accent/80 " : "hover:bg-accent/50",
       )}
     >
       <div className="flex gap-2.5 items-start">
@@ -68,6 +71,14 @@ const PaymentItem: React.FC<PaymentItemProps> = ({
         <div>
           <div className="font-semibold text-xs flex items-center gap-1.5">
             <span>Paiement</span>
+            {payment.status && (
+              <span
+                className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded truncate max-w-30"
+                title={payment.status}
+              >
+                {getPaymentStatusLabel(payment.status)}
+              </span>
+            )}
             {payment.transactionReference && (
               <span
                 className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded truncate max-w-30"
@@ -141,7 +152,7 @@ const PaymentLoadingSkeleton: React.FC = () => (
  * @returns The empty state container element.
  */
 const PaymentEmptyState: React.FC = () => (
-  <div className="flex flex-col items-center justify-center py-8 px-4 text-center border border-dashed rounded-lg border-border/60 bg-muted/20">
+  <div className="flex h-full flex-col items-center justify-center py-8 px-4 text-center border border-dashed rounded-lg border-border/60 bg-muted/20">
     <Receipt className="size-8 text-muted-foreground/60 stroke-[1.5]" />
     <p className="mt-2 text-sm font-medium text-foreground">Aucun versement</p>
     <p className="text-xs text-muted-foreground max-w-50 mt-0.5">

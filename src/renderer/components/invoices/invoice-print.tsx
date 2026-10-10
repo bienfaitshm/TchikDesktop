@@ -23,6 +23,7 @@ export type PrintInvoiceButtonProps = {
   isPrinted?: boolean;
   /** Indicates whether the user action is validated and ready to trigger printing. */
   isReady?: boolean;
+  disabled?: boolean;
   /** Optional click handler to initiate invoice printing. */
   onClick?: () => void;
 };
@@ -36,6 +37,7 @@ export const PrintInvoiceButton: React.FC<PrintInvoiceButtonProps> = ({
   isPrinted = false,
   isReady = false,
   isPrinting = false,
+  disabled,
   onClick,
 }) => {
   const getButtonLabel = (): string => {
@@ -49,7 +51,7 @@ export const PrintInvoiceButton: React.FC<PrintInvoiceButtonProps> = ({
     <LoadingButton
       type="button"
       onClick={onClick}
-      disabled={!isReady || isPrinting}
+      disabled={disabled || !isReady || isPrinting}
       loading={isPrinting}
       className="w-fit font-sans text-xs font-semibold rounded-full"
       size="sm"
@@ -182,7 +184,7 @@ export const ActionPrintContainer: React.FC<
  */
 export type PrinterConfigViewProps = {
   /** Optional render prop function receiving printer connection state. */
-  children?: (isConnected: boolean) => React.ReactNode;
+  children?: (isConfigured?: boolean, isConnected?: boolean) => React.ReactNode;
 };
 
 /**
@@ -201,7 +203,7 @@ export const PrinterConfigView: React.FC<PrinterConfigViewProps> = ({
         isConfigured={isConfigured}
         isConnected={isConnected}
       />
-      {isConfigured && children?.(isConnected)}
+      {children?.(isConfigured, isConnected)}
     </>
   );
 };
