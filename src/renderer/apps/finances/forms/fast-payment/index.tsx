@@ -8,17 +8,18 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-
-import { FeeSelection } from "./fee-selection";
 import { PaymentProcessForm } from "@/renderer/apps/finances/forms/payment-process-form";
 import {
   EmptySelectStudent,
   FastPaymentLoading,
 } from "@/renderer/apps/finances/components/fast-payment-empty";
-import { generateInvoiceRef, useFastPaymentStore } from "./hooks";
-import type { FastPaymentFormProps } from "./types";
 import { useSearchEnrollments } from "@/renderer/libs/queries/enrollements/helpers";
 import { ComboboxSearch } from "@/renderer/components/form/fields/generic-search-combo-box";
+import { generateInvoiceRef } from "@/packages/strings";
+
+import { FeeSelection } from "./fee-selection";
+import { useFastPaymentStore } from "./hooks";
+import type { FastPaymentFormProps } from "./types";
 
 /**
  * Main fast payment form component managing POS checkout workflow.

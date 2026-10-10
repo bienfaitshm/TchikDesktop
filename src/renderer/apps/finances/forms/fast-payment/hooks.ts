@@ -6,11 +6,13 @@ import type {
   StudentPayment,
 } from "@/packages/@core/data-access/db";
 import {
-  FEE_SCHEDULES_ENUM,
+  FEE_SCHEDULE_STATUS_ENUM,
   CURRENCY_ENUM,
   PAYMENT_METHOD_ENUM,
+  PAYMENT_STATUS_ENUM,
 } from "@/packages/@core/data-access/db/options";
 import type { EnrollmentOption, ScheduleOption } from "./types";
+import { generateInvoiceRef } from "@/packages/strings";
 
 /**
  * Payment transaction result containing fee assignment and associated student payment.
@@ -35,7 +37,8 @@ export type TicketPayment = {
   paymentId: string;
   feeTypeName: string;
   scheduleName: string;
-  status: FEE_SCHEDULES_ENUM;
+  status: FEE_SCHEDULE_STATUS_ENUM;
+  paymentStatus: PAYMENT_STATUS_ENUM;
   currency: CURRENCY_ENUM;
   amountPaid: number;
   totalDue: number;
@@ -106,33 +109,6 @@ const getScheduleDisplayName = (schedule?: ScheduleOption): string =>
   schedule?.installmentName ?? schedule?.label ?? "—";
 
 /**
- * Generates a unique point-of-sale tracking reference code.
- * @param year - Reference calendar year for the invoice prefix.
- * @returns Formatted unique tracking reference identifier.
- */
-export const generateInvoiceRef = (year = new Date().getFullYear()): string => {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const randomBytes = new Uint8Array(4);
-
-  if (
-    typeof globalThis.crypto !== "undefined" &&
-    globalThis.crypto.getRandomValues
-  ) {
-    globalThis.crypto.getRandomValues(randomBytes);
-  } else {
-    for (let i = 0; i < 4; i++) {
-      randomBytes[i] = Math.floor(Math.random() * 256);
-    }
-  }
-
-  const randomPart = Array.from(randomBytes)
-    .map((byte) => chars[byte % chars.length])
-    .join("");
-
-  return `POS-${year}-${randomPart}`;
-};
-
-/**
  * Constructs a normalized ticket entity from student, payment, and fee metadata.
  * @param student - Student identification details.
  * @param payment - Transaction payment result payload.
@@ -149,6 +125,7 @@ export function createTicket(
     student,
     payment: {
       paymentId: payment.payment.paymentId,
+      paymentStatus: PAYMENT_STATUS_ENUM.VALIDATED,
       feeTypeName: fee.feeTypeName,
       scheduleName: fee.scheduleName,
       status: payment.status,
@@ -317,9 +294,10 @@ export const derivePreviewTicket = (
       },
       payment: {
         paymentId: "PREVIEW-ID",
+        paymentStatus: PAYMENT_STATUS_ENUM.VALIDATED,
         feeTypeName: getFeeTypeDisplayName(selectedFeeType),
         scheduleName: getScheduleDisplayName(selectedSchedule),
-        status: FEE_SCHEDULES_ENUM.UNPAID,
+        status: FEE_SCHEDULE_STATUS_ENUM.UNPAID,
         currency: selectedSchedule?.currency ?? CURRENCY_ENUM.CDF,
         amountPaid: amountDue,
         totalDue: selectedSchedule?.totalAmount ?? 0,

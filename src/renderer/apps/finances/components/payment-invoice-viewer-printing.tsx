@@ -10,11 +10,13 @@ import { XCircleIcon } from "lucide-react";
 
 export type InvoiceViewerPrintingProps = {
   invoiceViewer?: React.ReactNode;
+  canCancelPayment?: boolean;
   isReady: boolean;
   invoiceRef?: string;
   paymentId?: string;
   isPrinted?: boolean;
   invoiceCode?: string;
+  isCanceled?: boolean;
   isCancelling?: boolean;
   onSuccessPrint?: (data: {
     id: string;
@@ -32,6 +34,8 @@ export type InvoiceViewerPrintingProps = {
 export const InvoiceViewerPrinting: React.FC<InvoiceViewerPrintingProps> = ({
   isReady,
   isPrinted,
+  isCanceled,
+  canCancelPayment,
   paymentId,
   invoiceRef,
   invoiceViewer,
@@ -65,11 +69,13 @@ export const InvoiceViewerPrinting: React.FC<InvoiceViewerPrintingProps> = ({
               size="sm"
               className="text-xs rounded-full"
               loading={isCancelling}
-              disabled={isSubmitting || isCancelling}
+              disabled={isSubmitting || isCancelling || canCancelPayment}
               onClick={onCancelPayment}
             >
               <XCircleIcon />
-              <span>Annuler le paiement</span>
+              <span>
+                {isCanceled ? "Paiement annule" : "Annuler le paiement"}
+              </span>
             </LoadingButton>
             <PrintInvoiceButton
               disabled={!isConnected || !isConfig}

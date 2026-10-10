@@ -31,6 +31,7 @@ import {
 } from "@/renderer/apps/finances/forms/fast-payment/hooks";
 import type { FastPaymentState } from "@/renderer/apps/finances/forms/fast-payment/hooks";
 import { InvoiceViewerPrinting } from "../components/payment-invoice-viewer-printing";
+import { PAYMENT_STATUS_ENUM } from "@/packages/@core/data-access/db/options";
 
 /**
  * Point-of-sale terminal page component for processing student payments.
@@ -157,6 +158,10 @@ export function InvoicePrinting(): React.JSX.Element {
       isReady={isReady}
       invoiceRef={payment?.transactionReference || ""}
       paymentId={payment?.paymentId}
+      canCancelPayment={Boolean(
+        payment?.paymentId &&
+        payment?.paymentStatus === PAYMENT_STATUS_ENUM.VALIDATED,
+      )}
       onSuccessPrint={({ invoiceRef }) => markTicketAsPrinted(invoiceRef)}
       invoiceViewer={
         payment && student ? (

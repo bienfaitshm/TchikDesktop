@@ -40,15 +40,11 @@ export const PrintInvoiceButton: React.FC<PrintInvoiceButtonProps> = ({
   disabled,
   onClick,
 }) => {
-  const getButtonLabel = (): string => {
-    if (!isReady) {
-      return "Validez l'action pour imprimer";
-    }
-    return isPrinted ? "Réimprimer la facture" : "Imprimer la facture";
-  };
+  const buttonLabel = getButtonLabel({ isPrinted, isReady });
 
   return (
     <LoadingButton
+      title="buttonLabel"
       type="button"
       onClick={onClick}
       disabled={disabled || !isReady || isPrinting}
@@ -58,7 +54,7 @@ export const PrintInvoiceButton: React.FC<PrintInvoiceButtonProps> = ({
       variant={isReady ? "default" : "outline"}
     >
       <Printer className="mr-2 h-3.5 w-3.5 shrink-0" />
-      <span>{getButtonLabel()}</span>
+      <span>{buttonLabel}</span>
     </LoadingButton>
   );
 };
@@ -206,4 +202,14 @@ export const PrinterConfigView: React.FC<PrinterConfigViewProps> = ({
       {children?.(isConfigured, isConnected)}
     </>
   );
+};
+
+export const getButtonLabel = (params: {
+  isReady?: boolean;
+  isPrinted?: boolean;
+}): string => {
+  if (!params.isReady) {
+    return "Enregistrer pour impr...";
+  }
+  return params.isPrinted ? "Réimprimer la facture" : "Imprimer la facture";
 };

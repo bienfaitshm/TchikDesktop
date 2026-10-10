@@ -20,7 +20,7 @@ export const InvoiceGridContainer = ({
 }: InvoiceGridContainerProps): React.JSX.Element => (
   <div
     className={cn(
-      "grid grid-cols-1 lg:grid-cols-12 gap-x-24 items-start",
+      "grid grid-cols-1 lg:grid-cols-3 gap-x-24 items-start",
       className,
     )}
     {...props}
@@ -41,10 +41,10 @@ export const InvoiceGridFormContainer = ({
   ...props
 }: InvoiceGridContainerProps): React.JSX.Element => (
   <div
-    className={cn("lg:col-span-8 flex flex-col gap-6", className)}
+    className={cn("lg:col-span-2 flex flex-col gap-6", className)}
     {...props}
   >
-    {children}
+    <div className="max-w-xl">{children}</div>
   </div>
 );
 
@@ -59,7 +59,7 @@ export const InvoiceGridPreviewContainer = ({
   children,
   ...props
 }: InvoiceGridContainerProps): React.JSX.Element => (
-  <div className={cn("lg:col-span-4", className)} {...props}>
-    {children}
+  <div className={cn("lg:col-span-1", className)} {...props}>
+    <div>{children}</div>
   </div>
 );
