@@ -75,7 +75,7 @@ export function FeeSelection({
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
         <Field className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor="fee-type-select text-xs">
+          <FieldLabel htmlFor="fee-type-select" className="text-xs">
             Type de Frais
           </FieldLabel>
           <ComboboxSearch
@@ -88,7 +88,7 @@ export function FeeSelection({
         </Field>
 
         <Field className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor="fee-schedule-select">
+          <FieldLabel htmlFor="fee-schedule-select" className="text-xs">
             Échéancier / Période
           </FieldLabel>
           <ComboboxSearch
