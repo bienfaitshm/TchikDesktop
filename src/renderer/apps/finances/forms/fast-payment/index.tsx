@@ -84,6 +84,8 @@ export function FastPaymentForm({
             >
               <Suspense fallback={<FastPaymentLoading />}>
                 <FeeSelection
+                  schoolId={schoolId}
+                  yearId={yearId}
                   studentOverview={
                     selectedStudent
                       ? {

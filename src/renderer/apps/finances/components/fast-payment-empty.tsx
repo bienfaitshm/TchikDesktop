@@ -23,6 +23,8 @@ import {
   EnrollmentOverviewProps,
 } from "./enrollment-overview";
 import { Button } from "@/renderer/components/ui/button";
+import { PaymentAction } from "../tables/payment-table.menus";
+import type { FeeAssignment } from "@/packages/@core/data-access/db";
 
 /**
  * Renders an animated loading indicator for fee processing states.
@@ -91,17 +93,10 @@ export const EmptySelect: React.FC<React.PropsWithChildren> = ({
   );
 };
 
-export interface AssignmentOverviewData {
-  status: FEE_SCHEDULE_STATUS_ENUM | string;
-  amountPaid: number;
-  totalAmount: number;
-  updatedAt?: Date | string | null;
-  createdAt?: Date | string | null;
-  currency?: CURRENCY_ENUM;
-}
-
 export interface PaymentOverviewProps {
-  assignment: AssignmentOverviewData;
+  assignment: FeeAssignment;
+  schoolId: string;
+  yearId: string;
   studentOverview?: EnrollmentOverviewProps;
   formatDate?: (date?: Date | string | null) => string;
 }
@@ -130,6 +125,8 @@ export const PaymentOverview: React.FC<
   React.PropsWithChildren<PaymentOverviewProps>
 > = ({
   assignment,
+  schoolId,
+  yearId,
   formatDate = defaultFormatDate,
   children,
   studentOverview,
@@ -270,7 +267,14 @@ export const PaymentOverview: React.FC<
           Paiement non effectué
         </AlertTitle>
         <AlertAction>
-          <Button>Actions</Button>
+          <PaymentAction
+            feeAssignment={assignment}
+            schoolId={schoolId}
+            yearId={yearId}
+            mutationKey={["fin"]}
+          >
+            <Button>Actions</Button>
+          </PaymentAction>
         </AlertAction>
         <AlertDescription className="text-xs text-muted-foreground">
           Aucun versement n'a encore été enregistré pour cette échéance.

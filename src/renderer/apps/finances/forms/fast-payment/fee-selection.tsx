@@ -34,6 +34,8 @@ export type FeeSelectionChildrenArgs = {
 export type FeeSelectionProps = {
   /** Unique enrollment identifier for student payment query. */
   enrollmentId: string;
+  schoolId: string;
+  yearId: string;
   studentOverview?: EnrollmentOverviewProps;
   /** Optional render prop function to render contextual payment forms or actions. */
   children?: (args: FeeSelectionChildrenArgs) => React.ReactNode;
@@ -48,6 +50,8 @@ export type FeeSelectionProps = {
  */
 export function FeeSelection({
   enrollmentId,
+  schoolId,
+  yearId,
   studentOverview,
   children,
 }: FeeSelectionProps) {
@@ -71,7 +75,9 @@ export function FeeSelection({
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
         <Field className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor="fee-type-select">Type de Frais</FieldLabel>
+          <FieldLabel htmlFor="fee-type-select text-xs">
+            Type de Frais
+          </FieldLabel>
           <ComboboxSearch
             id="fee-type-select"
             selectedItem={selectedFeeType}
@@ -116,6 +122,8 @@ export function FeeSelection({
             className="overflow-hidden"
           >
             <PaymentOverview
+              schoolId={schoolId}
+              yearId={yearId}
               studentOverview={studentOverview}
               assignment={selectedSchedule}
             >

@@ -27,11 +27,11 @@ import type {
   SeparatorPosition,
   SubmenuItemConfig,
   ToggleItemConfig,
-  Trigger,
   IMenuItemBuilder,
   DynamicLabel,
   DynamicIcon,
   ExtendedMenuItemConfig,
+  WithPropsChildren,
 } from "./types";
 import { isIn, mapDialogItems } from "./utils";
 import {
@@ -555,10 +555,9 @@ const MenuItemRenderer = memo(function MenuItemRenderer<TProps>({
 }) => React.ReactElement;
 (MenuItemRenderer as unknown as React.FC).displayName = "MenuItemRenderer";
 
-interface ActionMenuProps<TProps> {
+export interface ActionMenuProps<TProps> {
   items: ExtendedMenuItemConfig<TProps>[];
-  defaultTrigger?: Trigger<TProps>;
-  contextProps: TProps & { trigger?: Trigger<TProps> };
+  contextProps: TProps;
 }
 
 /**
@@ -568,20 +567,15 @@ interface ActionMenuProps<TProps> {
  */
 function ActionMenuComponent<TProps>({
   items,
-  defaultTrigger,
+  children = <ButtonMenu />,
   contextProps,
-}: ActionMenuProps<TProps>): React.ReactElement {
+}: WithPropsChildren<ActionMenuProps<TProps>>): React.ReactElement {
   const dialogItems = mapDialogItems(items);
-  const TriggerComponent = contextProps.trigger ?? defaultTrigger;
 
   return (
     <DialogMenuProvider>
       <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            TriggerComponent ? TriggerComponent(contextProps) : <ButtonMenu />
-          }
-        ></DropdownMenuTrigger>
+        <DropdownMenuTrigger render={children}></DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-xs">
           {items.map((item, index) => (
             <MenuItemRenderer
@@ -615,18 +609,16 @@ export function createMenuBuilder<TProps>() {
 
     build: (
       schema: MenuSchemaInput<TProps> | ExtendedMenuItemConfig<TProps>[],
-      defaultOptions?: { trigger?: Trigger<TProps> },
-    ): React.FC<TProps & { trigger?: Trigger<TProps> }> => {
+    ): React.FC<WithPropsChildren<TProps>> => {
       const compiledItems = normalizeSchema(schema);
 
-      const ActionMenu: React.FC<TProps & { trigger?: Trigger<TProps> }> = (
-        props,
-      ) => (
-        <ActionMenuComponent
-          items={compiledItems}
-          defaultTrigger={defaultOptions?.trigger}
-          contextProps={props}
-        />
+      const ActionMenu: React.FC<WithPropsChildren<TProps>> = ({
+        children,
+        ...props
+      }) => (
+        <ActionMenuComponent items={compiledItems} contextProps={props}>
+          {children}
+        </ActionMenuComponent>
       );
 
       ActionMenu.displayName = "ActionMenu";

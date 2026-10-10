@@ -1,3 +1,4 @@
+import { MenuTriggerState } from "@base-ui/react";
 import type { ComponentRenderFn, HTMLProps } from "@base-ui/react/types";
 
 /**
@@ -14,9 +15,11 @@ export type SeparatorPosition = "before" | "after" | "both" | "none";
 /**
  * Render function signature for custom component triggers.
  */
-export type Trigger<TProps> = (
-  props: TProps,
-) => React.ReactNode | ComponentRenderFn<HTMLProps, unknown>;
+export type Trigger =
+  | React.ReactElement<unknown, string | React.JSXElementConstructor<any>>
+  | ComponentRenderFn<HTMLProps, MenuTriggerState>;
+
+export type WithPropsChildren<T> = T & { children?: Trigger };
 
 /**
  * Value that can be provided statically or computed dynamically from props.

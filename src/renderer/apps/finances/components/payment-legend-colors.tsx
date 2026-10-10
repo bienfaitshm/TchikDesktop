@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  FEE_SCHEDULES_ENUM,
+  FEE_SCHEDULE_STATUS_ENUM,
   FEE_SCHEDULES_OPTIONS,
 } from "@/packages/@core/data-access/db/options";
 import { cn } from "@/renderer/utils";
@@ -18,12 +18,12 @@ import { cn } from "@/renderer/utils";
 /**
  * Mapping of fee schedule statuses to their visual color indicator classes.
  */
-export const STATUS_INDICATORS: Record<FEE_SCHEDULES_ENUM, string> = {
-  [FEE_SCHEDULES_ENUM.PAID]: "bg-emerald-500 ring-emerald-500/20",
-  [FEE_SCHEDULES_ENUM.UNPAID]: "bg-rose-500 ring-rose-500/20",
-  [FEE_SCHEDULES_ENUM.PARTIALLY_PAID]: "bg-amber-500 ring-amber-500/20",
-  [FEE_SCHEDULES_ENUM.EXEMPTED]: "bg-slate-400 ring-slate-400/20",
-  [FEE_SCHEDULES_ENUM.OVERPAID]: "bg-indigo-500 ring-indigo-500/20",
+export const STATUS_INDICATORS: Record<FEE_SCHEDULE_STATUS_ENUM, string> = {
+  [FEE_SCHEDULE_STATUS_ENUM.PAID]: "bg-emerald-500 ring-emerald-500/20",
+  [FEE_SCHEDULE_STATUS_ENUM.UNPAID]: "bg-rose-500 ring-rose-500/20",
+  [FEE_SCHEDULE_STATUS_ENUM.PARTIALLY_PAID]: "bg-amber-500 ring-amber-500/20",
+  [FEE_SCHEDULE_STATUS_ENUM.EXEMPTED]: "bg-slate-400 ring-slate-400/20",
+  [FEE_SCHEDULE_STATUS_ENUM.OVERPAID]: "bg-indigo-500 ring-indigo-500/20",
 };
 
 /**
