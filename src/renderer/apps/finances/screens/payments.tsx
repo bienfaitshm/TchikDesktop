@@ -1,14 +1,8 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router";
 import { HistoryIcon, Table2Icon } from "lucide-react";
-
-import {
-  ActionPrintContainer,
-  PrinterConfigView,
-  PrintInvoiceButton,
-} from "@/renderer/components/invoices/invoice-print";
 import { LoadingButton } from "@/renderer/components/buttons/button-loading";
 import { PaymentInvoice } from "@/renderer/components/invoices/payment-invoice";
 import { Button } from "@/renderer/components/ui/button";
@@ -28,9 +22,7 @@ import {
   PageHeaderTextContent,
 } from "@/renderer/containers/page-container";
 import { useProcessStudentPaymentForm } from "@/renderer/libs/queries/finances";
-import { usePrintInvoiceForm } from "@/renderer/libs/queries/printing";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
-
 import { PaymentHistoryDialog } from "@/renderer/apps/finances/dialog/payment-history-dialog";
 import { FastPaymentForm } from "@/renderer/apps/finances/forms/fast-payment";
 import {
@@ -38,6 +30,7 @@ import {
   useFastPaymentStore,
 } from "@/renderer/apps/finances/forms/fast-payment/hooks";
 import type { FastPaymentState } from "@/renderer/apps/finances/forms/fast-payment/hooks";
+import { InvoiceViewerPrinting } from "../components/payment-invoice-viewer-printing";
 
 /**
  * Point-of-sale terminal page component for processing student payments.
@@ -158,50 +151,27 @@ export function InvoicePrinting(): React.JSX.Element {
 
   const isReady = Boolean(payment?.paymentId && invoiceRef && !isModePreview);
 
-  const handlePrintSuccess = useCallback((): void => {
-    if (invoiceRef) {
-      markTicketAsPrinted(invoiceRef);
-    }
-  }, [invoiceRef, markTicketAsPrinted]);
-
-  const { isSubmitting, onSubmit } = usePrintInvoiceForm({
-    onSuccess: handlePrintSuccess,
-  });
-
-  const handlePrint = useCallback((): void => {
-    if (payment?.paymentId && invoiceRef) {
-      onSubmit({
-        invoiceCode: "payment",
-        id: payment.paymentId,
-        invoiceRef,
-      });
-    }
-  }, [payment?.paymentId, invoiceRef, onSubmit]);
-
   return (
-    <ActionPrintContainer isPending={isSubmitting} isPrinted={isPrinted}>
-      {payment && student ? (
-        <PaymentInvoice
-          payment={{
-            ...payment,
-            dueAmount: payment.totalDue,
-            paidAmount: payment.amountPaid,
-            receivedAmount: payment.amountPaid,
-          }}
-          student={student}
-          invoiceRef={invoiceRef}
-        />
-      ) : null}
-      <PrinterConfigView>
-        {() => (
-          <PrintInvoiceButton
-            isPrinted={isPrinted}
-            isPrinting={isSubmitting}
-            isReady={isReady}
-            onClick={handlePrint}
+    <InvoiceViewerPrinting
+      isPrinted={isPrinted}
+      isReady={isReady}
+      invoiceRef={payment?.transactionReference || ""}
+      paymentId={payment?.paymentId}
+      onSuccessPrint={({ invoiceRef }) => markTicketAsPrinted(invoiceRef)}
+      invoiceViewer={
+        payment && student ? (
+          <PaymentInvoice
+            payment={{
+              ...payment,
+              dueAmount: payment.totalDue,
+              paidAmount: payment.amountPaid,
+              receivedAmount: payment.amountPaid,
+            }}
+            student={student}
+            invoiceRef={invoiceRef}
           />
-        )}
-      </PrinterConfigView>
-    </ActionPrintContainer>
+        ) : null
+      }
+    />
   );
 }
