@@ -10,7 +10,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/renderer/components/ui/dialog";
+  DialogContainer,
+} from "@/components/dialog/base";
 import { Skeleton } from "@/renderer/components/ui/skeleton";
 import { Suspense } from "@/renderer/libs/queries/suspense";
 import {
@@ -65,7 +66,7 @@ export const PaymentHistoryDialog: React.FC<PaymentHistoryDialogProps> = ({
   ...props
 }) => (
   <Dialog {...props}>
-    <DialogContent className="sm:max-w-106.25">
+    <DialogContent>
       <DialogHeader>
         <DialogTitle className="text-base font-semibold tracking-tight">
           Historique des paiements
@@ -74,11 +75,11 @@ export const PaymentHistoryDialog: React.FC<PaymentHistoryDialogProps> = ({
           Liste chronologique des versements effectués pour cette échéance.
         </DialogDescription>
       </DialogHeader>
-
-      <Suspense fallback={<Skeleton className="h-32 w-full" />}>
-        <PaymentAssignHistory assignmentId={assignmentId} />
-      </Suspense>
-
+      <DialogContainer className="h-[70vh]">
+        <Suspense fallback={<Skeleton className="h-32 w-full" />}>
+          <PaymentAssignHistory assignmentId={assignmentId} />
+        </Suspense>
+      </DialogContainer>
       <DialogFooter>
         <DialogClose asChild>
           <Button variant="secondary" size="sm" className="h-8 text-xs">

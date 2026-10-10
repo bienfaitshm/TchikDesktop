@@ -178,7 +178,6 @@ export function InvoicePrinting(): React.JSX.Element {
     }
   }, [payment?.paymentId, invoiceRef, onSubmit]);
 
-  console.log({ payment });
   return (
     <ActionPrintContainer isPending={isSubmitting} isPrinted={isPrinted}>
       {payment && student ? (

@@ -51,9 +51,9 @@ export const PrintInvoiceButton: React.FC<PrintInvoiceButtonProps> = ({
       onClick={onClick}
       disabled={!isReady || isPrinting}
       loading={isPrinting}
-      className="w-full font-sans text-xs font-semibold rounded-full"
+      className="w-fit font-sans text-xs font-semibold rounded-full"
       size="sm"
-      variant="outline"
+      variant={isReady ? "default" : "outline"}
     >
       <Printer className="mr-2 h-3.5 w-3.5 shrink-0" />
       <span>{getButtonLabel()}</span>
