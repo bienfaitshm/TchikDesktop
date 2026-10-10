@@ -126,4 +126,9 @@ export const paymentService = {
 };
 
 export * from "./types";
-export type { StudentPaymentTable, EnrollmentPayment };
+export type {
+  StudentPaymentTable,
+  EnrollmentPayment,
+  CancelPaymentResult,
+  ProcessPaymentResult,
+};

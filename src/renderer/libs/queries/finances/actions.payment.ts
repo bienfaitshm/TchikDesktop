@@ -8,6 +8,7 @@ import type {
   FeeConfigurationDTO,
   TableClassroomPaymentAssignment,
 } from "@/packages/@core/data-access/db/queries";
+import type { CancelPaymentResult } from "@/packages/@core/data-access/db";
 import {
   CURRENCY_OPTIONS,
   PAYMENT_METHOD_OPTIONS,
@@ -15,17 +16,16 @@ import {
 import type {
   AssignFeesToStudentPayload,
   ProcessStudentPaymentPayload,
+  CancelStudentPaymentPayload,
 } from "@/packages/@core/apis/clients/finances.payment";
 import type { BaseMutationConfig } from "../base";
 import { useFormBaseNotify } from "../base";
 import {
   paymentKeys,
   useAssignFeesToStudent,
-  usePrintTicket,
   useProcessStudentPayment,
+  useCancelStudentPayment,
 } from "./finances";
-import { useSearchClassrooms } from "../classrooms";
-import { useSearchEnrollments } from "../enrollements";
 
 export type ReturnPaymentProcessData = FeeAssignment & {
   payment: StudentPayment;
@@ -36,6 +36,7 @@ export type AssignFeesFormConfig = BaseMutationConfig<void>;
 export type ProcessPaymentFormConfig = {
   process?: "fast";
 } & BaseMutationConfig<ReturnPaymentProcessData>;
+export type CancelPaymentFormConfig = BaseMutationConfig<CancelPaymentResult>;
 
 export interface PaymentContextParams {
   schoolId: string;
@@ -58,17 +59,17 @@ const PROCESS_PAYMENT_NOTIFICATIONS = {
   error: { title: "Échec du traitement du versement au guichet." },
 };
 
-const PRINT_TICKET_NOTIFICATION = {
+const CANCEL_PAYMENT_NOTIFICATIONS = {
   success: {
-    title: "Paiement enregistré",
-    description: "Le reçu immuable a été généré et la dette a été mise à jour.",
+    title: "Paiement annulé",
+    description: "La transaction a été annulée avec succès.",
   },
-  error: { title: "Échec du traitement du versement au guichet." },
+  error: { title: "Échec de l'annulation du paiement." },
 };
 
 /**
  * Form hook for assigning initial fee schedules to a student.
- * @param context - Context parameters containing schoolId and yearId.
+ * @param context - Parameters containing schoolId and yearId.
  * @param config - Optional base mutation configuration.
  * @returns Form state and handlers bound to the fee assignment mutation.
  */
@@ -158,8 +159,7 @@ export function useUpdateTableClassroomPayment(
 
 /**
  * Form hook for processing student payment transactions at counter.
- * @param context - Context parameters containing schoolId and yearId.
- * @param userConfig - Optional base mutation configuration.
+ * @param context - Parameters containing schoolId, yearId and other configurations.
  * @returns Form state, handlers, and payment select field options.
  */
 export function useProcessStudentPaymentForm({
@@ -191,4 +191,34 @@ export function useProcessStudentPaymentForm({
     paymentMethodOptions: PAYMENT_METHOD_OPTIONS,
     ...base,
   };
+}
+
+/**
+ * Form hook for cancelling an existing student payment transaction.
+ * @param config - Optional base mutation configuration.
+ * @returns Form state and handlers bound to the cancellation mutation.
+ */
+export function useCancelStudentPaymentForm(config?: CancelPaymentFormConfig) {
+  const mutation = useCancelStudentPayment();
+  const queryClient = useQueryClient();
+
+  const augmentedConfig: CancelPaymentFormConfig = {
+    ...config,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: paymentKeys.all });
+      if (config?.onSuccess) {
+        config.onSuccess(data);
+      }
+    },
+  };
+
+  return useFormBaseNotify<
+    CancelStudentPaymentPayload,
+    CancelStudentPaymentPayload,
+    CancelPaymentResult
+  >({
+    mutation,
+    config: augmentedConfig,
+    getNotifications: () => CANCEL_PAYMENT_NOTIFICATIONS,
+  });
 }
