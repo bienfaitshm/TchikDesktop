@@ -83,7 +83,20 @@ export function FastPaymentForm({
               transition={{ duration: 0.2 }}
             >
               <Suspense fallback={<FastPaymentLoading />}>
-                <FeeSelection enrollmentId={selectedStudent.enrollmentId}>
+                <FeeSelection
+                  studentOverview={
+                    selectedStudent
+                      ? {
+                          enrolledAt: selectedStudent.createdAt,
+                          startedAt: selectedStudent.createdAt,
+                          status: selectedStudent.status,
+                          fullName: selectedStudent.student.fullName,
+                          isProDeo: selectedStudent.isProDeo,
+                        }
+                      : undefined
+                  }
+                  enrollmentId={selectedStudent.enrollmentId}
+                >
                   {({ amountPaid, assignmentId, totalAmount }) => (
                     <div className="mt-4">
                       <PaymentProcessForm

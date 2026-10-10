@@ -14,6 +14,7 @@ import {
 } from "@/renderer/apps/finances/components/fast-payment-empty";
 import { formatScheduleStatus } from "./formatters";
 import { useFastPaymentStore } from "./hooks";
+import { EnrollmentOverviewProps } from "../../components/enrollment-overview";
 
 /**
  * Arguments provided to the children render prop function.
@@ -33,6 +34,7 @@ export type FeeSelectionChildrenArgs = {
 export type FeeSelectionProps = {
   /** Unique enrollment identifier for student payment query. */
   enrollmentId: string;
+  studentOverview?: EnrollmentOverviewProps;
   /** Optional render prop function to render contextual payment forms or actions. */
   children?: (args: FeeSelectionChildrenArgs) => React.ReactNode;
 };
@@ -44,7 +46,11 @@ export type FeeSelectionProps = {
  * @param props - Component properties including enrollmentId and children render prop.
  * @returns The fee selection UI section.
  */
-export function FeeSelection({ enrollmentId, children }: FeeSelectionProps) {
+export function FeeSelection({
+  enrollmentId,
+  studentOverview,
+  children,
+}: FeeSelectionProps) {
   const { data: feeOverview } = useGetStudentPaymentOverview(enrollmentId);
   const selectedFeeType = useFastPaymentStore((state) => state.selectedFeeType);
   const selectedSchedule = useFastPaymentStore(
@@ -109,7 +115,10 @@ export function FeeSelection({ enrollmentId, children }: FeeSelectionProps) {
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <PaymentOverview assignment={selectedSchedule}>
+            <PaymentOverview
+              studentOverview={studentOverview}
+              assignment={selectedSchedule}
+            >
               {children?.({
                 totalAmount: selectedSchedule.totalAmount,
                 amountPaid: selectedSchedule.amountPaid,

@@ -6,13 +6,23 @@ import { UserSearch } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import {
   CURRENCY_ENUM,
-  FEE_SCHEDULES_ENUM,
+  FEE_SCHEDULE_STATUS_ENUM,
 } from "@/packages/@core/data-access/db/options";
 import { CheckCircle2, ShieldCheck, Clock, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+  AlertAction,
+} from "@/components/ui/alert";
 import { formatCurrency } from "@/packages/currency";
+import {
+  EnrollmentOverview,
+  EnrollmentOverviewProps,
+} from "./enrollment-overview";
+import { Button } from "@/renderer/components/ui/button";
 
 /**
  * Renders an animated loading indicator for fee processing states.
@@ -37,7 +47,9 @@ export const FastPaymentLoading: React.FC = () => {
  * Displays a prompt prompting the cashier to select a student enrollment.
  * @returns The empty selection fallback element for students.
  */
-export const EmptySelectStudent: React.FC = () => {
+export const EmptySelectStudent: React.FC<React.PropsWithChildren> = ({
+  children,
+}) => {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
@@ -51,6 +63,7 @@ export const EmptySelectStudent: React.FC = () => {
         Veuillez sélectionner un élève pour poursuivre le processus
         d'encaissement.
       </p>
+      {children}
     </motion.div>
   );
 };
@@ -59,7 +72,9 @@ export const EmptySelectStudent: React.FC = () => {
  * Displays an empty-state prompt instructing the user to pick a fee category or schedule.
  * @returns The empty selection fallback element for fee types.
  */
-export const EmptySelect: React.FC = () => {
+export const EmptySelect: React.FC<React.PropsWithChildren> = ({
+  children,
+}) => {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
@@ -71,12 +86,13 @@ export const EmptySelect: React.FC = () => {
       <span>
         Veuillez sélectionner le type de frais et l'échéancier correspondant.
       </span>
+      {children}
     </motion.div>
   );
 };
 
 export interface AssignmentOverviewData {
-  status: FEE_SCHEDULES_ENUM | string;
+  status: FEE_SCHEDULE_STATUS_ENUM | string;
   amountPaid: number;
   totalAmount: number;
   updatedAt?: Date | string | null;
@@ -86,6 +102,7 @@ export interface AssignmentOverviewData {
 
 export interface PaymentOverviewProps {
   assignment: AssignmentOverviewData;
+  studentOverview?: EnrollmentOverviewProps;
   formatDate?: (date?: Date | string | null) => string;
 }
 
@@ -111,7 +128,12 @@ function defaultFormatDate(date?: Date | string | number | null): string {
  */
 export const PaymentOverview: React.FC<
   React.PropsWithChildren<PaymentOverviewProps>
-> = ({ assignment, formatDate = defaultFormatDate, children }) => {
+> = ({
+  assignment,
+  formatDate = defaultFormatDate,
+  children,
+  studentOverview,
+}) => {
   const {
     status,
     amountPaid,
@@ -122,7 +144,7 @@ export const PaymentOverview: React.FC<
   } = assignment;
   const remainingAmount = Math.max(0, totalAmount - amountPaid);
 
-  if (status === FEE_SCHEDULES_ENUM.EXEMPTED) {
+  if (status === FEE_SCHEDULE_STATUS_ENUM.EXEMPTED) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 5 }}
@@ -145,7 +167,7 @@ export const PaymentOverview: React.FC<
     );
   }
 
-  if (status === FEE_SCHEDULES_ENUM.PAID) {
+  if (status === FEE_SCHEDULE_STATUS_ENUM.PAID) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
@@ -153,31 +175,36 @@ export const PaymentOverview: React.FC<
         transition={{ duration: 0.25 }}
       >
         <Card className="border-emerald-200/60 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-none">
-          <CardContent className="p-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="size-5 text-primary dark:text-emerald-400 shrink-0" />
-              <div className="flex flex-col">
-                <span className="font-semibold text-xs text-emerald-950 dark:text-emerald-200">
-                  L'élève est en ordre avec ce frais
-                </span>
-                <span className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80 font-mono">
-                  Montant réglé : {amountPaid.toFixed(2)} $
-                </span>
+          <CardContent className="p-4 ">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="size-5 text-primary dark:text-emerald-400 shrink-0" />
+                <div className="flex flex-col">
+                  <span className="font-semibold text-xs text-emerald-950 dark:text-emerald-200">
+                    L'élève est en ordre avec ce frais
+                  </span>
+                  <span className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80 font-mono">
+                    Montant réglé : {amountPaid.toFixed(2)} $
+                  </span>
+                </div>
               </div>
+              <Badge
+                variant="outline"
+                className="border-emerald-300 text-emerald-700 dark:text-emerald-300 text-[10px]"
+              >
+                Dernier règlement : {formatDate(updatedAt || createdAt)}
+              </Badge>
             </div>
-            <Badge
-              variant="outline"
-              className="border-emerald-300 text-emerald-700 dark:text-emerald-300 text-[10px]"
-            >
-              Dernier règlement : {formatDate(updatedAt || createdAt)}
-            </Badge>
+            <div className="ml-8">
+              {studentOverview && <EnrollmentOverview {...studentOverview} />}
+            </div>
           </CardContent>
         </Card>
       </motion.div>
     );
   }
 
-  if (status === FEE_SCHEDULES_ENUM.PARTIALLY_PAID) {
+  if (status === FEE_SCHEDULE_STATUS_ENUM.PARTIALLY_PAID) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 5 }}
@@ -242,8 +269,12 @@ export const PaymentOverview: React.FC<
         <AlertTitle className="font-semibold text-xs">
           Paiement non effectué
         </AlertTitle>
+        <AlertAction>
+          <Button>Actions</Button>
+        </AlertAction>
         <AlertDescription className="text-xs text-muted-foreground">
           Aucun versement n'a encore été enregistré pour cette échéance.
+          {studentOverview && <EnrollmentOverview {...studentOverview} />}
         </AlertDescription>
       </Alert>
 
