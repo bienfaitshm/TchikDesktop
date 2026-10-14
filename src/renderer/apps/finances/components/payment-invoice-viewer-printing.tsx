@@ -7,6 +7,8 @@ import {
 import { usePrintInvoiceForm } from "@/renderer/libs/queries/printing";
 import { LoadingButton } from "@/renderer/components/buttons/button-loading";
 import { XCircleIcon } from "lucide-react";
+import { useCancelStudentPaymentForm } from "@/renderer/libs/queries/finances";
+import type { CancelPaymentResult } from "@/packages/@core/data-access/db";
 
 export type InvoiceViewerPrintingProps = {
   invoiceViewer?: React.ReactNode;
@@ -17,13 +19,12 @@ export type InvoiceViewerPrintingProps = {
   isPrinted?: boolean;
   invoiceCode?: string;
   isCanceled?: boolean;
-  isCancelling?: boolean;
   onSuccessPrint?: (data: {
     id: string;
     invoiceCode: string;
     invoiceRef: string;
   }) => void;
-  onCancelPayment?: () => void;
+  onSuccessCancelPayment?: (data: CancelPaymentResult) => void;
 };
 
 /**
@@ -40,10 +41,14 @@ export const InvoiceViewerPrinting: React.FC<InvoiceViewerPrintingProps> = ({
   invoiceRef,
   invoiceViewer,
   invoiceCode = "payment",
-  isCancelling = false,
   onSuccessPrint,
-  onCancelPayment,
+  onSuccessCancelPayment,
 }) => {
+  const cancelPayment = useCancelStudentPaymentForm({
+    onSuccess(data) {
+      onSuccessCancelPayment?.(data);
+    },
+  });
   const { isSubmitting, onSubmit } = usePrintInvoiceForm({
     onSuccess: onSuccessPrint,
   });
@@ -68,9 +73,14 @@ export const InvoiceViewerPrinting: React.FC<InvoiceViewerPrintingProps> = ({
               variant="destructive"
               size="sm"
               className="text-xs rounded-full"
-              loading={isCancelling}
-              disabled={isSubmitting || isCancelling || canCancelPayment}
-              onClick={onCancelPayment}
+              loading={cancelPayment.isSubmitting}
+              disabled={
+                isSubmitting ||
+                canCancelPayment ||
+                cancelPayment.isSubmitting ||
+                !paymentId
+              }
+              onClick={() => paymentId && cancelPayment.onSubmit({ paymentId })}
             >
               <XCircleIcon />
               <span>
