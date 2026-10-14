@@ -5,6 +5,7 @@ import {
 } from "@/packages/drizzle-queries";
 import {
   CURRENCY_ENUM,
+  PAYMENT_STATUS_ENUM,
   PAYMENT_METHOD_ENUM,
 } from "@/packages/@core/data-access/db/options";
 import {
@@ -182,6 +183,12 @@ export class StudentPaymentService {
         const payment = this.studentPaymentRepo.findById(paymentId, tx);
         if (!payment) {
           throw new RecordNotFoundError(`Payment [${paymentId}]`);
+        }
+
+        if (payment.status === PAYMENT_STATUS_ENUM.CANCELED) {
+          throw new BusinessRuleError(
+            `Cannot process fee assignment because the payment [${payment.paymentId}] is canceled.`,
+          );
         }
 
         const assignmentRecord = this.feeAssignmentRepo.findById(
