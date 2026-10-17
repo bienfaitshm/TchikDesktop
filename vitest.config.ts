@@ -1,24 +1,16 @@
 import { defineConfig, mergeConfig } from "vitest/config";
-import viteConfig from "./vite.config";
+import viteConfig from "./vite.config.ts";
 
 /**
- * Vitest configuration module merging base Vite settings with test execution rules,
- * Node environment setup, and strict V8 coverage thresholds.
- * @see https://vitest.dev/config/
+ * Defines and exports the merged Vitest configuration.
+ * @returns The merged Vite and Vitest configuration object.
  */
 export default defineConfig(() =>
   mergeConfig(viteConfig, {
     test: {
-      /** Enables global test APIs (describe, it, expect) without explicit imports. */
       globals: true,
-
-      /** Sets the execution environment for backend services without DOM dependencies. */
       environment: "node",
-
-      /** Files to execute before each test suite for global mocks and setup. */
       setupFiles: [],
-
-      /** Code coverage configuration enforcing minimum quality thresholds via V8. */
       coverage: {
         enabled: true,
         provider: "v8",

@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import tailwindcss from "@tailwindcss/vite";
+import path from "path";
 
 /**
  * Base Vite configuration module integrating path aliases and Tailwind CSS.
@@ -7,4 +8,9 @@ import tailwindcss from "@tailwindcss/vite";
  */
 export default defineConfig({
   plugins: [tailwindcss()],
+  resolve: {
+    alias: {
+      "@": path.resolve(import.meta.dirname, "./src"),
+    },
+  },
 });

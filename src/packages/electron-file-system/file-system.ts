@@ -1,6 +1,6 @@
 /**
  * @file file-system.ts
- * @description Implémentation concrète du système de fichiers pour Electron.
+ * @description Concrete implementation of the file system interface for Electron.
  */
 
 import type { SaveDialogOptions } from "electron";
@@ -14,7 +14,9 @@ export class ElectronFileSystem implements IFileSystem {
   private readonly logger = getLogger("FileSystem");
 
   /**
-   * Affiche la boîte de dialogue native pour choisir l'emplacement de sauvegarde.
+   * Displays the native dialog to choose the save location.
+   * @param options - Configuration options for the save dialog.
+   * @returns The selected file path, or null if canceled or failed.
    */
   public async promptSavePath(
     options: SaveDialogOptions,
@@ -27,7 +29,7 @@ export class ElectronFileSystem implements IFileSystem {
       return filePath;
     } catch (error) {
       this.logger.error(
-        "Erreur lors de l'ouverture du SaveDialog",
+        "Error occurred while opening the SaveDialog",
         error as Error,
       );
       return null;
@@ -35,8 +37,12 @@ export class ElectronFileSystem implements IFileSystem {
   }
 
   /**
-   * Persiste les données sur le disque de manière atomique.
-   * Gère la création automatique des dossiers parents si nécessaire.
+   * Persists data to the disk in an atomic manner.
+   * Handles automatic creation of parent directories if needed.
+   * @param path - Absolute target path for the file.
+   * @param content - Raw string or binary file content.
+   * @returns A promise that resolves when the write operation completes.
+   * @throws {Error} If writing to disk fails.
    */
   public async persistToDisk(
     path: string,
@@ -50,36 +56,22 @@ export class ElectronFileSystem implements IFileSystem {
         encoding: typeof content === "string" ? "utf8" : undefined,
       });
 
-      this.logger.info(`Fichier sauvegardé avec succès : ${path}`);
+      this.logger.info(`File successfully saved: ${path}`);
     } catch (error) {
-      this.logger.error(
-        `Échec de l'écriture sur le disque : ${path}`,
-        error as Error,
-      );
+      this.logger.error(`Failed to write to disk: ${path}`, error as Error);
       throw error;
     }
   }
 
   /**
-   * Extrait le nom du fichier (avec extension) à partir d'un chemin complet.
-   *
-   * @param path - Chemin absolu ou relatif du fichier.
-   * @returns Le nom du fichier (ex: "document.pdf").
-   * @throws {Error} Si l'extraction échoue (cas très rare).
-   *
+   * Extracts the file name (with extension) from a full path.
+   * @param path - Absolute or relative file path.
+   * @returns The extracted file name.
    * @example
-   * const fileName = await fs.getFileName("/users/docs/rapport.pdf");
-   * console.log(fileName); // "rapport.pdf"
+   * const fileName = fs.getFileName("/users/docs/report.pdf");
+   * console.log(fileName); // "report.pdf"
    */
-  public async getFileName(path: string): Promise<string> {
-    try {
-      return basename(path);
-    } catch (error) {
-      this.logger.error(
-        "Erreur lors de l'extraction du nom de fichier.",
-        error as Error,
-      );
-      throw error;
-    }
+  public getFileName(path: string): string {
+    return basename(path);
   }
 }

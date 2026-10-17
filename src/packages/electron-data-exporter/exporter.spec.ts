@@ -1,11 +1,23 @@
 /**
- * @file exporter.test.ts
+ * @file exporter.spec.ts
  * @description Unit tests for the DataExport orchestrator service.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { DataExport } from "./exporter";
 import type { IFileSystem } from "./types";
+
+vi.mock("@/packages/logger", () => ({
+  getLogger: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }),
+}));
+
+vi.mock("@/packages/file-extension", () => ({
+  getFileExtension: (filePath: string) => filePath.split(".").pop() || "",
+}));
 
 describe("DataExport", () => {
   let fileSystemMock: IFileSystem;
@@ -112,7 +124,7 @@ describe("DataExport", () => {
         configMock,
       );
       const result = await exportService.executeExport("unknown-strategy", {
-        fileType: "pdf" as const,
+        fileType: "pdf",
       });
 
       expect(result.success).toBe(false);
