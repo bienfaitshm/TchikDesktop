@@ -6,7 +6,7 @@ import { dbManager } from "@/packages/@core/data-access/db";
 import { getLogger } from "@/packages/logger";
 import { ipcServer } from "@/main/apps";
 import { initializeTextModifiers } from "@/main/features/text-transformation";
-import { setupDevelopmentEnvironment } from "@/main/electron-dev-extension";
+import { setupDevelopmentEnvironment } from "@/main/electron-extension-installer";
 import { updateInit } from "@/main/update";
 import { getAppIcon } from "@/main/utils";
 import { handleFatalError } from "./error-handler";
