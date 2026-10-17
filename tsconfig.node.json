@@ -11,6 +11,7 @@
     "moduleResolution": "bundler",
     "module": "ESNext",
     "target": "ES2022",
+    "jsx": "react-jsx",
     "types": ["electron-vite/node"],
     "paths": {
       "@/main/*": ["./src/main/*"],

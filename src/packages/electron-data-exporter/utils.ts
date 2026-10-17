@@ -17,5 +17,8 @@ export function formatZodError(error: ZodError): string {
  * @returns Cleaned string free of invalid path characters.
  */
 export function sanitizeFileName(name: string): string {
-  return name.replace(/[<>:"/\\|?*]/g, "_").trim();
+  return name
+    .trim()
+    .replace(/[<>:"/\\|?*\s]/g, "_")
+    .trim();
 }

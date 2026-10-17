@@ -1,7 +1,7 @@
 /**
  * @file exporter.ts
- * @description Orchestration service for document export operations.
- * Centralizes data retrieval logic and artifact generation pipelines.
+ * @description Service d'orchestration pour l'exportation de documents.
+ * Centralise la logique de récupération de données et de génération d'artefacts.
  */
 
 import { getLogger } from "@/packages/logger";
@@ -15,7 +15,7 @@ import type {
   ContextParams,
 } from "./types";
 
-export type ExportPayload = {
+type ExportPayload = {
   exportKey: string;
   exportName: string;
   filePath?: string | null;
@@ -24,7 +24,7 @@ export type ExportPayload = {
   userId?: string | null;
 };
 
-export interface DataExportConfig {
+interface DataExportConfig {
   saveHistoryExport?(payload: ExportPayload): void;
   onOpenFile?(path: string): void;
   notifyOnExport?(value: {
@@ -35,48 +35,38 @@ export interface DataExportConfig {
 
 export class DataExport {
   private readonly logger = getLogger("DataExport");
-  private readonly strategyRegistry = new Map<
-    string,
-    IExportStrategy<Record<string, unknown>>
-  >();
+  private readonly strategyRegistry = new Map<string, IExportStrategy<any>>();
 
   /**
-   * Initializes the export orchestrator with strategies, file system provider, and optional hooks.
-   * @param strategies - Array of injected export strategies.
-   * @param fileSystem - File system provider implementation for I/O operations.
-   * @param config - Optional configuration hooks for history, opening files, and notifications.
+   * @param strategies - Stratégies d'export injectées (DI).
+   * @param fileSystem - Interface pour les opérations I/O.
+   * @param config - Hooks optionnels (historique, ouverture, notification).
    */
   constructor(
-    strategies: IExportStrategy<Record<string, unknown>>[],
+    strategies: IExportStrategy<any>[],
     private readonly fileSystem: IFileSystem,
     private readonly config?: DataExportConfig,
   ) {
     this.registerStrategies(strategies);
   }
 
-  /**
-   * Registers export strategies into the internal registry.
-   * @param strategies - Array of export strategies to register.
-   */
-  private registerStrategies(
-    strategies: IExportStrategy<Record<string, unknown>>[],
-  ): void {
+  private registerStrategies(strategies: IExportStrategy<any>[]): void {
     strategies.forEach((strategy) => {
       if (this.strategyRegistry.has(strategy.id)) {
-        this.logger.warn(`Duplicate strategy ignored: ${strategy.id}`);
+        this.logger.warn(`Stratégie en double ignorée : ${strategy.id}`);
         return;
       }
       this.strategyRegistry.set(strategy.id, strategy);
     });
     this.logger.info(
-      `${this.strategyRegistry.size} export strategies registered.`,
+      `${this.strategyRegistry.size} stratégies d'export enregistrées.`,
     );
   }
 
   /**
-   * Returns a frozen list of available exports with their metadata.
-   * @param params - Optional parameters to filter metadata.
-   * @returns Frozen array of available document metadata.
+   * Retourne la liste des exports disponibles avec leurs métadonnées.
+   * @param params - Paramètres optionnels pour filtrer les métadonnées.
+   * @returns Tableau gelé des documents disponibles.
    */
   public async getAvailableExports<TParams extends Record<string, unknown>>(
     params?: TParams,
@@ -98,10 +88,10 @@ export class DataExport {
   }
 
   /**
-   * Executes the complete document export workflow.
-   * @param strategyId - Unique identifier of the export strategy.
-   * @param contextParams - Execution context parameters including file type and school ID.
-   * @returns Result containing the saved file name or a typed error.
+   * Exécute le processus d'exportation complet.
+   * @param strategyId - Identifiant de la stratégie.
+   * @param contextParams - Contexte (type de fichier, école, etc.).
+   * @returns Résultat avec le chemin du fichier sauvegardé ou une erreur typée.
    */
   public async executeExport(
     strategyId: string,
@@ -109,34 +99,38 @@ export class DataExport {
   ): Promise<ServiceResult<string>> {
     const strategy = this.strategyRegistry.get(strategyId);
     if (!strategy) {
-      return this.fail("NOT_FOUND", `Strategy not found: ${strategyId}`);
+      return this.fail("NOT_FOUND", `Stratégie introuvable : ${strategyId}`);
     }
 
     const log = getLogger(`Export:${strategyId}`);
-    log.info("Starting export workflow", { contextParams });
+    log.info("Début du workflow d'exportation", { contextParams });
 
     try {
-      const validationResult = strategy.validateContext(contextParams);
-      if (!validationResult.success) {
-        return validationResult;
-      }
+      // 1. Validation du contexte
+      const validation = strategy.validateContext(contextParams);
+      if (!validation.success) return validation;
 
-      const savePath = await this.resolveSavePath(strategy, contextParams, log);
+      // 2. Sélection du chemin de sauvegarde
+      const savePath = await this.getSavePath(strategy, contextParams, log);
       if (!savePath) {
-        log.info("Operation cancelled by user.");
-        return this.fail("CANCELLED", "Export cancelled.");
+        log.info("Opération annulée par l'utilisateur.");
+        return this.fail("CANCELLED", "Exportation annulée.");
       }
 
+      // 3. Vérification de l'extension
       const fileExtension = getFileExtension(savePath);
       if (!fileExtension) {
-        return this.fail("VALIDATION_ERROR", "Unsupported file extension.");
+        return this.fail(
+          "VALIDATION_ERROR",
+          "Extension de fichier non supportée.",
+        );
       }
 
+      // 4. Récupération des données
       const dataResult = await strategy.handleResolveData(contextParams);
-      if (!dataResult.success) {
-        return dataResult;
-      }
+      if (!dataResult.success) return dataResult;
 
+      // 5. Génération de l'artefact
       const artifact = await strategy.buildArtifact(
         fileExtension,
         dataResult.data,
@@ -146,46 +140,45 @@ export class DataExport {
         return artifact;
       }
 
+      // 6. Écriture sur disque
       await this.fileSystem.persistToDisk(savePath, artifact.data);
-      log.info("File saved successfully.");
+      log.info("Fichier sauvegardé avec succès.");
 
+      // 7. Post-traitement (hooks)
       const exportName = await this.fileSystem.getFileName(savePath);
       this.handlePostExport(strategyId, savePath, exportName, contextParams);
 
       return { success: true, data: exportName };
     } catch (error) {
-      log.error("Critical error in export pipeline.", error as Error);
+      log.error("Erreur critique dans le pipeline d'export.", error as Error);
       this.notify(false, error as ServiceError);
-      return this.fail("GENERATION_ERROR", "A system error occurred.", error);
+      return this.fail(
+        "GENERATION_ERROR",
+        "Une erreur système est survenue.",
+        error,
+      );
     }
   }
 
   /**
-   * Prompts the user for a save path based on strategy options.
-   * @param strategy - Active export strategy.
-   * @param contextParams - Context parameters for save options.
-   * @param log - Logger instance.
-   * @returns Selected file path or null if cancelled.
+   * Demande à l'utilisateur un chemin de sauvegarde.
+   * Retourne `null` si l'utilisateur annule.
    */
-  private async resolveSavePath(
-    strategy: IExportStrategy<Record<string, unknown>>,
+  private async getSavePath(
+    strategy: IExportStrategy<any>,
     contextParams: ContextParams,
     log: ReturnType<typeof getLogger>,
   ): Promise<string | null> {
     const options = strategy.getSaveOptions(contextParams?.fileType);
     const path = await this.fileSystem.promptSavePath(options);
     if (!path) {
-      log.info("Save dialog cancelled.");
+      log.info("Dialogue de sauvegarde annulé.");
     }
     return path ?? null;
   }
 
   /**
-   * Executes post-export hooks including notifications, file opening, and history logging.
-   * @param strategyId - Unique identifier of the strategy.
-   * @param filePath - Absolute path to the saved file.
-   * @param exportName - Name of the exported file.
-   * @param contextParams - Context parameters containing school ID.
+   * Exécute les hooks post-export (ouverture, historique, notification).
    */
   private handlePostExport(
     strategyId: string,
@@ -202,31 +195,25 @@ export class DataExport {
     this.config?.saveHistoryExport?.({
       exportKey: strategyId,
       exportName,
-      fileType: contextParams.fileType ?? "Unknown File Type",
+      fileType: contextParams.fileType ?? "Unkown File Type",
       filePath,
       schoolId: contextParams.schoolId,
     });
   }
 
   /**
-   * Sends notifications via configuration hook with error containment.
-   * @param success - Status of the export operation.
-   * @param data - Success payload or service error object.
+   * Envoie une notification via le hook, en capturant les erreurs silencieusement.
    */
   private notify(success: boolean, data: ServiceError | string): void {
     try {
       this.config?.notifyOnExport?.({ success, data });
     } catch (error) {
-      this.logger.error("Failed to send notification.", error as Error);
+      this.logger.error("Échec de l'envoi de la notification.", error as Error);
     }
   }
 
   /**
-   * Constructs a typed service failure result object.
-   * @param code - Error category code.
-   * @param message - Human-readable error description.
-   * @param details - Optional error details.
-   * @returns Standardized failure result object.
+   * Constructeur de résultat d'échec typé.
    */
   private fail(
     code: ServiceError["code"],

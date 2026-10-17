@@ -307,15 +307,14 @@ export abstract class AbstractExportStrategy<
   public getSaveOptions(
     targetExtension?: DOCUMENT_EXTENSION,
   ): SaveDialogOptions {
-    const sanitizedName = sanitizeFileName(this.displayName);
     const dateSuffix = formatDate(new Date(), "dd_MM_yyyy_HHmmss");
     const defaultPath = targetExtension
-      ? `${sanitizedName}_${dateSuffix}.${targetExtension}`
-      : `${sanitizedName}_${dateSuffix}`;
+      ? `${this.displayName}_${dateSuffix}.${targetExtension}`
+      : `${this.displayName}_${dateSuffix}`;
 
     return {
       title: `Export - ${this.displayName}`,
-      defaultPath,
+      defaultPath: sanitizeFileName(defaultPath),
       filters: this.resolveFilters(targetExtension),
     };
   }
