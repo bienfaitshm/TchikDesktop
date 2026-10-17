@@ -165,21 +165,22 @@
 
         .student-name-container {
             display: flex;
-            flex-direction: column;
-            gap: 1px;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 5px;
         }
 
         .badge-prodeo {
             font-size: 6pt;
-            font-weight: 700;
+            font-weight: 500;
             color: var(--primary-foreground);
             background-color: var(--primary);
             padding: 1px 4px;
             border-radius: 3px;
             display: inline-block;
             width: fit-content;
-            margin-top: 2px;
-            text-transform: uppercase;
+            text-transform: capitalize;
         }
 
         table.data-table tr:nth-child(even) {
@@ -245,7 +246,7 @@
                         <div class="student-name-container">
                             <span>{{this.name}}</span>
                             {{#if this.isProDeo}}
-                            <span class="badge-prodeo">Pro Deo</span>
+                            <span>(Pro Deo)</span>
                             {{/if}}
                         </div>
                     </td>
