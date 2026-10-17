@@ -21,7 +21,7 @@ const formattersCache = new Map<string, Intl.NumberFormat>();
 /**
  * Retrieves an existing Intl.NumberFormat instance or creates and caches a new one.
  * @param locale - BCP 47 language tag.
- * @param options - Standard Intl number formatting options.
+ * @param options - Intl number formatting options.
  * @returns Cached Intl.NumberFormat instance.
  */
 const getNumberFormatter = (
@@ -39,12 +39,26 @@ const getNumberFormatter = (
   return formattersCache.get(key)!;
 };
 
+/**
+ * Maps a boolean value to customizable string representations.
+ * @param value - Boolean state.
+ * @param options - Custom labels for true and false values.
+ * @returns Configured label string.
+ */
+const formatBooleanHelper = (
+  value: boolean,
+  options: { trueLabel?: string; falseLabel?: string } = {},
+): string => {
+  const { trueLabel = "Oui", falseLabel = "Non" } = options;
+  return value ? trueLabel : falseLabel;
+};
+
 export const additionalJsContext = {
   // --- String Transformers ---
 
   /**
    * Safely converts a string to uppercase.
-   * @param value - Target string value.
+   * @param value - String value.
    * @returns Uppercased string, or empty string if input is nullish.
    */
   toUpperCase: (value: string | null | undefined): string =>
@@ -52,7 +66,7 @@ export const additionalJsContext = {
 
   /**
    * Safely converts a string to lowercase.
-   * @param value - Target string value.
+   * @param value - String value.
    * @returns Lowercased string, or empty string if input is nullish.
    */
   toLowerCase: (value: string | null | undefined): string =>
@@ -60,7 +74,7 @@ export const additionalJsContext = {
 
   /**
    * Capitalizes the first character and lowercases the remainder of a string.
-   * @param value - Target string value.
+   * @param value - String value.
    * @returns Capitalized string, or empty string if input is nullish.
    */
   capitalize: (value: string | null | undefined): string =>
@@ -68,7 +82,7 @@ export const additionalJsContext = {
 
   /**
    * Truncates a string to a specified length and appends ellipsis if needed.
-   * @param value - Target string value.
+   * @param value - String value.
    * @param maxLength - Maximum character length limit (default: 50).
    * @returns Truncated string, or original value if within bounds.
    */
@@ -84,7 +98,7 @@ export const additionalJsContext = {
 
   /**
    * Formats a date using the primary date formatting provider.
-   * @param value - Target Date, string, or timestamp.
+   * @param value - Date, string, or timestamp.
    * @returns Formatted date string.
    */
   formatDate: (value: Date | string | number): string =>
@@ -92,7 +106,7 @@ export const additionalJsContext = {
 
   /**
    * Alias for date formatting to ensure template semantic consistency.
-   * @param value - Target Date, string, or timestamp.
+   * @param value - Date, string, or timestamp.
    * @returns Formatted date string.
    */
   formatDateTime: (value: Date | string | number): string =>
@@ -100,7 +114,7 @@ export const additionalJsContext = {
 
   /**
    * Formats a date relative to current time in French, falling back to full date after 7 days.
-   * @param value - Target Date, string, or timestamp.
+   * @param value - Date, string, or timestamp.
    * @returns Localized relative time string.
    */
   timeAgo: (value: Date | string | number): string => {
@@ -122,28 +136,22 @@ export const additionalJsContext = {
 
   /**
    * Maps a boolean value to customizable string representations in French.
-   * @param value - Target boolean state.
+   * @param value - Boolean state.
    * @param options - Custom labels for true and false values.
    * @returns Configured label string.
    */
-  formatBoolean: (
-    value: boolean,
-    options: { trueLabel?: string; falseLabel?: string } = {},
-  ): string => {
-    const { trueLabel = "Oui", falseLabel = "Non" } = options;
-    return value ? trueLabel : falseLabel;
-  },
+  formatBoolean: formatBooleanHelper,
 
   /**
    * Maps a boolean condition to a standard visual indicator icon.
-   * @param value - Target boolean state.
+   * @param value - Boolean state.
    * @returns Status icon string.
    */
   formatBooleanAsIcon: (value: boolean): string => (value ? "✅" : "❌"),
 
   /**
-   * Formats an activation state using configurable badge labels in French.
-   * @param value - Active status condition.
+   * Formats an activation state using configurable badge labels.
+   * @param value - Status condition.
    * @param active - Active label text (default: "Actif").
    * @param inactive - Inactive label text (default: "Inactif").
    * @returns Status badge label.
@@ -153,7 +161,7 @@ export const additionalJsContext = {
     active: string = "Actif",
     inactive: string = "Inactif",
   ): string =>
-    additionalJsContext.formatBoolean(value, {
+    formatBooleanHelper(value, {
       trueLabel: active,
       falseLabel: inactive,
     }),
@@ -184,7 +192,7 @@ export const additionalJsContext = {
   /**
    * Formats a number as a localized currency value via Intl.
    * @param value - Amount to format.
-   * @param currency - ISO 4217 currency code (default: "EUR").
+   * @param currency - ISO 4217 currency code (default: "CDF").
    * @param locale - BCP 47 locale identifier (default: "fr-FR").
    * @returns Formatted currency string, or empty string if input is invalid.
    */
@@ -204,7 +212,7 @@ export const additionalJsContext = {
 
   /**
    * Formats a numeric decimal value as a localized percentage via Intl.
-   * @param value - Decimal ratio (e.g., 0.15 for 15%).
+   * @param value - Ratio (e.g., 0.15 for 15%).
    * @param decimals - Fraction digits limit (default: 1).
    * @param locale - BCP 47 locale identifier (default: "fr-FR").
    * @returns Formatted percentage string.
@@ -228,7 +236,7 @@ export const additionalJsContext = {
 
   /**
    * Returns the value or a default string fallback if the target is nullish.
-   * @param value - Target input value.
+   * @param value - Input value.
    * @param fallbackValue - Replacement string (default: "—").
    * @returns Original value or default fallback.
    */
@@ -239,7 +247,7 @@ export const additionalJsContext = {
 
   /**
    * Asserts whether a value is non-null and defined.
-   * @param value - Target input value.
+   * @param value - Input value.
    * @returns True if value is defined and non-null.
    */
   isDefined: <T>(value: T | null | undefined): value is T =>
@@ -247,7 +255,7 @@ export const additionalJsContext = {
 
   /**
    * Safely joins array elements into a single delimited string.
-   * @param array - Target array of strings.
+   * @param array - Array of strings.
    * @param separator - Delimiter character sequence (default: ", ").
    * @returns Joined output string.
    */
@@ -258,10 +266,18 @@ export const additionalJsContext = {
 
   /**
    * Calculates the length of an array without risking runtime nullish errors.
-   * @param array - Target array.
+   * @param array - Array.
    * @returns Array length, or 0 if array is nullish.
    */
   count: <T>(array: T[] | null | undefined): number => array?.length ?? 0,
+
+  /**
+   * Checks if two values are strictly equal.
+   * @param a - First value.
+   * @param b - Second value.
+   * @returns True if both values are strictly equal, false otherwise.
+   */
+  eq: <T>(a: T, b: T): boolean => a === b,
 };
 
 export type AdditionalJsContext = typeof additionalJsContext;
