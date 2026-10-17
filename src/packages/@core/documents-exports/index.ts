@@ -1,7 +1,7 @@
 /**
  * @file index.ts
- * @description Point d'entrée du module d'exportation de documents.
- * Initialise l'orchestrateur avec ses dépendances injectées.
+ * @description Entry point for the document export module.
+ * Initializes the export orchestrator with injected dependencies and event handlers.
  */
 
 import { DataExport } from "@/packages/electron-data-exporter";
@@ -11,60 +11,81 @@ import { exportHistoryRepository } from "@/packages/@core/data-access/db/queries
 import { mainLogger } from "@/packages/logger";
 import { registeredStrategies } from "./strategies";
 
-const fileSystem = new ElectronFileSystem();
+/**
+ * Payload structure for export notifications.
+ */
+export interface ExportNotificationPayload {
+  success: boolean;
+  data?: string | { message?: string };
+}
 
-export const documentExport = new DataExport(registeredStrategies, fileSystem, {
-  onOpenFile: openFile,
+/**
+ * Payload structure for saving export history.
+ */
+export interface ExportHistoryPayload {
+  exportKey: string;
+  exportName: string;
+  fileType: string;
+  filePath: string;
+  schoolId?: string;
+  userId?: string;
+}
 
-  /**
-   * Callback de notification après export.
-   * Affiche une notification système native avec titre et corps adaptés au résultat.
-   */
-  notifyOnExport: ({ success, data }) => {
-    try {
-      const title = success ? "Exportation réussie" : "Échec de l'exportation";
-      const body =
-        typeof data === "string"
-          ? data
-          : data?.message || "Une erreur est survenue";
-      notify({ title, body });
-    } catch (error) {
-      mainLogger.error(
-        "Impossible d'afficher la notification d'export.",
-        error,
-      );
-    }
-  },
+/**
+ * Handles native system notifications following an export attempt.
+ * @param payload - Object containing export success status and payload/error data.
+ */
+export function handleExportNotification({
+  success,
+  data,
+}: ExportNotificationPayload): void {
+  try {
+    const title = success ? "Export Successful" : "Export Failed";
+    const body =
+      typeof data === "string" ? data : data?.message || "An error occurred";
+    notify({ title, body });
+  } catch (error) {
+    mainLogger.error("Failed to display export notification.", error);
+  }
+}
 
-  /**
-   * Sauvegarde l'export dans l'historique (base de données).
-   * Ignore silencieusement les erreurs pour ne pas perturber l'expérience utilisateur.
-   */
-  saveHistoryExport: async ({
-    exportKey,
-    exportName,
-    fileType,
-    filePath,
-    schoolId,
-    userId,
-  }) => {
-    if (!schoolId) return;
-    try {
-      await exportHistoryRepository.create({
-        exportKey,
-        exportName,
-        fileType,
-        schoolId,
-        filePath,
-        userId,
-      });
-    } catch (error) {
-      mainLogger.error(
-        "Erreur lors de la sauvegarde de l'historique d'export.",
-        error,
-      );
-    }
-  },
-});
+/**
+ * Persists export records to the database history repository.
+ * @param payload - Metadata including keys, names, file types, and IDs.
+ */
+export async function handleSaveExportHistory(
+  payload: ExportHistoryPayload,
+): Promise<void> {
+  const { schoolId, ...exportData } = payload;
+  if (!schoolId) {
+    return;
+  }
+
+  try {
+    await exportHistoryRepository.create({
+      schoolId,
+      ...exportData,
+    });
+  } catch (error) {
+    mainLogger.error("Error occurred while saving export history.", error);
+  }
+}
+
+/**
+ * Creates and configures the document export orchestrator instance.
+ * @param fileSystemInstance - File system provider implementation.
+ * @returns Configured DataExport instance.
+ */
+export function createDocumentExport(
+  fileSystemInstance = new ElectronFileSystem(),
+) {
+  return new DataExport(registeredStrategies, fileSystemInstance, {
+    onOpenFile: openFile,
+    notifyOnExport: handleExportNotification,
+    saveHistoryExport: handleSaveExportHistory,
+  });
+}
+
+export const documentExport = createDocumentExport();
 
 export { DOCUMENT_EXPORT_ROUTES } from "./constants";
