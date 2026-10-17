@@ -1,11 +1,11 @@
 import { getLogger } from "@/packages/logger";
-import { db } from "@/packages/@core/data-access/db/config";
+import { db, TDataBase } from "@/packages/@core/data-access/db/config";
 import {
   exportHistories,
   type TableExportHistory,
   type FindManyOptions,
 } from "@/packages/@core/data-access/db/schemas";
-import { BaseRepository, type LibSqlClient } from "../base-repository";
+import { BaseRepository } from "@/packages/drizzle-queries";
 
 const DEFAULT_SORT: FindManyOptions<TableExportHistory> = {
   orderBy: [{ column: "createdAt", order: "asc" }],
@@ -13,9 +13,9 @@ const DEFAULT_SORT: FindManyOptions<TableExportHistory> = {
 
 export class ExportHistoryRepository extends BaseRepository<
   TableExportHistory,
-  LibSqlClient
+  TDataBase
 > {
-  constructor(database: LibSqlClient = db) {
+  constructor(database: TDataBase = db) {
     super({
       db: database,
       table: exportHistories,
