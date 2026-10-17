@@ -1,10 +1,16 @@
 import React from "react";
 import type { DialogItemConfig, DialogRenderProps } from "./types";
 
+/**
+ * State structure holding the currently active dialog key identifier.
+ */
 interface DialogMenuState {
   activeDialogKey: string | null;
 }
 
+/**
+ * Action methods available for manipulating dialog visibility states.
+ */
 interface DialogMenuActions {
   showDialog(key: string): void;
   closeDialog(): void;
@@ -18,9 +24,9 @@ const DialogActionContext = React.createContext<DialogMenuActions | null>(null);
 DialogActionContext.displayName = "DialogActionContext";
 
 /**
- * Contextual boundary coordinating dialog visibility state tracking.
- * @param props - Children nodes demanding context subscription dependencies.
- * @returns Wrapped component architectures feeding rendering state.
+ * Context boundary component coordinating dialog visibility tracking across the menu ecosystem.
+ * @param props - Component children nodes requiring access to dialog context.
+ * @returns Wrapped component hierarchy providing dialog states and actions.
  */
 export const DialogMenuProvider: React.FC<React.PropsWithChildren> = ({
   children,
@@ -59,17 +65,26 @@ export const DialogMenuProvider: React.FC<React.PropsWithChildren> = ({
 };
 DialogMenuProvider.displayName = "DialogMenuProvider";
 
-interface DialogContainerProps<T = unknown> {
+/**
+ * Properties for the DialogContainer component.
+ * @template T - Context properties record type.
+ */
+interface DialogContainerProps<
+  T extends Record<string, unknown> = Record<string, unknown>,
+> {
   contextProps: T;
   items?: Map<string, DialogItemConfig<T>["renderDialog"]>;
 }
 
 /**
- * Evaluates mapping parameters to render conditionally invoked overlay layouts.
- * @param props - Contextual properties carrying active identifiers and render callbacks.
- * @returns Evaluated React elements correlating strictly to the current active key.
+ * Renders conditionally invoked overlay layouts based on the active dialog identifier.
+ * @template T - Context properties record type.
+ * @param props - Container properties carrying items map and context values.
+ * @returns Evaluated React elements correlating to the active dialog key.
  */
-export const DialogContainer = <T extends Record<string, unknown>>({
+export const DialogContainer = <
+  T extends Record<string, unknown> = Record<string, unknown>,
+>({
   items,
   contextProps,
 }: DialogContainerProps<T>): React.ReactElement | null => {
@@ -97,7 +112,7 @@ DialogContainer.displayName = "DialogContainer";
 
 /**
  * Retrieves the read-only operational state of structural visibility contexts.
- * @throws When called physically outside of `DialogMenuProvider` hierarchies.
+ * @throws When called outside of a DialogMenuProvider hierarchy.
  * @returns Current state holding the active dialog key.
  */
 export function useDialogState(): DialogMenuState {
@@ -110,8 +125,8 @@ export function useDialogState(): DialogMenuState {
 
 /**
  * Accesses operational dispatch functions driving UI mutation logic interactively.
- * @throws When called physically outside of `DialogMenuProvider` hierarchies.
- * @returns Hooks mapped specifically to orchestrate active overlays.
+ * @throws When called outside of a DialogMenuProvider hierarchy.
+ * @returns Methods mapped specifically to orchestrate active overlays.
  */
 export function useDialogActions(): DialogMenuActions {
   const context = React.useContext(DialogActionContext);

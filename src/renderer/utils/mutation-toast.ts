@@ -1,97 +1,20 @@
 import type { MutateOptions } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-interface StandardNotificationMessages {
-  successTitle: string;
-  successDescription: string;
-  errorTitle: string;
-  errorDescription: string;
-}
-
-const DEFAULT_MUTATION_MESSAGES: StandardNotificationMessages = {
-  successTitle: "Opération réussie !",
-  successDescription: "L'opération a été effectuée avec succès.",
-  errorTitle: "Une erreur est survenue.",
-  errorDescription:
-    "Veuillez réessayer ultérieurement. Si le problème persiste, contactez le support.",
-};
-
-export interface MutationNotificationOptions<
-  TData,
-  TError,
-  TVariables,
-  TContext,
-> extends Partial<MutateOptions<TData, TError, TVariables, TContext>> {
-  showErrorNotification?: boolean;
-  showSuccessNotification?: boolean;
-  successMessageTitle?: string;
-  successMessageDescription?: string;
-  errorMessageTitle?: string;
-  errorMessageDescription?: string;
-}
-
-export function createMutationCallbacksWithNotifications<
-  TData,
-  TError,
-  TVariables,
-  TContext,
->({
-  showErrorNotification = true,
-  showSuccessNotification = true,
-  successMessageTitle,
-  successMessageDescription,
-  errorMessageTitle,
-  errorMessageDescription,
-  onError,
-  onSettled,
-  onSuccess,
-}: MutationNotificationOptions<TData, TError, TVariables, TContext>): Partial<
-  MutateOptions<TData, TError, TVariables, TContext>
-> {
-  return {
-    onError(error, variables, context) {
-      onError?.(error, variables, context);
-
-      if (showErrorNotification) {
-        const errorDescription =
-          ((error as Error)?.message as string) ||
-          DEFAULT_MUTATION_MESSAGES.errorDescription;
-        toast.error(errorMessageTitle || DEFAULT_MUTATION_MESSAGES.errorTitle, {
-          description: errorMessageDescription || errorDescription,
-        });
-      }
-    },
-    onSettled(data, error, variables, context) {
-      onSettled?.(data, error, variables, context);
-    },
-    onSuccess(data, variables, context) {
-      onSuccess?.(data, variables, context);
-
-      if (showSuccessNotification) {
-        toast.success(
-          successMessageTitle || DEFAULT_MUTATION_MESSAGES.successTitle,
-          {
-            description:
-              successMessageDescription ||
-              DEFAULT_MUTATION_MESSAGES.successDescription,
-          },
-        );
-      }
-    },
-  };
-}
-
 /**
- * Configuration immuable des messages par défaut.
+ * Immutable default configuration messages for mutation notifications.
  */
-const DEFAULT_MESSAGES = {
-  successTitle: "Opération réussie !",
-  successDescription: "L'opération a été effectuée avec succès.",
-  errorTitle: "Une erreur est survenue.",
+export const DEFAULT_MUTATION_MESSAGES = {
+  successTitle: "Operation successful!",
+  successDescription: "The operation was completed successfully.",
+  errorTitle: "An error occurred.",
   errorDescription:
-    "Veuillez réessayer ultérieurement. Si le problème persiste, contactez le support.",
+    "Please try again later. If the problem persists, contact support.",
 } as const;
 
+/**
+ * Configuration options for mutation toast notifications.
+ */
 export interface NotificationOptions {
   showErrorNotification?: boolean;
   showSuccessNotification?: boolean;
@@ -102,7 +25,7 @@ export interface NotificationOptions {
 }
 
 /**
- * Union des options de mutation TanStack et de nos options de notification.
+ * Combined type of TanStack Query mutate options and notification configuration options.
  */
 export type MutationOptionsWithNotifications<
   TData,
@@ -112,8 +35,9 @@ export type MutationOptionsWithNotifications<
 > = MutateOptions<TData, TError, TVariables, TContext> & NotificationOptions;
 
 /**
- * Higher-Order Function pour injecter des notifications Toast dans les callbacks de mutation.
- * @param options - Mélange d'options TanStack Query et de configuration de notification.
+ * Higher-order utility function to inject toast notifications into TanStack Query mutation callbacks.
+ * @param options - Combination of TanStack Query options and notification configurations.
+ * @returns Enhanced mutation options with integrated success and error notifications.
  */
 export function withNotifications<TData, TError, TVariables, TContext>(
   options: Partial<
@@ -130,38 +54,65 @@ export function withNotifications<TData, TError, TVariables, TContext>(
     onSuccess,
     onError,
     onSettled,
+    ...restOptions
   } = options;
 
   return {
-    ...options,
+    ...restOptions,
 
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, onMutateResult, context) => {
       if (showSuccessNotification) {
-        toast.success(successMessageTitle ?? DEFAULT_MESSAGES.successTitle, {
-          description:
-            successMessageDescription ?? DEFAULT_MESSAGES.successDescription,
-        });
+        toast.success(
+          successMessageTitle ?? DEFAULT_MUTATION_MESSAGES.successTitle,
+          {
+            description:
+              successMessageDescription ??
+              DEFAULT_MUTATION_MESSAGES.successDescription,
+          },
+        );
       }
-      onSuccess?.(data, variables, context);
+      onSuccess?.(data, variables, onMutateResult, context);
     },
 
-    onError: (error, variables, context) => {
+    onError: (error, variables, onMutateResult, context) => {
       if (showErrorNotification) {
         const extractedMsg =
           error instanceof Error ? error.message : String(error);
 
-        toast.error(errorMessageTitle ?? DEFAULT_MESSAGES.errorTitle, {
+        toast.error(errorMessageTitle ?? DEFAULT_MUTATION_MESSAGES.errorTitle, {
           description:
             errorMessageDescription ??
             extractedMsg ??
-            DEFAULT_MESSAGES.errorDescription,
+            DEFAULT_MUTATION_MESSAGES.errorDescription,
         });
       }
-      onError?.(error, variables, context);
+      onError?.(error, variables, onMutateResult, context);
     },
 
-    onSettled: (data, error, variables, context) => {
-      onSettled?.(data, error, variables, context);
+    onSettled: (data, error, variables, onMutateResult, context) => {
+      onSettled?.(data, error, variables, onMutateResult, context);
     },
   };
+}
+
+/**
+ *
+ * @param param0
+ * @returns
+ * @deprecated withNotifications
+ */
+export function createMutationCallbacksWithNotifications<
+  TData,
+  TError,
+  TVariables,
+  TContext,
+>(
+  options: MutationOptionsWithNotifications<
+    TData,
+    TError,
+    TVariables,
+    TContext
+  >,
+): Partial<MutateOptions<TData, TError, TVariables, TContext>> {
+  return withNotifications(options);
 }

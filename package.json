@@ -1,7 +1,8 @@
 {
   "name": "tchik",
   "version": "1.13.3",
-  "description": "application de gestion d'une ecole",
+  "type": "module",
+  "description": "Application de gestion d'une ecole",
   "main": "./out/main/index.js",
   "author": "Bienfait Shomari",
   "homepage": "https://github.com/bienfaitshm/TchikDesktop",
@@ -164,7 +165,6 @@
     "vite": "^8.0.14",
     "vite-plugin-checker": "^0.14.5",
     "vite-plugin-node-polyfills": "^0.2.0",
-    "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.1.7",
     "yarn-upgrade-all": "^0.7.5"
   },

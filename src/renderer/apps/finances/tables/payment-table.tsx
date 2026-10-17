@@ -41,10 +41,16 @@ export const RenderPaymentCell: React.FC<FeeTypeRowActionsProps> = ({
 }) => {
   return (
     <PaymentAction
-      feeAssignment={feeAssignment}
-      schoolId={schoolId}
-      yearId={yearId}
-      mutationKey={mutationKey}
+      contextProps={{
+        feeAssignment,
+        schoolId,
+        yearId,
+        mutationKey,
+      }}
+      hidden={["pay"]}
+      onSuccess={(key: string, data) => {
+        console.log({ key, data });
+      }}
     >
       <Button className="w-full flex flex-col h-9  bg-accent/50  p-2 hover:bg-accent rounded-md">
         <TableCellPayment
