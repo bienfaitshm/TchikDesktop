@@ -1,11 +1,12 @@
 import type { FileFilter, SaveDialogOptions } from "electron";
-import type { ZodObject, ZodError, ZodTypeAny } from "zod";
+import type { ZodObject, ZodType } from "zod";
 import {
   DOCUMENT_EXTENSION,
   getFileDescription,
 } from "@/packages/file-extension";
 import { formatDate } from "@/packages/times";
 import type { RawFileContent, ServiceResult, ContextParams } from "./types";
+import { formatZodError, sanitizeFileName } from "./utils";
 
 /**
  * Context parameters passed during dynamic form field evaluation.
@@ -100,33 +101,11 @@ export interface IExportStrategy<
  */
 export interface ExportStrategyConfig<TFormField, TPayload, TData> {
   extensions: IExportExtension<TData>[];
-  schemaCreator?: (
-    fields: TFormField[],
-  ) => ZodObject<Record<string, ZodTypeAny>>;
+  schemaCreator?: (fields: TFormField[]) => ZodObject<Record<string, ZodType>>;
   extendWithFileTypeFormFields?: <TParams extends FormFieldContextParams>(
     params: TParams,
   ) => Promise<readonly TFormField[]>;
   resolver: DataResolver<TPayload, TData>;
-}
-
-/**
- * Formats Zod validation issues into a single descriptive string.
- * @param error Validation error object.
- * @returns Concatenated path and error messages string.
- */
-function formatZodError(error: ZodError): string {
-  return error.issues
-    .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
-    .join("; ");
-}
-
-/**
- * Sanitizes strings for safe file system usage.
- * @param name Filename input.
- * @returns Cleaned string free of invalid path characters.
- */
-function sanitizeFileName(name: string): string {
-  return name.replace(/[<>:"/\\|?*]/g, "_").trim();
 }
 
 /**
@@ -143,7 +122,7 @@ export abstract class AbstractExportStrategy<
   public abstract readonly description: string;
 
   protected abstract readonly validationSchema: ZodObject<
-    Record<string, ZodTypeAny>
+    Record<string, ZodType>
   >;
   protected readonly formFields: TFormField[];
 
@@ -154,7 +133,7 @@ export abstract class AbstractExportStrategy<
   protected resolver: DataResolver<TPayload, TData>;
   private readonly schemaCreator?: (
     fields: TFormField[],
-  ) => ZodObject<Record<string, ZodTypeAny>>;
+  ) => ZodObject<Record<string, ZodType>>;
   protected extendWithFileTypeFormFields?: <
     TParams extends FormFieldContextParams,
   >(
@@ -255,7 +234,7 @@ export abstract class AbstractExportStrategy<
    * Merges static base validation schema with dynamic form field schemas.
    * @returns Combined Zod schema.
    */
-  protected getSchemas(): ZodObject<Record<string, ZodTypeAny>> {
+  protected getSchemas(): ZodObject<Record<string, ZodType>> {
     const extraSchema = this.schemaCreator?.(this.formFields as TFormField[]);
     return extraSchema
       ? this.validationSchema.extend(extraSchema.shape)
