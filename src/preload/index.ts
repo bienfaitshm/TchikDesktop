@@ -53,7 +53,7 @@ export const storeApi: StoreAPI = {
     ipcRenderer.invoke(STORE_IPC_CHANNELS.RESET_SCHOOL_AND_YEAR),
 };
 
-const electronAPI = {
+export const electronAPI = {
   // Référence directe à ipcRenderer (si besoin d'accès avancé)
   ipcRenderer: customIpcRenderer,
 
@@ -138,8 +138,6 @@ const electronAPI = {
     resetSchoolAndYear: () => ipcRenderer.invoke("store:resetSchoolAndYear"),
   },
 };
-
-export default electronAPI;
 
 if (process.contextIsolated) {
   try {

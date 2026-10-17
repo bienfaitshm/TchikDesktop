@@ -7,7 +7,7 @@ import QueryProvider from "@/renderer/libs/queries/providers";
 import { Toaster } from "@/renderer/components/ui/sonner";
 import { SuspenseErrorBoundary } from "@/renderer/libs/queries/suspense";
 import ErrorPage from "@/renderer/screens/error";
-import { apiClient } from "@/renderer/libs/apis";
+import { getApiClient } from "@/renderer/libs/apis";
 import { getConfig } from "@/renderer/libs/stores/app-store";
 import { StoreProvider } from "@/renderer/libs/stores/provider";
 
@@ -15,7 +15,7 @@ import { StoreProvider } from "@/renderer/libs/stores/provider";
  * Configures global API request interceptors to inject tenant headers.
  */
 function setupApiInterceptors(): void {
-  apiClient.interceptors.request.use(async (payload) => {
+  getApiClient().interceptors.request.use(async (payload) => {
     const { schoolId, yearId } = getConfig();
 
     if (schoolId) {

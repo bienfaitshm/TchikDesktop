@@ -43,7 +43,7 @@ export type AppClients = {
  * @returns A proxy object exposing lazily-instantiated domain API clients.
  */
 export function createLazyAppClients(ipcClient: IpcClient): AppClients {
-  const cache: Partial<AppClients> = {};
+  const cache: Partial<object> = {};
 
   return new Proxy({} as AppClients, {
     get(target, prop: string | symbol) {
@@ -93,6 +93,7 @@ let cachedApiClient: IpcClient | null = null;
  * @returns The initialized IpcClient instance.
  */
 export function getApiClient(): IpcClient {
+  console.log("window.electron", window);
   if (!cachedApiClient) {
     cachedApiClient = new IpcClient(window.electron.ipcRenderer);
   }
