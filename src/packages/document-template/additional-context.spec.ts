@@ -89,7 +89,7 @@ describe("additionalJsContext", () => {
     it("should format currency values", () => {
       expect(
         additionalJsContext.formatCurrency(1500, "CDF", "fr-FR"),
-      ).toContain("1 500");
+      ).toContain("1 500,00 CDF");
       expect(additionalJsContext.formatCurrency(null)).toBe("");
     });
 

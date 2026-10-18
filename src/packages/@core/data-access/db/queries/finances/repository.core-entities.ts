@@ -4,7 +4,6 @@ import {
   wallets,
   feeTypes,
   feeSchedules,
-  type TableWallet,
   type Wallet,
   type TableFeeType,
   type FeeType,
@@ -13,101 +12,11 @@ import {
 } from "@/packages/@core/data-access/db/schemas";
 
 import {
-  DatabaseError,
   helpers,
   betterSqlite,
   OptionProvider,
 } from "@/packages/drizzle-queries";
-import { eq, getTableColumns, sql } from "drizzle-orm";
-
-const _walletJoinTables = {
-  wallets,
-} as const;
-
-export type BaseWalletOptionFilters = helpers.FindManyOptions<
-  typeof _walletJoinTables
->;
-
-const WALLET_OPTION_DEFAULT_SORT: BaseWalletOptionFilters = {
-  orderBy: [{ table: "wallets", column: "name", order: "asc" }],
-};
-
-/**
- * Repository providing access to wallet records in SQLite.
- */
-export class WalletRepository
-  extends betterSqlite.BaseRepository<
-    TableWallet,
-    TDataBase,
-    Wallet,
-    BaseWalletOptionFilters
-  >
-  implements OptionProvider<Wallet>
-{
-  /**
-   * Initializes the wallet repository with default table configurations and default filters.
-   * @param database - Optional database instance override, defaulting to core db connection.
-   */
-  constructor(database: TDataBase = db) {
-    super({
-      db: database,
-      table: wallets,
-      idColumn: wallets.walletId,
-      baseTableName: "wallets",
-      logger: getLogger,
-      defaultFilters: WALLET_OPTION_DEFAULT_SORT,
-      joinTables: _walletJoinTables,
-    });
-  }
-
-  /**
-   * Fetches wallet options matching the given filter criteria.
-   * @param filters - Optional filters to restrict and sort the retrieved records.
-   * @returns Array of wallet entities.
-   */
-  fetchOptions(filters?: BaseWalletOptionFilters): Wallet[] {
-    return this.findMany(filters);
-  }
-
-  /**
-   * Atomically updates a wallet balance in the database.
-   * @param walletId - Unique identifier of the target wallet.
-   * @param amount - Numerical amount to increase or decrease.
-   * @param type - Adjustment direction, either "INCREASE" or "DECREASE".
-   * @param tx - Optional transaction handle for atomic execution.
-   */
-  updateWalletBalance(
-    walletId: string,
-    amount: number,
-    type: "INCREASE" | "DECREASE" = "INCREASE",
-    tx: TDataBase = this.db,
-  ): void {
-    try {
-      const balanceExpression =
-        type === "INCREASE"
-          ? sql`${this.table.currentBalance} + ${amount}`
-          : sql`${this.table.currentBalance} - ${amount}`;
-
-      this.getClient(tx)
-        .update(this.table)
-        .set({
-          currentBalance: balanceExpression,
-          updatedAt: sql`CURRENT_TIMESTAMP`,
-        })
-        .where(eq(this.table.walletId, walletId))
-        .run();
-    } catch (error) {
-      const dbError = DatabaseError.from(
-        error,
-        `Failed to update balance for wallet ID: ${walletId}`,
-      );
-      this.logError("updateWalletBalance", dbError, { walletId, amount, type });
-      throw dbError;
-    }
-  }
-}
-
-export const walletRepository = new WalletRepository(db);
+import { eq, getTableColumns } from "drizzle-orm";
 
 export type FeeTypeDTO = FeeType & {
   wallet: Wallet;
