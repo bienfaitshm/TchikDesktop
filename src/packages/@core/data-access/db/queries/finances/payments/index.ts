@@ -14,15 +14,15 @@ import {
   type StudentPaymentTable,
   type EnrollmentPayment,
   FeeManagementService,
-} from "./use-cases/sync-classroom-fees";
-import { GetClassroomPaymentTable } from "./use-cases/get-classroom-payment-table";
+} from "./sync-classroom-fees";
+import { GetClassroomPaymentTable } from "./get-classroom-payment-table";
 
 import {
   StudentPaymentService,
   type ProcessPaymentPayload,
   type ProcessPaymentResult,
   type CancelPaymentResult,
-} from "./use-cases/process-student-payment";
+} from "./process-student-payment";
 
 import { OnSyncMessage } from "./types";
 

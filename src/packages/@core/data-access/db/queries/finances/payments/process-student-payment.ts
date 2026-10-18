@@ -13,11 +13,11 @@ import {
   FeeConfigurationRepository,
   StudentPaymentRepository,
   WalletRepository,
-} from "../../repository";
+} from "../repository";
 import { CustomLogger } from "@/packages/logger";
-import { validateContext } from "../utils";
-import { OverpaymentError, BusinessRuleError } from "../errors";
-import { DailyExchangeRateService } from "../../services";
+import { validateContext } from "./utils";
+import { OverpaymentError, BusinessRuleError } from "./errors";
+import { DailyExchangeRateService } from "../services";
 import {
   FeeAssignment,
   FeeConfiguration,
@@ -78,31 +78,8 @@ export class StudentPaymentService {
 
     try {
       return this.clientDb.transaction((tx) => {
-        const assignmentRecord = this.feeAssignmentRepo.findById(
-          payload.assignmentId,
-          tx,
-        );
-        if (!assignmentRecord) {
-          throw new RecordNotFoundError(
-            `Fee assignment [${payload.assignmentId}]`,
-          );
-        }
-
-        if (!assignmentRecord.feeConfigId) {
-          throw new BusinessRuleError(
-            `Fee assignment [${payload.assignmentId}] lacks a valid configuration ID.`,
-          );
-        }
-
-        const configRecord = this.feeConfigRepo.findById(
-          assignmentRecord.feeConfigId,
-          tx,
-        );
-        if (!configRecord) {
-          throw new RecordNotFoundError(
-            `Fee configuration [${assignmentRecord.feeConfigId}]`,
-          );
-        }
+        const { assignmentRecord, configRecord } =
+          this.fetchAndValidateAssignmentAndConfig(payload.assignmentId, tx);
 
         const { amountConverted, exchangeRateMultiplied } =
           this.rateService.computeExchangeRate(
@@ -119,43 +96,27 @@ export class StudentPaymentService {
           configRecord.currency,
         );
 
-        const newPayment = this.studentPaymentRepo.create(
-          {
-            assignmentId: payload.assignmentId,
-            amountReceived: payload.amountReceived,
-            currencyReceived: payload.currencyReceived,
-            appliedExchangeRate: exchangeRateMultiplied,
-            amountConverted: amountConverted,
-            paymentMethod: payload.paymentMethod ?? PAYMENT_METHOD_ENUM.CASH,
-            transactionReference: payload.transactionReference,
-            schoolId: payload.schoolId,
-            yearId: payload.yearId,
-          },
+        const payment = this.createPaymentRecord(
+          payload,
+          exchangeRateMultiplied,
+          amountConverted,
           tx,
         );
 
-        const updatedAssignment =
-          this.feeAssignmentRepo.updateAssignmentProgress(
-            payload.assignmentId,
-            amountConverted,
-            configRecord.totalAmount,
-            tx,
-          );
-
-        this.walletRepo.updateWalletBalance(
-          configRecord.wallet.walletId,
+        const updatedAssignment = this.updateAssignmentAndWallet(
+          payload.assignmentId,
           amountConverted,
-          "INCREASE",
+          configRecord,
           tx,
         );
 
         this.logger.info(
-          `[Payment processing] Success for assignment ${payload.assignmentId}. ID: ${newPayment.paymentId}`,
+          `[Payment processing] Success for assignment ${payload.assignmentId}. ID: ${payment.paymentId}`,
         );
 
         return {
           ...updatedAssignment,
-          payment: newPayment,
+          payment,
           feeConfig: configRecord,
         };
       });
@@ -180,42 +141,9 @@ export class StudentPaymentService {
 
     try {
       return this.clientDb.transaction((tx) => {
-        const payment = this.studentPaymentRepo.findById(paymentId, tx);
-        if (!payment) {
-          throw new RecordNotFoundError(`Payment [${paymentId}]`);
-        }
-
-        if (payment.status === PAYMENT_STATUS_ENUM.CANCELED) {
-          throw new BusinessRuleError(
-            `Cannot process fee assignment because the payment [${payment.paymentId}] is canceled.`,
-          );
-        }
-
-        const assignmentRecord = this.feeAssignmentRepo.findById(
-          payment.assignmentId,
-          tx,
-        );
-        if (!assignmentRecord) {
-          throw new RecordNotFoundError(
-            `Fee assignment [${payment.assignmentId}]`,
-          );
-        }
-
-        if (!assignmentRecord.feeConfigId) {
-          throw new BusinessRuleError(
-            `Fee assignment [${payment.assignmentId}] lacks a valid configuration ID.`,
-          );
-        }
-
-        const configRecord = this.feeConfigRepo.findById(
-          assignmentRecord.feeConfigId,
-          tx,
-        );
-        if (!configRecord) {
-          throw new RecordNotFoundError(
-            `Fee configuration [${assignmentRecord.feeConfigId}]`,
-          );
-        }
+        const payment = this.fetchAndValidatePayment(paymentId, tx);
+        const { assignmentRecord, configRecord } =
+          this.fetchAndValidateAssignmentAndConfig(payment.assignmentId, tx);
 
         const canceledPayment = this.studentPaymentRepo.cancelPayment(
           paymentId,
@@ -254,6 +182,122 @@ export class StudentPaymentService {
       );
       throw this.handleError(error);
     }
+  }
+
+  /**
+   * Fetches and validates fee assignment and configuration records.
+   * @param assignmentId - Unique identifier of the fee assignment.
+   * @param tx - Active database transaction client.
+   * @returns The validated assignment and configuration records.
+   */
+  private fetchAndValidateAssignmentAndConfig(
+    assignmentId: string,
+    tx: any,
+  ): { assignmentRecord: FeeAssignment; configRecord: FeeConfiguration } {
+    const assignmentRecord = this.feeAssignmentRepo.findById(assignmentId, tx);
+    if (!assignmentRecord) {
+      throw new RecordNotFoundError(`Fee assignment [${assignmentId}]`);
+    }
+
+    if (!assignmentRecord.feeConfigId) {
+      throw new BusinessRuleError(
+        `Fee assignment [${assignmentId}] lacks a valid configuration ID.`,
+      );
+    }
+
+    const configRecord = this.feeConfigRepo.findById(
+      assignmentRecord.feeConfigId,
+      tx,
+    );
+    if (!configRecord) {
+      throw new RecordNotFoundError(
+        `Fee configuration [${assignmentRecord.feeConfigId}]`,
+      );
+    }
+
+    return { assignmentRecord, configRecord };
+  }
+
+  /**
+   * Fetches and validates an existing student payment record.
+   * @param paymentId - Unique identifier of the payment.
+   * @param tx - Active database transaction client.
+   * @returns The validated payment record.
+   */
+  private fetchAndValidatePayment(paymentId: string, tx: any): StudentPayment {
+    const payment = this.studentPaymentRepo.findById(paymentId, tx);
+    if (!payment) {
+      throw new RecordNotFoundError(`Payment [${paymentId}]`);
+    }
+
+    if (payment.status === PAYMENT_STATUS_ENUM.CANCELED) {
+      throw new BusinessRuleError(
+        `Cannot process fee assignment because the payment [${payment.paymentId}] is canceled.`,
+      );
+    }
+
+    return payment;
+  }
+
+  /**
+   * Creates a new student payment record.
+   * @param payload - Payment processing payload.
+   * @param exchangeRateMultiplied - Applied exchange rate.
+   * @param amountConverted - Converted payment amount.
+   * @param tx - Active database transaction client.
+   * @returns The created payment record.
+   */
+  private createPaymentRecord(
+    payload: ProcessPaymentPayload,
+    exchangeRateMultiplied: number,
+    amountConverted: number,
+    tx: any,
+  ): StudentPayment {
+    return this.studentPaymentRepo.create(
+      {
+        assignmentId: payload.assignmentId,
+        amountReceived: payload.amountReceived,
+        currencyReceived: payload.currencyReceived,
+        appliedExchangeRate: exchangeRateMultiplied,
+        amountConverted,
+        paymentMethod: payload.paymentMethod ?? PAYMENT_METHOD_ENUM.CASH,
+        transactionReference: payload.transactionReference,
+        schoolId: payload.schoolId,
+        yearId: payload.yearId,
+      },
+      tx,
+    );
+  }
+
+  /**
+   * Updates the fee assignment progress and increases the wallet balance.
+   * @param assignmentId - Unique identifier of the fee assignment.
+   * @param amountConverted - Converted payment amount.
+   * @param configRecord - Fee configuration record.
+   * @param tx - Active database transaction client.
+   * @returns The updated assignment record.
+   */
+  private updateAssignmentAndWallet(
+    assignmentId: string,
+    amountConverted: number,
+    configRecord: FeeConfiguration,
+    tx: any,
+  ): FeeAssignment {
+    const updatedAssignment = this.feeAssignmentRepo.updateAssignmentProgress(
+      assignmentId,
+      amountConverted,
+      configRecord.totalAmount,
+      tx,
+    );
+
+    this.walletRepo.updateWalletBalance(
+      configRecord.wallet.walletId,
+      amountConverted,
+      "INCREASE",
+      tx,
+    );
+
+    return updatedAssignment;
   }
 
   /**

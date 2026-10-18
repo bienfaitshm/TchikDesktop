@@ -22,9 +22,9 @@ import {
   EnrollmentRepository,
   EnrollmentDTO,
 } from "@/packages/@core/data-access/db/queries/enrollments";
-import { buildAssignmentKey, extractRequiredAssignments } from "../utils";
-import { OnSyncMessage } from "../types";
-import { BusinessRuleError } from "../errors";
+import { buildAssignmentKey, extractRequiredAssignments } from "./utils";
+import { OnSyncMessage } from "./types";
+import { BusinessRuleError } from "./errors";
 
 /**
  * Extended fee type including schedule relationships for enrollment contexts.
@@ -47,6 +47,12 @@ export type StudentPaymentTable = {
 export class FeeManagementService {
   /**
    * Initializes the FeeManagementService with required repositories and utilities.
+   * @param classroomRepo - Repository for classroom data operations.
+   * @param enrollmentRepo - Repository for student enrollment data operations.
+   * @param feeConfigRepo - Repository for fee configuration data operations.
+   * @param feeAssignmentRepo - Repository for fee assignment data operations.
+   * @param clientDb - Database client instance.
+   * @param logger - Logger instance.
    */
   constructor(
     private readonly classroomRepo: ClassroomRepository,
@@ -66,30 +72,20 @@ export class FeeManagementService {
   async syncClassroomFeeAssignments(
     ctx: { schoolId: string; yearId: string; classId: string },
     onSyncMessage?: OnSyncMessage,
-  ) {
+  ): Promise<{
+    configs: FeeApplicableConfiguration[];
+    enrollments: EnrollmentDTO[];
+  }> {
     this.logger.info(
       `[FeeManagementService] Starting fee assignment sync for classroom: ${ctx.classId}`,
     );
 
     try {
-      onSyncMessage?.({
-        message: "Verifying classroom in database...",
-        pourcent: 10,
-      });
-
-      const classroom = await this.classroomRepo.findById(
+      const classroom = await this.validateClassroom(
         ctx.classId,
-        this.clientDb,
+        onSyncMessage,
       );
-
       if (!classroom) {
-        this.logger.warn(
-          `[FeeManagementService] Classroom ${ctx.classId} not found.`,
-        );
-        onSyncMessage?.({
-          message: "Classroom not found. Aborting.",
-          pourcent: 100,
-        });
         return { configs: [], enrollments: [] };
       }
 
@@ -98,8 +94,7 @@ export class FeeManagementService {
         pourcent: 30,
       });
 
-      console.log(ctx, classroom);
-      const { enrollments, configs } = this.fetchContextData(
+      const { enrollments, configs } = await this.loadContextData(
         ctx.schoolId,
         ctx.yearId,
         classroom,
@@ -138,12 +133,96 @@ export class FeeManagementService {
   }
 
   /**
+   * Validates classroom existence and reports progress.
+   * @param classId - Unique identifier of the classroom.
+   * @param onSyncMessage - Optional progress callback.
+   * @returns The classroom entity or null if not found.
+   */
+  private async validateClassroom(
+    classId: string,
+    onSyncMessage?: OnSyncMessage,
+  ): Promise<Classroom | null> {
+    onSyncMessage?.({
+      message: "Verifying classroom in database...",
+      pourcent: 10,
+    });
+
+    const classroom = await this.classroomRepo.findById(classId, this.clientDb);
+
+    if (!classroom) {
+      this.logger.warn(
+        `[FeeManagementService] Classroom ${classId} not found.`,
+      );
+      onSyncMessage?.({
+        message: "Classroom not found. Aborting.",
+        pourcent: 100,
+      });
+      return null;
+    }
+
+    return classroom;
+  }
+
+  /**
+   * Loads active student enrollments and applicable fee configurations.
+   * @param schoolId - School identifier.
+   * @param yearId - Academic year identifier.
+   * @param classroom - Classroom entity.
+   * @returns Object containing active enrollments and configurations.
+   */
+  private async loadContextData(
+    schoolId: string,
+    yearId: string,
+    classroom: Classroom,
+  ): Promise<{
+    enrollments: EnrollmentDTO[];
+    configs: FeeApplicableConfiguration[];
+  }> {
+    this.logger.debug("Loading context data for classroom", {
+      classroom,
+      schoolId,
+      yearId,
+    });
+
+    const enrollments = await this.enrollmentRepo.getActiveEnrollments(
+      {
+        where: {
+          classroomEnrollments: {
+            classroomId: classroom.classId,
+            yearId,
+            schoolId,
+          },
+        },
+        orderBy: [
+          { table: "users", column: "lastName", order: "asc" },
+          { table: "users", column: "middleName", order: "asc" },
+          { table: "users", column: "firstName", order: "asc" },
+        ],
+      },
+      this.clientDb,
+    );
+
+    const configs = await this.feeConfigRepo.findApplicableConfigurations(
+      {
+        classroomId: classroom.classId,
+        optionId: classroom.optionId,
+        section: classroom.section,
+        schoolId,
+        yearId,
+      },
+      this.clientDb,
+    );
+
+    return { enrollments, configs };
+  }
+
+  /**
    * Evaluates and assigns missing fees to a provided list of student enrollments.
    * @param enrollments - Array of student enrollments to process.
-   * @param ctx - Context object containing identifiers to match configurations.
+   * @param ctx - Object containing identifiers to match configurations.
    * @returns Array of applicable fee configurations.
    */
-  assignFees(
+  async assignFees(
     enrollments: { enrollmentId: string }[],
     ctx: {
       schoolId: string;
@@ -152,8 +231,8 @@ export class FeeManagementService {
       optionId: string | null;
       section: SECTION_ENUM | null;
     },
-  ) {
-    const configs = this.feeConfigRepo.findApplicableConfigurations(
+  ): Promise<FeeApplicableConfiguration[]> {
+    const configs = await this.feeConfigRepo.findApplicableConfigurations(
       ctx,
       this.clientDb,
     );
@@ -162,7 +241,7 @@ export class FeeManagementService {
       return configs;
     }
 
-    this.processAssignments(enrollments, configs);
+    await this.processAssignments(enrollments, configs);
     return configs;
   }
 
@@ -185,7 +264,7 @@ export class FeeManagementService {
       pourcent: 50,
     });
 
-    const existingKeys = this.getExistingAssignmentKeys(enrollments);
+    const existingKeys = await this.getExistingAssignmentKeys(enrollments);
 
     onSyncMessage?.({
       message: "Calculating missing installments...",
@@ -208,60 +287,16 @@ export class FeeManagementService {
   }
 
   /**
-   * Fetches the classroom enrollments and applicable fee configurations.
-   * @param schoolId - The school identifier.
-   * @param yearId - The academic year identifier.
-   * @param classroom - The classroom entity.
-   * @returns Object containing active enrollments and related configurations.
-   */
-  private fetchContextData(
-    schoolId: string,
-    yearId: string,
-    classroom: Classroom,
-  ) {
-    const enrollments = this.enrollmentRepo.getActiveEnrollments(
-      {
-        where: {
-          classroomEnrollments: {
-            classroomId: { $eq: classroom.classId },
-            yearId: { $eq: yearId },
-            schoolId: { $eq: schoolId },
-          },
-        },
-        orderBy: [
-          { table: "users", column: "lastName", order: "asc" },
-          { table: "users", column: "middleName", order: "asc" },
-          { table: "users", column: "firstName", order: "asc" },
-        ],
-      },
-      this.clientDb,
-    );
-
-    const configs = this.feeConfigRepo.findApplicableConfigurations(
-      {
-        classroomId: classroom.classId,
-        optionId: classroom.optionId,
-        section: classroom.section,
-        schoolId: schoolId,
-        yearId: yearId,
-      },
-      this.clientDb,
-    );
-
-    return { enrollments, configs };
-  }
-
-  /**
    * Retrieves a Set of existing assignment keys to prevent duplicate creation.
    * @param enrollments - Array of enrollments to query existing assignments for.
    * @returns A Set containing unique composite keys of existing assignments.
    */
-  private getExistingAssignmentKeys(
+  private async getExistingAssignmentKeys(
     enrollments: { enrollmentId: string }[],
-  ): Set<string> {
+  ): Promise<Set<string>> {
     const enrollmentIds = enrollments.map((e) => e.enrollmentId);
     const existing =
-      this.feeAssignmentRepo.getEnrollmentAssignments(enrollmentIds);
+      await this.feeAssignmentRepo.getEnrollmentAssignments(enrollmentIds);
     return new Set(
       existing.map((e) =>
         buildAssignmentKey(
@@ -314,7 +349,7 @@ export class FeeManagementService {
 
   /**
    * Converts an array of fee assignments into a Map indexed by schedule ID.
-   * @param assignments - List of fee assignment records.
+   * @param assignments - Array of fee assignment records.
    * @returns A dictionary mapping schedule IDs to their respective assignments.
    */
   private convertListToMap(
@@ -374,18 +409,20 @@ export class FeeManagementService {
    * @param enrollmentId - Unique identifier of the student's enrollment.
    * @returns Structured overview detailing the student's information and payment statuses.
    */
-  public getStudentPaymentOverview(enrollmentId: string): StudentPaymentTable {
+  public async getStudentPaymentOverview(
+    enrollmentId: string,
+  ): Promise<StudentPaymentTable> {
     this.logger.info(
       `[FeeManagementService] Fetching payment overview for enrollment ID: ${enrollmentId}`,
     );
 
     try {
-      const enrollment = this.enrollmentRepo.findById(enrollmentId);
+      const enrollment = await this.enrollmentRepo.findById(enrollmentId);
       if (!enrollment) {
         throw new BusinessRuleError(`Enrollment ${enrollmentId} not found.`);
       }
 
-      const configs = this.assignFees([enrollment], {
+      const configs = await this.assignFees([enrollment], {
         classroomId: enrollment.classroomId,
         optionId: enrollment.classroom.optionId,
         section: enrollment.classroom.section,
@@ -393,7 +430,7 @@ export class FeeManagementService {
         yearId: enrollment.yearId,
       });
 
-      const assignments = this.feeAssignmentRepo.findMany({
+      const assignments = await this.feeAssignmentRepo.findMany({
         where: {
           feeAssignments: {
             enrollmentId: { $eq: enrollmentId },
