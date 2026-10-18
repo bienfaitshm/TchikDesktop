@@ -40,6 +40,8 @@ export type FeeConfigurationDTO = FeeConfiguration & {
   wallet: Wallet;
 };
 
+export type DailyExchangeRateDTO = TableDailyExchangeRate;
+
 const configJoinTables = {
   options,
   classrooms,
@@ -56,6 +58,70 @@ const FEE_CONFIG_DEFAULT_SORT: FeeConfigurationFilters = {
   orderBy: [{ table: "feeConfigurations", column: "name", order: "asc" }],
 };
 
+const CONFIGURATION_WEIGHTS = {
+  CLASSROOM: 3,
+  OPTION: 2,
+  SECTION: 1,
+  DEFAULT: 0,
+} as const;
+
+export type EvaluationContext = {
+  schoolId: string;
+  yearId: string;
+  classroomId: string;
+  optionId: string | null;
+  section: SECTION_ENUM | null;
+};
+
+/**
+ * Computes the specificity weight of a fee configuration against the current context.
+ * @param config - The fee applicable configuration to evaluate.
+ * @param ctx - Context object containing identifiers.
+ * @returns Numeric weight representing specificity.
+ */
+function calculateConfigurationWeight(
+  config: FeeApplicableConfiguration,
+  ctx: Pick<EvaluationContext, "classroomId" | "optionId" | "section">,
+): number {
+  if (config.classroomId === ctx.classroomId) {
+    return CONFIGURATION_WEIGHTS.CLASSROOM;
+  }
+  if (ctx.optionId && config.optionId === ctx.optionId) {
+    return CONFIGURATION_WEIGHTS.OPTION;
+  }
+  if (ctx.section && config.section === ctx.section) {
+    return CONFIGURATION_WEIGHTS.SECTION;
+  }
+  return CONFIGURATION_WEIGHTS.DEFAULT;
+}
+
+/**
+ * Reduces configurations by keeping only the highest weighted match per fee type.
+ * @param configs - List of fetched configurations.
+ * @param ctx - Context object containing identifiers.
+ * @returns Array of unique prioritized configurations.
+ */
+function reduceToBestConfigurations(
+  configs: FeeApplicableConfiguration[],
+  ctx: Pick<EvaluationContext, "classroomId" | "optionId" | "section">,
+): FeeApplicableConfiguration[] {
+  const bestConfigsMap = new Map<string | null, FeeApplicableConfiguration>();
+
+  for (const config of configs) {
+    if (!config.feeTypeId) continue;
+    const currentWeight = calculateConfigurationWeight(config, ctx);
+    const existingConfig = bestConfigsMap.get(config.feeTypeId);
+    if (
+      !existingConfig ||
+      currentWeight >= calculateConfigurationWeight(existingConfig, ctx)
+    ) {
+      bestConfigsMap.set(config.feeTypeId, config);
+    }
+  }
+
+  return Array.from(bestConfigsMap.values());
+}
+
 /**
  * Repository handling database operations for fee configurations.
  */
@@ -71,7 +137,7 @@ export class FeeConfigurationRepository
   /**
    * Initializes a new instance of FeeConfigurationRepository.
    * @param database - Database connection instance.
-   * @param logger - Custom logger instance.
+   * @param customLogger - Custom logger instance.
    */
   constructor(
     database: TDataBase = db,
@@ -114,52 +180,54 @@ export class FeeConfigurationRepository
 
   /**
    * Lists available fee configurations for selection components.
-   * @param filters - Optional filters to apply when fetching records.
+   * @param filters - Filters to apply when fetching records.
    * @returns An array of fee configurations.
    */
-  fetchOptions(filters?: FeeConfigurationFilters) {
-    this.customLogger.info(
-      "[FeeConfigurationRepository] Fetching fee configuration options.",
-    );
+  public fetchOptions(filters?: FeeConfigurationFilters) {
+    this.customLogger.info("Fetching fee configuration options.");
     return this.findMany(filters);
+  }
+
+  /**
+   * Constructs query payload filters for extracting applicable configurations.
+   * @param ctx - Evaluation context containing school, year, and identifiers.
+   * @returns Fee configuration filter options.
+   */
+  private getExtractQueryPayload(
+    ctx: EvaluationContext,
+  ): FeeConfigurationFilters {
+    return {
+      where: {
+        feeConfigurations: {
+          schoolId: { $eq: ctx.schoolId },
+          yearId: { $eq: ctx.yearId },
+        },
+      },
+      or: [
+        { feeConfigurations: { classroomId: { $eq: ctx.classroomId } } },
+        { feeConfigurations: { optionId: { $eq: ctx.optionId } } },
+        { feeConfigurations: { section: { $eq: ctx.section } } },
+      ],
+    };
   }
 
   /**
    * Finds all applicable configurations for a classroom or option based on specific context weightings.
    * @param ctx - Context object containing school, year, classroom, option, and section identifiers.
-   * @param tx - Optional database transaction instance.
+   * @param tx - Database transaction instance.
    * @returns An array of prioritized applicable fee configurations.
    */
-  findApplicableConfigurations(
-    ctx: {
-      schoolId: string;
-      yearId: string;
-      classroomId: string;
-      optionId: string | null;
-      section: SECTION_ENUM | null;
-    },
+  public findApplicableConfigurations(
+    ctx: EvaluationContext,
     tx: TDataBase = this.db,
   ): FeeApplicableConfiguration[] {
     this.customLogger.info(
-      `[FeeConfigurationRepository] Finding applicable configurations for classroom ${ctx.classroomId} and school ${ctx.schoolId}`,
+      `Finding applicable configurations for classroom ${ctx.classroomId} and school ${ctx.schoolId}`,
     );
 
     try {
       const client = this.getClient(tx);
-      const filters: FeeConfigurationFilters = {
-        where: {
-          feeConfigurations: {
-            schoolId: { $eq: ctx.schoolId },
-            yearId: { $eq: ctx.yearId },
-          },
-        },
-        or: [
-          { feeConfigurations: { classroomId: { $eq: ctx.classroomId } } },
-          { feeConfigurations: { optionId: { $eq: ctx.optionId } } },
-          { feeConfigurations: { section: { $eq: ctx.section } } },
-        ],
-      };
-
+      const filters = this.getExtractQueryPayload(ctx);
       const queryPayload = helpers.extractQueryPayload(
         this.getJoinTable(),
         filters,
@@ -176,39 +244,16 @@ export class FeeConfigurationRepository
             },
           },
         })
-        .sync();
+        .sync() as FeeApplicableConfiguration[];
 
       if (configs.length === 0) {
-        this.customLogger.info(
-          "[FeeConfigurationRepository] No matching fee configurations found.",
-        );
+        this.customLogger.info("No matching fee configurations found.");
         return [];
       }
 
-      const getWeight = (c: FeeApplicableConfiguration) => {
-        if (c.classroomId === ctx.classroomId) return 3;
-        if (ctx.optionId && c.optionId === ctx.optionId) return 2;
-        if (ctx.section && c.section === ctx.section) return 1;
-        return 0;
-      };
-
-      const bestConfigsMap = new Map<
-        string | null,
-        FeeApplicableConfiguration
-      >();
-
-      for (const config of configs) {
-        if (!config.feeTypeId) continue;
-        const currentWeight = getWeight(config);
-        const existingConfig = bestConfigsMap.get(config.feeTypeId);
-        if (!existingConfig || currentWeight >= getWeight(existingConfig)) {
-          bestConfigsMap.set(config.feeTypeId, config);
-        }
-      }
-
-      const resolvedConfigs = Array.from(bestConfigsMap.values());
+      const resolvedConfigs = reduceToBestConfigurations(configs, ctx);
       this.customLogger.info(
-        `[FeeConfigurationRepository] Resolved ${resolvedConfigs.length} prioritized applicable configurations.`,
+        `Resolved ${resolvedConfigs.length} prioritized applicable configurations.`,
       );
 
       return resolvedConfigs;
@@ -218,7 +263,7 @@ export class FeeConfigurationRepository
         "Failed to find applicable fee configurations.",
       );
       this.customLogger.error(
-        "[FeeConfigurationRepository] Failed to find applicable fee configurations",
+        "Failed to find applicable fee configurations",
         error,
       );
       throw dbError;
@@ -246,13 +291,13 @@ const DAILY_EXCHANGE_RATE_DEFAULT_SORT: DailyExchangeRateFilters = {
 export class DailyExchangeRateRepository extends betterSqlite.BaseRepository<
   TableDailyExchangeRate,
   TDataBase,
-  any,
+  DailyExchangeRateDTO,
   DailyExchangeRateFilters
 > {
   /**
    * Initializes a new instance of DailyExchangeRateRepository.
    * @param database - Database connection instance.
-   * @param logger - Custom logger instance.
+   * @param customLogger - Custom logger instance.
    */
   constructor(
     database: TDataBase = db,
@@ -274,39 +319,30 @@ export class DailyExchangeRateRepository extends betterSqlite.BaseRepository<
   /**
    * Retrieves the most recent daily exchange rate for a given currency pair.
    * @param filters - Filter options to locate the appropriate exchange rate.
-   * @param tx - Optional database transaction instance.
+   * @param tx - Database transaction instance.
    * @returns The latest daily exchange rate record or null if not found.
    */
-  getLatestExchangeRate(
+  public getLatestExchangeRate(
     filters: DailyExchangeRateFilters,
     tx: TDataBase = this.db,
-  ) {
-    this.customLogger.info(
-      "[DailyExchangeRateRepository] Fetching latest exchange rate.",
-    );
+  ): DailyExchangeRateDTO | null {
+    this.customLogger.info("Fetching latest exchange rate.");
 
     try {
       const dailyRates = this.findMany(filters, tx);
       if (dailyRates.length > 0) {
         const [rate] = dailyRates;
-        this.customLogger.info(
-          `[DailyExchangeRateRepository] Exchange rate found: ${rate.rateId}`,
-        );
+        this.customLogger.info(`Exchange rate found: ${rate.rateId}`);
         return rate;
       }
-      this.customLogger.info(
-        "[DailyExchangeRateRepository] No exchange rate found for given filters.",
-      );
+      this.customLogger.info("No exchange rate found for given filters.");
       return null;
     } catch (error) {
       const dbError = DatabaseError.from(
         error,
         "Failed to retrieve the latest exchange rate.",
       );
-      this.customLogger.error(
-        "[DailyExchangeRateRepository] Failed to retrieve latest exchange rate",
-        error,
-      );
+      this.customLogger.error("Failed to retrieve latest exchange rate", error);
       throw dbError;
     }
   }

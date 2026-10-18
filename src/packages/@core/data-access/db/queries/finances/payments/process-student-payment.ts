@@ -13,6 +13,8 @@ import {
   FeeConfigurationRepository,
   StudentPaymentRepository,
   WalletRepository,
+  type FeeAssignmentDTO,
+  type FeeConfigurationDTO,
 } from "../repository";
 import { CustomLogger } from "@/packages/logger";
 import { validateContext } from "./utils";
@@ -20,7 +22,6 @@ import { OverpaymentError, BusinessRuleError } from "./errors";
 import { DailyExchangeRateService } from "../services";
 import {
   FeeAssignment,
-  FeeConfiguration,
   StudentPayment,
 } from "@/packages/@core/data-access/db/schemas";
 
@@ -36,7 +37,7 @@ export interface ProcessPaymentPayload {
 
 export interface ProcessPaymentResult extends FeeAssignment {
   payment: StudentPayment;
-  feeConfig: FeeConfiguration;
+  feeConfig: FeeConfigurationDTO;
 }
 
 export interface CancelPaymentResult extends ProcessPaymentResult {}
@@ -70,7 +71,7 @@ export class StudentPaymentService {
    * @param payload - Details of the payment transaction to process.
    * @returns The updated assignment record along with created payment and config details.
    */
-  public execute(payload: ProcessPaymentPayload): ProcessPaymentResult {
+  public executePayment(payload: ProcessPaymentPayload): ProcessPaymentResult {
     validateContext(payload.schoolId, payload.yearId);
     this.logger.info(
       `[Payment processing] Initiating payment for assignment ${payload.assignmentId}`,
@@ -142,13 +143,22 @@ export class StudentPaymentService {
     try {
       return this.clientDb.transaction((tx) => {
         const payment = this.fetchAndValidatePayment(paymentId, tx);
-        const { assignmentRecord, configRecord } =
-          this.fetchAndValidateAssignmentAndConfig(payment.assignmentId, tx);
+        const { configRecord } = this.fetchAndValidateAssignmentAndConfig(
+          payment.assignmentId,
+          tx,
+        );
 
         const canceledPayment = this.studentPaymentRepo.cancelPayment(
           paymentId,
           tx,
         );
+
+        if (!canceledPayment) {
+          this.logger.info(
+            `[Payment rollback] Error for cancel a payment ${paymentId}. Assignment ID: ${payment.assignmentId}`,
+          );
+          throw new BusinessRuleError("Impossible to cancel payment");
+        }
 
         const updatedAssignment =
           this.feeAssignmentRepo.revertAssignmentProgress(
@@ -158,12 +168,7 @@ export class StudentPaymentService {
             tx,
           );
 
-        this.walletRepo.updateWalletBalance(
-          configRecord.wallet.walletId,
-          payment.amountConverted,
-          "DECREASE",
-          tx,
-        );
+        this.walletRepo.updateWalletBalance(configRecord.wallet.walletId, tx);
 
         this.logger.info(
           `[Payment rollback] Success for payment ${paymentId}. Assignment ID: ${payment.assignmentId}`,
@@ -192,8 +197,8 @@ export class StudentPaymentService {
    */
   private fetchAndValidateAssignmentAndConfig(
     assignmentId: string,
-    tx: any,
-  ): { assignmentRecord: FeeAssignment; configRecord: FeeConfiguration } {
+    tx: TDataBase,
+  ): { assignmentRecord: FeeAssignmentDTO; configRecord: FeeConfigurationDTO } {
     const assignmentRecord = this.feeAssignmentRepo.findById(assignmentId, tx);
     if (!assignmentRecord) {
       throw new RecordNotFoundError(`Fee assignment [${assignmentId}]`);
@@ -224,7 +229,10 @@ export class StudentPaymentService {
    * @param tx - Active database transaction client.
    * @returns The validated payment record.
    */
-  private fetchAndValidatePayment(paymentId: string, tx: any): StudentPayment {
+  private fetchAndValidatePayment(
+    paymentId: string,
+    tx: TDataBase,
+  ): StudentPayment {
     const payment = this.studentPaymentRepo.findById(paymentId, tx);
     if (!payment) {
       throw new RecordNotFoundError(`Payment [${paymentId}]`);
@@ -251,7 +259,7 @@ export class StudentPaymentService {
     payload: ProcessPaymentPayload,
     exchangeRateMultiplied: number,
     amountConverted: number,
-    tx: any,
+    tx: TDataBase,
   ): StudentPayment {
     return this.studentPaymentRepo.create(
       {
@@ -280,8 +288,8 @@ export class StudentPaymentService {
   private updateAssignmentAndWallet(
     assignmentId: string,
     amountConverted: number,
-    configRecord: FeeConfiguration,
-    tx: any,
+    configRecord: FeeConfigurationDTO,
+    tx: TDataBase,
   ): FeeAssignment {
     const updatedAssignment = this.feeAssignmentRepo.updateAssignmentProgress(
       assignmentId,
@@ -290,12 +298,7 @@ export class StudentPaymentService {
       tx,
     );
 
-    this.walletRepo.updateWalletBalance(
-      configRecord.wallet.walletId,
-      amountConverted,
-      "INCREASE",
-      tx,
-    );
+    this.walletRepo.updateWalletBalance(configRecord.wallet.walletId, tx);
 
     return updatedAssignment;
   }

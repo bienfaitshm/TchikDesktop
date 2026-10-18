@@ -29,6 +29,7 @@ describe("FeeManagementService", () => {
     feeAssignmentRepo = {
       getEnrollmentAssignments: vi.fn(),
       bulkCreate: vi.fn(),
+      assignFees: vi.fn(),
       findMany: vi.fn(),
     };
     clientDb = {};
@@ -113,7 +114,7 @@ describe("FeeManagementService", () => {
       ];
       feeConfigRepo.findApplicableConfigurations.mockResolvedValue(configs);
       feeAssignmentRepo.getEnrollmentAssignments.mockResolvedValue([]);
-      feeAssignmentRepo.bulkCreate.mockResolvedValue(undefined);
+      feeAssignmentRepo.assignFees.mockResolvedValue(undefined);
 
       const result = await service.syncClassroomFeeAssignments({
         schoolId: "school-1",
@@ -122,7 +123,7 @@ describe("FeeManagementService", () => {
       });
 
       expect(result).toEqual({ configs, enrollments });
-      expect(feeAssignmentRepo.bulkCreate).toHaveBeenCalledTimes(1);
+      expect(feeAssignmentRepo.assignFees).toHaveBeenCalledTimes(1);
     });
 
     it("should wrap and throw DatabaseError on unexpected errors", async () => {
@@ -176,6 +177,8 @@ describe("FeeManagementService", () => {
       feeAssignmentRepo.getEnrollmentAssignments.mockResolvedValue([]);
       feeAssignmentRepo.bulkCreate.mockResolvedValue(undefined);
 
+      console.log("service.assignFees valid", service.assignFees);
+
       const res = await service.assignFees([{ enrollmentId: "enr-1" }], {
         schoolId: "school-1",
         yearId: "year-1",
@@ -185,7 +188,7 @@ describe("FeeManagementService", () => {
       });
 
       expect(res).toEqual(configs);
-      expect(feeAssignmentRepo.bulkCreate).toHaveBeenCalled();
+      expect(feeAssignmentRepo.assignFees).toHaveBeenCalled();
     });
   });
 

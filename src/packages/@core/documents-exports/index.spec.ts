@@ -15,6 +15,7 @@ import { mainLogger } from "@/packages/logger";
 
 vi.mock("@/packages/electron-utility", () => ({
   notify: vi.fn(),
+  getResourcePath: vi.fn(),
   openFile: vi.fn(),
 }));
 

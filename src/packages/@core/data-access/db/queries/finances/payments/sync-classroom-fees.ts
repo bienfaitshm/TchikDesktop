@@ -282,7 +282,7 @@ export class FeeManagementService {
         message: `Saving ${assignmentsToCreate.length} new assignments...`,
         pourcent: 90,
       });
-      await this.feeAssignmentRepo.bulkCreate(assignmentsToCreate);
+      await this.feeAssignmentRepo.assignFees(assignmentsToCreate);
     }
   }
 
@@ -433,7 +433,7 @@ export class FeeManagementService {
       const assignments = await this.feeAssignmentRepo.findMany({
         where: {
           feeAssignments: {
-            enrollmentId: { $eq: enrollmentId },
+            enrollmentId,
           },
         },
       });

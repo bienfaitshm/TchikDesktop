@@ -185,7 +185,7 @@ export class FeeAssignmentRepository
             status: { $ne: FEE_SCHEDULE_STATUS_ENUM.PAID },
           },
           feeTypes: {
-            feeTypeId: { $eq: feeTypeId },
+            feeTypeId,
           },
         },
       },

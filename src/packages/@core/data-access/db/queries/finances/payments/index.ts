@@ -9,21 +9,18 @@ import {
 import { dailyExchangeRateService } from "../services";
 import { classroomRepository } from "@/packages/@core/data-access/db/queries/classrooms";
 import { EnrollmentRepository } from "@/packages/@core/data-access/db/queries/enrollments";
-
 import {
   type StudentPaymentTable,
   type EnrollmentPayment,
   FeeManagementService,
 } from "./sync-classroom-fees";
 import { GetClassroomPaymentTable } from "./get-classroom-payment-table";
-
 import {
   StudentPaymentService,
   type ProcessPaymentPayload,
   type ProcessPaymentResult,
   type CancelPaymentResult,
 } from "./process-student-payment";
-
 import { OnSyncMessage } from "./types";
 
 const logger = getLogger("PaymentService");
@@ -63,7 +60,9 @@ export const paymentService = {
    * @param enrollmentId - Unique identifier of the student enrollment.
    * @returns Structured payment overview data.
    */
-  getStudentPaymentOverview(enrollmentId: string): StudentPaymentTable {
+  getStudentPaymentOverview(
+    enrollmentId: string,
+  ): Promise<StudentPaymentTable> {
     return feeManagementService.getStudentPaymentOverview(enrollmentId);
   },
 
@@ -112,7 +111,7 @@ export const paymentService = {
   async processStudentPayment(
     payload: ProcessPaymentPayload,
   ): Promise<ProcessPaymentResult> {
-    return processStudentPaymentUseCase.execute(payload);
+    return processStudentPaymentUseCase.executePayment(payload);
   },
 
   /**
