@@ -1,15 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { StudentPaymentService } from "./process-student-payment";
-import { RecordNotFoundError } from "@/packages/drizzle-queries";
+import {
+  RecordNotFoundError,
+  TransactionError,
+} from "@/packages/drizzle-queries";
+import { OverpaymentError, BusinessRuleError } from "./errors";
 import {
   CURRENCY_ENUM,
   PAYMENT_STATUS_ENUM,
   PAYMENT_METHOD_ENUM,
 } from "@/packages/@core/data-access/db/options";
-import { OverpaymentError, BusinessRuleError } from "./errors";
 
 describe("StudentPaymentService", () => {
-  let feeConfigRepo: any;
   let feeAssignmentRepo: any;
   let studentPaymentRepo: any;
   let rateService: any;
@@ -19,9 +21,6 @@ describe("StudentPaymentService", () => {
   let service: StudentPaymentService;
 
   beforeEach(() => {
-    feeConfigRepo = {
-      findById: vi.fn(),
-    };
     feeAssignmentRepo = {
       findById: vi.fn(),
       updateAssignmentProgress: vi.fn(),
@@ -47,7 +46,6 @@ describe("StudentPaymentService", () => {
     };
 
     service = new StudentPaymentService(
-      feeConfigRepo,
       feeAssignmentRepo,
       studentPaymentRepo,
       rateService,
@@ -58,156 +56,172 @@ describe("StudentPaymentService", () => {
   });
 
   describe("executePayment", () => {
-    const validPayload = {
+    const payload = {
       schoolId: "school-1",
       yearId: "year-1",
-      assignmentId: "assign-1",
+      assignmentId: "assignment-1",
       amountReceived: 100,
       currencyReceived: CURRENCY_ENUM.USD,
       paymentMethod: PAYMENT_METHOD_ENUM.CASH,
     };
 
-    it("should process payment successfully when nominal case", () => {
-      feeAssignmentRepo.findById.mockReturnValue({
-        assignmentId: "assign-1",
-        feeConfigId: "config-1",
-        amountPaid: 0,
-      });
-      feeConfigRepo.findById.mockReturnValue({
-        feeConfigId: "config-1",
+    it("should successfully process a payment within transaction", () => {
+      const mockAssignment = {
+        assignmentId: "assignment-1",
         totalAmount: 500,
+        amountPaid: 100,
         currency: CURRENCY_ENUM.USD,
-        wallet: { walletId: "wallet-1" },
-      });
+        feeType: { walletId: "wallet-1" },
+      };
+
+      feeAssignmentRepo.findById.mockReturnValue(mockAssignment);
       rateService.computeExchangeRate.mockReturnValue({
         amountConverted: 100,
         exchangeRateMultiplied: 1,
       });
-      studentPaymentRepo.create.mockReturnValue({
-        paymentId: "pay-1",
-        assignmentId: "assign-1",
-      });
-      feeAssignmentRepo.updateAssignmentProgress.mockReturnValue({
-        assignmentId: "assign-1",
-        amountPaid: 100,
-      });
 
-      const result = service.executePayment(validPayload);
+      const mockPayment = { paymentId: "payment-1", amountConverted: 100 };
+      studentPaymentRepo.create.mockReturnValue(mockPayment);
 
-      expect(result).toBeDefined();
-      expect(result.payment.paymentId).toBe("pay-1");
-      expect(feeAssignmentRepo.updateAssignmentProgress).toHaveBeenCalled();
+      const mockUpdatedAssignment = { ...mockAssignment, amountPaid: 200 };
+      feeAssignmentRepo.updateAssignmentProgress.mockReturnValue(
+        mockUpdatedAssignment,
+      );
+
+      const result = service.executePayment(payload);
+
+      expect(clientDb.transaction).toHaveBeenCalled();
+      expect(feeAssignmentRepo.findById).toHaveBeenCalledWith(
+        "assignment-1",
+        expect.any(Object),
+      );
+      expect(studentPaymentRepo.create).toHaveBeenCalled();
       expect(walletRepo.updateWalletBalance).toHaveBeenCalledWith(
         "wallet-1",
         expect.any(Object),
       );
+      expect(result).toEqual({
+        ...mockUpdatedAssignment,
+        payment: mockPayment,
+      });
     });
 
     it("should throw RecordNotFoundError if assignment does not exist", () => {
       feeAssignmentRepo.findById.mockReturnValue(null);
 
-      expect(() => service.executePayment(validPayload)).toThrow(
-        RecordNotFoundError,
-      );
-    });
-
-    it("should throw BusinessRuleError if assignment lacks configuration ID", () => {
-      feeAssignmentRepo.findById.mockReturnValue({
-        assignmentId: "assign-1",
-        feeConfigId: null,
-      });
-
-      expect(() => service.executePayment(validPayload)).toThrow(
-        BusinessRuleError,
-      );
-    });
-
-    it("should throw RecordNotFoundError if configuration does not exist", () => {
-      feeAssignmentRepo.findById.mockReturnValue({
-        assignmentId: "assign-1",
-        feeConfigId: "config-1",
-      });
-      feeConfigRepo.findById.mockReturnValue(null);
-
-      expect(() => service.executePayment(validPayload)).toThrow(
+      expect(() => service.executePayment(payload)).toThrow(
         RecordNotFoundError,
       );
     });
 
     it("should throw OverpaymentError if payment exceeds remaining debt", () => {
-      feeAssignmentRepo.findById.mockReturnValue({
-        assignmentId: "assign-1",
-        feeConfigId: "config-1",
-        amountPaid: 450,
-      });
-      feeConfigRepo.findById.mockReturnValue({
-        feeConfigId: "config-1",
-        totalAmount: 500,
+      const mockAssignment = {
+        assignmentId: "assignment-1",
+        totalAmount: 200,
+        amountPaid: 150,
         currency: CURRENCY_ENUM.USD,
-      });
+        feeType: { walletId: "wallet-1" },
+      };
+
+      feeAssignmentRepo.findById.mockReturnValue(mockAssignment);
       rateService.computeExchangeRate.mockReturnValue({
         amountConverted: 100,
         exchangeRateMultiplied: 1,
       });
 
-      expect(() => service.executePayment(validPayload)).toThrow(
-        OverpaymentError,
-      );
+      expect(() => service.executePayment(payload)).toThrow(OverpaymentError);
+    });
+
+    it("should wrap unexpected errors in TransactionError", () => {
+      feeAssignmentRepo.findById.mockImplementation(() => {
+        throw new Error("DB crash");
+      });
+
+      expect(() => service.executePayment(payload)).toThrow(TransactionError);
+      expect(logger.error).toHaveBeenCalled();
     });
   });
 
   describe("cancelPayment", () => {
-    it("should cancel payment successfully when nominal case", () => {
-      studentPaymentRepo.findById.mockReturnValue({
-        paymentId: "pay-1",
-        assignmentId: "assign-1",
+    const paymentId = "payment-1";
+
+    it("should successfully cancel a payment and revert progress", () => {
+      const mockPayment = {
+        paymentId,
+        assignmentId: "assignment-1",
         amountConverted: 100,
         status: PAYMENT_STATUS_ENUM.VALIDATED,
-      });
-      feeAssignmentRepo.findById.mockReturnValue({
-        assignmentId: "assign-1",
-        feeConfigId: "config-1",
-      });
-      feeConfigRepo.findById.mockReturnValue({
-        feeConfigId: "config-1",
-        totalAmount: 500,
-        wallet: { walletId: "wallet-1" },
-      });
-      studentPaymentRepo.cancelPayment.mockReturnValue({
-        paymentId: "pay-1",
+      };
+      const mockAssignment = {
+        assignmentId: "assignment-1",
+        feeType: { walletId: "wallet-1" },
+      };
+      const canceledPayment = {
+        ...mockPayment,
         status: PAYMENT_STATUS_ENUM.CANCELED,
-      });
-      feeAssignmentRepo.revertAssignmentProgress.mockReturnValue({
-        assignmentId: "assign-1",
-        amountPaid: 0,
-      });
+      };
+      const updatedAssignment = { assignmentId: "assignment-1", amountPaid: 0 };
 
-      const result = service.cancelPayment("pay-1");
+      studentPaymentRepo.findById.mockReturnValue(mockPayment);
+      feeAssignmentRepo.findById.mockReturnValue(mockAssignment);
+      studentPaymentRepo.cancelPayment.mockReturnValue(canceledPayment);
+      feeAssignmentRepo.revertAssignmentProgress.mockReturnValue(
+        updatedAssignment,
+      );
 
-      expect(result).toBeDefined();
-      expect(result.payment.status).toBe(PAYMENT_STATUS_ENUM.CANCELED);
-      expect(studentPaymentRepo.cancelPayment).toHaveBeenCalled();
+      const result = service.cancelPayment(paymentId);
+
+      expect(clientDb.transaction).toHaveBeenCalled();
+      expect(studentPaymentRepo.cancelPayment).toHaveBeenCalledWith(
+        paymentId,
+        expect.any(Object),
+      );
+      expect(feeAssignmentRepo.revertAssignmentProgress).toHaveBeenCalledWith(
+        "assignment-1",
+        100,
+        expect.any(Object),
+      );
       expect(walletRepo.updateWalletBalance).toHaveBeenCalledWith(
         "wallet-1",
         expect.any(Object),
       );
+      expect(result).toEqual({
+        ...updatedAssignment,
+        payment: canceledPayment,
+      });
     });
 
     it("should throw RecordNotFoundError if payment does not exist", () => {
       studentPaymentRepo.findById.mockReturnValue(null);
 
-      expect(() => service.cancelPayment("pay-invalid")).toThrow(
+      expect(() => service.cancelPayment(paymentId)).toThrow(
         RecordNotFoundError,
       );
     });
 
     it("should throw BusinessRuleError if payment is already canceled", () => {
-      studentPaymentRepo.findById.mockReturnValue({
-        paymentId: "pay-1",
+      const mockPayment = {
+        paymentId,
         status: PAYMENT_STATUS_ENUM.CANCELED,
-      });
+      };
+      studentPaymentRepo.findById.mockReturnValue(mockPayment);
 
-      expect(() => service.cancelPayment("pay-1")).toThrow(BusinessRuleError);
+      expect(() => service.cancelPayment(paymentId)).toThrow(BusinessRuleError);
+    });
+
+    it("should throw BusinessRuleError if cancellation fails at repository level", () => {
+      const mockPayment = {
+        paymentId,
+        assignmentId: "assignment-1",
+        status: PAYMENT_STATUS_ENUM.VALIDATED,
+      };
+      studentPaymentRepo.findById.mockReturnValue(mockPayment);
+      feeAssignmentRepo.findById.mockReturnValue({
+        feeType: { walletId: "wallet-1" },
+      });
+      studentPaymentRepo.cancelPayment.mockReturnValue(null);
+
+      expect(() => service.cancelPayment(paymentId)).toThrow(BusinessRuleError);
     });
   });
 });

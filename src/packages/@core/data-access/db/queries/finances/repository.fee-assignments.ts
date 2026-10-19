@@ -157,6 +157,10 @@ export class FeeAssignmentRepository
    * @returns Array of matching fee assignments.
    */
   public getEnrollmentAssignments(enrollmentIds: string[]): FeeAssignmentDTO[] {
+    if (enrollmentIds.length === 0) {
+      return [];
+    }
+
     return this.findMany({
       where: {
         feeAssignments: { enrollmentId: { $in: enrollmentIds } },
@@ -269,19 +273,25 @@ export class FeeAssignmentRepository
    * Retrieves the currently paid amount for a specific fee assignment.
    * @param assignmentId - Unique identifier of the fee assignment.
    * @param tx - Optional database transaction instance.
-   * @returns The amount already paid.
+   * @returns Object containing paid and total amounts.
    */
   public getAssignmentAmount(
     assignmentId: string,
     tx: TDataBase = this.db,
-  ): number {
+  ): { amountPaid: number; totalAmount: number } {
     const current = this.findById(assignmentId, tx, {
       amountPaid: this.table.amountPaid,
+      totalAmount: this.table.totalAmount,
     });
     if (!current) {
-      throw new Error(`Fee assignment with ID ${assignmentId} not found`);
+      throw new DatabaseError(
+        `Fee assignment with ID ${assignmentId} not found`,
+      );
     }
-    return current.amountPaid ?? 0;
+    return {
+      amountPaid: current.amountPaid ?? 0,
+      totalAmount: current.totalAmount ?? 0,
+    };
   }
 
   /**
@@ -314,17 +324,16 @@ export class FeeAssignmentRepository
    * Updates progress by adding new payment amount and refreshing status.
    * @param assignmentId - Unique identifier of the fee assignment.
    * @param amountConverted - The new amount to add to current balance.
-   * @param totalAmount - Target expected total amount.
    * @param tx - Optional database transaction instance.
-   * @returns Array of updated fee assignment records.
+   * @returns The updated fee assignment record.
    */
   public updateAssignmentProgress(
     assignmentId: string,
     amountConverted: number,
-    totalAmount: number,
     tx: TDataBase = this.db,
   ): FeeAssignment {
-    const previousAmount = this.getAssignmentAmount(assignmentId, tx);
+    const { amountPaid: previousAmount, totalAmount } =
+      this.getAssignmentAmount(assignmentId, tx);
     const newAmountPaid = previousAmount + amountConverted;
     return this.applyProgressUpdate(
       assignmentId,
@@ -339,17 +348,16 @@ export class FeeAssignmentRepository
    * Reverts progress by deducting canceled payment amount and updating status.
    * @param assignmentId - Unique identifier of the fee assignment.
    * @param amountDeducted - The amount to subtract from current balance.
-   * @param totalAmount - Target expected total amount.
    * @param tx - Optional database transaction instance.
-   * @returns Array of updated fee assignment records.
+   * @returns The updated fee assignment record.
    */
   public revertAssignmentProgress(
     assignmentId: string,
     amountDeducted: number,
-    totalAmount: number,
     tx: TDataBase = this.db,
   ): FeeAssignment {
-    const previousAmount = this.getAssignmentAmount(assignmentId, tx);
+    const { amountPaid: previousAmount, totalAmount } =
+      this.getAssignmentAmount(assignmentId, tx);
     const newAmountPaid = Math.max(0, previousAmount - amountDeducted);
     return this.applyProgressUpdate(
       assignmentId,
@@ -367,7 +375,7 @@ export class FeeAssignmentRepository
    * @param totalAmount - Target expected total amount.
    * @param actionName - Name of calling method for logging context.
    * @param tx - Database transaction handle.
-   * @returns Array of updated fee assignment records.
+   * @returns The updated fee assignment record.
    */
   private applyProgressUpdate(
     assignmentId: string,

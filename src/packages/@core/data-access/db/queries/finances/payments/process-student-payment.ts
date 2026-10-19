@@ -10,11 +10,9 @@ import {
 } from "@/packages/@core/data-access/db/options";
 import {
   FeeAssignmentRepository,
-  FeeConfigurationRepository,
   StudentPaymentRepository,
   WalletRepository,
   type FeeAssignmentDTO,
-  type FeeConfigurationDTO,
 } from "../repository";
 import { CustomLogger } from "@/packages/logger";
 import { validateContext } from "./utils";
@@ -37,7 +35,6 @@ export interface ProcessPaymentPayload {
 
 export interface ProcessPaymentResult extends FeeAssignment {
   payment: StudentPayment;
-  feeConfig: FeeConfigurationDTO;
 }
 
 export interface CancelPaymentResult extends ProcessPaymentResult {}
@@ -48,7 +45,6 @@ export interface CancelPaymentResult extends ProcessPaymentResult {}
 export class StudentPaymentService {
   /**
    * Initializes a new instance of StudentPaymentService.
-   * @param feeConfigRepo - Repository for fee configurations.
    * @param feeAssignmentRepo - Repository for fee assignments.
    * @param studentPaymentRepo - Repository for student payments.
    * @param rateService - Service for exchange rate calculations.
@@ -57,7 +53,6 @@ export class StudentPaymentService {
    * @param logger - Custom logger instance.
    */
   constructor(
-    private readonly feeConfigRepo: FeeConfigurationRepository,
     private readonly feeAssignmentRepo: FeeAssignmentRepository,
     private readonly studentPaymentRepo: StudentPaymentRepository,
     private readonly rateService: DailyExchangeRateService,
@@ -69,32 +64,29 @@ export class StudentPaymentService {
   /**
    * Executes the student payment workflow synchronously within a transaction.
    * @param payload - Details of the payment transaction to process.
-   * @returns The updated assignment record along with created payment and config details.
+   * @returns The updated assignment record along with created payment details.
    */
   public executePayment(payload: ProcessPaymentPayload): ProcessPaymentResult {
     validateContext(payload.schoolId, payload.yearId);
-    this.logger.info(
-      `[Payment processing] Initiating payment for assignment ${payload.assignmentId}`,
-    );
-
-    try {
-      return this.clientDb.transaction((tx) => {
-        const { assignmentRecord, configRecord } =
-          this.fetchAndValidateAssignmentAndConfig(payload.assignmentId, tx);
+    return this.executeInTransaction(
+      `Payment processing`,
+      payload.assignmentId,
+      (tx) => {
+        const assignmentRecord = this.fetchAssignment(payload.assignmentId, tx);
 
         const { amountConverted, exchangeRateMultiplied } =
           this.rateService.computeExchangeRate(
             payload.amountReceived,
             payload.currencyReceived,
-            configRecord.currency,
+            assignmentRecord.currency,
             payload.schoolId,
           );
 
         this.verifyDebt(
-          configRecord.totalAmount,
+          assignmentRecord.totalAmount,
           assignmentRecord.amountPaid,
           amountConverted,
-          configRecord.currency,
+          assignmentRecord.currency,
         );
 
         const payment = this.createPaymentRecord(
@@ -107,7 +99,7 @@ export class StudentPaymentService {
         const updatedAssignment = this.updateAssignmentAndWallet(
           payload.assignmentId,
           amountConverted,
-          configRecord,
+          assignmentRecord.feeType.walletId,
           tx,
         );
 
@@ -118,71 +110,69 @@ export class StudentPaymentService {
         return {
           ...updatedAssignment,
           payment,
-          feeConfig: configRecord,
         };
-      });
-    } catch (error) {
-      this.logger.error(
-        `[Payment processing] Transaction failed for assignment ${payload.assignmentId}`,
-        error,
-      );
-      throw this.handleError(error);
-    }
+      },
+    );
   }
 
   /**
    * Cancels an existing student payment and reverts all associated financial state changes.
    * @param paymentId - Unique identifier of the payment to revert.
-   * @returns The updated assignment record with canceled payment and config details.
+   * @returns The updated assignment record with canceled payment details.
    */
   public cancelPayment(paymentId: string): CancelPaymentResult {
-    this.logger.info(
-      `[Payment rollback] Initiating cancellation for payment ${paymentId}`,
-    );
+    return this.executeInTransaction(`Payment rollback`, paymentId, (tx) => {
+      const payment = this.fetchValidatePayment(paymentId, tx);
+      const assignment = this.fetchAssignment(payment.assignmentId, tx);
 
-    try {
-      return this.clientDb.transaction((tx) => {
-        const payment = this.fetchAndValidatePayment(paymentId, tx);
-        const { configRecord } = this.fetchAndValidateAssignmentAndConfig(
-          payment.assignmentId,
-          tx,
-        );
-
-        const canceledPayment = this.studentPaymentRepo.cancelPayment(
-          paymentId,
-          tx,
-        );
-
-        if (!canceledPayment) {
-          this.logger.info(
-            `[Payment rollback] Error for cancel a payment ${paymentId}. Assignment ID: ${payment.assignmentId}`,
-          );
-          throw new BusinessRuleError("Impossible to cancel payment");
-        }
-
-        const updatedAssignment =
-          this.feeAssignmentRepo.revertAssignmentProgress(
-            payment.assignmentId,
-            payment.amountConverted,
-            configRecord.totalAmount,
-            tx,
-          );
-
-        this.walletRepo.updateWalletBalance(configRecord.wallet.walletId, tx);
-
+      const canceledPayment = this.studentPaymentRepo.cancelPayment(
+        paymentId,
+        tx,
+      );
+      if (!canceledPayment) {
         this.logger.info(
-          `[Payment rollback] Success for payment ${paymentId}. Assignment ID: ${payment.assignmentId}`,
+          `[Payment rollback] Error for cancel a payment ${paymentId}. Assignment ID: ${payment.assignmentId}`,
         );
+        throw new BusinessRuleError("Impossible to cancel payment");
+      }
 
-        return {
-          ...updatedAssignment,
-          payment: canceledPayment,
-          feeConfig: configRecord,
-        };
-      });
+      const updatedAssignment = this.feeAssignmentRepo.revertAssignmentProgress(
+        payment.assignmentId,
+        payment.amountConverted,
+        tx,
+      );
+
+      this.walletRepo.updateWalletBalance(assignment.feeType.walletId, tx);
+
+      this.logger.info(
+        `[Payment rollback] Success for payment ${paymentId}. Assignment ID: ${payment.assignmentId}`,
+      );
+
+      return {
+        ...updatedAssignment,
+        payment: canceledPayment,
+      };
+    });
+  }
+
+  /**
+   * Executes a callback function inside a database transaction with standardized logging and error handling.
+   * @param actionType - Label for logging context.
+   * @param entityId - Identifier of the entity being processed.
+   * @param action - Synchronous callback function performing database operations.
+   * @returns The result of the transaction callback.
+   */
+  private executeInTransaction<T>(
+    actionType: string,
+    entityId: string,
+    action: (tx: TDataBase) => T,
+  ): T {
+    this.logger.info(`[${actionType}] Initiating for entity ${entityId}`);
+    try {
+      return this.clientDb.transaction((tx) => action(tx));
     } catch (error) {
       this.logger.error(
-        `[Payment rollback] Transaction failed for payment ${paymentId}`,
+        `[${actionType}] Transaction failed for entity ${entityId}`,
         error,
       );
       throw this.handleError(error);
@@ -190,37 +180,20 @@ export class StudentPaymentService {
   }
 
   /**
-   * Fetches and validates fee assignment and configuration records.
+   * Fetches and validates fee assignment records.
    * @param assignmentId - Unique identifier of the fee assignment.
    * @param tx - Active database transaction client.
-   * @returns The validated assignment and configuration records.
+   * @returns The validated assignment records.
    */
-  private fetchAndValidateAssignmentAndConfig(
+  private fetchAssignment(
     assignmentId: string,
     tx: TDataBase,
-  ): { assignmentRecord: FeeAssignmentDTO; configRecord: FeeConfigurationDTO } {
+  ): FeeAssignmentDTO {
     const assignmentRecord = this.feeAssignmentRepo.findById(assignmentId, tx);
     if (!assignmentRecord) {
       throw new RecordNotFoundError(`Fee assignment [${assignmentId}]`);
     }
-
-    if (!assignmentRecord.feeConfigId) {
-      throw new BusinessRuleError(
-        `Fee assignment [${assignmentId}] lacks a valid configuration ID.`,
-      );
-    }
-
-    const configRecord = this.feeConfigRepo.findById(
-      assignmentRecord.feeConfigId,
-      tx,
-    );
-    if (!configRecord) {
-      throw new RecordNotFoundError(
-        `Fee configuration [${assignmentRecord.feeConfigId}]`,
-      );
-    }
-
-    return { assignmentRecord, configRecord };
+    return assignmentRecord;
   }
 
   /**
@@ -229,7 +202,7 @@ export class StudentPaymentService {
    * @param tx - Active database transaction client.
    * @returns The validated payment record.
    */
-  private fetchAndValidatePayment(
+  private fetchValidatePayment(
     paymentId: string,
     tx: TDataBase,
   ): StudentPayment {
@@ -281,24 +254,23 @@ export class StudentPaymentService {
    * Updates the fee assignment progress and increases the wallet balance.
    * @param assignmentId - Unique identifier of the fee assignment.
    * @param amountConverted - Converted payment amount.
-   * @param configRecord - Fee configuration record.
+   * @param walletId - Identifier of the wallet to update.
    * @param tx - Active database transaction client.
    * @returns The updated assignment record.
    */
   private updateAssignmentAndWallet(
     assignmentId: string,
     amountConverted: number,
-    configRecord: FeeConfigurationDTO,
+    walletId: string,
     tx: TDataBase,
   ): FeeAssignment {
     const updatedAssignment = this.feeAssignmentRepo.updateAssignmentProgress(
       assignmentId,
       amountConverted,
-      configRecord.totalAmount,
       tx,
     );
 
-    this.walletRepo.updateWalletBalance(configRecord.wallet.walletId, tx);
+    this.walletRepo.updateWalletBalance(walletId, tx);
 
     return updatedAssignment;
   }

@@ -42,7 +42,6 @@ const getClassroomPaymentTableUseCase = new GetClassroomPaymentTable(
 );
 
 const processStudentPaymentUseCase = new StudentPaymentService(
-  feeConfigurationRepository,
   feeAssignmentRepository,
   studentPaymentRepository,
   dailyExchangeRateService,
