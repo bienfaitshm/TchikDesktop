@@ -1,42 +1,88 @@
-import type {
-  EnrollmentDTO,
-  EnrollmentPayment,
-} from "@/packages/@core/data-access/db";
-import type { ProcessStudentPaymentPayload } from "@/packages/@core/apis/clients/finances.payment";
-import type { SelectOption } from "@/packages/drizzle-queries";
-import { FormSubmitHandler } from "@/renderer/libs/queries/base";
-
-/**
- * Selection option type combining select props with full enrollment DTO metadata.
- */
-export type EnrollmentOption = SelectOption & EnrollmentDTO;
-
-/**
- * Represents a single fee payment schedule item from an enrollment.
- */
-export type ScheduleOption = EnrollmentPayment["schedules"][number];
-
-/**
- * Callback handler type for submitting fast student payment payloads.
- */
-export type FastPaymentSubmitter =
-  FormSubmitHandler<ProcessStudentPaymentPayload>;
-
-/**
- * Props interface for the FastPaymentForm component.
- */
-export type FastPaymentFormProps = {
-  /** Unique school identifier context. */
+export type StudentInfo = {
+  userId: string;
+  lastName: string;
+  middleName?: string | null;
+  firstName?: string | null;
+  username: string;
+  fullName: string;
+  gender: string;
+  role: string;
+  birthDate: string;
+  birthPlace: string;
   schoolId: string;
-  /** Unique academic year identifier context. */
-  yearId: string;
-  /** Options available for currency selection. */
-  currencyOptions?: SelectOption[];
-  /** Options available for payment method selection. */
-  paymentMethodOptions?: SelectOption[];
-  /** Async handler function invoked on form submission. */
-  onSubmit: FastPaymentSubmitter;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+};
 
-  /** Optional HTML form ID attribute. */
+export type ClassroomInfo = {
+  classId: string;
+  identifier: string;
+  shortIdentifier: string;
+  section: string;
+  optionId: string;
+  schoolId: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+};
+
+export type EnrollmentOption = {
+  enrollmentId: string;
+  classroomId: string;
+  status: string;
+  isNewStudent: boolean;
+  isProDeo: boolean;
+  studentCode: string;
+  studentId: string;
+  schoolId: string;
+  yearId: string;
+  createdAt: string;
+  updatedAt: string;
+  value?: string;
+  label?: string;
+  student: StudentInfo;
+  classroom: ClassroomInfo;
+  yearName: string;
+};
+
+export type FeeScheduleItem = {
+  value: string;
+  label: string;
+  scheduleId: string;
+  installmentName: string;
+  feeTypeId: string;
+  assignmentId: string;
+  enrollmentId: string;
+  feeConfigId: string;
+  amountPaid: number;
+  totalAmount: number;
+  currency: string;
+  status: string;
+  isCustomized: boolean;
+};
+
+export type FeeTypeItem = {
+  value: string;
+  label: string;
+  feeTypeId: string;
+  name: string;
+  walletId: string;
+  schoolId: string;
+  yearId: string;
+  schedules: FeeScheduleItem[];
+};
+
+export type StudentPaymentOverviewResponse = {
+  enrollment: EnrollmentOption;
+  payments: FeeTypeItem[];
+};
+
+export type FastPaymentFormProps = {
+  schoolId: string;
+  yearId: string;
+  currencyOptions?: { value: string; label: string }[];
+  paymentMethodOptions?: { value: string; label: string }[];
+  onSubmit: (data: any) => void;
   formId?: string;
 };

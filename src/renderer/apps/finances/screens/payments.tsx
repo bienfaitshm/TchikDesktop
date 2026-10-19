@@ -25,11 +25,7 @@ import { useProcessStudentPaymentForm } from "@/renderer/libs/queries/finances";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { PaymentHistoryDialog } from "@/renderer/apps/finances/dialog/payment-history-dialog";
 import { FastPaymentForm } from "@/renderer/apps/finances/forms/fast-payment";
-import {
-  derivePreviewTicket,
-  useFastPaymentStore,
-} from "@/renderer/apps/finances/forms/fast-payment/hooks";
-import type { FastPaymentState } from "@/renderer/apps/finances/forms/fast-payment/hooks";
+import { useFastPaymentStore } from "@/renderer/apps/finances/forms/fast-payment/hooks";
 import { InvoiceViewerPrinting } from "../components/payment-invoice-viewer-printing";
 import { PAYMENT_STATUS_ENUM } from "@/packages/@core/data-access/db/options";
 
@@ -69,7 +65,7 @@ export function FastPaymentPage(): React.JSX.Element {
             <PaymentForm />
           </InvoiceGridFormContainer>
           <InvoiceGridPreviewContainer>
-            <InvoicePrinting />
+            {/* <InvoicePrinting /> */}
           </InvoiceGridPreviewContainer>
         </InvoiceGridContainer>
       </PageContent>
@@ -83,7 +79,7 @@ export function FastPaymentPage(): React.JSX.Element {
  */
 export function PaymentForm(): React.JSX.Element {
   const { schoolId = "", yearId = "" } = useCurrentConfig();
-  const resetForm = useFastPaymentStore((store) => store.resetForm);
+  const resetForm = useFastPaymentStore((store) => store.resetSelections);
 
   const form = useProcessStudentPaymentForm({
     schoolId,
@@ -91,7 +87,7 @@ export function PaymentForm(): React.JSX.Element {
     mutationKey: ["fin"],
     onSuccess(data) {
       if (data) {
-        resetForm(data);
+        resetForm();
       }
     },
   });
@@ -122,61 +118,61 @@ export function PaymentForm(): React.JSX.Element {
  * Manages invoice preview state and executes ticket print mutations.
  * @returns The invoice printing action section element.
  */
-export function InvoicePrinting(): React.JSX.Element {
-  const selectedStudent = useFastPaymentStore((state) => state.selectedStudent);
-  const selectedFeeType = useFastPaymentStore((state) => state.selectedFeeType);
-  const selectedSchedule = useFastPaymentStore(
-    (state) => state.selectedSchedule,
-  );
-  const firstTicket = useFastPaymentStore((state) => state.tickets[0]);
-  const markTicketAsPrinted = useFastPaymentStore(
-    (state) => state.markTicketAsPrinted,
-  );
+// export function InvoicePrinting(): React.JSX.Element {
+//   const selectedStudent = useFastPaymentStore((state) => state.selectedStudent);
+//   const selectedFeeType = useFastPaymentStore((state) => state.selectedFeeType);
+//   const selectedSchedule = useFastPaymentStore(
+//     (state) => state.selectedSchedule,
+//   );
+//   const firstTicket = useFastPaymentStore((state) => state.tickets[0]);
+//   const markTicketAsPrinted = useFastPaymentStore(
+//     (state) => state.markTicketAsPrinted,
+//   );
 
-  const lastInvoice = useMemo(
-    () =>
-      derivePreviewTicket({
-        selectedStudent,
-        selectedFeeType,
-        selectedSchedule,
-        tickets: firstTicket ? [firstTicket] : [],
-      } as FastPaymentState),
-    [selectedStudent, selectedFeeType, selectedSchedule, firstTicket],
-  );
+//   const lastInvoice = useMemo(
+//     () =>
+//       derivePreviewTicket({
+//         selectedStudent,
+//         selectedFeeType,
+//         selectedSchedule,
+//         tickets: firstTicket ? [firstTicket] : [],
+//       } as FastPaymentState),
+//     [selectedStudent, selectedFeeType, selectedSchedule, firstTicket],
+//   );
 
-  const payment = lastInvoice?.payment;
-  const student = lastInvoice?.student;
-  const invoiceRef = lastInvoice?.invoiceRef;
-  const isModePreview = lastInvoice?.isModePreview;
-  const isPrinted = Boolean(lastInvoice?.isPrinted);
+//   const payment = lastInvoice?.payment;
+//   const student = lastInvoice?.student;
+//   const invoiceRef = lastInvoice?.invoiceRef;
+//   const isModePreview = lastInvoice?.isModePreview;
+//   const isPrinted = Boolean(lastInvoice?.isPrinted);
 
-  const isReady = Boolean(payment?.paymentId && invoiceRef && !isModePreview);
+//   const isReady = Boolean(payment?.paymentId && invoiceRef && !isModePreview);
 
-  return (
-    <InvoiceViewerPrinting
-      isPrinted={isPrinted}
-      isReady={isReady}
-      invoiceRef={payment?.transactionReference || ""}
-      paymentId={payment?.paymentId}
-      canCancelPayment={Boolean(
-        payment?.paymentId &&
-        payment?.paymentStatus === PAYMENT_STATUS_ENUM.VALIDATED,
-      )}
-      onSuccessPrint={({ invoiceRef }) => markTicketAsPrinted(invoiceRef)}
-      invoiceViewer={
-        payment && student ? (
-          <PaymentInvoice
-            payment={{
-              ...payment,
-              dueAmount: payment.totalDue,
-              paidAmount: payment.amountPaid,
-              receivedAmount: payment.amountPaid,
-            }}
-            student={student}
-            invoiceRef={invoiceRef}
-          />
-        ) : null
-      }
-    />
-  );
-}
+//   return (
+//     <InvoiceViewerPrinting
+//       isPrinted={isPrinted}
+//       isReady={isReady}
+//       invoiceRef={payment?.transactionReference || ""}
+//       paymentId={payment?.paymentId}
+//       canCancelPayment={Boolean(
+//         payment?.paymentId &&
+//         payment?.paymentStatus === PAYMENT_STATUS_ENUM.VALIDATED,
+//       )}
+//       onSuccessPrint={({ invoiceRef }) => markTicketAsPrinted(invoiceRef)}
+//       invoiceViewer={
+//         payment && student ? (
+//           <PaymentInvoice
+//             payment={{
+//               ...payment,
+//               dueAmount: payment.totalDue,
+//               paidAmount: payment.amountPaid,
+//               receivedAmount: payment.amountPaid,
+//             }}
+//             student={student}
+//             invoiceRef={invoiceRef}
+//           />
+//         ) : null
+//       }
+//     />
+//   );
+// }

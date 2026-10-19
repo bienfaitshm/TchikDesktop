@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   type ProcessPaymentPayload,
   ProcessPaymentSchema,
@@ -96,6 +96,15 @@ export const PaymentProcessForm: React.FC<
     defaultValues: mergeDefaultValues(defaultValues, DEFAULT_VALUES),
     onSubmit,
   });
+
+  useEffect(() => {
+    if (totalAmount) {
+      form.setValue("amountReceived", totalAmount, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [totalAmount]);
 
   const currentCurrency = form.watch("currencyReceived");
   const currencyReceived = form.watch("currencyReceived");

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
@@ -16,37 +16,25 @@ import { formatScheduleStatus } from "./formatters";
 import { useFastPaymentStore } from "./hooks";
 import { EnrollmentOverviewProps } from "../../components/enrollment-overview";
 
-/**
- * Arguments provided to the children render prop function.
- */
 export type FeeSelectionChildrenArgs = {
-  /** Total calculated amount for the selected fee schedule. */
   totalAmount: number;
-  /** Cumulative amount already paid for the selected fee schedule. */
   amountPaid: number;
-  /** Unique assignment identifier associated with the schedule. */
   assignmentId: string;
 };
 
-/**
- * Props interface for the FeeSelection component.
- */
 export type FeeSelectionProps = {
-  /** Unique enrollment identifier for student payment query. */
   enrollmentId: string;
   schoolId: string;
   yearId: string;
   studentOverview?: EnrollmentOverviewProps;
-  /** Optional render prop function to render contextual payment forms or actions. */
   children?: (args: FeeSelectionChildrenArgs) => React.ReactNode;
 };
 
 /**
- * Fee selection component handling fee type and schedule option selection.
- * Synchronizes selected options with the payment store and renders overview details.
- *
- * @param props - Component properties including enrollmentId and children render prop.
- * @returns The fee selection UI section.
+ * Handles fee type and schedule selection, synchronizing state IDs
+ * and deriving fresh overview data to prevent stale states.
+ * @param props - Component configuration properties.
+ * @returns The fee selection interface section.
  */
 export function FeeSelection({
   enrollmentId,
@@ -54,18 +42,38 @@ export function FeeSelection({
   yearId,
   studentOverview,
   children,
-}: FeeSelectionProps) {
+}: FeeSelectionProps): React.JSX.Element {
   const { data: feeOverview } = useGetStudentPaymentOverview(enrollmentId);
-  const selectedFeeType = useFastPaymentStore((state) => state.selectedFeeType);
-  const selectedSchedule = useFastPaymentStore(
-    (state) => state.selectedSchedule,
+
+  const selectedFeeTypeId = useFastPaymentStore(
+    (state) => state.selectedFeeTypeId,
   );
-  const setSelectedFeeType = useFastPaymentStore(
-    (state) => state.setSelectedFeeType,
+  const selectedScheduleId = useFastPaymentStore(
+    (state) => state.selectedScheduleId,
   );
-  const setSelectedSchedule = useFastPaymentStore(
-    (state) => state.setSelectedSchedule,
+  const setSelectedFeeTypeId = useFastPaymentStore(
+    (state) => state.setSelectedFeeTypeId,
   );
+  const setSelectedScheduleId = useFastPaymentStore(
+    (state) => state.setSelectedScheduleId,
+  );
+
+  const selectedFeeType = useMemo(() => {
+    if (!feeOverview?.payments) return null;
+    return (
+      feeOverview.payments.find((fee) => fee.value === selectedFeeTypeId) ??
+      null
+    );
+  }, [feeOverview, selectedFeeTypeId]);
+
+  const selectedSchedule = useMemo(() => {
+    if (!selectedFeeType?.schedules) return null;
+    return (
+      selectedFeeType.schedules.find(
+        (schedule) => schedule.scheduleId === selectedScheduleId,
+      ) ?? null
+    );
+  }, [selectedFeeType, selectedScheduleId]);
 
   return (
     <motion.div
@@ -81,9 +89,11 @@ export function FeeSelection({
           <ComboboxSearch
             id="fee-type-select"
             selectedItem={selectedFeeType}
-            value={selectedFeeType?.value}
+            value={selectedFeeTypeId ?? undefined}
             options={feeOverview?.payments ?? []}
-            onChange={(_, feeType) => setSelectedFeeType(feeType)}
+            onChange={(_, feeType) =>
+              setSelectedFeeTypeId(feeType?.value ?? null)
+            }
           />
         </Field>
 
@@ -94,9 +104,11 @@ export function FeeSelection({
           <ComboboxSearch
             id="fee-schedule-select"
             selectedItem={selectedSchedule}
-            value={selectedSchedule?.scheduleId}
+            value={selectedScheduleId ?? undefined}
             options={selectedFeeType?.schedules ?? []}
-            onChange={(_, schedule) => setSelectedSchedule?.(schedule)}
+            onChange={(_, schedule) =>
+              setSelectedScheduleId(schedule?.scheduleId ?? null)
+            }
             renderItem={({ label, status, amountPaid, totalAmount }) => (
               <RenderItem
                 label={label}

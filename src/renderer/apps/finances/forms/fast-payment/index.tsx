@@ -23,9 +23,7 @@ import type { FastPaymentFormProps } from "./types";
 
 /**
  * Main fast payment form component managing POS checkout workflow.
- * Renders student selection combobox and embeds fee selection and payment sub-forms.
- *
- * @param props - Form configuration including school context, payment options, and submission handler.
+ * @param props - Form configuration including school context and submission handler.
  * @returns The fast payment layout component JSX.
  */
 export function FastPaymentForm({
