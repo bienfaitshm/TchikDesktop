@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import {
   PageContainer,
@@ -18,11 +17,12 @@ import {
 } from "@/renderer/containers/invoice-grid-container";
 import {
   QuickEnrollmentForm,
-  StoreEnrollment,
   useEnrollmentStore,
 } from "@/components/form/enrollments";
-import { useCreateQuickEnrollmentForm } from "@/renderer/libs/queries/enrollements";
-import type { EnrollmentDTO } from "@/packages/@core/data-access/db";
+import {
+  useCreateQuickEnrollmentForm,
+  useGetEnrollmentById,
+} from "@/renderer/libs/queries/enrollements";
 import { LoadingButton } from "@/components/buttons/button-loading";
 import { EnrollmentInvoice } from "@/components/invoices/enrollment-invoice";
 import {
@@ -32,6 +32,13 @@ import {
 } from "@/components/invoices/invoice-print";
 import { usePrintInvoiceForm } from "@/renderer/libs/queries/printing";
 import { CapacityInfo } from "@/renderer/apps/searching/components/capcity-infos";
+import {
+  useInvoiceStore,
+  InvoicePreview,
+  InvoiceEmptyMessage,
+  type Invoice,
+} from "@/renderer/libs/invoice-preview-printing";
+import { Suspense } from "../libs/queries/suspense";
 
 /**
  * Properties for the EnrollmentForm component.
@@ -41,13 +48,13 @@ interface EnrollmentFormProps {
   schoolId: string;
   /** Unique identifier of the target academic year. */
   yearId: string;
-  /** Optional callback invoked when enrollment succeeds. */
-  onSuccess?: (enrollment: EnrollmentDTO) => void;
+  /** Optional callback triggered on successful enrollment creation. */
+  onSuccess?: (enrollment: any) => void;
 }
 
 /**
  * Renders the quick enrollment form with search capabilities and submit controls.
- * @param props - Form configuration including schoolId, yearId, and success callback.
+ * @param props - Configuration including schoolId, yearId, and success callback.
  * @returns The rendered quick enrollment form element.
  */
 export function EnrollmentForm({
@@ -55,10 +62,21 @@ export function EnrollmentForm({
   yearId,
   onSuccess,
 }: EnrollmentFormProps): React.JSX.Element {
+  const addInvoice = useInvoiceStore((state) => state.addInvoice);
+
   const form = useCreateQuickEnrollmentForm({
     schoolId,
     yearId,
-    onSuccess,
+    onSuccess(enrollment) {
+      addInvoice({
+        date: enrollment.createdAt,
+        id: enrollment.enrollmentId,
+        invoiceRef: enrollment.studentCode,
+        isPrinted: false,
+        type: "enrollment",
+      });
+      onSuccess?.(enrollment);
+    },
     mutationKey: ["schools"],
   });
 
@@ -88,37 +106,38 @@ export function EnrollmentForm({
  * Properties for the InvoiceEnrollmentPrinting component.
  */
 interface InvoiceEnrollmentPrintingProps {
-  /** Enrollment record to be printed. */
-  enrollment: StoreEnrollment;
+  /** The invoice record to print. */
+  invoice: Invoice;
 }
 
 /**
  * Manages invoice printing actions and receipt rendering for a given enrollment.
- * @param props - Component props containing the enrollment record.
+ * @param props - Properties containing the invoice record.
  * @returns The action container and receipt preview element.
  */
 export function InvoiceEnrollmentPrinting({
-  enrollment,
+  invoice,
 }: InvoiceEnrollmentPrintingProps): React.JSX.Element {
-  const markEnrollmentAsPrinted = useEnrollmentStore(
-    (store) => store.markEnrollmentAsPrinted,
+  const markEnrollmentAsPrinted = useInvoiceStore(
+    (state) => state.markAsPrinted,
   );
+  const { data: enrollment } = useGetEnrollmentById(invoice.id);
 
   const mutation = usePrintInvoiceForm({
     onSuccess() {
-      markEnrollmentAsPrinted(enrollment.enrollmentRef);
+      markEnrollmentAsPrinted(invoice.id);
     },
   });
 
   const handlePrint = (): void => {
     mutation.onSubmit({
       invoiceCode: "enrollment",
-      id: enrollment.enrollmentId,
-      invoiceRef: enrollment.enrollmentRef,
+      id: invoice.id,
+      invoiceRef: invoice.invoiceRef,
     });
   };
 
-  const guardianData = enrollment.tutor
+  const guardianData = enrollment?.tutor
     ? {
         name: enrollment.tutor.fullName,
         phone: enrollment.tutor.phoneNumber ?? "-",
@@ -129,62 +148,44 @@ export function InvoiceEnrollmentPrinting({
   return (
     <ActionPrintContainer
       isPending={mutation.isSubmitting}
-      isPrinted={enrollment.isPrinted}
+      isPrinted={invoice.isPrinted}
     >
       <EnrollmentInvoice
         student={{
-          code: enrollment.studentCode,
-          name: enrollment.student.fullName,
-          classroom: enrollment.classroom.shortIdentifier,
+          code: enrollment?.studentCode ?? invoice.invoiceRef,
+          name: enrollment?.student?.fullName ?? "",
+          classroom: enrollment?.classroom?.shortIdentifier ?? "",
         }}
         guardian={guardianData}
-        invoiceRef={enrollment.enrollmentRef}
+        invoiceRef={invoice.invoiceRef}
       />
       <PrinterConfigView>
-        {() => {
-          return (
-            <PrintInvoiceButton
-              isPrinted={enrollment.isPrinted}
-              isPrinting={mutation.isSubmitting}
-              isReady={true}
-              onClick={handlePrint}
-            />
-          );
-        }}
+        {() => (
+          <PrintInvoiceButton
+            isPrinted={invoice.isPrinted}
+            isPrinting={mutation.isSubmitting}
+            isReady={true}
+            onClick={handlePrint}
+          />
+        )}
       </PrinterConfigView>
     </ActionPrintContainer>
   );
 }
 
 /**
- * Properties for the EnrollmentInvoicePreview component.
- */
-interface EnrollmentInvoicePreviewProps {
-  /** The most recently saved enrollment record to display. */
-  lastEnrollment?: StoreEnrollment | null;
-}
-
-/**
  * Renders the preview panel container for enrollment receipts with empty state handling.
- * @param props - Component props containing the last enrollment record.
  * @returns The rendered preview panel component.
  */
-export function EnrollmentInvoicePreview({
-  lastEnrollment,
-}: EnrollmentInvoicePreviewProps): React.JSX.Element {
+export function EnrollmentInvoicePreview(): React.JSX.Element {
   return (
-    <div className="p-4 border rounded-md">
-      <h2 className="text-base font-semibold">Aperçu du reçu d'inscription</h2>
-
-      {lastEnrollment ? (
-        <InvoiceEnrollmentPrinting enrollment={lastEnrollment} />
-      ) : (
-        <p className="text-sm text-muted-foreground mt-1">
-          Le détail du reçu s'affichera ici une fois l'inscription de l'élève
-          enregistrée.
-        </p>
+    <InvoicePreview type="enrollment" messageInfo={<InvoiceEmptyMessage />}>
+      {(invoice) => (
+        <Suspense>
+          <InvoiceEnrollmentPrinting invoice={invoice} />
+        </Suspense>
       )}
-    </div>
+    </InvoicePreview>
   );
 }
 
@@ -195,9 +196,6 @@ export function EnrollmentInvoicePreview({
 export function EnrollmentPage(): React.JSX.Element {
   const { schoolId = "", yearId = "" } = useCurrentConfig();
   const addEnrollment = useEnrollmentStore((store) => store.addEnrollment);
-  const lastEnrollment = useEnrollmentStore((store) =>
-    store.getLastEnrollment(),
-  );
 
   const isConfigReady = Boolean(schoolId && yearId);
 
@@ -235,7 +233,7 @@ export function EnrollmentPage(): React.JSX.Element {
           </InvoiceGridFormContainer>
 
           <InvoiceGridPreviewContainer>
-            <EnrollmentInvoicePreview lastEnrollment={lastEnrollment} />
+            <EnrollmentInvoicePreview />
           </InvoiceGridPreviewContainer>
         </InvoiceGridContainer>
       </PageContent>
