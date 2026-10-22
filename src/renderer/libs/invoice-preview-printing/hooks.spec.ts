@@ -1,10 +1,30 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { useInvoiceStore, Invoice } from "./hooks";
+
+const localStorageMock = (() => {
+  let store = {};
+  return {
+    getItem: (key) => store[key] ?? null,
+    setItem: (key, value) => {
+      store[key] = String(value);
+    },
+    removeItem: (key) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+  };
+})();
 
 describe("InvoiceStore", () => {
   beforeEach(() => {
     useInvoiceStore.setState({ invoices: [] });
-    localStorage.clear();
+    vi.stubGlobal("localStorage", localStorageMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("should initialize with an empty invoice list", () => {
@@ -19,6 +39,7 @@ describe("InvoiceStore", () => {
       invoiceRef: "INV-001",
       type: "standard",
       isPrinted: false,
+      date: new Date(),
     };
 
     useInvoiceStore.getState().addInvoice(newInvoice);
@@ -35,12 +56,14 @@ describe("InvoiceStore", () => {
       invoiceRef: "INV-001",
       type: "standard",
       isPrinted: false,
+      date: new Date(),
     });
     store.addInvoice({
       id: "2",
       invoiceRef: "INV-002",
       type: "proforma",
       isPrinted: false,
+      date: new Date(),
     });
 
     expect(store.getLatestInvoice("standard")?.id).toBe("1");
@@ -57,6 +80,7 @@ describe("InvoiceStore", () => {
         invoiceRef: `INV-0${i}`,
         type: "standard",
         isPrinted: false,
+        date: new Date(),
       });
     }
 
@@ -73,6 +97,7 @@ describe("InvoiceStore", () => {
       invoiceRef: "INV-001",
       type: "standard",
       isPrinted: false,
+      date: new Date(),
     };
 
     store.addInvoice(invoice);
@@ -90,6 +115,7 @@ describe("InvoiceStore", () => {
       invoiceRef: "INV-001",
       type: "standard",
       isPrinted: false,
+      date: new Date(),
     });
 
     const success = store.markAsPrinted("1");
@@ -110,6 +136,7 @@ describe("InvoiceStore", () => {
       invoiceRef: "INV-001",
       type: "standard",
       isPrinted: false,
+      date: new Date(),
     });
 
     const removed = store.removeInvoice("1");
