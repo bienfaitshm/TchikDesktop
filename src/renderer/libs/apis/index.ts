@@ -93,9 +93,17 @@ let cachedApiClient: IpcClient | null = null;
  * @returns The initialized IpcClient instance.
  */
 export function getApiClient(): IpcClient {
-  console.log("window.electron", window);
   if (!cachedApiClient) {
-    cachedApiClient = new IpcClient(window.electron.ipcRenderer);
+    const ipcRenderer =
+      typeof window !== "undefined"
+        ? (window as any)?.electron?.ipcRenderer
+        : undefined;
+    if (!ipcRenderer) {
+      throw new Error(
+        "IpcClient unavailable: window.electron.ipcRenderer is not defined.",
+      );
+    }
+    cachedApiClient = new IpcClient(ipcRenderer);
   }
   return cachedApiClient;
 }

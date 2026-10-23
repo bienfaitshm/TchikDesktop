@@ -9,7 +9,9 @@ export default defineConfig(() =>
   mergeConfig(viteConfig, {
     test: {
       globals: true,
-      environment: "node",
+      environment: "node", // ou "node" — les deux marchent avec le fix
+      restoreMocks: true,
+      clearMocks: true,
       setupFiles: [],
       coverage: {
         enabled: true,
