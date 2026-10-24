@@ -1,17 +1,21 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { formatDate } from "@/packages/times";
 import { useGetStudentPayments } from "@/renderer/libs/queries/finances";
 import { Calendar, Receipt, Coins } from "lucide-react";
 import {
   PAYMENT_METHOD_ENUM,
+  PAYMENT_STATUS_ENUM,
   getPaymentStatusLabel,
 } from "@/packages/@core/data-access/db/options";
 import { cn } from "@/renderer/utils";
 import { formatCurrency } from "@/packages/currency";
-import { PaymentInvoice } from "@/renderer/components/invoices/payment-invoice";
+import { PaymentInvoiceContent } from "../components/payment-invoice-content";
 import type { StudentPaymentDTO } from "@/packages/@core/data-access/db";
 
 export type PaymentAssignHistoryProps = {
+  /** The unique identifier of the financial fee assignment. */
   assignmentId: string;
 };
 
@@ -34,8 +38,11 @@ const PAYMENT_METHOD_CONFIG: Record<
 };
 
 type PaymentItemProps = {
+  /** The student payment DTO record. */
   payment: StudentPaymentDTO;
+  /** Whether the payment item is currently selected. */
   isSelected?: boolean;
+  /** Callback triggered when the payment item is clicked. */
   onClick?: () => void;
 };
 
@@ -52,7 +59,7 @@ const PaymentItem: React.FC<PaymentItemProps> = ({
   const hasConversion = payment.amountReceived !== payment.amountConverted;
   const method = PAYMENT_METHOD_CONFIG[payment.paymentMethod] ?? {
     label: payment.paymentMethod,
-    className: "bg-muted text-muted-foreground",
+    className: "bg-accent text-muted-foreground",
   };
 
   return (
@@ -72,7 +79,11 @@ const PaymentItem: React.FC<PaymentItemProps> = ({
             <span>Paiement</span>
             {payment.status && (
               <span
-                className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded truncate max-w-30"
+                className={cn(
+                  "text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded truncate max-w-30",
+                  payment.status === PAYMENT_STATUS_ENUM.CANCELED &&
+                    "text-destructive",
+                )}
                 title={payment.status}
               >
                 {getPaymentStatusLabel(payment.status)}
@@ -119,6 +130,8 @@ const PaymentItem: React.FC<PaymentItemProps> = ({
   );
 };
 
+PaymentItem.displayName = "PaymentItem";
+
 /**
  * Renders an animated placeholder loading skeleton for transaction lists.
  * @returns The loading skeleton container element.
@@ -146,6 +159,8 @@ const PaymentLoadingSkeleton: React.FC = () => (
   </div>
 );
 
+PaymentLoadingSkeleton.displayName = "PaymentLoadingSkeleton";
+
 /**
  * Renders an empty state placeholder when no payments are available.
  * @returns The empty state container element.
@@ -160,24 +175,36 @@ const PaymentEmptyState: React.FC = () => (
   </div>
 );
 
+PaymentEmptyState.displayName = "PaymentEmptyState";
+
 type PaymentInvoiceViewerProps = {
-  payments?: StudentPaymentDTO[];
+  /** Array of student payment records. */
+  payments: StudentPaymentDTO[];
 };
 
 /**
- * Coordinates payment selection state, keyboard arrow navigation, and invoice preview rendering.
- * @props - Payment invoice viewer properties containing payment records.
- * @returns The structured invoice viewer and payment list component.
+ * Custom hook managing selected payment state and keyboard arrow navigation.
+ * @param payments - Array of available student payments.
+ * @returns Selected payment state and setter.
  */
-const PaymentInvoiceViewer: React.FC<PaymentInvoiceViewerProps> = ({
-  payments = [],
-}) => {
+function usePaymentNavigation(payments: StudentPaymentDTO[]) {
   const [selectedPayment, setSelectedPayment] =
-    useState<null | StudentPaymentDTO>(payments[0] ?? null);
+    useState<StudentPaymentDTO | null>(payments[0] ?? null);
+
+  useEffect(() => {
+    setSelectedPayment(payments[0] ?? null);
+  }, [payments]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (payments.length === 0) return;
+      if (
+        ["input", "textarea"].includes(
+          (document.activeElement?.tagName ?? "").toLowerCase(),
+        )
+      ) {
+        return;
+      }
 
       const currentIndex = payments.findIndex(
         (payment) => payment.paymentId === selectedPayment?.paymentId,
@@ -200,6 +227,20 @@ const PaymentInvoiceViewer: React.FC<PaymentInvoiceViewerProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [payments, selectedPayment]);
 
+  return { selectedPayment, setSelectedPayment };
+}
+
+/**
+ * Coordinates payment selection state, keyboard arrow navigation, and invoice preview rendering.
+ * @param props - Payment viewer properties containing payment records.
+ * @returns The structured invoice viewer and payment list component.
+ */
+const PaymentInvoiceViewer: React.FC<PaymentInvoiceViewerProps> = ({
+  payments,
+}) => {
+  const { selectedPayment, setSelectedPayment } =
+    usePaymentNavigation(payments);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
       <div className="lg:sticky top-6 space-y-2">
@@ -213,43 +254,21 @@ const PaymentInvoiceViewer: React.FC<PaymentInvoiceViewerProps> = ({
         ))}
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden flex flex-col items-center">
-        <div className="w-full max-w-md p-3">
-          {/* <InvoiceViewerPrinting
-            isReady={Boolean(selectedPayment)}
-            isPrinted={false}
-            invoiceRef={selectedPayment?.transactionReference ?? "-"}
-            paymentId={selectedPayment?.paymentId}
-            invoiceViewer={
-              selectedPayment && (
-                <PaymentInvoice
-                  payment={{
-                    ...selectedPayment,
-                    feeTypeName: selectedPayment.feeType.name,
-                    scheduleName: selectedPayment.feeSchedule.installmentName,
-                    currency: selectedPayment.currencyReceived,
-                    dueAmount: selectedPayment.feeAssigment.totalAmount,
-                    paidAmount: selectedPayment.amountConverted,
-                    receivedAmount: selectedPayment.amountReceived,
-                  }}
-                  student={{
-                    code: selectedPayment.enrollment.studentCode,
-                    name: selectedPayment.student.fullName,
-                    classroomName: selectedPayment.classroom.shortIdentifier,
-                  }}
-                  invoiceRef={selectedPayment.transactionReference ?? "-"}
-                />
-              )
-            }
-          /> */}
+        <div className="w-full max-w-md p-3 space-y-4">
+          {selectedPayment && (
+            <PaymentInvoiceContent payment={selectedPayment} />
+          )}
         </div>
       </div>
     </div>
   );
 };
 
+PaymentInvoiceViewer.displayName = "PaymentInvoiceViewer";
+
 /**
  * Manages fetching and presentation of student payment history for a given assignment identifier.
- * @props - Component properties containing the target financial assignment identifier.
+ * @param props - Component properties containing the target financial assignment identifier.
  * @returns The payment assignment history container component.
  */
 export const PaymentAssignHistory: React.FC<PaymentAssignHistoryProps> = ({
