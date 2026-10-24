@@ -1,10 +1,7 @@
 "use client";
-
-import { useMemo } from "react";
 import { Link } from "react-router";
 import { HistoryIcon, Table2Icon } from "lucide-react";
 import { LoadingButton } from "@/renderer/components/buttons/button-loading";
-import { PaymentInvoice } from "@/renderer/components/invoices/payment-invoice";
 import { Button } from "@/renderer/components/ui/button";
 import { APP_ROUTES } from "@/renderer/constants";
 import {
@@ -26,8 +23,13 @@ import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
 import { PaymentHistoryDialog } from "@/renderer/apps/finances/dialog/payment-history-dialog";
 import { FastPaymentForm } from "@/renderer/apps/finances/forms/fast-payment";
 import { useFastPaymentStore } from "@/renderer/apps/finances/forms/fast-payment/hooks";
-import { InvoiceViewerPrinting } from "../components/payment-invoice-viewer-printing";
-import { PAYMENT_STATUS_ENUM } from "@/packages/@core/data-access/db/options";
+import {
+  useInvoiceStore,
+  InvoicePreview,
+  InvoiceEmptyMessage,
+} from "@/renderer/libs/invoice-preview-printing";
+import { InvoicePrintContainer } from "@/renderer/components/invoices";
+import { PaymentInvoiceContainer } from "../components/payment-invoice-content";
 
 /**
  * Point-of-sale terminal page component for processing student payments.
@@ -65,12 +67,49 @@ export function FastPaymentPage(): React.JSX.Element {
             <PaymentForm />
           </InvoiceGridFormContainer>
           <InvoiceGridPreviewContainer>
-            {/* <InvoicePrinting /> */}
+            <InvoicePreview
+              type="payment"
+              messageInfo={
+                <InvoiceEmptyMessage
+                  title="Aperçu du reçu du paiement"
+                  description="Le détail du reçu s'affichera ici une fois le paiement de l'élève enregistré."
+                />
+              }
+            >
+              {(invoice) => (
+                <InvoicePrintContainer
+                  invoice={invoice}
+                  invoiceContent={PaymentInvoiceContainer}
+                  showPrintButton={false}
+                />
+              )}
+            </InvoicePreview>
           </InvoiceGridPreviewContainer>
         </InvoiceGridContainer>
       </PageContent>
     </PageContainer>
   );
+}
+
+function usePaymentFormSubmission(schoolId: string, yearId: string) {
+  const addInvoice = useInvoiceStore((state) => state.addInvoice);
+  const resetForm = useFastPaymentStore((store) => store.resetSelections);
+
+  return useProcessStudentPaymentForm({
+    schoolId,
+    yearId,
+    mutationKey: ["fin"],
+    onSuccess({ payment }) {
+      addInvoice({
+        date: payment.createdAt,
+        id: payment.paymentId,
+        invoiceRef: payment.transactionReference || "no-ref",
+        isPrinted: false,
+        type: "payment",
+      });
+      resetForm();
+    },
+  });
 }
 
 /**
@@ -79,18 +118,7 @@ export function FastPaymentPage(): React.JSX.Element {
  */
 export function PaymentForm(): React.JSX.Element {
   const { schoolId = "", yearId = "" } = useCurrentConfig();
-  const resetForm = useFastPaymentStore((store) => store.resetSelections);
-
-  const form = useProcessStudentPaymentForm({
-    schoolId,
-    yearId,
-    mutationKey: ["fin"],
-    onSuccess(data) {
-      if (data) {
-        resetForm();
-      }
-    },
-  });
+  const form = usePaymentFormSubmission(schoolId, yearId);
 
   return (
     <div className="space-y-4">
@@ -113,66 +141,3 @@ export function PaymentForm(): React.JSX.Element {
     </div>
   );
 }
-
-/**
- * Manages invoice preview state and executes ticket print mutations.
- * @returns The invoice printing action section element.
- */
-// export function InvoicePrinting(): React.JSX.Element {
-//   const selectedStudent = useFastPaymentStore((state) => state.selectedStudent);
-//   const selectedFeeType = useFastPaymentStore((state) => state.selectedFeeType);
-//   const selectedSchedule = useFastPaymentStore(
-//     (state) => state.selectedSchedule,
-//   );
-//   const firstTicket = useFastPaymentStore((state) => state.tickets[0]);
-//   const markTicketAsPrinted = useFastPaymentStore(
-//     (state) => state.markTicketAsPrinted,
-//   );
-
-//   const lastInvoice = useMemo(
-//     () =>
-//       derivePreviewTicket({
-//         selectedStudent,
-//         selectedFeeType,
-//         selectedSchedule,
-//         tickets: firstTicket ? [firstTicket] : [],
-//       } as FastPaymentState),
-//     [selectedStudent, selectedFeeType, selectedSchedule, firstTicket],
-//   );
-
-//   const payment = lastInvoice?.payment;
-//   const student = lastInvoice?.student;
-//   const invoiceRef = lastInvoice?.invoiceRef;
-//   const isModePreview = lastInvoice?.isModePreview;
-//   const isPrinted = Boolean(lastInvoice?.isPrinted);
-
-//   const isReady = Boolean(payment?.paymentId && invoiceRef && !isModePreview);
-
-//   return (
-//     <InvoiceViewerPrinting
-//       isPrinted={isPrinted}
-//       isReady={isReady}
-//       invoiceRef={payment?.transactionReference || ""}
-//       paymentId={payment?.paymentId}
-//       canCancelPayment={Boolean(
-//         payment?.paymentId &&
-//         payment?.paymentStatus === PAYMENT_STATUS_ENUM.VALIDATED,
-//       )}
-//       onSuccessPrint={({ invoiceRef }) => markTicketAsPrinted(invoiceRef)}
-//       invoiceViewer={
-//         payment && student ? (
-//           <PaymentInvoice
-//             payment={{
-//               ...payment,
-//               dueAmount: payment.totalDue,
-//               paidAmount: payment.amountPaid,
-//               receivedAmount: payment.amountPaid,
-//             }}
-//             student={student}
-//             invoiceRef={invoiceRef}
-//           />
-//         ) : null
-//       }
-//     />
-//   );
-// }

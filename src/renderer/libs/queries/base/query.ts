@@ -63,7 +63,7 @@ export function enrichWithMutationKey<TData, TError, TVariables, TContext>(
  * @param key - Query key to append.
  * @returns Enhanced query result with queryKey property.
  */
-export function enrichWithQueryKey<TQueryFnData, TError, TData>(
+export function enrichWithQueryKey<TError, TData>(
   result: UseSuspenseQueryResult<TData, TError>,
   key: QueryKey,
 ): UseSuspenseQueryResult<TData, TError> & {

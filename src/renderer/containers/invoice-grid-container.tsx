@@ -20,7 +20,7 @@ export const InvoiceGridContainer = ({
 }: InvoiceGridContainerProps): React.JSX.Element => (
   <div
     className={cn(
-      "grid grid-cols-1 lg:grid-cols-3 gap-x-24 items-start",
+      "grid grid-cols-1 lg:grid-cols-3 gap-x-5 items-start",
       className,
     )}
     {...props}

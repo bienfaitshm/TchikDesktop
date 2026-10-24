@@ -10,7 +10,6 @@ import { cn } from "@/renderer/utils";
 import { formatCurrency } from "@/packages/currency";
 import { PaymentInvoice } from "@/renderer/components/invoices/payment-invoice";
 import type { StudentPaymentDTO } from "@/packages/@core/data-access/db";
-import { InvoiceViewerPrinting } from "../components/payment-invoice-viewer-printing";
 
 export type PaymentAssignHistoryProps = {
   assignmentId: string;
@@ -215,7 +214,7 @@ const PaymentInvoiceViewer: React.FC<PaymentInvoiceViewerProps> = ({
       </div>
       <div className="w-full min-w-0 max-w-full overflow-hidden flex flex-col items-center">
         <div className="w-full max-w-md p-3">
-          <InvoiceViewerPrinting
+          {/* <InvoiceViewerPrinting
             isReady={Boolean(selectedPayment)}
             isPrinted={false}
             invoiceRef={selectedPayment?.transactionReference ?? "-"}
@@ -241,7 +240,7 @@ const PaymentInvoiceViewer: React.FC<PaymentInvoiceViewerProps> = ({
                 />
               )
             }
-          />
+          /> */}
         </div>
       </div>
     </div>

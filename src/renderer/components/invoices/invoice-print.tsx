@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { LoadingButton } from "@/components/buttons/button-loading";
 import { Link } from "react-router";
@@ -14,7 +16,7 @@ import { usePrintConfig } from "@/renderer/hooks/printer";
 import { cn } from "@/renderer/utils";
 
 /**
- * Props for the PrintInvoiceButton component.
+ * Properties for the PrintInvoiceButtonUI component.
  */
 export type PrintInvoiceButtonProps = {
   /** Indicates whether the print process is currently in progress. */
@@ -23,17 +25,33 @@ export type PrintInvoiceButtonProps = {
   isPrinted?: boolean;
   /** Indicates whether the user action is validated and ready to trigger printing. */
   isReady?: boolean;
+  /** Optional disabled state for the button. */
   disabled?: boolean;
   /** Optional click handler to initiate invoice printing. */
   onClick?: () => void;
 };
 
 /**
+ * Determines the appropriate button label based on the ready and printed state.
+ * @param params - Object containing isReady and isPrinted flags.
+ * @returns The localized button label string.
+ */
+export function getButtonLabel(params: {
+  isReady?: boolean;
+  isPrinted?: boolean;
+}): string {
+  if (!params.isReady) {
+    return "Enregistrer et imprimer";
+  }
+  return params.isPrinted ? "Réimprimer la facture" : "Imprimer la facture";
+}
+
+/**
  * Renders a button to print or reprint an invoice based on user validation and print state.
  * @param props - Component properties controlling printing states and click handler.
  * @returns Styled interactive print button with loading state support.
  */
-export const PrintInvoiceButton: React.FC<PrintInvoiceButtonProps> = ({
+export const PrintInvoiceButtonUI: React.FC<PrintInvoiceButtonProps> = ({
   isPrinted = false,
   isReady = false,
   isPrinting = false,
@@ -44,7 +62,7 @@ export const PrintInvoiceButton: React.FC<PrintInvoiceButtonProps> = ({
 
   return (
     <LoadingButton
-      title="buttonLabel"
+      title={buttonLabel}
       type="button"
       onClick={onClick}
       disabled={disabled || !isReady || isPrinting}
@@ -60,7 +78,7 @@ export const PrintInvoiceButton: React.FC<PrintInvoiceButtonProps> = ({
 };
 
 /**
- * Props for the PrinterStatusNotice component.
+ * Properties for the PrinterStatusNotice component.
  */
 export type PrinterStatusNoticeProps = {
   /** Indicates if a printer is configured in application settings. */
@@ -130,30 +148,28 @@ export const PrinterStatusNotice: React.FC<PrinterStatusNoticeProps> = ({
 };
 
 /**
- * Props for the ActionPrintContainer component.
+ * Properties for the ActionPrintHeaderStatus component.
  */
-export type ActionPrintContainerProps = {
+export type ActionPrintHeaderStatusProps = {
   /** Indicates whether the invoice ticket has been printed. */
   isPrinted?: boolean;
-  /** Indicates whether the print job is pending execution. */
-  isPending?: boolean;
 };
 
 /**
- * Wraps action items and displays status badges reflecting the invoice printing lifecycle.
- * @param props - Component properties including print status flags and child elements.
- * @returns Rendered container element with status badges.
+ * Renders header status badges reflecting the invoice printing lifecycle.
+ * @param props - Component properties containing print status.
+ * @returns Formatted badge elements indicating print state.
  */
-export const ActionPrintContainer: React.FC<
-  React.PropsWithChildren<ActionPrintContainerProps>
-> = ({ children, isPrinted = false, isPending = false }) => {
+export const ActionPrintHeaderStatus: React.FC<
+  ActionPrintHeaderStatusProps
+> = ({ isPrinted = false }) => {
   return (
-    <div className="flex flex-col gap-6 w-full">
-      <div className="flex justify-between items-center w-full my-2">
-        <Badge variant="outline" className="text-[10px] first-letter:uppercase">
-          <span>{!isPrinted ? "APERÇU TICKET" : "DERNIER TICKET ÉMIS"}</span>
-        </Badge>
+    <div className="relative w-fit">
+      <Badge variant="outline" className="text-[10px] first-letter:uppercase">
+        <span>{!isPrinted ? "APERÇU TICKET" : "DERNIER TICKET ÉMIS"}</span>
+      </Badge>
 
+      <div className="absolute -top-3 -right-5">
         {isPrinted ? (
           <Badge
             variant="secondary"
@@ -161,22 +177,32 @@ export const ActionPrintContainer: React.FC<
           >
             <CheckCircle2 className="size-3 text-emerald-600" /> Imprimé
           </Badge>
-        ) : isPending ? (
+        ) : (
           <Badge
             variant="outline"
             className="text-[10px] gap-1 border-amber-500/30 text-amber-600 bg-amber-500/10 animate-pulse"
           >
             En attente d'impression
           </Badge>
-        ) : null}
+        )}
       </div>
-      {children}
     </div>
   );
 };
 
 /**
- * Props for the PrinterConfigView component.
+ * Wraps action items and displays status badges reflecting the invoice printing lifecycle.
+ * @param props - Component properties including child elements.
+ * @returns Rendered container element.
+ */
+export const ActionPrintContainer: React.FC<React.PropsWithChildren> = ({
+  children,
+}) => {
+  return <div className="flex flex-col gap-6 w-full">{children}</div>;
+};
+
+/**
+ * Properties for the PrinterConfigView component.
  */
 export type PrinterConfigViewProps = {
   /** Optional render prop function receiving printer connection state. */
@@ -202,14 +228,4 @@ export const PrinterConfigView: React.FC<PrinterConfigViewProps> = ({
       {children?.(isConfigured, isConnected)}
     </>
   );
-};
-
-export const getButtonLabel = (params: {
-  isReady?: boolean;
-  isPrinted?: boolean;
-}): string => {
-  if (!params.isReady) {
-    return "Enregistrer pour impr...";
-  }
-  return params.isPrinted ? "Réimprimer la facture" : "Imprimer la facture";
 };
