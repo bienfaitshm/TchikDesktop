@@ -100,7 +100,7 @@ export const FeeClassroomPaymentTable: React.FC<FeeConfigTableProps> = ({
 
     return enhanceColumns(columns, {
       variant: "actions",
-      renderRowAction: (assign) => <RowAction assign={assign} />,
+      renderRowAction: (assign) => <RowAction contextProps={{ assign }} />,
     });
   }, [data?.head, schoolId, yearId, mutationKey]);
 

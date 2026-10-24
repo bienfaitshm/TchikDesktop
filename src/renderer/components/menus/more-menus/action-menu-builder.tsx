@@ -559,7 +559,7 @@ const RENDERER_MAP: Record<
 
 /**
  * Selects the appropriate internal renderer based on item configuration and global constraints.
- * @param props - Layout properties linking rendering layers and global disable/hide lists.
+ * @param props - Properties linking rendering layers and global disable/hide lists.
  * @returns Extracted components enriched by lifecycle dependencies.
  */
 const MenuItemRenderer = memo(function MenuItemRenderer<
@@ -627,7 +627,7 @@ const MenuItemRenderer = memo(function MenuItemRenderer<
 
 /**
  * Initializes the dropdown structural UI encapsulating provider interactions and global filtering rules.
- * @param props - Data nodes combined with structural trigger parameters, disable/hide lists, and success callbacks.
+ * @param props - Nodes combined with structural trigger parameters, disable/hide lists, and success callbacks.
  * @returns Comprehensive menu handling interactions.
  */
 function ActionMenuComponent<TProps, TKey extends string = string>({
