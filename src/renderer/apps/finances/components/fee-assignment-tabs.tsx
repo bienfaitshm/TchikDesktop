@@ -97,6 +97,7 @@ const FeeCard: React.FC<FeeCardProps> = ({ option }) => {
         feeAssignment={option}
         schoolId={option.feeType?.schoolId}
         yearId={option.feeType?.yearId}
+        mutationKey={["fin"]}
       >
         <Button className="w-full flex flex-col h-9 bg-accent/50 p-2 hover:bg-accent rounded-md">
           <TableCellPayment

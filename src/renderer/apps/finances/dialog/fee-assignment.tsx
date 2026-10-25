@@ -11,10 +11,12 @@ import {
   useCreateBulkFeeAssignmentForm,
   useUpdateAmountByAssignmentsForm,
   useUpdateAmountByClassroomsForm,
+  useDeleteFeeAssignmentForm,
   type BulkFeeAssignmentFormConfig,
 } from "@/renderer/libs/queries/finances";
 import {
   createBaseActionDialog,
+  createDeleteActionDialog,
   type ActionDialogProps,
 } from "@/renderer/dialog-actions/base.dialog-actions";
 import type {
@@ -149,3 +151,14 @@ export const UpdateAmountByClassroomsDialog = createBaseActionDialog<
 });
 
 UpdateAmountByClassroomsDialog.displayName = "UpdateAmountByClassroomsDialog";
+
+export const DeleteFeeAssignment = createDeleteActionDialog({
+  title: "Supprimer l'assignation de paiement",
+  description:
+    "Cette action supprimera également, en cascade, toutes les tranches associées.",
+  errorMessage:
+    "Une erreur est survenue lors de la suppression de l'assignation de paiement :",
+  useDeleteForm: useDeleteFeeAssignmentForm,
+});
+
+DeleteFeeAssignment.displayName = "DeleteFeeAssignment";

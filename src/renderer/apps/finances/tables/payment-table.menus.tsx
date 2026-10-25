@@ -7,6 +7,7 @@ import {
   FileText,
   CheckCircle,
   BadgePercent,
+  TrashIcon,
 } from "lucide-react";
 import { createMenuBuilder } from "@/components/menus/more-menus";
 import {
@@ -14,13 +15,13 @@ import {
   PaymentHistoryDialog,
   PaymentDetailDialog,
   UpdateAmountByAssignmentsDialog,
+  DeleteFeeAssignment,
 } from "../dialog";
 import type {
   AssignmentTableOfClassroom,
   FeeAssignment,
 } from "@/packages/@core/data-access/db";
 import { FEE_SCHEDULE_STATUS_ENUM } from "@/packages/@core/data-access/db/options";
-
 import { MarkStudentAsProDeoDialog } from "../../schools/dialogs/enrollment.dialog";
 import {
   markAsPaidForm,
@@ -47,7 +48,7 @@ export function isFullyPaid(feeAssignment: FeeAssignment): boolean {
 }
 
 /**
- * Checks whether a fee assignment is in read-only mode (already paid or total amount is zero).
+ * Checks whether a fee assignment is in read-only mode.
  * @param feeAssignment - The target fee assignment entity.
  * @returns True if no modification actions should be allowed.
  */
@@ -60,9 +61,8 @@ export function isReadOnlyAssignment(feeAssignment: FeeAssignment): boolean {
 
 /**
  * Determines whether a new payment can be registered for a fee assignment.
- * Forbidden if the total amount is zero, status is already paid, or status is exempted.
  * @param feeAssignment - The target fee assignment entity.
- * @returns True if payment registration should be allowed.
+ * @returns True if payment registration is allowed.
  */
 export function canPayFeeAssignment(feeAssignment: FeeAssignment): boolean {
   if (isReadOnlyAssignment(feeAssignment)) return false;
@@ -71,29 +71,31 @@ export function canPayFeeAssignment(feeAssignment: FeeAssignment): boolean {
 }
 
 /**
- * Determines whether a student can be exempted from a fee assignment.
- * Exemption is forbidden if any payment advance has been made, total amount is zero, or status is paid/exempted.
+ * Determines whether a fee assignment can be exempted or un-exempted.
  * @param feeAssignment - The target fee assignment entity.
- * @returns True if fee exemption should be allowed.
+ * @returns True if exemption modification is allowed.
  */
 export function canExemptFeeAssignment(feeAssignment: FeeAssignment): boolean {
-  if (isReadOnlyAssignment(feeAssignment)) return false;
-  if (feeAssignment.status === FEE_SCHEDULE_STATUS_ENUM.EXEMPTED) return false;
+  if (
+    isReadOnlyAssignment(feeAssignment) &&
+    feeAssignment.status !== FEE_SCHEDULE_STATUS_ENUM.EXEMPTED
+  ) {
+    return false;
+  }
   return feeAssignment.amountPaid === 0;
 }
 
 /**
- * Determines whether a fee assignment can be manually marked as paid.
- * Forbidden if total amount is zero, status is paid, or status is exempted.
+ * Determines whether a fee assignment can be marked as fully paid.
  * @param feeAssignment - The target fee assignment entity.
- * @returns True if marking as paid should be allowed.
+ * @returns True if marking as paid is allowed.
  */
 export function canMarkFeeAssignmentAsPaid(
   feeAssignment: FeeAssignment,
 ): boolean {
   if (isReadOnlyAssignment(feeAssignment)) return false;
   if (feeAssignment.status === FEE_SCHEDULE_STATUS_ENUM.EXEMPTED) return false;
-  return feeAssignment.amountPaid > 0;
+  return !isFullyPaid(feeAssignment);
 }
 
 /**
@@ -214,13 +216,23 @@ export const PaymentAction = feeMenu.build({
         />
       )),
   }),
+
+  delete: feeMenu
+    .label("Supprimer l'assignation", TrashIcon)
+    .dialog(({ onOpenChange, open, props: { feeAssignment, mutationKey } }) => (
+      <DeleteFeeAssignment
+        open={open}
+        onOpenChange={onOpenChange}
+        id={feeAssignment.assignmentId}
+        mutationKey={mutationKey}
+      />
+    ))
+    .separator("before")
+    .destructive(),
 });
 
 const rowMenu = createMenuBuilder<{ assign: AssignmentTableOfClassroom }>();
 
-/**
- * Contextual action menu configuration bound to student row records.
- */
 export const RowAction = rowMenu.build({
   editProdeo: rowMenu.label("Accorder le statut Pro Deo", BadgePercent).dialog(
     ({
