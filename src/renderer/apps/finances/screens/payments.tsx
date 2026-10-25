@@ -1,16 +1,7 @@
 "use client";
-
-import { useCallback, useMemo } from "react";
 import { Link } from "react-router";
 import { HistoryIcon, Table2Icon } from "lucide-react";
-
-import {
-  ActionPrintContainer,
-  PrinterConfigView,
-  PrintInvoiceButton,
-} from "@/renderer/components/invoices/invoice-print";
 import { LoadingButton } from "@/renderer/components/buttons/button-loading";
-import { PaymentInvoice } from "@/renderer/components/invoices/payment-invoice";
 import { Button } from "@/renderer/components/ui/button";
 import { APP_ROUTES } from "@/renderer/constants";
 import {
@@ -28,16 +19,17 @@ import {
   PageHeaderTextContent,
 } from "@/renderer/containers/page-container";
 import { useProcessStudentPaymentForm } from "@/renderer/libs/queries/finances";
-import { usePrintInvoiceForm } from "@/renderer/libs/queries/printing";
 import { useCurrentConfig } from "@/renderer/libs/stores/app-store";
-
 import { PaymentHistoryDialog } from "@/renderer/apps/finances/dialog/payment-history-dialog";
 import { FastPaymentForm } from "@/renderer/apps/finances/forms/fast-payment";
+import { useFastPaymentStore } from "@/renderer/apps/finances/forms/fast-payment/hooks";
 import {
-  derivePreviewTicket,
-  useFastPaymentStore,
-} from "@/renderer/apps/finances/forms/fast-payment/hooks";
-import type { FastPaymentState } from "@/renderer/apps/finances/forms/fast-payment/hooks";
+  useInvoiceStore,
+  InvoicePreview,
+  InvoiceEmptyMessage,
+} from "@/renderer/libs/invoice-preview-printing";
+import { InvoicePrintContainer } from "@/renderer/components/invoices";
+import { PaymentInvoiceContainer } from "../components/payment-invoice-content";
 
 /**
  * Point-of-sale terminal page component for processing student payments.
@@ -75,12 +67,49 @@ export function FastPaymentPage(): React.JSX.Element {
             <PaymentForm />
           </InvoiceGridFormContainer>
           <InvoiceGridPreviewContainer>
-            <InvoicePrinting />
+            <InvoicePreview
+              type="payment"
+              messageInfo={
+                <InvoiceEmptyMessage
+                  title="Aperçu du reçu du paiement"
+                  description="Le détail du reçu s'affichera ici une fois le paiement de l'élève enregistré."
+                />
+              }
+            >
+              {(invoice) => (
+                <InvoicePrintContainer
+                  invoice={invoice}
+                  invoiceContent={PaymentInvoiceContainer}
+                  showPrintButton={false}
+                />
+              )}
+            </InvoicePreview>
           </InvoiceGridPreviewContainer>
         </InvoiceGridContainer>
       </PageContent>
     </PageContainer>
   );
+}
+
+function usePaymentFormSubmission(schoolId: string, yearId: string) {
+  const addInvoice = useInvoiceStore((state) => state.addInvoice);
+  const resetForm = useFastPaymentStore((store) => store.resetSelections);
+
+  return useProcessStudentPaymentForm({
+    schoolId,
+    yearId,
+    mutationKey: ["fin"],
+    onSuccess({ payment }) {
+      addInvoice({
+        date: payment.createdAt,
+        id: payment.paymentId,
+        invoiceRef: payment.transactionReference || "no-ref",
+        isPrinted: false,
+        type: "payment",
+      });
+      resetForm();
+    },
+  });
 }
 
 /**
@@ -89,18 +118,7 @@ export function FastPaymentPage(): React.JSX.Element {
  */
 export function PaymentForm(): React.JSX.Element {
   const { schoolId = "", yearId = "" } = useCurrentConfig();
-  const resetForm = useFastPaymentStore((store) => store.resetForm);
-
-  const form = useProcessStudentPaymentForm({
-    schoolId,
-    yearId,
-    mutationKey: ["fin"],
-    onSuccess(data) {
-      if (data) {
-        resetForm(data);
-      }
-    },
-  });
+  const form = usePaymentFormSubmission(schoolId, yearId);
 
   return (
     <div className="space-y-4">
@@ -121,88 +139,5 @@ export function PaymentForm(): React.JSX.Element {
         Enregistrer
       </LoadingButton>
     </div>
-  );
-}
-
-/**
- * Manages invoice preview state and executes ticket print mutations.
- * @returns The invoice printing action section element.
- */
-export function InvoicePrinting(): React.JSX.Element {
-  const selectedStudent = useFastPaymentStore((state) => state.selectedStudent);
-  const selectedFeeType = useFastPaymentStore((state) => state.selectedFeeType);
-  const selectedSchedule = useFastPaymentStore(
-    (state) => state.selectedSchedule,
-  );
-  const firstTicket = useFastPaymentStore((state) => state.tickets[0]);
-  const markTicketAsPrinted = useFastPaymentStore(
-    (state) => state.markTicketAsPrinted,
-  );
-
-  const lastInvoice = useMemo(
-    () =>
-      derivePreviewTicket({
-        selectedStudent,
-        selectedFeeType,
-        selectedSchedule,
-        tickets: firstTicket ? [firstTicket] : [],
-      } as FastPaymentState),
-    [selectedStudent, selectedFeeType, selectedSchedule, firstTicket],
-  );
-
-  const payment = lastInvoice?.payment;
-  const student = lastInvoice?.student;
-  const invoiceRef = lastInvoice?.invoiceRef;
-  const isModePreview = lastInvoice?.isModePreview;
-  const isPrinted = Boolean(lastInvoice?.isPrinted);
-
-  const isReady = Boolean(payment?.paymentId && invoiceRef && !isModePreview);
-
-  const handlePrintSuccess = useCallback((): void => {
-    if (invoiceRef) {
-      markTicketAsPrinted(invoiceRef);
-    }
-  }, [invoiceRef, markTicketAsPrinted]);
-
-  const { isSubmitting, onSubmit } = usePrintInvoiceForm({
-    onSuccess: handlePrintSuccess,
-  });
-
-  const handlePrint = useCallback((): void => {
-    if (payment?.paymentId && invoiceRef) {
-      onSubmit({
-        invoiceCode: "payment",
-        id: payment.paymentId,
-        invoiceRef,
-      });
-    }
-  }, [payment?.paymentId, invoiceRef, onSubmit]);
-
-  console.log({ payment });
-  return (
-    <ActionPrintContainer isPending={isSubmitting} isPrinted={isPrinted}>
-      {payment && student ? (
-        <PaymentInvoice
-          payment={{
-            ...payment,
-            dueAmount: payment.totalDue,
-            paidAmount: payment.amountPaid,
-            receivedAmount: payment.amountPaid,
-          }}
-          student={student}
-          invoiceRef={invoiceRef}
-        />
-      ) : null}
-      <PrinterConfigView>
-        {() => (
-          <PrintInvoiceButton
-            isPrinted={isPrinted}
-            isPrinting={isSubmitting}
-            isReady={isReady}
-            onClick={handlePrint}
-          />
-        )}
-      </PrinterConfigView>
-    </ActionPrintContainer>
   );
 }

@@ -4,19 +4,22 @@ import type {
   ClassroomPaymentFilterParams,
   AssignFeesToStudentPayload,
   ProcessStudentPaymentPayload,
+  CancelStudentPaymentPayload,
 } from "@/packages/@core/apis/clients/finances.payment";
 import type {
   StudentPaymentTable,
   TableClassroomPaymentAssignment,
 } from "@/packages/@core/data-access/db/queries";
-import type { StudentPayment } from "@/packages/@core/data-access/db/schemas";
+import type {
+  CancelPaymentResult,
+  ProcessPaymentResult,
+} from "@/packages/@core/data-access/db";
 import type {
   UseMutationOptions,
   UseSuspenseQueryOptions,
 } from "@tanstack/react-query";
 import React from "react";
 import type { ProgressPayload } from "@/packages/electron-ipc-rest/ipc.client";
-
 import { Ticket } from "@/packages/@core/data-access/schema-validations/other";
 
 /**
@@ -33,13 +36,14 @@ export const paymentKeys = {
   mutations: {
     assignFees: () => [...paymentKeys.all, "assign-fees"] as const,
     processPayment: () => [...paymentKeys.all, "process-payment"] as const,
+    cancelPayment: () => [...paymentKeys.all, "cancel-payment"] as const,
     printTicket: () => [...paymentKeys.all, "print-ticket"] as const,
   },
 } as const;
 
 /**
  * Suspense query hook to fetch the complete classroom assignment and payment matrix table.
- * @param params - Filter parameters containing school, year, and class identifiers.
+ * @param params - Parameters containing school, year, and class identifiers.
  * @param options - Additional options for the suspense query.
  * @returns Suspense query result containing the classroom payment assignment table.
  */
@@ -95,12 +99,33 @@ export function useAssignFeesToStudent(
  */
 export function useProcessStudentPayment(
   options?: Partial<
-    UseMutationOptions<StudentPayment, Error, ProcessStudentPaymentPayload>
+    UseMutationOptions<
+      ProcessPaymentResult,
+      Error,
+      ProcessStudentPaymentPayload
+    >
   >,
 ) {
   return useMutation({
     mutationKey: paymentKeys.mutations.processPayment(),
     mutationFn: (data) => paymentApi.processStudentPayment(data),
+    ...options,
+  });
+}
+
+/**
+ * Mutation hook to cancel an existing student payment transaction.
+ * @param options - Mutation options for callback and execution handling.
+ * @returns Mutation controls for cancelling student payments.
+ */
+export function useCancelStudentPayment(
+  options?: Partial<
+    UseMutationOptions<CancelPaymentResult, Error, CancelStudentPaymentPayload>
+  >,
+) {
+  return useMutation({
+    mutationKey: paymentKeys.mutations.cancelPayment(),
+    mutationFn: (data) => paymentApi.cancelStudentPayment(data),
     ...options,
   });
 }
@@ -129,6 +154,11 @@ export function useOnClassroomSyncProgress() {
   return { progress, resetProgress };
 }
 
+/**
+ * Mutation hook to trigger ticket printing operations.
+ * @param options - Mutation options for callback and execution handling.
+ * @returns Mutation controls for ticket printing.
+ */
 export function usePrintTicket(
   options?: Partial<UseMutationOptions<Ticket, Error, Ticket>>,
 ) {

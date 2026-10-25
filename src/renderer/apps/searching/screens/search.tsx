@@ -82,7 +82,9 @@ export function HomeSearch() {
         {/* Conteneur principal centré façon "Nouvel Onglet" */}
         <div className="relative min-h-[85vh] w-full flex flex-col items-center justify-center px-4">
           {/* Widget d'info style météo (Fixé en haut à droite) */}
-          <CapacityInfo schoolId={schoolId} yearId={yearId} />
+          <div className="absolute top-0 right-0">
+            <CapacityInfo schoolId={schoolId} yearId={yearId} />
+          </div>
 
           {/* Bloc Central */}
           <div className="w-full max-w-2xl flex flex-col items-center gap-8 -mt-12">

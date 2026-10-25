@@ -20,7 +20,6 @@ import type {
   FeeAssignment,
   FeeAssignmentDTO,
 } from "@/packages/@core/data-access/db";
-import { queryClient } from "../providers";
 
 /**
  * Factory for React Query keys related to fee assignments.
@@ -196,7 +195,7 @@ export function useUpdateAmountByClassrooms(
 ) {
   return useMutation({
     mutationKey: feeAssignmentKeys.mutations.updateAmountByClassrooms(),
-    mutationFn: (payload) => feeAssignmentApi.updateAmountByClassroom(payload),
+    mutationFn: (payload) => feeAssignmentApi.updateAmountByClassrooms(payload),
     ...options,
   });
 }

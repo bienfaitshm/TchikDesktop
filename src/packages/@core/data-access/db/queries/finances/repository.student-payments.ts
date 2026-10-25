@@ -21,6 +21,7 @@ import {
 import { helpers, betterSqlite } from "@/packages/drizzle-queries";
 import { eq, getTableColumns } from "drizzle-orm";
 import { UserDTO, UserRepository } from "../users";
+import { PAYMENT_STATUS_ENUM } from "../../options";
 
 const TABLES = {
   classrooms,
@@ -113,6 +114,14 @@ export class StudentPaymentRepository extends betterSqlite.BaseRepository<
       )
       .innerJoin(feeTypes, eq(feeConfigurations.feeTypeId, feeTypes.feeTypeId))
       .$dynamic();
+  }
+
+  cancelPayment(paymentId: string, tx?: TDataBase) {
+    return this.updateById(
+      paymentId,
+      { status: PAYMENT_STATUS_ENUM.CANCELED },
+      tx,
+    );
   }
 }
 

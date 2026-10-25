@@ -1,8 +1,7 @@
-import { describe, it, expect, vi, beforeEach, Mock } from "vitest"; // ou 'jest'
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { toast } from "sonner";
-import { withNotifications } from "./mutation-toast";
+import { withNotifications, DEFAULT_MUTATION_MESSAGES } from "./mutation-toast";
 
-// On mock la librairie sonner
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -15,125 +14,158 @@ describe("withNotifications", () => {
     vi.clearAllMocks();
   });
 
-  describe("Comportement en cas de Succès", () => {
-    it("devrait afficher le toast de succès par défaut", () => {
-      const options = withNotifications({});
+  describe("Success Handling", () => {
+    it("should trigger default success toast on successful mutation", () => {
+      const options = withNotifications();
+      const mockData = { id: 1 };
+      const mockVariables = { name: "test" };
 
-      // On simule l'appel par React Query
-      options.onSuccess?.("data", "vars", "onMutation", "context");
+      options.onSuccess?.(
+        mockData,
+        mockVariables,
+        undefined as any,
+        undefined as any,
+      );
 
-      expect(toast.success).toHaveBeenCalledWith("Opération réussie !", {
-        description: "L'opération a été effectuée avec succès.",
-      });
+      expect(toast.success).toHaveBeenCalledTimes(1);
+      expect(toast.success).toHaveBeenCalledWith(
+        DEFAULT_MUTATION_MESSAGES.successTitle,
+        { description: DEFAULT_MUTATION_MESSAGES.successDescription },
+      );
     });
 
-    it("devrait afficher des messages de succès personnalisés", () => {
+    it("should trigger custom success toast when custom messages are provided", () => {
       const options = withNotifications({
-        successMessageTitle: "Super !",
-        successMessageDescription: "C'est dans la boîte.",
+        successMessageTitle: "Custom Success",
+        successMessageDescription: "Custom Success Description",
       });
 
-      options.onSuccess?.("data", "vars", "onMutation", "context");
+      options.onSuccess?.({}, {}, undefined as any, undefined as any);
 
-      expect(toast.success).toHaveBeenCalledWith("Super !", {
-        description: "C'est dans la boîte.",
+      expect(toast.success).toHaveBeenCalledTimes(1);
+      expect(toast.success).toHaveBeenCalledWith("Custom Success", {
+        description: "Custom Success Description",
       });
     });
 
-    it("ne devrait pas afficher de toast si showSuccessNotification est false", () => {
+    it("should not trigger success toast when showSuccessNotification is false", () => {
       const options = withNotifications({ showSuccessNotification: false });
 
-      options.onSuccess?.("data", "vars", "onMutation", "context");
+      options.onSuccess?.({}, {}, undefined as any, undefined as any);
 
       expect(toast.success).not.toHaveBeenCalled();
     });
 
-    it("devrait exécuter le onSuccess original fourni par le développeur", () => {
-      const mockOriginalOnSuccess = vi.fn();
-      const options = withNotifications({ onSuccess: mockOriginalOnSuccess });
+    it("should execute existing user onSuccess callback alongside notification", () => {
+      const userOnSuccess = vi.fn();
+      const options = withNotifications({ onSuccess: userOnSuccess });
+      const mockData = { id: 42 };
 
-      options.onSuccess?.("ma-data", "mes-vars", "onMutation", "mon-context");
+      options.onSuccess?.(mockData, {}, undefined as any, undefined as any);
 
-      expect(mockOriginalOnSuccess).toHaveBeenCalledWith(
-        "ma-data",
-        "mes-vars",
-        "onMutation",
-        "mon-context",
+      expect(userOnSuccess).toHaveBeenCalledTimes(1);
+      expect(userOnSuccess).toHaveBeenCalledWith(
+        mockData,
+        {},
+        undefined as any,
+        undefined as any,
       );
-      expect(toast.success).toHaveBeenCalled();
+      expect(toast.success).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe("Comportement en cas d'Erreur", () => {
-    it("devrait extraire dynamiquement le message de l'objet Error", () => {
-      const options = withNotifications({});
-      const myError = new Error("Erreur serveur 500");
+  describe("Error Handling", () => {
+    it("should trigger default error toast with Error instance message", () => {
+      const options = withNotifications();
+      const error = new Error("Database connection failed");
 
-      options.onError?.(myError, "vars", "onMutation", "context");
+      options.onError?.(error, {}, undefined as any, undefined as any);
 
-      expect(toast.error).toHaveBeenCalledWith("Une erreur est survenue.", {
-        description: "Erreur serveur 500", // Extrait automatiquement
-      });
-    });
-
-    it("devrait utiliser le fallback si l'erreur n'est pas une instance de Error", () => {
-      const options = withNotifications({});
-
-      // Simulation d'une erreur mal formattée retournée par une API
-      options.onError?.(
-        "Erreur string bizarre",
-        "vars",
-        "onMutation",
-        "context",
+      expect(toast.error).toHaveBeenCalledTimes(1);
+      expect(toast.error).toHaveBeenCalledWith(
+        DEFAULT_MUTATION_MESSAGES.errorTitle,
+        { description: "Database connection failed" },
       );
-
-      expect(toast.error).toHaveBeenCalledWith("Une erreur est survenue.", {
-        description:
-          "Veuillez réessayer ultérieurement. Si le problème persiste, contactez le support.",
-      });
     });
 
-    it("devrait donner la priorité à errorMessageDescription sur le message de l'objet Error", () => {
+    it("should handle non-Error exceptions by converting them to string", () => {
+      const options = withNotifications();
+      const error = "Critical Failure";
+
+      options.onError?.(error, {}, undefined as any, undefined as any);
+
+      expect(toast.error).toHaveBeenCalledTimes(1);
+      expect(toast.error).toHaveBeenCalledWith(
+        DEFAULT_MUTATION_MESSAGES.errorTitle,
+        { description: "Critical Failure" },
+      );
+    });
+
+    it("should use custom error messages when provided", () => {
       const options = withNotifications({
-        errorMessageDescription: "Message forcé",
+        errorMessageTitle: "Custom Error Title",
+        errorMessageDescription: "Custom Error Description",
       });
-      const myError = new Error("Ce message doit être ignoré");
+      const error = new Error("Ignored error");
 
-      options.onError?.(myError, "vars", "onMutation", "context");
+      options.onError?.(error, {}, undefined as any, undefined as any);
 
-      expect(toast.error).toHaveBeenCalledWith("Une erreur est survenue.", {
-        description: "Message forcé",
+      expect(toast.error).toHaveBeenCalledTimes(1);
+      expect(toast.error).toHaveBeenCalledWith("Custom Error Title", {
+        description: "Custom Error Description",
       });
     });
 
-    it("devrait exécuter le onError original fourni par le développeur", () => {
-      const mockOriginalOnError = vi.fn();
-      const options = withNotifications({ onError: mockOriginalOnError });
-      const myError = new Error("Test");
+    it("should not trigger error toast when showErrorNotification is false", () => {
+      const options = withNotifications({ showErrorNotification: false });
+      const error = new Error("Failed");
 
-      options.onError?.(myError, "vars", "onMutation", "context");
+      options.onError?.(error, {}, undefined as any, undefined as any);
 
-      expect(mockOriginalOnError).toHaveBeenCalledWith(
-        myError,
-        "vars",
-        "onMutation",
-        "context",
+      expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it("should execute existing user onError callback alongside notification", () => {
+      const userOnError = vi.fn();
+      const options = withNotifications({ onError: userOnError });
+      const error = new Error("Failed");
+
+      options.onError?.(error, {}, undefined as any, undefined as any);
+
+      expect(userOnError).toHaveBeenCalledTimes(1);
+      expect(userOnError).toHaveBeenCalledWith(
+        error,
+        {},
+        undefined as any,
+        undefined as any,
       );
+      expect(toast.error).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe("Comportement des autres options (Rest operator)", () => {
-    it("devrait passer correctement onSettled et onMutate", () => {
-      const mockOnSettled = vi.fn();
-      const mockOnMutate = vi.fn();
+  describe("Settled Handling", () => {
+    it("should execute existing user onSettled callback correctly", () => {
+      const userOnSettled = vi.fn();
+      const options = withNotifications({ onSettled: userOnSettled });
+      const mockData = { id: 1 };
+      const error = null;
 
-      const options = withNotifications({
-        onSettled: mockOnSettled,
-        onMutate: mockOnMutate,
-      });
+      options.onSettled?.(
+        mockData,
+        error,
+        {},
+        undefined as any,
+        undefined as any,
+      );
 
-      expect(options.onSettled).toBeDefined();
-      expect(options.onMutate).toBeDefined();
+      expect(userOnSettled).toHaveBeenCalledTimes(1);
+      expect(userOnSettled).toHaveBeenCalledWith(
+        mockData,
+        error,
+        {},
+        undefined as any,
+        undefined as any,
+      );
     });
   });
 });

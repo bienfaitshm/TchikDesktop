@@ -2,7 +2,10 @@ import {
   IpcClient,
   ProgressPayload,
 } from "@/packages/electron-ipc-rest/ipc.client";
-import type { StudentPayment } from "@/packages/@core/data-access/db";
+import type {
+  CancelPaymentResult,
+  ProcessPaymentResult,
+} from "@/packages/@core/data-access/db";
 import type {
   TableClassroomPaymentAssignment,
   StudentPaymentTable,
@@ -12,7 +15,6 @@ import {
   CURRENCY_ENUM,
   PAYMENT_METHOD_ENUM,
 } from "@/packages/@core/data-access/db/options";
-
 import type { Ticket } from "@/packages/@core/data-access/schema-validations";
 
 export type ClassroomPaymentFilterParams = {
@@ -37,6 +39,10 @@ export type ProcessStudentPaymentPayload = {
   currencyReceived: CURRENCY_ENUM;
   paymentMethod?: PAYMENT_METHOD_ENUM;
   transactionReference?: string;
+};
+
+export type CancelStudentPaymentPayload = {
+  paymentId: string;
 };
 
 export type PaymentApi = Readonly<{
@@ -74,13 +80,27 @@ export type PaymentApi = Readonly<{
 
   /**
    * Processes a student payment transaction at the counter.
-   * @param data - Payment transaction details including amount and currency.
+   * @param data - Transaction details including amount and currency.
    * @returns A promise resolving to the created student payment record.
    */
   processStudentPayment(
     data: ProcessStudentPaymentPayload,
-  ): Promise<StudentPayment>;
+  ): Promise<ProcessPaymentResult>;
 
+  /**
+   * Cancels an existing student payment transaction.
+   * @param data - Payload containing the payment identifier to cancel.
+   * @returns A promise resolving to the cancellation result.
+   */
+  cancelStudentPayment(
+    data: CancelStudentPaymentPayload,
+  ): Promise<CancelPaymentResult>;
+
+  /**
+   * Triggers the ticket generation and printing process.
+   * @param data - Ticket configuration data to print.
+   * @returns A promise resolving to the printing operation outcome.
+   */
   printTicket(data: Ticket): Promise<any>;
 }>;
 
@@ -111,7 +131,9 @@ export function createPaymentApis(ipcClient: IpcClient): PaymentApi {
     processStudentPayment(data) {
       return ipcClient.post(PaymentRoutes.PROCESS_PAYMENT, data);
     },
-
+    cancelStudentPayment(data) {
+      return ipcClient.post(PaymentRoutes.CANCEL_PAYMENT, data);
+    },
     printTicket(data) {
       return ipcClient.post(PaymentRoutes.PRINT_TICKET, data);
     },

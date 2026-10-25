@@ -1,11 +1,12 @@
 import type { FileFilter, SaveDialogOptions } from "electron";
-import type { ZodObject, ZodError, ZodTypeAny } from "zod";
+import type { ZodObject, ZodType } from "zod";
 import {
   DOCUMENT_EXTENSION,
   getFileDescription,
 } from "@/packages/file-extension";
 import { formatDate } from "@/packages/times";
 import type { RawFileContent, ServiceResult, ContextParams } from "./types";
+import { formatZodError, sanitizeFileName } from "./utils";
 
 /**
  * Context parameters passed during dynamic form field evaluation.
@@ -57,7 +58,7 @@ export abstract class AbstractExportExtension<
 
   /**
    * Transforms domain data into raw file payload.
-   * @param data - Resolved domain data.
+   * @param data Domain data.
    * @returns Raw string or binary content wrapped in a promise.
    */
   public abstract process(data: TData): Promise<RawFileContent>;
@@ -100,33 +101,11 @@ export interface IExportStrategy<
  */
 export interface ExportStrategyConfig<TFormField, TPayload, TData> {
   extensions: IExportExtension<TData>[];
-  schemaCreator?: (
-    fields: TFormField[],
-  ) => ZodObject<Record<string, ZodTypeAny>>;
+  schemaCreator?: (fields: TFormField[]) => ZodObject<Record<string, ZodType>>;
   extendWithFileTypeFormFields?: <TParams extends FormFieldContextParams>(
     params: TParams,
   ) => Promise<readonly TFormField[]>;
   resolver: DataResolver<TPayload, TData>;
-}
-
-/**
- * Formats Zod validation issues into a single descriptive string.
- * @param error - Zod validation error object.
- * @returns Concatenated path and error messages string.
- */
-function formatZodError(error: ZodError): string {
-  return error.issues
-    .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
-    .join("; ");
-}
-
-/**
- * Sanitizes strings for safe file system usage.
- * @param name - Raw filename input.
- * @returns Cleaned string free of invalid path characters.
- */
-function sanitizeFileName(name: string): string {
-  return name.replace(/[<>:"/\\|?*]/g, "_").trim();
 }
 
 /**
@@ -143,9 +122,9 @@ export abstract class AbstractExportStrategy<
   public abstract readonly description: string;
 
   protected abstract readonly validationSchema: ZodObject<
-    Record<string, ZodTypeAny>
+    Record<string, ZodType>
   >;
-  protected formFields: TFormField[] = [];
+  protected readonly formFields: TFormField[];
 
   private readonly extensionsRegistry = new Map<
     DOCUMENT_EXTENSION,
@@ -154,7 +133,7 @@ export abstract class AbstractExportStrategy<
   protected resolver: DataResolver<TPayload, TData>;
   private readonly schemaCreator?: (
     fields: TFormField[],
-  ) => ZodObject<Record<string, ZodTypeAny>>;
+  ) => ZodObject<Record<string, ZodType>>;
   protected extendWithFileTypeFormFields?: <
     TParams extends FormFieldContextParams,
   >(
@@ -165,6 +144,7 @@ export abstract class AbstractExportStrategy<
     this.schemaCreator = config.schemaCreator;
     this.resolver = config.resolver;
     this.extendWithFileTypeFormFields = config.extendWithFileTypeFormFields;
+    this.formFields = [];
 
     for (const ext of config.extensions) {
       this.extensionsRegistry.set(ext.extension, ext);
@@ -173,7 +153,7 @@ export abstract class AbstractExportStrategy<
 
   /**
    * Retrieves user interface metadata for dialogs and dynamic forms.
-   * @param params - Optional context parameters.
+   * @param params Optional context parameters.
    * @returns Aggregated metadata payload.
    */
   public async getMeta<TParams extends FormFieldContextParams>(
@@ -200,7 +180,7 @@ export abstract class AbstractExportStrategy<
 
   /**
    * Fetches domain data using the configured resolver implementation.
-   * @param payload - Validated input parameters.
+   * @param payload Validated input parameters.
    * @returns Unwrapped domain data.
    */
   public async resolveData(payload: TPayload): Promise<TData> {
@@ -209,7 +189,7 @@ export abstract class AbstractExportStrategy<
 
   /**
    * Safely wraps domain data fetching inside a ServiceResult container.
-   * @param payload - Validated input parameters.
+   * @param payload Validated input parameters.
    * @returns Result wrapper containing resolved data or structured error.
    */
   public async handleResolveData(
@@ -234,7 +214,7 @@ export abstract class AbstractExportStrategy<
 
   /**
    * Retrieves form field definitions required for user inputs.
-   * @param params - Optional contextual parameters.
+   * @param params Optional contextual parameters.
    * @returns Array of form field definitions.
    */
   public async getFormFields<TParams extends FormFieldContextParams>(
@@ -254,8 +234,8 @@ export abstract class AbstractExportStrategy<
    * Merges static base validation schema with dynamic form field schemas.
    * @returns Combined Zod schema.
    */
-  protected getSchemas(): ZodObject<Record<string, ZodTypeAny>> {
-    const extraSchema = this.schemaCreator?.(this.formFields);
+  protected getSchemas(): ZodObject<Record<string, ZodType>> {
+    const extraSchema = this.schemaCreator?.(this.formFields as TFormField[]);
     return extraSchema
       ? this.validationSchema.extend(extraSchema.shape)
       : this.validationSchema;
@@ -263,7 +243,7 @@ export abstract class AbstractExportStrategy<
 
   /**
    * Validates execution payload against combined Zod schemas.
-   * @param params - Unvalidated input payload.
+   * @param params Unvalidated input payload.
    * @returns Result wrapper with validated payload or validation error details.
    */
   public validateContext(params: unknown): ServiceResult<TPayload> {
@@ -283,8 +263,8 @@ export abstract class AbstractExportStrategy<
 
   /**
    * Delegates file generation to the extension matching the target format.
-   * @param targetExtension - Desired file extension.
-   * @param data - Domain data payload.
+   * @param targetExtension Desired file extension.
+   * @param data Domain data payload.
    * @returns Generated file content or generation error details.
    */
   public async buildArtifact(
@@ -321,28 +301,27 @@ export abstract class AbstractExportStrategy<
 
   /**
    * Constructs desktop Save Dialog configuration options for Electron.
-   * @param targetExtension - Optional target document format filter.
+   * @param targetExtension Optional target document format filter.
    * @returns Electron SaveDialogOptions object.
    */
   public getSaveOptions(
     targetExtension?: DOCUMENT_EXTENSION,
   ): SaveDialogOptions {
-    const sanitizedName = sanitizeFileName(this.displayName);
     const dateSuffix = formatDate(new Date(), "dd_MM_yyyy_HHmmss");
     const defaultPath = targetExtension
-      ? `${sanitizedName}_${dateSuffix}.${targetExtension}`
-      : `${sanitizedName}_${dateSuffix}`;
+      ? `${this.displayName}_${dateSuffix}.${targetExtension}`
+      : `${this.displayName}_${dateSuffix}`;
 
     return {
       title: `Export - ${this.displayName}`,
-      defaultPath,
+      defaultPath: sanitizeFileName(defaultPath),
       filters: this.resolveFilters(targetExtension),
     };
   }
 
   /**
    * Filters available file extension filters based on target selection.
-   * @param targetExtension - Target format filter.
+   * @param targetExtension Target format filter.
    * @returns Array of applicable Electron FileFilters.
    */
   private resolveFilters(targetExtension?: DOCUMENT_EXTENSION): FileFilter[] {

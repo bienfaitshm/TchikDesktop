@@ -1,56 +1,77 @@
-import React from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import type { DialogItemConfig, DialogRenderProps } from "./types";
 
-interface DialogMenuState {
+/**
+ * State structure holding the currently active dialog key identifier.
+ */
+export interface DialogMenuState {
   activeDialogKey: string | null;
 }
 
-interface DialogMenuActions {
-  showDialog(key: string): void;
-  closeDialog(): void;
-  handleOpenChange(open: boolean): void;
+/**
+ * Action methods available for manipulating dialog visibility states.
+ */
+export interface DialogMenuActions {
+  showDialog: (key: string) => void;
+  closeDialog: () => void;
+  handleOpenChange: (open: boolean) => void;
 }
 
-const DialogStateContext = React.createContext<DialogMenuState | null>(null);
+/**
+ * Props for the DialogMenuProvider component.
+ */
+export interface DialogMenuProviderProps {
+  children: React.ReactNode;
+}
+
+const DialogStateContext = createContext<DialogMenuState | null>(null);
 DialogStateContext.displayName = "DialogStateContext";
 
-const DialogActionContext = React.createContext<DialogMenuActions | null>(null);
+const DialogActionContext = createContext<DialogMenuActions | null>(null);
 DialogActionContext.displayName = "DialogActionContext";
 
 /**
- * Contextual boundary coordinating dialog visibility state tracking.
- * @param props - Children nodes demanding context subscription dependencies.
- * @returns Wrapped component architectures feeding rendering state.
+ * Context boundary component coordinating dialog visibility tracking across the menu ecosystem.
+ * @param props - The component props containing children nodes.
+ * @returns Wrapped component hierarchy providing dialog states and actions.
  */
-export const DialogMenuProvider: React.FC<React.PropsWithChildren> = ({
+export const DialogMenuProvider: React.FC<DialogMenuProviderProps> = ({
   children,
 }) => {
-  const [activeDialogKey, setActiveDialogKey] = React.useState<string | null>(
-    null,
-  );
+  const [activeDialogKey, setActiveDialogKey] = useState<string | null>(null);
 
-  const showDialog = React.useCallback((key: string) => {
+  const showDialog = useCallback((key: string) => {
     setActiveDialogKey(key);
   }, []);
 
-  const closeDialog = React.useCallback(() => {
+  const closeDialog = useCallback(() => {
     setActiveDialogKey(null);
   }, []);
 
-  const handleOpenChange = React.useCallback(
+  const handleOpenChange = useCallback(
     (open: boolean) => {
-      if (!open) closeDialog();
+      if (!open) {
+        closeDialog();
+      }
     },
     [closeDialog],
   );
 
-  const actionValue = React.useMemo(
+  const actionValue = useMemo(
     () => ({ showDialog, closeDialog, handleOpenChange }),
     [showDialog, closeDialog, handleOpenChange],
   );
 
+  const stateValue = useMemo(() => ({ activeDialogKey }), [activeDialogKey]);
+
   return (
-    <DialogStateContext.Provider value={{ activeDialogKey }}>
+    <DialogStateContext.Provider value={stateValue}>
       <DialogActionContext.Provider value={actionValue}>
         {children}
       </DialogActionContext.Provider>
@@ -59,49 +80,56 @@ export const DialogMenuProvider: React.FC<React.PropsWithChildren> = ({
 };
 DialogMenuProvider.displayName = "DialogMenuProvider";
 
-interface DialogContainerProps<T = unknown> {
-  contextProps: T;
-  items?: Map<string, DialogItemConfig<T>["renderDialog"]>;
+/**
+ * Properties for the DialogContainer component.
+ * @template T - Context properties record type.
+ */
+export interface DialogContainerProps<TProps> {
+  contextProps: TProps;
+  items?: Map<string, DialogItemConfig<TProps>["renderDialog"]>;
 }
 
 /**
- * Evaluates mapping parameters to render conditionally invoked overlay layouts.
- * @param props - Contextual properties carrying active identifiers and render callbacks.
- * @returns Evaluated React elements correlating strictly to the current active key.
+ * Renders conditionally invoked overlay layouts based on the active dialog identifier.
+ * @template T - Context properties record type.
+ * @param props - Container properties carrying items map and context values.
+ * @returns Evaluated React elements correlating to the active dialog key or null.
  */
-export const DialogContainer = <T extends Record<string, unknown>>({
+export const DialogContainer = <TProps extends {} = {}>({
   items,
   contextProps,
-}: DialogContainerProps<T>): React.ReactElement | null => {
+}: DialogContainerProps<TProps>): React.ReactElement | null => {
   const { activeDialogKey } = useDialogState();
   const { closeDialog, handleOpenChange } = useDialogActions();
 
-  if (!activeDialogKey || !items) return null;
+  if (!activeDialogKey || !items) {
+    return null;
+  }
 
   const renderDialog = items.get(activeDialogKey);
 
-  if (renderDialog) {
-    const dialogProps: DialogRenderProps<T> = {
-      props: contextProps,
-      open: true,
-      close: closeDialog,
-      onOpenChange: handleOpenChange,
-    };
-
-    return <>{renderDialog(dialogProps)}</>;
+  if (!renderDialog) {
+    return null;
   }
 
-  return null;
+  const dialogProps: DialogRenderProps<TProps> = {
+    props: contextProps,
+    open: true,
+    close: closeDialog,
+    onOpenChange: handleOpenChange,
+  };
+
+  return <>{renderDialog(dialogProps)}</>;
 };
 DialogContainer.displayName = "DialogContainer";
 
 /**
  * Retrieves the read-only operational state of structural visibility contexts.
- * @throws When called physically outside of `DialogMenuProvider` hierarchies.
+ * @throws When called outside of a DialogMenuProvider hierarchy.
  * @returns Current state holding the active dialog key.
  */
 export function useDialogState(): DialogMenuState {
-  const context = React.useContext(DialogStateContext);
+  const context = useContext(DialogStateContext);
   if (!context) {
     throw new Error("useDialogState must be used within a DialogMenuProvider");
   }
@@ -110,11 +138,11 @@ export function useDialogState(): DialogMenuState {
 
 /**
  * Accesses operational dispatch functions driving UI mutation logic interactively.
- * @throws When called physically outside of `DialogMenuProvider` hierarchies.
- * @returns Hooks mapped specifically to orchestrate active overlays.
+ * @throws When called outside of a DialogMenuProvider hierarchy.
+ * @returns Methods mapped specifically to orchestrate active overlays.
  */
 export function useDialogActions(): DialogMenuActions {
-  const context = React.useContext(DialogActionContext);
+  const context = useContext(DialogActionContext);
   if (!context) {
     throw new Error(
       "useDialogActions must be used within a DialogMenuProvider",

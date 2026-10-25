@@ -9,20 +9,18 @@ import {
 import { dailyExchangeRateService } from "../services";
 import { classroomRepository } from "@/packages/@core/data-access/db/queries/classrooms";
 import { EnrollmentRepository } from "@/packages/@core/data-access/db/queries/enrollments";
-
 import {
   type StudentPaymentTable,
   type EnrollmentPayment,
   FeeManagementService,
-} from "./use-cases/sync-classroom-fees";
-import { GetClassroomPaymentTable } from "./use-cases/get-classroom-payment-table";
-
+} from "./sync-classroom-fees";
+import { GetClassroomPaymentTable } from "./get-classroom-payment-table";
 import {
-  ProcessStudentPayment,
+  StudentPaymentService,
   type ProcessPaymentPayload,
   type ProcessPaymentResult,
-} from "./use-cases/process-student-payment";
-
+  type CancelPaymentResult,
+} from "./process-student-payment";
 import { OnSyncMessage } from "./types";
 
 const logger = getLogger("PaymentService");
@@ -43,8 +41,7 @@ const getClassroomPaymentTableUseCase = new GetClassroomPaymentTable(
   logger,
 );
 
-const processStudentPaymentUseCase = new ProcessStudentPayment(
-  feeConfigurationRepository,
+const processStudentPaymentUseCase = new StudentPaymentService(
   feeAssignmentRepository,
   studentPaymentRepository,
   dailyExchangeRateService,
@@ -62,7 +59,9 @@ export const paymentService = {
    * @param enrollmentId - Unique identifier of the student enrollment.
    * @returns Structured payment overview data.
    */
-  getStudentPaymentOverview(enrollmentId: string): StudentPaymentTable {
+  getStudentPaymentOverview(
+    enrollmentId: string,
+  ): Promise<StudentPaymentTable> {
     return feeManagementService.getStudentPaymentOverview(enrollmentId);
   },
 
@@ -72,7 +71,7 @@ export const paymentService = {
    * @param onSyncMessage - Optional callback invoked during progress updates.
    * @returns The sync execution result.
    */
-  syncClassroomFeeAssignments(
+  async syncClassroomFeeAssignments(
     ctx: {
       schoolId: string;
       yearId: string;
@@ -89,7 +88,7 @@ export const paymentService = {
    * @param onSyncMessage - Optional callback invoked during sync operations.
    * @returns Array of classroom payment assignments.
    */
-  getClassroomPaymentTable(
+  async getClassroomPaymentTable(
     filters: {
       schoolId: string;
       yearId: string;
@@ -108,10 +107,26 @@ export const paymentService = {
    * @param payload - Details of the payment transaction.
    * @returns Resulting updated fee assignment and payment details.
    */
-  processStudentPayment(payload: ProcessPaymentPayload): ProcessPaymentResult {
-    return processStudentPaymentUseCase.execute(payload);
+  async processStudentPayment(
+    payload: ProcessPaymentPayload,
+  ): Promise<ProcessPaymentResult> {
+    return processStudentPaymentUseCase.executePayment(payload);
+  },
+
+  /**
+   * Cancels an existing student payment transaction by its unique identifier.
+   * @param paymentId - Unique identifier of the payment to be canceled.
+   * @returns Resulting status and details of the cancellation.
+   */
+  async cancelStudentPayment(paymentId: string): Promise<CancelPaymentResult> {
+    return processStudentPaymentUseCase.cancelPayment(paymentId);
   },
 };
 
 export * from "./types";
-export { type StudentPaymentTable, EnrollmentPayment };
+export type {
+  StudentPaymentTable,
+  EnrollmentPayment,
+  CancelPaymentResult,
+  ProcessPaymentResult,
+};

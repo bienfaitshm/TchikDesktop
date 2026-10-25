@@ -93,6 +93,7 @@ export interface UseZodFormConfig<TFieldValues extends FieldValues> {
   schema: z.ZodType<TFieldValues, TFieldValues>;
   /** Default field values to populate initially. */
   defaultValues?: DefaultValues<TFieldValues>;
+  values?: TFieldValues;
   /** Custom submission callback logic. */
   onSubmit?: FormSubmitHandler<TFieldValues>;
 }
@@ -105,6 +106,7 @@ export interface UseZodFormConfig<TFieldValues extends FieldValues> {
 export function useZodForm<TFieldValues extends FieldValues>({
   schema,
   defaultValues,
+  values,
   onSubmit,
 }: UseZodFormConfig<TFieldValues>): UseZodFormReturn<TFieldValues> & {
   isSubmitting: boolean;
@@ -112,6 +114,7 @@ export function useZodForm<TFieldValues extends FieldValues>({
   const form = useForm({
     schema,
     defaultValues,
+    values,
     shouldUnregister: false,
   });
 

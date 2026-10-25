@@ -1,122 +1,162 @@
-// abstractions.spec.ts
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { z } from "zod";
+import { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 import {
-  AbstractExportExtension,
   AbstractExportStrategy,
+  AbstractExportExtension,
+  DataResolver,
+  ExportStrategyConfig,
 } from "./abstractions";
-import type { DOCUMENT_EXTENSION } from "@/packages/file-extension";
 
-// Mock des dépendances externes
-vi.mock("@/packages/file-extension", () => ({
-  getFileDescription: vi.fn((ext) => `Description for ${ext}`),
-}));
-
-// 1. Création d'une extension concrète (Dummy) pour le test
-class DummyCsvExtension extends AbstractExportExtension<{ name: string }> {
-  readonly extension = "csv" as DOCUMENT_EXTENSION;
-
-  process(data: { name: string }) {
-    if (data.name === "ERROR") throw new Error("Processing failed");
-    return `Name\n${data.name}`;
+class MockExportExtension extends AbstractExportExtension<string> {
+  public description?: string | undefined;
+  public readonly extension = DOCUMENT_EXTENSION.PDF;
+  public async process(data: string): Promise<string> {
+    if (data === "FAIL") throw new Error("Processing failed");
+    return `processed-${data}`;
   }
 }
 
-// 2. Création d'une stratégie concrète (Dummy) pour le test
-class DummyUserStrategy extends AbstractExportStrategy<{ name: string }> {
-  readonly id = "dummy-users";
-  readonly displayName = "Export Utilisateurs";
-  readonly description = "Exporte la liste des utilisateurs";
+class MockResolver implements DataResolver<{ id: string }, string> {
+  async resolveData(payload: { id: string }): Promise<string> {
+    if (payload.id === "error") throw new Error("Database error");
+    return `data-${payload.id}`;
+  }
+}
 
-  protected validationSchema = z.object({
-    role: z.string().min(1),
+class TestExportStrategy extends AbstractExportStrategy<
+  unknown,
+  { id: string },
+  string
+> {
+  public readonly id = "test-strategy";
+  public readonly category = "reports";
+  public readonly displayName = "Test Report";
+  public readonly description = "A test export strategy";
+
+  protected readonly validationSchema = z.object({
+    id: z.string().min(1),
   });
-
-  public async resolveData(_: unknown) {
-    return { success: true, data: { name: "Alice" } } as const;
-  }
 }
 
-describe("Abstractions d'Export", () => {
-  let strategy: DummyUserStrategy;
-  let csvExtension: DummyCsvExtension;
+describe("AbstractExportStrategy", () => {
+  let strategy: TestExportStrategy;
+  let mockExtension: MockExportExtension;
+  let mockResolver: MockResolver;
 
   beforeEach(() => {
-    csvExtension = new DummyCsvExtension();
-    strategy = new DummyUserStrategy({ extensions: [csvExtension] });
+    mockExtension = new MockExportExtension();
+    mockResolver = new MockResolver();
+
+    const config: ExportStrategyConfig<unknown, { id: string }, string> = {
+      extensions: [mockExtension],
+      resolver: mockResolver,
+    };
+
+    strategy = new TestExportStrategy(config);
   });
 
-  describe("AbstractExportExtension", () => {
-    it("doit retourner le filtre d'extension correct", () => {
-      const filter = csvExtension.getExtensionFilter();
-      expect(filter).toEqual({
-        name: "Description for csv",
-        extensions: ["csv"],
-      });
-    });
-  });
-
-  describe("AbstractExportStrategy", () => {
-    it("doit retourner les métadonnées correctes", async () => {
+  describe("getMeta", () => {
+    it("should return correct strategy metadata and filters", async () => {
       const meta = await strategy.getMeta();
-      expect(meta.title).toBe("Export Utilisateurs");
+      expect(meta.title).toBe("Test Report");
+      expect(meta.category).toBe("reports");
+      expect(meta.description).toBe("A test export strategy");
       expect(meta.extensions).toHaveLength(1);
-      expect(meta.extensions[0].extensions).toContain("csv");
+      expect(meta.extensions[0].extensions).toContain(DOCUMENT_EXTENSION.PDF);
     });
+  });
 
-    it("doit générer les options de sauvegarde avec le bon format de date", () => {
-      const options = strategy.getSaveOptions("csv" as DOCUMENT_EXTENSION);
-      const dateString = new Date().toISOString().split("T")[0];
-
-      expect(options.title).toBe("Exporter - Export Utilisateurs");
-      expect(options.defaultPath).toBe(`Export Utilisateurs_${dateString}.csv`);
-      expect(options.filters).toHaveLength(1);
-    });
-
-    it("doit valider le contexte avec succès si le schéma Zod correspond", () => {
-      const result = strategy.validateContext({ role: "admin" });
+  describe("validateContext", () => {
+    it("should successfully validate correct payload", () => {
+      const result = strategy.validateContext({ id: "123" });
       expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toEqual({ id: "123" });
+      }
     });
 
-    it("doit échouer la validation et formater l'erreur Zod", () => {
-      const result = strategy.validateContext({ role: "" }); // min(1) failed
+    it("should fail validation on invalid payload", () => {
+      const result = strategy.validateContext({ id: "" });
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.code).toBe("VALIDATION_ERROR");
-        expect(result.error.details).toContain("role");
       }
     });
+  });
 
-    it("doit construire l'artefact si l'extension existe", async () => {
-      const result = await strategy.buildArtifact("csv" as DOCUMENT_EXTENSION, {
-        name: "Bob",
-      });
+  describe("handleResolveData", () => {
+    it("should resolve data successfully", async () => {
+      const result = await strategy.handleResolveData({ id: "456" });
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data).toBe("Name\nBob");
+        expect(result.data).toBe("data-456");
       }
     });
 
-    it("doit capturer et formater les erreurs levées par l'extension", async () => {
-      const result = await strategy.buildArtifact("csv" as DOCUMENT_EXTENSION, {
-        name: "ERROR",
-      });
+    it("should catch resolver errors and return error service result", async () => {
+      const result = await strategy.handleResolveData({ id: "error" });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe("DATA_FETCH_ERROR");
+        expect(result.error.message).toBe("Database error");
+      }
+    });
+  });
+
+  describe("buildArtifact", () => {
+    it("should build artifact successfully for supported extension", async () => {
+      const result = await strategy.buildArtifact(
+        DOCUMENT_EXTENSION.PDF,
+        "content",
+      );
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBe("processed-content");
+      }
+    });
+
+    it("should return error when extension is not supported", async () => {
+      const result = await strategy.buildArtifact(
+        DOCUMENT_EXTENSION.CSV,
+        "content",
+      );
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe("GENERATION_ERROR");
+        expect(result.error.message).toContain("not supported");
+      }
+    });
+
+    it("should handle processing errors gracefully", async () => {
+      const result = await strategy.buildArtifact(
+        DOCUMENT_EXTENSION.PDF,
+        "FAIL",
+      );
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.code).toBe("GENERATION_ERROR");
         expect(result.error.details).toBe("Processing failed");
       }
     });
+  });
 
-    it("doit retourner une erreur si l'extension n'est pas supportée", async () => {
-      const result = await strategy.buildArtifact(
-        "pdf" as DOCUMENT_EXTENSION,
-        {},
+  describe("getSaveOptions", () => {
+    it("should return correct save options with target extension", () => {
+      const options = strategy.getSaveOptions(DOCUMENT_EXTENSION.PDF);
+      expect(options.title).toBe("Export - Test Report");
+      expect(options.defaultPath).toMatch(
+        /^Test_Report_\d{2}_\d{2}_\d{4}_\d{6}\.pdf$/,
       );
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.code).toBe("GENERATION_ERROR");
-      }
+      expect(options.filters).toHaveLength(1);
+    });
+
+    it("should return fallback options without target extension", () => {
+      const options = strategy.getSaveOptions();
+      expect(options.defaultPath).toMatch(
+        /^Test_Report_\d{2}_\d{2}_\d{4}_\d{6}$/,
+      );
+      expect(options.filters).toHaveLength(1);
     });
   });
 });

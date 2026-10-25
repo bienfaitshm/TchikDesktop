@@ -2,21 +2,40 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { UserSearch } from "lucide-react";
+import {
+  UserSearch,
+  CheckCircle2,
+  ShieldCheck,
+  Clock,
+  AlertCircle,
+  ArrowRight,
+} from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import {
   CURRENCY_ENUM,
-  FEE_SCHEDULES_ENUM,
+  FEE_SCHEDULE_STATUS_ENUM,
 } from "@/packages/@core/data-access/db/options";
-import { CheckCircle2, ShieldCheck, Clock, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { formatCurrency } from "@/packages/currency";
+import {
+  EnrollmentOverview,
+  type EnrollmentOverviewProps,
+} from "./enrollment-overview";
+import { Button } from "@/components/ui/button";
+import { PaymentAction } from "../tables/payment-table.menus";
+import type { FeeAssignment } from "@/packages/@core/data-access/db";
+import { cn } from "@/renderer/utils";
+
+export const CAN_HIDE_PAYMENT_FORM = [
+  FEE_SCHEDULE_STATUS_ENUM.EXEMPTED,
+  FEE_SCHEDULE_STATUS_ENUM.PAID,
+  FEE_SCHEDULE_STATUS_ENUM.OVERPAID,
+];
 
 /**
  * Renders an animated loading indicator for fee processing states.
- * @returns The loading state visual fallback.
+ * @returns The loading state visual fallback element.
  */
 export const FastPaymentLoading: React.FC = () => {
   return (
@@ -34,10 +53,12 @@ export const FastPaymentLoading: React.FC = () => {
 };
 
 /**
- * Displays a prompt prompting the cashier to select a student enrollment.
+ * Displays an empty-state prompt instructing the user to select a student enrollment.
  * @returns The empty selection fallback element for students.
  */
-export const EmptySelectStudent: React.FC = () => {
+export const EmptySelectStudent: React.FC<React.PropsWithChildren> = ({
+  children,
+}) => {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
@@ -51,6 +72,7 @@ export const EmptySelectStudent: React.FC = () => {
         Veuillez sélectionner un élève pour poursuivre le processus
         d'encaissement.
       </p>
+      {children}
     </motion.div>
   );
 };
@@ -59,7 +81,9 @@ export const EmptySelectStudent: React.FC = () => {
  * Displays an empty-state prompt instructing the user to pick a fee category or schedule.
  * @returns The empty selection fallback element for fee types.
  */
-export const EmptySelect: React.FC = () => {
+export const EmptySelect: React.FC<React.PropsWithChildren> = ({
+  children,
+}) => {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
@@ -71,28 +95,25 @@ export const EmptySelect: React.FC = () => {
       <span>
         Veuillez sélectionner le type de frais et l'échéancier correspondant.
       </span>
+      {children}
     </motion.div>
   );
 };
 
-export interface AssignmentOverviewData {
-  status: FEE_SCHEDULES_ENUM | string;
-  amountPaid: number;
-  totalAmount: number;
-  updatedAt?: Date | string | null;
-  createdAt?: Date | string | null;
-  currency?: CURRENCY_ENUM;
-}
+type FormatDateFn = (date?: Date | string | number | null) => string;
 
 export interface PaymentOverviewProps {
-  assignment: AssignmentOverviewData;
-  formatDate?: (date?: Date | string | null) => string;
+  assignment: FeeAssignment;
+  schoolId: string;
+  yearId: string;
+  studentOverview?: EnrollmentOverviewProps;
+  formatDate?: FormatDateFn;
 }
 
 /**
- * Formats a date object or string into a readable French date.
- * @param date - Date object, ISO string, or null/undefined.
- * @returns Formatted date string.
+ * Formats a date object or string into a localized French date string.
+ * @param date - Date object, ISO string, number timestamp, or null/undefined.
+ * @returns Formatted date string or a fallback dash.
  */
 function defaultFormatDate(date?: Date | string | number | null): string {
   if (!date) return "—";
@@ -105,15 +126,16 @@ function defaultFormatDate(date?: Date | string | number | null): string {
 }
 
 /**
- * Renders an animated status summary card for a student's fee schedule assignment.
- * @param props - Component properties containing assignment details and render children.
- * @returns The structured payment overview component.
+ * Retrieves configuration settings mapped to fee assignment statuses.
+ * @param assignment - The fee assignment object containing payment metrics.
+ * @param formatDate - Function to format dates.
+ * @returns A mapping object containing visual configurations per status.
  */
-export const PaymentOverview: React.FC<
-  React.PropsWithChildren<PaymentOverviewProps>
-> = ({ assignment, formatDate = defaultFormatDate, children }) => {
+const getStatusConfigMap = (
+  assignment: FeeAssignment,
+  formatDate: FormatDateFn,
+) => {
   const {
-    status,
     amountPaid,
     totalAmount,
     updatedAt,
@@ -122,98 +144,151 @@ export const PaymentOverview: React.FC<
   } = assignment;
   const remainingAmount = Math.max(0, totalAmount - amountPaid);
 
-  if (status === FEE_SCHEDULES_ENUM.EXEMPTED) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 5 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-      >
-        <Alert
-          variant="default"
-          className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300"
-        >
-          <ShieldCheck className="size-4 text-blue-600 dark:text-blue-400" />
-          <AlertTitle className="font-semibold text-xs">
-            Exempté de paiement
-          </AlertTitle>
-          <AlertDescription className="text-xs">
-            Cet élève a été exonéré du paiement de ce frais.
-          </AlertDescription>
-        </Alert>
-      </motion.div>
-    );
-  }
+  return {
+    [FEE_SCHEDULE_STATUS_ENUM.EXEMPTED]: {
+      title: "Exempté de paiement",
+      description: "Cet élève a été exonéré du paiement de ce frais.",
+      icon: ShieldCheck,
+      cardClass:
+        "border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-300",
+      iconClass: "text-blue-600 dark:text-blue-400",
+      badgeText: "Exonéré",
+      badgeClass: "border-blue-300 text-blue-700 dark:text-blue-300",
+      actionLabel: "Détails",
+      actionVariant: "outline" as const,
+      actionClass:
+        "border-blue-300 text-blue-800 hover:bg-blue-100 dark:border-blue-800 dark:text-blue-300",
+    },
+    [FEE_SCHEDULE_STATUS_ENUM.PAID]: {
+      title: "L'élève est en ordre avec ce frais",
+      description: `Montant réglé : ${amountPaid.toFixed(2)} ${currency}`,
+      icon: CheckCircle2,
+      cardClass:
+        "border-emerald-200/60 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-none",
+      iconClass: "text-emerald-600 dark:text-emerald-400",
+      badgeText: `Dernier règlement : ${formatDate(updatedAt || createdAt)}`,
+      badgeClass:
+        "border-emerald-300 text-emerald-700 dark:text-emerald-300 text-[10px]",
+      actionLabel: "Voir / Reçu",
+      actionVariant: "outline" as const,
+      actionClass:
+        "border-emerald-300 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:text-emerald-300",
+    },
+    [FEE_SCHEDULE_STATUS_ENUM.PARTIALLY_PAID]: {
+      title: "Paiement partiel en cours",
+      description: `Acompte versé : ${formatCurrency(amountPaid, currency)} sur ${formatCurrency(totalAmount, currency)}`,
+      icon: Clock,
+      cardClass:
+        "border-amber-200/60 bg-amber-50/40 dark:bg-amber-950/20 shadow-none",
+      iconClass: "text-amber-600 dark:text-amber-400",
+      badgeText: `Reste : ${formatCurrency(remainingAmount, currency)}`,
+      badgeClass:
+        "border-amber-300 text-amber-800 dark:text-amber-300 text-[10px] font-mono",
+      actionLabel: "Payer le solde",
+      actionVariant: "outline" as const,
+      actionClass: "bg-amber-600 hover:bg-amber-700 text-white gap-1.5",
+    },
+    [FEE_SCHEDULE_STATUS_ENUM.UNPAID]: {
+      title: "Paiement non effectué",
+      description:
+        "Aucun versement n'a encore été enregistré pour cette échéance.",
+      icon: AlertCircle,
+      cardClass: "border-muted bg-muted/20",
+      iconClass: "text-muted-foreground",
+      badgeText: null,
+      badgeClass: "",
+      actionLabel: "Modifier le prix",
+      actionVariant: "outline" as const,
+      actionClass: "border gap-1.5",
+    },
+  };
+};
 
-  if (status === FEE_SCHEDULES_ENUM.PAID) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.25 }}
+/**
+ * Renders an animated status summary card for a student's fee schedule assignment.
+ * @param props - Component properties containing assignment details, identifiers, and optional children.
+ * @returns The structured payment overview component with integrated actions.
+ */
+export const PaymentOverview: React.FC<
+  React.PropsWithChildren<PaymentOverviewProps>
+> = ({
+  assignment,
+  schoolId,
+  yearId,
+  formatDate = defaultFormatDate,
+  children,
+  studentOverview,
+}) => {
+  const { status } = assignment;
+  const statusMap = getStatusConfigMap(assignment, formatDate);
+  const currentConfig =
+    statusMap[status] || statusMap[FEE_SCHEDULE_STATUS_ENUM.UNPAID];
+  const IconComponent = currentConfig.icon;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      className="flex flex-col gap-4"
+    >
+      <Card
+        className={cn("shadow-none ring-0 border", currentConfig.cardClass)}
       >
-        <Card className="border-emerald-200/60 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-none">
-          <CardContent className="p-4 flex items-center justify-between gap-3">
+        <CardContent className="p-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="size-5 text-primary dark:text-emerald-400 shrink-0" />
+              <IconComponent
+                className={cn("size-5 shrink-0", currentConfig.iconClass)}
+              />
               <div className="flex flex-col">
-                <span className="font-semibold text-xs text-emerald-950 dark:text-emerald-200">
-                  L'élève est en ordre avec ce frais
+                <span className="font-semibold text-xs">
+                  {currentConfig.title}
                 </span>
-                <span className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80 font-mono">
-                  Montant réglé : {amountPaid.toFixed(2)} $
+                <span className="text-[11px] opacity-90">
+                  {currentConfig.description}
                 </span>
               </div>
             </div>
-            <Badge
-              variant="outline"
-              className="border-emerald-300 text-emerald-700 dark:text-emerald-300 text-[10px]"
-            >
-              Dernier règlement : {formatDate(updatedAt || createdAt)}
-            </Badge>
-          </CardContent>
-        </Card>
-      </motion.div>
-    );
-  }
-
-  if (status === FEE_SCHEDULES_ENUM.PARTIALLY_PAID) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 5 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        className="flex flex-col gap-4"
-      >
-        <Card className="border-amber-200/60 bg-amber-50/40 dark:bg-amber-950/20 shadow-none">
-          <CardContent className="p-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <Clock className="size-5 text-amber-600 dark:text-amber-400 shrink-0" />
-              <div className="flex flex-col">
-                <span className="font-semibold text-xs text-amber-950 dark:text-amber-200">
-                  Paiement partiel en cours
-                </span>
-                <span className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
-                  Acompte versé :{" "}
-                  <strong className="font-mono">
-                    {formatCurrency(amountPaid, currency)}
-                  </strong>{" "}
-                  sur{" "}
-                  <strong className="font-mono">
-                    {formatCurrency(totalAmount, currency)}
-                  </strong>
-                </span>
-              </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {currentConfig.badgeText && (
+                <Badge
+                  variant="outline"
+                  className={cn("h-6 px-2.5", currentConfig.badgeClass)}
+                >
+                  {currentConfig.badgeText}
+                </Badge>
+              )}
+              <PaymentAction
+                feeAssignment={assignment}
+                schoolId={schoolId}
+                yearId={yearId}
+                mutationKey={["fin"]}
+                hidden={["pay"]}
+              >
+                <Button
+                  variant={currentConfig.actionVariant}
+                  size="sm"
+                  className={cn(
+                    "h-6 px-3 rounded-full text-[10px]",
+                    currentConfig.actionClass,
+                  )}
+                >
+                  <span>{currentConfig.actionLabel}</span>
+                  <ArrowRight className="size-3 ml-1" />
+                </Button>
+              </PaymentAction>
             </div>
-            <Badge
-              variant="outline"
-              className="border-amber-300 text-amber-800 dark:text-amber-300 text-[10px] font-mono"
-            >
-              Reste : {formatCurrency(remainingAmount, currency)}
-            </Badge>
-          </CardContent>
-        </Card>
+          </div>
+          {studentOverview && (
+            <div className="mt-1 pt-2 border-t border-border/40">
+              <EnrollmentOverview {...studentOverview} />
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
+      {!CAN_HIDE_PAYMENT_FORM.includes(status) && (
         <AnimatePresence mode="wait">
           {children && (
             <motion.div
@@ -226,39 +301,7 @@ export const PaymentOverview: React.FC<
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
-    );
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 5 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className="flex flex-col gap-4"
-    >
-      <Alert variant="default" className="border-muted bg-muted/20">
-        <AlertCircle className="size-4 text-muted-foreground" />
-        <AlertTitle className="font-semibold text-xs">
-          Paiement non effectué
-        </AlertTitle>
-        <AlertDescription className="text-xs text-muted-foreground">
-          Aucun versement n'a encore été enregistré pour cette échéance.
-        </AlertDescription>
-      </Alert>
-
-      <AnimatePresence mode="wait">
-        {children && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      )}
     </motion.div>
   );
 };

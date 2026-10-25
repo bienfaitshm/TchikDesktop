@@ -1,3 +1,4 @@
+export * from "./repository.wallet";
 export * from "./repository.billing-operations";
 export * from "./repository.core-entities";
 export * from "./repository.fee-assignments";

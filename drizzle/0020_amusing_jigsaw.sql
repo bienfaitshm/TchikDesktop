@@ -1,0 +1,1 @@
+ALTER TABLE `student_payments` ADD `payment_status` text DEFAULT 'VALIDATED' NOT NULL;

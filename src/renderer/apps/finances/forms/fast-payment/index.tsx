@@ -8,23 +8,22 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-
-import { FeeSelection } from "./fee-selection";
 import { PaymentProcessForm } from "@/renderer/apps/finances/forms/payment-process-form";
 import {
   EmptySelectStudent,
   FastPaymentLoading,
 } from "@/renderer/apps/finances/components/fast-payment-empty";
-import { generateInvoiceRef, useFastPaymentStore } from "./hooks";
-import type { FastPaymentFormProps } from "./types";
 import { useSearchEnrollments } from "@/renderer/libs/queries/enrollements/helpers";
 import { ComboboxSearch } from "@/renderer/components/form/fields/generic-search-combo-box";
+import { generateInvoiceRef } from "@/packages/strings";
+
+import { FeeSelection } from "./fee-selection";
+import { useFastPaymentStore } from "./hooks";
+import type { FastPaymentFormProps } from "./types";
 
 /**
  * Main fast payment form component managing POS checkout workflow.
- * Renders student selection combobox and embeds fee selection and payment sub-forms.
- *
- * @param props - Form configuration including school context, payment options, and submission handler.
+ * @param props - Form configuration including school context and submission handler.
  * @returns The fast payment layout component JSX.
  */
 export function FastPaymentForm({
@@ -83,7 +82,22 @@ export function FastPaymentForm({
               transition={{ duration: 0.2 }}
             >
               <Suspense fallback={<FastPaymentLoading />}>
-                <FeeSelection enrollmentId={selectedStudent.enrollmentId}>
+                <FeeSelection
+                  schoolId={schoolId}
+                  yearId={yearId}
+                  studentOverview={
+                    selectedStudent
+                      ? {
+                          enrolledAt: selectedStudent.createdAt,
+                          startedAt: selectedStudent.createdAt,
+                          status: selectedStudent.status,
+                          fullName: selectedStudent.student.fullName,
+                          isProDeo: selectedStudent.isProDeo,
+                        }
+                      : undefined
+                  }
+                  enrollmentId={selectedStudent.enrollmentId}
+                >
                   {({ amountPaid, assignmentId, totalAmount }) => (
                     <div className="mt-4">
                       <PaymentProcessForm

@@ -18,7 +18,9 @@ import {
 } from "@/renderer/components/tables";
 import { createPaymentColumns } from "./payment-table.column";
 import { enhanceColumns } from "@/renderer/components/tables/columns";
-import { RowAction, CellAction } from "./payment-table.menus";
+import { RowAction, PaymentAction } from "./payment-table.menus";
+import { TableCellPayment } from "../components/table-cell-payment";
+import { Button } from "@/renderer/components/ui/button";
 export interface FeeTypeRowActionsProps {
   feeAssignment: FeeAssignment;
   schoolId: string;
@@ -35,15 +37,28 @@ export const RenderPaymentCell: React.FC<FeeTypeRowActionsProps> = ({
   feeAssignment,
   schoolId,
   yearId,
-  mutationKey,
+  mutationKey = ["fin"],
 }) => {
   return (
-    <CellAction
+    <PaymentAction
       feeAssignment={feeAssignment}
       schoolId={schoolId}
       yearId={yearId}
       mutationKey={mutationKey}
-    />
+
+      onSuccess={(key: string, data) => {
+        console.log({ key, data });
+      }}
+    >
+      <Button className="w-full flex flex-col h-9  bg-accent/50  p-2 hover:bg-accent rounded-md">
+        <TableCellPayment
+          amountPaid={feeAssignment.amountPaid}
+          totalAmount={feeAssignment.totalAmount}
+          currency={feeAssignment.currency}
+          status={feeAssignment.status}
+        />
+      </Button>
+    </PaymentAction>
   );
 };
 
@@ -83,14 +98,7 @@ export const FeeClassroomPaymentTable: React.FC<FeeConfigTableProps> = ({
 
     return enhanceColumns(columns, {
       variant: "actions",
-      renderRowAction: (assign) => (
-        <RowAction
-          assign={assign}
-          schoolId={schoolId}
-          yearId={yearId}
-          mutationKey={mutationKey}
-        />
-      ),
+      renderRowAction: (assign) => <RowAction assign={assign} />,
     });
   }, [data?.head, schoolId, yearId, mutationKey]);
 

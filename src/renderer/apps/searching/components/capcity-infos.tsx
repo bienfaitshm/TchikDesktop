@@ -1,7 +1,10 @@
+"use client";
+
 import React, { useState, useMemo } from "react";
-import { Users, ChevronLeft } from "lucide-react";
+import { Users, ChevronDown } from "lucide-react";
 import { useGetStatsByClass } from "@/renderer/libs/queries/dashboard";
 import type { ClassStatsDTO } from "@/packages/@core/data-access/db";
+import { cn } from "@/renderer/utils";
 
 /**
  * Represents a section group with computed cumulative total.
@@ -32,7 +35,7 @@ const SECTION_LABELS: Record<string, string> = {
 
 /**
  * Groups class items by section and computes totals per group.
- * @param classStats - List of individual class statistics.
+ * @param classStats - Array of individual class statistics.
  * @returns Array of grouped sections sorted with computed totals.
  */
 function groupClassStatsBySection(classStats: ClassStatsDTO[]): SectionGroup[] {
@@ -78,47 +81,44 @@ export const CapacityInfo: React.FC<CapacityInfoProps> = ({
     return groupClassStatsBySection(classStats);
   }, [classStats]);
 
-  const toggleExpand = () => {
+  const toggleExpand = (): void => {
     setIsExpanded((previousState) => !previousState);
   };
 
   return (
-    <div className="absolute top-4 right-4 z-50 flex items-start justify-end gap-2">
+    <div className="relative inline-block text-left">
       <button
         type="button"
         onClick={toggleExpand}
         aria-expanded={isExpanded}
         aria-controls="capacity-details-panel"
-        className="bg-background/80 backdrop-blur-md border border-border p-3.5 rounded-2xl flex items-center gap-3 hover:bg-card transition-all duration-300 select-none outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="bg-background/80 backdrop-blur-md border border-border px-4 py-2.5 rounded-xl flex items-center gap-3 hover:bg-card transition-all duration-200 select-none outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm"
       >
-        <div className="p-2.5 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
-          <Users size={20} />
+        <div className="p-2 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
+          <Users size={16} />
         </div>
         <div className="flex flex-col text-right">
-          <span className="text-xs text-muted-foreground font-medium">
+          <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
             Total Élèves
           </span>
-          <span className="text-base font-bold text-foreground leading-none mt-1">
+          <span className="text-sm font-bold text-foreground leading-tight mt-0.5">
             {totalStudents.toLocaleString("fr-FR")}
           </span>
         </div>
-        <ChevronLeft
+        <ChevronDown
           size={16}
-          className={`text-muted-foreground transition-transform duration-300 ${
-            isExpanded ? "rotate-180" : ""
-          }`}
+          className={cn(
+            "text-muted-foreground transition-transform duration-200 ml-1",
+            isExpanded && "rotate-180",
+          )}
         />
       </button>
 
-      <div
-        id="capacity-details-panel"
-        className={`bg-background/90 backdrop-blur-md border border-border rounded-2xl shadow-lg transition-all duration-300 ease-in-out overflow-hidden ${
-          isExpanded
-            ? "w-96 opacity-100 p-4 border-border"
-            : "w-0 opacity-0 p-0 border-transparent pointer-events-none"
-        }`}
-      >
-        <div className="w-full">
+      {isExpanded && (
+        <div
+          id="capacity-details-panel"
+          className="absolute right-0 mt-2 w-80 sm:w-96 bg-background/95 backdrop-blur-xl border border-border rounded-2xl shadow-xl z-50 p-4 animate-in fade-in-50 zoom-in-95 duration-150"
+        >
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-border/60">
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Répartition par section
@@ -128,11 +128,11 @@ export const CapacityInfo: React.FC<CapacityInfoProps> = ({
             </span>
           </div>
 
-          <div className="max-h-80 overflow-y-auto pr-1 space-y-4 scrollbar-thin scrollbar-thumb-accent">
+          <div className="max-h-72 overflow-y-auto pr-1 space-y-4">
             {groupedSections.length > 0 ? (
               groupedSections.map((group) => (
                 <div key={group.sectionKey} className="space-y-2">
-                  <div className="flex justify-between items-center bg-muted/50 px-2.5 py-1.5 rounded-lg border border-border/30">
+                  <div className="flex justify-between items-center bg-muted/40 px-3 py-1.5 rounded-lg border border-border/30">
                     <span className="text-xs font-bold text-foreground">
                       {group.sectionLabel}
                     </span>
@@ -162,13 +162,13 @@ export const CapacityInfo: React.FC<CapacityInfoProps> = ({
                 </div>
               ))
             ) : (
-              <div className="text-xs text-muted-foreground text-center py-4">
+              <div className="text-xs text-muted-foreground text-center py-6">
                 Aucune donnée disponible
               </div>
             )}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

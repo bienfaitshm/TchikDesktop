@@ -166,6 +166,7 @@ export const PaymentRoutes = {
   STUDENT_PAYMENT_OVERVIEW: "payments/student/overview",
   ASSIGN_FEES: "payments/assign-fees",
   PROCESS_PAYMENT: "payments/process",
+  CANCEL_PAYMENT: "payments/cancel",
   PRINT_TICKET: "payments/ticket/print",
 } as const;
 

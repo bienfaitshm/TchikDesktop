@@ -39,12 +39,11 @@ export type AppClients = {
 
 /**
  * Creates a lazy-loaded application API client proxy.
- *
  * @param ipcClient - The IPC client instance passed to API factories upon initialization.
  * @returns A proxy object exposing lazily-instantiated domain API clients.
  */
 export function createLazyAppClients(ipcClient: IpcClient): AppClients {
-  const cache: Partial<AppClients> = {};
+  const cache: Partial<object> = {};
 
   return new Proxy({} as AppClients, {
     get(target, prop: string | symbol) {
@@ -87,15 +86,32 @@ export function createLazyAppClients(ipcClient: IpcClient): AppClients {
   });
 }
 
+let cachedApiClient: IpcClient | null = null;
+
 /**
- * Default IPC client connected to the Electron renderer process.
+ * Retrieves or lazily initializes the default IPC client connected to the Electron renderer window process.
+ * @returns The initialized IpcClient instance.
  */
-export const apiClient = new IpcClient(window.electron.ipcRenderer);
+export function getApiClient(): IpcClient {
+  if (!cachedApiClient) {
+    const ipcRenderer =
+      typeof window !== "undefined"
+        ? (window as any)?.electron?.ipcRenderer
+        : undefined;
+    if (!ipcRenderer) {
+      throw new Error(
+        "IpcClient unavailable: window.electron.ipcRenderer is not defined.",
+      );
+    }
+    cachedApiClient = new IpcClient(ipcRenderer);
+  }
+  return cachedApiClient;
+}
 
 /**
  * Singleton proxy providing access to lazily initialized domain API clients.
  */
-export const api = createLazyAppClients(apiClient);
+export const api = createLazyAppClients(getApiClient());
 
 export const {
   classroom,

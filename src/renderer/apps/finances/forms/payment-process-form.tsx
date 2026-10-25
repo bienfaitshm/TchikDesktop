@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   type ProcessPaymentPayload,
   ProcessPaymentSchema,
@@ -97,6 +97,15 @@ export const PaymentProcessForm: React.FC<
     onSubmit,
   });
 
+  useEffect(() => {
+    if (totalAmount) {
+      form.setValue("amountReceived", totalAmount, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [totalAmount]);
+
   const currentCurrency = form.watch("currencyReceived");
   const currencyReceived = form.watch("currencyReceived");
   const remainingBalance =
@@ -119,9 +128,7 @@ export const PaymentProcessForm: React.FC<
               name="amountReceived"
               render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-xs font-medium text-muted-foreground">
-                    Montant reçu
-                  </FormLabel>
+                  <FormLabel className="text-xs">Montant reçu</FormLabel>
                   <FormControl>
                     <div className="relative flex items-center">
                       <Input
@@ -157,9 +164,7 @@ export const PaymentProcessForm: React.FC<
               name="currencyReceived"
               render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-xs font-medium text-muted-foreground">
-                    Devise
-                  </FormLabel>
+                  <FormLabel className="text-xs">Devise</FormLabel>
                   <SelectInput
                     {...field}
                     placeholder="Devise"
@@ -180,9 +185,7 @@ export const PaymentProcessForm: React.FC<
             name="paymentMethod"
             render={({ field }) => (
               <FormItem className="space-y-1.5">
-                <FormLabel className="text-xs font-medium text-muted-foreground">
-                  Mode de règlement
-                </FormLabel>
+                <FormLabel className="text-xs">Mode de règlement</FormLabel>
                 <SelectInput
                   {...field}
                   placeholder="Sélectionner le mode"
@@ -199,9 +202,7 @@ export const PaymentProcessForm: React.FC<
             name="transactionReference"
             render={({ field }) => (
               <FormItem className="space-y-1.5">
-                <FormLabel className="text-xs font-medium text-muted-foreground">
-                  Référence (Optionnel)
-                </FormLabel>
+                <FormLabel className="text-xs">Référence (Optionnel)</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="N° reçu, bordereau..."

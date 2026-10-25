@@ -1,105 +1,186 @@
-// DataExport.test.ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { DataExport } from "./exporter";
 import type { IExportStrategy } from "./abstractions";
 import type { IFileSystem } from "./types";
 
-// Mock des modules externes
 vi.mock("@/packages/logger", () => ({
-  getLogger: vi.fn(() => ({
+  getLogger: () => ({
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-  })),
+  }),
 }));
 
 vi.mock("@/packages/file-extension", () => ({
-  getFileExtension: vi.fn((path: string) => path.split(".").pop()),
+  getFileExtension: vi.fn((path: string) =>
+    path.endsWith(".pdf") ? "pdf" : null,
+  ),
 }));
 
-describe("DataExport Orchestrator", () => {
-  let mockStrategy: IExportStrategy;
-  let mockFileSystem: IFileSystem;
+describe("DataExport", () => {
+  let fileSystem: IFileSystem;
+  let mockStrategy: IExportStrategy<unknown>;
+  let config: any;
   let dataExport: DataExport;
 
   beforeEach(() => {
-    // Configuration de la stratégie mockée
+    vi.clearAllMocks();
+
+    fileSystem = {
+      promptSavePath: vi.fn().mockResolvedValue("/path/to/export.pdf"),
+      persistToDisk: vi.fn().mockResolvedValue(undefined),
+      getFileName: vi.fn().mockResolvedValue("export.pdf"),
+    };
+
     mockStrategy = {
-      id: "test-strategy",
-      getMeta: vi
+      id: "pdf-export",
+      getMeta: vi.fn().mockResolvedValue({
+        category: "reports",
+        title: "PDF Report",
+        extensions: ["pdf"],
+        description: "Export data to PDF",
+        fields: [],
+      }),
+      validateContext: vi.fn().mockReturnValue({ success: true }),
+      getSaveOptions: vi.fn().mockReturnValue({}),
+      handleResolveData: vi
         .fn()
-        .mockResolvedValue({
-          title: "Test Export",
-          extensions: [],
-          description: "",
-        }),
-      validateContext: vi.fn().mockReturnValue({ success: true, data: true }),
-      getSaveOptions: vi.fn().mockReturnValue({ defaultPath: "test.pdf" }),
-      resolveData: vi
-        .fn()
-        .mockResolvedValue({ success: true, data: { mock: "data" } }),
+        .mockResolvedValue({ success: true, data: { items: [] } }),
       buildArtifact: vi
         .fn()
         .mockResolvedValue({ success: true, data: new Uint8Array() }),
-    } as unknown as IExportStrategy;
-
-    // Configuration du file system mocké
-    mockFileSystem = {
-      promptSavePath: vi.fn().mockResolvedValue("/fake/path/document.pdf"),
-      persistToDisk: vi.fn().mockResolvedValue(undefined),
     };
 
-    dataExport = new DataExport([mockStrategy], mockFileSystem);
+    config = {
+      saveHistoryExport: vi.fn(),
+      onOpenFile: vi.fn(),
+      notifyOnExport: vi.fn(),
+    };
+
+    dataExport = new DataExport([mockStrategy], fileSystem, config);
   });
 
-  it("doit enregistrer les stratégies et retourner les métadonnées", async () => {
-    const exports = await dataExport.getAvailableExports();
-    expect(exports).toHaveLength(1);
-    expect(exports[0].id).toBe("test-strategy");
-    expect(exports[0].title).toBe("Test Export");
-  });
-
-  it("doit exécuter le workflow d'exportation complet avec succès", async () => {
-    const result = await dataExport.executeExport("test-strategy", {});
-
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data).toBe("/fake/path/document.pdf");
-    }
-
-    // Vérification de l'ordre d'appel (Workflow optimisation)
-    expect(mockStrategy.validateContext).toHaveBeenCalledOnce();
-    expect(mockFileSystem.promptSavePath).toHaveBeenCalledOnce();
-    expect(mockStrategy.resolveData).toHaveBeenCalledOnce();
-    expect(mockStrategy.buildArtifact).toHaveBeenCalledWith("pdf", {
-      mock: "data",
+  describe("getAvailableExports", () => {
+    it("should return frozen metadata list of registered strategies", async () => {
+      const exports = await dataExport.getAvailableExports();
+      expect(exports).toHaveLength(1);
+      expect(exports[0].id).toBe("pdf-export");
+      expect(Object.isFrozen(exports)).toBe(true);
     });
-    expect(mockFileSystem.persistToDisk).toHaveBeenCalledOnce();
   });
 
-  it("doit s'arrêter et retourner CANCELLED si l'utilisateur ferme la boîte de dialogue", async () => {
-    // On simule une annulation de l'utilisateur (retourne null ou undefined)
-    mockFileSystem.promptSavePath = vi.fn().mockResolvedValue(null);
+  describe("executeExport", () => {
+    it("should execute export successfully and trigger post-export hooks", async () => {
+      const result = await dataExport.executeExport("pdf-export", {
+        fileType: "pdf",
+        schoolId: "school-1",
+      });
 
-    const result = await dataExport.executeExport("test-strategy", {});
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBe("export.pdf");
+      }
+      expect(fileSystem.persistToDisk).toHaveBeenCalled();
+      expect(config.saveHistoryExport).toHaveBeenCalledWith({
+        exportKey: "pdf-export",
+        exportName: "export.pdf",
+        fileType: "pdf",
+        filePath: "/path/to/export.pdf",
+        schoolId: "school-1",
+      });
+      expect(config.onOpenFile).toHaveBeenCalledWith("/path/to/export.pdf");
+      expect(config.notifyOnExport).toHaveBeenCalledWith({
+        success: true,
+        data: "/path/to/export.pdf",
+      });
+    });
 
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.code).toBe("CANCELLED");
-    }
+    it("should return NOT_FOUND error when strategy does not exist", async () => {
+      const result = await dataExport.executeExport("invalid-strategy", {
+        fileType: "pdf",
+      });
 
-    // Vérification que les opérations coûteuses n'ont PAS été appelées
-    expect(mockStrategy.resolveData).not.toHaveBeenCalled();
-    expect(mockStrategy.buildArtifact).not.toHaveBeenCalled();
-    expect(mockFileSystem.persistToDisk).not.toHaveBeenCalled();
-  });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe("NOT_FOUND");
+      }
+    });
 
-  it("doit échouer si la stratégie n'existe pas", async () => {
-    const result = await dataExport.executeExport("unknown-strategy", {});
+    it("should return validation error when context validation fails", async () => {
+      (mockStrategy.validateContext as any).mockReturnValue({
+        success: false,
+        error: { code: "VALIDATION_ERROR", message: "Invalid context" },
+      });
 
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.code).toBe("NOT_FOUND");
-    }
+      const result = await dataExport.executeExport("pdf-export", {
+        fileType: "pdf",
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe("VALIDATION_ERROR");
+      }
+    });
+
+    it("should return CANCELLED error when user cancels save path prompt", async () => {
+      (fileSystem.promptSavePath as any).mockResolvedValue(null);
+
+      const result = await dataExport.executeExport("pdf-export", {
+        fileType: "pdf",
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe("CANCELLED");
+      }
+    });
+
+    it("should return validation error when file extension cannot be resolved", async () => {
+      (fileSystem.promptSavePath as any).mockResolvedValue("/path/to/export");
+
+      const result = await dataExport.executeExport("pdf-export", {
+        fileType: "unknown",
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe("VALIDATION_ERROR");
+      }
+    });
+
+    it("should return data resolution error when resolution fails", async () => {
+      (mockStrategy.handleResolveData as any).mockResolvedValue({
+        success: false,
+        error: { code: "GENERATION_ERROR", message: "Data failure" },
+      });
+
+      const result = await dataExport.executeExport("pdf-export", {
+        fileType: "pdf",
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe("GENERATION_ERROR");
+      }
+    });
+
+    it("should handle unexpected critical errors and return failure result", async () => {
+      (mockStrategy.handleResolveData as any).mockRejectedValue(
+        new Error("Unexpected DB crash"),
+      );
+
+      const result = await dataExport.executeExport("pdf-export", {
+        fileType: "pdf",
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe("GENERATION_ERROR");
+      }
+      expect(config.notifyOnExport).toHaveBeenCalledWith({
+        success: false,
+        data: expect.any(Object),
+      });
+    });
   });
 });
