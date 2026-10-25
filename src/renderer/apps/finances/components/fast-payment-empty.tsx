@@ -264,6 +264,7 @@ export const PaymentOverview: React.FC<
                 schoolId={schoolId}
                 yearId={yearId}
                 mutationKey={["fin"]}
+                hidden={["pay"]}
               >
                 <Button
                   variant={currentConfig.actionVariant}

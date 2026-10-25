@@ -30,9 +30,11 @@ import type {
   IMenuItemBuilder,
   DynamicLabel,
   DynamicIcon,
-  ExtendedMenuItemConfig,
+  MenuItemConfig,
+  DialogItemConfig,
   WithPropsChildren,
   ActionMenuProps,
+  ActionMenuComponentProps,
 } from "./types";
 import { isIn, mapDialogItems } from "./utils";
 import {
@@ -93,7 +95,7 @@ export class MenuItemBuilder<
   TProps,
   TKey extends string = string,
 > implements IMenuItemBuilder<TProps, TKey> {
-  config: Partial<ExtendedMenuItemConfig<TProps, TKey>>;
+  config: Partial<MenuItemConfig<TProps, TKey>>;
 
   /**
    * Initializes a new menu item builder instance.
@@ -131,7 +133,7 @@ export class MenuItemBuilder<
     render: (options: DialogRenderProps<TProps>) => React.ReactNode,
   ): this {
     this.config.type = "dialog";
-    this.config.renderDialog = render;
+    (this.config as DialogItemConfig<TProps, TKey>).renderDialog = render;
     return this;
   }
 
@@ -142,7 +144,7 @@ export class MenuItemBuilder<
    */
   public link(url: DynamicProp<TProps, string>): this {
     this.config.type = "link";
-    this.config.url = url;
+    (this.config as LinkItemConfig<TProps, TKey>).url = url;
     return this;
   }
 
@@ -153,7 +155,7 @@ export class MenuItemBuilder<
    */
   public action(onClick: (props: TProps) => unknown | Promise<unknown>): this {
     this.config.type = "action";
-    this.config.onAction = onClick;
+    (this.config as ActionItemConfig<TProps, TKey>).onAction = onClick;
     return this;
   }
 
@@ -165,11 +167,11 @@ export class MenuItemBuilder<
    */
   public toggle(
     checked: DynamicProp<TProps, boolean>,
-    onChange: (props: TProps, checked: boolean) => unknown | Promise<unknown>,
+    onChange: ToggleItemConfig<TProps, TKey>["onToggleChange"],
   ): this {
     this.config.type = "toggle";
-    this.config.isChecked = checked;
-    this.config.onToggleChange = onChange;
+    (this.config as ToggleItemConfig<TProps, TKey>).isChecked = checked;
+    (this.config as ToggleItemConfig<TProps, TKey>).onToggleChange = onChange;
     return this;
   }
 
@@ -179,11 +181,13 @@ export class MenuItemBuilder<
    * @returns The current builder instance.
    */
   public submenu(
-    items:
-      MenuSchemaInput<TProps, TKey> | ExtendedMenuItemConfig<TProps, TKey>[],
+    items: MenuSchemaInput<TProps, TKey> | MenuItemConfig<TProps, TKey>[],
   ): this {
     this.config.type = "submenu";
-    this.config.items = normalizeSchema<TProps, TKey>(items);
+    (this.config as SubmenuItemConfig<TProps, TKey>).items = normalizeSchema<
+      TProps,
+      TKey
+    >(items);
     return this;
   }
 
@@ -193,11 +197,13 @@ export class MenuItemBuilder<
    * @returns The current builder instance.
    */
   public group(
-    items:
-      MenuSchemaInput<TProps, TKey> | ExtendedMenuItemConfig<TProps, TKey>[],
+    items: MenuSchemaInput<TProps, TKey> | MenuItemConfig<TProps, TKey>[],
   ): this {
     this.config.type = "group";
-    this.config.items = normalizeSchema<TProps, TKey>(items);
+    (this.config as GroupItemConfig<TProps, TKey>).items = normalizeSchema<
+      TProps,
+      TKey
+    >(items);
     return this;
   }
 
@@ -256,7 +262,7 @@ export class MenuItemBuilder<
    * @returns The current builder instance.
    */
   public className(className: DynamicProp<TProps, string>): this {
-    this.config.customClass = className;
+    this.config.className = className;
     return this;
   }
 
@@ -264,8 +270,8 @@ export class MenuItemBuilder<
    * Finalizes builder operations and returns the finalized configuration object.
    * @returns The read-only configuration payload.
    */
-  public build(): ExtendedMenuItemConfig<TProps, TKey> {
-    return this.config as ExtendedMenuItemConfig<TProps, TKey>;
+  public build(): MenuItemConfig<TProps, TKey> {
+    return this.config as MenuItemConfig<TProps, TKey>;
   }
 }
 
@@ -290,17 +296,13 @@ function resolveDynamicValue<TProps, TReturn>(
  * @returns Array representing strictly typed configuration nodes.
  */
 function normalizeSchema<TProps, TKey extends string = string>(
-  schema:
-    MenuSchemaInput<TProps, TKey> | ExtendedMenuItemConfig<TProps, TKey>[],
-): ExtendedMenuItemConfig<TProps, TKey>[] {
+  schema: MenuSchemaInput<TProps, TKey> | MenuItemConfig<TProps, TKey>[],
+): MenuItemConfig<TProps, TKey>[] {
   if (Array.isArray(schema)) return schema;
 
   return Object.entries(schema).map(([key, entry]) => {
     const parsedMenu = entry instanceof MenuItemBuilder ? entry.build() : entry;
-    return { key: key as TKey, ...parsedMenu } as ExtendedMenuItemConfig<
-      TProps,
-      TKey
-    >;
+    return { key: key as TKey, ...parsedMenu } as MenuItemConfig<TProps, TKey>;
   });
 }
 
@@ -317,7 +319,7 @@ const MenuItemContent = memo(function MenuItemContent<
   contextProps,
   isLoading = false,
 }: {
-  item: ExtendedMenuItemConfig<TProps, TKey>;
+  item: MenuItemConfig<TProps, TKey>;
   contextProps: TProps;
   isLoading?: boolean;
 }) {
@@ -341,13 +343,13 @@ const MenuItemContent = memo(function MenuItemContent<
     </>
   );
 }) as <TProps, TKey extends string = string>(props: {
-  item: ExtendedMenuItemConfig<TProps, TKey>;
+  item: MenuItemConfig<TProps, TKey>;
   contextProps: TProps;
   isLoading?: boolean;
 }) => React.ReactElement;
 
 interface SharedRendererProps<TProps, TKey extends string = string> {
-  item: ExtendedMenuItemConfig<TProps, TKey>;
+  item: MenuItemConfig<TProps, TKey>;
   contextProps: TProps;
   itemClasses?: string;
   isDisabled?: boolean;
@@ -572,7 +574,7 @@ const MenuItemRenderer = memo(function MenuItemRenderer<
   hiddenKeys = [],
   onSuccess,
 }: {
-  item: ExtendedMenuItemConfig<TProps, TKey>;
+  item: MenuItemConfig<TProps, TKey>;
   contextProps: TProps;
   disabledKeys?: TKey[];
   hiddenKeys?: TKey[];
@@ -589,7 +591,7 @@ const MenuItemRenderer = memo(function MenuItemRenderer<
 
   const showBeforeSeparator = isIn(item.separatorPos, ["before", "both"]);
   const showAfterSeparator = isIn(item.separatorPos, ["after", "both"]);
-  const customClass = resolveDynamicValue(item.customClass, contextProps);
+  const customClass = resolveDynamicValue(item.className, contextProps);
 
   const itemClasses = cn(
     "gap-2 cursor-pointer flex items-center",
@@ -617,7 +619,7 @@ const MenuItemRenderer = memo(function MenuItemRenderer<
     </>
   );
 }) as <TProps, TKey extends string = string>(props: {
-  item: ExtendedMenuItemConfig<TProps, TKey>;
+  item: MenuItemConfig<TProps, TKey>;
   contextProps: TProps;
   disabledKeys?: TKey[];
   hiddenKeys?: TKey[];
@@ -633,10 +635,10 @@ const MenuItemRenderer = memo(function MenuItemRenderer<
 function ActionMenuComponent<TProps, TKey extends string = string>({
   items,
   children = <ButtonMenu />,
-  contextProps,
   disabled = [],
   hidden = [],
   onSuccess,
+  ...contextProps
 }: WithPropsChildren<ActionMenuProps<TProps, TKey>>): React.ReactElement {
   const dialogItems = mapDialogItems(items);
 
@@ -649,7 +651,7 @@ function ActionMenuComponent<TProps, TKey extends string = string>({
             <MenuItemRenderer
               key={item.key ?? index}
               item={item}
-              contextProps={contextProps}
+              contextProps={contextProps as TProps}
               disabledKeys={disabled}
               hiddenKeys={hidden}
               onSuccess={onSuccess}
@@ -681,22 +683,23 @@ export function createMenuBuilder<TProps, TKey extends string = string>() {
       new MenuItemBuilder<TProps, TKey>(label, icon),
 
     build: (
-      schema:
-        MenuSchemaInput<TProps, TKey> | ExtendedMenuItemConfig<TProps, TKey>[],
-    ): React.FC<
-      WithPropsChildren<Omit<ActionMenuProps<TProps, TKey>, "items">>
-    > => {
+      schema: MenuSchemaInput<TProps, TKey> | MenuItemConfig<TProps, TKey>[],
+    ): React.FC<ActionMenuComponentProps<TProps, TKey>> => {
       const compiledItems = normalizeSchema<TProps, TKey>(schema);
 
-      const ActionMenu: React.FC<
-        WithPropsChildren<Omit<ActionMenuProps<TProps, TKey>, "items">>
-      > = ({ children, disabled, hidden, onSuccess, ...props }) => (
+      const ActionMenu: React.FC<ActionMenuComponentProps<TProps, TKey>> = ({
+        children,
+        disabled,
+        hidden,
+        onSuccess,
+        ...props
+      }) => (
         <ActionMenuComponent<TProps, TKey>
           items={compiledItems}
-          contextProps={props as TProps}
           disabled={disabled}
           hidden={hidden}
           onSuccess={onSuccess}
+          {...props}
         >
           {children}
         </ActionMenuComponent>

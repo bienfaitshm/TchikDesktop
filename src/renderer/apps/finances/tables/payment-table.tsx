@@ -37,17 +37,15 @@ export const RenderPaymentCell: React.FC<FeeTypeRowActionsProps> = ({
   feeAssignment,
   schoolId,
   yearId,
-  mutationKey,
+  mutationKey = ["fin"],
 }) => {
   return (
     <PaymentAction
-      contextProps={{
-        feeAssignment,
-        schoolId,
-        yearId,
-        mutationKey,
-      }}
-      hidden={["pay"]}
+      feeAssignment={feeAssignment}
+      schoolId={schoolId}
+      yearId={yearId}
+      mutationKey={mutationKey}
+
       onSuccess={(key: string, data) => {
         console.log({ key, data });
       }}
@@ -100,7 +98,7 @@ export const FeeClassroomPaymentTable: React.FC<FeeConfigTableProps> = ({
 
     return enhanceColumns(columns, {
       variant: "actions",
-      renderRowAction: (assign) => <RowAction contextProps={{ assign }} />,
+      renderRowAction: (assign) => <RowAction assign={assign} />,
     });
   }, [data?.head, schoolId, yearId, mutationKey]);
 

@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 export const ResultSearch: React.FC = () => {
-  const { yearId, schoolId } = useCurrentConfig();
+  const { yearId = "", schoolId = "" } = useCurrentConfig();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("user") ?? "";
 

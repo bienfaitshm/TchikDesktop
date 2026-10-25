@@ -72,7 +72,7 @@ export interface ActionItemConfig<
 > extends BaseMenuItemConfig<TProps, TKey> {
   type: "action";
   label: DynamicLabel<TProps>;
-  onAction?: (props: TProps) => void | Promise<void>;
+  onAction?: (props: TProps) => unknown | Promise<unknown>;
 }
 
 /**
@@ -109,7 +109,10 @@ export interface ToggleItemConfig<
   type: "toggle";
   label: DynamicLabel<TProps>;
   isChecked: DynamicProp<TProps, boolean>;
-  onToggleChange: (props: TProps, checked: boolean) => void | Promise<void>;
+  onToggleChange: (
+    props: TProps,
+    checked: boolean,
+  ) => unknown | Promise<unknown>;
 }
 
 /**
@@ -154,23 +157,11 @@ export type MenuItemConfig<TProps, TKey extends string = string> =
   | SubmenuItemConfig<TProps, TKey>;
 
 /**
- * Extended menu item configuration ensuring support for dynamic properties and builder outputs.
- */
-export type ExtendedMenuItemConfig<
-  TProps,
-  TKey extends string = string,
-> = MenuItemConfig<TProps, TKey> & {
-  label?: DynamicLabel<TProps>;
-  icon?: DynamicIcon<TProps>;
-  className?: DynamicProp<TProps, string>;
-};
-
-/**
  * Dictionary or builder map accepted as input for menu schema definitions.
  */
 export type MenuSchemaInput<TProps, TKey extends string = string> = Record<
   string,
-  IMenuItemBuilder<TProps, TKey> | ExtendedMenuItemConfig<TProps, TKey>
+  IMenuItemBuilder<TProps, TKey> | MenuItemConfig<TProps, TKey>
 >;
 
 /**
@@ -178,19 +169,22 @@ export type MenuSchemaInput<TProps, TKey extends string = string> = Record<
  * @template TProps - The type of context properties passed down to items.
  * @template TKey - The string literal union type representing item keys.
  */
-export interface ActionMenuProps<TProps, TKey extends string = string> {
-  items: ExtendedMenuItemConfig<TProps, TKey>[];
-  contextProps: TProps;
+export type ActionMenuProps<TProps, TKey extends string = string> = TProps & {
+  items: MenuItemConfig<TProps, TKey>[];
   disabled?: TKey[];
   hidden?: TKey[];
   onSuccess?: (key: TKey, data: unknown) => void;
-}
+};
 
+export type ActionMenuComponentProps<
+  TProps,
+  TKey extends string = string,
+> = Omit<WithPropsChildren<ActionMenuProps<TProps, TKey>>, "items">;
 /**
  * Fluent builder pattern interface for constructing menu item configurations.
  */
 export interface IMenuItemBuilder<TProps, TKey extends string = string> {
-  config: Partial<ExtendedMenuItemConfig<TProps, TKey>>;
+  config: Partial<MenuItemConfig<TProps, TKey>>;
 
   /**
    * Sets the primary label and optional icon for the menu item.
@@ -238,8 +232,7 @@ export interface IMenuItemBuilder<TProps, TKey extends string = string> {
    * @returns The builder instance for chaining.
    */
   submenu(
-    items:
-      MenuSchemaInput<TProps, TKey> | ExtendedMenuItemConfig<TProps, TKey>[],
+    items: MenuSchemaInput<TProps, TKey> | MenuItemConfig<TProps, TKey>[],
   ): this;
 
   /**
@@ -248,8 +241,7 @@ export interface IMenuItemBuilder<TProps, TKey extends string = string> {
    * @returns The builder instance for chaining.
    */
   group(
-    items:
-      MenuSchemaInput<TProps, TKey> | ExtendedMenuItemConfig<TProps, TKey>[],
+    items: MenuSchemaInput<TProps, TKey> | MenuItemConfig<TProps, TKey>[],
   ): this;
 
   /**
@@ -295,7 +287,7 @@ export interface IMenuItemBuilder<TProps, TKey extends string = string> {
 
   /**
    * Finalizes and builds the immutable item configuration object.
-   * @returns The compiled ExtendedMenuItemConfig instance.
+   * @returns The compiled MenuItemConfig instance.
    */
-  build(): ExtendedMenuItemConfig<TProps, TKey>;
+  build(): MenuItemConfig<TProps, TKey>;
 }

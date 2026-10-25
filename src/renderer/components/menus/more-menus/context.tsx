@@ -84,11 +84,9 @@ DialogMenuProvider.displayName = "DialogMenuProvider";
  * Properties for the DialogContainer component.
  * @template T - Context properties record type.
  */
-export interface DialogContainerProps<
-  T extends Record<string, unknown> = Record<string, unknown>,
-> {
-  contextProps: T;
-  items?: Map<string, DialogItemConfig<T>["renderDialog"]>;
+export interface DialogContainerProps<TProps> {
+  contextProps: TProps;
+  items?: Map<string, DialogItemConfig<TProps>["renderDialog"]>;
 }
 
 /**
@@ -97,12 +95,10 @@ export interface DialogContainerProps<
  * @param props - Container properties carrying items map and context values.
  * @returns Evaluated React elements correlating to the active dialog key or null.
  */
-export const DialogContainer = <
-  T extends Record<string, unknown> = Record<string, unknown>,
->({
+export const DialogContainer = <TProps extends {} = {}>({
   items,
   contextProps,
-}: DialogContainerProps<T>): React.ReactElement | null => {
+}: DialogContainerProps<TProps>): React.ReactElement | null => {
   const { activeDialogKey } = useDialogState();
   const { closeDialog, handleOpenChange } = useDialogActions();
 
@@ -116,7 +112,7 @@ export const DialogContainer = <
     return null;
   }
 
-  const dialogProps: DialogRenderProps<T> = {
+  const dialogProps: DialogRenderProps<TProps> = {
     props: contextProps,
     open: true,
     close: closeDialog,

@@ -1,5 +1,5 @@
 import {
-  FeeAssignmentTDO,
+  FeeAssignmentDTO,
   SelectOption,
 } from "@/packages/@core/data-access/db";
 
@@ -25,12 +25,12 @@ export type OptionGroup<T = unknown> = {
  * @returns An array of option groups formatted for UI select components.
  */
 export function groupFeeAssignmentsByTypeName(
-  assignments: FeeAssignmentTDO[],
-): OptionGroup<FeeAssignmentTDO>[] {
+  assignments: FeeAssignmentDTO[],
+): OptionGroup<FeeAssignmentDTO>[] {
   const DEFAULT_CATEGORY = "Uncategorized";
 
   const groupedAssignments = assignments.reduce<
-    Record<string, Option<FeeAssignmentTDO>[]>
+    Record<string, Option<FeeAssignmentDTO>[]>
   >((accumulator, assignment) => {
     const rawName = assignment.feeType?.name;
     const categoryKey =
@@ -40,7 +40,7 @@ export function groupFeeAssignmentsByTypeName(
       accumulator[categoryKey] = [];
     }
 
-    const optionItem: Option<FeeAssignmentTDO> = {
+    const optionItem: Option<FeeAssignmentDTO> = {
       ...assignment,
       value: String(assignment.assignmentId ?? ""),
       label: assignment.feeSchedule.installmentName,
