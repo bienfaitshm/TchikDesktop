@@ -3,7 +3,7 @@ import {
   type StudentPaymentDTO,
 } from "@/packages/@core/data-access/db/queries";
 import type { DataResolver } from "@/packages/electron-data-exporter";
-
+import { PAYMENT_STATUS_ENUM } from "@/packages/@core/data-access/db";
 /**
  * Input payload required to query payment data.
  */
@@ -71,6 +71,7 @@ export class PaymentDataResolver implements DataResolver<
     const payments = await this.paymentRepository.findMany({
       where: {
         studentPayments: {
+          status: PAYMENT_STATUS_ENUM.VALIDATED,
           schoolId,
           yearId,
           ...(dateFilter ? { createdAt: dateFilter } : {}),
