@@ -19,6 +19,7 @@ import {
   Armchair,
   IdCard,
 } from "lucide-react";
+import { SearchForm } from "../components/search-panel-form";
 
 export const ResultSearch: React.FC = () => {
   const { yearId = "", schoolId = "" } = useCurrentConfig();
@@ -77,6 +78,9 @@ export const ResultSearch: React.FC = () => {
     <PageContainer>
       <PageContent>
         <div className="max-w-6xl mx-auto space-y-4 p-4 text-foreground">
+          <div className="w-full rounded-full max-w-2xl">
+            <SearchForm schoolId={schoolId} yearId={yearId} />
+          </div>
           {/* BANNIÈRE COMPACTE / PROFILE HEADER */}
           <div className="bg-card border border-border rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
             <div className="flex items-center gap-3">
